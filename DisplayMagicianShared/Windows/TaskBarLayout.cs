@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -58,8 +59,9 @@ namespace DisplayMagicianShared.Windows
             {3, new byte[] {0x30, 0x00, 0x00, 0x00, 0xFE, 0xFF, 0xFF, 0xFF}}
         };
 */
-        public bool ReadFromRegistry(string regKeyValue)
+        public bool ReadFromRegistry(string regKeyValue, out bool retryNeeded)
         {
+            retryNeeded = false;
             bool MMStuckRectVerFound = false;
             // Check if key exists
             int version = 3;
@@ -99,25 +101,33 @@ namespace DisplayMagicianShared.Windows
                                 address,
                                 RegistryKeyPermissionCheck.ReadSubTree))
                         {
-                            var binary = key?.GetValue(regKeyValue) as byte[];
-                            if (binary?.Length > 0)
+                            if (key.GetValueNames().Contains(regKeyValue))
                             {
-                                MainScreen = false;
-                                RegKeyValue = regKeyValue;
-                                Binary = binary;
-                                Version = version;
+                                var binary = key?.GetValue(regKeyValue) as byte[];
+                                if (binary?.Length > 0)
+                                {
+                                    MainScreen = false;
+                                    RegKeyValue = regKeyValue;
+                                    Binary = binary;
+                                    Version = version;
 
-                                // Extract the values from the binary byte field
-                                PopulateFieldsFromBinary();
+                                    // Extract the values from the binary byte field
+                                    PopulateFieldsFromBinary();
 
-                                SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: The taskbar for {RegKeyValue} is against the {Edge} edge, is positioned at ({TaskBarLocation.X},{TaskBarLocation.Y}) and is {TaskBarLocation.Width}x{TaskBarLocation.Height} in size.");
+                                    SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: The taskbar for {RegKeyValue} is against the {Edge} edge, is positioned at ({TaskBarLocation.X},{TaskBarLocation.Y}) and is {TaskBarLocation.Width}x{TaskBarLocation.Height} in size.");
 
-                                // If we get here then we're done and don't need to continue with the rest of the code.
-                                return true;
+                                    // If we get here then we're done and don't need to continue with the rest of the code.
+                                    return true;
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Unable to get the TaskBarStuckRectangle binary settings from {regKeyValue} screen. Screen details may not be available yet in registry.");
+                                    retryNeeded = true;
+                                }
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Unable to get the TaskBarStuckRectangle binary settings from {regKeyValue} screen. Screen details may not be available yet in registry.");
+                                SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Unable to find {regKeyValue} key in {address}. Screen details may not be available yet in registry.");
                             }
                         }
                     }
@@ -173,23 +183,32 @@ namespace DisplayMagicianShared.Windows
                                 address,
                                 RegistryKeyPermissionCheck.ReadSubTree))
                         {
-                            var binary = key?.GetValue(regKeyValue) as byte[];
-                            if (binary?.Length > 0)
+                            if (key.GetValueNames().Contains(regKeyValue))
                             {
-                                MainScreen = true;
-                                RegKeyValue = regKeyValue;
-                                Binary = binary;
-                                Version = version;
+                                var binary = key?.GetValue(regKeyValue) as byte[];
+                                if (binary?.Length > 0)
+                                {
+                                    MainScreen = true;
+                                    RegKeyValue = regKeyValue;
+                                    Binary = binary;
+                                    Version = version;
 
-                                // Extract the values from the binary byte field
-                                PopulateFieldsFromBinary();
+                                    // Extract the values from the binary byte field
+                                    PopulateFieldsFromBinary();
 
-                                SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: The taskbar for {RegKeyValue} is against the {Edge} edge, is positioned at ({TaskBarLocation.X},{TaskBarLocation.Y}) and is {TaskBarLocation.Width}x{TaskBarLocation.Height} in size.");
-                                return true;
+                                    SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: The taskbar for {RegKeyValue} is against the {Edge} edge, is positioned at ({TaskBarLocation.X},{TaskBarLocation.Y}) and is {TaskBarLocation.Width}x{TaskBarLocation.Height} in size.");
+                                    return true;
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Error($"TaskBarLayout/ReadFromRegistry: Unable to get the TaskBarStuckRectangle binary settings from {regKeyValue} screen.");
+                                    retryNeeded = true;
+                                    return false;
+                                }
                             }
                             else
                             {
-                                SharedLogger.logger.Error($"TaskBarLayout/ReadFromRegistry: Unable to get the TaskBarStuckRectangle binary settings from {regKeyValue} screen.");
+                                SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Unable to find {regKeyValue} key in {address}. Screen details may not be available yet in registry.");
                                 return false;
                             }
                         }
@@ -285,6 +304,11 @@ namespace DisplayMagicianShared.Windows
 
         private bool PopulateFieldsFromBinary()
         {
+            if (Binary == null)
+            {
+                return false;
+            }
+
             // Now we decipher the binary properties features to populate the stuckrectangle 
             // DPI 
             if (Binary.Length < 44)
@@ -356,6 +380,11 @@ namespace DisplayMagicianShared.Windows
 
         public bool PopulateBinaryFromFields()
         {
+            if (Binary == null)
+            {
+                return false;
+            }
+            
             // Set the DPI
             if (Binary.Length < 44)
             {
@@ -550,8 +579,8 @@ namespace DisplayMagicianShared.Windows
 
                     TaskBarLayout tbsr = new TaskBarLayout();
                     // Now we're at the point that we should be able to update the binary that we grabbed earlier when the object was created
-                    tbsrReadWorked = tbsr.ReadFromRegistry(GetRegKeyValueFromDevicePath(displaySources[monitorInfo.szDevice][0].DevicePath));
-                    if (!tbsrReadWorked)
+                    tbsrReadWorked = tbsr.ReadFromRegistry(GetRegKeyValueFromDevicePath(displaySources[monitorInfo.szDevice][0].DevicePath),out retryNeeded);
+                    if (retryNeeded)
                     {
                         SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar read #1 from registry didn't work.");
                         retryNeeded = true;
@@ -587,8 +616,8 @@ namespace DisplayMagicianShared.Windows
 
                     // If it's a main screen, also add a duplicate so we track the main StuckRects settings separately too
                     TaskBarLayout tbsrMain = new TaskBarLayout();
-                    tbsrReadWorked = tbsrMain.ReadFromRegistry("Settings");
-                    if (!tbsrReadWorked)
+                    tbsrReadWorked = tbsrMain.ReadFromRegistry("Settings",out retryNeeded) ;
+                    if (!retryNeeded)
                     {
                         SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar read #1 from registry didn't work.");
                         retryNeeded = true;
@@ -647,7 +676,7 @@ namespace DisplayMagicianShared.Windows
 
                     TaskBarLayout tbsr = new TaskBarLayout();
                     // Now we're at the point that we should be able to update the binary that we grabbed earlier when the object was created
-                    tbsrReadWorked = tbsr.ReadFromRegistry(GetRegKeyValueFromDevicePath(displaySources[monitorInfo.szDevice][0].DevicePath));
+                    tbsrReadWorked = tbsr.ReadFromRegistry(GetRegKeyValueFromDevicePath(displaySources[monitorInfo.szDevice][0].DevicePath), out retryNeeded);
                     if (!tbsrReadWorked)
                     {
                         SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar read #3 from registry didn't work.");
