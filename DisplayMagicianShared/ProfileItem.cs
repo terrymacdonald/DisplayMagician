@@ -710,6 +710,10 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforNVIDIAColor)
                                     {
+                                        // Lets update the screen config again for the final time.
+                                        nvidiaLibrary.UpdateActiveConfig();
+                                        winLibrary.UpdateActiveConfig();
+
                                         SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
@@ -775,6 +779,10 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforAMDColor)
                                     {
+                                        // Lets update the screen config again for the final time.
+                                        amdLibrary.UpdateActiveConfig();
+                                        winLibrary.UpdateActiveConfig();
+
                                         SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
@@ -815,6 +823,9 @@ namespace DisplayMagicianShared
                     {
                         if (winLibrary.SetActiveConfig(_windowsDisplayConfig))
                         {
+                            // Lets update the screen config again for the final time.
+                            winLibrary.UpdateActiveConfig();
+
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
                             return true;
                         }
@@ -1476,7 +1487,8 @@ namespace DisplayMagicianShared
                         // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
                         // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
                         // the taskbar locations in memory (it takes up to 15 seconds!). Nothing I can do, except put this protection in place :( .
-                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
+
+                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
                         SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                     }
                     catch (Exception ex)
@@ -1561,10 +1573,10 @@ namespace DisplayMagicianShared
                         // rather than the MMStuckRect reg keys
                         try
                         {
-                            if (_windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue.Contains("Settings")) > 0)
+                            if (_windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains("Settings")) > 0)
                             {
                                 screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains("Settings")).Value.Edge;
-                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge} of the screen.");
                             }
                             else
                             {
@@ -1584,7 +1596,7 @@ namespace DisplayMagicianShared
                     {
                         try
                         {
-                            int numMatches = _windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}"));
+                            int numMatches = _windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains($"UID{targetId}"));
                             if (numMatches > 1)
                             {
                                 var matchingTbls = (from tbl in _windowsDisplayConfig.TaskBarLayout where tbl.Value.RegKeyValue.Contains($"UID{targetId}") select tbl.Value).ToList();
