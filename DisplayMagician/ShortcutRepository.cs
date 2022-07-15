@@ -432,11 +432,6 @@ namespace DisplayMagician
                     try
                     {
 
-                        // Replace any "Enabled": true with "Disabled": false
-                        json = Regex.Replace(json, @"        ""Enabled"": true,", @"        ""Disabled"": false,");
-                        // Replace any "Enabled": false with "Disabled": true
-                        json = Regex.Replace(json, @"        ""Enabled"": false,", @"        ""Disabled"": true,");
-
                         // If the shortcuts file doesn't have "ProcessPriority" in it, then we need to add it
                         if (!Regex.Match(json, @"""ProcessPriority""").Success)
                         {

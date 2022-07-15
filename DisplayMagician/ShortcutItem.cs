@@ -139,7 +139,8 @@ namespace DisplayMagician
         private string _name = "";
         private ShortcutCategory _category = ShortcutCategory.Game;
         private string _differentExecutableToMonitor;
-        private string _executableAppId = "";
+        private string _applicationId = "";
+        private string _applicationName = "";
         private string _executableNameAndPath = "";
         private string _executableArguments = "";
         private bool _executableArgumentsRequired = false;
@@ -388,16 +389,31 @@ namespace DisplayMagician
         }
 
         [DefaultValue("")]
-        public string ExecutableAppId
+        public string ApplicationId
         {
             get
             {
-                return _executableAppId;
+                return _applicationId;
             }
 
             set
             {
-                _executableAppId = value;                
+                _applicationId = value;                
+
+            }
+        }
+
+        [DefaultValue("")]
+        public string ApplicationName
+        {
+            get
+            {
+                return _applicationName;
+            }
+
+            set
+            {
+                _applicationName = value;
 
             }
         }
@@ -955,6 +971,9 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = false;
             _differentExecutableToMonitor = "";
 
+            _applicationId = "";
+            _applicationName = "";
+
             _gameAppId = "";
             _gameArgumentsRequired = false;
             _gameArguments = "";
@@ -1049,6 +1068,9 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = false;
             _differentExecutableToMonitor = "";
 
+            _applicationId = "";
+            _applicationName = "";
+
             ReplaceShortcutIconInCache();
             RefreshValidity();
         }
@@ -1132,6 +1154,9 @@ namespace DisplayMagician
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
 
+            _applicationId = "";
+            _applicationName = "";
+
             ReplaceShortcutIconInCache();
             RefreshValidity();
         }
@@ -1169,7 +1194,8 @@ namespace DisplayMagician
             _name = name;
             _profileToUse = profile;
             _category = ShortcutCategory.Application;
-            _executableAppId = app.AppToUse.Id;
+            _applicationId = app.AppToUse.Id;
+            _applicationName = app.AppToUse.Name;
             _differentExecutableToMonitor = app.DifferentExecutableToMonitor;
             _executableNameAndPath = app.AppToUse.ExePath;
             _runExeAsAdministrator = app.RunAsAdministrator;
@@ -1242,6 +1268,8 @@ namespace DisplayMagician
             shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
             shortcut.RunExeAsAdministrator = RunExeAsAdministrator;
             shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
+            shortcut.ApplicationId = ApplicationId;
+            shortcut.ApplicationName = ApplicationName;
             shortcut.ProcessPriority = ProcessPriority;
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
@@ -1855,6 +1883,11 @@ namespace DisplayMagician
                 {
                     string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
                     _name = $"{baseName} ({_profileToUse.Name})";
+                }
+                else if (Category.Equals(ShortcutCategory.Application) && !String.IsNullOrWhiteSpace(ApplicationName))
+                {
+                    string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
+                    _name = $"{ApplicationName} ({_profileToUse.Name})";
                 }
                 else
                 {

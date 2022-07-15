@@ -305,8 +305,8 @@ namespace DisplayMagician.UIForms
         private void ShowShortcutLoadingWindow()
         {
             Program.AppShortcutLoadingSplashScreen = new ShortcutLoadingForm();
-            Program.AppShortcutLoadingSplashScreen.Title = "Preparing Shortcut...";
-            Program.AppShortcutLoadingSplashScreen.Description = "Preparing the Shortcut ready for you to edit. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            Program.AppShortcutLoadingSplashScreen.Title = "Scanning Game and App Data...";
+            Program.AppShortcutLoadingSplashScreen.Description = "Getting the Shortcut information ready for you to edit. Scanning your computer for all Games and Apps so you can choose them from a list.";
             int resultX = this.DesktopLocation.X + ((this.Width - Program.AppShortcutLoadingSplashScreen.Width) / 2);
             int resultY = this.DesktopLocation.Y + ((this.Height - Program.AppShortcutLoadingSplashScreen.Height) / 2);
             Program.AppShortcutLoadingSplashScreen.WantedLocation = new Point(resultX, resultY);
