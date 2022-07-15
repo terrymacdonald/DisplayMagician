@@ -1182,7 +1182,7 @@ namespace DisplayMagician
             }*/
 
             // Now start the main game/exe, and wait if we have to
-            if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
+            if (shortcutToUse.Category.Equals(ShortcutCategory.Executable))
             {
                 // Store the process to monitor for later
                 //IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;

@@ -166,7 +166,7 @@ namespace DisplayMagician.UIForms
                         }
                         else
                         {
-                            if (_selectedShortcut.Category == ShortcutCategory.Application)
+                            if (_selectedShortcut.Category == ShortcutCategory.Executable)
                             {
                                 dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(_selectedShortcut.ExecutableNameAndPath), @" (", _selectedShortcut.Name.ToLower(CultureInfo.InvariantCulture), @")");
                             }
@@ -289,6 +289,8 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = _shortcutForm.Shortcut;
                 //ShortcutRepository.IsValidRefresh();
                 RefreshShortcutLibraryUI();
+                // As this is an edit, we need to manually force saving the shortcut library
+                ShortcutRepository.SaveShortcuts();
             }
             this.Cursor = Cursors.Default;
             RemoveWarningIfShortcuts();
@@ -452,7 +454,7 @@ namespace DisplayMagician.UIForms
 
             // Figure out the string we're going to use as the MaskedForm message
             string message = "";
-            if (_selectedShortcut.Category.Equals(ShortcutCategory.Application))
+            if (_selectedShortcut.Category.Equals(ShortcutCategory.Executable))
                 message = $"Running the {_selectedShortcut.ExecutableNameAndPath} application and waiting until you close it.";
             else if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
                 message = $"Running the {_selectedShortcut.GameName} game and waiting until you close it.";

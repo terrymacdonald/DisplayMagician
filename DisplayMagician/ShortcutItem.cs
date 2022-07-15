@@ -29,9 +29,10 @@ namespace DisplayMagician
 
     public enum ShortcutCategory : int
     {
-        Application = 0,
+        Executable = 0,
         Game = 1,
         NoGame = 2,
+        Application = 3,
     }
 
     public enum ShortcutValidity : int
@@ -201,7 +202,7 @@ namespace DisplayMagician
                 _gameLibrary = SupportedGameLibraryType.Unknown;
                 _gameName = "";
                 _gameArguments = "";
-                _category = ShortcutCategory.Application;
+                _category = ShortcutCategory.Executable;
             }
             // Autocreate a name for the shortcut if AutoName is on
             // (and if we have a profile to use)
@@ -415,7 +416,7 @@ namespace DisplayMagician
 
                 // If the executableNameandPath is set then we also want to update the originalIconPath
                 // so it's the path to the application. This will kick of the icon grabbing processes
-                if (Category.Equals(ShortcutCategory.Application))
+                if (Category.Equals(ShortcutCategory.Executable))
                     _originalIconPath = value;
 
             }
@@ -1085,7 +1086,7 @@ namespace DisplayMagician
                 _uuid = uuid;
             _name = name;
             _profileToUse = profile;
-            _category = ShortcutCategory.Application;
+            _category = ShortcutCategory.Executable;
             _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
             _executableNameAndPath = executable.ExecutableNameAndPath;
             _runExeAsAdministrator = executable.RunAsAdministrator;
@@ -1403,25 +1404,50 @@ namespace DisplayMagician
                         worstError = ShortcutValidity.Warning;
                 }                
             }
+
+            logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is named: {Name}");
+
             // Is the main application still installed?
-            if (Category.Equals(ShortcutCategory.Application))
+            if (Category.Equals(ShortcutCategory.Executable))
             {
-                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Application");
+                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Executable");
                 // We need to check if the Application still exists
                 if (!System.IO.File.Exists(ExecutableNameAndPath))
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The Application executable {ExecutableNameAndPath} DOES NOT exist");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The executable {ExecutableNameAndPath} DOES NOT exist");
                     ShortcutError error = new ShortcutError();
                     error.Name = "InvalidExecutableNameAndPath";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The application executable '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
+                    error.Message = $"The executable '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
                 }
                 else
                 {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The Application executable {ExecutableNameAndPath} exists");
+                    logger.Trace($"ShortcutItem/RefreshValidity: The Executable {ExecutableNameAndPath} exists");
+                }
+
+            }
+            // Is the main application still installed?
+            else if (Category.Equals(ShortcutCategory.Application))
+            {
+                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Application");
+                // We need to check if the Application still exists
+                if (!System.IO.File.Exists(ExecutableNameAndPath))
+                {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The Application {ExecutableNameAndPath} DOES NOT exist");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "InvalidExecutableNameAndPath";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The application '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Error;
+                }
+                else
+                {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The Application {ExecutableNameAndPath} exists");
                 }
 
             }
@@ -1742,7 +1768,7 @@ namespace DisplayMagician
             if (DisplayPermanence == ShortcutPermanence.Temporary)
             {
                 // Only add this set of options if the shortcut is to an standalone application
-                if (Category == ShortcutCategory.Application)
+                if (Category == ShortcutCategory.Executable)
                 {
                     // Prepare text for the shortcut description field
                     shortcutDescription = string.Format(Language.Execute_application_with_profile, programName, ProfileToUse.Name);
@@ -1825,7 +1851,7 @@ namespace DisplayMagician
                 {
                     _name = $"{GameName} ({_profileToUse.Name})";
                 }
-                else if (Category.Equals(ShortcutCategory.Application) && ExecutableNameAndPath.Length > 0)
+                else if (Category.Equals(ShortcutCategory.Executable) && ExecutableNameAndPath.Length > 0)
                 {
                     string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
                     _name = $"{baseName} ({_profileToUse.Name})";
