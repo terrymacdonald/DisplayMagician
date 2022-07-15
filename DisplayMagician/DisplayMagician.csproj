@@ -305,7 +305,7 @@
       <Version>4.0.0-alpha5</Version>
     </PackageReference>
     <PackageReference Include="Autoupdater.NET.Official">
-      <Version>1.7.3</Version>
+      <Version>1.7.4</Version>
     </PackageReference>
     <PackageReference Include="BootMeUp">
       <Version>1.2.0</Version>
