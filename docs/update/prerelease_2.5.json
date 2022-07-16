@@ -16,7 +16,7 @@
   "extraDetails": {
     "manualUpgrade": false,
     "updatesDisplayProfiles": false,
-    "updatesGamesShortcuts": true,
+    "updatesGameShortcuts": true,
     "updatesSettings": true
   }  
 }
