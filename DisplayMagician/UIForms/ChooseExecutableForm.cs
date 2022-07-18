@@ -198,6 +198,11 @@ namespace DisplayMagician.UIForms
 
                 newItem = new ImageListViewItem(installedApp, installedApp.Name);
 
+                //ilv_saved_profiles.Items.Add(newItem);
+                logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: Adding this shortcut {installedApp.Name} to the imagelistview");
+                ilv_installed_apps.Items.Add(newItem, _appAdaptor);
+
+
                 // Select it if its the selectedProfile
                 if (_selectedApp is App && _selectedApp.Equals(installedApp))
                 {
@@ -207,15 +212,13 @@ namespace DisplayMagician.UIForms
                     btn_select_app.Enabled = true;                    
                 }
 
-                //ilv_saved_profiles.Items.Add(newItem);
-                logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: Adding this shortcut {installedApp.Name} to the imagelistview");
-                ilv_installed_apps.Items.Add(newItem, _appAdaptor);
             }
 
             logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: Resuming the imagelistview layout");
 
             // Restart updating the saved_profiles listview
             ilv_installed_apps.ResumeLayout();
+            ilv_installed_apps.Refresh();
 
             if (ilv_installed_apps.SelectedItems.Count > 0)
             {
