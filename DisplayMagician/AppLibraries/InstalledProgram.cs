@@ -232,27 +232,33 @@ namespace DisplayMagician.AppLibraries
 
                 foreach (var shortcut in shortucts)
                 {
+                    // Finish if this task is cancelled
                     if (cancelToken?.IsCancellationRequested == true)
                     {
                         return null;
                     }
 
+                    // Skip this shortcut if it's a directory
                     if (shortcut.Attributes.HasFlag(FileAttributes.Directory))
                     {
                         continue;
                     }
 
+                    // Get the link filename
                     var fileName = shortcut.Name;
                     var Directory = System.IO.Path.GetDirectoryName(shortcut.FullName);
 
+                    // Skip the folders we want to ignore
                     if (folderExceptions.FirstOrDefault(a => shortcut.FullName.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)
                     {
                         continue;
                     }
 
+                    // Parse the link file to get access to the settings in it.
                     var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcut.FullName);
                     var target = link.TargetPath;
 
+                    // Skip the paths we don't want to process.
                     if (pathExceptions.FirstOrDefault(a => target.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)
                     {
                         continue;
@@ -299,7 +305,14 @@ namespace DisplayMagician.AppLibraries
                         }
                         else
                         {
-                            iconLocation = link.IconLocation;
+                            if (System.IO.File.Exists(link.IconLocation))
+                            {
+                                iconLocation = link.IconLocation;
+                            }                            
+                            else
+                            {
+                                iconLocation = link.TargetPath;
+                            }
                         }
                     }
                     else
@@ -308,17 +321,17 @@ namespace DisplayMagician.AppLibraries
                     }
 
                     string workingDir = link.WorkingDirectory;
-                    if (link.WorkingDirectory == null)
+                    if (link.WorkingDirectory == null || String.IsNullOrWhiteSpace(link.WorkingDirectory) || !System.IO.File.Exists(link.WorkingDirectory))
                     {
-                        workingDir = System.IO.Path.GetFullPath(target);
+                        workingDir = System.IO.Path.GetDirectoryName(target);
                     }
 
                     var app = new InstalledProgram()
                     {
-                        Path = target,
-                        Icon = iconLocation,
+                        Path = DecodeIndirectFolders(target),
+                        Icon = DecodeIndirectFolders(iconLocation),
                         Name = System.IO.Path.GetFileNameWithoutExtension(shortcut.Name),
-                        WorkDir = workingDir,
+                        WorkDir = DecodeIndirectFolders(workingDir),
                         AppId = $"FromFolder_{System.IO.Path.GetFileNameWithoutExtension(shortcut.Name)}",
                         Arguments = ""
                     };
@@ -494,7 +507,50 @@ namespace DisplayMagician.AppLibraries
             return apps;
         }
 
-
+        public static string DecodeIndirectFolders(string indirectPath)
+        {
+            if (Regex.IsMatch(indirectPath, @"\%([^\\])\%"))
+            {
+                // This is a special folder variable, so we need to decode it
+                Match myMatches = Regex.Match(indirectPath, @"\%([^\\])\%");
+                if (myMatches.Success)
+                {
+                    string specialVariable = myMatches.Groups[1].Value;
+                    string replacement = "";
+                    if (specialVariable.Equals("ProgramFiles",StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        replacement = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                        indirectPath.Replace("%ProgramFiles%", replacement);
+                    }
+                    else if (specialVariable.Equals("ProgramFilesX86", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        replacement = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+                        indirectPath.Replace("%ProgramFilesX86%", replacement);
+                    }
+                    else if (specialVariable.Equals("ProgramFiles(x86)", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        replacement = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+                        indirectPath.Replace("%ProgramFiles(x86)%", replacement);
+                    }
+                    else if (specialVariable.Equals("CommonProgramFiles", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        replacement = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles);
+                        indirectPath.Replace("%CommonProgramFiles%", replacement);
+                    }
+                    else if (specialVariable.Equals("CommonProgramFilesX86", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        replacement = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86);
+                        indirectPath.Replace("%CommonProgramFilesX86%", replacement);
+                    }
+                    else if (specialVariable.Equals("CommonProgramFiles(x86)", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        replacement = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86);
+                        indirectPath.Replace("%CommonProgramFiles(x86)%", replacement);
+                    }
+                }
+            }
+            return indirectPath;
+        }
 
     }
 }

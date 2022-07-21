@@ -13,6 +13,7 @@ using DisplayMagicianShared;
 using MintPlayer.IconUtils;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Drawing.Printing;
 
 namespace DisplayMagician
 {
@@ -271,24 +272,11 @@ namespace DisplayMagician
                     try
                     {
 
-                        List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
+                        List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower());
                         Size largeSize = new Size(256, 256);
-                        foreach (Icon myExtractedIcon in myExtractedIcons)
+                        if (myExtractedIcons.Count > 0)
                         {
-                            try
-                            {
-                                // If the Icon wasn't extracted properly, then skip this and go to the next one as it may work.
-                                if (myExtractedIcon == null)
-                                {
-                                    continue;
-                                }
-                                myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
-                            }
-                            catch (ArgumentNullException nullex)
-                            {
-                                logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this file {fileNameAndPath} that we couldn't test, so skipping it.");
-                                continue;
-                            }
+                            myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcons.ToArray(), largeSize, 32, true, true);
 
                             if (myIcon != null)
                             {
@@ -303,6 +291,37 @@ namespace DisplayMagician
                                 logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
                             }
                         }
+                        /*foreach (Icon myExtractedIcon in myExtractedIcons)
+                        {
+                            try
+                            {
+                                // If the Icon wasn't extracted properly, then skip this and go to the next one as it may work.
+                                if (!(myExtractedIcon is Icon))
+                                {
+                                    logger.Debug($"ShortcutItem/GetMeABitmapFromFile: The icon file {fileNameAndPath} is in a format we cannot decipher, so skipping it.");
+                                    break;
+                                }
+                                myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
+                            }
+                            catch (ArgumentNullException nullex)
+                            {
+                                logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this file {fileNameAndPath} that we couldn't test, so skipping it.");
+                                break;
+                            }
+
+                            if (myIcon != null)
+                            {
+                                ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                                // Add the shortcutbitmap to the list
+                                bmList.Add(bm);
+
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");
+                            }
+                            else
+                            {
+                                logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
+                            }
+                        }*/
 
                     }
                     catch (Exception ex)
