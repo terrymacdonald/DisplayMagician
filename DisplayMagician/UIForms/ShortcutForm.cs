@@ -2253,10 +2253,10 @@ namespace DisplayMagician.UIForms
                 {
                     GameLibraries.GameLibrary.RefreshGameBitmaps();
                 }
-                if (!AppLibraries.AppLibrary.AppImagesLoaded)
+               /* if (!AppLibraries.AppLibrary.AppImagesLoaded)
                 {
                     AppLibraries.AppLibrary.RefreshAppBitmaps();
-                }
+                }*/
 
 
 

@@ -454,10 +454,12 @@ namespace DisplayMagician.UIForms
 
             // Figure out the string we're going to use as the MaskedForm message
             string message = "";
-            if (_selectedShortcut.Category.Equals(ShortcutCategory.Executable))
-                message = $"Running the {_selectedShortcut.ExecutableNameAndPath} application and waiting until you close it.";
-            else if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
+            if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
                 message = $"Running the {_selectedShortcut.GameName} game and waiting until you close it.";
+            else if (_selectedShortcut.Category.Equals(ShortcutCategory.Executable))
+                message = $"Running the {_selectedShortcut.ExecutableNameAndPath} executable and waiting until you close it.";
+            else if(_selectedShortcut.Category.Equals(ShortcutCategory.Application))
+                message = $"Running the {_selectedShortcut.ApplicationName} application and waiting until you close it.";
 
             // Create a Mask Control that will cover the ShortcutLibrary Window to lock
             lbl_mask.Text = message;

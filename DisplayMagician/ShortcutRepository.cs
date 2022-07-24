@@ -1159,25 +1159,196 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
             }
 
-            // Add a status notification icon in the status area
-            // but only if we are going to wait for a process to finish
-            // string oldNotifyText = "";
-            // ContextMenuStrip oldContextMenuStrip = null;
-
- 
-            // If we're starting from a desktop shortcut or desktop background menu, then there isn't an already existing MainForm.
-            // We need to start one, so that we're able to update the NotifyIcon.
-            /*bool temporaryMainForm = false;
-            if (myMainForm == null)
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: We need to create a temporary system tray icon as we're running from a shortcut");
-                temporaryMainForm = true;                
-                myMainForm = new MainForm();
-                Program.AppMainForm = myMainForm;
-            }*/
-
             // Now start the main game/exe, and wait if we have to
-            if (shortcutToUse.Category.Equals(ShortcutCategory.Executable))
+            if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
+            {
+                // Add a status notification icon in the status area
+                if (myMainForm.InvokeRequired)
+                {
+                    myMainForm.BeginInvoke((MethodInvoker)delegate {
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ApplicationName} application...");
+                    });
+                }
+                else
+                {
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ApplicationName} application...");
+                }
+
+                string processToMonitorName;
+                if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                {
+                    if (shortcutToUse.ExecutableNameAndPath.Contains("explorer.exe") && shortcutToUse.ExecutableArgumentsRequired && shortcutToUse.ExecutableArguments.StartsWith("shell:"))
+                    {
+                        // This is a UWP/Packaged app, so we need to monitor it differently
+                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+                    }
+                    else
+                    {
+                        // This is a normal, non-packaged app, so we run as normal
+                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+                    }                    
+                }
+                else
+                {
+                    processToMonitorName = shortcutToUse.DifferentExecutableToMonitor;
+                }
+
+                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the {shortcutToUse.ApplicationName} application to close.");
+                    // Now we want to tell the user we're running an application!
+                    // Construct the Windows toast content
+                    tcBuilder = new ToastContentBuilder()
+                        .AddText($"Running {shortcutToUse.ApplicationName}", hintMaxLines: 1)
+                        .AddText($"Waiting for all {processToMonitorName} processes to exit...")
+                        .AddButton(new ToastButton()
+                            .SetContent("Cancel")
+                            .AddArgument("action", "stopWaiting")
+                            .SetBackgroundActivation())
+                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                        .SetToastDuration(ToastDuration.Short);
+                    toastContent = tcBuilder.Content;
+                    // Make sure to use Windows.Data.Xml.Dom
+                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                    doc.LoadXml(toastContent.GetContent());
+                    // And create the toast notification
+                    toast = new ToastNotification(doc);
+                    toast.SuppressPopup = false;
+                    // Remove any other Notifications from us
+                    ToastNotificationManagerCompat.History.Clear();
+                    // And then show this notification
+                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                }
+
+
+                logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
+                // Start the main executable
+                List<Process> processesCreated = new List<Process>();
+                try
+                {
+                    processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+
+                    // Record the program we started so we can close it later
+                    foreach (Process p in processesCreated)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: {p.StartInfo.FileName} was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
+                    }
+
+                }
+                catch (Win32Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. Windows complained about something while trying to create a new process.");
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. The object was disposed before we could start the process.");
+                }
+                catch (FileNotFoundException ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. The file wasn't found by DisplayMagician and so we couldn't start it");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. Method call is invalid for the current state.");
+                }
+
+                // Wait an extra few seconds to give the application time to settle down
+                //Thread.Sleep(2000);
+
+                // Now we need to decide what we are monitoring. If the user has supplied an alternative process to monitor, then we monitor that instead!
+                bool foundSomethingToMonitor = false;
+                List<Process> processesToMonitor = new List<Process>();
+                if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                {
+                    processesToMonitor = processesCreated;
+                    logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{processToMonitorName}' created processes to monitor are running");
+                    foundSomethingToMonitor = true;
+                }
+                else
+                {
+                    // We use the a user supplied executable as the thing we're monitoring instead!
+                    try
+                    {
+                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
+                        logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
+                        foundSomethingToMonitor = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
+                        foundSomethingToMonitor = false;
+                    }
+                }
+
+                // if we have things to monitor, then we should start to wait for them
+                logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {shortcutToUse.ExecutableNameAndPath} to exit.");
+                if (foundSomethingToMonitor && processesToMonitor.Count > 0)
+                {
+                    while (true)
+                    {
+                        Application.DoEvents();
+                        // If we have no more processes left then we're done!
+                        if (ProcessUtils.ProcessExited(processesToMonitor))
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: No more processes to monitor are still running. It, and all it's child processes have exited!");
+                            break;
+                        }
+
+                        if (cancelToken.IsCancellationRequested)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for application {shortcutToUse.ExecutableNameAndPath} to close.");
+                            break;
+                        }
+                        // Send a message to windows so that it doesn't think
+                        // we're locked and try to kill us
+                        System.Threading.Thread.CurrentThread.Join(0);
+                        Thread.Sleep(1000);
+                    }
+                }
+
+                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                {
+                    if (cancelToken.IsCancellationRequested)
+                    {
+
+                        // The monitoring was stopped by the user
+                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
+                            .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                            .SetToastDuration(ToastDuration.Short);
+                    }
+
+
+                    else
+                    {
+                        // The program was closed normally
+                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} has closed.");
+                        // Tell the user that the application has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
+                            .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                            .SetToastDuration(ToastDuration.Short);
+
+                    }
+                    toastContent = tcBuilder.Content;
+                    // Make sure to use Windows.Data.Xml.Dom
+                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                    doc.LoadXml(toastContent.GetContent());
+                    // And create the toast notification
+                    toast = new ToastNotification(doc);
+                    // Remove any other Notifications from us
+                    ToastNotificationManagerCompat.History.Clear();
+                    // And then show it
+                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                }
+            }
+            else if (shortcutToUse.Category.Equals(ShortcutCategory.Executable))
             {
                 // Store the process to monitor for later
                 //IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
@@ -1187,18 +1358,29 @@ namespace DisplayMagician
                 if (myMainForm.InvokeRequired)
                 {
                     myMainForm.BeginInvoke((MethodInvoker)delegate {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...");
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath} executable...");
                     });
                 }
                 else
                 {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...");
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath} executable...");
                 }
 
                 string processToMonitorName;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+                    // if this is a UWP app
+                    if (shortcutToUse.ApplicationName.Contains("explorer.exe") && shortcutToUse.ExecutableArgumentsRequired && !String.IsNullOrWhiteSpace(shortcutToUse.ExecutableArguments))
+                    {
+                        //processToMonitorName = LocalApp.GetProcessFromAppId();
+                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+                    }
+                    else
+                    {
+                        // If this is a normal app we're starting
+                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+                    }
+                    
                 }
                 else
                 {

@@ -187,10 +187,10 @@ namespace DisplayMagician.AppLibraries
                     // This function tries to get a 256x256 Vista sized bitmap from the file
                     logger.Trace($"Program/LoadAppsInBackground: Attempting to get App bitmaps from {App.Name}.");
                     bmList.AddRange(ImageUtils.GetMeAllBitmapsFromFile(App.IconPath));
-                    if (App.ExePath != App.IconPath)
+                    /*if (App.ExePath != App.IconPath && !App.ExePath.Contains("explorer.exe"))
                     {
                         bmList.AddRange(ImageUtils.GetMeAllBitmapsFromFile(App.ExePath));
-                    }
+                    }*/
                     logger.Trace($"Program/LoadAppsInBackground: Got App bitmaps from {App.Name}.");
 
                 }

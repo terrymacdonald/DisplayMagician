@@ -114,6 +114,8 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
+                // Check if it is a UWP app
+
                 return !ProcessUtils.ProcessExited(_LocalAppProcessName);
                 /*int numAppProcesses = 0;
                 _LocalAppProcesses = Process.GetProcessesByName(_LocalAppProcessName).ToList();
@@ -196,7 +198,7 @@ namespace DisplayMagician.AppLibraries
             }*/
 
             return name;
-        }
+        }      
 
     }
 }

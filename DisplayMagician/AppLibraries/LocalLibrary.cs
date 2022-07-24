@@ -385,7 +385,9 @@ namespace DisplayMagician.AppLibraries
                     localApp.Directory = installedProgram.WorkDir;
                     localApp.ExePath = installedProgram.Path;
                     localApp.Arguments = installedProgram.Arguments;                                                            
-                    localApp.IconPath = installedProgram.Icon;                    
+                    localApp.IconPath = installedProgram.IconPath;
+                    localApp.AvailableAppBitmaps = installedProgram.AllLogos;
+                    localApp.AppBitmap = installedProgram.Logo;
                     localApp.ProcessName = Path.GetFileNameWithoutExtension(localApp.ExePath);
 
                     // Add the Locally Installed App to the list of Apps
@@ -440,7 +442,27 @@ namespace DisplayMagician.AppLibraries
             return AppProcesses;
         }
 
-        
+        public string GetProcessFromAppId(string localAppId)
+        {
+            App localApp = GetAppById(localAppId);
+            if (localApp == null)
+            {
+                // No App found, so return null
+                // Must have been uninstalled?
+                return null;
+            }
+            return null;
+            /*localApp.Id
+            {
+
+            }
+            else
+            {
+
+            }*/
+        }
+
+
         #endregion
 
     }

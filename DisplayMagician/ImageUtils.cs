@@ -14,6 +14,11 @@ using MintPlayer.IconUtils;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Drawing.Printing;
+using System.Windows.Media.Imaging;
+using System.Windows.Interop;
+using System.Windows;
+using Windows.UI.Xaml.Media.Imaging;
+using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
 
 namespace DisplayMagician
 {
@@ -74,7 +79,7 @@ namespace DisplayMagician
         public static GraphicsPath RoundedRect(Rectangle bounds, int radius)
         {
             int diameter = radius * 2;
-            Size size = new Size(diameter, diameter);
+            System.Drawing.Size size = new System.Drawing.Size(diameter, diameter);
             Rectangle arc = new Rectangle(bounds.Location, size);
             GraphicsPath path = new GraphicsPath();
 
@@ -273,7 +278,7 @@ namespace DisplayMagician
                     {
 
                         List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower());
-                        Size largeSize = new Size(256, 256);
+                        System.Drawing.Size largeSize = new System.Drawing.Size(256, 256);
                         if (myExtractedIcons.Count > 0)
                         {
                             myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcons.ToArray(), largeSize, 32, true, true);
@@ -382,7 +387,7 @@ namespace DisplayMagician
             sc.Order = order;
             sc.Source = source;
             sc.Image = bitmap;
-            sc.Size = new Size(sc.Image.Width, sc.Image.Height);
+            sc.Size = new System.Drawing.Size(sc.Image.Width, sc.Image.Height);
             return sc;
         }
 
@@ -470,11 +475,11 @@ namespace DisplayMagician
             // Figure out sizes and positions
             try
             {
-                Size targetSize = new Size(width, height);
+                System.Drawing.Size targetSize = new System.Drawing.Size(width, height);
                 logger.Trace($"ShortcutItem/ToBitmapOverlay: TargetSize is {targetSize.Width}px x {targetSize.Height}px.");
-                Size originalBitmapCurrentSize = new Size(originalBitmap.Width, originalBitmap.Height);
+                System.Drawing.Size originalBitmapCurrentSize = new System.Drawing.Size(originalBitmap.Width, originalBitmap.Height);
                 logger.Trace($"ShortcutItem/ToBitmapOverlay: originalBitmapCurrentSize is {originalBitmapCurrentSize.Width}px x {originalBitmapCurrentSize.Height}px.");
-                Size overlaylBitmapCurrentSize = new Size(overlayBitmap.Width, overlayBitmap.Height);
+                System.Drawing.Size overlaylBitmapCurrentSize = new System.Drawing.Size(overlayBitmap.Width, overlayBitmap.Height);
                 logger.Trace($"ShortcutItem/ToBitmapOverlay: overlaylBitmapCurrentSize is {overlaylBitmapCurrentSize.Width}px x {overlaylBitmapCurrentSize.Height}px.");
 
                 // Make a new empty bitmap of the wanted size
@@ -491,17 +496,17 @@ namespace DisplayMagician
                     g.CompositingQuality = CompositingQuality.AssumeLinear;
 
                     // Resize the originalBitmap if needed then draw it
-                    Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
+                    System.Drawing.Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Resizing the original bitmap to fit in the new combined bitmap. Size is now {originalBitmapNewSize.Width}px x {originalBitmapNewSize.Height}px");
-                    Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
+                    System.Drawing.Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the original bitmap into the new combined bitmap at position {originalBitmapNewLocation.X},{originalBitmapNewLocation.Y}..");
                     g.DrawImage(originalBitmap, originalBitmapNewLocation.X, originalBitmapNewLocation.Y, originalBitmapNewSize.Width, originalBitmapNewSize.Height);
 
                     // Resize the overlayBitmap if needed then draw it in the bottom-right corner                    
-                    Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
-                    Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize, 70);
+                    System.Drawing.Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
+                    System.Drawing.Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize, 70);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Resize the overlay bitmap to fit in the bottom right corner of the new combined bitmap. Size is now {overlayBitmapNewSize.Width}px x {overlayBitmapNewSize.Height}px");
-                    Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
+                    System.Drawing.Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
                     // Now we need to adjust that slightly up and in a bit
                     overlayBitmapNewLocation.Offset(0, -5);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the overlay bitmap into the new combined bitmap at position {overlayBitmapNewLocation.X},{overlayBitmapNewLocation.Y}.");
@@ -518,60 +523,110 @@ namespace DisplayMagician
 
         }
 
-/*
-#pragma warning disable CS3002 // Return type is not CLS-compliant
-        public static MultiIcon ToIconOverlay(Bitmap originalBitmap, Bitmap overlayBitmap)
-#pragma warning restore CS3002 // Return type is not CLS-compliant
+
+        public static Bitmap BitmapImage2Bitmap(BitmapImage bitmapImage)
         {
-            try
+            // BitmapImage bitmapImage = new BitmapImage(new Uri("../Images/test.png", UriKind.Relative));
+            if (bitmapImage == null)
             {
-                Size[] iconSizes = new[]
-                {
-                    new Size(256, 256),
-                    new Size(64, 64),
-                    new Size(48, 48),
-                    new Size(32, 32),
-                    new Size(24, 24),
-                    new Size(16, 16)
-                };
-                logger.Trace($"ShortcutItem/ToIconOverlay: Creating the new Multi image Icon.");
-                MultiIcon multiIcon = new MultiIcon();
-                logger.Trace($"ShortcutItem/ToIconOverlay: Adding a single icon to the multi image icon.");
-                SingleIcon icon = multiIcon.Add("Icon1");
-
-                foreach (Size size in iconSizes)
-                {
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Creating a new image layer of size {size.Width}px x {size.Height}px.");
-                    Bitmap bitmapOverlay = ToBitmapOverlay(originalBitmap, overlayBitmap, size.Width, size.Height);
-                    if (bitmapOverlay == null)
-                    {
-                        logger.Warn($"ShortcutItem/ToIconOverlay: bitmapOverlay is null, so we can't turn it into an Icon Overlay. Returning null");
-                        return null;
-                    }
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Adding the new image layer of size {size.Width}px x {size.Height}px to the multi image icon.");
-                    icon.Add(bitmapOverlay);
-
-                    if (size.Width >= 256 && size.Height >= 256)
-                    {
-                        logger.Trace($"ShortcutItem/ToIconOverlay: The image is > 256px x 256px so making it a PNG layer in the icon file.");
-                        icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
-                    }
-
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Disposing of the Bitmap data we just used as the source (stops memory leaks).");
-                    bitmapOverlay.Dispose();
-                }
-
-                logger.Trace($"ShortcutItem/ToIconOverlay: Make the top layer image of the Multi image icon the default one.");
-                multiIcon.SelectedIndex = 0;
-
-                return multiIcon;
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/ToIconOverlay: Exeception occurred while trying to convert the Shortcut Bitmap to an Icon Overlay to store in the shortcut cache directory. Returning null");
                 return null;
             }
-        }*/
+
+            using (MemoryStream outStream = new MemoryStream())
+            {
+                BitmapEncoder enc = new BmpBitmapEncoder();
+                enc.Frames.Add(BitmapFrame.Create(bitmapImage));
+                enc.Save(outStream);
+                System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(outStream);
+
+                return new Bitmap(bitmap);
+            }
+        }
+
+        [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+        public static extern bool DeleteObject(IntPtr hObject);
+
+        public static BitmapImage Bitmap2BitmapImage(Bitmap bitmap)
+{
+            if (bitmap == null)
+            {
+                return null;
+            }
+
+            IntPtr hBitmap = bitmap.GetHbitmap();
+            BitmapImage retval;
+
+            try
+            {
+                retval = (BitmapImage)Imaging.CreateBitmapSourceFromHBitmap(
+                             hBitmap,
+                             IntPtr.Zero,
+                             Int32Rect.Empty,
+                             BitmapSizeOptions.FromEmptyOptions());
+            }
+            finally
+            {
+                DeleteObject(hBitmap);
+            }
+
+            return retval;
+        }
+
+
+        /*
+        #pragma warning disable CS3002 // Return type is not CLS-compliant
+                public static MultiIcon ToIconOverlay(Bitmap originalBitmap, Bitmap overlayBitmap)
+        #pragma warning restore CS3002 // Return type is not CLS-compliant
+                {
+                    try
+                    {
+                        Size[] iconSizes = new[]
+                        {
+                            new Size(256, 256),
+                            new Size(64, 64),
+                            new Size(48, 48),
+                            new Size(32, 32),
+                            new Size(24, 24),
+                            new Size(16, 16)
+                        };
+                        logger.Trace($"ShortcutItem/ToIconOverlay: Creating the new Multi image Icon.");
+                        MultiIcon multiIcon = new MultiIcon();
+                        logger.Trace($"ShortcutItem/ToIconOverlay: Adding a single icon to the multi image icon.");
+                        SingleIcon icon = multiIcon.Add("Icon1");
+
+                        foreach (Size size in iconSizes)
+                        {
+                            logger.Trace($"ShortcutItem/ToIconOverlay: Creating a new image layer of size {size.Width}px x {size.Height}px.");
+                            Bitmap bitmapOverlay = ToBitmapOverlay(originalBitmap, overlayBitmap, size.Width, size.Height);
+                            if (bitmapOverlay == null)
+                            {
+                                logger.Warn($"ShortcutItem/ToIconOverlay: bitmapOverlay is null, so we can't turn it into an Icon Overlay. Returning null");
+                                return null;
+                            }
+                            logger.Trace($"ShortcutItem/ToIconOverlay: Adding the new image layer of size {size.Width}px x {size.Height}px to the multi image icon.");
+                            icon.Add(bitmapOverlay);
+
+                            if (size.Width >= 256 && size.Height >= 256)
+                            {
+                                logger.Trace($"ShortcutItem/ToIconOverlay: The image is > 256px x 256px so making it a PNG layer in the icon file.");
+                                icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
+                            }
+
+                            logger.Trace($"ShortcutItem/ToIconOverlay: Disposing of the Bitmap data we just used as the source (stops memory leaks).");
+                            bitmapOverlay.Dispose();
+                        }
+
+                        logger.Trace($"ShortcutItem/ToIconOverlay: Make the top layer image of the Multi image icon the default one.");
+                        multiIcon.SelectedIndex = 0;
+
+                        return multiIcon;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutItem/ToIconOverlay: Exeception occurred while trying to convert the Shortcut Bitmap to an Icon Overlay to store in the shortcut cache directory. Returning null");
+                        return null;
+                    }
+                }*/
 
         [DllImport("Shell32", CharSet = CharSet.Auto)]
         private static  extern int ExtractIconEx(string lpszFile, int nIconIndex, IntPtr[] phIconLarge, IntPtr[] phIconSmall, int nIcons);
