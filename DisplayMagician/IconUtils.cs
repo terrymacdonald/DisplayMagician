@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Windows.Media;
 
 namespace IconUtils
 {
@@ -111,5 +112,6 @@ namespace IconUtils
 
             return buf;
         }
-    }
+    }           
+
 }

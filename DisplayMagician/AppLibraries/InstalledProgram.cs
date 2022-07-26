@@ -311,23 +311,22 @@ namespace DisplayMagician.AppLibraries
                             {
                                 iconLocation = link.TargetPath;
                             }
-                        }
-                        else
-                        {
-                            if (System.IO.File.Exists(link.IconLocation))
-                            {
-                                iconLocation = link.IconLocation;
-                            }                            
-                            else
-                            {
-                                iconLocation = link.TargetPath;
-                            }
-                        }
+                        }                        
                     }
                     else
                     {
                         iconLocation = link.TargetPath;
                     }
+
+                    if (System.IO.File.Exists(link.IconLocation))
+                    {
+                        iconLocation = link.IconLocation;
+                    }
+                    else
+                    {
+                        iconLocation = link.TargetPath;
+                    }
+
 
                     string workingDir = link.WorkingDirectory;
                     if (link.WorkingDirectory == null || String.IsNullOrWhiteSpace(link.WorkingDirectory) || !System.IO.File.Exists(link.WorkingDirectory))

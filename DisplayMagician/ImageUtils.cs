@@ -19,6 +19,8 @@ using System.Windows.Interop;
 using System.Windows;
 using Windows.UI.Xaml.Media.Imaging;
 using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
+using Microsoft.WindowsAPICodePack.Win32Native;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace DisplayMagician
 {
@@ -157,7 +159,6 @@ namespace DisplayMagician
                 return new List<ShortcutBitmap>();
             }
 
-            Icon myIcon = null;
             List<ShortcutBitmap> bmList = new List<ShortcutBitmap>();
             int bmCount = 0;
             string fileNameOnly = Path.GetFileName(fileNameAndPath);
@@ -175,166 +176,224 @@ namespace DisplayMagician
                     Bitmap bmap = new Bitmap(fileNameAndPath);
                     ShortcutBitmap bm = CreateShortcutBitmap(bmap, fileNameOnly, fileNameAndPath, bmCount++);
                     // Add the shortcutbitmap to the list
-                    bmList.Add(bm);
-                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the image file {fileNameAndPath} using standard bitmap decoder access method.");
+                    if (!bmList.Contains(bm))
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the image file {fileNameAndPath} using standard bitmap decoder access method.");
+                        bmList.Add(bm);
+                    }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipping adding new bitmap from the image file {fileNameAndPath} using standard bitmap decoder access method.");
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the bitmap from an image ({fileNameAndPath})using standard bitmap decoder tools.");
                 }
             }
-            else
+
+            // Any ico or exe or com files fall through to here
+            if (fileNameAndPath.ToLower().EndsWith(".ico"))
             {
-                // Any ico or exe or com files fall through to here
-                if (fileNameAndPath.ToLower().EndsWith(".ico"))
+
+                try
                 {
 
-                    try
+                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: The file we want to get the image from is an icon file. Attempting to extract the icon file from {fileNameAndPath}.");
+
+                    Icon myIcon = new Icon(fileNameAndPath, 256, 256);
+                    myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
+                    ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                    // Add the shortcutbitmap to the list
+                    if (!bmList.Contains(bm))
                     {
-
-                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: The file we want to get the image from is an icon file. Attempting to extract the icon file from {fileNameAndPath}.");
-
-                        myIcon = new Icon(fileNameAndPath, 256, 256);
-                        //Icon myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
-                        ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
-                        // Add the shortcutbitmap to the list
-                        bmList.Add(bm);
                         logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using standard Icon access method.");
+                        bmList.Add(bm);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using Standard Icon tools for file {fileNameAndPath}.");
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the icon file {fileNameAndPath} using standard Icon access method.");
                     }
+                    
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using Standard Icon tools for file {fileNameAndPath}.");
+                }
 
-                    try
+                try
+                {
+                    MultiIcon myMultiIcon = new MultiIcon();
+                    SingleIcon mySingleIcon = myMultiIcon.Add("Icon1");
+                    mySingleIcon.Load(fileNameAndPath);
+                    foreach (IconImage myIconImage in mySingleIcon)
                     {
-                        MultiIcon myMultiIcon = new MultiIcon();
-                        SingleIcon mySingleIcon = myMultiIcon.Add("Icon1");
-                        mySingleIcon.Load(fileNameAndPath);
-                        foreach (IconImage myIconImage in mySingleIcon)
+                        ShortcutBitmap bm = CreateShortcutBitmap(myIconImage.Image, fileNameOnly, fileNameAndPath, bmCount++);
+                        // Add the shortcutbitmap to the list
+                        if (!bmList.Contains(bm))
                         {
-                            ShortcutBitmap bm = CreateShortcutBitmap(myIconImage.Image, fileNameOnly, fileNameAndPath, bmCount++);
-                            // Add the shortcutbitmap to the list
-                            bmList.Add(bm);
                             logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using MultiIcon access method.");
+                            bmList.Add(bm);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using MultiIcon tools for file {fileNameAndPath}.");
+                        else
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the icon file {fileNameAndPath} using MultiIcon access method.");
+                        }
                     }
                 }
-                else
+                catch (Exception ex)
                 {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using MultiIcon tools for file {fileNameAndPath}.");
+                }
+            }
 
-                    /*try
+
+
+
+            // Any ico or exe or com files fall through to here
+            if (fileNameAndPath.ToLower().EndsWith(".exe"))
+            {
+              
+
+                /*try
+                {
+                    Icon anIcon = (Icon)null;
+                    anIcon = IconFromFile.GetLargeIconFromFile(fileNameAndPath, true, true);
+                    //anIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
+                    ShortcutBitmap bm = CreateShortcutBitmap(anIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                    // Add the shortcutbitmap to the list
+                    if (!bmList.Contains(bm))
                     {
-                        List<Icon> myIcons = ImageUtils.ExtractIconsFromExe(fileNameAndPath, true);
-                        if (myIcons != null && myIcons.Count > 0)
-                        {
-                            foreach (Icon myExtractedIcon in myIcons)
-                            {
-                                bm = myExtractedIcon.ToBitmap();
-
-                                if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                                {
-                                    bmToReturn = bm;
-                                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                                }
-                            }
-                        }
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using Icon.ExtractAssociatedIcon access method.");
+                        bmList.Add(bm);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using ImageUtils.ExtractIconsFromExe.");
-                    }*/
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using Icon.ExtractAssociatedIcon access method.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using Icon.ExtractAssociatedIcon.");
+                }*/
 
-                    try
+                /*try
+                {
+                    List<Icon> myIcons = ImageUtils.ExtractIconsFromExe(fileNameAndPath, true);
+                    if (myIcons != null && myIcons.Count > 0)
                     {
-                        var ie = new TsudaKageyu.IconExtractor(fileNameAndPath);
-                        Icon[] allIcons = ie.GetAllIcons();
-                        foreach (Icon myExtractedIcon in allIcons)
+                        foreach (Icon myExtractedIcon in myIcons)
                         {
                             ShortcutBitmap bm = CreateShortcutBitmap(myExtractedIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
                             // Add the shortcutbitmap to the list
-                            bmList.Add(bm);
-
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Add new bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method.");
+                            if (!bmList.Contains(bm))
+                            {
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using ImageUtils.ExtractIconsFromExe access method.");
+                                bmList.Add(bm);
+                            }
+                            else
+                            {
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using ImageUtils.ExtractIconsFromExe access method.");
+                            }
+                            
                         }
                     }
-                    catch (Exception ex)
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using ImageUtils.ExtractIconsFromExe.");
+                }*/
+
+                try
+                {
+                    var ie = new TsudaKageyu.IconExtractor(fileNameAndPath);
+                    Icon[] allIcons = ie.GetAllIcons();
+                    foreach (Icon myExtractedIcon in allIcons)
                     {
-                        logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using TsudaKageyu.IconExtractor for file {fileNameAndPath}.");
+                        ShortcutBitmap bm = CreateShortcutBitmap(myExtractedIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                        // Add the shortcutbitmap to the list
+                        if (!bmList.Contains(bm))
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method.");
+                            bmList.Add(bm);
+                        }
+                        else
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method.");
+                        }                        
+                        
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using TsudaKageyu.IconExtractor for file {fileNameAndPath}.");
+                }
+
+                
+            }
+
+        
+            // Any ico or exe or com files fall through to here
+            if (fileNameAndPath.ToLower().EndsWith(".exe") || fileNameAndPath.ToLower().EndsWith(".ico"))
+            {
+                try
+                {
+                    Bitmap originalImage = WindowsThumbnailProvider.GetThumbnail(fileNameAndPath, 96, 96, ThumbnailOptions.BiggerSizeOk);
+                    ShortcutBitmap bm = CreateShortcutBitmap(originalImage, fileNameOnly, fileNameAndPath, bmCount++);
+                    // Add the shortcutbitmap to the list
+                    if (!bmList.Contains(bm))
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using WindowsThumbnailProvider.GetThumbnail access method.");
+                        bmList.Add(bm);
+                    }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using WindowsThumbnailProvider.GetThumbnail access method.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Trace(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the thumbnail from an *.exe or *.dll using WindowsThumbnailProvider.GetThumbnail. Means the file {fileNameAndPath} could not be processed so skipping it with this method");                                             
+                }
+
+                try
+                {
+
+                    List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower());
+                    System.Drawing.Size largeSize = new System.Drawing.Size(256, 256);
+                    if (myExtractedIcons.Count > 0)
+                    {
+                        Icon myIcon = null;
+
+                        myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcons.ToArray(), largeSize, 32, true, true);
+
+                        if (myIcon != null)
+                        {
+                            ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                            // Add the shortcutbitmap to the list
+                            if (!bmList.Contains(bm))
+                            {
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");
+                                bmList.Add(bm);
+                            }
+                            else
+                            {
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");
+                            }
+                        }
+                        else
+                        {
+                            logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
+                        }
                     }
 
                 }
-
-
-                // Any ico or exe or com files fall through to here
-                if (fileNameAndPath.ToLower().EndsWith(".exe") || fileNameAndPath.ToLower().EndsWith(".ico"))
+                catch (Exception ex)
                 {
-
-                    try
-                    {
-
-                        List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower());
-                        System.Drawing.Size largeSize = new System.Drawing.Size(256, 256);
-                        if (myExtractedIcons.Count > 0)
-                        {
-                            myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcons.ToArray(), largeSize, 32, true, true);
-
-                            if (myIcon != null)
-                            {
-                                ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
-                                // Add the shortcutbitmap to the list
-                                bmList.Add(bm);
-
-                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");
-                            }
-                            else
-                            {
-                                logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
-                            }
-                        }
-                        /*foreach (Icon myExtractedIcon in myExtractedIcons)
-                        {
-                            try
-                            {
-                                // If the Icon wasn't extracted properly, then skip this and go to the next one as it may work.
-                                if (!(myExtractedIcon is Icon))
-                                {
-                                    logger.Debug($"ShortcutItem/GetMeABitmapFromFile: The icon file {fileNameAndPath} is in a format we cannot decipher, so skipping it.");
-                                    break;
-                                }
-                                myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
-                            }
-                            catch (ArgumentNullException nullex)
-                            {
-                                logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this file {fileNameAndPath} that we couldn't test, so skipping it.");
-                                break;
-                            }
-
-                            if (myIcon != null)
-                            {
-                                ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
-                                // Add the shortcutbitmap to the list
-                                bmList.Add(bm);
-
-                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");
-                            }
-                            else
-                            {
-                                logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
-                            }
-                        }*/
-
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor on file {fileNameAndPath}! ");
-                    }
-                }                    
-            }           
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor on file {fileNameAndPath}! ");
+                }
+            }
 
             return bmList;
 

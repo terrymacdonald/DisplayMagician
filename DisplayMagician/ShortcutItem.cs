@@ -18,6 +18,7 @@ using AudioSwitcher.AudioApi;
 using TsudaKageyu;
 using System.ComponentModel;
 using DisplayMagician.AppLibraries;
+using DisplayMagicianShared.NVIDIA;
 
 namespace DisplayMagician
 {
@@ -128,6 +129,20 @@ namespace DisplayMagician
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap Image;
         public Size Size;
+
+        public override bool Equals(object obj) => obj is ShortcutBitmap other && this.Equals(other);
+
+        public bool Equals(ShortcutBitmap other)
+        => Size.Equals(Size) &&
+            Image.Equals(other.Image);
+
+        public override int GetHashCode()
+        {
+            return (Size, Image).GetHashCode();
+        }
+        public static bool operator ==(ShortcutBitmap lhs, ShortcutBitmap rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(ShortcutBitmap lhs, ShortcutBitmap rhs) => !(lhs == rhs);
     }
 
     public class ShortcutItem : IComparable

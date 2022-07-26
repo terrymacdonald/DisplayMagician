@@ -171,7 +171,8 @@ namespace DisplayMagician.AppLibraries
             // IconPath can be an ICO, or an EXE
             foreach (var App in AppLibrary.AllInstalledAppsInAllLibraries)
             {
-                List<ShortcutBitmap> bmList = new List<ShortcutBitmap>();
+                List<ShortcutBitmap> bmList = new List<ShortcutBitmap>();                
+
                 try
                 {
 
@@ -199,7 +200,16 @@ namespace DisplayMagician.AppLibraries
                     logger.Error(ex, $"Program/LoadAppsInBackground: Exception building App bitmaps for {App.Name} during load");
                 }
 
-                if (bmList.Count == 0)
+                // Only copy across the new bitmaps we've got (leaving the ones already there
+                foreach (var bm in bmList)
+                {
+                    if (!App.AvailableAppBitmaps.Contains(bm))
+                    {
+                        App.AvailableAppBitmaps.Add(bm);
+                    }
+                }
+
+                if (App.AvailableAppBitmaps.Count == 0)
                 {
                     ShortcutBitmap bm = new ShortcutBitmap();
                     if (App.AppLibrary.Equals(SupportedAppLibraryType.Local))
@@ -211,11 +221,10 @@ namespace DisplayMagician.AppLibraries
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", App.ExePath, bmList.Count);
                     }
                     // Add the shortcutbitmap to the list
-                    bmList.Add(bm);
+                    App.AvailableAppBitmaps.Add(bm);
 
                 }
 
-                App.AvailableAppBitmaps = bmList;
                 App.AppBitmap = ImageUtils.GetMeLargestAvailableBitmap(bmList);
             }
             AppImagesLoaded = true;
