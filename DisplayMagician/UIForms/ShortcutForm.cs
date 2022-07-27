@@ -1665,7 +1665,7 @@ namespace DisplayMagician.UIForms
                         // If the exe is selected, then grab images from the exe
                         _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.ExecutableNameAndPath));
                         // If the different exe to monitor is set, then grab the icons from there too!
-                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
+                        if (_shortcutToEdit.DifferentExecutableToMonitor != null && !String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
                         {
                             _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.DifferentExecutableToMonitor));
                         }
@@ -1745,7 +1745,14 @@ namespace DisplayMagician.UIForms
                     {
                         rb_wait_alternative_executable.Checked = true;
                     }
-                    txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+                    if (_shortcutToEdit.DifferentExecutableToMonitor == null || String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor))
+                    {
+                        txt_alternative_executable.Text = "";
+                    }
+                    else
+                    {
+                        txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+                    }
 
                 }
                 // =============================================
@@ -1858,7 +1865,14 @@ namespace DisplayMagician.UIForms
                     {
                         rb_wait_alternative_executable.Checked = true;
                     }
-                    txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+                    if (_shortcutToEdit.DifferentExecutableToMonitor == null || String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor))
+                    {
+                        txt_alternative_executable.Text = "";
+                    }
+                    else
+                    {
+                        txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+                    }
 
                 }
                 // =============================================
@@ -1943,7 +1957,11 @@ namespace DisplayMagician.UIForms
                     if (_shortcutToEdit.MonitorDifferentGameExe)
                     {
                         cb_wait_alternative_game.Checked = true;
-                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
+                        if (String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
+                        {
+                            txt_alternative_game.Text = "";
+                        }
+                        else
                         {
                             txt_alternative_game.Text = _shortcutToEdit.DifferentGameExeToMonitor;
                         }
@@ -1951,6 +1969,7 @@ namespace DisplayMagician.UIForms
                     else
                     {
                         cb_wait_alternative_game.Checked = false;
+                        txt_alternative_game.Text = "";
                     }
 
                     // If we don't have any available images, then we need to get some

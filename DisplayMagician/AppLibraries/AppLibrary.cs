@@ -214,18 +214,21 @@ namespace DisplayMagician.AppLibraries
                     ShortcutBitmap bm = new ShortcutBitmap();
                     if (App.AppLibrary.Equals(SupportedAppLibraryType.Local))
                     {
-                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Exe Icon", App.ExePath, bmList.Count);
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Exe Icon", App.ExePath, 0);
                     }
                     else
                     {
-                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", App.ExePath, bmList.Count);
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", App.ExePath, 0);
                     }
                     // Add the shortcutbitmap to the list
                     App.AvailableAppBitmaps.Add(bm);
-
+                    App.AppBitmap = bm;
                 }
-
-                App.AppBitmap = ImageUtils.GetMeLargestAvailableBitmap(bmList);
+                else
+                {
+                    App.AppBitmap = ImageUtils.GetMeLargestAvailableBitmap(bmList);
+                }
+                
             }
             AppImagesLoaded = true;
         }

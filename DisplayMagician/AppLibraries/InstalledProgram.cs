@@ -469,14 +469,18 @@ namespace DisplayMagician.AppLibraries
                                 bitmapImage.EndInit();
                             }
                             bitmap.Image = ImageUtils.BitmapImage2Bitmap(bitmapImage);
+                            bitmap.UUID = Guid.NewGuid().ToString("D");
                             bitmap.Source = package.Logo.LocalPath;
+                            bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
                             bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);
                             bitmap.Order = 0;
                         }
                         catch (Exception ex2)
                         {
+                            bitmap.UUID = Guid.NewGuid().ToString("D");
                             bitmap.Image = new Bitmap(package.Logo.LocalPath);
                             bitmap.Source = package.Logo.LocalPath;
+                            bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
                             bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);   
                             bitmap.Order = 0;
                         }
@@ -559,8 +563,10 @@ namespace DisplayMagician.AppLibraries
                             var windowsUWPPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows);
 
                             ShortcutBitmap bitmap = new ShortcutBitmap();
+                            bitmap.UUID = Guid.NewGuid().ToString("D"); 
                             bitmap.Image = new Bitmap(package.Logo.LocalPath);
                             bitmap.Source = package.Logo.LocalPath;
+                            bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
                             bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);
                             bitmap.Order = 0;
 

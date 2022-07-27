@@ -19,6 +19,7 @@ using TsudaKageyu;
 using System.ComponentModel;
 using DisplayMagician.AppLibraries;
 using DisplayMagicianShared.NVIDIA;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagician
 {
@@ -128,7 +129,7 @@ namespace DisplayMagician
         public string Source;
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap Image;
-        public Size Size;
+        public Size Size;        
 
         public override bool Equals(object obj) => obj is ShortcutBitmap other && this.Equals(other);
 
@@ -399,7 +400,15 @@ namespace DisplayMagician
 
             set
             {
-                _differentExecutableToMonitor = value;
+                if (value == null)
+                {
+                    _differentExecutableToMonitor = "";
+                }
+                else
+                {
+                    _differentExecutableToMonitor = value;
+                }
+                
             }
         }
 
@@ -590,7 +599,14 @@ namespace DisplayMagician
 
             set
             {
-                _gameArguments = value;
+                if (_gameArguments == null)
+                {
+                    _gameArguments = "";
+                }
+                else
+                {
+                    _gameArguments = value;
+                }
             }
         }
 
@@ -617,7 +633,14 @@ namespace DisplayMagician
 
             set
             {
-                _differentGameExeToMonitor = value;
+                if (value == null)
+                {
+                    _differentGameExeToMonitor = "";
+                }
+                else
+                {
+                    _differentGameExeToMonitor = value;
+                }                
             }
         }
 
