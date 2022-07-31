@@ -1,5 +1,6 @@
 ﻿using AudioSwitcher.AudioApi;
 using AudioSwitcher.AudioApi.CoreAudio;
+using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.UIForms;
@@ -1175,18 +1176,21 @@ namespace DisplayMagician
                 }
 
                 string processToMonitorName;
+                bool isUWPApp = false;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
+                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+
                     if (shortcutToUse.ExecutableNameAndPath.Contains("explorer.exe") && shortcutToUse.ExecutableArgumentsRequired && shortcutToUse.ExecutableArguments.StartsWith("shell:"))
                     {
                         // This is a UWP/Packaged app, so we need to monitor it differently
-                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+                        isUWPApp = true;
                     }
                     else
                     {
                         // This is a normal, non-packaged app, so we run as normal
-                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
-                    }                    
+                        isUWPApp = false;
+                    }                   
                 }
                 else
                 {
@@ -1226,7 +1230,28 @@ namespace DisplayMagician
                 List<Process> processesCreated = new List<Process>();
                 try
                 {
-                    processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    App appToUse = null;
+                    foreach (App app in AppLibrary.AllInstalledAppsInAllLibraries) 
+                    {
+                        if (app.Id.Equals(shortcutToUse.ApplicationId))
+                        {
+                            appToUse = app;
+                            break;
+                        }
+
+                    }
+
+                    Process process = null;
+                    if (appToUse is App)
+                    {
+                        process = Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
+                    }
+
+                    //processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    if (process != null)
+                    {
+                        processesCreated.Add(process);
+                    }                    
 
                     // Record the program we started so we can close it later
                     foreach (Process p in processesCreated)
@@ -1260,9 +1285,19 @@ namespace DisplayMagician
                 List<Process> processesToMonitor = new List<Process>();
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    processesToMonitor = processesCreated;
-                    logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{processToMonitorName}' created processes to monitor are running");
-                    foundSomethingToMonitor = true;
+                    try
+                    {
+                        App app = LocalLibrary.GetLibrary().GetAppById(shortcutToUse.ApplicationId);
+                        if (app.IsRunning)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Found that UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) was running");
+                            foundSomethingToMonitor = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception whilst checking if UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) was running.");
+                    }
                 }
                 else
                 {

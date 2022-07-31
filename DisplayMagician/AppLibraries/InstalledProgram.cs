@@ -602,6 +602,82 @@ namespace DisplayMagician.AppLibraries
             return apps;
         }
 
+        public static Package GetUWPAppPackageByAUMID(string aumid)
+        {
+            try
+            {
+                var manager = new PackageManager();
+                IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
+                foreach (var package in packages)
+                {
+                    if (package.IsFramework || package.IsResourcePackage || package.SignatureKind != PackageSignatureKind.Store)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        if (package.InstalledLocation == null)
+                        {
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // InstalledLocation accessor may throw Win32 exception for unknown reason
+                        continue;
+                    }
+
+                    bool worked = true;
+                    try
+                    {
+                        IReadOnlyList<AppListEntry> applListEntries = (IReadOnlyList<AppListEntry>)package.GetAppListEntries();
+                        if (applListEntries.Count == 0)
+                        {
+                            continue;
+                        }
+                        string name = "";
+                        string aumi = "";
+
+                        var entry = applListEntries[0];
+                        aumi = entry.AppUserModelId;
+                        if (entry.AppUserModelId.Equals(aumid))
+                        {
+                            return package;
+                        }
+      
+                    }
+                    catch (Exception ex)
+                    {
+                        return null;
+                    }
+
+                }
+            }
+            catch (Exception e) when (!Debugger.IsAttached)
+            {
+                logger.Error(e, "Failed to get list of installed UWP apps.");
+            }
+
+            return null;
+        }
+
+        public static bool IsUWPAppRunning(string aumid)
+        {
+            try
+            {
+                Package package = GetUWPAppPackageByAUMID(aumid);
+                Process process = new Process();
+                //if (package.GetAppListEntries())
+            }
+            catch (Exception e) when (!Debugger.IsAttached)
+            {
+                logger.Error(e, "Failed to get list of installed UWP apps.");
+            }
+
+            return false;
+        }
+
         public static string DecodeIndirectFolders(string indirectPath)
         {
             if (Regex.IsMatch(indirectPath, @"\%([^\\])\%"))

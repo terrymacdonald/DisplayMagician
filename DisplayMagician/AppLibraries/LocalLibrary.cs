@@ -11,8 +11,9 @@ using System.Xml.XPath;
 using System.Web;
 using System.Diagnostics;
 using Newtonsoft.Json;
-using DisplayMagician.Processes;
+//using DisplayMagician.Processes;
 using System.Threading.Tasks;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -433,13 +434,14 @@ namespace DisplayMagician.AppLibraries
 
         public override List<Process> StartApp(App App, string AppArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string args = $@"/command=runApp /AppId={App.Id} /path=""{App.Directory}""";
-            if (String.IsNullOrWhiteSpace(AppArguments))
-            {
-                args += AppArguments;
-            }
-            List<Process> AppProcesses = ProcessUtils.StartProcess(_LocalExe, args, processPriority);
-            return AppProcesses;
+            //List<Process> AppProcesses = ProcessUtils.StartProcess(App.ExePath, AppArguments, processPriority);
+            List<Process> appProcesses = new List<Process>();
+
+            Process appProcess = Process.Start(App.ExePath, AppArguments);
+
+            appProcesses.Add(appProcess);
+            
+            return appProcesses;
         }
 
         public string GetProcessFromAppId(string localAppId)

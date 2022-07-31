@@ -730,6 +730,10 @@ namespace DisplayMagician.UIForms
                 // Otherwise we're saving an app selected from the list
                 logger.Trace($"ShortcutForm/btn_save_Click: We're saving an app!");
 
+                // Update the two details that may have been updated by the user into the App data
+                _selectedApp.ExecutableArgumentsRequired = cb_args_executable.Checked;
+                _selectedApp.Arguments = txt_args_executable.Text;
+
                 _appToUse = new AppShortcutData
                 {
                     AppToUse = _selectedApp,
@@ -737,8 +741,9 @@ namespace DisplayMagician.UIForms
                     ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value),
                     ProcessPriority = (ProcessPriority)cbx_exe_priority.SelectedValue,
                     DifferentExecutableToMonitor = txt_alternative_executable.Text,
-                    ProcessNameToMonitorUsesExecutable = rb_wait_executable.Checked,
+                    ProcessNameToMonitorUsesExecutable = rb_wait_executable.Checked,                    
                 };
+                
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
                 {

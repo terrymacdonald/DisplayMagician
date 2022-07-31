@@ -95,10 +95,8 @@ namespace DisplayMagician
     {
         public App AppToUse;
         public string DifferentExecutableToMonitor;
-        //public string ExecutableNameAndPath;
         public bool RunAsAdministrator;
         public int ExecutableTimeout;
-        //public string ExecutableArguments;
         public bool ProcessNameToMonitorUsesExecutable;
         public ProcessPriority ProcessPriority;
     }

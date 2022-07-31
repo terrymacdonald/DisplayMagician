@@ -116,43 +116,67 @@ namespace DisplayMagician.AppLibraries
             {
                 // Check if it is a UWP app
 
-                return !ProcessUtils.ProcessExited(_LocalAppProcessName);
-                /*int numAppProcesses = 0;
-                _LocalAppProcesses = Process.GetProcessesByName(_LocalAppProcessName).ToList();
-                foreach (Process AppProcess in _LocalAppProcesses)
+                //return !ProcessUtils.ProcessExited(_LocalAppProcessName);
+                int numAppProcesses = 0;
+                if (Path.GetFileName(_LocalAppExePath).Equals("explorer.exe"))
                 {
-                    try
-                    {                       
-                        if (AppProcess.ProcessName.Equals(_LocalAppProcessName))
-                            numAppProcesses++;
-                    }
-                    catch (Exception ex)
+                    // it's a UWP app, so we detect it differently
+                    //Package uGetUWPAppPackageByAUMID()
+
+
+                    _LocalAppProcesses = Process.GetProcesses().Where(pr => pr.MainModule.FileName.Contains(_LocalAppDir)).ToList();
+                    if (_LocalAppProcesses.Count > 0)
                     {
-                        logger.Debug(ex, $"LocalApp/IsRunning: Accessing Process.ProcessName caused exception. Trying AppUtils.GetMainModuleFilepath instead");
-                        // If there is a race condition where MainModule isn't available, then we 
-                        // instead try the much slower GetMainModuleFilepath (which does the same thing)
-                        string filePath = AppUtils.GetMainModuleFilepath(AppProcess.Id);
-                        if (filePath == null)
-                        {
-                            // if we hit this bit then AppUtils.GetMainModuleFilepath failed,
-                            // so we just assume that the process is a App process
-                            // as it matched the gogal process search
-                            numAppProcesses++;
-                            continue;
-                        }
-                        else
-                        {
-                            if (filePath.StartsWith(_LocalAppExePath))
-                                numAppProcesses++;
-                        }
-                            
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
                     }
                 }
-                if (numAppProcesses > 0)
-                    return true;
                 else
-                    return false;*/
+                {
+                    // its NOT a UWP app
+                    _LocalAppProcesses = Process.GetProcessesByName(_LocalAppProcessName).ToList();
+                    foreach (Process AppProcess in _LocalAppProcesses)
+                    {
+                        try
+                        {
+                            if (AppProcess.ProcessName.Equals(_LocalAppProcessName))
+                                numAppProcesses++;
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Debug(ex, $"LocalApp/IsRunning: Accessing Process.ProcessName caused exception. Trying AppUtils.GetMainModuleFilepath instead");
+                            // If there is a race condition where MainModule isn't available, then we 
+                            // instead try the much slower GetMainModuleFilepath (which does the same thing)
+                            string filePath = AppProcess.MainModule.FileName;
+                            if (filePath == null)
+                            {
+                                // if we hit this bit then AppUtils.GetMainModuleFilepath failed,
+                                // so we just assume that the process is a App process
+                                // as it matched the process search
+                                numAppProcesses++;
+                                continue;
+                            }
+                            else
+                            {
+                                if (filePath.StartsWith(_LocalAppExe))
+                                    numAppProcesses++;
+                            }
+
+                        }
+                    }
+                    if (numAppProcesses > 0)
+                        return true;
+                    else
+                        return false;
+                }
+
             }
+                //ProcessUtils.GetChildProcesses();
+                
+                
         }
 
         [JsonIgnore]
