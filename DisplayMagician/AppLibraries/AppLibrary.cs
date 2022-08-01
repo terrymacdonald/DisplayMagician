@@ -48,48 +48,48 @@ namespace DisplayMagician.AppLibraries
         #endregion
 
         #region Class Methods
-        public virtual bool AddApp(App App)
+        public virtual bool AddApp(App app)
         {
             return false;
         }
 
-        public virtual bool RemoveApp(App App)
+        public virtual bool RemoveApp(App app)
         {
             return false;
         }
 
-        public virtual bool RemoveAppById(string AppId)
+        public virtual bool RemoveAppById(string appId)
         {
             return false;
         }
 
-        public virtual bool RemoveApp(string AppNameOrId)
+        public virtual bool RemoveApp(string appNameOrId)
         {
             return false;
         }
 
-        public virtual bool ContainsApp(App App)
+        public virtual bool ContainsApp(App app)
         {
             return false;
         }
 
-        public virtual bool ContainsAppById(string AppId)
+        public virtual bool ContainsAppById(string appId)
         {
             return false;
         }
 
-        public virtual bool ContainsApp(string AppNameOrId)
+        public virtual bool ContainsApp(string appNameOrId)
         {
             return false;
         }
 
 
-        public virtual App GetApp(string AppNameOrId)
+        public virtual App GetApp(string appNameOrId)
         {
             return null;
         }
 
-        public virtual App GetAppById(string AppId)
+        public virtual App GetAppById(string appId)
         {
             return null;
         }
@@ -111,6 +111,30 @@ namespace DisplayMagician.AppLibraries
         public virtual bool AppIsRunning(App App)
         {
             return false;
+        }
+
+        public static App GetAnyAppById(string appId)
+        {
+            App appToUse = null;
+            foreach (App app in AppLibrary.AllInstalledAppsInAllLibraries)
+            {
+                if (app.Id.Equals(appId))
+                {
+                    appToUse = app;
+                    break;
+                }
+            }
+
+            if (appToUse is App)
+            {
+                logger.Info($"AppLibrary/GetAppById: Found App {appToUse.Name} from ID {appId}");
+                return appToUse;
+            }
+            else
+            {
+                logger.Info($"AppLibrary/GetAppById: Didn't find App {appToUse.Name} from ID {appId}");
+                return appToUse;
+            }
         }
 
         public static bool LoadAppsInBackground()
@@ -221,7 +245,7 @@ namespace DisplayMagician.AppLibraries
                 if (App.AvailableAppBitmaps.Count == 0)
                 {
                     ShortcutBitmap bm = new ShortcutBitmap();
-                    if (App.AppLibrary.Equals(SupportedAppLibraryType.Local))
+                    if (App.AppLibraryType.Equals(SupportedAppLibraryType.Local))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Exe Icon", App.ExePath, 0);
                     }

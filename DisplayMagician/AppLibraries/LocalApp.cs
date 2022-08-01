@@ -8,6 +8,7 @@ using System.Diagnostics;
 using DisplayMagician.Processes;
 using System.ComponentModel;
 using Newtonsoft.Json;
+using DisplayMagician.GameLibraries;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -64,7 +65,7 @@ namespace DisplayMagician.AppLibraries
         }
 
         [DefaultValue(SupportedAppLibraryType.Local)]
-        public override SupportedAppLibraryType AppLibrary
+        public override SupportedAppLibraryType AppLibraryType
         {
             get => SupportedAppLibraryType.Local;
         }
@@ -117,6 +118,11 @@ namespace DisplayMagician.AppLibraries
             set => _LocalAppType = value;
         }
 
+        [JsonIgnore]
+        public override AppLibrary AppLibrary
+        {
+            get => _LocalAppLibrary;
+        }
 
         [JsonIgnore]
         public override bool IsRunning
@@ -211,7 +217,7 @@ namespace DisplayMagician.AppLibraries
             return true;
         }
 
-        public override bool Start(ProcessPriority priority, int timeout, bool runExeAsAdmin, out List<Process> processesStarted)
+        public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
             processesStarted = new List<Process>();
             Process process = null;
@@ -219,10 +225,26 @@ namespace DisplayMagician.AppLibraries
             if (LocalAppType == InstalledAppType.InstalledProgram)
             {
                 processesStarted = ProcessUtils.StartProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
+                if (processesStarted.Count > 0)
+                {
+                    logger.Trace($"LocalApp/Start: Started LocalApp installed program {Name} with {processesStarted.Count} processes.");
+                }
+                else
+                {
+                    logger.Error($"LocalApp/Start: Unable to start LocalApp installed program {Name} as no processes were created!");
+                }
             }
             else if (LocalAppType == InstalledAppType.UWP)
             {
                 processesStarted = StartUWPProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
+                if (processesStarted.Count > 0)
+                {
+                    logger.Trace($"LocalApp/Start: Started LocalApp UWP {Name} with {processesStarted.Count} processes.");
+                }
+                else
+                {
+                    logger.Error($"LocalApp/Start: Unable to start LocalApp UWP {Name} as no processes were created!");
+                }
             }
             else
             {

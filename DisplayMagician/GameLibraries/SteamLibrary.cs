@@ -844,17 +844,30 @@ namespace DisplayMagician.GameLibraries
 
         public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string address = $@"steam://rungameid/{game.Id}";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            List<Process> startedProcesses = new List<Process>();
+            if (game.Start(out startedProcesses, gameArguments, processPriority))
             {
-                address += @"//" + gameArguments;
+                logger.Trace($"SteamLibrary/StartGame: Successfully started Steam game {game.Name}");
             }
-            //Process gameProcess = Process.Start(address);
-            List<Process> gameProcesses = ProcessUtils.StartProcess(address,null,processPriority);
+            else
+            {
+                logger.Trace($"SteamLibrary/StartGame: Failed to start Steam game {game.Name}");
+            }
+            return startedProcesses;
+        }
 
-            // Wait 1 second then see if we need to find the child processes.
-
-            return gameProcesses;
+        public override bool StopGame(Game game)
+        {
+            if (game.Stop())
+            {
+                logger.Trace($"SteamLibrary/StopGame: Successfully stopped Steam game {game.Name}");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"SteamLibrary/StopGame: Failed to stop Steam game {game.Name}");
+                return false;
+            }
         }
         #endregion
 

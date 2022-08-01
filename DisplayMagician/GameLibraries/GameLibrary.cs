@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using DisplayMagician;
+using DisplayMagician.AppLibraries;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -113,6 +114,11 @@ namespace DisplayMagician.GameLibraries
         public virtual List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             return null;
+        }
+
+        public virtual bool StopGame(Game game)
+        {
+            return true;
         }
 
         public static bool LoadGamesInBackground()
@@ -322,23 +328,23 @@ namespace DisplayMagician.GameLibraries
                 if (bmList.Count == 0)
                 {
                     ShortcutBitmap bm = new ShortcutBitmap();
-                    if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
+                    if (game.GameLibraryType.Equals(SupportedGameLibraryType.Steam))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Steam, "Steam Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.Uplay))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Uplay, "Uplay Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.Origin))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Origin, "Origin Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Epic))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.Epic))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Epic, "Epic Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.GOG))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.GOG))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.GOG, "GOG Icon", game.ExePath, bmList.Count);
                     }
@@ -357,6 +363,29 @@ namespace DisplayMagician.GameLibraries
             GamesImagesLoaded = true;
         }
 
+        public static Game GetAnyGameById(string gameId)
+        {
+            Game gameToUse = null;
+            foreach (Game game in GameLibrary.AllInstalledGamesInAllLibraries)
+            {
+                if (game.Id.Equals(gameId))
+                {
+                    gameToUse = game;
+                    break;
+                }
+            }
+
+            if (gameToUse is Game)
+            {
+                logger.Info($"GameLibrary/GetGameById: Found {gameToUse.GameLibraryType} App {gameToUse.Name} from ID {gameId}");
+                return gameToUse;
+            }
+            else
+            {
+                logger.Info($"GameLibrary/GetGameById: Didn't find App {gameToUse.Name} from ID {gameId}");
+                return gameToUse;
+            }
+        }
 
 
         #endregion

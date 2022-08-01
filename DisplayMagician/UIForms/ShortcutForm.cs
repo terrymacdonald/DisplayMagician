@@ -2369,7 +2369,7 @@ namespace DisplayMagician.UIForms
 
                 if (!String.IsNullOrWhiteSpace(txt_game_name.Text) && ilv_games.SelectedItems.Count == 1 && _selectedGame != null)
                 {
-                    _gameLauncher = _selectedGame.GameLibrary.ToString("G");
+                    _gameLauncher = _selectedGame.GameLibraryType.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = _selectedGame.Id;
                     _availableImages = _selectedGame.AvailableGameBitmaps;
@@ -3503,7 +3503,7 @@ namespace DisplayMagician.UIForms
                     if (_loadedShortcut)
                         _isUnsaved = true;
                     _selectedGame = game;
-                    _gameLauncher = game.GameLibrary.ToString("G");
+                    _gameLauncher = game.GameLibraryType.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = game.Id;
                     _availableImages = game.AvailableGameBitmaps;

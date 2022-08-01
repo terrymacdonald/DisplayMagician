@@ -562,16 +562,32 @@ namespace DisplayMagician.GameLibraries
 
         public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string args = $@"/command=runGame /gameId={game.Id} /path=""{game.Directory}""";
-            if (String.IsNullOrWhiteSpace(gameArguments))
+            List<Process> startedProcesses = new List<Process>();
+            if (game.Start(out startedProcesses, gameArguments, processPriority))
             {
-                args += gameArguments;
+                logger.Trace($"XboxLibrary/StartGame: Successfully started Xbox game {game.Name}");
             }
-            List<Process> gameProcesses = ProcessUtils.StartProcess(_xboxExe, args, processPriority);
-            return gameProcesses;
+            else
+            {
+                logger.Trace($"XboxLibrary/StartGame: Failed to start Xbox game {game.Name}");
+            }
+            return startedProcesses;
         }
 
-        
+        public override bool StopGame(Game game)
+        {
+            if (game.Stop())
+            {
+                logger.Trace($"XboxLibrary/StopGame: Successfully stopped Xbox game {game.Name}");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"XboxLibrary/StopGame: Failed to stop Xbox game {game.Name}");
+                return false;
+            }            
+        }
+
         #endregion
 
     }

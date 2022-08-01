@@ -1060,7 +1060,7 @@ namespace DisplayMagician
             _category = ShortcutCategory.Game;
             _gameAppId = game.GameToPlay.Id;
             _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibrary;
+            _gameLibrary = game.GameToPlay.GameLibraryType;
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;

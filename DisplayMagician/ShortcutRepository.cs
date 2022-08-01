@@ -1232,20 +1232,11 @@ namespace DisplayMagician
                 List<Process> processesCreated = new List<Process>();
                 try
                 {
-                    App appToUse = null;
-                    foreach (App app in AppLibrary.AllInstalledAppsInAllLibraries) 
-                    {
-                        if (app.Id.Equals(shortcutToUse.ApplicationId))
-                        {
-                            appToUse = app;
-                            break;
-                        }
-
-                    }
+                    App appToUse = AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId);
 
                     if (appToUse is App)
                     {
-                        if (appToUse.Start(shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator, out processesCreated))
+                        if (appToUse.Start(out processesCreated, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: LocalApp {appToUse.Name} was launched as the main application to monitor.");
                         }
@@ -1289,7 +1280,7 @@ namespace DisplayMagician
                 {
                     try
                     {
-                        App app = LocalLibrary.GetLibrary().GetAppById(shortcutToUse.ApplicationId);
+                        App app = AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId);
                         if (app.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: Found that UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) was running");
@@ -1584,38 +1575,9 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the game that we wanted to run, and that we're going to monitor and watch");
 
                 Game gameToRun = null;
-                GameLibrary gameLibraryToUse = null;
 
-                // If the game is a Steam Game we check for that
-                if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Steam))
-                {
-                    // We now need to get the SteamGame info
-                    gameLibraryToUse = SteamLibrary.GetLibrary();
-                }
-                // If the game is a Uplay Uplay Game we check for that
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
-                {
-                    // We now need to get the Uplay Game  info
-                    gameLibraryToUse = UplayLibrary.GetLibrary();
-                }
-                // If the game is an Origin Game we check for that
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Origin))
-                {
-                    // We now need to get the Origin Game  info
-                    gameLibraryToUse = OriginLibrary.GetLibrary();
-                }
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Epic))
-                {
-                    // We now need to get the Epic Game  info
-                    gameLibraryToUse = EpicLibrary.GetLibrary();
-                }
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.GOG))
-                {
-                    // We now need to get the GOG Game info
-                    gameLibraryToUse = GogLibrary.GetLibrary();
-                }
-                gameToRun = gameLibraryToUse.GetGameById(shortcutToUse.GameAppId);
-                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameLibraryToUse.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
+                gameToRun = GameLibrary.GetAnyGameById(shortcutToUse.GameAppId);
+                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameToRun.GameLibrary.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
 
                 // If the GameAppID is not null, then we've matched a game! Lets run it.
                 if (gameToRun != null)
@@ -1635,12 +1597,12 @@ namespace DisplayMagician
                     if (myMainForm.InvokeRequired)
                     {
                         myMainForm.BeginInvoke((MethodInvoker)delegate {
-                            myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameLibraryToUse.GameLibraryName}...");
+                            myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
                         });
                     }
                     else
                     {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameLibraryToUse.GameLibraryName}...");
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
                     }
 
                     if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
@@ -1648,8 +1610,8 @@ namespace DisplayMagician
                         // Now we want to tell the user we're start a game
                         // Construct the Windows toast content
                         tcBuilder = new ToastContentBuilder()
-                        .AddText($"Starting {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
-                        .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to start (and update if needed)...")
+                        .AddText($"Starting {gameToRun.GameLibraryType}", hintMaxLines: 1)
+                        .AddText($"Waiting for {gameToRun.GameLibraryType} Game Library to start (and update if needed)...")
                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                         .SetToastDuration(ToastDuration.Short);
                         toastContent = tcBuilder.Content;
@@ -1669,7 +1631,14 @@ namespace DisplayMagician
                     // NOTE: We now have to try and find the processes, as the game library will start to run the game itself, and we have no idea what process it is
                     // We'll have to look for the game exe later on in this process...
                     List<Process> gameProcesses;
-                    gameProcesses = gameLibraryToUse.StartGame(gameToRun, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority);
+                    if (gameToRun.Start(out gameProcesses, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority))
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Starting the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
+                    }
+                    else
+                    {
+                        logger.Error($"ShortcutRepository/RunShortcut: Unable to start the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
+                    }
 
                     // Delay 500ms
                     Thread.Sleep(500);
@@ -1689,7 +1658,7 @@ namespace DisplayMagician
 
                         // If we have found one or more processes then we should be good to go
                         // so let's break, and get to the next step....
-                        if (gameLibraryToUse.IsRunning)
+                        if (gameToRun.GameLibrary.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: Found at least one GameLibrary process has started");
                             break;
@@ -1704,9 +1673,9 @@ namespace DisplayMagician
                     // Check whether GameLibrary is updating (if it supports finding that out!)
                     // Note - this is the scaffolding in place for the future. It will allow future ability to 
                     // detect game library updates if I can find a way of developing them per library in the future.
-                    if (gameLibraryToUse.IsUpdating)
+                    if (gameToRun.GameLibrary.IsUpdating)
                     {
-                        logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameLibraryToUse.GameLibraryName} has started updating itself.");
+                        logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameToRun.GameLibrary.GameLibraryName} has started updating itself.");
 
                         if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                         {
@@ -1714,8 +1683,8 @@ namespace DisplayMagician
                             // Construct the Windows toast content
                             tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo($"notify=updatingGameLibrary", ToastActivationType.Foreground)
-                            .AddText($"Updating {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
-                            .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to update itself...")
+                            .AddText($"Updating {gameToRun.GameLibrary.GameLibraryName}", hintMaxLines: 1)
+                            .AddText($"Waiting for {gameToRun.GameLibrary.GameLibraryName} Game Library to update itself...")
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                             toastContent = tcBuilder.Content;
@@ -1735,9 +1704,9 @@ namespace DisplayMagician
                         {
 
                             // If the game library has finished updating then let's break, and get to the next step....
-                            if (!gameLibraryToUse.IsUpdating)
+                            if (!gameToRun.GameLibrary.IsUpdating)
                             {
-                                logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameLibraryToUse.GameLibraryName} has finished updating.");
+                                logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameToRun.GameLibrary.GameLibraryName} has finished updating.");
                                 break;
                             }
 
@@ -1949,19 +1918,19 @@ namespace DisplayMagician
 
                                 // This is the main waiting thread!
                                 // Wait for the game to exit
-                                logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit.");
+                                logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit.");
                                 while (true)
                                 {
                                     Application.DoEvents();
                                     if (!gameToRun.IsRunning)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
                                         break;
                                     }
 
                                     if (cancelToken.IsCancellationRequested)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to close.");
                                         break;
                                     }
 
@@ -1976,18 +1945,18 @@ namespace DisplayMagician
                                     if (cancelToken.IsCancellationRequested)
                                     {
                                         // The monitoring was stopped by the user
-                                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
                                         // Construct the toast content
                                         tcBuilder = new ToastContentBuilder()
                                             .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
-                                            .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
+                                            .AddText($"Monitoring of {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
                                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                             .SetToastDuration(ToastDuration.Short);
                                     }
                                     else
                                     {
                                         // The program was closed normally
-                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} has exited.");
                                         // Tell the user that the Game has closed
                                         // Construct the toast content
                                         tcBuilder = new ToastContentBuilder()
@@ -2056,7 +2025,7 @@ namespace DisplayMagician
 
                                 if (cancelToken.IsCancellationRequested)
                                 {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to close.");
                                     break;
                                 }
 
@@ -2118,7 +2087,7 @@ namespace DisplayMagician
                             // Construct the Windows toast content
                             tcBuilder = new ToastContentBuilder()
                             .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
-                            .AddText($"Waiting for the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit...")
+                            .AddText($"Waiting for the {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit...")
                             .AddButton(new ToastButton()
                                 .SetContent("Cancel")
                                 .AddArgument("action", "stopWaiting")
@@ -2204,19 +2173,19 @@ namespace DisplayMagician
                         {
                             // This is the main waiting thread!
                             // Wait for the game to exit
-                            logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit.");
+                            logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit.");
                             while (true)
                             {
                                 Application.DoEvents();
                                 if (!gameToRun.IsRunning)
                                 {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
                                     break;
                                 }
 
                                 if (cancelToken.IsCancellationRequested)
                                 {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to close.");
                                     break;
                                 }
 
@@ -2231,18 +2200,18 @@ namespace DisplayMagician
                                 if (cancelToken.IsCancellationRequested)
                                 {
                                     // The monitoring was stopped by the user
-                                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
                                     // Construct the toast content
                                     tcBuilder = new ToastContentBuilder()
                                         .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
-                                        .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
+                                        .AddText($"Monitoring of {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
                                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                         .SetToastDuration(ToastDuration.Short);
                                 }
                                 else
                                 {
                                     // The program was closed normally
-                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} has exited.");
                                     // Tell the user that the Game has closed
                                     // Construct the toast content
                                     tcBuilder = new ToastContentBuilder()
@@ -2270,7 +2239,7 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    logger.Error($"ShortcutRepository/RunShortcut: Error starting the {gameToRun.Name} {gameToRun.GameLibrary} Game as the game wasn't found.");
+                    logger.Error($"ShortcutRepository/RunShortcut: Error starting the {gameToRun.Name} {gameToRun.GameLibraryType} Game as the game wasn't found.");
                 }
             }
 

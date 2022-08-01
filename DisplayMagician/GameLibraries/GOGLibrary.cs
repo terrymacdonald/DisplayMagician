@@ -563,16 +563,31 @@ namespace DisplayMagician.GameLibraries
 
         public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string args = $@"/command=runGame /gameId={game.Id} /path=""{game.Directory}""";
-            if (String.IsNullOrWhiteSpace(gameArguments))
+            List<Process> startedProcesses = new List<Process>();
+            if (game.Start(out startedProcesses, gameArguments, processPriority))
             {
-                args += gameArguments;
+                logger.Trace($"GogLibrary/StartGame: Successfully started GoG game {game.Name}");
             }
-            List<Process> gameProcesses = ProcessUtils.StartProcess(_gogExe, args, processPriority);
-            return gameProcesses;
+            else
+            {
+                logger.Trace($"GogLibrary/StartGame: Failed to start GoG game {game.Name}");
+            }
+            return startedProcesses;
         }
 
-        
+        public override bool StopGame(Game game)
+        {
+            if (game.Stop())
+            {
+                logger.Trace($"GogLibrary/StopGame: Successfully stopped GOG game {game.Name}");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"GogLibrary/StopGame: Failed to stop GOG game {game.Name}");
+                return false;
+            }
+        }
         #endregion
 
     }

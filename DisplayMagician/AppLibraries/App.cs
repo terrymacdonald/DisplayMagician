@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Text.RegularExpressions;
+using DisplayMagician.GameLibraries;
 using Newtonsoft.Json;
 
 namespace DisplayMagician.AppLibraries
@@ -17,7 +18,9 @@ namespace DisplayMagician.AppLibraries
         #region Properties
         public virtual string Id { get; set; }
 
-        public virtual SupportedAppLibraryType AppLibrary { get; }
+        public virtual SupportedAppLibraryType AppLibraryType { get; }
+
+        public virtual AppLibrary AppLibrary { get; }
 
         public virtual bool IsRunning { get; set; }
 
@@ -53,7 +56,7 @@ namespace DisplayMagician.AppLibraries
             return true;
         }
 
-        public virtual bool Start(ProcessPriority priority, int timeout, bool runExeAsAdmin, out List<Process> processesStarted)
+        public virtual bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {            
             processesStarted = new List<Process>();
             return true;
