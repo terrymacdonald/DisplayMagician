@@ -1238,19 +1238,18 @@ namespace DisplayMagician
                     {
                         if (appToUse.Start(out processesCreated, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: LocalApp {appToUse.Name} was launched as the main application to monitor.");
+                            logger.Debug($"ShortcutRepository/RunShortcut: {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} was launched as the main application to monitor.");
+                            // Record the program we started so we can close it later
+                            foreach (Process p in processesCreated)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: {p.StartInfo.FileName} was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
+                            }
                         }
                         else
                         {
-                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch LocalApp {appToUse.Name} as the main application to monitor.");
+                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} as the main application to monitor.");
                         }
-                    }                                        
-
-                    // Record the program we started so we can close it later
-                    foreach (Process p in processesCreated)
-                    {
-                        logger.Debug($"ShortcutRepository/RunShortcut: {p.StartInfo.FileName} was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
-                    }
+                    }                                                            
 
                 }
                 catch (Win32Exception ex)
