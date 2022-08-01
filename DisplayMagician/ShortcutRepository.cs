@@ -1227,6 +1227,8 @@ namespace DisplayMagician
 
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
                 // Start the main executable
+
+
                 List<Process> processesCreated = new List<Process>();
                 try
                 {
@@ -1241,17 +1243,17 @@ namespace DisplayMagician
 
                     }
 
-                    Process process = null;
                     if (appToUse is App)
                     {
-                        process = Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
-                    }
-
-                    //processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
-                    if (process != null)
-                    {
-                        processesCreated.Add(process);
-                    }                    
+                        if (appToUse.Start(shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator, out processesCreated))
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: LocalApp {appToUse.Name} was launched as the main application to monitor.");
+                        }
+                        else
+                        {
+                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch LocalApp {appToUse.Name} as the main application to monitor.");
+                        }
+                    }                                        
 
                     // Record the program we started so we can close it later
                     foreach (Process p in processesCreated)

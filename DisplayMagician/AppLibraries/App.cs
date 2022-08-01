@@ -11,6 +11,8 @@ namespace DisplayMagician.AppLibraries
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private bool isUWP = false;
+
 
         #region Properties
         public virtual string Id { get; set; }
@@ -51,7 +53,17 @@ namespace DisplayMagician.AppLibraries
             return true;
         }
 
-       
+        public virtual bool Start(ProcessPriority priority, int timeout, bool runExeAsAdmin, out List<Process> processesStarted)
+        {            
+            processesStarted = new List<Process>();
+            return true;
+        }
+
+        public virtual bool Stop()
+        {
+            return true;
+        }
+
         #endregion
     }
 }

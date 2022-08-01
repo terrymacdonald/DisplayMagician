@@ -104,6 +104,15 @@ namespace DisplayMagician.AppLibraries
             return null;
         }
 
+        public virtual bool StopApp(App App)
+        {
+            return false;
+        }
+        public virtual bool AppIsRunning(App App)
+        {
+            return false;
+        }
+
         public static bool LoadAppsInBackground()
         {
 

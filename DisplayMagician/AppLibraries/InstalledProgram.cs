@@ -21,6 +21,13 @@ using System.Web;
 
 namespace DisplayMagician.AppLibraries
 {
+
+    public enum InstalledAppType : UInt32
+    {
+        InstalledProgram = 0,
+        UWP = 1,
+    }
+
     class InstalledProgram
     {
 
@@ -33,6 +40,8 @@ namespace DisplayMagician.AppLibraries
         public string WorkDir { get; set; }
         public string Name { get; set; }
         public string AppId { get; set; }
+
+        public InstalledAppType AppType { get; set; }
 
         public ShortcutBitmap Logo { get; set; }
 
@@ -97,9 +106,10 @@ namespace DisplayMagician.AppLibraries
                     Path = file.FullName,
                     IconPath = file.FullName,
                     WorkDir = System.IO.Path.GetDirectoryName(file.FullName),
+                    Arguments = "",
                     Name = programName,
                     AppId = $"FromProgramData_{programName}",
-                    Arguments = ""
+                    AppType = InstalledAppType.InstalledProgram,
                 };
             }
             else if (file.Extension?.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) == true)
@@ -118,7 +128,8 @@ namespace DisplayMagician.AppLibraries
                     WorkDir = data.WorkDir,
                     Arguments = data.Arguments,
                     Name = name,
-                    AppId = $"FromProgramData_{name}"
+                    AppId = $"FromProgramData_{name}",
+                    AppType = InstalledAppType.InstalledProgram,
                 };
 
                 if (!String.IsNullOrEmpty(data.IconPath))
@@ -150,7 +161,8 @@ namespace DisplayMagician.AppLibraries
                     WorkDir = System.IO.Path.GetDirectoryName(file.FullName),
                     AppId = $"FromProgramData_{System.IO.Path.GetFileNameWithoutExtension(file.FullName)}",
                     Arguments = "",
-                    IconPath = file.FullName
+                    IconPath = file.FullName,
+                    AppType = InstalledAppType.InstalledProgram,
                 };
             }
 
@@ -211,7 +223,8 @@ namespace DisplayMagician.AppLibraries
                 Arguments = link.Arguments,
                 WorkDir = link.WorkingDirectory,
                 Name = link.FullName,
-                AppId = $"FromLink_{link.FullName}"
+                AppId = $"FromLink_{link.FullName}",
+                AppType = InstalledAppType.InstalledProgram,
             };
         }
         public static async Task<List<InstalledProgram>> GetShortcutProgramsFromFolder(string path, CancellationTokenSource cancelToken = null)
@@ -345,7 +358,8 @@ namespace DisplayMagician.AppLibraries
                         AppId = $"FromFolder_{System.IO.Path.GetFileNameWithoutExtension(shortcut.Name)}",
                         Logo = ImageUtils.GetMeLargestAvailableBitmap(allLogos),
                         AllLogos = allLogos,
-                        Arguments = ""
+                        Arguments = "",
+                        AppType = InstalledAppType.InstalledProgram,
                     };
 
                     apps.Add(app);
@@ -498,7 +512,8 @@ namespace DisplayMagician.AppLibraries
                             IconPath = package.Logo.LocalPath,
                             Logo = bitmap,
                             AllLogos = allLogos,
-                            AppId = package.Id.FamilyName
+                            AppId = package.Id.FamilyName,
+                            AppType = InstalledAppType.UWP,
                         };
 
                         apps.Add(app);
@@ -582,7 +597,8 @@ namespace DisplayMagician.AppLibraries
                                 IconPath = iconPath,
                                 Logo = bitmap,
                                 AllLogos = allLogos,
-                                AppId = package.Id.FamilyName
+                                AppId = package.Id.FamilyName,
+                                AppType = InstalledAppType.UWP,
                             };
 
                             apps.Add(app);

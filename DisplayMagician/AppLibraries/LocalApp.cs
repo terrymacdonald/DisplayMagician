@@ -22,6 +22,7 @@ namespace DisplayMagician.AppLibraries
         private string _LocalAppProcessName;
         private List<Process> _LocalAppProcesses = new List<Process>();
         private string _LocalAppIconPath;
+        private InstalledAppType _LocalAppType = InstalledAppType.InstalledProgram;
         //private string _gogURI;
         private static readonly LocalLibrary _LocalAppLibrary = LocalLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -109,6 +110,14 @@ namespace DisplayMagician.AppLibraries
             set => _LocalAppProcesses = value;
         }
 
+        [DefaultValue(InstalledAppType.InstalledProgram)]
+        public InstalledAppType LocalAppType
+        {
+            get => _LocalAppType;
+            set => _LocalAppType = value;
+        }
+
+
         [JsonIgnore]
         public override bool IsRunning
         {
@@ -188,7 +197,7 @@ namespace DisplayMagician.AppLibraries
             }
         }
 
-        public bool CopyTo(LocalApp LocalApp)
+        public override bool CopyTo(App LocalApp)
         {
             if (!(LocalApp is LocalApp))
                 return false;
@@ -199,6 +208,41 @@ namespace DisplayMagician.AppLibraries
             LocalApp.Name = Name;
             LocalApp.ExePath = ExePath;
             LocalApp.Directory = Directory;
+            return true;
+        }
+
+        public override bool Start(ProcessPriority priority, int timeout, bool runExeAsAdmin, out List<Process> processesStarted)
+        {
+            processesStarted = new List<Process>();
+            Process process = null;
+            
+            if (LocalAppType == InstalledAppType.InstalledProgram)
+            {
+                processesStarted = ProcessUtils.StartProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
+            }
+            else if (LocalAppType == InstalledAppType.UWP)
+            {
+                processesStarted = StartUWPProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
+            }
+            else
+            {
+                logger.Error($"LocalApp/Start: Unable to start LocalApp as the App is of an unknown type!");
+            }
+                        
+            //processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+            if (process != null)
+            {
+                processesStarted.Add(process);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override bool Stop()
+        {
             return true;
         }
 
@@ -222,7 +266,14 @@ namespace DisplayMagician.AppLibraries
             }*/
 
             return name;
-        }      
+        }
+
+        private static List<Process> StartUWPProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
+        {
+            List<Process> returnedProcesses = ProcessUtils.StartProcess(executable, arguments, processPriority, startTimeout, runAsAdministrator);            
+
+            return returnedProcesses;
+        }
 
     }
 }

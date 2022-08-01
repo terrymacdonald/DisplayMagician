@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 using DisplayMagician.Processes;
 
 namespace DisplayMagician.AppLibraries
-{
+{    
     public sealed class LocalLibrary : AppLibrary
     {
         #region Class Variables
@@ -390,6 +390,7 @@ namespace DisplayMagician.AppLibraries
                     localApp.AvailableAppBitmaps = installedProgram.AllLogos;
                     localApp.AppBitmap = installedProgram.Logo;
                     localApp.ProcessName = Path.GetFileNameWithoutExtension(localApp.ExePath);
+                    localApp.LocalAppType = installedProgram.AppType; // Neede to be passed through so that we know how to start it!
 
                     // Add the Locally Installed App to the list of Apps
                     _allLocalApps.Add(localApp);
@@ -442,6 +443,15 @@ namespace DisplayMagician.AppLibraries
             appProcesses.Add(appProcess);
             
             return appProcesses;
+        }
+
+        public override bool StopApp(App App)
+        {
+            return false;
+        }
+        public override bool AppIsRunning(App App)
+        {
+            return false;
         }
 
         public string GetProcessFromAppId(string localAppId)
