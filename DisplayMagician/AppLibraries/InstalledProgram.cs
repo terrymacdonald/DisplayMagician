@@ -250,9 +250,9 @@ namespace DisplayMagician.AppLibraries
 
                 var shell = new IWshRuntimeLibrary.WshShell();
                 var apps = new List<InstalledProgram>();
-                var shortucts = new SafeFileEnumerator(path, "*.lnk", SearchOption.AllDirectories);
+                var shortcuts = new SafeFileEnumerator(path, "*.lnk", SearchOption.AllDirectories);
 
-                foreach (var shortcut in shortucts)
+                foreach (var shortcut in shortcuts)
                 {
                     // Finish if this task is cancelled
                     if (cancelToken?.IsCancellationRequested == true)
@@ -458,6 +458,7 @@ namespace DisplayMagician.AppLibraries
                     bool worked = true;
                     try
                     {
+                       
                         IReadOnlyList<AppListEntry> applListEntries = (IReadOnlyList<AppListEntry>)package.GetAppListEntries();
                         if (applListEntries.Count == 0)
                         {
