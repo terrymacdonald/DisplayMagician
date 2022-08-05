@@ -43,6 +43,10 @@ namespace DisplayMagician.AppLibraries
 
         public InstalledAppType AppType { get; set; }
 
+        public string FamilyName { get; set; }
+
+        public AppListEntry AppListEntry { get; set; }
+
         public ShortcutBitmap Logo { get; set; }
 
         public List<ShortcutBitmap> AllLogos { get; set; }
@@ -110,6 +114,7 @@ namespace DisplayMagician.AppLibraries
                     Name = programName,
                     AppId = $"FromProgramData_{programName}",
                     AppType = InstalledAppType.InstalledProgram,
+                    FamilyName = "",
                 };
             }
             else if (file.Extension?.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) == true)
@@ -130,6 +135,7 @@ namespace DisplayMagician.AppLibraries
                     Name = name,
                     AppId = $"FromProgramData_{name}",
                     AppType = InstalledAppType.InstalledProgram,
+                    FamilyName = "",
                 };
 
                 if (!String.IsNullOrEmpty(data.IconPath))
@@ -163,6 +169,7 @@ namespace DisplayMagician.AppLibraries
                     Arguments = "",
                     IconPath = file.FullName,
                     AppType = InstalledAppType.InstalledProgram,
+                    FamilyName = "",
                 };
             }
 
@@ -225,6 +232,7 @@ namespace DisplayMagician.AppLibraries
                 Name = link.FullName,
                 AppId = $"FromLink_{link.FullName}",
                 AppType = InstalledAppType.InstalledProgram,
+                FamilyName = "",
             };
         }
         public static async Task<List<InstalledProgram>> GetShortcutProgramsFromFolder(string path, CancellationTokenSource cancelToken = null)
@@ -360,6 +368,7 @@ namespace DisplayMagician.AppLibraries
                         AllLogos = allLogos,
                         Arguments = "",
                         AppType = InstalledAppType.InstalledProgram,
+                        FamilyName = "",
                     };
 
                     apps.Add(app);
@@ -467,124 +476,41 @@ namespace DisplayMagician.AppLibraries
                         string name = "";
                         string aumi = "";
 
-                        var entry = applListEntries[0];
-                        aumi = entry.AppUserModelId;                        
-                        name = entry.DisplayInfo.DisplayName;
-                        ShortcutBitmap bitmap = new ShortcutBitmap();
-                        try 
+                        // Go through each app entry in the package to add it to the list
+                        foreach (AppListEntry entry in applListEntries)
                         {
-                            var logoStream = entry.DisplayInfo.GetLogo(new Windows.Foundation.Size(150, 150));
-                            var bitmapImage = new BitmapImage();
-                            using (var randomAccessStream = logoStream.OpenReadAsync().GetResults())
-                            using (var stream = randomAccessStream.AsStream())
-                            {
-                                bitmapImage.BeginInit();
-                                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                                bitmapImage.StreamSource = stream;
-                                bitmapImage.EndInit();
-                            }
-                            bitmap.Image = ImageUtils.BitmapImage2Bitmap(bitmapImage);
-                            bitmap.UUID = Guid.NewGuid().ToString("D");
-                            bitmap.Source = package.Logo.LocalPath;
-                            bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
-                            bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);
-                            bitmap.Order = 0;
-                        }
-                        catch (Exception ex2)
-                        {
-                            bitmap.UUID = Guid.NewGuid().ToString("D");
-                            bitmap.Image = new Bitmap(package.Logo.LocalPath);
-                            bitmap.Source = package.Logo.LocalPath;
-                            bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
-                            bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);   
-                            bitmap.Order = 0;
-                        }
-                        var windowsDirectoryPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows);
-
-                        List<ShortcutBitmap> allLogos = new List<ShortcutBitmap>();
-                        allLogos.Add(bitmap);
-
-                        var app = new InstalledProgram()
-                        {
-                            Name = Utils.NormaliseGameName(name),
-                            WorkDir = package.InstalledLocation.Path,
-                            Path = $"{windowsDirectoryPath}\\explorer.exe",
-                            Arguments = $"shell:AppsFolder\\{aumi}",
-                            IconPath = package.Logo.LocalPath,
-                            Logo = bitmap,
-                            AllLogos = allLogos,
-                            AppId = package.Id.FamilyName,
-                            AppType = InstalledAppType.UWP,
-                        };
-
-                        apps.Add(app);
-                    }
-                    catch (Exception ex)
-                    {
-                        worked = false;
-                    }
-
-                    if (!worked)
-                    {
-                        try
-                        {
-                            string manifestPath;
-                            if (package.IsBundle)
-                            {
-                                manifestPath = @"AppxMetadata\AppxBundleManifest.xml";
-                            }
-                            else
-                            {
-                                manifestPath = "AppxManifest.xml";
-                            }
-
-                            manifestPath = System.IO.Path.Combine(package.InstalledLocation.Path, manifestPath);
-                            var manifest = new XmlDocument();
-                            manifest.Load(manifestPath);
-
-                            var apxApp = manifest.SelectSingleNode(@"/*[local-name() = 'Package']/*[local-name() = 'Applications']//*[local-name() = 'Application'][1]");
-                            var appId = apxApp.Attributes["Id"].Value;
-
-                            var visuals = apxApp.SelectSingleNode(@"//*[local-name() = 'VisualElements']");
-                            var iconPath = visuals.Attributes["Square150x150Logo"]?.Value;
-                            if (String.IsNullOrEmpty(iconPath))
-                            {
-                                iconPath = visuals.Attributes["Square70x70Logo"]?.Value;
-                                if (String.IsNullOrEmpty(iconPath))
-                                {
-                                    iconPath = visuals.Attributes["Square44x44Logo"]?.Value;
-                                    if (String.IsNullOrEmpty(iconPath))
-                                    {
-                                        iconPath = visuals.Attributes["Logo"]?.Value;
-                                    }
-                                }
-                            }
-
-                            if (!String.IsNullOrEmpty(iconPath))
-                            {
-                                iconPath = System.IO.Path.Combine(package.InstalledLocation.Path, iconPath);
-                                iconPath = GetUWPGameIcon(iconPath);
-                            }
-
-                            var name = manifest.SelectSingleNode(@"/*[local-name() = 'Package']/*[local-name() = 'Properties']/*[local-name() = 'DisplayName']").InnerText;
-                            if (name.StartsWith("ms-resource"))
-                            {
-                                name = Utils.GetIndirectResourceString(package.Id.FullName, package.Id.Name, name);
-                                if (String.IsNullOrEmpty(name))
-                                {
-                                    name = manifest.SelectSingleNode(@"/*[local-name() = 'Package']/*[local-name() = 'Identity']").Attributes["Name"].Value;
-                                }
-                            }
-
-                            var windowsUWPPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows);
-
+                            aumi = entry.AppUserModelId;
+                            name = entry.DisplayInfo.DisplayName;
                             ShortcutBitmap bitmap = new ShortcutBitmap();
-                            bitmap.UUID = Guid.NewGuid().ToString("D"); 
-                            bitmap.Image = new Bitmap(package.Logo.LocalPath);
-                            bitmap.Source = package.Logo.LocalPath;
-                            bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
-                            bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);
-                            bitmap.Order = 0;
+                            try
+                            {
+                                var logoStream = entry.DisplayInfo.GetLogo(new Windows.Foundation.Size(150, 150));
+                                var bitmapImage = new BitmapImage();
+                                using (var randomAccessStream = logoStream.OpenReadAsync().GetResults())
+                                using (var stream = randomAccessStream.AsStream())
+                                {
+                                    bitmapImage.BeginInit();
+                                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                                    bitmapImage.StreamSource = stream;
+                                    bitmapImage.EndInit();
+                                }
+                                bitmap.Image = ImageUtils.BitmapImage2Bitmap(bitmapImage);
+                                bitmap.UUID = Guid.NewGuid().ToString("D");
+                                bitmap.Source = package.Logo.LocalPath;
+                                bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
+                                bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);
+                                bitmap.Order = 0;
+                            }
+                            catch (Exception ex2)
+                            {
+                                bitmap.UUID = Guid.NewGuid().ToString("D");
+                                bitmap.Image = new Bitmap(package.Logo.LocalPath);
+                                bitmap.Source = package.Logo.LocalPath;
+                                bitmap.Name = System.IO.Path.GetFileName(package.Logo.LocalPath);
+                                bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);
+                                bitmap.Order = 0;
+                            }
+                            var windowsDirectoryPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows);
 
                             List<ShortcutBitmap> allLogos = new List<ShortcutBitmap>();
                             allLogos.Add(bitmap);
@@ -593,22 +519,26 @@ namespace DisplayMagician.AppLibraries
                             {
                                 Name = Utils.NormaliseGameName(name),
                                 WorkDir = package.InstalledLocation.Path,
-                                Path = $"{windowsUWPPath}\\explorer.exe",
-                                Arguments = $"shell:AppsFolder\\{package.Id.FamilyName}!{appId}",
-                                IconPath = iconPath,
+                                Path = $"{windowsDirectoryPath}\\explorer.exe",
+                                Arguments = $"shell:AppsFolder\\{aumi}",
+                                IconPath = package.Logo.LocalPath,
                                 Logo = bitmap,
                                 AllLogos = allLogos,
-                                AppId = package.Id.FamilyName,
+                                FamilyName = package.Id.FamilyName,                                
+                                AppId = aumi,
                                 AppType = InstalledAppType.UWP,
                             };
 
                             apps.Add(app);
                         }
-                        catch (Exception e)
-                        {
-                            logger.Error(e, $"Failed to parse UWP game info.");
-                        }
-                    }                    
+                        
+                    }
+                    catch (Exception ex)
+                    {
+                        worked = false;
+                    }
+
+                    
                 }
             }
             catch (Exception e) when (!Debugger.IsAttached)
@@ -617,6 +547,68 @@ namespace DisplayMagician.AppLibraries
             }
 
             return apps;
+        }
+
+        public static AppListEntry GetUWPAppListEntryByAUMID(string aumid)
+        {
+            try
+            {
+                var manager = new PackageManager();
+                IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
+                foreach (var package in packages)
+                {
+                    if (package.IsFramework || package.IsResourcePackage || package.SignatureKind != PackageSignatureKind.Store)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        if (package.InstalledLocation == null)
+                        {
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // InstalledLocation accessor may throw Win32 exception for unknown reason
+                        continue;
+                    }
+
+                    bool worked = true;
+                    try
+                    {
+                        IReadOnlyList<AppListEntry> applListEntries = (IReadOnlyList<AppListEntry>)package.GetAppListEntries();
+                        if (applListEntries.Count == 0)
+                        {
+                            continue;
+                        }
+                        foreach (AppListEntry entry in applListEntries)
+                        {
+                            string name = "";
+                            string aumi = "";
+
+                            aumi = entry.AppUserModelId;
+                            if (entry.AppUserModelId.Equals(aumid))
+                            {
+                                return entry;
+                            }
+                        }                                               
+      
+                    }
+                    catch (Exception ex)
+                    {
+                        return null;
+                    }
+
+                }
+            }
+            catch (Exception e) when (!Debugger.IsAttached)
+            {
+                logger.Error(e, "Failed to get list of installed UWP apps.");
+            }
+
+            return null;
         }
 
         public static Package GetUWPAppPackageByAUMID(string aumid)
@@ -662,7 +654,7 @@ namespace DisplayMagician.AppLibraries
                         {
                             return package;
                         }
-      
+
                     }
                     catch (Exception ex)
                     {

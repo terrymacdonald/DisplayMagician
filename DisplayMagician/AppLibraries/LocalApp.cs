@@ -8,7 +8,11 @@ using System.Diagnostics;
 using DisplayMagician.Processes;
 using System.ComponentModel;
 using Newtonsoft.Json;
-using DisplayMagician.GameLibraries;
+using Windows.ApplicationModel;
+using Windows.System;
+using Windows.ApplicationModel.Core;
+using Windows.System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -24,6 +28,11 @@ namespace DisplayMagician.AppLibraries
         private List<Process> _LocalAppProcesses = new List<Process>();
         private string _LocalAppIconPath;
         private InstalledAppType _LocalAppType = InstalledAppType.InstalledProgram;
+        //private Package _LocalAppPackage;
+        private AppListEntry _LocalAppListEntry;
+        private AppDiagnosticInfoWatcher _LocalAppUWPWatcher = null;
+        private string _LocalAppFamilyName = "";
+        private AppResourceGroupExecutionState _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
         //private string _gogURI;
         private static readonly LocalLibrary _LocalAppLibrary = LocalLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -117,6 +126,19 @@ namespace DisplayMagician.AppLibraries
             get => _LocalAppType;
             set => _LocalAppType = value;
         }
+        
+        public string FamilyName
+        {
+            get => _LocalAppFamilyName;
+            set => _LocalAppFamilyName = value;
+        }
+
+        [JsonIgnore]
+        public AppListEntry AppListEntry
+        {
+            get => _LocalAppListEntry;
+            set => _LocalAppListEntry = value;
+        }
 
         [JsonIgnore]
         public override AppLibrary AppLibrary
@@ -129,29 +151,10 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
-                // Check if it is a UWP app
-
-                //return !ProcessUtils.ProcessExited(_LocalAppProcessName);
-                int numAppProcesses = 0;
-                if (Path.GetFileName(_LocalAppExePath).Equals("explorer.exe"))
+                // Check if it is an installed program app
+                if (LocalAppType == InstalledAppType.InstalledProgram)
                 {
-                    // it's a UWP app, so we detect it differently
-                    //Package uGetUWPAppPackageByAUMID()
-
-
-                    _LocalAppProcesses = Process.GetProcesses().Where(pr => pr.MainModule.FileName.Contains(_LocalAppDir)).ToList();
-                    if (_LocalAppProcesses.Count > 0)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    // its NOT a UWP app
+                    int numAppProcesses = 0;
                     _LocalAppProcesses = Process.GetProcessesByName(_LocalAppProcessName).ToList();
                     foreach (Process AppProcess in _LocalAppProcesses)
                     {
@@ -179,19 +182,91 @@ namespace DisplayMagician.AppLibraries
                                 if (filePath.StartsWith(_LocalAppExe))
                                     numAppProcesses++;
                             }
-
                         }
                     }
+
                     if (numAppProcesses > 0)
                         return true;
                     else
                         return false;
                 }
+                else if (LocalAppType == InstalledAppType.UWP)
+                {
+                    if (_LocalAppListEntry is AppListEntry)
+                    {
+
+                        if (_LocalAppIsRunning == AppResourceGroupExecutionState.Running)
+                        {
+                            return true;
+                        }
+                        else 
+                        {
+                            return false;
+                        }
+
+                        /*
+
+                        IReadOnlyList<AppListEntry> applListEntries = (IReadOnlyList<AppListEntry>)_LocalAppPackage.GetAppListEntries();
+                        if (applListEntries.Count > 0)
+                        {
+                            string name = "";
+                            string aumi = "";
+
+                            var entry = applListEntries[0];
+                            aumi = entry.AppUserModelId;
+                            name = entry.DisplayInfo.DisplayName;
+
+                            var things = Windows.System.AppDiagnosticInfo.RequestInfoAsync().GetResults();
+                            foreach (var thing in things)
+                            {
+                                thing.GetResourceGroups();
+                            }
+
+                            List<PackageContentGroup> pcgList = _LocalAppPackage.GetContentGroupsAsync().GetResults().ToList();
+                            foreach (PackageContentGroup pcg in pcgList)
+                            {
+                                pcg.
+                            }
+                        }*/                        
+                    }
+                    else
+                    {
+                        logger.Error($"LocalApp/IsRunning: This UWP LocalApp does not have a Package associated with it. There was an error creating the LocalApp, which means we cannot use it now.");
+                        return false;
+                    }
+                }
+                else
+                {
+                    logger.Error($"LocalApp/IsRunning: This LocalApp is not a recognised InstalledPpType.");
+                    return false;
+                }
+                    
 
             }
                 //ProcessUtils.GetChildProcesses();
                 
                 
+        }
+
+        private void UWPWatcherAdded(AppDiagnosticInfoWatcher sender, AppDiagnosticInfoWatcherEventArgs args)
+        {
+            // This function is run whenever a new UWP app is started
+            if (args.AppDiagnosticInfo.AppInfo.AppUserModelId == _LocalAppId)
+            {
+                _LocalAppIsRunning = AppResourceGroupExecutionState.Running;
+            }
+
+        }
+
+        private void UWPWatcherRemoved(AppDiagnosticInfoWatcher sender, AppDiagnosticInfoWatcherEventArgs args)
+        {
+            // This function is run whenever a new UWP app is stopped or terminated
+            if (args.AppDiagnosticInfo.AppInfo.AppUserModelId == _LocalAppId)
+            {
+                _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
+                _LocalAppUWPWatcher.Stop();
+            }
+
         }
 
         [JsonIgnore]
@@ -236,15 +311,50 @@ namespace DisplayMagician.AppLibraries
             }
             else if (LocalAppType == InstalledAppType.UWP)
             {
-                processesStarted = StartUWPProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
-                if (processesStarted.Count > 0)
+                // Create UWP watcher to watch this app starting
+                var _LocalAppUWPWatcher = Windows.System.AppDiagnosticInfo.CreateWatcher();
+                _LocalAppUWPWatcher.Added += UWPWatcherAdded;
+                _LocalAppUWPWatcher.Removed += UWPWatcherRemoved;
+                _LocalAppUWPWatcher.Start();
+
+                _LocalAppListEntry = InstalledProgram.GetUWPAppListEntryByAUMID(_LocalAppId);
+                if (_LocalAppListEntry is AppListEntry)
+                {
+                    bool myLaunchWorked = StartUWPProcess().GetAwaiter().GetResult();
+
+                    if (myLaunchWorked)
+                    {
+                        // app launched
+                        logger.Error($"LocalApp/Start: Started LocalApp application {Name} successfully!");
+                        _LocalAppIsRunning = AppResourceGroupExecutionState.Running;
+                        return true;
+                    }
+                    else
+                    {
+                        // app not launched!
+                        logger.Error($"LocalApp/Start: Unable to start LocalApp application {Name} as the launch didn't work!");
+                        _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
+                        return false;
+                    }
+                }    
+                else
+                {
+                    // app not launched!
+                    logger.Error($"LocalApp/Start: Unable to start LocalApp application {Name} as the AUMI {_LocalAppId} cannot be found!");
+                    _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
+                    return false;
+                }
+               
+                //processesStarted = StartUWPProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
+                /*if (processesStarted.Count > 0)
                 {
                     logger.Trace($"LocalApp/Start: Started LocalApp UWP {Name} with {processesStarted.Count} processes.");
                 }
                 else
                 {
                     logger.Error($"LocalApp/Start: Unable to start LocalApp UWP {Name} as no processes were created!");
-                }
+                }*/
+                
             }
             else
             {
@@ -261,7 +371,7 @@ namespace DisplayMagician.AppLibraries
             {
                 return false;
             }
-        }
+        }        
 
         public override bool Stop()
         {
@@ -290,11 +400,11 @@ namespace DisplayMagician.AppLibraries
             return name;
         }
 
-        private static List<Process> StartUWPProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
+        private async Task<bool> StartUWPProcess()
         {
-            List<Process> returnedProcesses = ProcessUtils.StartProcess(executable, arguments, processPriority, startTimeout, runAsAdministrator);            
+            bool result = await _LocalAppListEntry.LaunchAsync();
 
-            return returnedProcesses;
+            return result;
         }
 
     }

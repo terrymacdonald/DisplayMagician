@@ -390,7 +390,8 @@ namespace DisplayMagician.AppLibraries
                     localApp.AvailableAppBitmaps = installedProgram.AllLogos;
                     localApp.AppBitmap = installedProgram.Logo;
                     localApp.ProcessName = Path.GetFileNameWithoutExtension(localApp.ExePath);
-                    localApp.LocalAppType = installedProgram.AppType; // Neede to be passed through so that we know how to start it!
+                    localApp.LocalAppType = installedProgram.AppType; // Needs to be passed through so that we know how to start it!
+                    localApp.FamilyName = installedProgram.FamilyName;
 
                     // Add the Locally Installed App to the list of Apps
                     _allLocalApps.Add(localApp);

@@ -1230,20 +1230,15 @@ namespace DisplayMagician
 
 
                 List<Process> processesCreated = new List<Process>();
+                App appToUse = AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId);
                 try
-                {
-                    App appToUse = AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId);
+                {                    
 
                     if (appToUse is App)
                     {
                         if (appToUse.Start(out processesCreated, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} was launched as the main application to monitor.");
-                            // Record the program we started so we can close it later
-                            foreach (Process p in processesCreated)
-                            {
-                                logger.Debug($"ShortcutRepository/RunShortcut: {p.StartInfo.FileName} was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
-                            }
+                            logger.Debug($"ShortcutRepository/RunShortcut: {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} was launched as the main application to monitor.");                            
                         }
                         else
                         {
@@ -1279,11 +1274,33 @@ namespace DisplayMagician
                 {
                     try
                     {
-                        App app = AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId);
-                        if (app.IsRunning)
+                        if (appToUse.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: Found that UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) was running");
-                            foundSomethingToMonitor = true;
+
+                            // if we have things to monitor, then we should start to wait for them
+                            logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {appToUse.Name} to exit.");
+                            while (true)
+                            {
+                                Application.DoEvents();
+                                // If we have no more processes left then we're done!
+                                if (!appToUse.IsRunning)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: The application {appToUse.Name} has exited!");
+                                    break;
+                                }
+
+                                if (cancelToken.IsCancellationRequested)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for application {appToUse.Name} to close.");
+                                    break;
+                                }
+                                // Send a message to windows so that it doesn't think
+                                // we're locked and try to kill us
+                                System.Threading.Thread.CurrentThread.Join(0);
+                                Thread.Sleep(1000);
+                            }
+
                         }
                     }
                     catch (Exception ex)
@@ -1305,33 +1322,33 @@ namespace DisplayMagician
                         logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
                         foundSomethingToMonitor = false;
                     }
-                }
 
-                // if we have things to monitor, then we should start to wait for them
-                logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {shortcutToUse.ExecutableNameAndPath} to exit.");
-                if (foundSomethingToMonitor && processesToMonitor.Count > 0)
-                {
-                    while (true)
+                    // if we have things to monitor, then we should start to wait for them
+                    logger.Debug($"ShortcutRepository/RunShortcut: Waiting for different executable {shortcutToUse.DifferentExecutableToMonitor} to exit.");
+                    if (foundSomethingToMonitor)
                     {
-                        Application.DoEvents();
-                        // If we have no more processes left then we're done!
-                        if (ProcessUtils.ProcessExited(processesToMonitor))
+                        while (true)
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: No more processes to monitor are still running. It, and all it's child processes have exited!");
-                            break;
-                        }
+                            Application.DoEvents();
+                            // If we have no more processes left then we're done!
+                            if (!appToUse.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: The different executable {shortcutToUse.DifferentExecutableToMonitor} has exited!");
+                                break;
+                            }
 
-                        if (cancelToken.IsCancellationRequested)
-                        {
-                            logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for application {shortcutToUse.ExecutableNameAndPath} to close.");
-                            break;
+                            if (cancelToken.IsCancellationRequested)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for different executable {shortcutToUse.DifferentExecutableToMonitor} to exit.");
+                                break;
+                            }
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
                         }
-                        // Send a message to windows so that it doesn't think
-                        // we're locked and try to kill us
-                        System.Threading.Thread.CurrentThread.Join(0);
-                        Thread.Sleep(1000);
                     }
-                }
+                }                
 
                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                 {
