@@ -96,6 +96,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FovCalculator.cs" />
     <Compile Include="GameLibraries\GOGGame.cs" />
     <Compile Include="GameLibraries\GOGLibrary.cs" />
     <Compile Include="GameLibraries\Game.cs" />
@@ -146,6 +147,12 @@
     <Compile Include="ShortcutRepository.cs" />
     <Compile Include="Processes\SingleInstanceHelper.cs" />
     <Compile Include="SingleInstance.cs" />
+    <Compile Include="UIForms\FovForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\FovForm.Designer.cs">
+      <DependentUpon>FovForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
       <SubType>Form</SubType>
@@ -236,6 +243,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Language.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\FovForm.resx">
+      <DependentUpon>FovForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\HotkeyForm.resx">
       <DependentUpon>HotkeyForm.cs</DependentUpon>

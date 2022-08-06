@@ -660,5 +660,11 @@ namespace DisplayMagician.UIForms
                 Application.DoEvents();
             }
         }
+
+        private void btn_fov_calc_Click(object sender, EventArgs e)
+        {
+            var fovCalcForm = new FovForm();
+            fovCalcForm.ShowDialog(this);            
+        }
     }
 }
