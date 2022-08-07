@@ -147,11 +147,11 @@
     <Compile Include="ShortcutRepository.cs" />
     <Compile Include="Processes\SingleInstanceHelper.cs" />
     <Compile Include="SingleInstance.cs" />
-    <Compile Include="UIForms\FovForm.cs">
+    <Compile Include="UIForms\FovCalcForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="UIForms\FovForm.Designer.cs">
-      <DependentUpon>FovForm.cs</DependentUpon>
+    <Compile Include="UIForms\FovCalcForm.Designer.cs">
+      <DependentUpon>FovCalcForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
@@ -244,8 +244,8 @@
       <LastGenOutput>Language.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="UIForms\FovForm.resx">
-      <DependentUpon>FovForm.cs</DependentUpon>
+    <EmbeddedResource Include="UIForms\FovCalcForm.resx">
+      <DependentUpon>FovCalcForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\HotkeyForm.resx">
       <DependentUpon>HotkeyForm.cs</DependentUpon>

@@ -31,16 +31,17 @@ namespace DisplayMagician
         public double ResultBaseSteps;
     }
 
-    public enum ScreenRatio : uint
+    public enum ScreenAspectRatio : uint
     {
-        SixteenByNine = 0,
-        SixteenByTen = 1,
-        TwentyOneByNine = 2,
-        TwentyOneByTen = 3,
-        ThirtyTwoByNine = 4,
-        ThirtyTwoByTen = 5,
-        FiveByFour = 6,
-        FourByThree = 7,
+        Custom = 0, 
+        SixteenByNine = 1,
+        SixteenByTen = 2,
+        TwentyOneByNine = 3,
+        TwentyOneByTen = 4,
+        ThirtyTwoByNine = 5,
+        ThirtyTwoByTen = 6,
+        FiveByFour = 7,
+        FourByThree = 8,
     }
 
     public enum ScreenLayout : uint
@@ -469,7 +470,11 @@ namespace DisplayMagician
 
         public static ScreenLayout ScreenLayout { get; set; }
 
-        public static ScreenRatio ScreenRatio { get; set; }
+        public static ScreenAspectRatio ScreenRatio { get; set; }
+
+        public static double ScreenRatioX { get; set; }
+
+        public static double ScreenRatioY { get; set; }
 
         public static double ScreenSize { get; set; }
 
@@ -483,7 +488,7 @@ namespace DisplayMagician
 
         public static ScreenMeasurementUnit BezelSizeUnit { get; set; }
 
-        public static bool CalculateFOV(ScreenLayout screenLayout, ScreenRatio screenRatio, double screenSize, ScreenMeasurementUnit screenSizeUnit, double distanceToScreen, ScreenMeasurementUnit distanceToScreenUnit, double bezelSize, ScreenMeasurementUnit bezelSizeUnit)
+        public static bool CalculateFOV(ScreenLayout screenLayout, ScreenAspectRatio screenRatio, double screenSize, ScreenMeasurementUnit screenSizeUnit, double distanceToScreen, ScreenMeasurementUnit distanceToScreenUnit, double bezelSize, ScreenMeasurementUnit bezelSizeUnit)
         {
             ScreenLayout = screenLayout;
             ScreenRatio = screenRatio;
@@ -607,45 +612,68 @@ namespace DisplayMagician
             // If we get here we can start doing the calculation! Yay!
             double screenRatioX = 21;
             double screenRatioY = 9;
-            if (ScreenRatio == ScreenRatio.SixteenByNine)
+            if (ScreenRatio == ScreenAspectRatio.SixteenByNine)
             {
                 screenRatioX = 16;
                 screenRatioY = 9;
             }
-            else if (ScreenRatio == ScreenRatio.SixteenByTen)
+            else if (ScreenRatio == ScreenAspectRatio.SixteenByTen)
             {
                 screenRatioX = 16;
                 screenRatioY = 10;
             }
-            else if (ScreenRatio == ScreenRatio.TwentyOneByNine)
+            else if (ScreenRatio == ScreenAspectRatio.TwentyOneByNine)
             {
                 screenRatioX = 21;
                 screenRatioY = 9;
             }
-            else if (ScreenRatio == ScreenRatio.TwentyOneByTen)
+            else if (ScreenRatio == ScreenAspectRatio.TwentyOneByTen)
             {
                 screenRatioX = 21;
                 screenRatioY = 10;
             }
-            else if (ScreenRatio == ScreenRatio.ThirtyTwoByNine)
+            else if (ScreenRatio == ScreenAspectRatio.ThirtyTwoByNine)
             {
                 screenRatioX = 32;
                 screenRatioY = 9;
             }
-            else if (ScreenRatio == ScreenRatio.ThirtyTwoByTen)
+            else if (ScreenRatio == ScreenAspectRatio.ThirtyTwoByTen)
             {
                 screenRatioX = 32;
                 screenRatioY = 10;
             }
-            else if (ScreenRatio == ScreenRatio.FiveByFour)
+            else if (ScreenRatio == ScreenAspectRatio.FiveByFour)
             {
                 screenRatioX = 5;
                 screenRatioY = 4;
             }
-            else if (ScreenRatio == ScreenRatio.FourByThree)
+            else if (ScreenRatio == ScreenAspectRatio.FourByThree)
             {
                 screenRatioX = 4;
                 screenRatioY = 3;
+            }
+            else if (ScreenRatio == ScreenAspectRatio.Custom)
+            {
+                if (ScreenRatioX > 0)
+                {
+                    screenRatioX = ScreenRatioX;
+                }                
+                else
+                {
+                    return false;
+                }
+                if (ScreenRatioY > 0)
+                {
+                    screenRatioY = ScreenRatioY;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
             }
 
             int screenCount = 3;
