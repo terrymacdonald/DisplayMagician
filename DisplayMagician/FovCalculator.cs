@@ -403,7 +403,7 @@ namespace DisplayMagician
                 Decimals = 1,
                 Factor = 1,
                 BaseSingle = 58,
-                BaseTriple = 40,
+                BaseTriple = 58,
                 Increment = 0,
                 Step = 0
             },
@@ -412,12 +412,12 @@ namespace DisplayMagician
                 GameName = "RACE 07",
                 GamePublisher = "SimBin Studios",
                 GameURL = "https://store.steampowered.com/app/8600/RACE_07/",
-                Min = 0.5,
+                Min = 0.4,
                 Max = 1.5,
                 Decimals = 1,
                 Factor = 1,
                 BaseSingle = 58,
-                BaseTriple = 40,
+                BaseTriple = 58,
                 Increment = 0,
                 Step = 0
             },
@@ -437,24 +437,56 @@ namespace DisplayMagician
             },*/
         }.OrderBy(tr => tr.GameName).ToList();
 
+
+        public static ScreenLayout ScreenLayout { get; set; }
+
+        public static ScreenRatio ScreenRatio { get; set; }
+
+        public static double ScreenSize { get; set; }
+
+        public static ScreenMeasurementUnit ScreenSizeUnit { get; set; }
+
+        public static double DistanceToScreen { get; set; }
+
+        public static ScreenMeasurementUnit DistanceToScreenUnit { get; set; }
+
+        public static double BezelSize { get; set; }
+
+        public static ScreenMeasurementUnit BezelSizeUnit { get; set; }
+
         public static bool CalculateFOV(ScreenLayout screenLayout, ScreenRatio screenRatio, double screenSize, ScreenMeasurementUnit screenSizeUnit, double distanceToScreen, ScreenMeasurementUnit distanceToScreenUnit, double bezelSize, ScreenMeasurementUnit bezelSizeUnit)
+        {
+            ScreenLayout = screenLayout;
+            ScreenRatio = screenRatio;
+            ScreenSize = screenSize;
+            ScreenSizeUnit = screenSizeUnit;
+            DistanceToScreen = distanceToScreen;
+            DistanceToScreenUnit = distanceToScreenUnit;
+            BezelSize = bezelSize;
+            BezelSizeUnit = bezelSizeUnit;
+
+            return CalculateFOV();
+        }
+
+
+        public static bool CalculateFOV()
         {
             // This will calculate the Field of View for each game, and store the answer in with the game
             // This will allow the result to be shown to the user via a form, yet have all the calculations performed here.
 
             // Convert ScreenSize to cm
             double screenSizeInCm = 0;
-            if (screenSizeUnit == ScreenMeasurementUnit.Inch)
+            if (ScreenSizeUnit == ScreenMeasurementUnit.Inch)
             {
-                screenSizeInCm = screenSize * 2.54;
+                screenSizeInCm = ScreenSize * 2.54;
             }
-            else if (screenSizeUnit == ScreenMeasurementUnit.MM)
+            else if (ScreenSizeUnit == ScreenMeasurementUnit.MM)
             {
-                screenSizeInCm = screenSize / 10;
+                screenSizeInCm = ScreenSize / 10;
             }
-            else if (screenSizeUnit == ScreenMeasurementUnit.CM)
+            else if (ScreenSizeUnit == ScreenMeasurementUnit.CM)
             {
-                screenSizeInCm = screenSize;
+                screenSizeInCm = ScreenSize;
             }
             else
             {
@@ -464,17 +496,17 @@ namespace DisplayMagician
 
             // Convert distanceToScreen to cm
             double distanceToScreenInCm = 0;
-            if (distanceToScreenUnit == ScreenMeasurementUnit.Inch)
+            if (DistanceToScreenUnit == ScreenMeasurementUnit.Inch)
             {
-                distanceToScreenInCm = screenSize * 2.54;
+                distanceToScreenInCm = DistanceToScreen * 2.54;
             }
-            else if (distanceToScreenUnit == ScreenMeasurementUnit.MM)
+            else if (DistanceToScreenUnit == ScreenMeasurementUnit.MM)
             {
-                distanceToScreenInCm = screenSize / 10;
+                distanceToScreenInCm = DistanceToScreen / 10;
             }
-            else if (distanceToScreenUnit == ScreenMeasurementUnit.CM)
+            else if (DistanceToScreenUnit == ScreenMeasurementUnit.CM)
             {
-                distanceToScreenInCm = screenSize;
+                distanceToScreenInCm = DistanceToScreen;
             }
             else
             {
@@ -482,25 +514,29 @@ namespace DisplayMagician
                 return false;
             }
 
-            // Convert bezelSize to cm
+
             double bezelSizeInCm = 0;
-            if (bezelSizeUnit == ScreenMeasurementUnit.Inch)
+            if (ScreenLayout == ScreenLayout.TripleScreen)
             {
-                bezelSizeInCm = bezelSize * 2.54;
-            }
-            else if (bezelSizeUnit == ScreenMeasurementUnit.MM)
-            {
-                bezelSizeInCm = bezelSize / 10;
-            }
-            else if (bezelSizeUnit == ScreenMeasurementUnit.CM)
-            {
-                bezelSizeInCm = bezelSize;
-            }
-            else
-            {
-                // Unit supplied is not one we know about!
-                return false;
-            }
+                // Convert bezelSize to cm
+                if (BezelSizeUnit == ScreenMeasurementUnit.Inch)
+                {
+                    bezelSizeInCm = BezelSize * 2.54;
+                }
+                else if (BezelSizeUnit == ScreenMeasurementUnit.MM)
+                {
+                    bezelSizeInCm = BezelSize / 10;
+                }
+                else if (BezelSizeUnit == ScreenMeasurementUnit.CM)
+                {
+                    bezelSizeInCm = BezelSize;
+                }
+                else
+                {
+                    // Unit supplied is not one we know about!
+                    return false;
+                }
+            }        
 
             // Check sensible minimums and maximums
             // Check that screen size is between 48cm and 508cm diagonally (19 inch to 200 inch screen sizes)
@@ -542,49 +578,49 @@ namespace DisplayMagician
             // If we get here we can start doing the calculation! Yay!
             double screenRatioX = 21;
             double screenRatioY = 9;
-            if (screenRatio == ScreenRatio.SixteenByNine)
+            if (ScreenRatio == ScreenRatio.SixteenByNine)
             {
                 screenRatioX = 16;
                 screenRatioY = 9;
             }
-            else if (screenRatio == ScreenRatio.SixteenByTen)
+            else if (ScreenRatio == ScreenRatio.SixteenByTen)
             {
                 screenRatioX = 16;
                 screenRatioY = 10;
             }
-            else if (screenRatio == ScreenRatio.TwentyOneByNine)
+            else if (ScreenRatio == ScreenRatio.TwentyOneByNine)
             {
                 screenRatioX = 21;
                 screenRatioY = 9;
             }
-            else if (screenRatio == ScreenRatio.TwentyOneByTen)
+            else if (ScreenRatio == ScreenRatio.TwentyOneByTen)
             {
                 screenRatioX = 21;
                 screenRatioY = 10;
             }
-            else if (screenRatio == ScreenRatio.ThirtyTwoByNine)
+            else if (ScreenRatio == ScreenRatio.ThirtyTwoByNine)
             {
                 screenRatioX = 32;
                 screenRatioY = 9;
             }
-            else if (screenRatio == ScreenRatio.ThirtyTwoByTen)
+            else if (ScreenRatio == ScreenRatio.ThirtyTwoByTen)
             {
                 screenRatioX = 32;
                 screenRatioY = 10;
             }
-            else if (screenRatio == ScreenRatio.FiveByFour)
+            else if (ScreenRatio == ScreenRatio.FiveByFour)
             {
                 screenRatioX = 5;
                 screenRatioY = 4;
             }
-            else if (screenRatio == ScreenRatio.FourByThree)
+            else if (ScreenRatio == ScreenRatio.FourByThree)
             {
                 screenRatioX = 4;
                 screenRatioY = 3;
             }
 
             int screenCount = 3;
-            if (screenLayout == ScreenLayout.TripleScreen)
+            if (ScreenLayout == ScreenLayout.TripleScreen)
             {
                 screenCount = 3;
             }
@@ -594,7 +630,7 @@ namespace DisplayMagician
             }
 
             // Calculate the constants we need
-            double screenRatioDouble = screenRatioX / screenRatioY;
+            double screenRatioDouble = screenRatioY / screenRatioX;
             double bezelThickness = 2 * bezelSizeInCm;
             double height = Math.Sin(Math.Atan(screenRatioDouble)) * screenSizeInCm;
             double width = Math.Cos(Math.Atan(screenRatioDouble)) * screenSizeInCm + (screenCount > 1 ? bezelThickness : 0);
@@ -691,7 +727,7 @@ namespace DisplayMagician
 
         private static double calcAngle(double baseInCm, double distanceToMonitorInCm)
         {
-            return Math.Atan((baseInCm / 2 / distanceToMonitorInCm) * 2);
+            return (Math.Atan(baseInCm / 2 / distanceToMonitorInCm) * 2);
             // return angle * (180 / Math.PI);
         }
     }
