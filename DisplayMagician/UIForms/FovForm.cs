@@ -20,13 +20,13 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
             //CalculateCurrentDisplayLayout();
             FovCalculator.CalculateFOV(
-                ScreenLayout.TripleScreen,
+                ScreenLayout.SingleScreen,
                 ScreenRatio.SixteenByNine,
                 27,
                 ScreenMeasurementUnit.Inch,
                 56,
                 ScreenMeasurementUnit.CM,
-                7,
+                0,
                 ScreenMeasurementUnit.MM
             );
         }

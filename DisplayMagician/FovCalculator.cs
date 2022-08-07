@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static DisplayMagician.FovCalculator;
+using static System.Net.WebRequestMethods;
 using static WinFormAnimation.AnimationFunctions;
 
 namespace DisplayMagician
@@ -77,7 +78,7 @@ namespace DisplayMagician
                 GameURL = "",
                 Min = 0,
                 Max = 180,
-                Decimals = 0,
+                Decimals = 1,
                 Factor = 1,
                 BaseSingle = 0,
                 BaseTriple = 0,
@@ -185,7 +186,7 @@ namespace DisplayMagician
             },
             new GameFovDetail(){
                 FovType = FovType.HorizontalFOVBaseSteps,
-                GameName = "F1 2016+ (In-car Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
+                GameName = "F1 2016-2018 (In-car Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
                 Min = -1,
@@ -199,7 +200,7 @@ namespace DisplayMagician
             },
             new GameFovDetail(){
                 FovType = FovType.HorizontalFOVBaseSteps,
-                GameName = "F1 2016+ (Nose Camera & T-Bar Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
+                GameName = "F1 2016-2018 (Nose Camera & T-Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
                 Min = -1,
@@ -213,7 +214,7 @@ namespace DisplayMagician
             },
             new GameFovDetail(){
                 FovType = FovType.HorizontalFOVBaseSteps,
-                GameName = "F1 2016+ (Distant T-Bar Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
+                GameName = "F1 2016-2018 (T-Camer Offset)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
                 Min = -1,
@@ -226,13 +227,41 @@ namespace DisplayMagician
                 Step = 0.05 //slider step
             },
             new GameFovDetail(){
+                FovType = FovType.HorizontalFOVBaseSteps,
+                GameName = "F1 2019-2020 (In-car Camera)", //https://forums.codemasters.com/topic/46401-f1-2019-fov-values/
+                GamePublisher = "Codemasters",
+                GameURL = "",
+                Min = -2,
+                Max = +2,
+                Decimals = 2,
+                Factor = 2,
+                BaseSingle = 77,
+                BaseTriple = 77,
+                Increment = 2,
+                Step = 0.05 //slider step
+            },
+            new GameFovDetail(){
+                FovType = FovType.HorizontalFOVBaseSteps,
+                GameName = "F1 2021 (In-car Camera)",
+                GamePublisher = "Codemasters",
+                GameURL = "",
+                Min = -20,
+                Max = +20,
+                Decimals = 2,
+                Factor = 20,
+                BaseSingle = 77,
+                BaseTriple = 77,
+                Increment = 2,
+                Step = 0.05 //slider step
+            },
+            new GameFovDetail(){
                 FovType = FovType.VerticalFOVDegrees,
                 GameName = "Vertical FOV in Degrees",
                 GamePublisher = "",
                 GameURL = "",
                 Min = 0,
                 Max = 180,
-                Decimals = 0,
+                Decimals = 1,
                 Factor = 1,
                 BaseSingle = 0,
                 BaseTriple = 0,
@@ -669,8 +698,9 @@ namespace DisplayMagician
                 }
                 else if (game.FovType == FovType.HorizontalFOVBaseSteps)
                 {
-                    double value = (arcConstant * (hAngle * screenCount)) * game.Factor;
+                    double value = (arcConstant * (hAngle * screenCount));
                     value = Math.Round((value - game.BaseTriple) / game.Increment) * game.Step;
+                    value *= game.Factor;
 
                     if (value > game.Max)
                         value = game.Max;
