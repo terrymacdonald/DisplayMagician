@@ -17,6 +17,7 @@ namespace DisplayMagician
         public string GameName;
         public string GamePublisher;
         public string GameURL;
+        public string Instructions;
         public double Min;
         public double Max;
         public double Decimals;
@@ -67,6 +68,20 @@ namespace DisplayMagician
         TripleScreenAngle = 5,
     }
 
+    public struct ScreenFovDetail
+    {
+
+        public ScreenLayout ScreenLayout;
+        public ScreenAspectRatio ScreenAspectRatio;
+        public double ScreenAspectRatioX;
+        public double ScreenAspectRatioY;
+        public double ScreenSize;
+        public ScreenMeasurementUnit ScreenSizeUnit;
+        public double DistanceToScreen;
+        public ScreenMeasurementUnit DistanceToScreenUnit;
+        public double BezelWidth;
+        public ScreenMeasurementUnit BezelWidthUnit;
+    }
 
     public static class FovCalculator
     {
@@ -77,6 +92,7 @@ namespace DisplayMagician
                 GameName = "Horizontal FOV in Degrees",
                 GamePublisher = "",
                 GameURL = "",
+                Instructions = "",
                 Min = 0,
                 Max = 180,
                 Decimals = 1,
@@ -91,6 +107,7 @@ namespace DisplayMagician
                 GameName = "Project CARS 1",
                 GamePublisher = "Slightly Mad Studios",
                 GameURL = "https://store.steampowered.com/app/234630/Project_CARS/",
+                Instructions = "",
                 Min = 35,
                 Max = 180,
                 Decimals = 0,
@@ -105,6 +122,7 @@ namespace DisplayMagician
                 GameName = "Project CARS 2",
                 GamePublisher = "Slightly Mad Studios",
                 GameURL = "https://store.steampowered.com/app/378860/Project_CARS_2/",
+                Instructions = "",
                 Min = 35,
                 Max = 180,
                 Decimals = 0,
@@ -119,6 +137,7 @@ namespace DisplayMagician
                 GameName = "Project CARS 3",
                 GamePublisher = "Slightly Mad Studios",
                 GameURL = "https://store.steampowered.com/app/958400/Project_CARS_3/",
+                Instructions = "",
                 Min = 35,
                 Max = 180,
                 Decimals = 0,
@@ -134,6 +153,7 @@ namespace DisplayMagician
                 GameName = "Automobilista 2",
                 GamePublisher = "Reiza Studios",
                 GameURL = "https://store.steampowered.com/app/1066890/Automobilista_2/",
+                Instructions = "",
                 Min = 35,
                 Max = 180,
                 Decimals = 0,
@@ -148,6 +168,7 @@ namespace DisplayMagician
                 GameName = "European Truck Simulator 2",
                 GamePublisher = "SCS Software",
                 GameURL = "https://store.steampowered.com/app/227300/Euro_Truck_Simulator_2/",
+                Instructions = "",
                 Min = 35,
                 Max = 180,
                 Decimals = 0,
@@ -162,6 +183,7 @@ namespace DisplayMagician
                 GameName = "American Truck Simulator",
                 GamePublisher = "SCS Software",
                 GameURL = "https://store.steampowered.com/app/270880/American_Truck_Simulator/",
+                Instructions = "",
                 Min = 35,
                 Max = 180,
                 Decimals = 0,
@@ -176,6 +198,7 @@ namespace DisplayMagician
                 GameName = "Richard Burns Rally",
                 GamePublisher = "SCi",
                 GameURL = "https://rallysimfans.hu/rbr/download.php?download=rsfrbr",
+                Instructions = "",
                 Min = 10,
                 Max = 180,
                 Decimals = 6,
@@ -190,6 +213,7 @@ namespace DisplayMagician
                 GameName = "F1 2016-2018 (In-car Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
+                Instructions = "",
                 Min = -1,
                 Max = +1,
                 Decimals = 2,
@@ -204,6 +228,7 @@ namespace DisplayMagician
                 GameName = "F1 2016-2018 (Nose Camera & T-Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
+                Instructions = "",
                 Min = -1,
                 Max = +1,
                 Decimals = 2,
@@ -218,6 +243,7 @@ namespace DisplayMagician
                 GameName = "F1 2016-2018 (T-Camer Offset)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
+                Instructions = "",
                 Min = -1,
                 Max = +1,
                 Decimals = 2,
@@ -232,6 +258,7 @@ namespace DisplayMagician
                 GameName = "F1 2019-2020 (In-car Camera)", //https://forums.codemasters.com/topic/46401-f1-2019-fov-values/
                 GamePublisher = "Codemasters",
                 GameURL = "",
+                Instructions = "",
                 Min = -2,
                 Max = +2,
                 Decimals = 2,
@@ -246,6 +273,7 @@ namespace DisplayMagician
                 GameName = "F1 2021 (In-car Camera)",
                 GamePublisher = "Codemasters",
                 GameURL = "",
+                Instructions = "",
                 Min = -20,
                 Max = +20,
                 Decimals = 2,
@@ -260,6 +288,7 @@ namespace DisplayMagician
                 GameName = "Vertical FOV in Degrees",
                 GamePublisher = "",
                 GameURL = "",
+                Instructions = "",
                 Min = 0,
                 Max = 180,
                 Decimals = 1,
@@ -274,6 +303,7 @@ namespace DisplayMagician
                 GameName = "Assetto Corsa",
                 GamePublisher = "Kunos Simulazioni",
                 GameURL = "https://store.steampowered.com/app/244210/Assetto_Corsa/",
+                Instructions = "",
                 Min = 10,
                 Max = 120,
                 Decimals = 1,
@@ -288,6 +318,7 @@ namespace DisplayMagician
                 GameName = "Assetto Corsa Competizione",
                 GamePublisher = "Kunos Simulazioni",
                 GameURL = "https://store.steampowered.com/app/805550/Assetto_Corsa_Competizione/",
+                Instructions = "",
                 Min = 10,
                 Max = 120,
                 Decimals = 1,
@@ -302,6 +333,7 @@ namespace DisplayMagician
                 GameName = "rFactor 1",
                 GamePublisher = "Image Space Incorporated",
                 GameURL = "https://store.steampowered.com/app/339790/rFactor/",
+                Instructions = "",
                 Min = 10,
                 Max = 100,
                 Decimals = 0,
@@ -316,6 +348,7 @@ namespace DisplayMagician
                 GameName = "rFactor 2",
                 GamePublisher = "Studio 397",
                 GameURL = "https://store.steampowered.com/app/365960/rFactor_2/",
+                Instructions = "",
                 Min = 10,
                 Max = 100,
                 Decimals = 0,
@@ -330,6 +363,7 @@ namespace DisplayMagician
                 GameName = "Game Stock Car",
                 GamePublisher = "Reiza Studios",
                 GameURL = "https://store.steampowered.com/app/365960/rFactor_2/",
+                Instructions = "",
                 Min = 10,
                 Max = 100,
                 Decimals = 0,
@@ -344,6 +378,7 @@ namespace DisplayMagician
                 GameName = "Formula Truck 2013",
                 GamePublisher = "Reiza Studios",
                 GameURL = "https://store.steampowered.com/app/273750/Formula_Truck_2013/",
+                Instructions = "",
                 Min = 10,
                 Max = 100,
                 Decimals = 0,
@@ -358,6 +393,7 @@ namespace DisplayMagician
                 GameName = "Automobilista",
                 GamePublisher = "Reiza Studios",
                 GameURL = "https://store.steampowered.com/app/431600/Automobilista/",
+                Instructions = "",
                 Min = 10,
                 Max = 100,
                 Decimals = 0,
@@ -372,6 +408,7 @@ namespace DisplayMagician
                 GameName = "DiRT Rally",
                 GamePublisher = "Codemasters",
                 GameURL = "https://store.steampowered.com/app/310560/DiRT_Rally/",
+                Instructions = "",
                 Min = 10,
                 Max = 115,
                 Decimals = 0,
@@ -386,6 +423,7 @@ namespace DisplayMagician
                 GameName = "DiRT Rally 2.0",
                 GamePublisher = "Codemasters",
                 GameURL = "https://store.steampowered.com/app/690790/DiRT_Rally_20/",
+                Instructions = "",
                 Min = 10,
                 Max = 115,
                 Decimals = 0,
@@ -400,6 +438,7 @@ namespace DisplayMagician
                 GameName = "GRID",
                 GamePublisher = "Codemasters",
                 GameURL = "https://store.steampowered.com/app/703860/GRID/",
+                Instructions = "",
                 Min = 10,
                 Max = 115,
                 Decimals = 0,
@@ -414,6 +453,7 @@ namespace DisplayMagician
                 GameName = "RaceRoom Racing Experience",
                 GamePublisher = "KW Studios",
                 GameURL = "https://store.steampowered.com/app/211500/RaceRoom_Racing_Experience/",
+                Instructions = "",
                 Min = 0.5,
                 Max = 1.5,
                 Decimals = 1,
@@ -428,6 +468,7 @@ namespace DisplayMagician
                 GameName = "GTR 2 FIA GT Racing Game",
                 GamePublisher = "SimBin Studios",
                 GameURL = "https://store.steampowered.com/app/8790/GTR_2_FIA_GT_Racing_Game/",
+                Instructions = "",
                 Min = 0.5,
                 Max = 1.5,
                 Decimals = 1,
@@ -442,6 +483,7 @@ namespace DisplayMagician
                 GameName = "RACE 07",
                 GamePublisher = "SimBin Studios",
                 GameURL = "https://store.steampowered.com/app/8600/RACE_07/",
+                Instructions = "",
                 Min = 0.4,
                 Max = 1.5,
                 Decimals = 1,
@@ -456,6 +498,7 @@ namespace DisplayMagician
                 GameName = "BeamNG.drive",
                 GamePublisher = "BeamNG",
                 GameURL = "https://store.steampowered.com/app/284160/BeamNGdrive/",
+                Instructions = "",
                 Min = 0,
                 Max = 0,
                 Decimals = 0,
@@ -467,10 +510,16 @@ namespace DisplayMagician
             },*/
         }.OrderBy(tr => tr.GameName).ToList();
 
+        public static List<GameFovDetail> Games { 
+            get 
+            {
+                return _gameFovDetails;
+            } 
+        }
 
         public static ScreenLayout ScreenLayout { get; set; }
 
-        public static ScreenAspectRatio ScreenRatio { get; set; }
+        public static ScreenAspectRatio ScreenAspectRatio { get; set; }
 
         public static double ScreenRatioX { get; set; }
 
@@ -484,20 +533,34 @@ namespace DisplayMagician
 
         public static ScreenMeasurementUnit DistanceToScreenUnit { get; set; }
 
-        public static double BezelSize { get; set; }
+        public static double BezelWidth { get; set; }
 
-        public static ScreenMeasurementUnit BezelSizeUnit { get; set; }
+        public static ScreenMeasurementUnit BezelWidthUnit { get; set; }
+
+        public static bool CalculateFOV(ScreenFovDetail screenFovDetail)
+        {
+            ScreenLayout = screenFovDetail.ScreenLayout;
+            ScreenAspectRatio = screenFovDetail.ScreenAspectRatio;
+            ScreenSize = screenFovDetail.ScreenSize;
+            ScreenSizeUnit = screenFovDetail.ScreenSizeUnit;
+            DistanceToScreen = screenFovDetail.DistanceToScreen;
+            DistanceToScreenUnit = screenFovDetail.DistanceToScreenUnit;
+            BezelWidth = screenFovDetail.BezelWidth;
+            BezelWidthUnit = screenFovDetail.BezelWidthUnit;
+
+            return CalculateFOV();
+        }        
 
         public static bool CalculateFOV(ScreenLayout screenLayout, ScreenAspectRatio screenRatio, double screenSize, ScreenMeasurementUnit screenSizeUnit, double distanceToScreen, ScreenMeasurementUnit distanceToScreenUnit, double bezelSize, ScreenMeasurementUnit bezelSizeUnit)
         {
             ScreenLayout = screenLayout;
-            ScreenRatio = screenRatio;
+            ScreenAspectRatio = screenRatio;
             ScreenSize = screenSize;
             ScreenSizeUnit = screenSizeUnit;
             DistanceToScreen = distanceToScreen;
             DistanceToScreenUnit = distanceToScreenUnit;
-            BezelSize = bezelSize;
-            BezelSizeUnit = bezelSizeUnit;
+            BezelWidth = bezelSize;
+            BezelWidthUnit = bezelSizeUnit;
 
             return CalculateFOV();
         }
@@ -553,17 +616,17 @@ namespace DisplayMagician
             if (ScreenLayout == ScreenLayout.TripleScreen)
             {
                 // Convert bezelSize to cm
-                if (BezelSizeUnit == ScreenMeasurementUnit.Inch)
+                if (BezelWidthUnit == ScreenMeasurementUnit.Inch)
                 {
-                    bezelSizeInCm = BezelSize * 2.54;
+                    bezelSizeInCm = BezelWidth * 2.54;
                 }
-                else if (BezelSizeUnit == ScreenMeasurementUnit.MM)
+                else if (BezelWidthUnit == ScreenMeasurementUnit.MM)
                 {
-                    bezelSizeInCm = BezelSize / 10;
+                    bezelSizeInCm = BezelWidth / 10;
                 }
-                else if (BezelSizeUnit == ScreenMeasurementUnit.CM)
+                else if (BezelWidthUnit == ScreenMeasurementUnit.CM)
                 {
-                    bezelSizeInCm = BezelSize;
+                    bezelSizeInCm = BezelWidth;
                 }
                 else
                 {
@@ -612,47 +675,47 @@ namespace DisplayMagician
             // If we get here we can start doing the calculation! Yay!
             double screenRatioX = 21;
             double screenRatioY = 9;
-            if (ScreenRatio == ScreenAspectRatio.SixteenByNine)
+            if (ScreenAspectRatio == ScreenAspectRatio.SixteenByNine)
             {
                 screenRatioX = 16;
                 screenRatioY = 9;
             }
-            else if (ScreenRatio == ScreenAspectRatio.SixteenByTen)
+            else if (ScreenAspectRatio == ScreenAspectRatio.SixteenByTen)
             {
                 screenRatioX = 16;
                 screenRatioY = 10;
             }
-            else if (ScreenRatio == ScreenAspectRatio.TwentyOneByNine)
+            else if (ScreenAspectRatio == ScreenAspectRatio.TwentyOneByNine)
             {
                 screenRatioX = 21;
                 screenRatioY = 9;
             }
-            else if (ScreenRatio == ScreenAspectRatio.TwentyOneByTen)
+            else if (ScreenAspectRatio == ScreenAspectRatio.TwentyOneByTen)
             {
                 screenRatioX = 21;
                 screenRatioY = 10;
             }
-            else if (ScreenRatio == ScreenAspectRatio.ThirtyTwoByNine)
+            else if (ScreenAspectRatio == ScreenAspectRatio.ThirtyTwoByNine)
             {
                 screenRatioX = 32;
                 screenRatioY = 9;
             }
-            else if (ScreenRatio == ScreenAspectRatio.ThirtyTwoByTen)
+            else if (ScreenAspectRatio == ScreenAspectRatio.ThirtyTwoByTen)
             {
                 screenRatioX = 32;
                 screenRatioY = 10;
             }
-            else if (ScreenRatio == ScreenAspectRatio.FiveByFour)
+            else if (ScreenAspectRatio == ScreenAspectRatio.FiveByFour)
             {
                 screenRatioX = 5;
                 screenRatioY = 4;
             }
-            else if (ScreenRatio == ScreenAspectRatio.FourByThree)
+            else if (ScreenAspectRatio == ScreenAspectRatio.FourByThree)
             {
                 screenRatioX = 4;
                 screenRatioY = 3;
             }
-            else if (ScreenRatio == ScreenAspectRatio.Custom)
+            else if (ScreenAspectRatio == ScreenAspectRatio.Custom)
             {
                 if (ScreenRatioX > 0)
                 {
@@ -778,6 +841,7 @@ namespace DisplayMagician
                     // Unknown type of FOV requested
                     return false;
                 }
+                _gameFovDetails[i] = game;
             }
 
             return true;
@@ -787,6 +851,53 @@ namespace DisplayMagician
         {
             return (Math.Atan(baseInCm / 2 / distanceToMonitorInCm) * 2);
             // return angle * (180 / Math.PI);
+        }
+
+        public static string PrintResultsToString()
+        {
+            string output = "";
+
+            foreach (var game in Games)
+            {
+                if (String.IsNullOrEmpty(game.GamePublisher))
+                {
+                    output += $"Game: {game.GameName}\n";
+                }
+                else
+                {
+                    output += $"Game: {game.GameName} ({game.GamePublisher})\n";
+                }
+                output += $"URL: {game.GameURL}\n";
+
+                if (game.FovType == FovType.HorizontalFOVDegrees)
+                {
+                    output += $"Horizontal FOV (Degrees): {game.ResultDegrees}\n";
+                }
+                else if (game.FovType == FovType.VerticalFOVDegrees)
+                {
+                    output += $"Vertical FOV (Degrees): {game.ResultDegrees}\n";
+                }
+                else if (game.FovType == FovType.HorizontalFOVRadians)
+                {
+                    output += $"Horizontal FOV (Radians): {game.ResultRadians}\n";
+                }
+                else if (game.FovType == FovType.HorizontalFOVBaseSteps)
+                {
+                    output += $"Horizontal FOV (Steps from center): {game.ResultBaseSteps}\n";
+                }
+                else if (game.FovType == FovType.VerticalFOVTimes)
+                {
+                    output += $"Vertical FOV (Times): {game.ResultTimes}\n";
+                }
+                else if (game.FovType == FovType.TripleScreenAngle)
+                {
+                    output += $"Triple Screen Angle (Degrees): {game.ResultDegrees}\n";
+                }
+                output += $"Instructions: {game.Instructions}\n\n";
+                output += $"----------------------------------------------\n\n";
+            }
+
+            return output;
         }
     }
 }

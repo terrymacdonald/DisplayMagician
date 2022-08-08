@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician;
 using DisplayMagicianShared;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagician.UIForms
 {
@@ -16,7 +17,7 @@ namespace DisplayMagician.UIForms
     {   
         
         private ScreenLayout _screenLayout = ScreenLayout.TripleScreen;
-
+        
         public FovCalcForm()
         {
             InitializeComponent();
@@ -68,7 +69,7 @@ namespace DisplayMagician.UIForms
             txt_aspect_ratio_y.Visible = false;
 
 
-            //CalculateCurrentDisplayLayout();
+            /*//CalculateCurrentDisplayLayout();
             FovCalculator.CalculateFOV(
                 ScreenLayout.SingleScreen,
                 ScreenAspectRatio.SixteenByNine,
@@ -78,7 +79,10 @@ namespace DisplayMagician.UIForms
                 ScreenMeasurementUnit.CM,
                 0,
                 ScreenMeasurementUnit.MM
-            );
+            );*/
+
+            // Center the form on the primary screen
+            Utils.CenterOnPrimaryScreen(this);
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -128,20 +132,22 @@ namespace DisplayMagician.UIForms
             // Firstly do the bezels (if needed)
             if (_screenLayout == ScreenLayout.TripleScreen)
             {
+                FovCalculator.ScreenLayout = ScreenLayout.TripleScreen;
                 if (Double.TryParse(txt_bezel_thickness.Text, out result))
                 {
-                    FovCalculator.BezelSize = result;
+                    FovCalculator.BezelWidth = result;
                 }
                 else
                 {
-                    FovCalculator.BezelSize = 0;
+                    FovCalculator.BezelWidth = 0;
                 }
             }            
             else
             {
-                FovCalculator.BezelSize = 0;
+                FovCalculator.ScreenLayout = ScreenLayout.SingleScreen;
+                FovCalculator.BezelWidth = 0;
             }
-            FovCalculator.BezelSizeUnit = (ScreenMeasurementUnit)cmb_bezel_thickness.SelectedValue;
+            FovCalculator.BezelWidthUnit = (ScreenMeasurementUnit)cmb_bezel_thickness.SelectedValue;
 
             // Next, do the Screen size
             if (Double.TryParse(txt_screen_size.Text, out result))
@@ -187,10 +193,12 @@ namespace DisplayMagician.UIForms
                 {
                     FovCalculator.ScreenRatioY = 9;
                 }
-            }            
-            
+            }
+
             // Now actually do the calculation!
             FovCalculator.CalculateFOV();
+
+            rtb_results.Text = FovCalculator.PrintResultsToString();
 
         }
 
@@ -223,5 +231,109 @@ namespace DisplayMagician.UIForms
                 txt_aspect_ratio_y.Visible = false;
             }
         }
+
+        private void FovCalcForm_Load(object sender, EventArgs e)
+        {
+            // Refresh the profiles to see whats valid
+            ProfileRepository.IsPossibleRefresh();
+
+            // Use the profiles to populate the form based on the current config
+            // If there is 3 or more screens connected, then assume its a triple screen
+            ScreenFovDetail currentScreenFovDetail = new ScreenFovDetail();
+
+            if (ProfileRepository.CurrentProfile.WindowsDisplayConfig.DisplayIdentifiers.Count >= 3)
+            {
+                currentScreenFovDetail.ScreenLayout = ScreenLayout.TripleScreen;
+            }
+            else
+            {
+                currentScreenFovDetail.ScreenLayout = ScreenLayout.SingleScreen;
+            }
+
+            try
+            {
+                GDI_DISPLAY_SETTING gdiDevice = ProfileRepository.CurrentProfile.WindowsDisplayConfig.GdiDisplaySettings.Where(dp => dp.Value.IsPrimary).First().Value;
+                double aspectRatio = gdiDevice.DeviceMode.PixelsWidth / gdiDevice.DeviceMode.PixelsHeight;
+                if (aspectRatio == (16 / 9)) {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.SixteenByNine;
+                }
+                else if (aspectRatio == (16 / 10)) {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.SixteenByTen;
+                }
+                else if (aspectRatio == (21 / 9)) {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.TwentyOneByNine;
+                }
+                else if (aspectRatio == (21 / 10)) {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.TwentyOneByTen;
+                }
+                else if (aspectRatio == (32 / 9)) {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.ThirtyTwoByNine;
+                }
+                else if (aspectRatio == (32 / 10)) {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.ThirtyTwoByTen;
+                }
+                else if (aspectRatio == (4 / 3)) {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.FourByThree;
+                }
+                else if (aspectRatio == (5 / 4))
+                {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.FiveByFour;
+                }
+                else
+                {
+                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.Custom;
+                    currentScreenFovDetail.ScreenAspectRatioX = gdiDevice.DeviceMode.PixelsWidth;
+                    currentScreenFovDetail.ScreenAspectRatioY = gdiDevice.DeviceMode.PixelsHeight;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.SixteenByNine;
+            }
+
+            currentScreenFovDetail.ScreenSize = 27;
+            currentScreenFovDetail.ScreenSizeUnit = ScreenMeasurementUnit.Inch;
+
+            currentScreenFovDetail.DistanceToScreen = 60;
+            currentScreenFovDetail.DistanceToScreenUnit = ScreenMeasurementUnit.CM;
+
+            currentScreenFovDetail.BezelWidth = 3;
+            currentScreenFovDetail.BezelWidthUnit = ScreenMeasurementUnit.MM;
+            
+            // Now set the UI based on the currentScreenFovDetail
+            if (currentScreenFovDetail.ScreenLayout == ScreenLayout.TripleScreen)
+            {
+                btn_triple_screens.PerformClick();
+            }
+            else
+            {
+                btn_single_screen.PerformClick();
+            }
+            txt_screen_size.Text = currentScreenFovDetail.ScreenSize.ToString();
+            cmb_screen_size_units.SelectedValue = currentScreenFovDetail.ScreenSizeUnit;
+            cmb_aspect_ratio.SelectedValue = currentScreenFovDetail.ScreenAspectRatio;
+            if (currentScreenFovDetail.ScreenAspectRatio == ScreenAspectRatio.Custom)
+            {
+                txt_aspect_ratio_x.Text = currentScreenFovDetail.ScreenAspectRatioX.ToString();
+                txt_aspect_ratio_y.Text = currentScreenFovDetail.ScreenAspectRatioY.ToString();
+            }
+            txt_distance_to_screen.Text = currentScreenFovDetail.DistanceToScreen.ToString();
+            cmb_distance_to_screen.SelectedValue = currentScreenFovDetail.DistanceToScreenUnit;
+            txt_bezel_thickness.Text = currentScreenFovDetail.BezelWidth.ToString();
+            cmb_bezel_thickness.SelectedValue = currentScreenFovDetail.BezelWidthUnit;
+
+            // Run the FOVCal on load so we have something to see!
+            FovCalculator.CalculateFOV(currentScreenFovDetail);
+
+            rtb_results.Text = FovCalculator.PrintResultsToString();
+
+        }
+
+        private void txt_distance_to_screen_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
     }
 }
