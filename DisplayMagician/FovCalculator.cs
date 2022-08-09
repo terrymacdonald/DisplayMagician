@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.UI.WebControls.WebParts;
 using static DisplayMagician.FovCalculator;
 using static System.Net.WebRequestMethods;
 using static WinFormAnimation.AnimationFunctions;
@@ -914,6 +915,65 @@ namespace DisplayMagician
                 }
                 output += $"Instructions: {game.Instructions}\n\n";
                 output += $"----------------------------------------------\n\n";
+            }
+
+            return output;
+        }
+
+        public static string PrintResultsToRtf()
+        {
+            string output = "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\colortbl;\\red0\\green0\\blue0;}{\\fonttbl\r\n{\\f0\\fswiss\\fcharset1252 Times New Roman;}\r\n{\\f1\\fswiss\\fcharset1252 microsoft sans serif,sans-serif;}\r\n{\\f2\\fswiss\\fcharset1252 &quot;}\r\n}{\\*\\generator CuteEditor 5.0;}\\viewkind4\\uc1\\pard\\par";
+
+            foreach (var game in Games)
+            {
+                if (String.IsNullOrEmpty(game.GamePublisher))
+                {
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone {game.GameName}\\par\r\n";
+                }
+                else
+                {
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone {game.GameName} ({game.GamePublisher})\\par\r\n";                
+                }
+                output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone URL:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {game.GameURL}\\par\r\n";
+                if (!String.IsNullOrWhiteSpace(game.Instructions))
+                {
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Instructions:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {game.Instructions}\\par\r\n";
+                }                
+
+                if (game.FovType == FovType.HorizontalFOVDegrees)
+                {
+                    
+                    //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone HorizontalFOV(Degrees):\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees Horizontal FOV\\par\r\n";
+                }
+                else if (game.FovType == FovType.VerticalFOVDegrees)
+                {
+                    //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Vertical FOV (Degrees):\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees Vertical FOV\\par\r\n";
+                }
+                else if (game.FovType == FovType.HorizontalFOVRadians)
+                {
+                    //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Horizontal FOV (Radians):\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultRadians} Radians Horizontal FOV\\par\r\n";
+                }
+                else if (game.FovType == FovType.HorizontalFOVBaseSteps)
+                {
+                    //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Horizontal FOV (Steps from center):\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultBaseSteps} steps from default FOV\\par\r\n";
+                }
+                else if (game.FovType == FovType.VerticalFOVTimes)
+                {
+                    //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Vertical FOV (Times):\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultTimes} Times Vertical FOV\\par\r\n";
+                }
+                else if (game.FovType == FovType.TripleScreenAngle)
+                {
+                    //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Triple Screen Angle (Degrees):\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees Triple Screen Angle\\par\r\n";
+                }
+                
+                output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+                output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
             }
 
             return output;

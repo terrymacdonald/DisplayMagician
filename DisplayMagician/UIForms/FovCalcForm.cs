@@ -226,7 +226,8 @@ namespace DisplayMagician.UIForms
             // Now actually do the calculation!
             FovCalculator.CalculateFOV();
 
-            rtb_results.Text = FovCalculator.PrintResultsToString();
+            //rtb_results.Text = FovCalculator.PrintResultsToString();
+            rtb_results.Rtf = FovCalculator.PrintResultsToRtf();
 
             lbl_hresult.Text = FovCalculator.ResultHorizontalDegrees.ToString();
             lbl_vresult.Text = FovCalculator.ResultVerticalDegrees.ToString();
@@ -446,6 +447,11 @@ namespace DisplayMagician.UIForms
             {
                 RunFovCalculation();
             }
+        }
+
+        private void llbl_markus_ewert_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {        
+            System.Diagnostics.Process.Start("https://github.com/dinex86/FOV-Calculator");
         }
     }
 }

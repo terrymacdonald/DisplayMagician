@@ -65,6 +65,7 @@
             this.rtb_results = new System.Windows.Forms.RichTextBox();
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_about_fov = new System.Windows.Forms.Label();
+            this.llbl_markus_ewert = new System.Windows.Forms.LinkLabel();
             this.pnl_fov.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.split_fov)).BeginInit();
             this.split_fov.Panel1.SuspendLayout();
@@ -106,6 +107,7 @@
             // split_fov.Panel1
             // 
             this.split_fov.Panel1.BackColor = System.Drawing.Color.Black;
+            this.split_fov.Panel1.Controls.Add(this.llbl_markus_ewert);
             this.split_fov.Panel1.Controls.Add(this.lbl_bezel_thickness_description);
             this.split_fov.Panel1.Controls.Add(this.lbl_distinace_to_screen_tip);
             this.split_fov.Panel1.Controls.Add(this.lbl_screen_type);
@@ -513,6 +515,20 @@
             this.lbl_about_fov.Text = resources.GetString("lbl_about_fov.Text");
             this.lbl_about_fov.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // llbl_markus_ewert
+            // 
+            this.llbl_markus_ewert.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.llbl_markus_ewert.AutoSize = true;
+            this.llbl_markus_ewert.LinkBehavior = System.Windows.Forms.LinkBehavior.AlwaysUnderline;
+            this.llbl_markus_ewert.LinkColor = System.Drawing.Color.LightSkyBlue;
+            this.llbl_markus_ewert.Location = new System.Drawing.Point(216, 567);
+            this.llbl_markus_ewert.Name = "llbl_markus_ewert";
+            this.llbl_markus_ewert.Size = new System.Drawing.Size(312, 13);
+            this.llbl_markus_ewert.TabIndex = 54;
+            this.llbl_markus_ewert.TabStop = true;
+            this.llbl_markus_ewert.Text = "A massive thanks to Markus Ewert for permission to use his code";
+            this.llbl_markus_ewert.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llbl_markus_ewert_LinkClicked);
+            // 
             // FovCalcForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -581,5 +597,6 @@
         private System.Windows.Forms.Label lbl_hresult;
         private System.Windows.Forms.Label lbl_htitle;
         private System.Windows.Forms.Button btn_print;
+        private System.Windows.Forms.LinkLabel llbl_markus_ewert;
     }
 }
