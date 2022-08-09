@@ -87,7 +87,7 @@ namespace DisplayMagician
     {
 
         private static List<GameFovDetail> _gameFovDetails = new List<GameFovDetail>() {
-            new GameFovDetail(){
+            /*new GameFovDetail(){
                 FovType = FovType.HorizontalFOVDegrees,
                 GameName = "Horizontal FOV in Degrees",
                 GamePublisher = "",
@@ -101,7 +101,7 @@ namespace DisplayMagician
                 BaseTriple = 0,
                 Increment = 0,
                 Step = 0
-            },
+            },*/
             new GameFovDetail(){
                 FovType = FovType.HorizontalFOVDegrees,
                 GameName = "Project CARS 1",
@@ -283,7 +283,7 @@ namespace DisplayMagician
                 Increment = 2,
                 Step = 0.05 //slider step
             },
-            new GameFovDetail(){
+            /*new GameFovDetail(){
                 FovType = FovType.VerticalFOVDegrees,
                 GameName = "Vertical FOV in Degrees",
                 GamePublisher = "",
@@ -297,7 +297,7 @@ namespace DisplayMagician
                 BaseTriple = 0,
                 Increment = 0,
                 Step = 0
-            },
+            },*/
             new GameFovDetail(){
                 FovType = FovType.VerticalFOVDegrees,
                 GameName = "Assetto Corsa",
@@ -493,21 +493,21 @@ namespace DisplayMagician
                 Increment = 0,
                 Step = 0
             },
-            /*new GameFovDetail(){
-                FovType = FovType.HorizontalFOVDegrees,
+            new GameFovDetail(){
+                FovType = FovType.VerticalFOVDegrees,
                 GameName = "BeamNG.drive",
                 GamePublisher = "BeamNG",
                 GameURL = "https://store.steampowered.com/app/284160/BeamNGdrive/",
                 Instructions = "",
-                Min = 0,
-                Max = 0,
-                Decimals = 0,
+                Min = 10,
+                Max = 120,
+                Decimals = 1,
                 Factor = 1,
                 BaseSingle = 0,
                 BaseTriple = 0,
                 Increment = 0,
                 Step = 0
-            },*/
+            },
         }.OrderBy(tr => tr.GameName).ToList();
 
         public static List<GameFovDetail> Games { 
@@ -534,6 +534,10 @@ namespace DisplayMagician
         public static ScreenMeasurementUnit DistanceToScreenUnit { get; set; }
 
         public static double BezelWidth { get; set; }
+
+        public static double ResultHorizontalDegrees { get; set; }
+
+        public static double ResultVerticalDegrees { get; set; }
 
         public static ScreenMeasurementUnit BezelWidthUnit { get; set; }
 
@@ -636,43 +640,45 @@ namespace DisplayMagician
             }        
 
             // Check sensible minimums and maximums
-            // Check that screen size is between 48cm and 508cm diagonally (19 inch to 200 inch screen sizes)
-            if (screenSizeInCm < 48)
+            // Check that screen size is between cm and 508cm diagonally (7 inch to 200 inch screen sizes)
+            if (screenSizeInCm <= 17)
             {
                 // Screen size is too small
-                return false;
+                screenSizeInCm = 17;
             }
-            else if (screenSizeInCm > 508)
+            else if (screenSizeInCm >= 508)
             {
                 // Screen size is too big
-                return false;
+                screenSizeInCm = 508;
             }
 
             // Check that distance to screen is between 5cm and 10m
-            if (distanceToScreenInCm < 5)
+            if (distanceToScreenInCm <= 5)
             {
                 // Distance to screen is too small
-                return false;
+                distanceToScreenInCm = 5;
             }
-            else if (distanceToScreenInCm > 10000)
+            else if (distanceToScreenInCm >= 10000)
             {
                 // Distance to screen is too big
-                return false;
+                distanceToScreenInCm = 10000;
+
             }
 
             // Check that bezel size is between 0 and 10cm
-            if (bezelSizeInCm < 0)
+            if (bezelSizeInCm <= 0)
             {
                 // Bezel size is too small
-                return false;
+                bezelSizeInCm = 0;
             }
-            else if (bezelSizeInCm > 10)
+            else if (bezelSizeInCm >= 10)
             {
                 // Bezel size is too big
-                return false;
+                bezelSizeInCm = 10;
             }
 
             // If we get here we can start doing the calculation! Yay!
+            
             double screenRatioX = 21;
             double screenRatioY = 9;
             if (ScreenAspectRatio == ScreenAspectRatio.SixteenByNine)
@@ -723,7 +729,7 @@ namespace DisplayMagician
                 }                
                 else
                 {
-                    return false;
+                    screenRatioX = 16;
                 }
                 if (ScreenRatioY > 0)
                 {
@@ -731,12 +737,13 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    return false;
+                    screenRatioY = 9;
                 }
             }
             else
             {
-                return false;
+                screenRatioX = 16;
+                screenRatioY = 9;
             }
 
             int screenCount = 3;
@@ -758,25 +765,26 @@ namespace DisplayMagician
             double vAngle = calcAngle(height, distanceToScreenInCm);
             double arcConstant = (180 / Math.PI);
 
-
+            double value = 0;
+            double base10 = 0;
             for (int i = 0; i < _gameFovDetails.Count; i++)
             {
                 GameFovDetail game = _gameFovDetails[i];
                 if (game.FovType == FovType.HorizontalFOVDegrees)
                 {
-                    double value = (arcConstant * (hAngle * screenCount)) * game.Factor;
+                    value = (arcConstant * (hAngle * screenCount)) * game.Factor;
                     if (value > game.Max)
                         value = game.Max;
                     else if (value < game.Min)
                         value = game.Min;
 
-                    double base10 = Math.Pow(10, game.Decimals);
+                    base10 = Math.Pow(10, game.Decimals);
                     game.ResultDegrees = Math.Round((value * base10) / base10, (int)game.Decimals);
 
                 }
                 else if (game.FovType == FovType.HorizontalFOVRadians)
 {
-                    double value = (arcConstant * calcAngle(width / screenRatioX * screenRatioY / 3 * 4, distanceToScreenInCm)) * game.Factor;
+                    value = (arcConstant * calcAngle(width / screenRatioX * screenRatioY / 3 * 4, distanceToScreenInCm)) * game.Factor;
                     if (value > game.Max)
                         value = game.Max;
                     else if (value < game.Min)
@@ -784,12 +792,12 @@ namespace DisplayMagician
 
                     value *= (Math.PI / 180);
 
-                    double base10 = Math.Pow(10, game.Decimals);
+                    base10 = Math.Pow(10, game.Decimals);
                     game.ResultRadians = Math.Round((value * base10) / base10, (int)game.Decimals);
                 }
                 else if (game.FovType == FovType.HorizontalFOVBaseSteps)
                 {
-                    double value = (arcConstant * (hAngle * screenCount));
+                    value = (arcConstant * (hAngle * screenCount));
                     value = Math.Round((value - game.BaseTriple) / game.Increment) * game.Step;
                     value *= game.Factor;
 
@@ -798,23 +806,24 @@ namespace DisplayMagician
                     else if (value < game.Min)
                         value = game.Min;
 
-                    double base10 = Math.Pow(10, game.Decimals);
+                    base10 = Math.Pow(10, game.Decimals);
                     game.ResultBaseSteps = Math.Round((value * base10) / base10, (int)game.Decimals);
                 }
                 else if (game.FovType == FovType.VerticalFOVDegrees)
                 {
-                    double value = (arcConstant * vAngle) * game.Factor;
+                    value = (arcConstant * vAngle) * game.Factor;
                     if (value > game.Max)
                         value = game.Max;
                     else if (value < game.Min)
                         value = game.Min;
 
-                    double base10 = Math.Pow(10, game.Decimals);
+                    base10 = Math.Pow(10, game.Decimals);
                     game.ResultDegrees = Math.Round((value * base10) / base10, (int)game.Decimals);
+                    
                 }
                 else if (game.FovType == FovType.VerticalFOVTimes)
                 {
-                    double value = (arcConstant * vAngle) * game.Factor;
+                    value = (arcConstant * vAngle) * game.Factor;
                     value /= (screenCount == 1 ? game.BaseSingle : game.BaseTriple);
 
                     if (value > game.Max)
@@ -822,18 +831,18 @@ namespace DisplayMagician
                     else if (value < game.Min)
                         value = game.Min;
 
-                    double base10 = Math.Pow(10, game.Decimals);
+                    base10 = Math.Pow(10, game.Decimals);
                     game.ResultTimes = Math.Round((value * base10) / base10, (int)game.Decimals);
                 }
                 else if (game.FovType == FovType.TripleScreenAngle)
                 {
-                    double value = (arcConstant * hAngle) * game.Factor;
+                    value = (arcConstant * hAngle) * game.Factor;
                     if (value > game.Max)
                         value = game.Max;
                     else if (value < game.Min)
                         value = game.Min;
 
-                    double base10 = Math.Pow(10, game.Decimals);
+                    base10 = Math.Pow(10, game.Decimals);
                     game.ResultDegrees = Math.Round((value * base10) / base10, (int)game.Decimals);
                 }
                 else
@@ -843,6 +852,16 @@ namespace DisplayMagician
                 }
                 _gameFovDetails[i] = game;
             }
+
+            // Figure out the Horizontal FOV Degrees
+            value = (arcConstant * (hAngle * screenCount));
+            base10 = Math.Pow(10, 1);
+            ResultHorizontalDegrees = Math.Round((value * base10) / base10, 1);
+
+            // Figure out the Horizontal Vertical Degrees
+            value = (arcConstant * vAngle);
+            base10 = Math.Pow(10, 1);
+            ResultVerticalDegrees = Math.Round((value * base10) / base10, 1);
 
             return true;
         }

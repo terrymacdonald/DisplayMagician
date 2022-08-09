@@ -30,7 +30,6 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FovCalcForm));
             this.btn_back = new System.Windows.Forms.Button();
-            this.btn_update = new System.Windows.Forms.Button();
             this.pnl_fov = new System.Windows.Forms.Panel();
             this.split_fov = new System.Windows.Forms.SplitContainer();
             this.lbl_bezel_thickness_description = new System.Windows.Forms.Label();
@@ -57,11 +56,15 @@
             this.cmb_aspect_ratio = new System.Windows.Forms.ComboBox();
             this.lbl_aspect_ratio_arrow = new System.Windows.Forms.Label();
             this.lbl_aspect_ratio_separator = new System.Windows.Forms.Label();
+            this.lbl_vresult = new System.Windows.Forms.Label();
+            this.lbl_vtitle = new System.Windows.Forms.Label();
+            this.lbl_hresult = new System.Windows.Forms.Label();
+            this.lbl_htitle = new System.Windows.Forms.Label();
+            this.btn_print = new System.Windows.Forms.Button();
             this.lbl_results = new System.Windows.Forms.Label();
             this.rtb_results = new System.Windows.Forms.RichTextBox();
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_about_fov = new System.Windows.Forms.Label();
-            this.btn_print = new System.Windows.Forms.Button();
             this.pnl_fov.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.split_fov)).BeginInit();
             this.split_fov.Panel1.SuspendLayout();
@@ -85,29 +88,12 @@
             this.btn_back.UseVisualStyleBackColor = true;
             this.btn_back.Click += new System.EventHandler(this.btn_back_Click);
             // 
-            // btn_update
-            // 
-            this.btn_update.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_update.BackColor = System.Drawing.Color.Black;
-            this.btn_update.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_update.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_update.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_update.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_update.ForeColor = System.Drawing.Color.White;
-            this.btn_update.Location = new System.Drawing.Point(577, 718);
-            this.btn_update.Name = "btn_update";
-            this.btn_update.Size = new System.Drawing.Size(128, 40);
-            this.btn_update.TabIndex = 7;
-            this.btn_update.Text = "&Update";
-            this.btn_update.UseVisualStyleBackColor = false;
-            this.btn_update.Click += new System.EventHandler(this.btn_update_Click);
-            // 
             // pnl_fov
             // 
             this.pnl_fov.Controls.Add(this.split_fov);
             this.pnl_fov.Location = new System.Drawing.Point(2, 128);
             this.pnl_fov.Name = "pnl_fov";
-            this.pnl_fov.Size = new System.Drawing.Size(1301, 578);
+            this.pnl_fov.Size = new System.Drawing.Size(1301, 594);
             this.pnl_fov.TabIndex = 9;
             // 
             // split_fov
@@ -148,9 +134,14 @@
             // split_fov.Panel2
             // 
             this.split_fov.Panel2.BackColor = System.Drawing.Color.Black;
+            this.split_fov.Panel2.Controls.Add(this.lbl_vresult);
+            this.split_fov.Panel2.Controls.Add(this.lbl_vtitle);
+            this.split_fov.Panel2.Controls.Add(this.lbl_hresult);
+            this.split_fov.Panel2.Controls.Add(this.lbl_htitle);
+            this.split_fov.Panel2.Controls.Add(this.btn_print);
             this.split_fov.Panel2.Controls.Add(this.lbl_results);
             this.split_fov.Panel2.Controls.Add(this.rtb_results);
-            this.split_fov.Size = new System.Drawing.Size(1301, 578);
+            this.split_fov.Size = new System.Drawing.Size(1301, 594);
             this.split_fov.SplitterDistance = 711;
             this.split_fov.TabIndex = 0;
             // 
@@ -252,7 +243,7 @@
             this.btn_triple_screens.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_triple_screens.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_triple_screens.ForeColor = System.Drawing.Color.White;
-            this.btn_triple_screens.Location = new System.Drawing.Point(549, 39);
+            this.btn_triple_screens.Location = new System.Drawing.Point(549, 55);
             this.btn_triple_screens.Name = "btn_triple_screens";
             this.btn_triple_screens.Size = new System.Drawing.Size(139, 33);
             this.btn_triple_screens.TabIndex = 45;
@@ -268,7 +259,7 @@
             this.btn_single_screen.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_single_screen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_single_screen.ForeColor = System.Drawing.Color.White;
-            this.btn_single_screen.Location = new System.Drawing.Point(389, 39);
+            this.btn_single_screen.Location = new System.Drawing.Point(389, 55);
             this.btn_single_screen.Name = "btn_single_screen";
             this.btn_single_screen.Size = new System.Drawing.Size(139, 33);
             this.btn_single_screen.TabIndex = 44;
@@ -286,7 +277,6 @@
             this.lbl_bezel_thickness.Size = new System.Drawing.Size(150, 20);
             this.lbl_bezel_thickness.TabIndex = 15;
             this.lbl_bezel_thickness.Text = "5. Bezel Thickness?";
-            this.lbl_bezel_thickness.Click += new System.EventHandler(this.lbl_bezel_thickness_Click);
             // 
             // cmb_bezel_thickness
             // 
@@ -296,6 +286,7 @@
             this.cmb_bezel_thickness.Name = "cmb_bezel_thickness";
             this.cmb_bezel_thickness.Size = new System.Drawing.Size(133, 28);
             this.cmb_bezel_thickness.TabIndex = 14;
+            this.cmb_bezel_thickness.SelectedIndexChanged += new System.EventHandler(this.cmb_bezel_thickness_SelectedIndexChanged);
             // 
             // txt_bezel_thickness
             // 
@@ -314,6 +305,7 @@
             this.cmb_distance_to_screen.Name = "cmb_distance_to_screen";
             this.cmb_distance_to_screen.Size = new System.Drawing.Size(133, 28);
             this.cmb_distance_to_screen.TabIndex = 11;
+            this.cmb_distance_to_screen.SelectedIndexChanged += new System.EventHandler(this.cmb_distance_to_screen_SelectedIndexChanged);
             // 
             // txt_distance_to_screen
             // 
@@ -353,6 +345,7 @@
             this.txt_aspect_ratio_y.Name = "txt_aspect_ratio_y";
             this.txt_aspect_ratio_y.Size = new System.Drawing.Size(69, 26);
             this.txt_aspect_ratio_y.TabIndex = 6;
+            this.txt_aspect_ratio_y.TextChanged += new System.EventHandler(this.txt_aspect_ratio_y_TextChanged);
             // 
             // txt_aspect_ratio_x
             // 
@@ -361,6 +354,7 @@
             this.txt_aspect_ratio_x.Name = "txt_aspect_ratio_x";
             this.txt_aspect_ratio_x.Size = new System.Drawing.Size(64, 26);
             this.txt_aspect_ratio_x.TabIndex = 5;
+            this.txt_aspect_ratio_x.TextChanged += new System.EventHandler(this.txt_aspect_ratio_x_TextChanged);
             // 
             // txt_screen_size
             // 
@@ -369,6 +363,7 @@
             this.txt_screen_size.Name = "txt_screen_size";
             this.txt_screen_size.Size = new System.Drawing.Size(78, 26);
             this.txt_screen_size.TabIndex = 4;
+            this.txt_screen_size.TextChanged += new System.EventHandler(this.txt_screen_size_TextChanged);
             // 
             // cmb_screen_size_units
             // 
@@ -378,6 +373,7 @@
             this.cmb_screen_size_units.Name = "cmb_screen_size_units";
             this.cmb_screen_size_units.Size = new System.Drawing.Size(133, 28);
             this.cmb_screen_size_units.TabIndex = 3;
+            this.cmb_screen_size_units.SelectedIndexChanged += new System.EventHandler(this.cmb_screen_size_units_SelectedIndexChanged);
             // 
             // cmb_aspect_ratio
             // 
@@ -411,6 +407,67 @@
             this.lbl_aspect_ratio_separator.TabIndex = 53;
             this.lbl_aspect_ratio_separator.Text = ":";
             // 
+            // lbl_vresult
+            // 
+            this.lbl_vresult.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_vresult.ForeColor = System.Drawing.Color.White;
+            this.lbl_vresult.Location = new System.Drawing.Point(374, 543);
+            this.lbl_vresult.Name = "lbl_vresult";
+            this.lbl_vresult.Size = new System.Drawing.Size(171, 35);
+            this.lbl_vresult.TabIndex = 27;
+            this.lbl_vresult.Text = "33.9";
+            this.lbl_vresult.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // lbl_vtitle
+            // 
+            this.lbl_vtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_vtitle.ForeColor = System.Drawing.Color.White;
+            this.lbl_vtitle.Location = new System.Drawing.Point(374, 526);
+            this.lbl_vtitle.Name = "lbl_vtitle";
+            this.lbl_vtitle.Size = new System.Drawing.Size(171, 23);
+            this.lbl_vtitle.TabIndex = 26;
+            this.lbl_vtitle.Text = "Vertical FOV Degrees";
+            this.lbl_vtitle.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // lbl_hresult
+            // 
+            this.lbl_hresult.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_hresult.ForeColor = System.Drawing.Color.White;
+            this.lbl_hresult.Location = new System.Drawing.Point(39, 543);
+            this.lbl_hresult.Name = "lbl_hresult";
+            this.lbl_hresult.Size = new System.Drawing.Size(171, 35);
+            this.lbl_hresult.TabIndex = 25;
+            this.lbl_hresult.Text = "160.5";
+            this.lbl_hresult.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // lbl_htitle
+            // 
+            this.lbl_htitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_htitle.ForeColor = System.Drawing.Color.White;
+            this.lbl_htitle.Location = new System.Drawing.Point(40, 526);
+            this.lbl_htitle.Name = "lbl_htitle";
+            this.lbl_htitle.Size = new System.Drawing.Size(171, 23);
+            this.lbl_htitle.TabIndex = 24;
+            this.lbl_htitle.Text = "Horizontal FOV Degrees";
+            this.lbl_htitle.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // btn_print
+            // 
+            this.btn_print.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_print.BackColor = System.Drawing.Color.Black;
+            this.btn_print.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_print.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_print.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_print.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_print.ForeColor = System.Drawing.Color.White;
+            this.btn_print.Location = new System.Drawing.Point(246, 538);
+            this.btn_print.Name = "btn_print";
+            this.btn_print.Size = new System.Drawing.Size(92, 33);
+            this.btn_print.TabIndex = 23;
+            this.btn_print.Text = "&Print";
+            this.btn_print.UseVisualStyleBackColor = false;
+            this.btn_print.Click += new System.EventHandler(this.btn_print_Click);
+            // 
             // lbl_results
             // 
             this.lbl_results.AutoSize = true;
@@ -428,7 +485,7 @@
             // 
             this.rtb_results.Location = new System.Drawing.Point(12, 52);
             this.rtb_results.Name = "rtb_results";
-            this.rtb_results.Size = new System.Drawing.Size(560, 418);
+            this.rtb_results.Size = new System.Drawing.Size(560, 464);
             this.rtb_results.TabIndex = 0;
             this.rtb_results.Text = "";
             // 
@@ -456,22 +513,6 @@
             this.lbl_about_fov.Text = resources.GetString("lbl_about_fov.Text");
             this.lbl_about_fov.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // btn_print
-            // 
-            this.btn_print.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_print.BackColor = System.Drawing.Color.Black;
-            this.btn_print.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_print.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_print.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_print.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_print.ForeColor = System.Drawing.Color.White;
-            this.btn_print.Location = new System.Drawing.Point(720, 718);
-            this.btn_print.Name = "btn_print";
-            this.btn_print.Size = new System.Drawing.Size(128, 40);
-            this.btn_print.TabIndex = 22;
-            this.btn_print.Text = "&Print";
-            this.btn_print.UseVisualStyleBackColor = false;
-            // 
             // FovCalcForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -480,10 +521,8 @@
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1301, 770);
-            this.Controls.Add(this.btn_print);
             this.Controls.Add(this.lbl_about_fov);
             this.Controls.Add(this.lbl_title);
-            this.Controls.Add(this.btn_update);
             this.Controls.Add(this.pnl_fov);
             this.Controls.Add(this.btn_back);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -507,7 +546,6 @@
         #endregion
 
         private System.Windows.Forms.Button btn_back;
-        private System.Windows.Forms.Button btn_update;
         private System.Windows.Forms.Panel pnl_fov;
         private System.Windows.Forms.SplitContainer split_fov;
         private System.Windows.Forms.Label lbl_title;
@@ -538,6 +576,10 @@
         private System.Windows.Forms.Label lbl_aspect_ratio_separator;
         private System.Windows.Forms.Label lbl_results;
         private System.Windows.Forms.RichTextBox rtb_results;
+        private System.Windows.Forms.Label lbl_vresult;
+        private System.Windows.Forms.Label lbl_vtitle;
+        private System.Windows.Forms.Label lbl_hresult;
+        private System.Windows.Forms.Label lbl_htitle;
         private System.Windows.Forms.Button btn_print;
     }
 }

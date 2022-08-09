@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using DisplayMagician;
 using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
+using Microsoft.WindowsAPICodePack.Win32Native;
 
 namespace DisplayMagician.UIForms
 {
@@ -17,7 +18,8 @@ namespace DisplayMagician.UIForms
     {   
         
         private ScreenLayout _screenLayout = ScreenLayout.TripleScreen;
-        
+        private bool _formLoaded = false;
+
         public FovCalcForm()
         {
             InitializeComponent();
@@ -110,6 +112,10 @@ namespace DisplayMagician.UIForms
             lbl_bezel_thickness_description.Visible = false;
             txt_bezel_thickness.Visible = false;
 
+            if (_formLoaded)
+            {
+                RunFovCalculation();
+            }
         }
 
         private void btn_triple_screens_Click(object sender, EventArgs e)
@@ -123,9 +129,15 @@ namespace DisplayMagician.UIForms
             lbl_bezel_thickness.Visible = true;
             lbl_bezel_thickness_description.Visible = true;
             txt_bezel_thickness.Visible = true;
+
+            if (_formLoaded)
+            {
+                RunFovCalculation();
+            }
         }
 
-        private void btn_update_Click(object sender, EventArgs e)
+        
+        private void RunFovCalculation()
         {
             double result;
             // Populate the FOV Calc data, ready for the calculation
@@ -141,11 +153,15 @@ namespace DisplayMagician.UIForms
                 {
                     FovCalculator.BezelWidth = 0;
                 }
-            }            
+            }
             else
             {
                 FovCalculator.ScreenLayout = ScreenLayout.SingleScreen;
                 FovCalculator.BezelWidth = 0;
+            }
+            if (cmb_bezel_thickness.SelectedValue == null)
+            {
+                return;
             }
             FovCalculator.BezelWidthUnit = (ScreenMeasurementUnit)cmb_bezel_thickness.SelectedValue;
 
@@ -158,21 +174,33 @@ namespace DisplayMagician.UIForms
             {
                 FovCalculator.ScreenSize = 0;
             }
+            if (cmb_screen_size_units.SelectedValue == null)
+            {
+                return;
+            }
             FovCalculator.ScreenSizeUnit = (ScreenMeasurementUnit)cmb_screen_size_units.SelectedValue;
 
             // Next, do the Distance to Screen
             if (Double.TryParse(txt_distance_to_screen.Text, out result))
             {
                 FovCalculator.DistanceToScreen = result;
-            } 
+            }
             else
             {
                 FovCalculator.DistanceToScreen = 0;
             }
+            if (cmb_distance_to_screen.SelectedValue == null)
+            {
+                return;
+            }
             FovCalculator.DistanceToScreenUnit = (ScreenMeasurementUnit)cmb_distance_to_screen.SelectedValue;
 
             // Next, do the Screen Aspect Ratio
-
+            if (cmb_aspect_ratio.SelectedValue == null)
+            {
+                return;
+            }
+            FovCalculator.ScreenAspectRatio = (ScreenAspectRatio)cmb_aspect_ratio.SelectedValue;
             if (((ScreenAspectRatio)cmb_aspect_ratio.SelectedValue).Equals(ScreenAspectRatio.Custom))
             {
                 result = 0;
@@ -194,23 +222,17 @@ namespace DisplayMagician.UIForms
                     FovCalculator.ScreenRatioY = 9;
                 }
             }
-
+            
             // Now actually do the calculation!
             FovCalculator.CalculateFOV();
 
             rtb_results.Text = FovCalculator.PrintResultsToString();
 
-        }
-
-        private void lbl_bezel_thickness_Click(object sender, EventArgs e)
-        {
+            lbl_hresult.Text = FovCalculator.ResultHorizontalDegrees.ToString();
+            lbl_vresult.Text = FovCalculator.ResultVerticalDegrees.ToString();
 
         }
-
-        private void txt_bezel_thickness_TextChanged(object sender, EventArgs e)
-        {
-
-        }
+      
 
         private void cmb_aspect_ratio_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -230,6 +252,10 @@ namespace DisplayMagician.UIForms
                 txt_aspect_ratio_x.Visible = false;
                 txt_aspect_ratio_y.Visible = false;
             }
+            if (_formLoaded)
+            {
+                RunFovCalculation();
+            }
         }
 
         private void FovCalcForm_Load(object sender, EventArgs e)
@@ -243,11 +269,11 @@ namespace DisplayMagician.UIForms
 
             if (ProfileRepository.CurrentProfile.WindowsDisplayConfig.DisplayIdentifiers.Count >= 3)
             {
-                currentScreenFovDetail.ScreenLayout = ScreenLayout.TripleScreen;
+                btn_triple_screens.PerformClick();
             }
             else
             {
-                currentScreenFovDetail.ScreenLayout = ScreenLayout.SingleScreen;
+                btn_single_screen.PerformClick();
             }
 
             try
@@ -255,85 +281,171 @@ namespace DisplayMagician.UIForms
                 GDI_DISPLAY_SETTING gdiDevice = ProfileRepository.CurrentProfile.WindowsDisplayConfig.GdiDisplaySettings.Where(dp => dp.Value.IsPrimary).First().Value;
                 double aspectRatio = gdiDevice.DeviceMode.PixelsWidth / gdiDevice.DeviceMode.PixelsHeight;
                 if (aspectRatio == (16 / 9)) {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.SixteenByNine;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.SixteenByNine;
                 }
                 else if (aspectRatio == (16 / 10)) {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.SixteenByTen;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.SixteenByTen;
                 }
                 else if (aspectRatio == (21 / 9)) {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.TwentyOneByNine;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.TwentyOneByNine;
                 }
                 else if (aspectRatio == (21 / 10)) {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.TwentyOneByTen;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.TwentyOneByTen;
                 }
                 else if (aspectRatio == (32 / 9)) {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.ThirtyTwoByNine;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.ThirtyTwoByNine;
                 }
                 else if (aspectRatio == (32 / 10)) {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.ThirtyTwoByTen;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.ThirtyTwoByTen;
                 }
                 else if (aspectRatio == (4 / 3)) {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.FourByThree;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.FourByThree;
                 }
                 else if (aspectRatio == (5 / 4))
                 {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.FiveByFour;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.FiveByFour;
                 }
                 else
                 {
-                    currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.Custom;
-                    currentScreenFovDetail.ScreenAspectRatioX = gdiDevice.DeviceMode.PixelsWidth;
-                    currentScreenFovDetail.ScreenAspectRatioY = gdiDevice.DeviceMode.PixelsHeight;
+                    cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.Custom;
+                    txt_aspect_ratio_x.Text = gdiDevice.DeviceMode.PixelsWidth.ToString(); 
+                    txt_aspect_ratio_y.Text = gdiDevice.DeviceMode.PixelsHeight.ToString();
                 }
 
             }
             catch (Exception ex)
             {
-                currentScreenFovDetail.ScreenAspectRatio = ScreenAspectRatio.SixteenByNine;
+                cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.SixteenByNine;
             }
 
-            currentScreenFovDetail.ScreenSize = 27;
-            currentScreenFovDetail.ScreenSizeUnit = ScreenMeasurementUnit.Inch;
+            txt_screen_size.Text = 27.ToString();
+            cmb_screen_size_units.SelectedValue = ScreenMeasurementUnit.Inch;
 
-            currentScreenFovDetail.DistanceToScreen = 60;
-            currentScreenFovDetail.DistanceToScreenUnit = ScreenMeasurementUnit.CM;
+            txt_distance_to_screen.Text = 60.ToString();
+            cmb_distance_to_screen.SelectedValue = ScreenMeasurementUnit.CM;
 
-            currentScreenFovDetail.BezelWidth = 3;
-            currentScreenFovDetail.BezelWidthUnit = ScreenMeasurementUnit.MM;
-            
-            // Now set the UI based on the currentScreenFovDetail
-            if (currentScreenFovDetail.ScreenLayout == ScreenLayout.TripleScreen)
+            txt_bezel_thickness.Text = 3.ToString();
+            cmb_bezel_thickness.SelectedValue = ScreenMeasurementUnit.MM;
+
+            RunFovCalculation();
+
+            _formLoaded = true;
+        }
+
+
+        private bool CheckValueWithinRange(TextBox value, ComboBox unit, double lowerBound, double upperBound)
+        {
+            // Convert bezelSize to cm
+            double result = 0;
+            double resultInCm = 0;
+            if (Double.TryParse(value.Text, out result))
             {
-                btn_triple_screens.PerformClick();
+
+                ScreenMeasurementUnit unitValue = (ScreenMeasurementUnit)unit.SelectedValue;
+                if (unitValue == ScreenMeasurementUnit.Inch)
+                {
+                    resultInCm = result * 2.54;
+                }
+                else if (unitValue == ScreenMeasurementUnit.MM)
+                {
+                    resultInCm = result / 10;
+                }
+                else if (unitValue == ScreenMeasurementUnit.CM)
+                {
+                    resultInCm = result;
+                }
+                else
+                {
+                    // Unit supplied is not one we know about!
+                    resultInCm = 0;
+                }
+
+                if (resultInCm >= lowerBound && resultInCm <= upperBound)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
-                btn_single_screen.PerformClick();
+                return false;
             }
-            txt_screen_size.Text = currentScreenFovDetail.ScreenSize.ToString();
-            cmb_screen_size_units.SelectedValue = currentScreenFovDetail.ScreenSizeUnit;
-            cmb_aspect_ratio.SelectedValue = currentScreenFovDetail.ScreenAspectRatio;
-            if (currentScreenFovDetail.ScreenAspectRatio == ScreenAspectRatio.Custom)
+
+        }
+
+        private void btn_print_Click(object sender, EventArgs e)
+        {
+            // Print to file
+        }
+
+        private void cmb_screen_size_units_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_formLoaded && CheckValueWithinRange(txt_screen_size, cmb_screen_size_units, 17, 508))
             {
-                txt_aspect_ratio_x.Text = currentScreenFovDetail.ScreenAspectRatioX.ToString();
-                txt_aspect_ratio_y.Text = currentScreenFovDetail.ScreenAspectRatioY.ToString();
+                RunFovCalculation();
+            }            
+        }
+
+        private void cmb_distance_to_screen_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Check that distance to screen is between 5cm and 10m
+            if (_formLoaded && CheckValueWithinRange(txt_distance_to_screen, cmb_distance_to_screen, 5, 10000))
+            { 
+                RunFovCalculation();
             }
-            txt_distance_to_screen.Text = currentScreenFovDetail.DistanceToScreen.ToString();
-            cmb_distance_to_screen.SelectedValue = currentScreenFovDetail.DistanceToScreenUnit;
-            txt_bezel_thickness.Text = currentScreenFovDetail.BezelWidth.ToString();
-            cmb_bezel_thickness.SelectedValue = currentScreenFovDetail.BezelWidthUnit;
+        }
 
-            // Run the FOVCal on load so we have something to see!
-            FovCalculator.CalculateFOV(currentScreenFovDetail);
+        private void cmb_bezel_thickness_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Check that bezel size is between 0 and 10cm
+            if (_formLoaded && CheckValueWithinRange(txt_bezel_thickness, cmb_bezel_thickness, 0, 10))
+            {
+                RunFovCalculation();
+            }
+        }
 
-            rtb_results.Text = FovCalculator.PrintResultsToString();
+        private void txt_screen_size_TextChanged(object sender, EventArgs e)
+        {
+            // Check that screen size is between 17cm and 508cm diagonally (7 inch to 200 inch screen sizes)
+            if (_formLoaded && CheckValueWithinRange(txt_screen_size, cmb_screen_size_units, 17, 508))
+            {
+                RunFovCalculation();
+            }
+        }
 
+        private void txt_aspect_ratio_y_TextChanged(object sender, EventArgs e)
+        {
+            if (_formLoaded)
+            {
+                RunFovCalculation();
+            }
+        }
+
+        private void txt_aspect_ratio_x_TextChanged(object sender, EventArgs e)
+        {
+            if (_formLoaded)
+            {
+                RunFovCalculation();
+            }
         }
 
         private void txt_distance_to_screen_TextChanged(object sender, EventArgs e)
         {
-
+            if (_formLoaded && CheckValueWithinRange(txt_distance_to_screen, cmb_distance_to_screen, 5, 10000))
+            {
+                RunFovCalculation();
+            }
         }
 
+        private void txt_bezel_thickness_TextChanged(object sender, EventArgs e)
+        {
+            if (_formLoaded && CheckValueWithinRange(txt_bezel_thickness, cmb_bezel_thickness, 0, 10))
+            {
+                RunFovCalculation();
+            }
+        }
     }
 }
