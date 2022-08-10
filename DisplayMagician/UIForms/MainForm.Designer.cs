@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btn_fov_calc = new System.Windows.Forms.Button();
             this.btn_help = new System.Windows.Forms.Button();
             this.btn_donate = new System.Windows.Forms.Button();
             this.btn_settings = new System.Windows.Forms.Button();
@@ -73,6 +74,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btn_fov_calc);
             this.splitContainer1.Panel1.Controls.Add(this.btn_help);
             this.splitContainer1.Panel1.Controls.Add(this.btn_donate);
             this.splitContainer1.Panel1.Controls.Add(this.btn_settings);
@@ -89,6 +91,16 @@
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
             this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
             this.splitContainer1.TabStop = false;
+            // 
+            // btn_fov_calc
+            // 
+            resources.ApplyResources(this.btn_fov_calc, "btn_fov_calc");
+            this.btn_fov_calc.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_fov_calc.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_fov_calc.ForeColor = System.Drawing.Color.White;
+            this.btn_fov_calc.Name = "btn_fov_calc";
+            this.btn_fov_calc.UseVisualStyleBackColor = true;
+            this.btn_fov_calc.Click += new System.EventHandler(this.btn_fov_calc_Click);
             // 
             // btn_help
             // 
@@ -332,5 +344,6 @@
         private System.Windows.Forms.Button btn_settings;
         private System.Windows.Forms.Button btn_donate;
         private System.Windows.Forms.Button btn_help;
+        private System.Windows.Forms.Button btn_fov_calc;
     }
 }

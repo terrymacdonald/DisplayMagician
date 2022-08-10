@@ -96,11 +96,12 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AppLibraries\App.cs" />
+	  <Compile Include="FovCalculator.cs" />
+	  <Compile Include="AppLibraries\App.cs" />
     <Compile Include="AppLibraries\LocalLibrary.cs" />
     <Compile Include="GameLibraries\GameLibrary.cs" />
     <Compile Include="AppLibraries\LocalApp.cs" />
-    <Compile Include="GameLibraries\GOGGame.cs" />
+	<Compile Include="GameLibraries\GOGGame.cs" />
     <Compile Include="GameLibraries\XboxGame.cs" />
     <Compile Include="GameLibraries\XboxLibrary.cs" />
     <Compile Include="GameLibraries\GOGLibrary.cs" />
@@ -160,6 +161,12 @@
     <Compile Include="UIForms\ChooseExecutableForm.Designer.cs">
       <DependentUpon>ChooseExecutableForm.cs</DependentUpon>
     </Compile>
+	  <Compile Include="UIForms\FovCalcForm.cs">
+		  <SubType>Form</SubType>
+	  </Compile>
+	  <Compile Include="UIForms\FovCalcForm.Designer.cs">
+		  <DependentUpon>FovCalcForm.cs</DependentUpon>
+	  </Compile>
     <Compile Include="UIForms\AppAdaptor.cs" />
     <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
@@ -262,6 +269,9 @@
     <EmbeddedResource Include="UIForms\ChooseExecutableForm.resx">
       <DependentUpon>ChooseExecutableForm.cs</DependentUpon>
     </EmbeddedResource>
+	  <EmbeddedResource Include="UIForms\FovCalcForm.resx">
+		  <DependentUpon>FovCalcForm.cs</DependentUpon>
+	  </EmbeddedResource>
     <EmbeddedResource Include="UIForms\HotkeyForm.resx">
       <DependentUpon>HotkeyForm.cs</DependentUpon>
     </EmbeddedResource>
