@@ -60,7 +60,7 @@
             this.lbl_vtitle = new System.Windows.Forms.Label();
             this.lbl_hresult = new System.Windows.Forms.Label();
             this.lbl_htitle = new System.Windows.Forms.Label();
-            this.btn_print = new System.Windows.Forms.Button();
+            this.btn_save = new System.Windows.Forms.Button();
             this.lbl_results = new System.Windows.Forms.Label();
             this.rtb_results = new System.Windows.Forms.RichTextBox();
             this.lbl_title = new System.Windows.Forms.Label();
@@ -140,7 +140,7 @@
             this.split_fov.Panel2.Controls.Add(this.lbl_vtitle);
             this.split_fov.Panel2.Controls.Add(this.lbl_hresult);
             this.split_fov.Panel2.Controls.Add(this.lbl_htitle);
-            this.split_fov.Panel2.Controls.Add(this.btn_print);
+            this.split_fov.Panel2.Controls.Add(this.btn_save);
             this.split_fov.Panel2.Controls.Add(this.lbl_results);
             this.split_fov.Panel2.Controls.Add(this.rtb_results);
             this.split_fov.Size = new System.Drawing.Size(1301, 594);
@@ -453,22 +453,22 @@
             this.lbl_htitle.Text = "Horizontal FOV Degrees";
             this.lbl_htitle.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
-            // btn_print
+            // btn_save
             // 
-            this.btn_print.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_print.BackColor = System.Drawing.Color.Black;
-            this.btn_print.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_print.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_print.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_print.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_print.ForeColor = System.Drawing.Color.White;
-            this.btn_print.Location = new System.Drawing.Point(246, 538);
-            this.btn_print.Name = "btn_print";
-            this.btn_print.Size = new System.Drawing.Size(92, 33);
-            this.btn_print.TabIndex = 23;
-            this.btn_print.Text = "&Print";
-            this.btn_print.UseVisualStyleBackColor = false;
-            this.btn_print.Click += new System.EventHandler(this.btn_print_Click);
+            this.btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_save.BackColor = System.Drawing.Color.Black;
+            this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_save.ForeColor = System.Drawing.Color.White;
+            this.btn_save.Location = new System.Drawing.Point(246, 538);
+            this.btn_save.Name = "btn_save";
+            this.btn_save.Size = new System.Drawing.Size(92, 33);
+            this.btn_save.TabIndex = 23;
+            this.btn_save.Text = "&Save";
+            this.btn_save.UseVisualStyleBackColor = false;
+            this.btn_save.Click += new System.EventHandler(this.btn_save_Click);
             // 
             // lbl_results
             // 
@@ -596,7 +596,7 @@
         private System.Windows.Forms.Label lbl_vtitle;
         private System.Windows.Forms.Label lbl_hresult;
         private System.Windows.Forms.Label lbl_htitle;
-        private System.Windows.Forms.Button btn_print;
+        private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.LinkLabel llbl_markus_ewert;
     }
 }

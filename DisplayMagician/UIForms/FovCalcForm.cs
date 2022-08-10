@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -227,7 +228,7 @@ namespace DisplayMagician.UIForms
             FovCalculator.CalculateFOV();
 
             //rtb_results.Text = FovCalculator.PrintResultsToString();
-            rtb_results.Rtf = FovCalculator.PrintResultsToRtf();
+            rtb_results.Rtf = FovCalculator.CreateRtfResults();
 
             lbl_hresult.Text = FovCalculator.ResultHorizontalDegrees.ToString();
             lbl_vresult.Text = FovCalculator.ResultVerticalDegrees.ToString();
@@ -377,9 +378,22 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void btn_print_Click(object sender, EventArgs e)
+        private void btn_save_Click(object sender, EventArgs e)
         {
-            // Print to file
+            // Save to file
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+
+            saveFileDialog.Filter = "rtf files (*.rtf)|*.rtf|All files (*.*)|*.*";
+            saveFileDialog.FilterIndex = 1;
+            saveFileDialog.RestoreDirectory = true;
+            saveFileDialog.FileName = "DisplayMagician-FOV-Results.rtf";
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string filename = saveFileDialog.FileName;
+
+                File.WriteAllText(filename,FovCalculator.SaveRtfResultsFile());
+            }
         }
 
         private void cmb_screen_size_units_SelectedIndexChanged(object sender, EventArgs e)

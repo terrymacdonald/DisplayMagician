@@ -2,10 +2,12 @@
 using Microsoft.WindowsAPICodePack.Win32Native.Consts;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.UI.WebControls.WebParts;
+using System.Windows.Forms;
 using static DisplayMagician.FovCalculator;
 using static System.Net.WebRequestMethods;
 using static WinFormAnimation.AnimationFunctions;
@@ -213,7 +215,7 @@ namespace DisplayMagician
                 FovType = FovType.HorizontalFOVBaseSteps,
                 GameName = "F1 2016-2018 (In-car Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
-                GameURL = "",
+                GameURL = "https://store.steampowered.com/app/391040/F1_2016/",
                 Instructions = "",
                 Min = -1,
                 Max = +1,
@@ -226,7 +228,7 @@ namespace DisplayMagician
             },
             new GameFovDetail(){
                 FovType = FovType.HorizontalFOVBaseSteps,
-                GameName = "F1 2016-2018 (Nose Camera & T-Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
+                GameName = "F1 2016-2018 (Nose & T-Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
                 Instructions = "",
@@ -241,7 +243,7 @@ namespace DisplayMagician
             },
             new GameFovDetail(){
                 FovType = FovType.HorizontalFOVBaseSteps,
-                GameName = "F1 2016-2018 (T-Camer Offset)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
+                GameName = "F1 2016-2018 (T-Camera Offset)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
                 GameURL = "",
                 Instructions = "",
@@ -258,7 +260,7 @@ namespace DisplayMagician
                 FovType = FovType.HorizontalFOVBaseSteps,
                 GameName = "F1 2019-2020 (In-car Camera)", //https://forums.codemasters.com/topic/46401-f1-2019-fov-values/
                 GamePublisher = "Codemasters",
-                GameURL = "",
+                GameURL = "https://store.steampowered.com/app/1080110/F1_2020/",
                 Instructions = "",
                 Min = -2,
                 Max = +2,
@@ -273,7 +275,22 @@ namespace DisplayMagician
                 FovType = FovType.HorizontalFOVBaseSteps,
                 GameName = "F1 2021 (In-car Camera)",
                 GamePublisher = "Codemasters",
-                GameURL = "",
+                GameURL = "https://store.steampowered.com/app/1134570/F1_2021/",
+                Instructions = "",
+                Min = -20,
+                Max = +20,
+                Decimals = 2,
+                Factor = 20,
+                BaseSingle = 77,
+                BaseTriple = 77,
+                Increment = 2,
+                Step = 0.05 //slider step
+            },
+            new GameFovDetail(){
+                FovType = FovType.HorizontalFOVBaseSteps,
+                GameName = "F1 22 (In-car Camera)",
+                GamePublisher = "Codemasters",
+                GameURL = "https://store.steampowered.com/app/1692250/F1_22/",
                 Instructions = "",
                 Min = -20,
                 Max = +20,
@@ -873,7 +890,7 @@ namespace DisplayMagician
             // return angle * (180 / Math.PI);
         }
 
-        public static string PrintResultsToString()
+        public static string CreateStringResults()
         {
             string output = "";
 
@@ -920,9 +937,137 @@ namespace DisplayMagician
             return output;
         }
 
-        public static string PrintResultsToRtf()
+        public static string SaveRtfResultsFile()
         {
             string output = "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\colortbl;\\red0\\green0\\blue0;}{\\fonttbl\r\n{\\f0\\fswiss\\fcharset1252 Times New Roman;}\r\n{\\f1\\fswiss\\fcharset1252 microsoft sans serif,sans-serif;}\r\n{\\f2\\fswiss\\fcharset1252 &quot;}\r\n}{\\*\\generator CuteEditor 5.0;}\\viewkind4\\uc1\\pard\\par";
+
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone DisplayMagician Field-of-View Results\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone This file contains the results of the DisplayMagician Field-of-View Calculator. The calculator used the following settings to produce the results you see.\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+
+            if (FovCalculator.ScreenLayout == ScreenLayout.TripleScreen)
+            {
+                output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Display Layout:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone Triple Screen\\par\r\n";
+            }            
+            else
+            {
+                output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Display Layout:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone Triple Screen\\par\r\n";
+            }
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Screen Size:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {ScreenSize} {ScreenSizeUnit.ToString("G")}\\par\r\n";
+            double screenRatioX;
+            double screenRatioY;
+            if (ScreenAspectRatio == ScreenAspectRatio.SixteenByNine)
+            {
+                screenRatioX = 16;
+                screenRatioY = 9;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.SixteenByTen)
+            {
+                screenRatioX = 16;
+                screenRatioY = 10;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.TwentyOneByNine)
+            {
+                screenRatioX = 21;
+                screenRatioY = 9;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.TwentyOneByTen)
+            {
+                screenRatioX = 21;
+                screenRatioY = 10;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.ThirtyTwoByNine)
+            {
+                screenRatioX = 32;
+                screenRatioY = 9;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.ThirtyTwoByTen)
+            {
+                screenRatioX = 32;
+                screenRatioY = 10;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.FiveByFour)
+            {
+                screenRatioX = 5;
+                screenRatioY = 4;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.FourByThree)
+            {
+                screenRatioX = 4;
+                screenRatioY = 3;
+            }
+            else if (ScreenAspectRatio == ScreenAspectRatio.Custom)
+            {
+                if (ScreenRatioX > 0)
+                {
+                    screenRatioX = ScreenRatioX;
+                }
+                else
+                {
+                    screenRatioX = 16;
+                }
+                if (ScreenRatioY > 0)
+                {
+                    screenRatioY = ScreenRatioY;
+                }
+                else
+                {
+                    screenRatioY = 9;
+                }
+            }
+            else
+            {
+                screenRatioX = 16;
+                screenRatioY = 9;
+            }
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Aspect Ratio:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {screenRatioX}:{screenRatioY}\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Distance to Screen:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {DistanceToScreen} {DistanceToScreenUnit.ToString("G")}\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Bezel Size:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {BezelWidth} {BezelWidthUnit.ToString("G")}\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  ------------------------------------------------------------------------------------------------\\par\r\n"; 
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+
+            output += CreateRtfGameOutput();
+
+            // Add the Horizontal Degrees at the end
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Horizontal FOV in Degrees\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultHorizontalDegrees} Degrees\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+
+            // And then add the Vertical Degrees at the end
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Vertical FOV in Degrees\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultVerticalDegrees} Degrees\\par\r\n";            
+
+            return output;
+        }
+
+        public static string CreateRtfResults()
+        {
+            string output = "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\colortbl;\\red0\\green0\\blue0;}{\\fonttbl\r\n{\\f0\\fswiss\\fcharset1252 Times New Roman;}\r\n{\\f1\\fswiss\\fcharset1252 microsoft sans serif,sans-serif;}\r\n{\\f2\\fswiss\\fcharset1252 &quot;}\r\n}{\\*\\generator CuteEditor 5.0;}\\viewkind4\\uc1\\pard\\par";
+
+            output += CreateRtfGameOutput();
+
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  ---------------------------------------------------------------------------------------\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+
+            // Add the Horizontal Degrees at the end
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Horizontal FOV in Degrees\\par\r\n";            
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultHorizontalDegrees} Degrees\\par\r\n";           
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+
+            // And then add the Vertical Degrees at the end
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Vertical FOV in Degrees\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultVerticalDegrees} Degrees\\par\r\n";
+
+            return output;
+        }
+
+        public static string CreateRtfGameOutput()
+        {
+            string output = "";
 
             foreach (var game in Games)
             {
@@ -932,46 +1077,46 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone {game.GameName} ({game.GamePublisher})\\par\r\n";                
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone {game.GameName} ({game.GamePublisher})\\par\r\n";
                 }
                 output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone URL:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone  \\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {game.GameURL}\\par\r\n";
                 if (!String.IsNullOrWhiteSpace(game.Instructions))
                 {
                     output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Instructions:\\cf1\\f1\\fs20\\qj\\b0\\i0\\ulnone {game.Instructions}\\par\r\n";
-                }                
+                }
 
                 if (game.FovType == FovType.HorizontalFOVDegrees)
                 {
-                    
+
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone HorizontalFOV(Degrees):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees Horizontal FOV\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
                 }
                 else if (game.FovType == FovType.VerticalFOVDegrees)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Vertical FOV (Degrees):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees Vertical FOV\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
                 }
                 else if (game.FovType == FovType.HorizontalFOVRadians)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Horizontal FOV (Radians):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultRadians} Radians Horizontal FOV\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultRadians} Radians\\par\r\n";
                 }
                 else if (game.FovType == FovType.HorizontalFOVBaseSteps)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Horizontal FOV (Steps from center):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultBaseSteps} steps from default FOV\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultBaseSteps} steps from default FOV\\par\r\n";
                 }
                 else if (game.FovType == FovType.VerticalFOVTimes)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Vertical FOV (Times):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultTimes} Times Vertical FOV\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultTimes} Times\\par\r\n";
                 }
                 else if (game.FovType == FovType.TripleScreenAngle)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Triple Screen Angle (Degrees):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees Triple Screen Angle\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
                 }
-                
+
                 output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
                 output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
             }
