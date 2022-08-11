@@ -238,145 +238,143 @@ namespace DisplayMagician.AppLibraries
 
         public static async Task<List<InstalledProgram>> GetShortcutProgramsFromFolderAsync(string path, CancellationTokenSource cancelToken = null)
         {
-            //return await Task.Run(() =>
-            //{
-                var folderExceptions = new string[]
+            
+            var folderExceptions = new string[]
+            {
+                @"\Accessibility\",
+                @"\Accessories\",
+                @"\Administrative Tools\",
+                @"\Maintenance\",
+                @"\StartUp\",
+                @"\Windows ",
+                @"\Microsoft ",
+            };
+
+            var pathExceptions = new string[]
+            {
+                @"\system32\",
+                @"\windows\",
+            };
+
+            var shell = new IWshRuntimeLibrary.WshShell();
+            var apps = new List<InstalledProgram>();
+            var shortcuts = new SafeFileEnumerator(path, "*.lnk", SearchOption.AllDirectories);
+
+            foreach (var shortcut in shortcuts)
+            {
+                // Finish if this task is cancelled
+                if (cancelToken?.IsCancellationRequested == true)
                 {
-                    @"\Accessibility\",
-                    @"\Accessories\",
-                    @"\Administrative Tools\",
-                    @"\Maintenance\",
-                    @"\StartUp\",
-                    @"\Windows ",
-                    @"\Microsoft ",
-                };
-
-                var pathExceptions = new string[]
-                {
-                    @"\system32\",
-                    @"\windows\",
-                };
-
-                var shell = new IWshRuntimeLibrary.WshShell();
-                var apps = new List<InstalledProgram>();
-                var shortcuts = new SafeFileEnumerator(path, "*.lnk", SearchOption.AllDirectories);
-
-                foreach (var shortcut in shortcuts)
-                {
-                    // Finish if this task is cancelled
-                    if (cancelToken?.IsCancellationRequested == true)
-                    {
-                        return null;
-                    }
-
-                    // Skip this shortcut if it's a directory
-                    if (shortcut.Attributes.HasFlag(FileAttributes.Directory))
-                    {
-                        continue;
-                    }
-
-                    // Get the link filename
-                    var fileName = shortcut.Name;
-                    var Directory = System.IO.Path.GetDirectoryName(shortcut.FullName);
-
-                    // Skip the folders we want to ignore
-                    if (folderExceptions.FirstOrDefault(a => shortcut.FullName.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)
-                    {
-                        continue;
-                    }
-
-                    // Parse the link file to get access to the settings in it.
-                    var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcut.FullName);
-                    var target = link.TargetPath;
-
-                    // Skip the paths we don't want to process.
-                    if (pathExceptions.FirstOrDefault(a => target.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)
-                    {
-                        continue;
-                    }
-
-                    // Ignore uninstallers
-                    if (UninstallProgram.IsFileUninstaller(System.IO.Path.GetFileName(target)))
-                    {
-                        continue;
-                    }
-
-                    // Ignore duplicates
-                    if (apps.FirstOrDefault(a => a.Path == target) != null)
-                    {
-                        continue;
-                    }
-
-                    // Ignore non-application links
-                    if (System.IO.Path.GetExtension(target) != ".exe")
-                    {
-                        continue;
-                    }
-
-                    string iconLocation;
-                    if (!String.IsNullOrWhiteSpace(link.IconLocation))
-                    {
-                        if (Regex.IsMatch(link.IconLocation, @"^,\d+$"))
-                        {
-                            // This is an empty shortcut path, so we need to use the target path instead
-                            iconLocation = link.TargetPath;
-                        }
-                        else if (Regex.IsMatch(link.IconLocation, @",\d+$"))
-                        {
-                            // This is a shortcut path, so we need to remove the icon number from the end
-                            Match myMatches = Regex.Match(link.IconLocation, @"^(.*?),\d+$");
-                            if (myMatches.Success)
-                            {
-                                iconLocation = myMatches.Groups[1].Value;
-                            }
-                            else
-                            {
-                                iconLocation = link.TargetPath;
-                            }
-                        }                        
-                    }
-                    else
-                    {
-                        iconLocation = link.TargetPath;
-                    }
-
-                    if (System.IO.File.Exists(link.IconLocation))
-                    {
-                        iconLocation = link.IconLocation;
-                    }
-                    else
-                    {
-                        iconLocation = link.TargetPath;
-                    }
-
-
-                    string workingDir = link.WorkingDirectory;
-                    if (link.WorkingDirectory == null || String.IsNullOrWhiteSpace(link.WorkingDirectory) || !System.IO.File.Exists(link.WorkingDirectory))
-                    {
-                        workingDir = System.IO.Path.GetDirectoryName(target);
-                    }
-
-                    List<ShortcutBitmap> allLogos = ImageUtils.GetMeAllBitmapsFromFile(DecodeIndirectFolders(iconLocation));
-
-                    var app = new InstalledProgram()
-                    {
-                        Path = DecodeIndirectFolders(target),
-                        IconPath = DecodeIndirectFolders(iconLocation),
-                        Name = System.IO.Path.GetFileNameWithoutExtension(shortcut.Name),
-                        WorkDir = DecodeIndirectFolders(workingDir),
-                        AppId = $"FromFolder_{System.IO.Path.GetFileNameWithoutExtension(shortcut.Name)}",
-                        Logo = ImageUtils.GetMeLargestAvailableBitmap(allLogos),
-                        AllLogos = allLogos,
-                        Arguments = "",
-                        AppType = InstalledAppType.InstalledProgram,
-                        FamilyName = "",
-                    };
-
-                    apps.Add(app);
+                    return null;
                 }
 
-                return apps;
-            //});
+                // Skip this shortcut if it's a directory
+                if (shortcut.Attributes.HasFlag(FileAttributes.Directory))
+                {
+                    continue;
+                }
+
+                // Get the link filename
+                var fileName = shortcut.Name;
+                var Directory = System.IO.Path.GetDirectoryName(shortcut.FullName);
+
+                // Skip the folders we want to ignore
+                if (folderExceptions.FirstOrDefault(a => shortcut.FullName.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)
+                {
+                    continue;
+                }
+
+                // Parse the link file to get access to the settings in it.
+                var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcut.FullName);
+                var target = link.TargetPath;
+
+                // Skip the paths we don't want to process.
+                if (pathExceptions.FirstOrDefault(a => target.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)
+                {
+                    continue;
+                }
+
+                // Ignore uninstallers
+                if (UninstallProgram.IsFileUninstaller(System.IO.Path.GetFileName(target)))
+                {
+                    continue;
+                }
+
+                // Ignore duplicates
+                if (apps.FirstOrDefault(a => a.Path == target) != null)
+                {
+                    continue;
+                }
+
+                // Ignore non-application links
+                if (System.IO.Path.GetExtension(target) != ".exe")
+                {
+                    continue;
+                }
+
+                string iconLocation;
+                if (!String.IsNullOrWhiteSpace(link.IconLocation))
+                {
+                    if (Regex.IsMatch(link.IconLocation, @"^,\d+$"))
+                    {
+                        // This is an empty shortcut path, so we need to use the target path instead
+                        iconLocation = link.TargetPath;
+                    }
+                    else if (Regex.IsMatch(link.IconLocation, @",\d+$"))
+                    {
+                        // This is a shortcut path, so we need to remove the icon number from the end
+                        Match myMatches = Regex.Match(link.IconLocation, @"^(.*?),\d+$");
+                        if (myMatches.Success)
+                        {
+                            iconLocation = myMatches.Groups[1].Value;
+                        }
+                        else
+                        {
+                            iconLocation = link.TargetPath;
+                        }
+                    }                        
+                }
+                else
+                {
+                    iconLocation = link.TargetPath;
+                }
+
+                if (System.IO.File.Exists(link.IconLocation))
+                {
+                    iconLocation = link.IconLocation;
+                }
+                else
+                {
+                    iconLocation = link.TargetPath;
+                }
+
+
+                string workingDir = link.WorkingDirectory;
+                if (link.WorkingDirectory == null || String.IsNullOrWhiteSpace(link.WorkingDirectory) || !System.IO.File.Exists(link.WorkingDirectory))
+                {
+                    workingDir = System.IO.Path.GetDirectoryName(target);
+                }
+
+                List<ShortcutBitmap> allLogos = ImageUtils.GetMeAllBitmapsFromFile(DecodeIndirectFolders(iconLocation));
+
+                var app = new InstalledProgram()
+                {
+                    Path = DecodeIndirectFolders(target),
+                    IconPath = DecodeIndirectFolders(iconLocation),
+                    Name = System.IO.Path.GetFileNameWithoutExtension(shortcut.Name),
+                    WorkDir = DecodeIndirectFolders(workingDir),
+                    AppId = $"FromFolder_{System.IO.Path.GetFileNameWithoutExtension(shortcut.Name)}",
+                    Logo = ImageUtils.GetMeLargestAvailableBitmap(allLogos),
+                    AllLogos = allLogos,
+                    Arguments = "",
+                    AppType = InstalledAppType.InstalledProgram,
+                    FamilyName = "",
+                };
+
+                apps.Add(app);
+            }
+
+            return apps;            
         }
 
         public static List<InstalledProgram> GetInstalledPrograms(CancellationTokenSource cancelToken = null)
