@@ -372,8 +372,7 @@ namespace DisplayMagician.AppLibraries
                 }
 
                 // Get the installed programs from registry and UWP package data
-                Task<List<InstalledProgram>> getInstalledProgram = InstalledProgram.GetInstalledProgramsAsync();
-                List<InstalledProgram> installedPrograms = getInstalledProgram.Result;
+                List<InstalledProgram> installedPrograms = InstalledProgram.GetInstalledPrograms();
                 installedPrograms.AddRange(InstalledProgram.GetUWPApps());
 
                 // Loop through the returned data, and create a list of DisplayMagician Apps

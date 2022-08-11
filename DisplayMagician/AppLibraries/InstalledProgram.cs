@@ -235,10 +235,11 @@ namespace DisplayMagician.AppLibraries
                 FamilyName = "",
             };
         }
-        public static async Task<List<InstalledProgram>> GetShortcutProgramsFromFolder(string path, CancellationTokenSource cancelToken = null)
+
+        public static async Task<List<InstalledProgram>> GetShortcutProgramsFromFolderAsync(string path, CancellationTokenSource cancelToken = null)
         {
-            return await Task.Run(() =>
-            {
+            //return await Task.Run(() =>
+            //{
                 var folderExceptions = new string[]
                 {
                     @"\Accessibility\",
@@ -375,16 +376,16 @@ namespace DisplayMagician.AppLibraries
                 }
 
                 return apps;
-            });
+            //});
         }
 
-        public static async Task<List<InstalledProgram>> GetInstalledProgramsAsync(CancellationTokenSource cancelToken = null)
+        public static List<InstalledProgram> GetInstalledPrograms(CancellationTokenSource cancelToken = null)
         {
             var apps = new List<InstalledProgram>();
 
             // Get apps from All Users
-            var allPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs");
-            var allApps = await GetShortcutProgramsFromFolder(allPath);
+            string allPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs");
+            List<InstalledProgram> allApps = GetShortcutProgramsFromFolderAsync(allPath, cancelToken).GetAwaiter().GetResult();
             if (cancelToken?.IsCancellationRequested == true)
             {
                 return null;
@@ -395,8 +396,8 @@ namespace DisplayMagician.AppLibraries
             }
 
             // Get current user apps
-            var userPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
-            var userApps = await GetShortcutProgramsFromFolder(userPath);
+            string userPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
+            List<InstalledProgram> userApps = GetShortcutProgramsFromFolderAsync(userPath, cancelToken).GetAwaiter().GetResult();
             if (cancelToken?.IsCancellationRequested == true)
             {
                 return null;
