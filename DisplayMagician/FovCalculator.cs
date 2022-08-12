@@ -215,7 +215,7 @@ namespace DisplayMagician
                 FovType = FovType.HorizontalFOVBaseSteps,
                 GameName = "F1 2016-2018 (In-car Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
-                GameURL = "https://store.steampowered.com/app/391040/F1_2016/",
+                GameURL = "https://store.steampowered.com/app/737800/F1_2018/",
                 Instructions = "",
                 Min = -1,
                 Max = +1,
@@ -230,7 +230,7 @@ namespace DisplayMagician
                 FovType = FovType.HorizontalFOVBaseSteps,
                 GameName = "F1 2016-2018 (Nose & T-Camera)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
-                GameURL = "",
+                GameURL = "https://store.steampowered.com/app/737800/F1_2018/",
                 Instructions = "",
                 Min = -1,
                 Max = +1,
@@ -245,7 +245,7 @@ namespace DisplayMagician
                 FovType = FovType.HorizontalFOVBaseSteps,
                 GameName = "F1 2016-2018 (T-Camera Offset)", // https://www.reddit.com/r/F1Game/comments/7x0of9/codemasters_f1_20162017_fov_slider/
                 GamePublisher = "Codemasters",
-                GameURL = "",
+                GameURL = "https://store.steampowered.com/app/737800/F1_2018/",
                 Instructions = "",
                 Min = -1,
                 Max = +1,
@@ -1032,13 +1032,12 @@ namespace DisplayMagician
 
             // Add the Horizontal Degrees at the end
             output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Horizontal FOV in Degrees\\par\r\n";
-            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultHorizontalDegrees} Degrees\\par\r\n";
-            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {ResultHorizontalDegrees} Degrees\\par\r\n";
             output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
 
             // And then add the Vertical Degrees at the end
             output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Vertical FOV in Degrees\\par\r\n";
-            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultVerticalDegrees} Degrees\\par\r\n";            
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {ResultVerticalDegrees} Degrees\\par\r\n";            
 
             return output;
         }
@@ -1054,13 +1053,12 @@ namespace DisplayMagician
 
             // Add the Horizontal Degrees at the end
             output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Horizontal FOV in Degrees\\par\r\n";            
-            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultHorizontalDegrees} Degrees\\par\r\n";           
-            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {ResultHorizontalDegrees} Degrees\\par\r\n";           
             output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
 
             // And then add the Vertical Degrees at the end
             output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs32\\qj\\b1\\i0\\ulnone Vertical FOV in Degrees\\par\r\n";
-            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs30\\qj\\b1\\i0\\ulnone {ResultVerticalDegrees} Degrees\\par\r\n";
+            output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {ResultVerticalDegrees} Degrees\\par\r\n";
 
             return output;
         }
@@ -1089,32 +1087,32 @@ namespace DisplayMagician
                 {
 
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone HorizontalFOV(Degrees):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
                 }
                 else if (game.FovType == FovType.VerticalFOVDegrees)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Vertical FOV (Degrees):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
                 }
                 else if (game.FovType == FovType.HorizontalFOVRadians)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Horizontal FOV (Radians):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultRadians} Radians\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultRadians} Radians\\par\r\n";
                 }
                 else if (game.FovType == FovType.HorizontalFOVBaseSteps)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Horizontal FOV (Steps from center):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultBaseSteps} steps from default FOV\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultBaseSteps} steps from default FOV\\par\r\n";
                 }
                 else if (game.FovType == FovType.VerticalFOVTimes)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Vertical FOV (Times):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultTimes} Times\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultTimes} Times\\par\r\n";
                 }
                 else if (game.FovType == FovType.TripleScreenAngle)
                 {
                     //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Triple Screen Angle (Degrees):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs28\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
+                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultDegrees} Degrees\\par\r\n";
                 }
 
                 output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone  \\par\r\n";
