@@ -39,6 +39,16 @@ namespace DisplayMagician
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
         private Keys _hotkeyShortcutLibraryWindow = Keys.None;
+        private ScreenLayout _fovCalcScreenLayout = ScreenLayout.TripleScreen;
+        private double _fovCalcScreenSize = 27;
+        private ScreenMeasurementUnit _fovCalcScreenSizeUnit = ScreenMeasurementUnit.Inch;
+        private ScreenAspectRatio _fovCalcAspectRatio = ScreenAspectRatio.SixteenByNine;
+        private double _fovCalcAspectRatioX = 16;
+        private double _fovCalcAspectRatioY = 9;
+        private double _fovCalcDistanceToScreen = 56;
+        private ScreenMeasurementUnit _fovCalcDistanceToScreenUnit = ScreenMeasurementUnit.CM; 
+        private double _fovCalcBezelSize = 3;
+        private ScreenMeasurementUnit _fovCalcBezelSizeUnit = ScreenMeasurementUnit.MM;
         #endregion
 
         #region Class Properties
@@ -264,6 +274,137 @@ namespace DisplayMagician
                 _hotkeyShortcutLibraryWindow = value;
             }
         }
+
+        [DefaultValue(ScreenLayout.TripleScreen)]
+        public ScreenLayout FovCalcScreenLayout
+        {
+            get
+            {
+                return _fovCalcScreenLayout;
+            }
+            set
+            {
+                _fovCalcScreenLayout = value;
+            }
+        }
+
+        [DefaultValue(27)]
+        public double FovCalcScreenSize
+        {
+            get
+            {
+                return _fovCalcScreenSize;
+            }
+            set
+            {
+                _fovCalcScreenSize = value;
+            }
+        }
+
+        [DefaultValue(ScreenMeasurementUnit.Inch)]
+        public ScreenMeasurementUnit FovCalcScreenSizeUnit
+        {
+            get
+            {
+                return _fovCalcScreenSizeUnit;
+            }
+            set
+            {
+                _fovCalcScreenSizeUnit = value;
+            }
+        }
+
+        [DefaultValue(ScreenAspectRatio.SixteenByNine)]
+        public ScreenAspectRatio FovCalcAspectRatio
+        {
+            get
+            {
+                return _fovCalcAspectRatio;
+            }
+            set
+            {
+                _fovCalcAspectRatio = value;
+            }
+        }
+
+        [DefaultValue(16)]
+        public double FovCalcAspectRatioX
+        {
+            get
+            {
+                return _fovCalcAspectRatioX;
+            }
+            set
+            {
+                _fovCalcAspectRatioX = value;
+            }
+        }
+
+        [DefaultValue(9)]
+        public double FovCalcAspectRatioY
+        {
+            get
+            {
+                return _fovCalcAspectRatioY;
+            }
+            set
+            {
+                _fovCalcAspectRatioY = value;
+            }
+        }
+
+        [DefaultValue(56)]
+        public double FovCalcDistanceToScreen
+        {
+            get
+            {
+                return _fovCalcDistanceToScreen;
+            }
+            set
+            {
+                _fovCalcDistanceToScreen = value;
+            }
+        }
+
+        [DefaultValue(ScreenMeasurementUnit.CM)]
+        public ScreenMeasurementUnit FovCalcDistanceToScreenUnit
+        {
+            get
+            {
+                return _fovCalcDistanceToScreenUnit;
+            }
+            set
+            {
+                _fovCalcDistanceToScreenUnit = value;
+            }
+        }
+
+        [DefaultValue(3)]
+        public double FovCalcBezelSize
+        {
+            get
+            {
+                return _fovCalcBezelSize;
+            }
+            set
+            {
+                _fovCalcBezelSize = value;
+            }
+        }
+
+        [DefaultValue(ScreenMeasurementUnit.MM)]
+        public ScreenMeasurementUnit FovCalcBezelSizeUnit
+        {
+            get
+            {
+                return _fovCalcBezelSizeUnit;
+            }
+            set
+            {
+                _fovCalcBezelSizeUnit = value;
+            }
+        }
+        
 
         #endregion
 

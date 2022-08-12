@@ -12,6 +12,7 @@ using DisplayMagician;
 using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
 using Microsoft.WindowsAPICodePack.Win32Native;
+using static DisplayMagician.WindowsThumbnailProvider;
 
 namespace DisplayMagician.UIForms
 {
@@ -69,20 +70,7 @@ namespace DisplayMagician.UIForms
             lbl_aspect_ratio_arrow.Visible = false;
             lbl_aspect_ratio_separator.Visible = false;
             txt_aspect_ratio_x.Visible = false;
-            txt_aspect_ratio_y.Visible = false;
-
-
-            /*//CalculateCurrentDisplayLayout();
-            FovCalculator.CalculateFOV(
-                ScreenLayout.SingleScreen,
-                ScreenAspectRatio.SixteenByNine,
-                27,
-                ScreenMeasurementUnit.Inch,
-                56,
-                ScreenMeasurementUnit.CM,
-                0,
-                ScreenMeasurementUnit.MM
-            );*/
+            txt_aspect_ratio_y.Visible = false;            
 
             // Center the form on the primary screen
             Utils.CenterOnPrimaryScreen(this);
@@ -90,16 +78,65 @@ namespace DisplayMagician.UIForms
 
         private void btn_back_Click(object sender, EventArgs e)
         {
+            // Save the current settings to the program settings so we can load them later
+            Program.AppProgramSettings.FovCalcScreenLayout = _screenLayout;
+            double result;
+            if (Double.TryParse(txt_bezel_thickness.Text, out result))
+            {
+                Program.AppProgramSettings.FovCalcBezelSize = result;
+            }
+            else
+            {
+                Program.AppProgramSettings.FovCalcBezelSize = 0;
+            }
+            Program.AppProgramSettings.FovCalcBezelSizeUnit = (ScreenMeasurementUnit)cmb_bezel_thickness.SelectedValue;
+
+            // Next, do the Screen size
+            if (Double.TryParse(txt_screen_size.Text, out result))
+            {
+                Program.AppProgramSettings.FovCalcScreenSize = result;
+            }
+            else
+            {
+                Program.AppProgramSettings.FovCalcScreenSize = 0;
+            }
+            Program.AppProgramSettings.FovCalcScreenSizeUnit = (ScreenMeasurementUnit)cmb_screen_size_units.SelectedValue;
+
+            // Next, do the Distance to Screen
+            if (Double.TryParse(txt_distance_to_screen.Text, out result))
+            {
+                Program.AppProgramSettings.FovCalcDistanceToScreen = result;
+            }
+            else
+            {
+                Program.AppProgramSettings.FovCalcDistanceToScreen = 0;
+            }
+            Program.AppProgramSettings.FovCalcDistanceToScreenUnit = (ScreenMeasurementUnit)cmb_distance_to_screen.SelectedValue;
+
+            // Next, do the Screen Aspect Ratio
+            Program.AppProgramSettings.FovCalcAspectRatio = (ScreenAspectRatio)cmb_aspect_ratio.SelectedValue;
+            result = 0;
+            if (Double.TryParse(txt_aspect_ratio_x.Text, out result))
+            {
+                Program.AppProgramSettings.FovCalcAspectRatioX = result;
+            }
+            else
+            {
+                Program.AppProgramSettings.FovCalcAspectRatioX = 16;
+            }
+            result = 0;
+            if (Double.TryParse(txt_aspect_ratio_y.Text, out result))
+            {
+                Program.AppProgramSettings.FovCalcAspectRatioY = result;
+            }
+            else
+            {
+                Program.AppProgramSettings.FovCalcAspectRatioY = 9;
+            }
+            Program.AppProgramSettings.SaveSettings();
+
             this.Close();
         }
-
-        /*private void CalculateCurrentDisplayLayout()
-        {
-            foreach (var display in ProfileRepository.CurrentProfile.WindowsDisplayConfig.DisplayAdapters)
-            {
-                display.Value
-            }
-        }*/
 
         private void btn_single_screen_Click(object sender, EventArgs e)
         {
@@ -265,9 +302,27 @@ namespace DisplayMagician.UIForms
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
 
+            // Populate the fov calculator based on the last settings we saved:
+            if (Program.AppProgramSettings.FovCalcScreenLayout == ScreenLayout.TripleScreen)
+            {
+                btn_triple_screens.PerformClick();
+            }
+            else
+            {
+                btn_single_screen.PerformClick();
+            }
+            txt_screen_size.Text = Program.AppProgramSettings.FovCalcScreenSize.ToString();
+            cmb_screen_size_units.SelectedValue = Program.AppProgramSettings.FovCalcScreenSizeUnit;
+            cmb_aspect_ratio.SelectedValue = Program.AppProgramSettings.FovCalcAspectRatio;
+            txt_aspect_ratio_x.Text = Program.AppProgramSettings.FovCalcAspectRatioX.ToString();
+            txt_aspect_ratio_y.Text = Program.AppProgramSettings.FovCalcAspectRatioY.ToString();
+            txt_distance_to_screen.Text = Program.AppProgramSettings.FovCalcDistanceToScreen.ToString();
+            cmb_distance_to_screen.SelectedValue = Program.AppProgramSettings.FovCalcDistanceToScreenUnit;
+            txt_bezel_thickness.Text = Program.AppProgramSettings.FovCalcBezelSize.ToString();
+            cmb_bezel_thickness.SelectedValue = Program.AppProgramSettings.FovCalcBezelSizeUnit;
+
             // Use the profiles to populate the form based on the current config
             // If there is 3 or more screens connected, then assume its a triple screen
-            ScreenFovDetail currentScreenFovDetail = new ScreenFovDetail();
 
             if (ProfileRepository.CurrentProfile.WindowsDisplayConfig.DisplayIdentifiers.Count >= 3)
             {
