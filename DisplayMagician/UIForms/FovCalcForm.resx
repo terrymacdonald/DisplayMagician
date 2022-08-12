@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="lbl_about_fov.Text" xml:space="preserve">
-    <value>As humans go about our normal lives, we are constantly judging distances between ourselves and the objects around us. We get used to figuring out the spaces between us and things nearby. When we interact with a computer game, the sizes and distances can appear different to our brains as they are different from those we experience in real life, and those differences can cause us to make mistakes. This calculator can help you adjust each game so that the sizes and disitances in the game are closer to what you would see in real life.</value>
+    <value>As humans go about our normal lives, we are constantly judging distances between ourselves and the objects around us. We get used to figuring out the spaces between us and things nearby. When we interact with a computer game, the sizes and distances can appear different to our brains as they are different from those we experience in real life, and those differences can cause us to make mistakes. This calculator can help you adjust each game so that the sizes and disitances in the game are similar to what you would see in real life.</value>
   </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="$this.BackgroundImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">

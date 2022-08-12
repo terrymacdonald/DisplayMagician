@@ -920,7 +920,19 @@ namespace DisplayMagician
                 }
                 else if (game.FovType == FovType.HorizontalFOVBaseSteps)
                 {
-                    output += $"Horizontal FOV (Steps from center): {game.ResultBaseSteps}\n";
+                    if (game.ResultBaseSteps > 0)
+                    {
+                        output += $"Horizontal FOV (Steps from center): +{game.ResultBaseSteps}\n";
+                    }
+                    else if (game.ResultBaseSteps < 0)
+                    {
+                        output += $"Horizontal FOV (Steps from center): -{game.ResultBaseSteps}\n";
+                    }
+                    else
+                    {
+                        output += $"Horizontal FOV (Steps from center): {game.ResultBaseSteps}\n";
+                    }
+
                 }
                 else if (game.FovType == FovType.VerticalFOVTimes)
                 {
@@ -1101,8 +1113,19 @@ namespace DisplayMagician
                 }
                 else if (game.FovType == FovType.HorizontalFOVBaseSteps)
                 {
-                    //output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs20\\qj\\b1\\i0\\ulnone Horizontal FOV (Steps from center):\\par\r\n";
-                    output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultBaseSteps} steps from default FOV\\par\r\n";
+                    if (game.ResultBaseSteps > 0)
+                    {
+                        output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone +{game.ResultBaseSteps} steps from center\\par\r\n";
+                    }
+                    else if (game.ResultBaseSteps < 0)
+                    {
+                        output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone -{game.ResultBaseSteps} steps from center\\par\r\n";
+                    }
+                    else 
+                    {
+                        output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {game.ResultBaseSteps} steps from center\\par\r\n";
+                    }
+
                 }
                 else if (game.FovType == FovType.VerticalFOVTimes)
                 {
