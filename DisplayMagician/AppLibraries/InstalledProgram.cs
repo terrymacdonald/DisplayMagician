@@ -33,23 +33,25 @@ namespace DisplayMagician.AppLibraries
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public string Path { get; set; }
-        public string Arguments { get; set; }
-        public string IconPath { get; set; }
+        public string Path { get; set; } = "";
+        public string Arguments { get; set; } = "";
+        public string IconPath { get; set; } = "";
         //public int IconIndex { get; set; }
-        public string WorkDir { get; set; }
-        public string Name { get; set; }
-        public string AppId { get; set; }
+        public string WorkDir { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string AppId { get; set; } = "";
 
-        public InstalledAppType AppType { get; set; }
+        public InstalledAppType AppType { get; set; } = InstalledAppType.InstalledProgram;
 
-        public string FamilyName { get; set; }
+        public string FamilyName { get; set; } = "";
 
-        public AppListEntry AppListEntry { get; set; }
+        public AppListEntry AppListEntry { get; set; } = null;
+
+        public Package AppPackage { get; set; } = null;
 
         public ShortcutBitmap Logo { get; set; }
 
-        public List<ShortcutBitmap> AllLogos { get; set; }
+        public List<ShortcutBitmap> AllLogos { get; set; } = null;
 
         public override string ToString()
         {
@@ -115,6 +117,8 @@ namespace DisplayMagician.AppLibraries
                     AppId = $"FromProgramData_{programName}",
                     AppType = InstalledAppType.InstalledProgram,
                     FamilyName = "",
+                    AppListEntry = null,
+                    AppPackage = null,
                 };
             }
             else if (file.Extension?.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) == true)
@@ -136,6 +140,8 @@ namespace DisplayMagician.AppLibraries
                     AppId = $"FromProgramData_{name}",
                     AppType = InstalledAppType.InstalledProgram,
                     FamilyName = "",
+                    AppListEntry = null,
+                    AppPackage = null,
                 };
 
                 if (!String.IsNullOrEmpty(data.IconPath))
@@ -170,6 +176,8 @@ namespace DisplayMagician.AppLibraries
                     IconPath = file.FullName,
                     AppType = InstalledAppType.InstalledProgram,
                     FamilyName = "",
+                    AppListEntry = null,
+                    AppPackage = null,
                 };
             }
 
@@ -233,6 +241,8 @@ namespace DisplayMagician.AppLibraries
                 AppId = $"FromLink_{link.FullName}",
                 AppType = InstalledAppType.InstalledProgram,
                 FamilyName = "",
+                AppListEntry = null,
+                AppPackage = null,
             };
         }
 
@@ -369,6 +379,8 @@ namespace DisplayMagician.AppLibraries
                     Arguments = "",
                     AppType = InstalledAppType.InstalledProgram,
                     FamilyName = "",
+                    AppListEntry = null,
+                    AppPackage = null,
                 };
 
                 apps.Add(app);
@@ -523,9 +535,11 @@ namespace DisplayMagician.AppLibraries
                                 IconPath = package.Logo.LocalPath,
                                 Logo = bitmap,
                                 AllLogos = allLogos,
-                                FamilyName = package.Id.FamilyName,                                
+                                FamilyName = package.Id.FamilyName,
                                 AppId = aumi,
                                 AppType = InstalledAppType.UWP,
+                                AppListEntry = entry,
+                                AppPackage = package,
                             };
 
                             apps.Add(app);

@@ -1179,18 +1179,7 @@ namespace DisplayMagician
                 bool isUWPApp = false;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;
-
-                    if (shortcutToUse.ExecutableNameAndPath.Contains("explorer.exe") && shortcutToUse.ExecutableArgumentsRequired && shortcutToUse.ExecutableArguments.StartsWith("shell:"))
-                    {
-                        // This is a UWP/Packaged app, so we need to monitor it differently
-                        isUWPApp = true;
-                    }
-                    else
-                    {
-                        // This is a normal, non-packaged app, so we run as normal
-                        isUWPApp = false;
-                    }                   
+                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;                        
                 }
                 else
                 {
@@ -1204,7 +1193,7 @@ namespace DisplayMagician
                     // Construct the Windows toast content
                     tcBuilder = new ToastContentBuilder()
                         .AddText($"Running {shortcutToUse.ApplicationName}", hintMaxLines: 1)
-                        .AddText($"Waiting for all {processToMonitorName} processes to exit...")
+                        .AddText($"Waiting for the {shortcutToUse.ApplicationName} application to be closed...")
                         .AddButton(new ToastButton()
                             .SetContent("Cancel")
                             .AddArgument("action", "stopWaiting")
@@ -1247,21 +1236,9 @@ namespace DisplayMagician
                     }                                                            
 
                 }
-                catch (Win32Exception ex)
+                catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. Windows complained about something while trying to create a new process.");
-                }
-                catch (ObjectDisposedException ex)
-                {
-                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. The object was disposed before we could start the process.");
-                }
-                catch (FileNotFoundException ex)
-                {
-                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. The file wasn't found by DisplayMagician and so we couldn't start it");
-                }
-                catch (InvalidOperationException ex)
-                {
-                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. Method call is invalid for the current state.");
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception caused whilst starting UWP App {appToUse.Name}.");
                 }
 
                 // Wait an extra few seconds to give the application time to settle down
@@ -1307,6 +1284,48 @@ namespace DisplayMagician
                     {
                         logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception whilst checking if UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) was running.");
                     }
+
+                    if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                    {
+                        if (cancelToken.IsCancellationRequested)
+                        {
+
+                            // The monitoring was stopped by the user
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) monitoring was stopped by the user.");
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"UWP App {shortcutToUse.ApplicationName} monitoring cancelled", hintMaxLines: 1)
+                                .AddText($"Monitoring of UWP App {shortcutToUse.ApplicationName} was stopped by the user.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
+
+
+                        else
+                        {
+                            // The program was closed normally
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the UWP App {shortcutToUse.ApplicationName} was closed.");
+                            // Tell the user that the application has closed
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"UWP App {shortcutToUse.ApplicationName} was closed", hintMaxLines: 1)
+                                .AddText($"All UWP App {shortcutToUse.ApplicationName} processes were shutdown and changes were reverted.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+
+                        }
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new Windows.Data.Xml.Dom.XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        ToastNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                    }
                 }
                 else
                 {
@@ -1331,7 +1350,7 @@ namespace DisplayMagician
                         {
                             Application.DoEvents();
                             // If we have no more processes left then we're done!
-                            if (!appToUse.IsRunning)
+                            if (ProcessUtils.ProcessExited(processesToMonitor))
                             {
                                 logger.Debug($"ShortcutRepository/RunShortcut: The different executable {shortcutToUse.DifferentExecutableToMonitor} has exited!");
                                 break;
@@ -1348,49 +1367,48 @@ namespace DisplayMagician
                             Thread.Sleep(1000);
                         }
                     }
+
+                    if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                    {
+                        if (cancelToken.IsCancellationRequested)
+                        {
+
+                            // The monitoring was stopped by the user
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.DifferentExecutableToMonitor} monitoring was stopped by the user.");
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} monitoring cancelled", hintMaxLines: 1)
+                                .AddText($"Monitoring of different executable {shortcutToUse.DifferentExecutableToMonitor} was stopped by the user.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
+                        else
+                        {
+                            // The program was closed normally
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.DifferentExecutableToMonitor} was closed.");
+                            // Tell the user that the application has closed
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} was closed", hintMaxLines: 1)
+                                .AddText($"All different executable {shortcutToUse.DifferentExecutableToMonitor} processes were shutdown and changes were reverted.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+
+                        }
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new Windows.Data.Xml.Dom.XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        ToastNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                    }
                 }                
-
-                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
-                {
-                    if (cancelToken.IsCancellationRequested)
-                    {
-
-                        // The monitoring was stopped by the user
-                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
-                        // Construct the toast content
-                        tcBuilder = new ToastContentBuilder()
-                            .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
-                            .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short);
-                    }
-
-
-                    else
-                    {
-                        // The program was closed normally
-                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} has closed.");
-                        // Tell the user that the application has closed
-                        // Construct the toast content
-                        tcBuilder = new ToastContentBuilder()
-                            .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
-                            .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short);
-
-                    }
-                    toastContent = tcBuilder.Content;
-                    // Make sure to use Windows.Data.Xml.Dom
-                    doc = new Windows.Data.Xml.Dom.XmlDocument();
-                    doc.LoadXml(toastContent.GetContent());
-                    // And create the toast notification
-                    toast = new ToastNotification(doc);
-                    // Remove any other Notifications from us
-                    ToastNotificationManagerCompat.History.Clear();
-                    // And then show it
-                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-
-                }
+                
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Executable))
             {
@@ -1413,18 +1431,8 @@ namespace DisplayMagician
                 string processToMonitorName;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    // if this is a UWP app
-                    if (shortcutToUse.ApplicationName.Contains("explorer.exe") && shortcutToUse.ExecutableArgumentsRequired && !String.IsNullOrWhiteSpace(shortcutToUse.ExecutableArguments))
-                    {
-                        //processToMonitorName = LocalApp.GetProcessFromAppId();
-                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
-                    }
-                    else
-                    {
-                        // If this is a normal app we're starting
-                        processToMonitorName = shortcutToUse.ExecutableNameAndPath;
-                    }
-                    
+                    // If this is a normal app we're starting
+                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;                    
                 }
                 else
                 {
@@ -1548,29 +1556,53 @@ namespace DisplayMagician
                 {
                     if (cancelToken.IsCancellationRequested)
                     {
-
                         // The monitoring was stopped by the user
-                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
-                        // Construct the toast content
-                        tcBuilder = new ToastContentBuilder()
-                            .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
-                            .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short);
+                        if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
+                                .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
+                        else
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"Different executable {shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
+                                .AddText($"Monitoring of different executable {processToMonitorName} processes were stopped by the user.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
                     }
-
-
                     else
                     {
-                        // The program was closed normally
-                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} has closed.");
-                        // Tell the user that the application has closed
-                        // Construct the toast content
-                        tcBuilder = new ToastContentBuilder()
-                            .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
-                            .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short);
+                        // The monitoring was stopped by the user
+                        if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                        {
+                            // The program was closed normally
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} was closed.");
+                            // Tell the user that the application has closed
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
+                                .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
+                        else
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.ExecutableNameAndPath} was closed.");
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} was closed", hintMaxLines: 1)
+                                .AddText($"All different executable {processToMonitorName} processes were shutdown and changes were reverted.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
 
                     }
                     toastContent = tcBuilder.Content;

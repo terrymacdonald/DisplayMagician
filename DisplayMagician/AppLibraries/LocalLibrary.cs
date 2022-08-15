@@ -391,6 +391,8 @@ namespace DisplayMagician.AppLibraries
                     localApp.ProcessName = Path.GetFileNameWithoutExtension(localApp.ExePath);
                     localApp.LocalAppType = installedProgram.AppType; // Needs to be passed through so that we know how to start it!
                     localApp.FamilyName = installedProgram.FamilyName;
+                    localApp.AppPackage = installedProgram.AppPackage;
+                    localApp.AppListEntry = installedProgram.AppListEntry;
 
                     // Add the Locally Installed App to the list of Apps
                     _allLocalApps.Add(localApp);

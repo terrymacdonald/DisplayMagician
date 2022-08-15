@@ -30,6 +30,7 @@ namespace DisplayMagician.AppLibraries
         private InstalledAppType _LocalAppType = InstalledAppType.InstalledProgram;
         //private Package _LocalAppPackage;
         private AppListEntry _LocalAppListEntry;
+        private Package _LocalAppPackage;
         private AppDiagnosticInfoWatcher _LocalAppUWPWatcher = null;
         private string _LocalAppFamilyName = "";
         private AppResourceGroupExecutionState _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
@@ -141,6 +142,13 @@ namespace DisplayMagician.AppLibraries
         }
 
         [JsonIgnore]
+        public Package AppPackage
+        {
+            get => _LocalAppPackage;
+            set => _LocalAppPackage = value;
+        }
+
+        [JsonIgnore]
         public override AppLibrary AppLibrary
         {
             get => _LocalAppLibrary;
@@ -194,40 +202,21 @@ namespace DisplayMagician.AppLibraries
                 {
                     if (_LocalAppListEntry is AppListEntry)
                     {
-
-                        if (_LocalAppIsRunning == AppResourceGroupExecutionState.Running)
+                        if (UWPIsRunning(_LocalAppId).Result)
                         {
                             return true;
                         }
-                        else 
+                        else
                         {
+                            // UWP App has exited, so we should remove the UWPWatcher if it hasn't already been done
+                            if (_LocalAppUWPWatcher != null)
+                            {
+                                _LocalAppUWPWatcher.Stop();
+                                _LocalAppUWPWatcher = null;
+                            }
                             return false;
                         }
-
-                        /*
-
-                        IReadOnlyList<AppListEntry> applListEntries = (IReadOnlyList<AppListEntry>)_LocalAppPackage.GetAppListEntries();
-                        if (applListEntries.Count > 0)
-                        {
-                            string name = "";
-                            string aumi = "";
-
-                            var entry = applListEntries[0];
-                            aumi = entry.AppUserModelId;
-                            name = entry.DisplayInfo.DisplayName;
-
-                            var things = Windows.System.AppDiagnosticInfo.RequestInfoAsync().GetResults();
-                            foreach (var thing in things)
-                            {
-                                thing.GetResourceGroups();
-                            }
-
-                            List<PackageContentGroup> pcgList = _LocalAppPackage.GetContentGroupsAsync().GetResults().ToList();
-                            foreach (PackageContentGroup pcg in pcgList)
-                            {
-                                pcg.
-                            }
-                        }*/                        
+                        
                     }
                     else
                     {
@@ -243,9 +232,17 @@ namespace DisplayMagician.AppLibraries
                     
 
             }
-                //ProcessUtils.GetChildProcesses();
                 
                 
+        }        
+
+        [JsonIgnore]
+        public override bool IsUpdating
+        {
+            get
+            {
+                return false;
+            }
         }
 
         private void UWPWatcherAdded(AppDiagnosticInfoWatcher sender, AppDiagnosticInfoWatcherEventArgs args)
@@ -263,19 +260,34 @@ namespace DisplayMagician.AppLibraries
             // This function is run whenever a new UWP app is stopped or terminated
             if (args.AppDiagnosticInfo.AppInfo.AppUserModelId == _LocalAppId)
             {
-                _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
-                _LocalAppUWPWatcher.Stop();
+                _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;                
             }
 
         }
 
-        [JsonIgnore]
-        public override bool IsUpdating
+        private async Task<bool> UWPIsRunning(string aumid)
         {
-            get
+            IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid);
+            foreach (var thing in infos)
             {
-                return false;
+                // We only monitor the first item in the resource group, as it seems to be the main part of the UWP app in most apps
+                // NOTE - this may not always monitor the right part of the app, but I'm not sure how to make this logic better.
+                AppResourceGroupExecutionState status = thing.GetResourceGroups()[0].GetStateReport().ExecutionState;
+                if (status == AppResourceGroupExecutionState.NotRunning || status == AppResourceGroupExecutionState.Unknown)
+                {
+                    // IMPORTANT - This status only occurs when Windows terminates the app processes (or if it doesn't know the status of the app).
+                    // This happens 10 seconds after the app is closed using the X, or when windows runs out of resources and has to terminate the app due to low resources.
+                    // This UWP application lifecycle means that there is a 10 second delay between when the UWP app is closed, and when it is really closed by Windows
+                    // (and therefore when DisplayMagician can detect it).
+                    return false;
+                }
+                else
+                {
+                    // False is returned if the UWP app is Running, Suspended or Suspending.
+                    return true;
+                }
             }
+            return false;
         }
 
         public override bool CopyTo(App LocalApp)
@@ -343,17 +355,7 @@ namespace DisplayMagician.AppLibraries
                     logger.Error($"LocalApp/Start: Unable to start LocalApp application {Name} as the AUMI {_LocalAppId} cannot be found!");
                     _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
                     return false;
-                }
-               
-                //processesStarted = StartUWPProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
-                /*if (processesStarted.Count > 0)
-                {
-                    logger.Trace($"LocalApp/Start: Started LocalApp UWP {Name} with {processesStarted.Count} processes.");
-                }
-                else
-                {
-                    logger.Error($"LocalApp/Start: Unable to start LocalApp UWP {Name} as no processes were created!");
-                }*/
+                }                              
                 
             }
             else
@@ -361,7 +363,6 @@ namespace DisplayMagician.AppLibraries
                 logger.Error($"LocalApp/Start: Unable to start LocalApp as the App is of an unknown type!");
             }
                         
-            //processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
             if (process != null)
             {
                 processesStarted.Add(process);
