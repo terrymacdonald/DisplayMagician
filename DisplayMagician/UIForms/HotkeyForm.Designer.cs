@@ -150,6 +150,7 @@ namespace DisplayMagician.UIForms
             this.Controls.Add(this.lbl_hotkey_selector);
             this.Controls.Add(this.txt_hotkey);
             this.Controls.Add(this.lbl_hotkey_description);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "HotkeyForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

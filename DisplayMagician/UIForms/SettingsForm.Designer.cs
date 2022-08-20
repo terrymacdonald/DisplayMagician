@@ -29,6 +29,7 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             this.btn_back = new System.Windows.Forms.Button();
             this.gb_general = new System.Windows.Forms.GroupBox();
             this.cb_show_status_action = new System.Windows.Forms.CheckBox();
@@ -477,6 +478,7 @@ namespace DisplayMagician.UIForms
             this.Controls.Add(this.gb_general);
             this.Controls.Add(this.btn_back);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "SettingsForm";

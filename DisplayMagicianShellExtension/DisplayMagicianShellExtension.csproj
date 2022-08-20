@@ -38,7 +38,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
+    <ApplicationIcon>DisplayMagician.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -91,6 +91,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DisplayMagician.ico" />
     <Content Include="Resources\DisplayMagician.ico" />
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>

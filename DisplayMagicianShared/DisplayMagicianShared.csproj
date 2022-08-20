@@ -35,7 +35,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
+    <ApplicationIcon>DisplayMagician.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
@@ -155,7 +155,9 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="DisplayMagician.ico" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="Properties\amdblack.png" />
   </ItemGroup>

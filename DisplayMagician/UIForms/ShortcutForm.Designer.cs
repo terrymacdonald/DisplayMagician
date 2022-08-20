@@ -32,6 +32,7 @@ namespace DisplayMagician.UIForms
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutForm));
             this.btn_save = new System.Windows.Forms.Button();
             this.btn_cancel = new System.Windows.Forms.Button();
             this.il_games = new System.Windows.Forms.ImageList(this.components);
@@ -49,6 +50,7 @@ namespace DisplayMagician.UIForms
             this.lbl_no_active_audio_devices = new System.Windows.Forms.Label();
             this.lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
             this.gb_capture_settings = new System.Windows.Forms.GroupBox();
+            this.cb_capture_comms_device = new System.Windows.Forms.CheckBox();
             this.gb_capture_volume = new System.Windows.Forms.GroupBox();
             this.rb_set_capture_volume = new System.Windows.Forms.RadioButton();
             this.rb_keep_capture_volume = new System.Windows.Forms.RadioButton();
@@ -59,6 +61,7 @@ namespace DisplayMagician.UIForms
             this.rb_change_capture = new System.Windows.Forms.RadioButton();
             this.rb_no_change_capture = new System.Windows.Forms.RadioButton();
             this.gb_audio_settings = new System.Windows.Forms.GroupBox();
+            this.cb_audio_comms_device = new System.Windows.Forms.CheckBox();
             this.gb_audio_volume = new System.Windows.Forms.GroupBox();
             this.rb_set_audio_volume = new System.Windows.Forms.RadioButton();
             this.rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
@@ -141,8 +144,6 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.btn_help = new System.Windows.Forms.Button();
-            this.cb_audio_comms_device = new System.Windows.Forms.CheckBox();
-            this.cb_capture_comms_device = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.p_profiles.SuspendLayout();
@@ -418,6 +419,16 @@ namespace DisplayMagician.UIForms
             this.gb_capture_settings.TabStop = false;
             this.gb_capture_settings.Text = "Microphone Settings";
             // 
+            // cb_capture_comms_device
+            // 
+            this.cb_capture_comms_device.AutoSize = true;
+            this.cb_capture_comms_device.Location = new System.Drawing.Point(325, 114);
+            this.cb_capture_comms_device.Name = "cb_capture_comms_device";
+            this.cb_capture_comms_device.Size = new System.Drawing.Size(418, 24);
+            this.cb_capture_comms_device.TabIndex = 22;
+            this.cb_capture_comms_device.Text = "Also set this as the default communicatons microphone";
+            this.cb_capture_comms_device.UseVisualStyleBackColor = true;
+            // 
             // gb_capture_volume
             // 
             this.gb_capture_volume.Controls.Add(this.rb_set_capture_volume);
@@ -550,6 +561,16 @@ namespace DisplayMagician.UIForms
             this.gb_audio_settings.TabIndex = 0;
             this.gb_audio_settings.TabStop = false;
             this.gb_audio_settings.Text = "Audio Output Settings";
+            // 
+            // cb_audio_comms_device
+            // 
+            this.cb_audio_comms_device.AutoSize = true;
+            this.cb_audio_comms_device.Location = new System.Drawing.Point(326, 112);
+            this.cb_audio_comms_device.Name = "cb_audio_comms_device";
+            this.cb_audio_comms_device.Size = new System.Drawing.Size(424, 24);
+            this.cb_audio_comms_device.TabIndex = 21;
+            this.cb_audio_comms_device.Text = "Also set this as the default communicatons audio output";
+            this.cb_audio_comms_device.UseVisualStyleBackColor = true;
             // 
             // gb_audio_volume
             // 
@@ -1637,26 +1658,6 @@ namespace DisplayMagician.UIForms
             this.btn_help.UseVisualStyleBackColor = true;
             this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
             // 
-            // cb_audio_comms_device
-            // 
-            this.cb_audio_comms_device.AutoSize = true;
-            this.cb_audio_comms_device.Location = new System.Drawing.Point(326, 112);
-            this.cb_audio_comms_device.Name = "cb_audio_comms_device";
-            this.cb_audio_comms_device.Size = new System.Drawing.Size(424, 24);
-            this.cb_audio_comms_device.TabIndex = 21;
-            this.cb_audio_comms_device.Text = "Also set this as the default communicatons audio output";
-            this.cb_audio_comms_device.UseVisualStyleBackColor = true;
-            // 
-            // cb_capture_comms_device
-            // 
-            this.cb_capture_comms_device.AutoSize = true;
-            this.cb_capture_comms_device.Location = new System.Drawing.Point(325, 114);
-            this.cb_capture_comms_device.Name = "cb_capture_comms_device";
-            this.cb_capture_comms_device.Size = new System.Drawing.Size(418, 24);
-            this.cb_capture_comms_device.TabIndex = 22;
-            this.cb_capture_comms_device.Text = "Also set this as the default communicatons microphone";
-            this.cb_capture_comms_device.UseVisualStyleBackColor = true;
-            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1675,6 +1676,7 @@ namespace DisplayMagician.UIForms
             this.Controls.Add(this.tabc_shortcut);
             this.Controls.Add(this.btn_cancel);
             this.Controls.Add(this.btn_save);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(1100, 982);
