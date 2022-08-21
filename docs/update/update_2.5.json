@@ -1,6 +1,6 @@
 {
   "autoupdate": {
-    "version": "2.5.1.1",
+    "version": "2.5.0.1",
     "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v2.4.1/DisplayMagicianSetup-v2.4.1.1.msi",
     "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases",
     "mandatory": {
