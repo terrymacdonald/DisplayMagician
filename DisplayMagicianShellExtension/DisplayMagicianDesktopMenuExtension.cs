@@ -26,7 +26,7 @@ namespace DisplayMagicianShellExtension
         internal static string AlternateAppHomePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DisplayMagician");
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.3.json");
+        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.4.json");
         internal static string registryDisplayMagician = @"SOFTWARE\DisplayMagician";
         string DisplayMagicianFullname = "";
         string DisplayMagicianInstallDir = "";
