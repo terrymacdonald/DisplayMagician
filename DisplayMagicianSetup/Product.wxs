@@ -116,7 +116,7 @@
 			</Component>
 			<Component Id="HKCURegistryEntries" Guid="481CA633-0BC0-49CD-B673-51BE9560B00F">
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Type="string" Name="AppDataDir" Value="[LocalAppDataFolder]" KeyPath="yes"/>
-				<RemoveRegistryKey Root="HKLM" Key="Software\DisplayMagician" Action="removeOnUninstall"/>
+				<RemoveRegistryKey Root="HKCU" Key="Software\DisplayMagician" Action="removeOnUninstall"/>
 			</Component>
 		</Directory>
 

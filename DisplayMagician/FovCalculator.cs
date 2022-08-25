@@ -10,7 +10,7 @@ using System.Web.UI.WebControls.WebParts;
 using System.Windows.Forms;
 using static DisplayMagician.FovCalculator;
 using static System.Net.WebRequestMethods;
-using static WinFormAnimation.AnimationFunctions;
+//using static WinFormAnimation.AnimationFunctions;
 
 namespace DisplayMagician
 {

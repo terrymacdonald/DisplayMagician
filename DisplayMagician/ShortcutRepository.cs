@@ -1176,7 +1176,7 @@ namespace DisplayMagician
                 }
 
                 string processToMonitorName;
-                bool isUWPApp = false;
+                //bool isUWPApp = false;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
                     processToMonitorName = shortcutToUse.ExecutableNameAndPath;                        

@@ -494,7 +494,7 @@ namespace DisplayMagician.UIForms
 
             ilv_saved_shortcuts.ResumeLayout();
 
-            // REmove the Masked Control to allow the user to start using DisplayMagician again.
+            // Remove the Masked Control to allow the user to start using DisplayMagician again.
             lbl_mask.Visible = false;
             lbl_mask.SendToBack();
 

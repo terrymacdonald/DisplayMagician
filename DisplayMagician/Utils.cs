@@ -67,7 +67,7 @@ namespace DisplayMagician
         public static void ActivateCenteredOnPrimaryScreen(this Form frm)
         {
             if (!(frm is Form))
-{
+            {
                 logger.Trace($"Utils/ActivateCenteredOnPrimaryScreen: frm passed in is not a Form. Not able to center the form.");
                 return;
             }
