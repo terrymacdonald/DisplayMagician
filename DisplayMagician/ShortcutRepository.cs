@@ -1253,7 +1253,7 @@ namespace DisplayMagician
                     {
                         if (appToUse.IsRunning)
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Found that UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) was running");
+                            logger.Debug($"ShortcutRepository/RunShortcut: Found that {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) application was running");
 
                             // if we have things to monitor, then we should start to wait for them
                             logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {appToUse.Name} to exit.");
@@ -1282,7 +1282,7 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception whilst checking if UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) was running.");
+                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception whilst checking if App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) App was running.");
                     }
 
                     if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
@@ -1308,8 +1308,8 @@ namespace DisplayMagician
                             // Tell the user that the application has closed
                             // Construct the toast content
                             tcBuilder = new ToastContentBuilder()
-                                .AddText($"UWP App {shortcutToUse.ApplicationName} was closed", hintMaxLines: 1)
-                                .AddText($"All UWP App {shortcutToUse.ApplicationName} processes were shutdown and changes were reverted.")
+                                .AddText($"{shortcutToUse.ApplicationName} app was closed", hintMaxLines: 1)
+                                .AddText($"All {shortcutToUse.ApplicationName} aplication processes were shutdown and changes were reverted.")
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                 .SetToastDuration(ToastDuration.Short);
 

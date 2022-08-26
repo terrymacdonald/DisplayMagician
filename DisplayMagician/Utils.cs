@@ -71,10 +71,11 @@ namespace DisplayMagician
                 logger.Trace($"Utils/ActivateCenteredOnPrimaryScreen: frm passed in is not a Form. Not able to center the form.");
                 return;
             }
-            CenterOnPrimaryScreen(frm);
+            frm.Top = (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2;
+            frm.Left = (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2;
             frm.Visible = true;
             frm.Activate();
-            frm.BringToFront();
+            //frm.BringToFront();
         }
 
         public static void ShowCenteredOnPrimaryScreen(this Form frm)

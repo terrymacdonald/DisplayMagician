@@ -381,7 +381,6 @@
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "DisplayMagician - Game Shortcuts";
-            this.Activated += new System.EventHandler(this.ShortcutLibraryForm_Activated);
             this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ShortcutLibraryForm_KeyPress);
             this.cms_shortcuts.ResumeLayout(false);

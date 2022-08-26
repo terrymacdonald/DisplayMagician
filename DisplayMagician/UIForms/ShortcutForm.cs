@@ -1307,6 +1307,7 @@ namespace DisplayMagician.UIForms
             // Set the shortcut mode
             _shortcutCategory = _shortcutToEdit.Category;
 
+            _isUnsaved = false;
 
             // Populate all the Games into the Games ListView            
             ilv_games.Enabled = true;
@@ -1333,6 +1334,7 @@ namespace DisplayMagician.UIForms
             // =============================================
             // IF THE SHORTCUT IS AN EXISTING SHORTCUT
             // =============================================
+            bool shortcutTweakChangesName = false;
             if (_editingExistingShortcut && _shortcutToEdit is ShortcutItem)
             {
                 // *** Main Shortcut controls ***
@@ -1370,10 +1372,15 @@ namespace DisplayMagician.UIForms
                 if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
                 {
                     MessageBox.Show(
-                        @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut.",
+                        @"The Display Profile used by this Shortcut no longer exists and cannot be used. We have selected the current Display Profile instead. You can choose a different Display Profile for this Shortcut if you wish.",
                         @"Display Profile no longer exists",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
+
+                    chosenProfile = ProfileRepository.CurrentProfile;
+                    shortcutTweakChangesName = true;
+                    _isUnsaved = true;
+
                 }
                 // If we get to the end of the loaded profiles and haven't
                 // found a matching profile, then we need to show the current profile
@@ -1397,6 +1404,8 @@ namespace DisplayMagician.UIForms
                         if (ProfileRepository.ProfileCount > 0)
                         {
                             chosenProfile = ProfileRepository.AllProfiles[0];
+                            shortcutTweakChangesName = true;
+                            _isUnsaved = true;
                         }
 
                     }
@@ -1404,6 +1413,15 @@ namespace DisplayMagician.UIForms
                 }
 
                 _profileToUse = chosenProfile;
+                // Also need to select the chosenProfile in the UI so it gets saved properly
+                foreach (var item in ilv_saved_profiles.Items)
+                {
+                    if (item.Text == chosenProfile.Name)
+                    {
+                        item.Selected = true;
+                        break;
+                    }
+                }
 
                 // *** 2. Choose Audio Tab ***
                 // Populate all the Audio devices in the audio devices list.
@@ -2186,11 +2204,20 @@ namespace DisplayMagician.UIForms
                         if (ProfileRepository.ProfileCount > 0)
                         {
                             chosenProfile = ProfileRepository.AllProfiles[0];
+                            shortcutTweakChangesName = true;
                         }
 
                     }
                     _profileToUse = chosenProfile;
-
+                    // Also need to select the chosenProfile in the UI so it gets saved properly
+                    foreach (var item in ilv_saved_profiles.Items)
+                    {
+                        if (item.Text == chosenProfile.Name)
+                        {
+                            item.Selected = true;
+                            break;
+                        }
+                    }
                 }
 
                 // Set up the new shortcut as a game
@@ -2211,6 +2238,10 @@ namespace DisplayMagician.UIForms
                 rb_switch_capture_temp.Checked = true;
             }
 
+            if (shortcutTweakChangesName && cb_autosuggest.Checked)
+            {
+                SuggestShortcutName();
+            }
 
             // Refresh the Shortcut UI
             RefreshShortcutUI();
@@ -2218,7 +2249,6 @@ namespace DisplayMagician.UIForms
             //RefreshImageListView(chosenProfile);
 
             _loadedShortcut = true;
-            _isUnsaved = false;
             
         }
 
@@ -2658,10 +2688,10 @@ namespace DisplayMagician.UIForms
                     {
                         // We're not allowed to save so record this in the logs
                         logger.Warn($"ShortcutForm/ShortcutForm_FormClosing: The shortcut isn't valid, so we'll skip closing the form to let the user modify it without losing their changes.");
-                        //AllowedToSave(true);
+                        AllowedToSave(true);
                         // Cancel the event!
                         e.Cancel = true;
-                        //DialogResult = DialogResult.Cancel;
+                        this.Show();
                     }
                 }
                 else

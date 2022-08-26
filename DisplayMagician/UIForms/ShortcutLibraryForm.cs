@@ -528,13 +528,13 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
+        /*private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
         {
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
 
             RemoveWarningIfShortcuts();
-        }
+        }*/
 
         private void tsmi_save_to_desktop_Click(object sender, EventArgs e)
         {
