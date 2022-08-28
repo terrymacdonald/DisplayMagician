@@ -432,6 +432,7 @@
     <None Include="Resources\nvidiawhite.png" />
     <None Include="Resources\exe.png" />
     <None Include="Resources\DisplayMagician.ico" />
+    <None Include="Resources\DisplayMagician2.ico" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
