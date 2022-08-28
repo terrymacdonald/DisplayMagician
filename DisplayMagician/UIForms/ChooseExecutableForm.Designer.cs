@@ -153,6 +153,7 @@ namespace DisplayMagician.UIForms
             this.ilv_installed_apps.TabIndex = 49;
             this.ilv_installed_apps.UseWIC = true;
             this.ilv_installed_apps.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_installed_apps_ItemClick);
+            this.ilv_installed_apps.VisibleChanged += new System.EventHandler(this.ilv_installed_apps_VisibleChanged);
             // 
             // btn_back
             // 
@@ -193,7 +194,9 @@ namespace DisplayMagician.UIForms
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Choose an application";
             this.TopMost = true;
+            this.Activated += new System.EventHandler(this.ChooseExecutableForm_Activated);
             this.Load += new System.EventHandler(this.ChooseExecutableForm_Load);
+            this.Shown += new System.EventHandler(this.ChooseExecutableForm_Shown);
             this.gb_select_exe.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();

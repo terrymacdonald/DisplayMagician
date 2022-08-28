@@ -175,6 +175,16 @@ namespace DisplayMagician.UIForms
             // Refresh the Installed Apps Library UI
             RefreshExecutableFormUI();
 
+            // Gah! I cannot get the EnsureVisible code to work as EnsureVisible doesn't seem to work until the ilistview is drawn
+            if (ilv_installed_apps.SelectedItems.Count > 0)
+            {
+                // Make sure that if the item is selected that it's visible
+                int selectedIndex = ilv_installed_apps.SelectedItems[0].Index;
+                if (ilv_installed_apps.IsItemVisible(ilv_installed_apps.SelectedItems[0]) == ItemVisibility.NotVisible)
+                {
+                    ilv_installed_apps.EnsureVisible(selectedIndex);
+                }                    
+            }
         }
 
         private void RefreshExecutableFormUI()
@@ -209,7 +219,8 @@ namespace DisplayMagician.UIForms
                     logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: This shortcut {installedApp.Name} is the selected one so selecting it in the UI");
                     newItem.Selected = true;
                     newItem.Focused = true;
-                    btn_select_app.Enabled = true;                    
+                    btn_select_app.Enabled = true;
+                    //ilv_installed_apps.EnsureVisible(newItem.Index);
                 }
 
             }
@@ -219,13 +230,6 @@ namespace DisplayMagician.UIForms
             // Restart updating the saved_profiles listview
             ilv_installed_apps.ResumeLayout();
             ilv_installed_apps.Refresh();
-
-            if (ilv_installed_apps.SelectedItems.Count > 0)
-            {
-                // Make sure that if the item is selected that it's visible
-                int selectedIndex = ilv_installed_apps.SelectedItems[0].Index;                
-                ilv_installed_apps.EnsureVisible(selectedIndex);
-            }            
 
         }
 
@@ -270,6 +274,24 @@ namespace DisplayMagician.UIForms
             _exeToUse = getExeFile();
             DialogResult = DialogResult.OK;
             this.Close();
+        }
+
+        private void ChooseExecutableForm_Activated(object sender, EventArgs e)
+        {
+            /*if (ilv_installed_apps.SelectedItems.Count > 0)
+            {
+                // Make sure that if the item is selected that it's visible
+                int selectedIndex = ilv_installed_apps.SelectedItems[0].Index;
+                ilv_installed_apps.EnsureVisible(selectedIndex);
+            }*/
+        }
+
+        private void ChooseExecutableForm_Shown(object sender, EventArgs e)
+        {            
+        }
+
+        private void ilv_installed_apps_VisibleChanged(object sender, EventArgs e)
+        {            
         }
     }
 }
