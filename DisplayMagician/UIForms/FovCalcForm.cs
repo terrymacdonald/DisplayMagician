@@ -375,15 +375,6 @@ namespace DisplayMagician.UIForms
                 cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.SixteenByNine;
             }
 
-            txt_screen_size.Text = 27.ToString();
-            cmb_screen_size_units.SelectedValue = ScreenMeasurementUnit.Inch;
-
-            txt_distance_to_screen.Text = 60.ToString();
-            cmb_distance_to_screen.SelectedValue = ScreenMeasurementUnit.CM;
-
-            txt_bezel_thickness.Text = 3.ToString();
-            cmb_bezel_thickness.SelectedValue = ScreenMeasurementUnit.MM;
-
             RunFovCalculation();
 
             _formLoaded = true;
