@@ -35,7 +35,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>DisplayMagician.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
