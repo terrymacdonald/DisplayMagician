@@ -22,6 +22,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         {
             var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Read(fs);
+            fs.Close();
         }
 
         /// <summary>
@@ -44,26 +45,33 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
             do
             {
-                var appid = reader.ReadUInt32();
-
-                if (appid == 0)
+                try
                 {
-                    break;
+                    var appid = reader.ReadUInt32();
+
+                    if (appid == 0)
+                    {
+                        return;
+                    }
+
+                    var app = new App
+                    {
+                        AppID = appid,
+                        Size = reader.ReadUInt32(),
+                        InfoState = reader.ReadUInt32(),
+                        LastUpdated = DateTimeFromUnixTime(reader.ReadUInt32()),
+                        Token = reader.ReadUInt64(),
+                        Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
+                        ChangeNumber = reader.ReadUInt32(),
+                        Data = deserializer.Deserialize(input),
+                    };
+
+                    Apps.Add(app);
                 }
-
-                var app = new App
+                catch (Exception ex)
                 {
-                    AppID = appid,
-                    Size = reader.ReadUInt32(),
-                    InfoState = reader.ReadUInt32(),
-                    LastUpdated = DateTimeFromUnixTime(reader.ReadUInt32()),
-                    Token = reader.ReadUInt64(),
-                    Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
-                    ChangeNumber = reader.ReadUInt32(),
-                    Data = deserializer.Deserialize(input),
-                };
-
-                Apps.Add(app);
+                    return;
+                }
             } while (true);
         }
 
