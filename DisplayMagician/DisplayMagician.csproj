@@ -388,7 +388,7 @@
       <Version>5.0.5</Version>
     </PackageReference>
     <PackageReference Include="protobuf-net">
-      <Version>3.1.22</Version>
+      <Version>3.1.25</Version>
     </PackageReference>
     <PackageReference Include="QueryString.NET">
       <Version>1.0.0</Version>
