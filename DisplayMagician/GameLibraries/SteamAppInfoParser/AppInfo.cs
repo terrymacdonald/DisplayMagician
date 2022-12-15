@@ -9,6 +9,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
     class AppInfo
     {
         private const uint Magic = 0x07_56_44_27;
+        private const uint Magic2 = 0x07_56_44_28;
 
         public EUniverse Universe { get; set; }
 
@@ -34,7 +35,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
             var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic)
+            if (magic != Magic && magic != Magic2)
             {
                 throw new InvalidDataException($"Unknown magic header: {magic}");
             }
