@@ -513,7 +513,16 @@ namespace DisplayMagician.GameLibraries
 
                 string appInfoVdfFile = Path.Combine(_steamPath, "appcache", "appinfo.vdf");
                 var newAppInfo = new AppInfo();
-                newAppInfo.Read(appInfoVdfFile);
+                try
+                {
+                    // Try to read the appInfoVdfFile
+                    newAppInfo.Read(appInfoVdfFile);
+                }
+                catch (Exception ex)
+                {
+                    // If we have a problem then we just have to return no Steam Games!
+                    return false;
+                }
 
                 logger.Trace($"SteamLibrary/LoadInstalledGames: Found {newAppInfo.Apps.Count} apps in the {appInfoVdfFile} VDF file");
 

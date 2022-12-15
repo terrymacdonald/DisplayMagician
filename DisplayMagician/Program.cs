@@ -146,11 +146,7 @@ namespace DisplayMagician {
             //NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
 
             var config = new NLog.Config.LoggingConfiguration();
-
-            // Targets where to log to: File and Console
-            //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
-            string AppLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
-
+            
             // Create the Logging Dir if it doesn't exist so that it's avilable for all 
             // parts of the program to use
             if (!Directory.Exists(AppLogPath))
@@ -164,7 +160,7 @@ namespace DisplayMagician {
                     Console.WriteLine($"Program/Main Exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
             }
-            else
+            /*else
             {
                 // If the log directory does exist, then attempt to rename the old log files so they
                 // don't get overwritten and we can send them in a support zip file
@@ -189,7 +185,7 @@ namespace DisplayMagician {
                 {
                     File.Move(AppLogFilename, Path.Combine(Program.AppLogPath, $"DisplayMagician1.log"));
                 }
-            }
+            }*/
 
             // NOTE: This had to be moved up from the later state
             // Copy the old Settings file to the new v2 name
@@ -283,11 +279,20 @@ namespace DisplayMagician {
             //AppProgramSettings.LogLevel = "Trace";
 
 
+            // Targets where to log to: File and Console
+            //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
+            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
+            string archiveFilename = $"DisplayMagician###.log";
+
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
             {
-                FileName = AppLogFilename,
-                DeleteOldFileOnStartup = true,
+                FileName = appLogFilename,
+                ArchiveOldFileOnStartup = true,
+                ArchiveFileName = archiveFilename,
+                ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Rolling,
+                MaxArchiveFiles = 4,
+                ArchiveAboveSize = 41943040, // 40MB max file size
                 Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
             };
 
