@@ -857,7 +857,8 @@ namespace DisplayMagician.UIForms
                     // If it is a UWP application
                     if (txt_executable.Text.EndsWith("explorer.exe") && txt_args_executable.Text.StartsWith("shell:AppsFolder"))
                     {
-                        isUWP = true;
+                        isUWP = true;                       
+
                         if (!File.Exists(txt_executable.Text))
                         {
                             logger.Error($"ShortcutForm/AllowedToSave: The explorer executable {txt_executable.Text} used to launch UWP apps doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
@@ -2739,6 +2740,18 @@ namespace DisplayMagician.UIForms
                         cb_args_executable.Checked = true;
                     }                    
                     UpdateExeImagesUI(_selectedApp);
+
+                    if (txt_executable.Text.EndsWith("explorer.exe") && txt_args_executable.Text.StartsWith("shell:AppsFolder"))
+                    {
+                        // At this point DisplayMagician can't track the processes of UWP apps due to WIndows Permission Model. It only allows applications that are installed with a
+                        // PackageIdentity to access the Process information for UWP apps. This can't be done with .msi installer files :(.
+                        // TODO: Update this code to remove this check once we move to .net6 and install using a package identity
+                        MessageBox.Show(
+                        $"You have selected a UWP-style application. Windows Permissions Model prevents DisplayMagician from monitoring UWP applications. This means that DisplayMagician will not wait for your UWP application, and will assume it wasn't opened (even though Windows did start it!). This will be fixed in a future version of DisplayMagician.",
+                        @"DisplayMagician cannot monitor UWP applications",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    }
                 }
                 else
                 {
