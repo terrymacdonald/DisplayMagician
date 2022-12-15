@@ -30,8 +30,8 @@ namespace DisplayMagician.UIForms
             // Populate the LogLevel dictionary
             logLevelText.Add("Trace", "Full Application Trace (very large)");
             logLevelText.Add("Debug", "Detailed Debug messages (large)");
-            logLevelText.Add("Info", "Information, Warning and Error messages (Default)");
-            logLevelText.Add("Warn", "Warning and Error messages only");
+            logLevelText.Add("Info", "Information, Warning and Error messages");
+            logLevelText.Add("Warn", "Warning and Error messages only (Default)");
             logLevelText.Add("Error", "Error messages only");
             logLevelText.Add("Fatal", "Fatal Error messages only");
 

@@ -34,7 +34,7 @@ namespace DisplayMagician
         private bool _installedDesktopContextMenu = true;
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
-        private string _logLevel = NLog.LogLevel.Trace.ToString();
+        private string _logLevel = NLog.LogLevel.Warn.ToString();
         private string _displayMagicianVersion = null;
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
