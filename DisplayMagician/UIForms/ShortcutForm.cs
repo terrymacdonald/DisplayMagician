@@ -2780,8 +2780,17 @@ namespace DisplayMagician.UIForms
             {
                 _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_alternative_executable.Text));
             }
-            _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
-            _shortcutToEdit.SelectedImage = _selectedImage;
+            if (_availableImages.Count > 0)
+            {
+                _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                _shortcutToEdit.SelectedImage = _selectedImage;
+            }
+            else
+            {
+                ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                _availableImages.Add(bm);
+                _shortcutToEdit.SelectedImage = _selectedImage;
+            }
             pb_exe_icon.Image = _selectedImage.Image;
             btn_choose_exe_icon.Enabled = true;
         }
