@@ -1358,9 +1358,8 @@ namespace DisplayMagicianShared
                     //screen.DisplayConnector = displayMode.DisplayConnector;
                     screen.ScreenX = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XPos;
                     screen.ScreenY = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YPos;
-                    screen.ScreenWidth = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XRes;
-                    screen.ScreenHeight = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YRes;
-
+                    screen.Rotation = ScreenRotation.ROTATE_0;
+                    
                     // If we're at the 0,0 coordinate then we're the primary monitor
                     if (screen.ScreenX == 0 && screen.ScreenY == 0)
                     {
@@ -1439,8 +1438,40 @@ namespace DisplayMagicianShared
                             //screen.DisplayConnector = displayMode.DisplayConnector;
                             screen.ScreenX = displayMode.SourceMode.Position.X;
                             screen.ScreenY = displayMode.SourceMode.Position.Y;
-                            screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                            screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                            //screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                            //screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+
+                            if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE90)
+                            {
+                                // Portrait screen so need to change width and height
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Height;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Width;
+                                screen.Rotation = ScreenRotation.ROTATE_90;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE180)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_180;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_270;
+                            }
+                            else
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
+                            }
 
                             // If we're at the 0,0 coordinate then we're the primary monitor
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
