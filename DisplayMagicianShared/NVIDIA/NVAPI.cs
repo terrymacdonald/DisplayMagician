@@ -2117,7 +2117,9 @@ namespace DisplayMagicianShared.NVIDIA
            RefreshRateInMillihertz == other.RefreshRateInMillihertz &&
            Flags == other.Flags &&
            ConnectorType == other.ConnectorType &&
-           TvFormat == other.TvFormat &&
+           //TvFormat == other.TvFormat &&    // Annoyingly the latest driver has issues when trying to detect the TVFormat just after a screen rotation (e.g. 0deg to 90deg). It sometimes will set this to 557 and other times to 320. 
+           // so I cannot use this in Equality comparisons because of this random change. This is ok though, as the TVFormat isn't used for applying settings as far as I am aware, so either value 
+           // the driver sets seems to work ok.
            TimingOverride == other.TimingOverride &&
            Timing.Equals(other.Timing);
 
