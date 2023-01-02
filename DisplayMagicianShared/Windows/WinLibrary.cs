@@ -500,6 +500,10 @@ namespace DisplayMagicianShared.Windows
         private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS, bool fastScan = true)
         {
 
+            // Forcing fastscan to stop the taskbar location scanning delaying the user experience
+            // TODO: Find a replacement method of doing the taskbar location detection. Microsoft may have made things easier in Windows 11 by now....
+            fastScan = true;
+
             // Prepare the empty windows display config
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = CreateDefaultConfig();
 
