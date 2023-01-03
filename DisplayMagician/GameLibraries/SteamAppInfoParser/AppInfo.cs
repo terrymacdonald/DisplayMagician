@@ -42,12 +42,14 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
             Universe = (EUniverse)reader.ReadUInt32();
 
-            var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
+            var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);            
 
             do
             {
                 try
                 {
+                    var data = deserializer.Deserialize(input);
+
                     var appid = reader.ReadUInt32();
 
                     if (appid == 0)
