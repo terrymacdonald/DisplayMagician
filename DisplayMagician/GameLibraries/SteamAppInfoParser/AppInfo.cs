@@ -1,15 +1,18 @@
-﻿using System;
+﻿using DisplayMagician.GameLibraries.SteamAppInfoParser;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using ValveKeyValue;
 
+// Code used from SteamDatabase team at https://github.com/SteamDatabase/SteamAppInfo/tree/master/SteamAppInfoParser
+
 namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 {
     class AppInfo
     {
+        private const uint Magic28 = 0x07_56_44_28;
         private const uint Magic = 0x07_56_44_27;
-        private const uint Magic2 = 0x07_56_44_28;
 
         public EUniverse Universe { get; set; }
 
@@ -21,9 +24,8 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="filename">The file to open and read.</param>
         public void Read(string filename)
         {
-            var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Read(fs);
-            fs.Close();
         }
 
         /// <summary>
@@ -32,49 +34,47 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="input">The input <see cref="Stream"/> to read from.</param>
         public void Read(Stream input)
         {
-            var reader = new BinaryReader(input);
+            using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic && magic != Magic2)
+            if (magic != Magic && magic != Magic28)
             {
-                throw new InvalidDataException($"Unknown magic header: {magic}");
+                throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
 
-            var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);            
+            var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
 
             do
             {
-                try
+                var appid = reader.ReadUInt32();
+
+                if (appid == 0)
                 {
-                    var data = deserializer.Deserialize(input);
-
-                    var appid = reader.ReadUInt32();
-
-                    if (appid == 0)
-                    {
-                        return;
-                    }
-
-                    var app = new App
-                    {
-                        AppID = appid,
-                        Size = reader.ReadUInt32(),
-                        InfoState = reader.ReadUInt32(),
-                        LastUpdated = DateTimeFromUnixTime(reader.ReadUInt32()),
-                        Token = reader.ReadUInt64(),
-                        Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
-                        ChangeNumber = reader.ReadUInt32(),
-                        Data = deserializer.Deserialize(input),
-                    };
-
-                    Apps.Add(app);
+                    break;
                 }
-                catch (Exception ex)
+
+                reader.ReadUInt32(); // size until end of Data
+
+                var app = new App
                 {
-                    return;
+                    AppID = appid,
+                    InfoState = reader.ReadUInt32(),
+                    LastUpdated = DateTimeFromUnixTime(reader.ReadUInt32()),
+                    Token = reader.ReadUInt64(),
+                    Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
+                    ChangeNumber = reader.ReadUInt32(),
+                };
+
+                if (magic == Magic28)
+                {
+                    app.BinaryDataHash = new ReadOnlyCollection<byte>(reader.ReadBytes(20));
                 }
+
+                app.Data = deserializer.Deserialize(input);
+
+                Apps.Add(app);
             } while (true);
         }
 

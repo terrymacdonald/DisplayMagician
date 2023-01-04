@@ -26,8 +26,8 @@ using System.Resources;
 [assembly: Guid("e4ceaf5e-ad01-4695-b179-31168eb74c48")]
 
 // Version information
-[assembly: AssemblyVersion("2.5.0.342")]
-[assembly: AssemblyFileVersion("2.5.0.342")]
+[assembly: AssemblyVersion("2.5.0.344")]
+[assembly: AssemblyFileVersion("2.5.0.344")]
 [assembly: NeutralResourcesLanguageAttribute( "en" )]
 [assembly: CLSCompliant(true)]
 

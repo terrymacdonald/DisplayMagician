@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using ValveKeyValue;
@@ -20,7 +21,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="filename">The file to open and read.</param>
         public void Read(string filename)
         {
-            var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Read(fs);
         }
 
@@ -30,12 +31,12 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="input">The input <see cref="Stream"/> to read from.</param>
         public void Read(Stream input)
         {
-            var reader = new BinaryReader(input);
+            using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
             if (magic != Magic && magic != Magic27)
             {
-                throw new InvalidDataException($"Unknown magic header: {magic}");
+                throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
