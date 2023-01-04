@@ -46,19 +46,22 @@ DisplayMagician lets you set up the following information for each game or appli
   * Origin (Electronic Arts)
   * Epic Games 
   * GOG.com
+* Or select your Game from a list of installed Windows applications
+* Or even select a specific game executable to run
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
 * Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display)
-* Supports Windows DPI Scaling, setting Refresh Rates and HDR
+* Supports Windows DPI Scaling, rotated screens, setting Refresh Rates and HDR
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
-* Contains a Field-of-view (FOV) Calculator to help set games to make objects appear at normal size
+* It even contains a Field-of-view (FOV) Calculator to help set games to make objects appear at normal size
 * Allows you to easily chose installed applications from software installed via installers and UWP apps downloaded from the Microsoft Store.
 
 ## Planned features
 
-* Change UI from Winforms to .NET6 and MAUI
+* Migrate from .Net Framework 4.8 to .Net 7, and transition to new supported libraries
+* Create DisplayMagician v3 using MAUI rather than Winforms
 * Add Unit Tests!
 * Maybe add Intel Alchemist GPU spanned screen support when those cards are eventually released.
 
@@ -69,7 +72,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
 
 ## Donation
-I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. That said, I'd appreciate a donation to help buy a coffee or two! 
+I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to craft something that is useful to so many people. That said, I'd appreciate a donation to help buy a coffee or two! 
 
 <a href="https://www.buymeacoffee.com/displaymagician" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a><a href="https://github.com/sponsors/terrymacdonald" target="_blank">  <img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-sponsor.png" alt="Github Sponsor" height="41" width="122"></a>
 
@@ -89,6 +92,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 <p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfileHotkey.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianFovCalculator.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianSettings.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianShellExtension.png"/></p>
 
 
@@ -129,7 +133,7 @@ Have fun!
 
 ## License
 
-Copyright © Terry MacDonald 2020-2022
+Copyright © Terry MacDonald 2020-2023
 
 Original HelioDisplayManagement - copyright © Soroush Falahati 2017-2020
 
@@ -153,10 +157,17 @@ I’m so very thankful for the help of the following people, who make DisplayMag
 
 * Sean at SimCraft (Thank you so much for your generous donation!)
 * Domenic (Thanks for the solid month of troubleshooting help and the monthly sponsorship!)
-* RBZL (thanks for the monthly donation)
-* Frcooper (thanks for the monthly donation)
+* Frcooper (thanks for the monthly donations)
+* Miiinttt (thanks for the monthly donations)
 
 Also big thanks to:
+* Dmanzano1 (Thank you for your donation)
+* Yohan (Thank you for your donation)
+* Guennid (Thank you for your donation)
+* RBZL (thanks for the past monthly donations)
+* Davedontmind (Thank you for your donation)
+* Hmalatian (Thank you for your donation)
+* Nielssoeth (Thank you for your donation)
 * Markus Ewert 'dinex86' (Thanks for letting my use your FOV logic)
 * Dogy007 (Thanks for the sponsorship)
 * Ceramed (Thank you for your donation and your help troubleshooting SuperDisplay and SpaceDesk screens)
@@ -202,7 +213,6 @@ Also big thanks to:
 * Bossebossebosse (thanks for the donation)
 * Sk666 (thanks for the donation)
 * FormelLMS (thanks for the continued sponsoring and the testing help)
-* RBZL (thanks for the donation)
 * Neilperson (thanks for the cool idea)
 * DragRedSim (thanks for the bug report)
 * Original HelioDisplayManagement project created by the amazing Soroush Falahati
