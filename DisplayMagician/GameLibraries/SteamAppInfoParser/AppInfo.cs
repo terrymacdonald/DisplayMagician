@@ -24,8 +24,9 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="filename">The file to open and read.</param>
         public void Read(string filename)
         {
-            using var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Read(fs);
+            fs.Close();
         }
 
         /// <summary>
@@ -34,11 +35,12 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="input">The input <see cref="Stream"/> to read from.</param>
         public void Read(Stream input)
         {
-            using var reader = new BinaryReader(input);
+            var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
             if (magic != Magic && magic != Magic28)
             {
+                reader.Close();
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
@@ -76,6 +78,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
                 Apps.Add(app);
             } while (true);
+            reader.Close();
         }
 
         public static DateTime DateTimeFromUnixTime(uint unixTime)
