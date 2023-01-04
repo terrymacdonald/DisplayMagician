@@ -16,6 +16,10 @@ using IWshRuntimeLibrary;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
 using TsudaKageyu;
+using System.ComponentModel;
+using DisplayMagician.AppLibraries;
+using DisplayMagicianShared.NVIDIA;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagician
 {
@@ -27,9 +31,10 @@ namespace DisplayMagician
 
     public enum ShortcutCategory : int
     {
-        Application = 0,
+        Executable = 0,
         Game = 1,
         NoGame = 2,
+        Application = 3,
     }
 
     public enum ShortcutValidity : int
@@ -74,7 +79,7 @@ namespace DisplayMagician
         public bool RunAsAdministrator;
     }
 
-    public struct Executable
+    public struct ExecutableShortcutData
     {
         public string DifferentExecutableToMonitor;
         public string ExecutableNameAndPath;
@@ -86,7 +91,17 @@ namespace DisplayMagician
         public ProcessPriority ProcessPriority;
     }
 
-    public struct GameStruct
+    public struct AppShortcutData
+    {
+        public App AppToUse;
+        public string DifferentExecutableToMonitor;
+        public bool RunAsAdministrator;
+        public int ExecutableTimeout;
+        public bool ProcessNameToMonitorUsesExecutable;
+        public ProcessPriority ProcessPriority;
+    }
+
+    public struct GameShorcutData
     {
         public Game GameToPlay;
         public int StartTimeout;
@@ -112,7 +127,21 @@ namespace DisplayMagician
         public string Source;
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap Image;
-        public Size Size;
+        public Size Size;        
+
+        public override bool Equals(object obj) => obj is ShortcutBitmap other && this.Equals(other);
+
+        public bool Equals(ShortcutBitmap other)
+        => Size.Equals(Size) &&
+            Image.Equals(other.Image);
+
+        public override int GetHashCode()
+        {
+            return (Size, Image).GetHashCode();
+        }
+        public static bool operator ==(ShortcutBitmap lhs, ShortcutBitmap rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(ShortcutBitmap lhs, ShortcutBitmap rhs) => !(lhs == rhs);
     }
 
     public class ShortcutItem : IComparable
@@ -124,6 +153,8 @@ namespace DisplayMagician
         private string _name = "";
         private ShortcutCategory _category = ShortcutCategory.Game;
         private string _differentExecutableToMonitor;
+        private string _applicationId = "";
+        private string _applicationName = "";
         private string _executableNameAndPath = "";
         private string _executableArguments = "";
         private bool _executableArgumentsRequired = false;
@@ -140,10 +171,12 @@ namespace DisplayMagician
         private bool _monitorDifferentGameExe = false;
         private string _audioDevice = "";
         private bool _changeAudioDevice = false;
+        private bool _useAsCommsAudioDevice = true;
         private bool _setAudioVolume = false;
         private decimal _audioVolume = -1;
         private string _captureDevice = "";
         private bool _changeCaptureDevice;
+        private bool _useAsCommsCaptureDevice = true;
         private bool _setCaptureVolume = false;
         private decimal _captureVolume = -1;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
@@ -184,7 +217,7 @@ namespace DisplayMagician
                 _gameLibrary = SupportedGameLibraryType.Unknown;
                 _gameName = "";
                 _gameArguments = "";
-                _category = ShortcutCategory.Application;
+                _category = ShortcutCategory.Executable;
             }
             // Autocreate a name for the shortcut if AutoName is on
             // (and if we have a profile to use)
@@ -193,10 +226,7 @@ namespace DisplayMagician
                 // If Autoname is on, and then lets autoname it!
                 // That populates all the right things
                 AutoSuggestShortcutName();
-            }
-
-            //RefreshValidity();
-
+            }            
         }
 
         public static Version Version
@@ -204,7 +234,7 @@ namespace DisplayMagician
             get => new Version(1, 0);
         }
 
-
+        [DefaultValue("")]
         public string UUID
         {
             get
@@ -220,6 +250,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string Name
         {
             get
@@ -232,6 +263,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool AutoName
         {
             get
@@ -267,6 +299,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string ProfileUUID { 
             get 
             {
@@ -285,6 +318,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutPermanence.Temporary)]
         public ShortcutPermanence DisplayPermanence 
         { 
             get 
@@ -298,6 +332,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutPermanence.Temporary)]
         public ShortcutPermanence AudioPermanence
         {
             get
@@ -311,6 +346,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutPermanence.Temporary)]
         public ShortcutPermanence CapturePermanence
         {
             get
@@ -324,6 +360,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutCategory.Game)]
         public ShortcutCategory Category
         {
             get
@@ -337,6 +374,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ProcessPriority.Normal)]
         public ProcessPriority ProcessPriority
         {
             get
@@ -350,6 +388,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string DifferentExecutableToMonitor
         {
             get
@@ -359,10 +398,49 @@ namespace DisplayMagician
 
             set
             {
-                _differentExecutableToMonitor = value;
+                if (value == null)
+                {
+                    _differentExecutableToMonitor = "";
+                }
+                else
+                {
+                    _differentExecutableToMonitor = value;
+                }
+                
             }
         }
 
+        [DefaultValue("")]
+        public string ApplicationId
+        {
+            get
+            {
+                return _applicationId;
+            }
+
+            set
+            {
+                _applicationId = value;                
+
+            }
+        }
+
+        [DefaultValue("")]
+        public string ApplicationName
+        {
+            get
+            {
+                return _applicationName;
+            }
+
+            set
+            {
+                _applicationName = value;
+
+            }
+        }
+
+        [DefaultValue("")]
         public string ExecutableNameAndPath
         {
             get
@@ -376,12 +454,13 @@ namespace DisplayMagician
 
                 // If the executableNameandPath is set then we also want to update the originalIconPath
                 // so it's the path to the application. This will kick of the icon grabbing processes
-                if (Category.Equals(ShortcutCategory.Application))
+                if (Category.Equals(ShortcutCategory.Executable))
                     _originalIconPath = value;
 
             }
         }
 
+        [DefaultValue("")]
         public string ExecutableArguments
         {
             get
@@ -395,6 +474,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool ExecutableArgumentsRequired
         {
             get
@@ -408,6 +488,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool RunExeAsAdministrator
         {
             get
@@ -421,6 +502,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ProcessNameToMonitorUsesExecutable
         {
             get
@@ -434,6 +516,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string GameAppId
         {
             get
@@ -447,6 +530,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string GameName
         {
             get
@@ -460,6 +544,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(SupportedGameLibraryType.Unknown)]
         public SupportedGameLibraryType GameLibrary
         {
             get
@@ -474,6 +559,7 @@ namespace DisplayMagician
         }
 
 #pragma warning disable CS3003 // Type is not CLS-compliant
+        [DefaultValue(Keys.None)]
         public Keys Hotkey
 #pragma warning restore CS3003 // Type is not CLS-compliant
         {
@@ -487,6 +573,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(20)]
         public int StartTimeout
         {
             get
@@ -500,6 +587,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string GameArguments
         {
             get
@@ -509,7 +597,14 @@ namespace DisplayMagician
 
             set
             {
-                _gameArguments = value;
+                if (_gameArguments == null)
+                {
+                    _gameArguments = "";
+                }
+                else
+                {
+                    _gameArguments = value;
+                }
             }
         }
 
@@ -526,6 +621,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string DifferentGameExeToMonitor
         {
             get
@@ -535,7 +631,14 @@ namespace DisplayMagician
 
             set
             {
-                _differentGameExeToMonitor = value;
+                if (value == null)
+                {
+                    _differentGameExeToMonitor = "";
+                }
+                else
+                {
+                    _differentGameExeToMonitor = value;
+                }                
             }
         }
 
@@ -552,7 +655,7 @@ namespace DisplayMagician
             }
         }
 
-
+        [DefaultValue("")]
         public string AudioDevice
         {
             get
@@ -566,6 +669,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool ChangeAudioDevice
         {
             get
@@ -579,6 +683,21 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
+        public bool UseAsCommsAudioDevice
+        {
+            get
+            {
+                return _useAsCommsAudioDevice;
+            }
+
+            set
+            {
+                _useAsCommsAudioDevice = value;
+            }
+        }
+
+        [DefaultValue(50)]
         public decimal AudioVolume
         {
             get
@@ -592,6 +711,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool SetAudioVolume
         {
             get
@@ -605,6 +725,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string CaptureDevice
         {
             get
@@ -618,6 +739,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool ChangeCaptureDevice
         {
             get
@@ -631,6 +753,21 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
+        public bool UseAsCommsCaptureDevice
+        {
+            get
+            {
+                return _useAsCommsCaptureDevice;
+            }
+
+            set
+            {
+                _useAsCommsCaptureDevice = value;
+            }
+        }
+
+        [DefaultValue(50)]
         public decimal CaptureVolume
         {
             get
@@ -644,6 +781,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool SetCaptureVolume
         {
             get
@@ -657,6 +795,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<StartProgram>))]
         public List<StartProgram> StartPrograms
         {
             get
@@ -670,6 +809,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<StopProgram>))]
         public List<StopProgram> StopPrograms
         {
             get
@@ -683,7 +823,7 @@ namespace DisplayMagician
             }
         }
 
-
+        [DefaultValue("")]
         public string OriginalIconPath {
             get
             {
@@ -699,6 +839,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap OriginalLargeBitmap
         {
@@ -718,6 +859,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap ShortcutBitmap
         {
@@ -732,6 +874,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string SavedShortcutIconCacheFilename
         {
             get
@@ -771,6 +914,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public ShortcutBitmap SelectedImage
         {
             get
@@ -785,6 +929,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<ShortcutBitmap>))]
         public List<ShortcutBitmap> AvailableImages
         {
             get
@@ -811,10 +956,12 @@ namespace DisplayMagician
             string originalIconPath,
             bool changeAudioDevice = false,
             string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
             bool setAudioVolume = false,
             decimal audioVolume = -1,
             bool changeCaptureDevice = false,
             string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
@@ -831,10 +978,12 @@ namespace DisplayMagician
             _profileToUse = profile;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
             _setAudioVolume = setAudioVolume;
             _audioVolume = audioVolume;
             _changeCaptureDevice = changeCaptureDevice;
             _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
             _setCaptureVolume = setCaptureVolume;
             _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
@@ -858,6 +1007,9 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = false;
             _differentExecutableToMonitor = "";
 
+            _applicationId = "";
+            _applicationName = "";
+
             _gameAppId = "";
             _gameArgumentsRequired = false;
             _gameArguments = "";
@@ -876,7 +1028,7 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            GameStruct game, 
+            GameShorcutData game, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
@@ -885,10 +1037,12 @@ namespace DisplayMagician
             List<ShortcutBitmap> availableImages,
             bool changeAudioDevice = false,
             string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
             bool setAudioVolume = false,
             decimal audioVolume = -1,
             bool changeCaptureDevice = false,
             string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
@@ -906,7 +1060,7 @@ namespace DisplayMagician
             _category = ShortcutCategory.Game;
             _gameAppId = game.GameToPlay.Id;
             _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibrary;
+            _gameLibrary = game.GameToPlay.GameLibraryType;
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
@@ -915,10 +1069,12 @@ namespace DisplayMagician
             _processPriority = game.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
             _setAudioVolume = setAudioVolume;
             _audioVolume = audioVolume;
             _changeCaptureDevice = changeCaptureDevice;
             _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
             _setCaptureVolume = setCaptureVolume;
             _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
@@ -948,6 +1104,9 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = false;
             _differentExecutableToMonitor = "";
 
+            _applicationId = "";
+            _applicationName = "";
+
             ReplaceShortcutIconInCache();
             RefreshValidity();
         }
@@ -957,7 +1116,7 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            Executable executable, 
+            ExecutableShortcutData executable, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
@@ -966,10 +1125,12 @@ namespace DisplayMagician
             List<ShortcutBitmap> availableImages, 
             bool changeAudioDevice = false,
             string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
             bool setAudioVolume = false,
             decimal audioVolume = -1,
             bool changeCaptureDevice = false,
             string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
@@ -983,7 +1144,7 @@ namespace DisplayMagician
                 _uuid = uuid;
             _name = name;
             _profileToUse = profile;
-            _category = ShortcutCategory.Application;
+            _category = ShortcutCategory.Executable;
             _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
             _executableNameAndPath = executable.ExecutableNameAndPath;
             _runExeAsAdministrator = executable.RunAsAdministrator;
@@ -994,10 +1155,12 @@ namespace DisplayMagician
             _processPriority = executable.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
             _setAudioVolume = setAudioVolume;
             _audioVolume = audioVolume;
             _changeCaptureDevice = changeCaptureDevice;
             _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
             _setCaptureVolume = setCaptureVolume;
             _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
@@ -1014,6 +1177,95 @@ namespace DisplayMagician
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
+            // We create the Bitmaps for the executable
+            _originalBitmap = selectedImage.Image;
+            // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
+            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            // Empty out the unused shortcut data
+            _gameAppId = "";
+            _gameArgumentsRequired = false;
+            _gameArguments = "";
+            _gameLibrary = SupportedGameLibraryType.Unknown;
+            _monitorDifferentGameExe = false;
+            _differentGameExeToMonitor = "";
+
+            _applicationId = "";
+            _applicationName = "";
+
+            ReplaceShortcutIconInCache();
+            RefreshValidity();
+        }
+
+        public void UpdateAppShortcut(
+            string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
+            ProfileItem profile,
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
+            AppShortcutData app,
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
+            ShortcutBitmap selectedImage,
+            List<ShortcutBitmap> availableImages,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
+            bool autoName = true,
+            Keys hotkey = Keys.None,
+            string uuid = ""
+            )
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileToUse = profile;
+            _category = ShortcutCategory.Application;
+            _applicationId = app.AppToUse.Id;
+            _applicationName = app.AppToUse.Name;
+            _differentExecutableToMonitor = app.DifferentExecutableToMonitor;
+            _executableNameAndPath = app.AppToUse.ExePath;
+            _runExeAsAdministrator = app.RunAsAdministrator;
+            _startTimeout = app.ExecutableTimeout;
+            _executableArguments = app.AppToUse.Arguments;
+            _executableArgumentsRequired = app.AppToUse.ExecutableArgumentsRequired;
+            _processNameToMonitorUsesExecutable = app.ProcessNameToMonitorUsesExecutable;
+            _processPriority = app.ProcessPriority;
+            _changeAudioDevice = changeAudioDevice;
+            _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
+            _displayPermanence = displayPermanence;
+            _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _stopPrograms = stopPrograms;
+            _selectedImage = selectedImage;
+            _availableImages = availableImages;
+            _hotkey = hotkey;
+
+            _originalIconPath = app.AppToUse.IconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            
             // We create the Bitmaps for the executable
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
@@ -1052,6 +1304,8 @@ namespace DisplayMagician
             shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
             shortcut.RunExeAsAdministrator = RunExeAsAdministrator;
             shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
+            shortcut.ApplicationId = ApplicationId;
+            shortcut.ApplicationName = ApplicationName;
             shortcut.ProcessPriority = ProcessPriority;
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
@@ -1064,10 +1318,12 @@ namespace DisplayMagician
             shortcut.Errors.AddRange(Errors);
             shortcut.ChangeAudioDevice = ChangeAudioDevice;
             shortcut.AudioDevice = AudioDevice;
+            shortcut.UseAsCommsAudioDevice = UseAsCommsAudioDevice;
             shortcut.SetAudioVolume = SetAudioVolume;
             shortcut.AudioVolume = AudioVolume;
             shortcut.ChangeCaptureDevice = ChangeCaptureDevice;
             shortcut.CaptureDevice = CaptureDevice;
+            shortcut.UseAsCommsCaptureDevice     = UseAsCommsCaptureDevice;
             shortcut.SetCaptureVolume = SetCaptureVolume;
             shortcut.CaptureVolume = CaptureVolume;
             // shortcut.Hotkey = Hotkey; // We cannot duplicate the Hotkey as it breaks things
@@ -1212,25 +1468,50 @@ namespace DisplayMagician
                         worstError = ShortcutValidity.Warning;
                 }                
             }
+
+            logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is named: {Name}");
+
             // Is the main application still installed?
-            if (Category.Equals(ShortcutCategory.Application))
+            if (Category.Equals(ShortcutCategory.Executable))
             {
-                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Application");
+                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Executable");
                 // We need to check if the Application still exists
                 if (!System.IO.File.Exists(ExecutableNameAndPath))
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The Application executable {ExecutableNameAndPath} DOES NOT exist");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The executable {ExecutableNameAndPath} DOES NOT exist");
                     ShortcutError error = new ShortcutError();
                     error.Name = "InvalidExecutableNameAndPath";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The application executable '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
+                    error.Message = $"The executable '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
                 }
                 else
                 {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The Application executable {ExecutableNameAndPath} exists");
+                    logger.Trace($"ShortcutItem/RefreshValidity: The Executable {ExecutableNameAndPath} exists");
+                }
+
+            }
+            // Is the main application still installed?
+            else if (Category.Equals(ShortcutCategory.Application))
+            {
+                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Application");
+                // We need to check if the Application still exists
+                if (!System.IO.File.Exists(ExecutableNameAndPath))
+                {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The Application {ExecutableNameAndPath} DOES NOT exist");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "InvalidExecutableNameAndPath";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The application '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Error;
+                }
+                else
+                {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The Application {ExecutableNameAndPath} exists");
                 }
 
             }
@@ -1551,7 +1832,7 @@ namespace DisplayMagician
             if (DisplayPermanence == ShortcutPermanence.Temporary)
             {
                 // Only add this set of options if the shortcut is to an standalone application
-                if (Category == ShortcutCategory.Application)
+                if (Category == ShortcutCategory.Executable)
                 {
                     // Prepare text for the shortcut description field
                     shortcutDescription = string.Format(Language.Execute_application_with_profile, programName, ProfileToUse.Name);
@@ -1634,10 +1915,15 @@ namespace DisplayMagician
                 {
                     _name = $"{GameName} ({_profileToUse.Name})";
                 }
-                else if (Category.Equals(ShortcutCategory.Application) && ExecutableNameAndPath.Length > 0)
+                else if (Category.Equals(ShortcutCategory.Executable) && ExecutableNameAndPath.Length > 0)
                 {
                     string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
                     _name = $"{baseName} ({_profileToUse.Name})";
+                }
+                else if (Category.Equals(ShortcutCategory.Application) && !String.IsNullOrWhiteSpace(ApplicationName))
+                {
+                    string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
+                    _name = $"{ApplicationName} ({_profileToUse.Name})";
                 }
                 else
                 {

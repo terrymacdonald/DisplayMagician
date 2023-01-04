@@ -89,7 +89,7 @@ namespace DisplayMagician.UIForms
             this.label1.ForeColor = System.Drawing.Color.White;
             this.label1.Location = new System.Drawing.Point(139, 21);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(138, 16);
+            this.label1.Size = new System.Drawing.Size(137, 16);
             this.label1.TabIndex = 2;
             this.label1.Text = "Choose image to use:";
             this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -102,7 +102,7 @@ namespace DisplayMagician.UIForms
             this.label2.ForeColor = System.Drawing.Color.White;
             this.label2.Location = new System.Drawing.Point(457, 21);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(106, 16);
+            this.label2.Size = new System.Drawing.Size(105, 16);
             this.label2.TabIndex = 3;
             this.label2.Text = "Selected image:";
             this.label2.TextAlign = System.Drawing.ContentAlignment.TopCenter;

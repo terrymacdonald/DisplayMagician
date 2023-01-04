@@ -1,5 +1,6 @@
 ﻿using AudioSwitcher.AudioApi;
 using AudioSwitcher.AudioApi.CoreAudio;
+using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.UIForms;
@@ -40,7 +41,7 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.2.json");
+        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.5.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -406,7 +407,7 @@ namespace DisplayMagician
             }            
         }
 
-        private static bool LoadShortcuts()
+        public static bool LoadShortcuts()
         {
 
             logger.Debug($"ShortcutRepository/LoadShortcuts: Loading shortcuts from {_shortcutStorageJsonFileName} into the Shortcut Repository");
@@ -431,11 +432,6 @@ namespace DisplayMagician
                     // to handle old versions of the file that need updating. Done with a simple regex replace
                     try
                     {
-
-                        // Replace any "Enabled": true with "Disabled": false
-                        json = Regex.Replace(json, @"        ""Enabled"": true,", @"        ""Disabled"": false,");
-                        // Replace any "Enabled": false with "Disabled": true
-                        json = Regex.Replace(json, @"        ""Enabled"": false,", @"        ""Disabled"": true,");
 
                         // If the shortcuts file doesn't have "ProcessPriority" in it, then we need to add it
                         if (!Regex.Match(json, @"""ProcessPriority""").Success)
@@ -464,8 +460,9 @@ namespace DisplayMagician
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
-                            DefaultValueHandling = DefaultValueHandling.Include,
+                            DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
+                            ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
@@ -620,8 +617,10 @@ namespace DisplayMagician
                 JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
+                    DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    MissingMemberHandling = MissingMemberHandling.Error,
+                    ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                     {
                         jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
@@ -644,7 +643,7 @@ namespace DisplayMagician
                 logger.Error(ex, $"ShortcutRepository/SaveShortcuts: Unable to save the shortcut repository to the {_shortcutStorageJsonFileName}.");
             }
 
-            // If we have any JSON.net errors, then we need to records them in the logs
+            // If we have any JSON.net errors, then we need to record them in the logs
             if (jsonErrors.Count > 0)
             {
                 foreach (string jsonError in jsonErrors)
@@ -698,7 +697,7 @@ namespace DisplayMagician
         }
 
 
-        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, CancellationToken cancelToken)
+        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, ref CancellationToken cancelToken)
         {
             logger.Debug($"ShortcutRepository/RunShortcut: Running the shortcut {shortcutToUse.Name}.");
 
@@ -771,12 +770,18 @@ namespace DisplayMagician
 
             // Get the list of Audio Devices currently connected or unplugged (they can be plugged back in)
             bool needToChangeAudioDevice = false;
+            bool needToChangeCommsAudioDevice = false;
             CoreAudioDevice rollbackAudioDevice = null;
+            CoreAudioDevice rollbackCommunicationAudioDevice = null;
             double rollbackAudioVolume = 50;
+            double rollbackCommunicationAudioVolume = 50;
             List<CoreAudioDevice> activeAudioDevices = new List<CoreAudioDevice>();
             bool needToChangeCaptureDevice = false;
+            bool needToChangeCommsCaptureDevice = false;
             CoreAudioDevice rollbackCaptureDevice = null;
+            CoreAudioDevice rollbackCommunicationCaptureDevice = null;
             double rollbackCaptureVolume = 50;
+            double rollbackCommunicationCaptureVolume = 50;            
             List<CoreAudioDevice> activeCaptureDevices = new List<CoreAudioDevice>();
 
             if (_audioController != null)
@@ -803,17 +808,51 @@ namespace DisplayMagician
                                 
                             }
 
-                            if (needToChangeAudioDevice)
+                            if (shortcutToUse.UseAsCommsAudioDevice)
                             {
-                                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
-                                
+                                // record the old communications audio device
+                                rollbackCommunicationAudioDevice = _audioController.DefaultPlaybackCommunicationsDevice;
+                                if (rollbackCommunicationAudioDevice != null)
+                                {
+                                    rollbackCommunicationAudioVolume = _audioController.DefaultPlaybackCommunicationsDevice.Volume;
+                                    if (!rollbackCommunicationAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                                    {
+                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} communications audio device.");
+                                        needToChangeCommsAudioDevice = true;
+                                    }
+                                }
+                            }                                
+
+                            // Get a reference to the device if we need to change comsething
+                            if (needToChangeAudioDevice || needToChangeCommsAudioDevice)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device or commmunications device.");                               
 
                                 foreach (CoreAudioDevice audioDevice in activeAudioDevices)
                                 {
                                     if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
                                     {
-                                        // use the Audio Device
-                                        audioDevice.SetAsDefault();
+                                        if (needToChangeAudioDevice)
+                                        {
+                                            // use the Audio Device as default Audio device
+                                            logger.Info($"ShortcutRepository/RunShortcut: Setting {audioDevice.Name} to be the default Audio Device.");
+                                            audioDevice.SetAsDefault();
+                                        }
+                                        else
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: No need to set {audioDevice.Name} to be the default Audio Device. Skipping");
+                                        }
+
+                                        if (needToChangeCommsAudioDevice)
+                                        {
+                                            // use the Audio Device as default Comms Audio device
+                                            logger.Info($"ShortcutRepository/RunShortcut: Setting {audioDevice.Name} to be the default Communications Audio Device.");
+                                            audioDevice.SetAsDefaultCommunications();
+                                        }
+                                        else
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: No need to set {audioDevice.Name} to be the default Communications Audio Device. Skipping");
+                                        }
                                         foundAudioDevice = true;
                                         break;
                                     }
@@ -821,16 +860,17 @@ namespace DisplayMagician
 
                                 if (!foundAudioDevice)
                                 {
-                                    logger.Error($"ShortcutRepository/RunShortcut: We wanted to use {shortcutToUse.AudioDevice} audio device but it wasn't plugged in or unplugged. Unable to use so skipping setting the audio device.");
+                                    logger.Error($"ShortcutRepository/RunShortcut: We wanted to use {shortcutToUse.AudioDevice} audio device but it wasn't plugged in or unplugged. Unable to use so skipping setting the default audio device and default communications audio device.");
                                 }
                             }
                             else
                             {
-                                logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
+                                logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device for audio and communications so no need to change audio devices.");
                             }
 
                             if (foundAudioDevice)
-                            {
+                            {                                
+
                                 if (shortcutToUse.SetAudioVolume)
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} volume level to {shortcutToUse.AudioVolume}%.");
@@ -840,6 +880,21 @@ namespace DisplayMagician
                                     });
                                     myTask.Start();
                                     myTask.Wait(2000);
+
+                                    if (shortcutToUse.UseAsCommsAudioDevice)
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} Communications Audio volume level to be {shortcutToUse.AudioVolume}%.");
+                                        myTask = new Task(() =>
+                                        {
+                                            _audioController.DefaultPlaybackCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                        });
+                                        myTask.Start();
+                                        myTask.Wait(2000);
+                                    }
+                                    else
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: No need to set {shortcutToUse.AudioDevice} Communications Audio volume level. Skipping");
+                                    }
                                 }
                                 else
                                 {
@@ -886,7 +941,23 @@ namespace DisplayMagician
                                 }
                             }
 
-                            if (needToChangeCaptureDevice) 
+                            if (shortcutToUse.UseAsCommsCaptureDevice)
+                            {
+                                // record the old communications capture device
+                                rollbackCommunicationCaptureDevice = _audioController.DefaultCaptureCommunicationsDevice;
+                                if (rollbackCommunicationCaptureDevice != null)
+                                {
+                                    rollbackCommunicationCaptureVolume = _audioController.DefaultCaptureCommunicationsDevice.Volume;
+                                    if (!rollbackCommunicationCaptureDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                                    {
+                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} communications audio device.");
+                                        needToChangeCommsCaptureDevice = true;
+                                    }
+                                }
+                            }
+                                
+
+                            if (needToChangeCaptureDevice || needToChangeCommsCaptureDevice) 
                             {
                                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
 
@@ -894,8 +965,26 @@ namespace DisplayMagician
                                 {
                                     if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
                                     {
-                                        // use the Audio Device
-                                        captureDevice.SetAsDefault();
+                                        if (needToChangeCaptureDevice)
+                                        {
+                                            // use the Audio Device
+                                            logger.Info($"ShortcutRepository/RunShortcut: Setting {captureDevice.Name} to be the default capture (microphone) Device.");
+                                            captureDevice.SetAsDefault();                                            
+                                        }
+                                        else
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: No need to set {captureDevice.Name} to be the default capture (microphone) Device. Skipping");
+                                        }
+
+                                        if (needToChangeCommsCaptureDevice)
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: Setting {captureDevice.Name} to be the default Communications Capture Device.");
+                                            captureDevice.SetAsDefaultCommunications();
+                                        }
+                                        else
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: No need to set {captureDevice.Name} to be the default Communications Capture Device. Skipping");
+                                        }
                                         foundCaptureDevice = true;
                                         break;
                                     }
@@ -912,7 +1001,8 @@ namespace DisplayMagician
                             }
 
                             if (foundCaptureDevice)
-                            {
+                            {                                
+
                                 if (shortcutToUse.SetCaptureVolume)
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
@@ -922,6 +1012,21 @@ namespace DisplayMagician
                                     });
                                     myTask.Start();
                                     myTask.Wait(2000);
+
+                                    if (shortcutToUse.UseAsCommsAudioDevice)
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} Communications Audio volume level to be {shortcutToUse.AudioVolume}%.");
+                                        myTask = new Task(() =>
+                                        {
+                                            _audioController.DefaultCaptureCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                        });
+                                        myTask.Start();
+                                        myTask.Wait(2000);
+                                    }
+                                    else
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: No need to set {shortcutToUse.AudioDevice} Communications Audio volume level. Skipping");
+                                    }
                                 }
                                 else
                                 {
@@ -1055,25 +1160,293 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
             }
 
-            // Add a status notification icon in the status area
-            // but only if we are going to wait for a process to finish
-            // string oldNotifyText = "";
-            // ContextMenuStrip oldContextMenuStrip = null;
-
- 
-            // If we're starting from a desktop shortcut or desktop background menu, then there isn't an already existing MainForm.
-            // We need to start one, so that we're able to update the NotifyIcon.
-            /*bool temporaryMainForm = false;
-            if (myMainForm == null)
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: We need to create a temporary system tray icon as we're running from a shortcut");
-                temporaryMainForm = true;                
-                myMainForm = new MainForm();
-                Program.AppMainForm = myMainForm;
-            }*/
-
             // Now start the main game/exe, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
+            {
+                // Add a status notification icon in the status area
+                if (myMainForm.InvokeRequired)
+                {
+                    myMainForm.BeginInvoke((MethodInvoker)delegate {
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ApplicationName} application...");
+                    });
+                }
+                else
+                {
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ApplicationName} application...");
+                }
+
+                string processToMonitorName;
+                //bool isUWPApp = false;
+                if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                {
+                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;                        
+                }
+                else
+                {
+                    processToMonitorName = shortcutToUse.DifferentExecutableToMonitor;
+                }
+
+                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the {shortcutToUse.ApplicationName} application to close.");
+                    // Now we want to tell the user we're running an application!
+                    // Construct the Windows toast content
+                    tcBuilder = new ToastContentBuilder()
+                        .AddText($"Running {shortcutToUse.ApplicationName}", hintMaxLines: 1)
+                        .AddText($"Waiting for the {shortcutToUse.ApplicationName} application to be closed...")
+                        .AddButton(new ToastButton()
+                            .SetContent("Cancel")
+                            .AddArgument("action", "stopWaiting")
+                            .SetBackgroundActivation())
+                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                        .SetToastDuration(ToastDuration.Short);
+                    toastContent = tcBuilder.Content;
+                    // Make sure to use Windows.Data.Xml.Dom
+                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                    doc.LoadXml(toastContent.GetContent());
+                    // And create the toast notification
+                    toast = new ToastNotification(doc);
+                    toast.SuppressPopup = false;
+                    // Remove any other Notifications from us
+                    ToastNotificationManagerCompat.History.Clear();
+                    // And then show this notification
+                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                }
+
+
+                logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
+                // Start the main executable
+
+
+                List<Process> processesCreated = new List<Process>();
+                App appToUse = AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId);
+                try
+                {                    
+
+                    if (appToUse is App)
+                    {
+                        if (appToUse.Start(out processesCreated, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} was launched as the main application to monitor.");                            
+                        }
+                        else
+                        {
+                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} as the main application to monitor.");
+                        }
+                    }                                                            
+
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception caused whilst starting UWP App {appToUse.Name}.");
+                }
+
+                // Wait an extra few seconds to give the application time to settle down
+                //Thread.Sleep(2000);
+
+                // Now we need to decide what we are monitoring. If the user has supplied an alternative process to monitor, then we monitor that instead!
+                bool foundSomethingToMonitor = false;
+                List<Process> processesToMonitor = new List<Process>();
+                if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                {
+                    try
+                    {
+                        if (appToUse.IsRunning)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Found that {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) application was running");
+
+                            // if we have things to monitor, then we should start to wait for them
+                            logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {appToUse.Name} to exit.");
+                            while (true)
+                            {
+                                Application.DoEvents();
+                                // If we have no more processes left then we're done!
+                                if (!appToUse.IsRunning)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: The application {appToUse.Name} has exited!");
+                                    break;
+                                }
+
+                                if (cancelToken.IsCancellationRequested)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for application {appToUse.Name} to close.");
+                                    break;
+                                }
+                                // Send a message to windows so that it doesn't think
+                                // we're locked and try to kill us
+                                System.Threading.Thread.CurrentThread.Join(0);
+                                Thread.Sleep(1000);
+                            }
+
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception whilst checking if App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) App was running.");
+                    }
+
+                    if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                    {
+                        if (cancelToken.IsCancellationRequested)
+                        {
+
+                            // The monitoring was stopped by the user
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the UWP App {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) monitoring was stopped by the user.");
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"UWP App {shortcutToUse.ApplicationName} monitoring cancelled", hintMaxLines: 1)
+                                .AddText($"Monitoring of UWP App {shortcutToUse.ApplicationName} was stopped by the user.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
+
+
+                        else
+                        {
+                            // The program was closed normally
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the UWP App {shortcutToUse.ApplicationName} was closed.");
+                            // Tell the user that the application has closed
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"{shortcutToUse.ApplicationName} app was closed", hintMaxLines: 1)
+                                .AddText($"All {shortcutToUse.ApplicationName} aplication processes were shutdown and changes were reverted.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+
+                        }
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new Windows.Data.Xml.Dom.XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        ToastNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                    }
+                }
+                else
+                {
+                    // We use the a user supplied executable as the thing we're monitoring instead!
+                    try
+                    {
+                        // Wait 3 seconds for the different executable to start up. If there is a loader involved we want to give it some time.
+                        Task.Delay(3000);
+                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
+                        if (processesToMonitor.Count > 0)
+                        {
+                            logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
+                            foundSomethingToMonitor = true;
+                        }
+                        else
+                        {
+                            logger.Warn($"ShortcutRepository/RunShortcut: No '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running, so we didn't find anything to monitor!");
+                            foundSomethingToMonitor = false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
+                        foundSomethingToMonitor = false;
+                    }
+
+                    // if we have things to monitor, then we should start to wait for them
+                    logger.Debug($"ShortcutRepository/RunShortcut: Waiting for different executable {shortcutToUse.DifferentExecutableToMonitor} to exit.");
+                    if (foundSomethingToMonitor)
+                    {
+                        while (true)
+                        {
+                            Application.DoEvents();
+                            // If we have no more processes left then we're done!
+                            if (ProcessUtils.ProcessExited(processesToMonitor))
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: The different executable {shortcutToUse.DifferentExecutableToMonitor} has exited!");
+                                break;
+                            }
+
+                            if (cancelToken.IsCancellationRequested)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for different executable {shortcutToUse.DifferentExecutableToMonitor} to exit.");
+                                break;
+                            }
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
+                        }
+
+                        if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                        {
+                            if (cancelToken.IsCancellationRequested)
+                            {
+
+                                // The monitoring was stopped by the user
+                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.DifferentExecutableToMonitor} monitoring was stopped by the user.");
+                                // Construct the toast content
+                                tcBuilder = new ToastContentBuilder()
+                                    .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} monitoring cancelled", hintMaxLines: 1)
+                                    .AddText($"Monitoring of different executable {shortcutToUse.DifferentExecutableToMonitor} was stopped by the user.")
+                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                    .SetToastDuration(ToastDuration.Short);
+                            }
+                            else
+                            {
+                                // The program was closed normally
+                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.DifferentExecutableToMonitor} was closed.");
+                                // Tell the user that the application has closed
+                                // Construct the toast content
+                                tcBuilder = new ToastContentBuilder()
+                                    .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} was closed", hintMaxLines: 1)
+                                    .AddText($"All different executable {shortcutToUse.DifferentExecutableToMonitor} processes were shutdown and changes were reverted.")
+                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                    .SetToastDuration(ToastDuration.Short);
+
+                            }
+                            toastContent = tcBuilder.Content;
+                            // Make sure to use Windows.Data.Xml.Dom
+                            doc = new Windows.Data.Xml.Dom.XmlDocument();
+                            doc.LoadXml(toastContent.GetContent());
+                            // And create the toast notification
+                            toast = new ToastNotification(doc);
+                            // Remove any other Notifications from us
+                            ToastNotificationManagerCompat.History.Clear();
+                            // And then show it
+                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        }
+                    }
+                    else
+                    {
+                        if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                        {
+                            // The program was closed normally
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.DifferentExecutableToMonitor} couldn't be detected.");
+                            // Tell the user that the differnt executable couldn't be detected as running
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} not detected", hintMaxLines: 1)
+                                .AddText($"A different executable {shortcutToUse.DifferentExecutableToMonitor} process couldn't be detected. Stopping monitoring.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                            toastContent = tcBuilder.Content;
+                            // Make sure to use Windows.Data.Xml.Dom
+                            doc = new Windows.Data.Xml.Dom.XmlDocument();
+                            doc.LoadXml(toastContent.GetContent());
+                            // And create the toast notification
+                            toast = new ToastNotification(doc);
+                            // Remove any other Notifications from us
+                            ToastNotificationManagerCompat.History.Clear();
+                            // And then show it
+                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        }
+                    }
+                }                
+                
+            }
+            else if (shortcutToUse.Category.Equals(ShortcutCategory.Executable))
             {
                 // Store the process to monitor for later
                 //IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
@@ -1083,18 +1456,19 @@ namespace DisplayMagician
                 if (myMainForm.InvokeRequired)
                 {
                     myMainForm.BeginInvoke((MethodInvoker)delegate {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...");
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath} executable...");
                     });
                 }
                 else
                 {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...");
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath} executable...");
                 }
 
                 string processToMonitorName;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;
+                    // If this is a normal app we're starting
+                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;                    
                 }
                 else
                 {
@@ -1178,8 +1552,16 @@ namespace DisplayMagician
                     try
                     {
                         processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
-                        logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
-                        foundSomethingToMonitor = true;
+                        if (processesToMonitor.Count > 0)
+                        {
+                            logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
+                            foundSomethingToMonitor = true;
+                        }
+                        else
+                        {
+                            logger.Warn($"ShortcutRepository/RunShortcut: No '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running, so we didn't find anything to monitor!");
+                            foundSomethingToMonitor = false;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -1190,7 +1572,7 @@ namespace DisplayMagician
 
                 // if we have things to monitor, then we should start to wait for them
                 logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {shortcutToUse.ExecutableNameAndPath} to exit.");
-                if (foundSomethingToMonitor && processesToMonitor.Count > 0)
+                if (foundSomethingToMonitor)
                 {                        
                     while (true)
                     {
@@ -1212,87 +1594,125 @@ namespace DisplayMagician
                         System.Threading.Thread.CurrentThread.Join(0);
                         Thread.Sleep(1000);
                     }
-                }
+                    if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                    {
+                        if (cancelToken.IsCancellationRequested)
+                        {
+                            // The monitoring was stopped by the user
+                            if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
+                                // Construct the toast content
+                                tcBuilder = new ToastContentBuilder()
+                                    .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
+                                    .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")
+                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                    .SetToastDuration(ToastDuration.Short);
+                            }
+                            else
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
+                                // Construct the toast content
+                                tcBuilder = new ToastContentBuilder()
+                                    .AddText($"Different executable {shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
+                                    .AddText($"Monitoring of different executable {processToMonitorName} processes were stopped by the user.")
+                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                    .SetToastDuration(ToastDuration.Short);
+                            }
+                        }
+                        else
+                        {
+                            // The monitoring was stopped by the user
+                            if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                            {
+                                // The program was closed normally
+                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} was closed.");
+                                // Tell the user that the application has closed
+                                // Construct the toast content
+                                tcBuilder = new ToastContentBuilder()
+                                    .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
+                                    .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
+                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                    .SetToastDuration(ToastDuration.Short);
+                            }
+                            else
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.ExecutableNameAndPath} was closed.");
+                                // Construct the toast content
+                                tcBuilder = new ToastContentBuilder()
+                                    .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} was closed", hintMaxLines: 1)
+                                    .AddText($"All different executable {processToMonitorName} processes were shutdown and changes were reverted.")
+                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                    .SetToastDuration(ToastDuration.Short);
+                            }
 
-                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                        }
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new Windows.Data.Xml.Dom.XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        ToastNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                    }
+                }
+                else
                 {
-                    if (cancelToken.IsCancellationRequested)
+                    if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                     {
-
                         // The monitoring was stopped by the user
-                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
-                        // Construct the toast content
-                        tcBuilder = new ToastContentBuilder()
-                            .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
-                            .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short);
+                        if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                        {
+                            // The program was closed normally
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} wasn't started.");
+                            // Tell the user that the application has closed
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"{shortcutToUse.ExecutableNameAndPath} was not started", hintMaxLines: 1)
+                                .AddText($"Couldn't find {processToMonitorName} processes were shutdown and changes were reverted.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
+                        else
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.ExecutableNameAndPath} was closed.");
+                            // Construct the toast content
+                            tcBuilder = new ToastContentBuilder()
+                                .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} was closed", hintMaxLines: 1)
+                                .AddText($"All different executable {processToMonitorName} processes were shutdown and changes were reverted.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                        }
+
+                        
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new Windows.Data.Xml.Dom.XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        ToastNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
                     }
-
-
-                    else
-                    {
-                        // The program was closed normally
-                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} has closed.");
-                        // Tell the user that the application has closed
-                        // Construct the toast content
-                        tcBuilder = new ToastContentBuilder()
-                            .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
-                            .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short);
-
-                    }
-                    toastContent = tcBuilder.Content;
-                    // Make sure to use Windows.Data.Xml.Dom
-                    doc = new Windows.Data.Xml.Dom.XmlDocument();
-                    doc.LoadXml(toastContent.GetContent());
-                    // And create the toast notification
-                    toast = new ToastNotification(doc);
-                    // Remove any other Notifications from us
-                    ToastNotificationManagerCompat.History.Clear();
-                    // And then show it
-                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-
                 }
+
+                
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Game))
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the game that we wanted to run, and that we're going to monitor and watch");
 
                 Game gameToRun = null;
-                GameLibrary gameLibraryToUse = null;
 
-                // If the game is a Steam Game we check for that
-                if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Steam))
-                {
-                    // We now need to get the SteamGame info
-                    gameLibraryToUse = SteamLibrary.GetLibrary();
-                }
-                // If the game is a Uplay Uplay Game we check for that
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
-                {
-                    // We now need to get the Uplay Game  info
-                    gameLibraryToUse = UplayLibrary.GetLibrary();
-                }
-                // If the game is an Origin Game we check for that
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Origin))
-                {
-                    // We now need to get the Origin Game  info
-                    gameLibraryToUse = OriginLibrary.GetLibrary();
-                }
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Epic))
-                {
-                    // We now need to get the Epic Game  info
-                    gameLibraryToUse = EpicLibrary.GetLibrary();
-                }
-                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.GOG))
-                {
-                    // We now need to get the GOG Game info
-                    gameLibraryToUse = GogLibrary.GetLibrary();
-                }
-                gameToRun = gameLibraryToUse.GetGameById(shortcutToUse.GameAppId);
-                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameLibraryToUse.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
+                gameToRun = GameLibrary.GetAnyGameById(shortcutToUse.GameAppId);
+                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameToRun.GameLibrary.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
 
                 // If the GameAppID is not null, then we've matched a game! Lets run it.
                 if (gameToRun != null)
@@ -1312,12 +1732,12 @@ namespace DisplayMagician
                     if (myMainForm.InvokeRequired)
                     {
                         myMainForm.BeginInvoke((MethodInvoker)delegate {
-                            myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameLibraryToUse.GameLibraryName}...");
+                            myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
                         });
                     }
                     else
                     {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameLibraryToUse.GameLibraryName}...");
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
                     }
 
                     if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
@@ -1325,8 +1745,8 @@ namespace DisplayMagician
                         // Now we want to tell the user we're start a game
                         // Construct the Windows toast content
                         tcBuilder = new ToastContentBuilder()
-                        .AddText($"Starting {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
-                        .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to start (and update if needed)...")
+                        .AddText($"Starting {gameToRun.GameLibraryType}", hintMaxLines: 1)
+                        .AddText($"Waiting for {gameToRun.GameLibraryType} Game Library to start (and update if needed)...")
                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                         .SetToastDuration(ToastDuration.Short);
                         toastContent = tcBuilder.Content;
@@ -1346,7 +1766,14 @@ namespace DisplayMagician
                     // NOTE: We now have to try and find the processes, as the game library will start to run the game itself, and we have no idea what process it is
                     // We'll have to look for the game exe later on in this process...
                     List<Process> gameProcesses;
-                    gameProcesses = gameLibraryToUse.StartGame(gameToRun, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority);
+                    if (gameToRun.Start(out gameProcesses, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority))
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Starting the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
+                    }
+                    else
+                    {
+                        logger.Error($"ShortcutRepository/RunShortcut: Unable to start the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
+                    }
 
                     // Delay 500ms
                     Thread.Sleep(500);
@@ -1366,7 +1793,7 @@ namespace DisplayMagician
 
                         // If we have found one or more processes then we should be good to go
                         // so let's break, and get to the next step....
-                        if (gameLibraryToUse.IsRunning)
+                        if (gameToRun.GameLibrary.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: Found at least one GameLibrary process has started");
                             break;
@@ -1381,9 +1808,9 @@ namespace DisplayMagician
                     // Check whether GameLibrary is updating (if it supports finding that out!)
                     // Note - this is the scaffolding in place for the future. It will allow future ability to 
                     // detect game library updates if I can find a way of developing them per library in the future.
-                    if (gameLibraryToUse.IsUpdating)
+                    if (gameToRun.GameLibrary.IsUpdating)
                     {
-                        logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameLibraryToUse.GameLibraryName} has started updating itself.");
+                        logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameToRun.GameLibrary.GameLibraryName} has started updating itself.");
 
                         if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                         {
@@ -1391,8 +1818,8 @@ namespace DisplayMagician
                             // Construct the Windows toast content
                             tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo($"notify=updatingGameLibrary", ToastActivationType.Foreground)
-                            .AddText($"Updating {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
-                            .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to update itself...")
+                            .AddText($"Updating {gameToRun.GameLibrary.GameLibraryName}", hintMaxLines: 1)
+                            .AddText($"Waiting for {gameToRun.GameLibrary.GameLibraryName} Game Library to update itself...")
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                             toastContent = tcBuilder.Content;
@@ -1412,9 +1839,9 @@ namespace DisplayMagician
                         {
 
                             // If the game library has finished updating then let's break, and get to the next step....
-                            if (!gameLibraryToUse.IsUpdating)
+                            if (!gameToRun.GameLibrary.IsUpdating)
                             {
-                                logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameLibraryToUse.GameLibraryName} has finished updating.");
+                                logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameToRun.GameLibrary.GameLibraryName} has finished updating.");
                                 break;
                             }
 
@@ -1626,19 +2053,19 @@ namespace DisplayMagician
 
                                 // This is the main waiting thread!
                                 // Wait for the game to exit
-                                logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit.");
+                                logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit.");
                                 while (true)
                                 {
                                     Application.DoEvents();
                                     if (!gameToRun.IsRunning)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
                                         break;
                                     }
 
                                     if (cancelToken.IsCancellationRequested)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to close.");
                                         break;
                                     }
 
@@ -1653,18 +2080,18 @@ namespace DisplayMagician
                                     if (cancelToken.IsCancellationRequested)
                                     {
                                         // The monitoring was stopped by the user
-                                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
                                         // Construct the toast content
                                         tcBuilder = new ToastContentBuilder()
                                             .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
-                                            .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
+                                            .AddText($"Monitoring of {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
                                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                             .SetToastDuration(ToastDuration.Short);
                                     }
                                     else
                                     {
                                         // The program was closed normally
-                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} has exited.");
                                         // Tell the user that the Game has closed
                                         // Construct the toast content
                                         tcBuilder = new ToastContentBuilder()
@@ -1733,7 +2160,7 @@ namespace DisplayMagician
 
                                 if (cancelToken.IsCancellationRequested)
                                 {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to close.");
                                     break;
                                 }
 
@@ -1795,7 +2222,7 @@ namespace DisplayMagician
                             // Construct the Windows toast content
                             tcBuilder = new ToastContentBuilder()
                             .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
-                            .AddText($"Waiting for the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit...")
+                            .AddText($"Waiting for the {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit...")
                             .AddButton(new ToastButton()
                                 .SetContent("Cancel")
                                 .AddArgument("action", "stopWaiting")
@@ -1881,19 +2308,19 @@ namespace DisplayMagician
                         {
                             // This is the main waiting thread!
                             // Wait for the game to exit
-                            logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit.");
+                            logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit.");
                             while (true)
                             {
                                 Application.DoEvents();
                                 if (!gameToRun.IsRunning)
                                 {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
                                     break;
                                 }
 
                                 if (cancelToken.IsCancellationRequested)
                                 {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to close.");
                                     break;
                                 }
 
@@ -1908,18 +2335,18 @@ namespace DisplayMagician
                                 if (cancelToken.IsCancellationRequested)
                                 {
                                     // The monitoring was stopped by the user
-                                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
                                     // Construct the toast content
                                     tcBuilder = new ToastContentBuilder()
                                         .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
-                                        .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
+                                        .AddText($"Monitoring of {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
                                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                         .SetToastDuration(ToastDuration.Short);
                                 }
                                 else
                                 {
                                     // The program was closed normally
-                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
+                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} has exited.");
                                     // Tell the user that the Game has closed
                                     // Construct the toast content
                                     tcBuilder = new ToastContentBuilder()
@@ -1947,7 +2374,7 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    logger.Error($"ShortcutRepository/RunShortcut: Error starting the {gameToRun.Name} {gameToRun.GameLibrary} Game as the game wasn't found.");
+                    logger.Error($"ShortcutRepository/RunShortcut: Error starting the {gameToRun.Name} {gameToRun.GameLibraryType} Game as the game wasn't found.");
                 }
             }
 
@@ -2009,21 +2436,40 @@ namespace DisplayMagician
                     // use the Audio Device
                     rollbackAudioDevice.SetAsDefault();
 
-                    if (shortcutToUse.SetAudioVolume)
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to orignal volume");
+                    Task myTask = new Task(() =>
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to {shortcutToUse.SetAudioVolume}% volume");
-                        Task myTask = new Task(() =>
-                        {
-                            rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
-                        });
-                        myTask.Start();
-                        myTask.Wait(2000);
-                    }
+                        rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
+                    });
+                    myTask.Start();
+                    myTask.Wait(2000);
+
                 }
                 else
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Audio Device, so no need to change it back.");
                 }
+
+
+                if (needToChangeCommsAudioDevice && shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications audio back to {rollbackCommunicationAudioDevice.Name} audio device");
+                    // use the Audio Device
+                    rollbackCommunicationAudioDevice.SetAsDefaultCommunications();
+
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications audio volume back to original volume");
+                    Task myTask = new Task(() =>
+                    {
+                        rollbackCommunicationAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationAudioVolume));
+                    });
+                    myTask.Start();
+                    myTask.Wait(2000);
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Skipping reverting the default communications audio device back.");
+                }                  
+                    
             }
             else
             {
@@ -2042,7 +2488,7 @@ namespace DisplayMagician
 
                     if (shortcutToUse.SetCaptureVolume)
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to {shortcutToUse.SetAudioVolume}% volume");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to original volume");
                         Task myTask = new Task(() =>
                         {
                             rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
@@ -2050,11 +2496,42 @@ namespace DisplayMagician
                         myTask.Start();
                         myTask.Wait(2000);
                     }
+                    else
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Skipping reverting default capture device volume back to original volume as the default capture volume wasn't changed.");
+                    }
 
                 }
                 else
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Capture Device, so no need to change it back.");
+                }
+
+                if (needToChangeCommsCaptureDevice && shortcutToUse.CapturePermanence == ShortcutPermanence.Temporary)
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications capture (microphone) device back to {rollbackCommunicationCaptureDevice.Name} capture device");
+                    // use the Audio Device
+                    rollbackCommunicationCaptureDevice.SetAsDefault();
+
+                    if (shortcutToUse.SetCaptureVolume)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications capture (microphone) volume back to original volume");
+                        Task myTask = new Task(() =>
+                        {
+                            rollbackCommunicationCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationCaptureVolume));
+                        });
+                        myTask.Start();
+                        myTask.Wait(2000);
+                    }
+                    else
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Skipping reverting default communications capture device volume back to original volume as the default capture volume wasn't changed.");
+                    }
+
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Communications Capture Device, so no need to change it back.");
                 }
             }
             else

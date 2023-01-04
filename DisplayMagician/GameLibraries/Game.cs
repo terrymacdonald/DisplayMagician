@@ -1,7 +1,10 @@
-﻿using System;
+﻿using DisplayMagician.Processes;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Text.RegularExpressions;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -13,7 +16,10 @@ namespace DisplayMagician.GameLibraries
         #region Properties
         public virtual string Id { get; set; }
 
-        public virtual SupportedGameLibraryType GameLibrary { get; }
+        public virtual SupportedGameLibraryType GameLibraryType { get; }
+
+        [JsonIgnore]
+        public virtual GameLibrary GameLibrary { get; }
 
         public virtual bool IsRunning { get; set; }
 
@@ -46,7 +52,18 @@ namespace DisplayMagician.GameLibraries
         {
             return true;
         }
-        
+
+        public virtual bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
+        {
+            processesStarted = new List<Process>();
+            return true;
+        }
+
+        public virtual bool Stop()
+        {
+            return true;
+        }
+
         #endregion
     }
 }

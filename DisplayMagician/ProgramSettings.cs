@@ -1,10 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using DisplayMagicianShared;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using Windows.Data.Json;
 
 
 namespace DisplayMagician
@@ -16,7 +19,7 @@ namespace DisplayMagician
         // Common items to the class
         private static bool _programSettingsLoaded = false;
         // Other constants that are useful
-        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.4.json");
+        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.5.json");
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
@@ -27,17 +30,29 @@ namespace DisplayMagician
         private bool _showMinimiseMessageInActionCenter = true;
         private bool _showStatusMessageInActionCenter = true;
         private bool _upgradeToPrereleases = false;
+        private bool _upgradeEnabled = true;
         private bool _installedDesktopContextMenu = true;
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
-        private string _logLevel = NLog.LogLevel.Trace.ToString();
+        private string _logLevel = NLog.LogLevel.Warn.ToString();
         private string _displayMagicianVersion = null;
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
         private Keys _hotkeyShortcutLibraryWindow = Keys.None;
+        private ScreenLayout _fovCalcScreenLayout = ScreenLayout.TripleScreen;
+        private double _fovCalcScreenSize = 27;
+        private ScreenMeasurementUnit _fovCalcScreenSizeUnit = ScreenMeasurementUnit.Inch;
+        private ScreenAspectRatio _fovCalcAspectRatio = ScreenAspectRatio.SixteenByNine;
+        private double _fovCalcAspectRatioX = 16;
+        private double _fovCalcAspectRatioY = 9;
+        private double _fovCalcDistanceToScreen = 56;
+        private ScreenMeasurementUnit _fovCalcDistanceToScreenUnit = ScreenMeasurementUnit.CM; 
+        private double _fovCalcBezelSize = 3;
+        private ScreenMeasurementUnit _fovCalcBezelSizeUnit = ScreenMeasurementUnit.MM;
         #endregion
 
         #region Class Properties
+        [DefaultValue(0)]
         public string DisplayMagicianVersion
         {
             get 
@@ -53,6 +68,8 @@ namespace DisplayMagician
                 _displayMagicianVersion = value;
             }
         }
+
+        [DefaultValue(false)]
         public bool StartOnBootUp
         {
             get
@@ -65,6 +82,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ShowSplashScreen
         {
             get
@@ -77,6 +95,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ShowMinimiseMessageInActionCenter
         {
             get
@@ -89,6 +108,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ShowStatusMessageInActionCenter
         {
             get
@@ -101,6 +121,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool UpgradeToPreReleases
         {
             get
@@ -113,6 +134,20 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
+        public bool UpgradeEnabled
+        {
+            get
+            {
+                return _upgradeEnabled;
+            }
+            set
+            {
+                _upgradeEnabled = value;
+            }
+        }
+
+        [DefaultValue(false)]
         public bool MinimiseOnStart { 
             get
             {
@@ -124,6 +159,7 @@ namespace DisplayMagician
             } 
         }
 
+        [DefaultValue(true)]
         public bool InstalledDesktopContextMenu
         {
             get
@@ -136,6 +172,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(0)]
         public int LastMessageIdRead
         {
             get
@@ -148,6 +185,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<int>))]
         public List<int> MessagesToMonitor
         {
             get
@@ -160,6 +198,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("Trace")]
         public string LogLevel
         {
             get
@@ -197,6 +236,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(Keys.None)]
         public Keys HotkeyMainWindow
         {
             get
@@ -209,6 +249,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(Keys.None)]
         public Keys HotkeyDisplayProfileWindow
         {
             get
@@ -221,6 +262,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(Keys.None)]
         public Keys HotkeyShortcutLibraryWindow
         {
             get
@@ -232,6 +274,137 @@ namespace DisplayMagician
                 _hotkeyShortcutLibraryWindow = value;
             }
         }
+
+        [DefaultValue(ScreenLayout.TripleScreen)]
+        public ScreenLayout FovCalcScreenLayout
+        {
+            get
+            {
+                return _fovCalcScreenLayout;
+            }
+            set
+            {
+                _fovCalcScreenLayout = value;
+            }
+        }
+
+        [DefaultValue(27)]
+        public double FovCalcScreenSize
+        {
+            get
+            {
+                return _fovCalcScreenSize;
+            }
+            set
+            {
+                _fovCalcScreenSize = value;
+            }
+        }
+
+        [DefaultValue(ScreenMeasurementUnit.Inch)]
+        public ScreenMeasurementUnit FovCalcScreenSizeUnit
+        {
+            get
+            {
+                return _fovCalcScreenSizeUnit;
+            }
+            set
+            {
+                _fovCalcScreenSizeUnit = value;
+            }
+        }
+
+        [DefaultValue(ScreenAspectRatio.SixteenByNine)]
+        public ScreenAspectRatio FovCalcAspectRatio
+        {
+            get
+            {
+                return _fovCalcAspectRatio;
+            }
+            set
+            {
+                _fovCalcAspectRatio = value;
+            }
+        }
+
+        [DefaultValue(16)]
+        public double FovCalcAspectRatioX
+        {
+            get
+            {
+                return _fovCalcAspectRatioX;
+            }
+            set
+            {
+                _fovCalcAspectRatioX = value;
+            }
+        }
+
+        [DefaultValue(9)]
+        public double FovCalcAspectRatioY
+        {
+            get
+            {
+                return _fovCalcAspectRatioY;
+            }
+            set
+            {
+                _fovCalcAspectRatioY = value;
+            }
+        }
+
+        [DefaultValue(56)]
+        public double FovCalcDistanceToScreen
+        {
+            get
+            {
+                return _fovCalcDistanceToScreen;
+            }
+            set
+            {
+                _fovCalcDistanceToScreen = value;
+            }
+        }
+
+        [DefaultValue(ScreenMeasurementUnit.CM)]
+        public ScreenMeasurementUnit FovCalcDistanceToScreenUnit
+        {
+            get
+            {
+                return _fovCalcDistanceToScreenUnit;
+            }
+            set
+            {
+                _fovCalcDistanceToScreenUnit = value;
+            }
+        }
+
+        [DefaultValue(3)]
+        public double FovCalcBezelSize
+        {
+            get
+            {
+                return _fovCalcBezelSize;
+            }
+            set
+            {
+                _fovCalcBezelSize = value;
+            }
+        }
+
+        [DefaultValue(ScreenMeasurementUnit.MM)]
+        public ScreenMeasurementUnit FovCalcBezelSizeUnit
+        {
+            get
+            {
+                return _fovCalcBezelSizeUnit;
+            }
+            set
+            {
+                _fovCalcBezelSizeUnit = value;
+            }
+        }
+        
 
         #endregion
 
@@ -255,9 +428,10 @@ namespace DisplayMagician
             if (File.Exists(programSettingsStorageJsonFileName))
             {
                 string json = "";
+                List<string> jsonErrors = new List<string>();
                 try {
                     json = File.ReadAllText(programSettingsStorageJsonFileName, Encoding.Unicode);
-                }
+                }                
                 catch (Exception ex)
                 {
                     Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {programSettingsStorageJsonFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
@@ -271,13 +445,43 @@ namespace DisplayMagician
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
-                            DefaultValueHandling = DefaultValueHandling.Include,
-                            TypeNameHandling = TypeNameHandling.Auto
+                            DefaultValueHandling = DefaultValueHandling.Populate,
+                            TypeNameHandling = TypeNameHandling.Auto,
+                            ObjectCreationHandling = ObjectCreationHandling.Replace,
+                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+{
+                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                args.ErrorContext.Handled = true;
+                            },
                         });
+                    }
+                    catch (JsonReaderException ex)
+                    {
+                        // If there is a error in the JSON format
+                        if (ex.HResult == -2146233088)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {programSettingsStorageJsonFileName} but JsonConvert threw an exception.");
+                        }
+                        MessageBox.Show($"The Program Settings file {programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ProgramSettings/LoadSettings: Tried to parse the JSON file {programSettingsStorageJsonFileName} but the JsonConvert threw an exception. {ex}");
+                        SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: Tried to parse the JSON in the Program Settings file {programSettingsStorageJsonFileName} but the JsonConvert threw an exception.");
+                        MessageBox.Show($"The Program Settings file {programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+                    // If we have any JSON.net errors, then we need to records them in the logs
+                    if (jsonErrors.Count > 0)
+                    {
+                        foreach (string jsonError in jsonErrors)
+                        {
+                            SharedLogger.logger.Error($"ProgramSettings/LoadSettings: {jsonErrors}");
+                        }
                     }
 
                     if (programSettings.DisplayMagicianVersion == null) {
@@ -308,14 +512,22 @@ namespace DisplayMagician
             // Force the PreviousDisplayMagicianVersion to this version just before we save the settings.
             DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
+            List<string> jsonErrors = new List<string>();
             try
             {
+                
                 var json = JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
-                    TypeNameHandling = TypeNameHandling.Auto
-
+                    DefaultValueHandling = DefaultValueHandling.Include,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    MissingMemberHandling = MissingMemberHandling.Error,
+                    ObjectCreationHandling = ObjectCreationHandling.Replace,
+                    Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                    {
+                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                        args.ErrorContext.Handled = true;
+                    },
                 });
 
 
@@ -328,6 +540,15 @@ namespace DisplayMagician
             catch (Exception ex)
             {
                 logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {programSettingsStorageJsonFileName}.");
+            }
+
+            // If we have any JSON.net errors, then we need to records them in the logs
+            if (jsonErrors.Count > 0)
+            {
+                foreach (string jsonError in jsonErrors)
+                {
+                    logger.Error($"ProgramSettings/SaveSettings: {jsonErrors}");
+                }
             }
 
             return false;

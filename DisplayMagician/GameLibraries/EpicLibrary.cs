@@ -95,9 +95,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Epic Games from Epic Client if needed
-                if (_allEpicGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allEpicGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allEpicGames;
             }
         }
@@ -216,7 +217,7 @@ namespace DisplayMagician.GameLibraries
         {
             if (!(epicGame is EpicGame))
                 return false;
-            
+
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
             if (ContainsGame(epicGame))
@@ -579,14 +580,30 @@ namespace DisplayMagician.GameLibraries
 
         public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string address = $@"com.epicgames.launcher://apps/{game.Id}?action=launch&silent=true";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            List<Process> startedProcesses = new List<Process>();
+            if (game.Start(out startedProcesses, gameArguments, processPriority))
             {
-                address += @"/" + gameArguments;
+                logger.Trace($"EpicLibrary/StartGame: Successfully started Epic game {game.Name}");
             }
-            //Process gameProcess = Process.Start(address);
-            List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
-            return gameProcesses;
+            else
+            {
+                logger.Trace($"EpicLibrary/StartGame: Failed to start Epic game {game.Name}");
+            }
+            return startedProcesses;
+        }
+
+        public override bool StopGame(Game game)
+        {
+            if (game.Stop())
+            {
+                logger.Trace($"EpicLibrary/StopGame: Successfully stopped Epic game {game.Name}");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"EpicLibrary/StopGame: Failed to stop Epic game {game.Name}");
+                return false;
+            }
         }
         #endregion
 

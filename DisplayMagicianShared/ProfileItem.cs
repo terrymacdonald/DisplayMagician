@@ -14,9 +14,18 @@ using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace DisplayMagicianShared
 {
+
+    public enum ScreenRotation
+    {
+        ROTATE_0,
+        ROTATE_90,
+        ROTATE_180,
+        ROTATE_270,
+    }
 
     public struct ScreenPosition
     {        
@@ -42,6 +51,7 @@ namespace DisplayMagicianShared
         public int SpannedColumns;
         public int SpannedRows;
         public TaskBarLayout.TaskBarEdge TaskBarEdge;
+        public ScreenRotation Rotation;
     }
 
     public struct SpannedScreenPosition
@@ -155,6 +165,8 @@ namespace DisplayMagicianShared
 
         #region Instance Properties
 
+        [DefaultValue("")]
+
         public string UUID
         {
             get
@@ -199,8 +211,11 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue(VIDEO_MODE.WINDOWS)]
+
         public virtual VIDEO_MODE VideoMode { get; set; } = VIDEO_MODE.WINDOWS;
 
+        [DefaultValue(Keys.None)]
         public Keys Hotkey {
             get 
             {
@@ -212,9 +227,11 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue("")]
+
         public virtual string Name { get; set; }
 
-        [JsonRequired]
+        [JsonRequired]       
         public NVIDIA_DISPLAY_CONFIG NVIDIADisplayConfig
         {
             get
@@ -291,13 +308,16 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue("")]
         public string SavedProfileIconCacheFilename { get; set; }
-        
 
+        [DefaultValue(Wallpaper.Mode.DoNothing)]
         public Wallpaper.Mode WallpaperMode { get; set; }
 
+        [DefaultValue(Wallpaper.Style.Fill)]
         public Wallpaper.Style WallpaperStyle { get; set; }
 
+        [DefaultValue("")]
         public string WallpaperBitmapFilename{ 
             get
             {
@@ -309,6 +329,7 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue(default(List<string>))]
         public virtual List<string> ProfileDisplayIdentifiers
         {
             get
@@ -326,6 +347,7 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public virtual Bitmap ProfileBitmap
         {
@@ -346,6 +368,7 @@ namespace DisplayMagicianShared
 
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public virtual Bitmap ProfileTightestBitmap
         {
@@ -478,7 +501,7 @@ namespace DisplayMagicianShared
         }
 
 
-        public bool CreateProfileFromCurrentDisplaySettings()
+        public bool CreateProfileFromCurrentDisplaySettings(bool fastScan = true)
         {
             // Calling the 3 different libraries automatically gets the different configs from each of the 3 video libraries.
             // If the video library isn't in use then it also fills in the defaults so that the JSON file can save properly
@@ -495,16 +518,16 @@ namespace DisplayMagicianShared
                 if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled)
                 {
                     nvidiaLibrary.UpdateActiveConfig();
-                    winLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig(fastScan);
                 }
                 else if (VideoMode == VIDEO_MODE.AMD && amdLibrary.IsInstalled)
                 {
                     amdLibrary.UpdateActiveConfig();
-                    winLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig(fastScan);
                 }
                 else
                 {
-                    winLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig(fastScan);
                 }                               
 
                 // Grab the profile data from the current stored config (that we just updated)
@@ -710,6 +733,10 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforNVIDIAColor)
                                     {
+                                        // Lets update the screen config again for the final time.
+                                        nvidiaLibrary.UpdateActiveConfig();
+                                        winLibrary.UpdateActiveConfig();
+
                                         SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
@@ -775,6 +802,10 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforAMDColor)
                                     {
+                                        // Lets update the screen config again for the final time.
+                                        amdLibrary.UpdateActiveConfig();
+                                        winLibrary.UpdateActiveConfig();
+
                                         SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
@@ -815,6 +846,9 @@ namespace DisplayMagicianShared
                     {
                         if (winLibrary.SetActiveConfig(_windowsDisplayConfig))
                         {
+                            // Lets update the screen config again for the final time.
+                            winLibrary.UpdateActiveConfig();
+
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
                             return true;
                         }
@@ -886,6 +920,7 @@ namespace DisplayMagicianShared
                         screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
                         screen.SpannedColumns = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
                         screen.Colour = spannedScreenColor;
+                        screen.Rotation = ScreenRotation.ROTATE_0;
 
                         // This is a combined surround/mosaic screen
                         // We need to build the size of the screen to match it later so we check the MosaicViewports
@@ -996,6 +1031,7 @@ namespace DisplayMagicianShared
                             screen.ScreenY = (int)overallY;
                             screen.ScreenWidth = (int)overallWidth;
                             screen.ScreenHeight = (int)overallHeight;
+                            screen.Rotation = ScreenRotation.ROTATE_0;
                         }
 
                     }
@@ -1023,8 +1059,38 @@ namespace DisplayMagicianShared
                                         screen.Name = displayId.ToString();
                                         screen.ScreenX = displaySource.SourceModeInfo.Position.X;
                                         screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        //screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        //screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_0)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                            screen.Rotation = ScreenRotation.ROTATE_0;
+                                        }
+                                        else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_90)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                            screen.Rotation = ScreenRotation.ROTATE_90;
+                                        }
+                                        else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_180)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                            screen.Rotation = ScreenRotation.ROTATE_180;
+                                        }
+                                        else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_270)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                            screen.Rotation = ScreenRotation.ROTATE_270;
+                                        }
+                                        else
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                            screen.Rotation = ScreenRotation.ROTATE_0;
+                                        }
                                         breakOuterLoop = true;
                                         break;
                                     }
@@ -1125,8 +1191,8 @@ namespace DisplayMagicianShared
                             screen.Colour = normalScreenColor;
                             screen.ScreenX = displaySource.SourceModeInfo.Position.X;
                             screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                            //screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                            //screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
                             if (screen.ScreenWidth == 0)
                             {
                                 SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
@@ -1134,6 +1200,37 @@ namespace DisplayMagicianShared
                             if (screen.ScreenHeight == 0)
                             {
                                 SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                            }
+
+                            if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_0)
+                            {
+                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height; 
+                                screen.Rotation = ScreenRotation.ROTATE_0;
+                            }
+                            else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_90 )
+                            {
+                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                screen.Rotation = ScreenRotation.ROTATE_90;
+                            }
+                            else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_180)
+                            {
+                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height; 
+                                screen.Rotation = ScreenRotation.ROTATE_180;
+                            }
+                            else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_270)
+                            {
+                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                screen.Rotation = ScreenRotation.ROTATE_270;
+                            }
+                            else
+                            {
+                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
                             }
 
                             // If we're at the 0,0 coordinate then we're the primary monitor
@@ -1261,9 +1358,8 @@ namespace DisplayMagicianShared
                     //screen.DisplayConnector = displayMode.DisplayConnector;
                     screen.ScreenX = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XPos;
                     screen.ScreenY = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YPos;
-                    screen.ScreenWidth = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XRes;
-                    screen.ScreenHeight = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YRes;
-
+                    screen.Rotation = ScreenRotation.ROTATE_0;
+                    
                     // If we're at the 0,0 coordinate then we're the primary monitor
                     if (screen.ScreenX == 0 && screen.ScreenY == 0)
                     {
@@ -1342,8 +1438,40 @@ namespace DisplayMagicianShared
                             //screen.DisplayConnector = displayMode.DisplayConnector;
                             screen.ScreenX = displayMode.SourceMode.Position.X;
                             screen.ScreenY = displayMode.SourceMode.Position.Y;
-                            screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                            screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                            //screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                            //screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+
+                            if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE90)
+                            {
+                                // Portrait screen so need to change width and height
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Height;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Width;
+                                screen.Rotation = ScreenRotation.ROTATE_90;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE180)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_180;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_270;
+                            }
+                            else
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
+                            }
 
                             // If we're at the 0,0 coordinate then we're the primary monitor
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
@@ -1476,7 +1604,8 @@ namespace DisplayMagicianShared
                         // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
                         // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
                         // the taskbar locations in memory (it takes up to 15 seconds!). Nothing I can do, except put this protection in place :( .
-                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
+
+                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
                         SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                     }
                     catch (Exception ex)
@@ -1513,18 +1642,48 @@ namespace DisplayMagicianShared
                             //screen.DisplayConnector = displayMode.DisplayConnector;
                             screen.ScreenX = displayMode.SourceMode.Position.X;
                             screen.ScreenY = displayMode.SourceMode.Position.Y;
-                            screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                            screen.ScreenHeight = (int)displayMode.SourceMode.Height;
-
-                            // If we're at the 0,0 coordinate then we're the primary monitor
-                            if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                            if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY)
                             {
-                                screen.IsPrimary = true;
-                                screen.Colour = primaryScreenColor;
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
                             }
-                            break;
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE90)
+                            {
+                                // Portrait screen so need to change width and height
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Height;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Width;
+                                screen.Rotation = ScreenRotation.ROTATE_90;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE180)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_180;
+                            }
+                            else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_270;
+                            }
+                            else
+                            {
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
+                            }
                         }
+
+                        // If we're at the 0,0 coordinate then we're the primary monitor
+                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                        {
+                            screen.IsPrimary = true;
+                            screen.Colour = primaryScreenColor;
+                        }
+                        break;
                     }
+                
 
                     foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
                     {
@@ -1561,10 +1720,10 @@ namespace DisplayMagicianShared
                         // rather than the MMStuckRect reg keys
                         try
                         {
-                            if (_windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue.Contains("Settings")) > 0)
+                            if (_windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains("Settings")) > 0)
                             {
                                 screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains("Settings")).Value.Edge;
-                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge} of the screen.");
                             }
                             else
                             {
@@ -1584,7 +1743,7 @@ namespace DisplayMagicianShared
                     {
                         try
                         {
-                            int numMatches = _windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}"));
+                            int numMatches = _windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains($"UID{targetId}"));
                             if (numMatches > 1)
                             {
                                 var matchingTbls = (from tbl in _windowsDisplayConfig.TaskBarLayout where tbl.Value.RegKeyValue.Contains($"UID{targetId}") select tbl.Value).ToList();

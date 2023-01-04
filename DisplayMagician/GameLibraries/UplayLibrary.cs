@@ -94,9 +94,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Uplay Games from Uplay Client if needed
-                if (_allGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allGames;
             }
         }
@@ -905,37 +906,32 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
-        /*public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
-        {
-            string address = $@"uplay://launch/{game.Id}";
-            if (String.IsNullOrWhiteSpace(gameArguments))
-            {
-                address += @"/" + gameArguments;
-            }
-            else
-            {
-                address += "/0";
-            }
-            Process gameProcess = Process.Start(address);
-            gameProcess.PriorityClass = processPriority;
-            return gameProcess;
-
-        }*/
-
         public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string address = $@"uplay://launch/{game.Id}";
-            if (String.IsNullOrWhiteSpace(gameArguments))
+            List<Process> startedProcesses = new List<Process>();
+            if (game.Start(out startedProcesses, gameArguments, processPriority))
             {
-                address += @"/" + gameArguments;
+                logger.Trace($"UplayLibrary/StartGame: Successfully started Uplay game {game.Name}");
             }
             else
             {
-                address += "/0";
+                logger.Trace($"UplayLibrary/StartGame: Failed to start Uplay game {game.Name}");
             }
-            //List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
-            List<Process> gameProcesses = ProcessUtils.StartProcess(address, "", ProcessPriority.Normal);
-            return gameProcesses;
+            return startedProcesses;
+        }
+
+        public override bool StopGame(Game game)
+        {
+            if (game.Stop())
+            {
+                logger.Trace($"UplayLibrary/StopGame: Successfully stopped Uplay game {game.Name}");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"UplayLibrary/StopGame: Failed to stop Uplay game {game.Name}");
+                return false;
+            }
         }
 
         #endregion

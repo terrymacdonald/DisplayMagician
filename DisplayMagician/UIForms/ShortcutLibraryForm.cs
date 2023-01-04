@@ -166,7 +166,7 @@ namespace DisplayMagician.UIForms
                         }
                         else
                         {
-                            if (_selectedShortcut.Category == ShortcutCategory.Application)
+                            if (_selectedShortcut.Category == ShortcutCategory.Executable)
                             {
                                 dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(_selectedShortcut.ExecutableNameAndPath), @" (", _selectedShortcut.Name.ToLower(CultureInfo.InvariantCulture), @")");
                             }
@@ -289,6 +289,8 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = _shortcutForm.Shortcut;
                 //ShortcutRepository.IsValidRefresh();
                 RefreshShortcutLibraryUI();
+                // As this is an edit, we need to manually force saving the shortcut library
+                ShortcutRepository.SaveShortcuts();
             }
             this.Cursor = Cursors.Default;
             RemoveWarningIfShortcuts();
@@ -303,8 +305,8 @@ namespace DisplayMagician.UIForms
         private void ShowShortcutLoadingWindow()
         {
             Program.AppShortcutLoadingSplashScreen = new ShortcutLoadingForm();
-            Program.AppShortcutLoadingSplashScreen.Title = "Preparing Shortcut...";
-            Program.AppShortcutLoadingSplashScreen.Description = "Preparing the Shortcut ready for you to edit. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            Program.AppShortcutLoadingSplashScreen.Title = "Scanning Game and App Data...";
+            Program.AppShortcutLoadingSplashScreen.Description = "Getting the Shortcut information ready for you to edit. Scanning your computer for all Games and Apps so you can choose them from a list.";
             int resultX = this.DesktopLocation.X + ((this.Width - Program.AppShortcutLoadingSplashScreen.Width) / 2);
             int resultY = this.DesktopLocation.Y + ((this.Height - Program.AppShortcutLoadingSplashScreen.Height) / 2);
             Program.AppShortcutLoadingSplashScreen.WantedLocation = new Point(resultX, resultY);
@@ -452,10 +454,12 @@ namespace DisplayMagician.UIForms
 
             // Figure out the string we're going to use as the MaskedForm message
             string message = "";
-            if (_selectedShortcut.Category.Equals(ShortcutCategory.Application))
-                message = $"Running the {_selectedShortcut.ExecutableNameAndPath} application and waiting until you close it.";
-            else if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
+            if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
                 message = $"Running the {_selectedShortcut.GameName} game and waiting until you close it.";
+            else if (_selectedShortcut.Category.Equals(ShortcutCategory.Executable))
+                message = $"Running the {_selectedShortcut.ExecutableNameAndPath} executable and waiting until you close it.";
+            else if(_selectedShortcut.Category.Equals(ShortcutCategory.Application))
+                message = $"Running the {_selectedShortcut.ApplicationName} application and waiting until you close it.";
 
             // Create a Mask Control that will cover the ShortcutLibrary Window to lock
             lbl_mask.Text = message;
@@ -476,23 +480,7 @@ namespace DisplayMagician.UIForms
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                if (!Program.AppProgramSettings.MinimiseOnStart)
-                {
-
-                    // Get the MainForm so we can access the NotifyIcon on it.
-                    //MainForm mainForm = (MainForm)this.Owner;                    
-
-                    // Run the shortcut
-                    //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut);
-
-                }
-                else
-                {
-                    // Run the shortcut
-                    //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut);
-                }
+                result = Program.RunShortcutTask(_selectedShortcut);
             }
             catch (OperationCanceledException ex)
             {
@@ -506,7 +494,7 @@ namespace DisplayMagician.UIForms
 
             ilv_saved_shortcuts.ResumeLayout();
 
-            // REmove the Masked Control to allow the user to start using DisplayMagician again.
+            // Remove the Masked Control to allow the user to start using DisplayMagician again.
             lbl_mask.Visible = false;
             lbl_mask.SendToBack();
 
@@ -540,13 +528,13 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
+        /*private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
         {
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
 
             RemoveWarningIfShortcuts();
-        }
+        }*/
 
         private void tsmi_save_to_desktop_Click(object sender, EventArgs e)
         {

@@ -13,6 +13,14 @@ using DisplayMagicianShared;
 using MintPlayer.IconUtils;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Drawing.Printing;
+using System.Windows.Media.Imaging;
+using System.Windows.Interop;
+using System.Windows;
+using Windows.UI.Xaml.Media.Imaging;
+using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
+using Microsoft.WindowsAPICodePack.Win32Native;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace DisplayMagician
 {
@@ -73,7 +81,7 @@ namespace DisplayMagician
         public static GraphicsPath RoundedRect(Rectangle bounds, int radius)
         {
             int diameter = radius * 2;
-            Size size = new Size(diameter, diameter);
+            System.Drawing.Size size = new System.Drawing.Size(diameter, diameter);
             Rectangle arc = new Rectangle(bounds.Location, size);
             GraphicsPath path = new GraphicsPath();
 
@@ -151,13 +159,13 @@ namespace DisplayMagician
                 return new List<ShortcutBitmap>();
             }
 
-            Icon myIcon = null;
             List<ShortcutBitmap> bmList = new List<ShortcutBitmap>();
             int bmCount = 0;
             string fileNameOnly = Path.GetFileName(fileNameAndPath);
 
-            if (fileNameAndPath.EndsWith(".jpg") || fileNameAndPath.EndsWith(".gif") || fileNameAndPath.EndsWith(".tif") || fileNameAndPath.EndsWith(".png") || fileNameAndPath.EndsWith(".bmp") ||
-                fileNameAndPath.EndsWith(".jpeg") || fileNameAndPath.EndsWith(".tiff"))
+            // Look for any single bitmap files, and extract the single image and return it as a list of one.
+            if (fileNameAndPath.ToLower().EndsWith(".jpg") || fileNameAndPath.ToLower().EndsWith(".gif") || fileNameAndPath.ToLower().EndsWith(".tif") || fileNameAndPath.ToLower().EndsWith(".png") || fileNameAndPath.ToLower().EndsWith(".bmp") ||
+                fileNameAndPath.ToLower().EndsWith(".jpeg") || fileNameAndPath.ToLower().EndsWith(".tiff"))
             {
 
                 try
@@ -168,15 +176,25 @@ namespace DisplayMagician
                     Bitmap bmap = new Bitmap(fileNameAndPath);
                     ShortcutBitmap bm = CreateShortcutBitmap(bmap, fileNameOnly, fileNameAndPath, bmCount++);
                     // Add the shortcutbitmap to the list
-                    bmList.Add(bm);
-                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the image file {fileNameAndPath} using standard bitmap decoder access method.");
+                    if (!bmList.Contains(bm))
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the image file {fileNameAndPath} using standard bitmap decoder access method.");
+                        bmList.Add(bm);
+                    }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipping adding new bitmap from the image file {fileNameAndPath} using standard bitmap decoder access method.");
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the bitmap from an image ({fileNameAndPath})using standard bitmap decoder tools.");
                 }
             }
-            else if (fileNameAndPath.EndsWith(".ico"))
+
+            // Any ico or exe or com files fall through to here
+            if (fileNameAndPath.ToLower().EndsWith(".ico"))
             {
 
                 try
@@ -184,16 +202,24 @@ namespace DisplayMagician
 
                     logger.Trace($"ShortcutItem/GetMeABitmapFromFile: The file we want to get the image from is an icon file. Attempting to extract the icon file from {fileNameAndPath}.");
 
-                    myIcon = new Icon(fileNameAndPath, 256, 256);
-                    //Icon myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
+                    Icon myIcon = new Icon(fileNameAndPath, 256, 256);
+                    myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
                     ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
                     // Add the shortcutbitmap to the list
-                    bmList.Add(bm);
-                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using standard Icon access method.");
+                    if (!bmList.Contains(bm))
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using standard Icon access method.");
+                        bmList.Add(bm);
+                    }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the icon file {fileNameAndPath} using standard Icon access method.");
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using Standard Icon tools.");
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using Standard Icon tools for file {fileNameAndPath}.");
                 }
 
                 try
@@ -205,17 +231,52 @@ namespace DisplayMagician
                     {
                         ShortcutBitmap bm = CreateShortcutBitmap(myIconImage.Image, fileNameOnly, fileNameAndPath, bmCount++);
                         // Add the shortcutbitmap to the list
-                        bmList.Add(bm);
-                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using MultiIcon access method.");
+                        if (!bmList.Contains(bm))
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using MultiIcon access method.");
+                            bmList.Add(bm);
+                        }
+                        else
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the icon file {fileNameAndPath} using MultiIcon access method.");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using MultiIcon tools.");
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using MultiIcon tools for file {fileNameAndPath}.");
                 }
             }
-            else
+
+
+
+
+            // Any ico or exe or com files fall through to here
+            if (fileNameAndPath.ToLower().EndsWith(".exe"))
             {
+              
+
+                /*try
+                {
+                    Icon anIcon = (Icon)null;
+                    anIcon = IconFromFile.GetLargeIconFromFile(fileNameAndPath, true, true);
+                    //anIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
+                    ShortcutBitmap bm = CreateShortcutBitmap(anIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                    // Add the shortcutbitmap to the list
+                    if (!bmList.Contains(bm))
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using Icon.ExtractAssociatedIcon access method.");
+                        bmList.Add(bm);
+                    }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using Icon.ExtractAssociatedIcon access method.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using Icon.ExtractAssociatedIcon.");
+                }*/
 
                 /*try
                 {
@@ -224,13 +285,18 @@ namespace DisplayMagician
                     {
                         foreach (Icon myExtractedIcon in myIcons)
                         {
-                            bm = myExtractedIcon.ToBitmap();
-
-                            if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
+                            ShortcutBitmap bm = CreateShortcutBitmap(myExtractedIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                            // Add the shortcutbitmap to the list
+                            if (!bmList.Contains(bm))
                             {
-                                bmToReturn = bm;
-                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using ImageUtils.ExtractIconsFromExe access method.");
+                                bmList.Add(bm);
                             }
+                            else
+                            {
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using ImageUtils.ExtractIconsFromExe access method.");
+                            }
+                            
                         }
                     }
                 }
@@ -247,56 +313,87 @@ namespace DisplayMagician
                     {
                         ShortcutBitmap bm = CreateShortcutBitmap(myExtractedIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
                         // Add the shortcutbitmap to the list
-                        bmList.Add(bm);
-
-                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Add new bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method.");
+                        if (!bmList.Contains(bm))
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method.");
+                            bmList.Add(bm);
+                        }
+                        else
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method.");
+                        }                        
+                        
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using TsudaKageyu.IconExtractor.");
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using TsudaKageyu.IconExtractor for file {fileNameAndPath}.");
                 }
 
+                
             }
 
-            try
+        
+            // Any ico or exe or com files fall through to here
+            if (fileNameAndPath.ToLower().EndsWith(".exe") || fileNameAndPath.ToLower().EndsWith(".ico"))
             {
-
-                List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
-                Size largeSize = new Size(256, 256);
-                foreach (Icon myExtractedIcon in myExtractedIcons)
+                try
                 {
-
-                    try
-                    {                        
-                        myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
-                    }
-                    catch (ArgumentNullException nullex)
+                    Bitmap originalImage = WindowsThumbnailProvider.GetThumbnail(fileNameAndPath, 96, 96, ThumbnailOptions.BiggerSizeOk);
+                    ShortcutBitmap bm = CreateShortcutBitmap(originalImage, fileNameOnly, fileNameAndPath, bmCount++);
+                    // Add the shortcutbitmap to the list
+                    if (!bmList.Contains(bm))
                     {
-                        logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this icon that we couldn't test, so skipping it.");
-                        continue;
-                    }
-
-                    if (myIcon != null)
-                    {
-                        ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(),fileNameOnly,fileNameAndPath,bmCount++);
-                        // Add the shortcutbitmap to the list
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the exe file {fileNameAndPath} using WindowsThumbnailProvider.GetThumbnail access method.");
                         bmList.Add(bm);
-
-                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");                        
                     }
                     else
                     {
-                        logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the exe file {fileNameAndPath} using WindowsThumbnailProvider.GetThumbnail access method.");
                     }
                 }
+                catch (Exception ex)
+                {
+                    logger.Trace(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the thumbnail from an *.exe or *.dll using WindowsThumbnailProvider.GetThumbnail. Means the file {fileNameAndPath} could not be processed so skipping it with this method");                                             
+                }
 
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor! ");
-            }
+                try
+                {
 
+                    List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower());
+                    System.Drawing.Size largeSize = new System.Drawing.Size(256, 256);
+                    if (myExtractedIcons.Count > 0)
+                    {
+                        Icon myIcon = null;
+
+                        myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcons.ToArray(), largeSize, 32, true, true);
+
+                        if (myIcon != null)
+                        {
+                            ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
+                            // Add the shortcutbitmap to the list
+                            if (!bmList.Contains(bm))
+                            {
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");
+                                bmList.Add(bm);
+                            }
+                            else
+                            {
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Skipped adding new bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method.");
+                            }
+                        }
+                        else
+                        {
+                            logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor on file {fileNameAndPath}! ");
+                }
+            }
 
             return bmList;
 
@@ -349,7 +446,7 @@ namespace DisplayMagician
             sc.Order = order;
             sc.Source = source;
             sc.Image = bitmap;
-            sc.Size = new Size(sc.Image.Width, sc.Image.Height);
+            sc.Size = new System.Drawing.Size(sc.Image.Width, sc.Image.Height);
             return sc;
         }
 
@@ -437,11 +534,11 @@ namespace DisplayMagician
             // Figure out sizes and positions
             try
             {
-                Size targetSize = new Size(width, height);
+                System.Drawing.Size targetSize = new System.Drawing.Size(width, height);
                 logger.Trace($"ShortcutItem/ToBitmapOverlay: TargetSize is {targetSize.Width}px x {targetSize.Height}px.");
-                Size originalBitmapCurrentSize = new Size(originalBitmap.Width, originalBitmap.Height);
+                System.Drawing.Size originalBitmapCurrentSize = new System.Drawing.Size(originalBitmap.Width, originalBitmap.Height);
                 logger.Trace($"ShortcutItem/ToBitmapOverlay: originalBitmapCurrentSize is {originalBitmapCurrentSize.Width}px x {originalBitmapCurrentSize.Height}px.");
-                Size overlaylBitmapCurrentSize = new Size(overlayBitmap.Width, overlayBitmap.Height);
+                System.Drawing.Size overlaylBitmapCurrentSize = new System.Drawing.Size(overlayBitmap.Width, overlayBitmap.Height);
                 logger.Trace($"ShortcutItem/ToBitmapOverlay: overlaylBitmapCurrentSize is {overlaylBitmapCurrentSize.Width}px x {overlaylBitmapCurrentSize.Height}px.");
 
                 // Make a new empty bitmap of the wanted size
@@ -458,17 +555,17 @@ namespace DisplayMagician
                     g.CompositingQuality = CompositingQuality.AssumeLinear;
 
                     // Resize the originalBitmap if needed then draw it
-                    Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
+                    System.Drawing.Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Resizing the original bitmap to fit in the new combined bitmap. Size is now {originalBitmapNewSize.Width}px x {originalBitmapNewSize.Height}px");
-                    Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
+                    System.Drawing.Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the original bitmap into the new combined bitmap at position {originalBitmapNewLocation.X},{originalBitmapNewLocation.Y}..");
                     g.DrawImage(originalBitmap, originalBitmapNewLocation.X, originalBitmapNewLocation.Y, originalBitmapNewSize.Width, originalBitmapNewSize.Height);
 
                     // Resize the overlayBitmap if needed then draw it in the bottom-right corner                    
-                    Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
-                    Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize, 70);
+                    System.Drawing.Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
+                    System.Drawing.Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize, 70);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Resize the overlay bitmap to fit in the bottom right corner of the new combined bitmap. Size is now {overlayBitmapNewSize.Width}px x {overlayBitmapNewSize.Height}px");
-                    Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
+                    System.Drawing.Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
                     // Now we need to adjust that slightly up and in a bit
                     overlayBitmapNewLocation.Offset(0, -5);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the overlay bitmap into the new combined bitmap at position {overlayBitmapNewLocation.X},{overlayBitmapNewLocation.Y}.");
@@ -485,60 +582,110 @@ namespace DisplayMagician
 
         }
 
-/*
-#pragma warning disable CS3002 // Return type is not CLS-compliant
-        public static MultiIcon ToIconOverlay(Bitmap originalBitmap, Bitmap overlayBitmap)
-#pragma warning restore CS3002 // Return type is not CLS-compliant
+
+        public static Bitmap BitmapImage2Bitmap(BitmapImage bitmapImage)
         {
-            try
+            // BitmapImage bitmapImage = new BitmapImage(new Uri("../Images/test.png", UriKind.Relative));
+            if (bitmapImage == null)
             {
-                Size[] iconSizes = new[]
-                {
-                    new Size(256, 256),
-                    new Size(64, 64),
-                    new Size(48, 48),
-                    new Size(32, 32),
-                    new Size(24, 24),
-                    new Size(16, 16)
-                };
-                logger.Trace($"ShortcutItem/ToIconOverlay: Creating the new Multi image Icon.");
-                MultiIcon multiIcon = new MultiIcon();
-                logger.Trace($"ShortcutItem/ToIconOverlay: Adding a single icon to the multi image icon.");
-                SingleIcon icon = multiIcon.Add("Icon1");
-
-                foreach (Size size in iconSizes)
-                {
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Creating a new image layer of size {size.Width}px x {size.Height}px.");
-                    Bitmap bitmapOverlay = ToBitmapOverlay(originalBitmap, overlayBitmap, size.Width, size.Height);
-                    if (bitmapOverlay == null)
-                    {
-                        logger.Warn($"ShortcutItem/ToIconOverlay: bitmapOverlay is null, so we can't turn it into an Icon Overlay. Returning null");
-                        return null;
-                    }
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Adding the new image layer of size {size.Width}px x {size.Height}px to the multi image icon.");
-                    icon.Add(bitmapOverlay);
-
-                    if (size.Width >= 256 && size.Height >= 256)
-                    {
-                        logger.Trace($"ShortcutItem/ToIconOverlay: The image is > 256px x 256px so making it a PNG layer in the icon file.");
-                        icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
-                    }
-
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Disposing of the Bitmap data we just used as the source (stops memory leaks).");
-                    bitmapOverlay.Dispose();
-                }
-
-                logger.Trace($"ShortcutItem/ToIconOverlay: Make the top layer image of the Multi image icon the default one.");
-                multiIcon.SelectedIndex = 0;
-
-                return multiIcon;
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/ToIconOverlay: Exeception occurred while trying to convert the Shortcut Bitmap to an Icon Overlay to store in the shortcut cache directory. Returning null");
                 return null;
             }
-        }*/
+
+            using (MemoryStream outStream = new MemoryStream())
+            {
+                BitmapEncoder enc = new BmpBitmapEncoder();
+                enc.Frames.Add(BitmapFrame.Create(bitmapImage));
+                enc.Save(outStream);
+                System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(outStream);
+
+                return new Bitmap(bitmap);
+            }
+        }
+
+        [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+        public static extern bool DeleteObject(IntPtr hObject);
+
+        public static BitmapImage Bitmap2BitmapImage(Bitmap bitmap)
+{
+            if (bitmap == null)
+            {
+                return null;
+            }
+
+            IntPtr hBitmap = bitmap.GetHbitmap();
+            BitmapImage retval;
+
+            try
+            {
+                retval = (BitmapImage)Imaging.CreateBitmapSourceFromHBitmap(
+                             hBitmap,
+                             IntPtr.Zero,
+                             Int32Rect.Empty,
+                             BitmapSizeOptions.FromEmptyOptions());
+            }
+            finally
+            {
+                DeleteObject(hBitmap);
+            }
+
+            return retval;
+        }
+
+
+        /*
+        #pragma warning disable CS3002 // Return type is not CLS-compliant
+                public static MultiIcon ToIconOverlay(Bitmap originalBitmap, Bitmap overlayBitmap)
+        #pragma warning restore CS3002 // Return type is not CLS-compliant
+                {
+                    try
+                    {
+                        Size[] iconSizes = new[]
+                        {
+                            new Size(256, 256),
+                            new Size(64, 64),
+                            new Size(48, 48),
+                            new Size(32, 32),
+                            new Size(24, 24),
+                            new Size(16, 16)
+                        };
+                        logger.Trace($"ShortcutItem/ToIconOverlay: Creating the new Multi image Icon.");
+                        MultiIcon multiIcon = new MultiIcon();
+                        logger.Trace($"ShortcutItem/ToIconOverlay: Adding a single icon to the multi image icon.");
+                        SingleIcon icon = multiIcon.Add("Icon1");
+
+                        foreach (Size size in iconSizes)
+                        {
+                            logger.Trace($"ShortcutItem/ToIconOverlay: Creating a new image layer of size {size.Width}px x {size.Height}px.");
+                            Bitmap bitmapOverlay = ToBitmapOverlay(originalBitmap, overlayBitmap, size.Width, size.Height);
+                            if (bitmapOverlay == null)
+                            {
+                                logger.Warn($"ShortcutItem/ToIconOverlay: bitmapOverlay is null, so we can't turn it into an Icon Overlay. Returning null");
+                                return null;
+                            }
+                            logger.Trace($"ShortcutItem/ToIconOverlay: Adding the new image layer of size {size.Width}px x {size.Height}px to the multi image icon.");
+                            icon.Add(bitmapOverlay);
+
+                            if (size.Width >= 256 && size.Height >= 256)
+                            {
+                                logger.Trace($"ShortcutItem/ToIconOverlay: The image is > 256px x 256px so making it a PNG layer in the icon file.");
+                                icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
+                            }
+
+                            logger.Trace($"ShortcutItem/ToIconOverlay: Disposing of the Bitmap data we just used as the source (stops memory leaks).");
+                            bitmapOverlay.Dispose();
+                        }
+
+                        logger.Trace($"ShortcutItem/ToIconOverlay: Make the top layer image of the Multi image icon the default one.");
+                        multiIcon.SelectedIndex = 0;
+
+                        return multiIcon;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutItem/ToIconOverlay: Exeception occurred while trying to convert the Shortcut Bitmap to an Icon Overlay to store in the shortcut cache directory. Returning null");
+                        return null;
+                    }
+                }*/
 
         [DllImport("Shell32", CharSet = CharSet.Auto)]
         private static  extern int ExtractIconEx(string lpszFile, int nIconIndex, IntPtr[] phIconLarge, IntPtr[] phIconSmall, int nIcons);

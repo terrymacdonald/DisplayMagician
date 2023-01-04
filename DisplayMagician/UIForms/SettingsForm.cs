@@ -1,4 +1,5 @@
-﻿using DisplayMagicianShared;
+﻿using AutoUpdaterDotNET;
+using DisplayMagicianShared;
 using NHotkey;
 using NHotkey.WindowsForms;
 using System;
@@ -29,8 +30,8 @@ namespace DisplayMagician.UIForms
             // Populate the LogLevel dictionary
             logLevelText.Add("Trace", "Full Application Trace (very large)");
             logLevelText.Add("Debug", "Detailed Debug messages (large)");
-            logLevelText.Add("Info", "Information, Warning and Error messages (Default)");
-            logLevelText.Add("Warn", "Warning and Error messages only");
+            logLevelText.Add("Info", "Information, Warning and Error messages");
+            logLevelText.Add("Warn", "Warning and Error messages only (Default)");
             logLevelText.Add("Error", "Error messages only");
             logLevelText.Add("Fatal", "Fatal Error messages only");
 
@@ -111,6 +112,17 @@ namespace DisplayMagician.UIForms
             {
                 cb_upgrade_prerelease.Checked = false;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeToPreReleases set to false");
+            }
+
+            if (Program.AppProgramSettings.UpgradeEnabled == true)
+            {
+                cb_upgrade_enabled.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to true");
+            }
+            else
+            {
+                cb_upgrade_enabled.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to false");
             }
 
             if (Program.AppProgramSettings.InstalledDesktopContextMenu == true)
@@ -354,6 +366,26 @@ namespace DisplayMagician.UIForms
             {
                 Program.AppProgramSettings.UpgradeToPreReleases = false;
                 logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from upgrading to pre-release versions of software");
+            }
+
+            // save upgrade in prereleases setting
+            if (cb_upgrade_enabled.Checked)
+            {
+                Program.AppProgramSettings.UpgradeEnabled = true;
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully set DisplayMagician to look for upgrades when starting");
+            }
+            else
+            {
+                Program.AppProgramSettings.UpgradeEnabled = false;
+                // Stop any autoupdate reminder timers as we no longer want to upgrade
+                if (Program.AppUpdateRemindLaterTimer is System.Timers.Timer && Program.AppUpdateRemindLaterTimer.Enabled)
+                {
+                    Program.AppUpdateRemindLaterTimer.Stop(); 
+                    Program.AppUpdateRemindLaterTimer.Dispose();                   
+                }
+                AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
+                AutoUpdater.PersistenceProvider.SetRemindLater(DateTime.Now);
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from looking for upgrades when starting");
             }
 
             // Save ProgramSettings
@@ -606,7 +638,9 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppLogPath,"DisplayMagician2.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician3.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician4.log"),
+                            Path.Combine(Program.AppLogPath,"DisplayMagician5.log"),
                             // Also try to copy the new configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json"),
@@ -615,11 +649,14 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json"),
                             Path.Combine(Program.AppDataPath,"Settings_1.0.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.3.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.4.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.5.json"),
                             // Also try to copy the old configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json.old"),

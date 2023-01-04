@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using DisplayMagician;
+using DisplayMagician.AppLibraries;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -44,7 +45,7 @@ namespace DisplayMagician.GameLibraries
         public virtual string GameLibraryName { get; set; }
 
         public virtual SupportedGameLibraryType GameLibraryType { get; set; }
-        
+
         public virtual string GameLibraryExe { get; set; }
 
         public virtual string GameLibraryPath { get; set; }
@@ -106,7 +107,7 @@ namespace DisplayMagician.GameLibraries
         }
 
         public virtual bool LoadInstalledGames()
-        {           
+        {
             return false;
         }
 
@@ -115,17 +116,33 @@ namespace DisplayMagician.GameLibraries
             return null;
         }
 
+        public virtual bool StopGame(Game game)
+        {
+            return true;
+        }
+
         public static bool LoadGamesInBackground()
         {
 
             logger.Trace($"Program/LoadGamesInBackground: Attempting to load games from detected game libraries.");
 
 
+            // Clear the game libraries in case this is a refresh
+            SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
+            steamLibrary.AllInstalledGames.Clear();
+            UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
+            uplayLibrary.AllInstalledGames.Clear();
+            OriginLibrary originLibrary = OriginLibrary.GetLibrary();
+            originLibrary.AllInstalledGames.Clear();
+            EpicLibrary epicLibrary = EpicLibrary.GetLibrary();
+            epicLibrary.AllInstalledGames.Clear();
+            GogLibrary gogLibrary = GogLibrary.GetLibrary();
+            gogLibrary.AllInstalledGames.Clear();
+
             // Now lets prepare loading all the Steam games we have installed
             Action loadSteamGamesAction = new Action(() =>
             {
                 // Check if Steam is installed
-                GameLibrary steamLibrary = SteamLibrary.GetLibrary();
                 if (steamLibrary.IsGameLibraryInstalled)
                 {
                     // Load Steam library games
@@ -147,7 +164,6 @@ namespace DisplayMagician.GameLibraries
             Action loadUplayGamesAction = new Action(() =>
             {
                 // Check if Uplay is installed
-                GameLibrary uplayLibrary = UplayLibrary.GetLibrary();
                 if (uplayLibrary.IsGameLibraryInstalled)
                 {
                     // Load Uplay library games
@@ -170,7 +186,6 @@ namespace DisplayMagician.GameLibraries
             Action loadOriginGamesAction = new Action(() =>
             {
                 // Check if Origin is installed
-                GameLibrary originLibrary = OriginLibrary.GetLibrary();
                 if (originLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
@@ -193,7 +208,6 @@ namespace DisplayMagician.GameLibraries
             Action loadEpicGamesAction = new Action(() =>
             {
                 // Check if Epic is installed
-                GameLibrary epicLibrary = EpicLibrary.GetLibrary();
                 if (epicLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
@@ -216,7 +230,6 @@ namespace DisplayMagician.GameLibraries
             Action loadGogGamesAction = new Action(() =>
             {
                 // Check if GOG is installed
-                GameLibrary gogLibrary = GogLibrary.GetLibrary();
                 if (gogLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
@@ -261,20 +274,14 @@ namespace DisplayMagician.GameLibraries
                     logger.Error(ex, $"Program/LoadGamesInBackground: LoadGamesActions exception:");
                 }
             }
-
-            // Clear the game libraries in case this is a refresh
-            SteamLibrary.GetLibrary().AllInstalledGames.Clear();
-            UplayLibrary.GetLibrary().AllInstalledGames.Clear();
-            OriginLibrary.GetLibrary().AllInstalledGames.Clear();
-            EpicLibrary.GetLibrary().AllInstalledGames.Clear();
-            GogLibrary.GetLibrary().AllInstalledGames.Clear();
+            
             // Produce a single array of Games we can reference later
             GameLibrary.AllInstalledGamesInAllLibraries = new List<Game>();
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(SteamLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(EpicLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(GogLibrary.GetLibrary().AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(steamLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(uplayLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(originLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(epicLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(gogLibrary.AllInstalledGames);
 
             // Stop creating Game Bitmaps from the Games so the rest of the program is faster later
             //RefreshGameBitmaps();
@@ -321,23 +328,23 @@ namespace DisplayMagician.GameLibraries
                 if (bmList.Count == 0)
                 {
                     ShortcutBitmap bm = new ShortcutBitmap();
-                    if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
+                    if (game.GameLibraryType.Equals(SupportedGameLibraryType.Steam))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Steam, "Steam Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.Uplay))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Uplay, "Uplay Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.Origin))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Origin, "Origin Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Epic))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.Epic))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Epic, "Epic Icon", game.ExePath, bmList.Count);
                     }
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.GOG))
+                    else if (game.GameLibraryType.Equals(SupportedGameLibraryType.GOG))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.GOG, "GOG Icon", game.ExePath, bmList.Count);
                     }
@@ -356,6 +363,29 @@ namespace DisplayMagician.GameLibraries
             GamesImagesLoaded = true;
         }
 
+        public static Game GetAnyGameById(string gameId)
+        {
+            Game gameToUse = null;
+            foreach (Game game in GameLibrary.AllInstalledGamesInAllLibraries)
+            {
+                if (game.Id.Equals(gameId))
+                {
+                    gameToUse = game;
+                    break;
+                }
+            }
+
+            if (gameToUse is Game)
+            {
+                logger.Info($"GameLibrary/GetGameById: Found {gameToUse.GameLibraryType} App {gameToUse.Name} from ID {gameId}");
+                return gameToUse;
+            }
+            else
+            {
+                logger.Info($"GameLibrary/GetGameById: Didn't find App {gameToUse.Name} from ID {gameId}");
+                return gameToUse;
+            }
+        }
 
 
         #endregion

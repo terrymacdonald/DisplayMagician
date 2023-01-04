@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using ValveKeyValue;
@@ -22,6 +23,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         {
             var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Read(fs);
+            fs.Close();
         }
 
         /// <summary>
@@ -35,7 +37,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
             if (magic != Magic && magic != Magic27)
             {
-                throw new InvalidDataException($"Unknown magic header: {magic}");
+                throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
@@ -67,6 +69,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
                 Packages.Add(package);
             } while (true);
+            reader.Close();
         }
     }
 }

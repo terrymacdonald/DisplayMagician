@@ -112,9 +112,11 @@
 			</Directory>
 			<Component Id="HKLMRegistryEntries" Guid="4AB42CB7-3E2A-465B-9BE2-DDDE7D34797B">
 				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Type="string" Name="InstallDir" Value="[APPLICATIONROOTDIRECTORY]" KeyPath="yes"/>
+				<RemoveRegistryKey Root="HKLM" Key="Software\DisplayMagician" Action="removeOnUninstall"/>
 			</Component>
 			<Component Id="HKCURegistryEntries" Guid="481CA633-0BC0-49CD-B673-51BE9560B00F">
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Type="string" Name="AppDataDir" Value="[LocalAppDataFolder]" KeyPath="yes"/>
+				<RemoveRegistryKey Root="HKCU" Key="Software\DisplayMagician" Action="removeOnUninstall"/>
 			</Component>
 		</Directory>
 
@@ -133,7 +135,8 @@
 					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}"/>
 				</Shortcut>
 				<RemoveFolder Id="CleanUpApplicationShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
-				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="DisplayMagicianInstalled" Type="integer" Value="1" KeyPath="yes"/>
+				<RemoveFolder Id="CleanUpAppUserModelId" Directory="ApplicationProgramsFolder" On="uninstall"/>
+				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="DisplayMagicianInstalled" Type="integer" Value="1" KeyPath="yes" />
 			</Component>		
 		</DirectoryRef>
 

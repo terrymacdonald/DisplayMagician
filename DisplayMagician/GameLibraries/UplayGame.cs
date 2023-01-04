@@ -6,6 +6,7 @@ using System.Net;
 using DisplayMagician.Resources;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -56,9 +57,15 @@ namespace DisplayMagician.GameLibraries
             set => _uplayGameName = value;
         }
 
-        public override SupportedGameLibraryType GameLibrary
+        public override SupportedGameLibraryType GameLibraryType
         {
             get => SupportedGameLibraryType.Uplay;
+        }
+
+        [JsonIgnore]
+        public override GameLibrary GameLibrary
+        {
+            get => _uplayGameLibrary;
         }
 
         public override string IconPath
@@ -182,6 +189,22 @@ namespace DisplayMagician.GameLibraries
             }*/
 
             return name;
+        }
+
+        public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
+        {
+            string address = $@"uplay://launch/{Id}";
+            if (!String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += @"/" + gameArguments;
+            }
+            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+            return true;
+        }
+
+        public override bool Stop()
+        {
+            return true;
         }
 
     }

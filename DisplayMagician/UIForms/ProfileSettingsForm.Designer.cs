@@ -29,6 +29,7 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProfileSettingsForm));
             this.btn_back = new System.Windows.Forms.Button();
             this.gb_general = new System.Windows.Forms.GroupBox();
             this.rb_leave_wallpaper = new System.Windows.Forms.RadioButton();
@@ -86,7 +87,7 @@ namespace DisplayMagician.UIForms
             this.rb_leave_wallpaper.Checked = true;
             this.rb_leave_wallpaper.Location = new System.Drawing.Point(28, 30);
             this.rb_leave_wallpaper.Name = "rb_leave_wallpaper";
-            this.rb_leave_wallpaper.Size = new System.Drawing.Size(146, 20);
+            this.rb_leave_wallpaper.Size = new System.Drawing.Size(145, 20);
             this.rb_leave_wallpaper.TabIndex = 22;
             this.rb_leave_wallpaper.TabStop = true;
             this.rb_leave_wallpaper.Text = "Do Nothing (Default)";
@@ -98,7 +99,7 @@ namespace DisplayMagician.UIForms
             this.rb_clear_wallpaper.AutoSize = true;
             this.rb_clear_wallpaper.Location = new System.Drawing.Point(28, 56);
             this.rb_clear_wallpaper.Name = "rb_clear_wallpaper";
-            this.rb_clear_wallpaper.Size = new System.Drawing.Size(381, 20);
+            this.rb_clear_wallpaper.Size = new System.Drawing.Size(380, 20);
             this.rb_clear_wallpaper.TabIndex = 21;
             this.rb_clear_wallpaper.Text = "Clear the Desktop Wallpaper when using this Display Profile";
             this.rb_clear_wallpaper.UseVisualStyleBackColor = true;
@@ -109,7 +110,7 @@ namespace DisplayMagician.UIForms
             this.rb_apply_wallpaper.AutoSize = true;
             this.rb_apply_wallpaper.Location = new System.Drawing.Point(28, 82);
             this.rb_apply_wallpaper.Name = "rb_apply_wallpaper";
-            this.rb_apply_wallpaper.Size = new System.Drawing.Size(386, 20);
+            this.rb_apply_wallpaper.Size = new System.Drawing.Size(385, 20);
             this.rb_apply_wallpaper.TabIndex = 20;
             this.rb_apply_wallpaper.Text = "Apply this Desktop Wallpaper when using this Display Profile";
             this.rb_apply_wallpaper.UseVisualStyleBackColor = true;
@@ -190,7 +191,7 @@ namespace DisplayMagician.UIForms
             this.lbl_style.ForeColor = System.Drawing.Color.Transparent;
             this.lbl_style.Location = new System.Drawing.Point(176, 334);
             this.lbl_style.Name = "lbl_style";
-            this.lbl_style.Size = new System.Drawing.Size(44, 16);
+            this.lbl_style.Size = new System.Drawing.Size(43, 16);
             this.lbl_style.TabIndex = 13;
             this.lbl_style.Text = "Style: ";
             // 
@@ -214,6 +215,7 @@ namespace DisplayMagician.UIForms
             this.Controls.Add(this.gb_general);
             this.Controls.Add(this.btn_back);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "ProfileSettingsForm";

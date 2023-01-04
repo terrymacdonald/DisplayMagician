@@ -45,14 +45,14 @@ namespace DisplayMagician.UIForms
                 Game game = (Game)key;
 
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
-              
+
                 return game.GameBitmap.Image.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
 
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, "GameAdapter/GetThumbnail: Exception caused while trying to get the Game Bitmap.");
-                
+
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -131,7 +131,7 @@ namespace DisplayMagician.UIForms
                 Game game = (Game)key;
 
                 // Get file info
-                if (game.GameBitmap is Bitmap)
+                if (game.GameBitmap is ShortcutBitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
                     // System.Drawing.Image exception created while accessing the Size

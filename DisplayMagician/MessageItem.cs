@@ -13,7 +13,7 @@ namespace DisplayMagician
 
         public string MessageMode
         { get; set; } = "txt";
-        
+
         public string MinVersion
         { get; set; }
 

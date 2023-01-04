@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
 using System.Threading;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace DisplayMagicianShared
 {
@@ -696,7 +697,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static void UpdateActiveProfile()
+        public static void UpdateActiveProfile(bool fastScan = true)
         {
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
@@ -751,7 +752,7 @@ namespace DisplayMagicianShared
             //ShellHelper.TellShellToWriteSettings();
             //WinLibrary.RefreshTaskBars();
 
-            profile.CreateProfileFromCurrentDisplaySettings();
+            profile.CreateProfileFromCurrentDisplaySettings(fastScan);
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
@@ -839,10 +840,9 @@ namespace DisplayMagicianShared
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Include,
-                            DefaultValueHandling = DefaultValueHandling.Include,
+                            DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            
+                            ObjectCreationHandling = ObjectCreationHandling.Replace,                            
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
@@ -1003,7 +1003,7 @@ namespace DisplayMagicianShared
                 json = root.ToString(Formatting.Indented);
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFileName}.");
+                    SharedLogger.logger.Debug($"ProfileRepository/MigrateJsonToLatestVersion: Saving the profile repository to the {_profileStorageJsonFileName}.");
 
                     File.WriteAllText(_profileStorageJsonFileName, json, Encoding.Unicode);
                 }
@@ -1054,9 +1054,7 @@ namespace DisplayMagicianShared
                 JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
-                    //NullValueHandling = NullValueHandling.Ignore,
                     DefaultValueHandling = DefaultValueHandling.Include,
-                    //DefaultValueHandling = DefaultValueHandling.Ignore,
                     TypeNameHandling = TypeNameHandling.Auto,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,

@@ -6,6 +6,7 @@ using System.Net;
 using DisplayMagician.Resources;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -57,9 +58,15 @@ namespace DisplayMagician.GameLibraries
             set => _epicGameName = value;
         }
 
-        public override SupportedGameLibraryType GameLibrary
+        public override SupportedGameLibraryType GameLibraryType
         {
             get => SupportedGameLibraryType.Epic;
+        }
+
+        [JsonIgnore]
+        public override GameLibrary GameLibrary
+        {
+            get => _epicGameLibrary;
         }
 
         public override string IconPath
@@ -103,45 +110,10 @@ namespace DisplayMagician.GameLibraries
             get
             {
                 return !ProcessUtils.ProcessExited(_epicGameProcessName);
-                /*int numGameProcesses = 0;
-                _epicGameProcesses = Process.GetProcessesByName(_epicGameProcessName).ToList();
-                foreach (Process gameProcess in _epicGameProcesses)
-                {
-                    try
-                    {                       
-                        if (gameProcess.ProcessName.Equals(_epicGameProcessName))
-                            numGameProcesses++;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Debug(ex, $"EpicGame/IsRunning: Accessing Process.ProcessName caused exception. Trying GameUtils.GetMainModuleFilepath instead");
-                        // If there is a race condition where MainModule isn't available, then we 
-                        // instead try the much slower GetMainModuleFilepath (which does the same thing)
-                        string filePath = GameUtils.GetMainModuleFilepath(gameProcess.Id);
-                        if (filePath == null)
-                        {
-                            // if we hit this bit then GameUtils.GetMainModuleFilepath failed,
-                            // so we just assume that the process is a game process
-                            // as it matched the epical process search
-                            numGameProcesses++;
-                            continue;
-                        }
-                        else
-                        {
-                            if (filePath.StartsWith(_epicGameExePath))
-                                numGameProcesses++;
-                        }
-                            
-                    }
-                }
-                if (numGameProcesses > 0)
-                    return true;
-                else
-                    return false;*/
             }
         }
 
-        // Have to do much more research to figure out how to detect when Epic is updating a game
+        // TODO Have to do much more research to figure out how to detect when Epic is updating a game
         public override bool IsUpdating
         {
             get
@@ -184,6 +156,22 @@ namespace DisplayMagician.GameLibraries
             }*/
 
             return name;
+        }
+
+        public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
+        {
+            string address = $@"com.epicgames.launcher://apps/{Id}?action=launch&silent=true";
+            if (!String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += @"/" + gameArguments;
+            }
+            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+            return true;
+        }
+
+        public override bool Stop()
+        {
+            return true;
         }
 
     }

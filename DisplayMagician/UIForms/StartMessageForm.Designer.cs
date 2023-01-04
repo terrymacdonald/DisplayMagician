@@ -100,6 +100,7 @@ namespace DisplayMagician.UIForms
             this.Controls.Add(this.pnl_richtextbox);
             this.Controls.Add(this.btn_back);
             this.Controls.Add(this.lbl_heading_text);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "StartMessageForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

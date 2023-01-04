@@ -8,6 +8,7 @@ using DisplayMagician.Resources;
 using Microsoft.Win32;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -57,8 +58,14 @@ namespace DisplayMagician.GameLibraries
             set => _steamGameName = value;
         }
 
-        public override SupportedGameLibraryType GameLibrary { 
+        public override SupportedGameLibraryType GameLibraryType { 
             get => SupportedGameLibraryType.Steam; 
+        }
+
+        [JsonIgnore]
+        public override GameLibrary GameLibrary
+        {
+            get => _steamGameLibrary;
         }
 
         public override string IconPath { 
@@ -213,6 +220,22 @@ namespace DisplayMagician.GameLibraries
             }
 
             return name;
+        }
+
+        public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
+        {
+            string address = $@"steam://rungameid/{Id}";
+            if (!String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += @"/" + gameArguments;
+            }
+            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+            return true;
+        }
+
+        public override bool Stop()
+        {
+            return true;
         }
 
     }

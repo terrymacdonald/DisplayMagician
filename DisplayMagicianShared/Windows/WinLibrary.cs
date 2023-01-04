@@ -473,12 +473,12 @@ namespace DisplayMagicianShared.Windows
 
         }
 
-        public bool UpdateActiveConfig()
+        public bool UpdateActiveConfig(bool fastScan = true)
         {
             SharedLogger.logger.Trace($"WinLibrary/UpdateActiveConfig: Updating the currently active config");
             try
             {
-                _activeDisplayConfig = GetActiveConfig();
+                _activeDisplayConfig = GetActiveConfig(fastScan);
                 _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
             }
             catch (Exception ex)
@@ -490,15 +490,19 @@ namespace DisplayMagicianShared.Windows
             return true;
         }
 
-        public WINDOWS_DISPLAY_CONFIG GetActiveConfig()
+        public WINDOWS_DISPLAY_CONFIG GetActiveConfig(bool fastScan = true)
         {
             SharedLogger.logger.Trace($"WinLibrary/GetActiveConfig: Getting the currently active config");
             // We'll leave virtual refresh rate aware until we can reliably detect Windows 11 versions.
-            return GetWindowsDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS);
+            return GetWindowsDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, fastScan);
         }
 
-        private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS)
+        private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS, bool fastScan = true)
         {
+
+            // Forcing fastscan to stop the taskbar location scanning delaying the user experience
+            // TODO: Find a replacement method of doing the taskbar location detection. Microsoft may have made things easier in Windows 11 by now....
+            fastScan = true;
 
             // Prepare the empty windows display config
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = CreateDefaultConfig();
@@ -909,25 +913,32 @@ namespace DisplayMagicianShared.Windows
             // Check whether Windows has actually added the registry keys that outline the taskbar position
             if (retryNeeded)
             {
-                // We wait until the reg key is populated                
-                for (int count = 1; count <= 4; count++)
+                if (fastScan)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We were unable to get all the Windows Taskbar Layouts! So we need to try again. Attempt {count} of 4.");
-
-                    // Wait 5 seconds
-                    System.Threading.Thread.Sleep(5000);
-                    // then try again
-                    retryNeeded = false;
-                    taskBarStuckRectangles = TaskBarLayout.GetAllCurrentTaskBarLayouts(windowsDisplayConfig.DisplaySources, out retryNeeded);
-
-                    if (!retryNeeded)
-                    {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We successfully got the Windows Taskbar Layouts on attempt {count}! So we can stop trying to get them");
-                        break;
-                    }
-
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Skipping retrying Windows Taskbar Layouts and just accepting the first locations");
                 }
-            }
+                else
+                {
+                    // We wait until the reg key is populated                
+                    for (int count = 1; count <= 4; count++)
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We were unable to get all the Windows Taskbar Layouts! So we need to try again. Attempt {count} of 4.");
+
+                        // Wait 5 seconds
+                        System.Threading.Thread.Sleep(5000);
+                        // then try again
+                        retryNeeded = false;
+                        taskBarStuckRectangles = TaskBarLayout.GetAllCurrentTaskBarLayouts(windowsDisplayConfig.DisplaySources, out retryNeeded);
+
+                        if (!retryNeeded)
+                        {
+                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We successfully got the Windows Taskbar Layouts on attempt {count}! So we can stop trying to get them");
+                            break;
+                        }
+
+                    }
+                }               
+            }           
 
             // Now we try to get the taskbar settings too
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar Settings.");

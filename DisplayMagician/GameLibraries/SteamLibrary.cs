@@ -97,9 +97,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Steam Games from Steam Client if needed
-                if (_allSteamGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allSteamGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allSteamGames;
             }
         }
@@ -512,7 +513,16 @@ namespace DisplayMagician.GameLibraries
 
                 string appInfoVdfFile = Path.Combine(_steamPath, "appcache", "appinfo.vdf");
                 var newAppInfo = new AppInfo();
-                newAppInfo.Read(appInfoVdfFile);
+                try
+                {
+                    // Try to read the appInfoVdfFile
+                    newAppInfo.Read(appInfoVdfFile);
+                }
+                catch (Exception ex)
+                {
+                    // If we have a problem then we just have to return no Steam Games!
+                    return false;
+                }
 
                 logger.Trace($"SteamLibrary/LoadInstalledGames: Found {newAppInfo.Apps.Count} apps in the {appInfoVdfFile} VDF file");
 
@@ -843,17 +853,30 @@ namespace DisplayMagician.GameLibraries
 
         public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string address = $@"steam://rungameid/{game.Id}";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            List<Process> startedProcesses = new List<Process>();
+            if (game.Start(out startedProcesses, gameArguments, processPriority))
             {
-                address += @"//" + gameArguments;
+                logger.Trace($"SteamLibrary/StartGame: Successfully started Steam game {game.Name}");
             }
-            //Process gameProcess = Process.Start(address);
-            List<Process> gameProcesses = ProcessUtils.StartProcess(address,null,processPriority);
+            else
+            {
+                logger.Trace($"SteamLibrary/StartGame: Failed to start Steam game {game.Name}");
+            }
+            return startedProcesses;
+        }
 
-            // Wait 1 second then see if we need to find the child processes.
-
-            return gameProcesses;
+        public override bool StopGame(Game game)
+        {
+            if (game.Stop())
+            {
+                logger.Trace($"SteamLibrary/StopGame: Successfully stopped Steam game {game.Name}");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"SteamLibrary/StopGame: Failed to stop Steam game {game.Name}");
+                return false;
+            }
         }
         #endregion
 

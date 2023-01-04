@@ -6,6 +6,7 @@ using System.Net;
 using DisplayMagician.Resources;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -57,9 +58,15 @@ namespace DisplayMagician.GameLibraries
             set => _gogGameName = value;
         }
 
-        public override SupportedGameLibraryType GameLibrary
+        public override SupportedGameLibraryType GameLibraryType
         {
             get => SupportedGameLibraryType.GOG;
+        }
+
+        [JsonIgnore]
+        public override GameLibrary GameLibrary
+        {
+            get => _gogGameLibrary;
         }
 
         public override string IconPath
@@ -184,6 +191,22 @@ namespace DisplayMagician.GameLibraries
             }*/
 
             return name;
+        }
+
+        public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
+        {
+            string args = $@"/command=runGame /gameId={Id} /path=""{Directory}""";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                args += gameArguments;
+            }
+            processesStarted = ProcessUtils.StartProcess(GogLibrary.GetLibrary().GameLibraryExe, args, priority);
+            return true;
+        }
+
+        public override bool Stop()
+        {
+            return true;
         }
 
     }

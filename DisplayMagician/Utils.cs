@@ -1,12 +1,19 @@
 ﻿using Microsoft.Win32;
 using NLog;
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
+using System.Text;
 
 namespace DisplayMagician
-{
+{ 
+
     static class Utils
     {
         // 1. Import InteropServices
@@ -60,14 +67,15 @@ namespace DisplayMagician
         public static void ActivateCenteredOnPrimaryScreen(this Form frm)
         {
             if (!(frm is Form))
-{
+            {
                 logger.Trace($"Utils/ActivateCenteredOnPrimaryScreen: frm passed in is not a Form. Not able to center the form.");
                 return;
             }
-            CenterOnPrimaryScreen(frm);
+            frm.Top = (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2;
+            frm.Left = (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2;
             frm.Visible = true;
             frm.Activate();
-            frm.BringToFront();
+            //frm.BringToFront();
         }
 
         public static void ShowCenteredOnPrimaryScreen(this Form frm)
@@ -127,9 +135,332 @@ namespace DisplayMagician
             return currentBuild >= 22000;
         }
 
+        public static string NormaliseGameName(this string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return string.Empty;
+            }
+
+            var newName = name;
+            newName = RemoveTrademarks(newName);
+            newName = newName.Replace("_", " ");
+            newName = newName.Replace(".", " ");
+            newName = newName.Replace('’', '\'');
+            newName = RemoveUnlessThatEmptiesTheString(newName, @"\[.*?\]");
+            newName = RemoveUnlessThatEmptiesTheString(newName, @"\(.*?\)");
+            newName = Regex.Replace(newName, @"\s*:\s*", ": ");
+            newName = Regex.Replace(newName, @"\s+", " ");
+            if (Regex.IsMatch(newName, @",\s*The$"))
+            {
+                newName = "The " + Regex.Replace(newName, @",\s*The$", "", RegexOptions.IgnoreCase);
+            }
+
+            return newName.Trim();
+        }
+
+        public static string RemoveTrademarks(this string str, string remplacement = "")
+        {
+            if (String.IsNullOrEmpty(str))
+            {
+                return str;
+            }
+
+            return Regex.Replace(str, @"[™©®]", remplacement);
+        }
+
+        private static string RemoveUnlessThatEmptiesTheString(string input, string pattern)
+        {
+            string output = Regex.Replace(input, pattern, string.Empty);
+
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                return input;
+            }
+            return output;
+        }
+
+        public static void ExtractResource(string path, string name, string type, string destination)
+        {
+            IntPtr hMod = NativeMethods.LoadLibraryEx(path, IntPtr.Zero, 0x00000002);
+            IntPtr hRes = NativeMethods.FindResource(hMod, name, type);
+            uint size = NativeMethods.SizeofResource(hMod, hRes);
+            IntPtr pt = NativeMethods.LoadResource(hMod, hRes);
+
+            byte[] bPtr = new byte[size];
+            Marshal.Copy(pt, bPtr, 0, (int)size);
+            using (MemoryStream m = new MemoryStream(bPtr))
+            {
+                File.WriteAllBytes(destination, m.ToArray());
+            }
+        }
+
+        public static long GetUriPackFileSize(string packUri)
+        {
+            var info = System.Windows.Application.GetResourceStream(new Uri(packUri));
+            using (var stream = info.Stream)
+            {
+                return stream.Length;
+            }
+        }
+
+        public static string ReadFileFromResource(string resource)
+        {
+            using (var stream = Assembly.GetCallingAssembly().GetManifestResourceStream(resource))
+            {
+                var tr = new StreamReader(stream);
+                return tr.ReadToEnd();
+            }
+        }
+
+        public static string GetIndirectResourceString(string fullName, string packageName, string resource)
+        {
+            var resUri = new Uri(resource);
+            var resourceString = string.Empty;
+            if (resource.StartsWith("ms-resource://"))
+            {
+                resourceString = $"@{{{fullName}? {resource}}}";
+            }
+            else if (resource.Contains('/'))
+            {
+                resourceString = $"@{{{fullName}? ms-resource://{packageName}/{resource.Replace("ms-resource:", "").Trim('/')}}}";
+            }
+            else
+            {
+                resourceString = $"@{{{fullName}? ms-resource://{packageName}/resources/{resUri.Segments.Last()}}}";
+            }
+
+            var sb = new StringBuilder(1024);
+            var result = NativeMethods.SHLoadIndirectString(resourceString, sb, sb.Capacity, IntPtr.Zero);
+            if (result == 0)
+            {
+                return sb.ToString();
+            }
+
+            resourceString = $"@{{{fullName}? ms-resource://{packageName}/{resUri.Segments.Last()}}}";
+            result = NativeMethods.SHLoadIndirectString(resourceString, sb, sb.Capacity, IntPtr.Zero);
+            if (result == 0)
+            {
+                return sb.ToString();
+            }
+
+            return string.Empty;
+        }
 
     }
 
+    // Originally from https://stackoverflow.com/questions/9746538/fastest-safest-file-finding-parsing
+    public class SafeFileEnumerator : IEnumerable<FileSystemInfo>
+    {
+        /// <summary>
+        /// Helper class to enumerate the file system.
+        /// </summary>
+        private class Enumerator : IEnumerator<FileSystemInfo>
+        {
+            // Core enumerator that we will be walking though
+            private IEnumerator<FileSystemInfo> fileEnumerator;
+            // Directory enumerator to capture access errors
+            private IEnumerator<DirectoryInfo> directoryEnumerator;
 
+            private DirectoryInfo root;
+            private string pattern;
+            private SearchOption searchOption;
+            private IList<Exception> errors;
+
+            public Enumerator(DirectoryInfo root, string pattern, SearchOption option, IList<Exception> errors)
+            {
+                this.root = root;
+                this.pattern = pattern;
+                this.errors = errors;
+                this.searchOption = option;
+
+                Reset();
+            }
+
+            /// <summary>
+            /// Current item the primary itterator is pointing to
+            /// </summary>
+            public FileSystemInfo Current
+            {
+                get
+                {
+                    //if (fileEnumerator == null) throw new ObjectDisposedException("FileEnumerator");
+                    return fileEnumerator.Current as FileSystemInfo;
+                }
+            }
+
+            object System.Collections.IEnumerator.Current
+            {
+                get { return Current; }
+            }
+
+            public void Dispose()
+            {
+                Dispose(true, true);
+            }
+
+            private void Dispose(bool file, bool dir)
+            {
+                if (file)
+                {
+                    if (fileEnumerator != null)
+                        fileEnumerator.Dispose();
+
+                    fileEnumerator = null;
+                }
+
+                if (dir)
+                {
+                    if (directoryEnumerator != null)
+                        directoryEnumerator.Dispose();
+
+                    directoryEnumerator = null;
+                }
+            }
+
+            public bool MoveNext()
+            {
+                // Enumerate the files in the current folder
+                if ((fileEnumerator != null) && (fileEnumerator.MoveNext()))
+                    return true;
+
+                // Don't go recursive...
+                if (searchOption == SearchOption.TopDirectoryOnly) { return false; }
+
+                while ((directoryEnumerator != null) && (directoryEnumerator.MoveNext()))
+                {
+                    Dispose(true, false);
+
+                    try
+                    {
+                        fileEnumerator = new SafeFileEnumerator(
+                            directoryEnumerator.Current,
+                            pattern,
+                            SearchOption.AllDirectories,
+                            errors
+                            ).GetEnumerator();
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add(ex);
+                        continue;
+                    }
+
+                    // Open up the current folder file enumerator
+                    if (fileEnumerator.MoveNext())
+                        return true;
+                }
+
+                Dispose(true, true);
+
+                return false;
+            }
+
+            public void Reset()
+            {
+                Dispose(true, true);
+
+                // Safely get the enumerators, including in the case where the root is not accessable
+                if (root != null)
+                {
+                    try
+                    {
+                        fileEnumerator = root.GetFileSystemInfos(pattern, SearchOption.TopDirectoryOnly).AsEnumerable<FileSystemInfo>().GetEnumerator();
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add(ex);
+                        fileEnumerator = null;
+                    }
+
+                    try
+                    {
+                        directoryEnumerator = root.GetDirectories("*", SearchOption.TopDirectoryOnly).AsEnumerable<DirectoryInfo>().GetEnumerator();
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add(ex);
+                        directoryEnumerator = null;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Starting directory to search from
+        /// </summary>
+        private DirectoryInfo root;
+
+        /// <summary>
+        /// Filter pattern
+        /// </summary>
+        private string pattern;
+
+        /// <summary>
+        /// Indicator if search is recursive or not
+        /// </summary>
+        private SearchOption searchOption;
+
+        /// <summary>
+        /// Any errors captured
+        /// </summary>
+        private IList<Exception> errors;
+
+        /// <summary>
+        /// Create an Enumerator that will scan the file system, skipping directories where access is denied
+        /// </summary>
+        /// <param name="root">Starting Directory</param>
+        /// <param name="pattern">Filter pattern</param>
+        /// <param name="option">Recursive or not</param>
+        public SafeFileEnumerator(string root, string pattern, SearchOption option)
+            : this(new DirectoryInfo(root), pattern, option)
+        { }
+
+        /// <summary>
+        /// Create an Enumerator that will scan the file system, skipping directories where access is denied
+        /// </summary>
+        /// <param name="root">Starting Directory</param>
+        /// <param name="pattern">Filter pattern</param>
+        /// <param name="option">Recursive or not</param>
+        public SafeFileEnumerator(DirectoryInfo root, string pattern, SearchOption option)
+            : this(root, pattern, option, new List<Exception>())
+        { }
+
+        // Internal constructor for recursive itterator
+        private SafeFileEnumerator(DirectoryInfo root, string pattern, SearchOption option, IList<Exception> errors)
+        {
+            if (root == null || !root.Exists)
+            {
+                throw new ArgumentException("Root directory is not set or does not exist.", "root");
+            }
+            this.root = root;
+            this.searchOption = option;
+            this.pattern = String.IsNullOrEmpty(pattern)
+                ? "*"
+                : pattern;
+            this.errors = errors;
+        }
+
+        /// <summary>
+        /// Errors captured while parsing the file system.
+        /// </summary>
+        public Exception[] Errors
+        {
+            get
+            {
+                return errors.ToArray();
+            }
+        }
+
+        public IEnumerator<FileSystemInfo> GetEnumerator()
+        {
+            return new Enumerator(root, pattern, searchOption, errors);
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
 
 }

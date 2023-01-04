@@ -1,13 +1,17 @@
-﻿using System;
+﻿using DisplayMagician.GameLibraries.SteamAppInfoParser;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using ValveKeyValue;
 
+// Code used from SteamDatabase team at https://github.com/SteamDatabase/SteamAppInfo/tree/master/SteamAppInfoParser
+
 namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 {
     class AppInfo
     {
+        private const uint Magic28 = 0x07_56_44_28;
         private const uint Magic = 0x07_56_44_27;
 
         public EUniverse Universe { get; set; }
@@ -34,9 +38,10 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
             var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic)
+            if (magic != Magic && magic != Magic28)
             {
-                throw new InvalidDataException($"Unknown magic header: {magic}");
+                reader.Close();
+                throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
@@ -45,34 +50,35 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
             do
             {
-                try
+                var appid = reader.ReadUInt32();
+
+                if (appid == 0)
                 {
-                    var appid = reader.ReadUInt32();
-
-                    if (appid == 0)
-                    {
-                        return;
-                    }
-
-                    var app = new App
-                    {
-                        AppID = appid,
-                        Size = reader.ReadUInt32(),
-                        InfoState = reader.ReadUInt32(),
-                        LastUpdated = DateTimeFromUnixTime(reader.ReadUInt32()),
-                        Token = reader.ReadUInt64(),
-                        Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
-                        ChangeNumber = reader.ReadUInt32(),
-                        Data = deserializer.Deserialize(input),
-                    };
-
-                    Apps.Add(app);
+                    break;
                 }
-                catch (Exception ex)
+
+                reader.ReadUInt32(); // size until end of Data
+
+                var app = new App
                 {
-                    return;
+                    AppID = appid,
+                    InfoState = reader.ReadUInt32(),
+                    LastUpdated = DateTimeFromUnixTime(reader.ReadUInt32()),
+                    Token = reader.ReadUInt64(),
+                    Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
+                    ChangeNumber = reader.ReadUInt32(),
+                };
+
+                if (magic == Magic28)
+                {
+                    app.BinaryDataHash = new ReadOnlyCollection<byte>(reader.ReadBytes(20));
                 }
+
+                app.Data = deserializer.Deserialize(input);
+
+                Apps.Add(app);
             } while (true);
+            reader.Close();
         }
 
         public static DateTime DateTimeFromUnixTime(uint unixTime)

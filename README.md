@@ -40,7 +40,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or start your games by right-clicking on the DisplayMagician Notification Tray icon.
 * Choose which Audio Device you want the shortcut to use. Like using the wireless headset when driving? This lets you with a single click.
 * Add one or more programs to pre-start before your game or application
-* Works with the following Game Launchers:
+* Allows you to easily select games from the following Game Launchers:
   * Steam
   * Ubisoft Uplay
   * Origin (Electronic Arts)
@@ -53,6 +53,8 @@ DisplayMagician lets you set up the following information for each game or appli
 * Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display)
 * Supports Windows DPI Scaling, setting Refresh Rates and HDR
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
+* Contains a Field-of-view (FOV) Calculator to help set games to make objects appear at normal size
+* Allows you to easily chose installed applications from software installed via installers and UWP apps downloaded from the Microsoft Store.
 
 ## Planned features
 
@@ -82,9 +84,11 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 <p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut2.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianChooseApplication.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianChooseShortcutImage.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfileHotkey.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianFovCalculator.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianShellExtension.png"/></p>
 
 
@@ -153,6 +157,7 @@ I’m so very thankful for the help of the following people, who make DisplayMag
 * Frcooper (thanks for the monthly donation)
 
 Also big thanks to:
+* Markus Ewert 'dinex86' (Thanks for letting my use your FOV logic)
 * Dogy007 (Thanks for the sponsorship)
 * Ceramed (Thank you for your donation and your help troubleshooting SuperDisplay and SpaceDesk screens)
 * Bjorg (Thank you for your donation)

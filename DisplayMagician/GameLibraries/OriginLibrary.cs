@@ -96,9 +96,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Origin Games from Origin Client if needed
-                if (_allOriginGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allOriginGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allOriginGames;
             }
         }
@@ -747,14 +748,30 @@ namespace DisplayMagician.GameLibraries
         }*/
         public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
-            string address = $"origin2://game/launch?offerIds={game.Id}";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            List<Process> startedProcesses = new List<Process>();
+            if (game.Start(out startedProcesses, gameArguments, processPriority))
             {
-                address += @"/" + gameArguments;
+                logger.Trace($"OriginLibrary/StartGame: Successfully started Origin game {game.Name}");
             }
-            //Process gameProcess = Process.Start(address);
-            List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
-            return gameProcesses;
+            else
+            {
+                logger.Trace($"OriginLibrary/StartGame: Failed to start Origin game {game.Name}");
+            }
+            return startedProcesses;
+        }
+
+        public override bool StopGame(Game game)
+        {
+            if (game.Stop())
+            {
+                logger.Trace($"OriginLibrary/StopGame: Successfully stopped Origin game {game.Name}");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"OriginLibrary/StopGame: Failed to stop Origin game {game.Name}");
+                return false;
+            }
         }
 
 

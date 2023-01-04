@@ -62,74 +62,73 @@ namespace DisplayMagician.Processes
             if (TryExecute(executable, arguments, out processCreated, runAsAdministrator))
             {
                 logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by TryExecute");
+
+                if (processCreated != null && processCreated.Id > 0)
+                {
+                    try
+                    {
+
+                        processCreated.WaitForExit(4000);
+
+                        if (processCreated.HasExited)
+                        {
+
+                            logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has exited quickly. It is possible that it is a game or app launcher, so we'll try to see if it launched any child processes, and monitor them instead!");
+
+                            // If the process has exited, then it's likely to be a launcher, so we try to find the children processes
+                            List<Process> childProcesses = GetChildProcesses(processCreated);
+                            if (childProcesses.Count > 0)
+                            {
+                                logger.Trace($"ProcessUtils/StartProcess: Yay! We found {childProcesses.Count} child processes were launched when we started {executable} {arguments}, so we'll monitor them instead!");
+                                returnedProcesses.AddRange(childProcesses);
+                            }
+                            else
+                            {
+                                logger.Trace($"ProcessUtils/StartProcess: Oh no! We couldn't find any child processes after we started {executable} {arguments} and it closed itself. Nothing to monitor! It's possible that there is a problem with the {executable} program. Try running it yourself manually to see if you can see a problem with it.");
+                                // We need to try and find if there were any child processes another way
+                                // For example, this is where we land when Explorer launches a UWP program using ShellAppsFolder 
+                                // Explorer runs the UWP program, and then closes the application process, as it seems to communicate with 
+                                // svchost.exe thorough the backend.
+                            }
+                        }
+                        else
+                        {
+                            ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
+                            // If we're here then the process was created and hasn't exited!
+                            try
+                            {
+
+                                if (processCreated.PriorityClass != wantedPriority)
+                                {
+                                    processCreated.PriorityClass = wantedPriority;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Warn(ex, $"ProcessUtils/StartProcess: Exception while trying to set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
+                            }
+                            returnedProcesses.Add(processCreated);
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        // Oops - something went wrong. We'll log it and have to move on :(
+                        //process = null;
+                        logger.Error(ex, $"ProcessUtils/StartProcess: Exception while trying to start {executable}. We were unable to start it.");
+                    }
+
+                }
             }
             else
             {
-                logger.Warn($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute, so attempting with TryExecute_Impersonate");
-                /*ImpersonationProcess impProcessCreated;
-                //if (IsImpersonated())
-                //{
-                //logger.Trace($"ProcessUtils/StartProcess: Useer CAN be impersonated, so trying to run {executable} {arguments} with TryExecute_Impersonated");
-                if (TryExecute_Impersonated(executable, arguments, out impProcessCreated))
-                {
-                    logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by TryExecute_Impersonated");
-                    processCreated = impProcessCreated;
-                }
-                else
-                {
-                    logger.Error($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute_Impersonated, so giving up");
-                }*/
-                //}
-                //else
-                //{
-                //    logger.Error($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be attempted by TryExecute_Impersonated as the User can't be impersonated, so giving up");
-                //}
+                logger.Warn($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute, so attempting with TryExecute_Impersonate");                
             }
 
-            if (processCreated != null && processCreated.Id > 0)
-            {
-                try
-                {
-
-                    processCreated.WaitForExit(1000);
-
-                    if (processCreated.HasExited)
-                    {
-                        // If the process has exited, then it's likely to be a launcher, so we try to find the children processes
-                        List<Process> childProcesses = GetChildProcesses(processCreated);
-                        returnedProcesses.AddRange(childProcesses);
-                    }
-                    else
-                    {
-                        ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
-                        // If we're here then the process was created and hasn't exited!
-                        try
-                        {
-
-                            if (processCreated.PriorityClass != wantedPriority)
-                            {
-                                processCreated.PriorityClass = wantedPriority;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Warn(ex, $"ProcessUtils/StartProcess: Exception while trying to set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
-                        }
-                        returnedProcesses.Add(processCreated);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    // Oops - something went wrong. We'll log it and have to move on :(
-                    //process = null;
-                    logger.Error(ex, $"ProcessUtils/StartProcess: Exception while trying to start {executable}. We were unable to start it.");
-                }
-
-            }
+            
 
             return returnedProcesses;
-        }
+        }        
 
         public static List<Process> GetChildProcesses(Process process)
         {

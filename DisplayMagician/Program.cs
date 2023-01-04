@@ -23,10 +23,13 @@ using System.Threading;
 using Microsoft.Win32;
 using DisplayMagician.Processes;
 using NETWORKLIST;
+using DisplayMagician.AppLibraries;
+using System.ComponentModel;
+using System.Text;
 
 namespace DisplayMagician {
 
-    internal static class Program
+    public static class Program
     {
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppStartupPath = Application.StartupPath;
@@ -55,11 +58,13 @@ namespace DisplayMagician {
         public static MainForm AppMainForm;
         public static LoadingForm AppSplashScreen;
         public static ShortcutLoadingForm AppShortcutLoadingSplashScreen;
+        public static UpgradeExtraDetails? AppUpgradeExtraDetails = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
+        public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
 
         public enum ERRORLEVEL: int
         {
@@ -72,6 +77,15 @@ namespace DisplayMagician {
             ERROR_APPLYING_PROFILE = 103,  // Errorlevel returned when RunProfile command is used, and it cannot apply the profile for some reason
             ERROR_UNKNOWN_COMMAND = 104, // Errorlevel returned when DisplayMagician is given an unregonised command
         };
+
+
+        public struct UpgradeExtraDetails
+        {
+            public bool ManualUpgrade;
+            public bool UpdatesDisplayProfiles;
+            public bool UpdatesGameShortcuts;
+            public bool UpdatesSettings;
+        }
 
         private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
         {
@@ -132,11 +146,7 @@ namespace DisplayMagician {
             //NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
 
             var config = new NLog.Config.LoggingConfiguration();
-
-            // Targets where to log to: File and Console
-            //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
-            string AppLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
-
+            
             // Create the Logging Dir if it doesn't exist so that it's avilable for all 
             // parts of the program to use
             if (!Directory.Exists(AppLogPath))
@@ -150,7 +160,7 @@ namespace DisplayMagician {
                     Console.WriteLine($"Program/Main Exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
             }
-            else
+            /*else
             {
                 // If the log directory does exist, then attempt to rename the old log files so they
                 // don't get overwritten and we can send them in a support zip file
@@ -175,7 +185,7 @@ namespace DisplayMagician {
                 {
                     File.Move(AppLogFilename, Path.Combine(Program.AppLogPath, $"DisplayMagician1.log"));
                 }
-            }
+            }*/
 
             // NOTE: This had to be moved up from the later state
             // Copy the old Settings file to the new v2 name
@@ -188,8 +198,20 @@ namespace DisplayMagician {
                     string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
                     string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
                     string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
+                    string oldv24SettingsFile = Path.Combine(AppDataPath, "Settings_2.4.json");
 
-                    if (File.Exists(oldv23SettingsFile))
+                    if (File.Exists(oldv24SettingsFile))
+                    {
+                        File.Copy(oldv24SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+
+                        // Load the program settings to populate the extra additional settings with default values
+                        // as there are some new settings in there.
+                        AppProgramSettings = ProgramSettings.LoadSettings();
+                        // Save the updated program settings so they're baked in.
+                        AppProgramSettings.SaveSettings();
+                    }
+                    else if (File.Exists(oldv23SettingsFile))
                     {
                         File.Copy(oldv23SettingsFile, targetSettingsFile, true);
                         upgradedSettingsFile = true;
@@ -257,11 +279,20 @@ namespace DisplayMagician {
             //AppProgramSettings.LogLevel = "Trace";
 
 
+            // Targets where to log to: File and Console
+            //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
+            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
+            string archiveFilename = $"DisplayMagician###.log";
+
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
             {
-                FileName = AppLogFilename,
-                DeleteOldFileOnStartup = true,
+                FileName = appLogFilename,
+                ArchiveOldFileOnStartup = true,
+                ArchiveFileName = archiveFilename,
+                ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Rolling,
+                MaxArchiveFiles = 4,
+                ArchiveAboveSize = 41943040, // 40MB max file size
                 Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
             };
 
@@ -437,18 +468,29 @@ namespace DisplayMagician {
                 {
                     string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
                     string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
+                    string oldv22ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
 
-                    if (File.Exists(oldv2ShortcutsFile))
+                    if (File.Exists(oldv22ShortcutsFile))
                     {
-                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv2ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        logger.Info($"Program/Main: Upgrading v2.2 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
+                        File.Copy(oldv22ShortcutsFile, targetShortcutsFile);
+                    }
+                    else if (File.Exists(oldv2ShortcutsFile))
+                    {
+                        logger.Info($"Program/Main: Upgrading v2.0 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
                         File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
                     }
                     else if (File.Exists(oldv1ShortcutsFile))
                     {
-                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv1ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        logger.Info($"Program/Main: Upgrading v1.0 shortcut file {oldv1ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
                         File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
-                    }
-                    
+                    }                   
+
+                    // Load the Shortcuts so that they get populated with default values as part of the upgrade
+                    ShortcutRepository.LoadShortcuts();
+                    // Now save the shortcuts so the new default values get written to disk
+                    ShortcutRepository.SaveShortcuts();
+
                 }
                 else
                 {
@@ -568,8 +610,10 @@ namespace DisplayMagician {
                     AppMainForm = new MainForm();
                     AppMainForm.Load += MainForm_LoadCompleted;
 
-                    // Load the games in background onexecute
+                    // Load the games in background on execute
                     GameLibrary.LoadGamesInBackground();
+                    // Load the apps in background on execute
+                    AppLibrary.LoadAppsInBackground();
 
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
@@ -884,7 +928,10 @@ namespace DisplayMagician {
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
                 logger.Debug($"Program/Main: Try to load all the Games in the background to avoid locking the UI");
+                // Load the games in background on execute
                 GameLibrary.LoadGamesInBackground();
+                // Load the apps in background on execute
+                AppLibrary.LoadAppsInBackground();
 
                 // Set up the AppMainForm variable that we need to use later
                 AppMainForm = new MainForm();
@@ -1267,24 +1314,20 @@ namespace DisplayMagician {
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                //Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
-                //result = taskToRun.GetAwaiter().GetResult();
-                // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
-                //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon));
-
-                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token), AppCancellationTokenSource.Token);
-                //taskToRun.RunSynchronously();
-                while (!taskToRun.IsCompleted)
+                CancellationToken cancelToken = AppCancellationTokenSource.Token;
+                // Start the RunShortcut Task in a new thread
+                Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, ref cancelToken), cancelToken);
+                // And then wait here until the task completes
+                while (true)
                 {
-                    Thread.Sleep(1000);
                     Application.DoEvents();
-                    if (Program.AppCancellationTokenSource.Token.IsCancellationRequested)
+                    Thread.Sleep(2000);
+                    if (output.IsCompleted || cancelToken.IsCancellationRequested)
                     {
                         break;
                     }
                 }
-                taskToRun.Wait(Program.AppCancellationTokenSource.Token);
-                result = taskToRun.Result;
+                //output.Wait(cancelToken);                
             }
             catch (OperationCanceledException ex)
             {
@@ -1544,7 +1587,15 @@ namespace DisplayMagician {
 
         public static void CheckForUpdates()
         {
-            // First of all, check to see if there is any way to get to the internet on this computer.
+            // Firstly check if the user wants to upgrade at all
+            // If not, just return
+            if (!Program.AppProgramSettings.UpgradeEnabled)
+            {
+                logger.Warn($"Program/CheckForUpdates: User has set the Program Settings to ignore any DisplayMagician updates. Skipping the auto update.");
+                return;
+            }
+
+            // Second of all, check to see if there is any way to get to the internet on this computer.
             // If not, then why bother!
             try
             {              
@@ -1571,13 +1622,15 @@ namespace DisplayMagician {
             AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
             AutoUpdater.RunUpdateAsAdmin = true;
             AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
+            AutoUpdater.RemindLaterTimeSpan = RemindLaterFormat.Days;
+            AutoUpdater.RemindLaterAt = 7;
             if (Program.AppProgramSettings.UpgradeToPreReleases == false)
             {
-                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/update_2.0.json");
+                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/update_2.5.json");
             }
             else
             {
-                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/prerelease_2.0.json");
+                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/prerelease_2.5.json");
             }
         }
 
@@ -1590,19 +1643,19 @@ namespace DisplayMagician {
                 logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
                 args.UpdateInfo = new UpdateInfoEventArgs
                 {
-                    CurrentVersion = (string)json["version"],
-                    ChangelogURL = (string)json["changelog"],
-                    DownloadURL = (string)json["url"],
+                    CurrentVersion = (string)json["autoupdate"]["version"],
+                    ChangelogURL = (string)json["autoupdate"]["changelog"],
+                    DownloadURL = (string)json["autoupdate"]["url"],
                     Mandatory = new Mandatory
                     {
-                        Value = (bool)json["mandatory"]["value"],
-                        UpdateMode = (Mode)(int)json["mandatory"]["mode"],
-                        MinimumVersion = (string)json["mandatory"]["minVersion"]
+                        Value = (bool)json["autoupdate"]["mandatory"]["value"],
+                        UpdateMode = (Mode)(int)json["autoupdate"]["mandatory"]["mode"],
+                        MinimumVersion = (string)json["autoupdate"]["mandatory"]["minVersion"]
                     },
                     CheckSum = new CheckSum
                     {
-                        Value = (string)json["checksum"]["value"],
-                        HashingAlgorithm = (string)json["checksum"]["hashingAlgorithm"]
+                        Value = (string)json["autoupdate"]["checksum"]["value"],
+                        HashingAlgorithm = (string)json["autoupdate"]["checksum"]["hashingAlgorithm"]
                     }
                 };
             }
@@ -1611,12 +1664,29 @@ namespace DisplayMagician {
                 logger.Error(ex, $"Program/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
             }
 
+            // Also record the DisplayMagician Update settings.
+            try 
+            {
+                logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the received Update JSON file.");
+                AppUpgradeExtraDetails = new UpgradeExtraDetails
+                {
+                    ManualUpgrade = (bool)json["extraDetails"]["manualUpgrade"],
+                    UpdatesDisplayProfiles = (bool)json["extraDetails"]["updatesDisplayProfiles"],
+                    UpdatesGameShortcuts = (bool)json["extraDetails"]["updatesGameShortcuts"],
+                    UpdatesSettings = (bool)json["extraDetails"]["updatesSettings"],
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
+            }
         }
 
         private static void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
         {
             if (args.Error == null)
-            {
+            {                
+
                 if (args.IsUpdateAvailable)
                 {
                     // Shut down the splash screen
@@ -1624,31 +1694,110 @@ namespace DisplayMagician {
                         Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
                     logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
-                    DialogResult dialogResult;                    
+                    DialogResult dialogResult;
+                    UpgradeForm upgradeForm = new UpgradeForm();
+
+                    StringBuilder message= new StringBuilder();
+                    message.Append(@"{\rtf1\ansi \qc \line \line \line ");
+                    
 
                     if (args.Mandatory.Value)
                     {
                         logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
-                        dialogResult =
-                            MessageBox.Show(
-                                $@"There is new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is required update. Press Ok to begin updating the application.", @"Update Available",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Information);
+                        message.Append($@"There is a new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is a mandatory update. \line \line ");
                     }
                     else
                     {
                         logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
-                        dialogResult =
-                            MessageBox.Show(
-                                $@"There is new version {args.CurrentVersion} available. You are using version {
-                                        args.InstalledVersion
-                                    }. Do you want to update the application now?", @"Update Available",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Information);
+
+                        message.Append($@"There is a new version {args.CurrentVersion} available. You are currently using version {args.InstalledVersion}. \line \line ");                        
                     }
 
-                    // Uncomment the following line if you want to show standard update dialog instead.
-                    //AutoUpdater.ShowUpdateForm(args);
+                    if (Program.AppUpgradeExtraDetails.HasValue)
+                    {
+                        message.Append(@"\b ");
+                        if (AppUpgradeExtraDetails.Value.ManualUpgrade)
+                        {
+                            // Manual upgrade required. This list tells the user what steps that is.
+                            if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles, recreate your Game Shortcuts and check your DisplayMagician settings. ");
+                            }
+                            else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles and recreate your Game Shortcuts. ");
+                            }
+                            else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles and check your DisplayMagician settings. ");
+                            }
+                            else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to recreate your Game Shortcuts and check your DisplayMagician settings. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to manually recreate your Game Shortcuts. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to manually check your DisplayMagician settings. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will require you to perform some manual upgrade tasks yourself. ");
+                            }
+                        }
+                        else
+                        {
+                            // Automatic upgrade required. This list tells the user what steps that is.
+                            if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your Display Profiles, your Game Shortcuts and DisplayMagician settings as part of the upgrade process. ");
+                            }
+                            else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your Display Profiles and your Game Shortcuts as part of the upgrade process. ");
+                            }
+                            else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your Display Profiles and DisplayMagician settings as part of the upgrade process. ");
+                            }
+                            else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your Display Profiles as part of the upgrade process. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your Game Shortcuts and DisplayMagician settings as part of the upgrade process. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your Game Shortcuts as part of the upgrade process. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your DisplayMagician settings as part of the upgrade process. ");
+                            }
+                            else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
+                            {
+                                message.Append($@"The upgrade will automatically update your DisplayMagician configuration as part of the upgrade process. ");
+                            }
+                        }
+                    }
+                    message.Append(@"\line \line ");
+                    message.Append(@"\b0 ");
+
+                    message.Append($@"Press 'Upgrade now' to update, 'Remind me later' to remind you again in a week's time, or 'Skip' to continue without upgrading.");
+                    message.Append(@"}");
+
+                    upgradeForm.Message = message.ToString();
+
+                    dialogResult = upgradeForm.ShowDialog();
 
                     if (dialogResult.Equals(DialogResult.Yes) || dialogResult.Equals(DialogResult.OK))
                     {
@@ -1668,6 +1817,61 @@ namespace DisplayMagician {
                                 MessageBoxIcon.Error);
                         }
                     }
+                    else if (dialogResult.Equals(DialogResult.Cancel) && upgradeForm.Remind)
+                    {
+                        // The user wants us to remind them in 7 days
+                        // We need to set up a timer to do so (code adapted from AutoUpdater.net internal code)
+                        AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
+
+                        DateTime remindLaterDateTime = DateTime.Now;
+                        switch (AutoUpdater.RemindLaterTimeSpan)
+                        {
+                            case RemindLaterFormat.Days:
+                                remindLaterDateTime = DateTime.Now + TimeSpan.FromDays(AutoUpdater.RemindLaterAt);
+                                break;
+                            case RemindLaterFormat.Hours:
+                                remindLaterDateTime = DateTime.Now + TimeSpan.FromHours(AutoUpdater.RemindLaterAt);
+                                break;
+                            case RemindLaterFormat.Minutes:
+                                remindLaterDateTime = DateTime.Now + TimeSpan.FromMinutes(AutoUpdater.RemindLaterAt);
+                                break;
+                        }
+
+                        AutoUpdater.PersistenceProvider.SetRemindLater(remindLaterDateTime);
+                        
+                        TimeSpan timeSpan = remindLaterDateTime - DateTime.Now;
+
+                        var context = SynchronizationContext.Current;
+
+                        AppUpdateRemindLaterTimer = new System.Timers.Timer
+                        {
+                            Interval = Math.Max(1, timeSpan.TotalMilliseconds),
+                            AutoReset = false
+                        };
+
+                        AppUpdateRemindLaterTimer.Elapsed += delegate
+                        {
+                            AppUpdateRemindLaterTimer = null;
+                            if (context != null)
+                            {
+                                try
+                                {
+                                    context.Send(_ => CheckForUpdates(), null);
+                                }
+                                catch (InvalidAsynchronousStateException)
+                                {
+                                    CheckForUpdates();
+                                }
+                            }
+                            else
+                            {
+                                CheckForUpdates();
+                            }
+                        };
+
+                        AppUpdateRemindLaterTimer.Start();
+                        
+                    }
                 }
             }
             else
@@ -1686,7 +1890,7 @@ namespace DisplayMagician {
                 else
                 {
                     logger.Warn(args.Error, $"Program/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
-                    MessageBox.Show(args.Error.Message,
+                    MessageBox.Show($"Program/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}",
                         args.Error.GetType().ToString(), MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }

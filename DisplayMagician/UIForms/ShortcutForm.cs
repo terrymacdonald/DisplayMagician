@@ -14,6 +14,9 @@ using AudioSwitcher.AudioApi;
 using NHotkey.WindowsForms;
 using NHotkey;
 using System.Threading;
+using DisplayMagician.AppLibraries;
+using static DisplayMagician.GameLibraries.ProductInformation;
+using System.ComponentModel;
 
 namespace DisplayMagician.UIForms
 {
@@ -24,26 +27,32 @@ namespace DisplayMagician.UIForms
         private ProfileAdaptor _profileAdaptor;
         private GameAdaptor _gameAdaptor;
         private bool _editingExistingShortcut = false;
+        private ShortcutCategory _shortcutCategory = ShortcutCategory.Game;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
         private ProfileItem _profileToUse = null;
         private string _gameLauncher = "";
-        private GameStruct _gameToUse;
-        private Executable _executableToUse;
+        private GameShorcutData _gameToUse;
+        private ExecutableShortcutData _executableToUse;
+        private AppShortcutData _appToUse;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
         List<StopProgram> _stopPrograms = new List<StopProgram>();
         private string _audioDevice = "";
+        private bool _useAsCommsAudioDevice = true;
         private bool _changeAudioDevice = false;
         private bool _setAudioVolume = false;
         private decimal _audioVolume = -1;
         private string _captureDevice = "";
+        private bool _useAsCommsCaptureDevice = true;
         private bool _changeCaptureDevice = false;
         private bool _setCaptureVolume = false;
         private decimal _captureVolume = -1;
         private ShortcutItem _shortcutToEdit = null;
-        Game _selectedGame = null;
+        private Game _selectedGame = null;
+        private App _selectedApp = null;
+        private string _selectedAppId = "";
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
@@ -114,7 +123,7 @@ namespace DisplayMagician.UIForms
 
             // Center the form on the primary screen
             Utils.CenterOnPrimaryScreen(this);
-
+            
         }    
 
         public ShortcutItem Shortcut
@@ -196,141 +205,10 @@ namespace DisplayMagician.UIForms
             // Store all of the information in the Shortcut object based on what's been selected in this form
 
             // Validate the fields are filled as they should be!
-
-
-            // Check the name is valid to save
-            if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text))
+            if (!AllowedToSave(true))
             {
-                MessageBox.Show(
-                    @"You need to specify a name for this Shortcut before it can be saved.",
-                    @"Please name this Shortcut.",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Exclamation);
                 return;
-            }
-
-            // Check the profile is set and that it's still valid
-            if (!(_profileToUse is ProfileItem))
-            {
-                MessageBox.Show(
-                    @"You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.",
-                    @"Please choose a Display Profile.",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Exclamation);
-                return;
-            }
-
-            // Check the Shortcut Category to see if it's application
-            if (rb_standalone.Checked)
-            {
-                if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
-                {
-                    MessageBox.Show(
-                        @"If you have chosen to pass extra arguments to the executable when it is run, then you need to enter them in the 'Pass arguments to Executable' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Executable' checkbox.",
-                        @"Please add Executable arguments.",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-
-                }
-
-                if (!File.Exists(txt_executable.Text))
-                {
-                    MessageBox.Show(
-                        @"The executable you have chosen does not exist! Please reselect the executable, or check you have permissions to view it.",
-                        @"Executable doesn't exist",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                if (rb_wait_alternative_executable.Checked && String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
-                {
-                    MessageBox.Show(
-                        $"If you want to wait for an alternative executable then you need to choose it! Click the 'Choose' button next to the different executable field.",
-                        @"Need to choose the different executable",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                if (rb_wait_alternative_executable.Checked && !File.Exists(txt_alternative_executable.Text))
-                {
-                    MessageBox.Show(
-                        @"The alternative executable you have chosen does not exist! Please reselect the alternative executable, or check you have permissions to view it.",
-                        @"Alternative executable doesn't exist",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-            }
-            else if (rb_launcher.Checked)
-            {
-
-                if (cb_args_game.Checked && String.IsNullOrWhiteSpace(txt_args_game.Text))
-                {
-                    MessageBox.Show(
-                        @"If you have chosen to pass extra arguments to the Game when it is run, then you need to enter them in the 'Pass arguments to Game' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Game' checkbox.",
-                        @"Please add Game arguments.",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                if (_gameId.Equals("0"))
-                {
-                    MessageBox.Show(
-                        @"Please choose a Game by scrolling through the list, selecting the Game that you want, and then clicking the '>>' button to fill the Game fields.",
-                        @"Please choose a Game.",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                bool gameStillInstalled = false;
-                foreach (ImageListViewItem gameItem in ilv_games.Items)
-                {
-                    if (gameItem.Text.Equals(txt_game_name.Text))
-                    {
-                        gameStillInstalled = true;
-                        break;
-                    }
-                        
-                }
-                if (!gameStillInstalled)
-                {
-                    DialogResult result = MessageBox.Show(
-                        $"This shortcut refers to the '{txt_game_name.Text}' game that was installed in your {_gameLauncher} library. This game is no longer installed, so the shortcut won't work. Do you still want to save the shortcut?",
-                        @"Game no longer exists",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Exclamation);
-                    if (result == DialogResult.No)
-                        return;
-                }
-
-                if (cb_wait_alternative_game.Checked && String.IsNullOrWhiteSpace(txt_alternative_game.Text))
-                {
-                    MessageBox.Show(
-                        $"If you want to wait for an alternative game executable then you need to choose it! Click the 'Choose' button next to the different game executable field.",
-                        @"Need to choose the different game executable",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-                if (cb_wait_alternative_game.Checked && !File.Exists(txt_alternative_game.Text))
-                {
-                    MessageBox.Show(
-                        @"The alternative game executable you have chosen does not exist! Please reselect the alternative game executable, or check you have permissions to view it.",
-                        @"Alternative game executable doesn't exist",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                    return;
-                }
-
-            }
-
+            }            
 
             // Check the display permanence requirements
             if (rb_switch_display_temp.Checked)
@@ -357,6 +235,14 @@ namespace DisplayMagician.UIForms
                         _audioDevice = "";
                     }
 
+                    if (cb_audio_comms_device.Checked)
+                    {
+                        _useAsCommsAudioDevice = true;
+                    }
+                    else
+                    {
+                        _useAsCommsAudioDevice = false;
+                    }
 
                     if (rb_set_audio_volume.Checked)
                     {
@@ -402,6 +288,14 @@ namespace DisplayMagician.UIForms
                         _captureDevice = "";
                     }
 
+                    if (cb_capture_comms_device.Checked)
+                    {
+                        _useAsCommsCaptureDevice = true;
+                    }
+                    else
+                    {
+                        _useAsCommsCaptureDevice = false;
+                    }
 
                     if (rb_set_capture_volume.Checked)
                     {
@@ -440,10 +334,12 @@ namespace DisplayMagician.UIForms
             {
                 _changeAudioDevice = false;
                 _audioDevice = "";
+                _useAsCommsAudioDevice = true;
                 _setAudioVolume = false;
                 _audioVolume = -1;
                 _changeCaptureDevice = false;
                 _captureDevice = "";
+                _useAsCommsCaptureDevice = true;
                 _setCaptureVolume = false;
                 _captureVolume = -1;
                 _audioPermanence = ShortcutPermanence.Temporary;
@@ -509,11 +405,11 @@ namespace DisplayMagician.UIForms
 
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
-            if (rb_launcher.Checked)
+            if (_shortcutCategory == ShortcutCategory.Game)
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're saving a game!");
-                
-                _gameToUse = new GameStruct
+
+                _gameToUse = new GameShorcutData
                 {
                     StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                     GameArguments = txt_args_game.Text,
@@ -571,10 +467,12 @@ namespace DisplayMagician.UIForms
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -584,24 +482,26 @@ namespace DisplayMagician.UIForms
                         _hotkey
                     );
                 }
-                catch(Exception ex) 
+                catch (Exception ex)
                 {
-                    logger.Error(ex,$"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut! :  ",
-                        txt_shortcut_save_name.Text, 
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut! :  ",
+                        txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
                         _displayPermanence,
                         _audioPermanence,
                         _capturePermanence,
                         _gameToUse.GameToPlay.IconPath,
-                        _selectedImage, 
-                        _availableImages, 
+                        _selectedImage,
+                        _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -611,12 +511,13 @@ namespace DisplayMagician.UIForms
                         _hotkey
                     );
                 }
-                
+
             }
-            else if (rb_standalone.Checked)
+            // If we're saving an executable
+            else if (_shortcutCategory == ShortcutCategory.Executable)
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're saving a standalone executable!");
-                _executableToUse = new Executable
+                _executableToUse = new ExecutableShortcutData
                 {
                     ExecutableArguments = txt_args_executable.Text,
                     ExecutableArgumentsRequired = cb_args_executable.Checked,
@@ -624,6 +525,8 @@ namespace DisplayMagician.UIForms
                     RunAsAdministrator = cb_run_exe_as_administrator.Checked,
                     ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value),
                     ProcessPriority = (ProcessPriority)cbx_exe_priority.SelectedValue,
+                    DifferentExecutableToMonitor = txt_alternative_executable.Text,
+                    ProcessNameToMonitorUsesExecutable = rb_wait_executable.Checked,
                 };
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
@@ -647,14 +550,16 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _executableToUse.ExecutableNameAndPath,
-                        _selectedImage, 
+                        _selectedImage,
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -673,14 +578,16 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _executableToUse.ExecutableNameAndPath,
-                        _selectedImage, 
+                        _selectedImage,
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -689,9 +596,99 @@ namespace DisplayMagician.UIForms
                         _hotkey
                     );
                 }
-
             }
-            else
+            else if (_shortcutCategory == ShortcutCategory.Application)
+            {
+                // Otherwise we're saving an app selected from the list
+                logger.Trace($"ShortcutForm/btn_save_Click: We're saving an app!");
+
+                if (_selectedApp == null)
+                {
+                    _selectedApp = _appToUse.AppToUse;
+                }
+
+                // Update the two details that may have been updated by the user into the App data
+                _selectedApp.ExecutableArgumentsRequired = cb_args_executable.Checked;
+                _selectedApp.Arguments = txt_args_executable.Text;
+
+                _appToUse = new AppShortcutData
+                {
+                    AppToUse = _selectedApp,
+                    RunAsAdministrator = cb_run_exe_as_administrator.Checked,
+                    ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value),
+                    ProcessPriority = (ProcessPriority)cbx_exe_priority.SelectedValue,
+                    DifferentExecutableToMonitor = txt_alternative_executable.Text,
+                    ProcessNameToMonitorUsesExecutable = rb_wait_executable.Checked,                    
+                };
+                
+
+                if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
+                {
+                    _appToUse.ProcessNameToMonitorUsesExecutable = false;
+                    _appToUse.DifferentExecutableToMonitor = txt_alternative_executable.Text;
+                }
+                else
+                {
+                    _appToUse.ProcessNameToMonitorUsesExecutable = true;
+                }
+
+
+                try
+                {
+                    _shortcutToEdit.UpdateAppShortcut(
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _appToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _selectedImage,
+                        _availableImages,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _useAsCommsAudioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _useAsCommsCaptureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _stopPrograms,
+                        _autoName,
+                        _hotkey
+                    );
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut! :  ",
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _appToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _selectedImage,
+                        _availableImages,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _useAsCommsAudioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _useAsCommsCaptureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _stopPrograms,
+                        _autoName,
+                        _hotkey
+                    );
+                }
+            }
+            else if (_shortcutCategory == ShortcutCategory.NoGame)
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're not saving any game or executable to start!");
                 try
@@ -705,10 +702,12 @@ namespace DisplayMagician.UIForms
                         _executableToUse.ExecutableNameAndPath,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -728,10 +727,12 @@ namespace DisplayMagician.UIForms
                         _executableToUse.ExecutableNameAndPath,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -740,8 +741,10 @@ namespace DisplayMagician.UIForms
                         _hotkey
                     );
                 }
-
-
+            }
+            else
+            {
+                logger.Error($"ShortcutForm/btn_save_Click: We're unable to save as the Shortut Category isn't a category we support! {_shortcutCategory.ToString("G")}");
             }
 
             if (_hotkey == Keys.None)
@@ -793,66 +796,118 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             SuggestShortcutName();
-            EnableSaveButtonIfValid();
         }
 
-        private bool CanEnableSaveButton()
+        private bool AllowedToSave(bool showErrorsToUser = false)
         {
+            // initialise errors list
+            List<string> errors = new List<string>();
+
             // Check the name is valid to save
             if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text))
-            {logger.Error($"ShortcutForm/CanEnableSaveButton: The application doesn't have an executable listed the shortcut");
-                return false;
+            {
+                logger.Error($"ShortcutForm/AllowedToSave: The shortcut doesn't have a name yet!");
+                errors.Add("You need to specify a name for this Shortcut before it can be saved.");
             }
 
             // Check the profile is set and that it's still valid
             if (!(_profileToUse is ProfileItem))
             {
-                logger.Error($"ShortcutForm/CanEnableSaveButton: The shortcut doesn't have a profile assigned to it!");
-                return false;
+                logger.Error($"ShortcutForm/AllowedToSave: The shortcut doesn't have a display profile selected!");
+                errors.Add("You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.");
             }
 
             // Check the Shortcut Category to see if it's application
             if (rb_standalone.Checked)
             {
-                if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
+                if (_shortcutCategory == ShortcutCategory.Executable)
                 {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The application doesn't have an executable listed");
-                    return false;
+                    if (!File.Exists(txt_executable.Text))
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: The executable {txt_executable.Text} doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
+                        errors.Add("The executable you have chosen does not exist! Please reselect the executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
+                    }
 
-                }
 
-                if (!File.Exists(txt_executable.Text))
+                    if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: The user wants to provide executable args but hasn't provided any.");
+                        errors.Add("If you have chosen to pass extra arguments to the executable when it is run, then you need to enter them in the 'Pass arguments to Executable' field.If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Executable' checkbox.");                        
+                    }
+
+                    
+                    if (rb_wait_alternative_executable.Checked)
+                    {
+                        if (String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The user asked to wait for an alternative executable as part of an executable shortcut, but failed to provide one!");
+                            errors.Add("If you have chosen to monitor an alternative executable when this Executable shortcut is run, then you need to select that alternative executable using the Choose button or paste in a valid path into the alternative executable textbox. If you didn't want to monitor an alternative executable then please select the 'Wait until the executable above is closed before continuing' option instead.");
+                        }
+
+                        if (!File.Exists(txt_alternative_executable.Text))
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The alternative executable the user wants to monitor as part of an executable shortcut doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
+                            errors.Add("The alternative executable you have chosen does not exist! Please reselect the alternative executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
+                        }
+                    }                     
+                }                
+                else if (_shortcutCategory == ShortcutCategory.Application)
                 {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The application executable {txt_executable.Text} doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
-                    return false;
-                }
+                    bool isUWP = false;
+                    // If it is a UWP application
+                    if (txt_executable.Text.EndsWith("explorer.exe") && txt_args_executable.Text.StartsWith("shell:AppsFolder"))
+                    {
+                        isUWP = true;                       
 
-                if (rb_wait_alternative_executable.Checked && String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
-                {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The user asked to wait for an alternative application executable, but failed to provide one!");
-                    return false;
-                }
+                        if (!File.Exists(txt_executable.Text))
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The explorer executable {txt_executable.Text} used to launch UWP apps doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
+                            errors.Add("The explorer executable {txt_executable.Text} used to launch UWP apps does not exist! Please reselect the Application you want to launch using the Choose button.");
+                        }
 
-                if (rb_wait_alternative_executable.Checked && !File.Exists(txt_alternative_executable.Text))
-                {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The alternative application executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
-                    return false;
-                }
+                        if (!cb_args_executable.Checked)
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The user has selected an UWP Application but the executable args aoption isn't selected which it has to be.");
+                            errors.Add("You have chosen a UWP Application to run and monitor for this shortcut, but you have not selected to use the executable args option. This option is required in order to be valid. Please reselect the Application you want to launch using the Choose button.");
+                        }
 
+                        if (cb_args_executable.Checked && !txt_args_executable.Text.StartsWith("shell:AppsFolder"))
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The user has selected an UWP Application but the executable args doesn't start with 'shell:AppsFolder' which they have to do.");
+                            errors.Add("You have chosen a UWP Application to run and monitor for this shortcut, but the executable args don't start with 'shell:AppsFolder' which they have to do in order to be valid. Please reselect the Application you want to launch using the Choose button.");
+                        }
+                        
+                    }                  
+
+                    if (rb_wait_alternative_executable.Checked)
+                    {
+                        if (String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The user asked to wait for an alternative executable as part of an application shortcut, but failed to provide one!");
+                            errors.Add("If you have chosen to monitor an alternative executable when this Application shortcut is run, then you need to select that alternative executable using the Choose button or paste in a valid path into the alternative executable textbox. If you didn't want to monitor an alternative executable then please select the 'Wait until the executable above is closed before continuing' option instead.");
+                        }
+
+                        if (!File.Exists(txt_alternative_executable.Text))
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The alternative executable the user wants to monitor as part of an application shortcut doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
+                            errors.Add("The alternative executable you have chosen does not exist! Please reselect the alternative executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
+                        }
+                    }
+                }
             }
             else if (rb_launcher.Checked)
             {
 
                 if (cb_args_game.Checked && String.IsNullOrWhiteSpace(txt_args_game.Text))
                 {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The user wanted to pass arguments to the game executable, but failed to provide any!");
-                    return false;
+                    logger.Error($"ShortcutForm/AllowedToSave: The user wanted to pass arguments to the game executable, but failed to provide any!");
+                    errors.Add("If you have chosen to pass extra arguments to the game when it is run, then you need to enter them in the 'Pass arguments to Game' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Game' checkbox.");
                 }
 
                 if (_gameId.Equals("0"))
                 {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The game ID provided is 0, and this is invalid. We cannot run the game.");
-                    return false;
+                    logger.Error($"ShortcutForm/AllowedToSave: The game ID provided is 0, and this is invalid. We cannot run the game.");
+                    errors.Add("No game has been selected. Please choose a game from the list of games shown in the list.");
                 }
 
                 bool gameStillInstalled = false;
@@ -867,20 +922,24 @@ namespace DisplayMagician.UIForms
                 }
                 if (!gameStillInstalled)
                 {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The {_gameLauncher} game with ID {_gameId} isn't installed at present, so can't be used!");
-                    return false;
+                    logger.Error($"ShortcutForm/AllowedToSave: The {_gameLauncher} game with ID {_gameId} isn't installed at present, so can't be used!");
+                    errors.Add("This shortcut uses a game that is no longer installed on this computer. Please choose a different game from the list of games shown in the list, or reinstall the game this shortcut uses.");
                 }
 
-                if (cb_wait_alternative_game.Checked && String.IsNullOrWhiteSpace(txt_alternative_game.Text))
+                if (cb_wait_alternative_game.Checked)
                 {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The user asked to wait for an alternative game executable, but failed to provide one!");                    
-                    return false;
-                }
+                    if (String.IsNullOrWhiteSpace(txt_alternative_game.Text))
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: The user asked to monitor an alternative game executable, but failed to provide one!");
+                        errors.Add("If you have chosen to monitor a different game executable, then you need to select that different game executable using the Choose button or paste in a valid path into the 'Monitor different executable' textbox. If you didn't want to monitor a different game executable then please uncheck the 'Monitor different executable' checkbox.");
+                    }
 
-                if (cb_wait_alternative_game.Checked && !File.Exists(txt_alternative_game.Text))
-                {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The alternative game executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_game.Text}' is still there, and that the file has the correct permissions.");
-                    return false;
+                    if (!File.Exists(txt_alternative_game.Text))
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_game.Text}' is still there, and that the file has the correct permissions.");
+                        errors.Add("The different game executable you have chosen to monitor does not exist! Please reselect the different game executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
+                    }
+
                 }
 
             }
@@ -893,51 +952,82 @@ namespace DisplayMagician.UIForms
                 {
                     foreach (StartProgram myStartProgram in startProgramsToStartWithoutExe)
                     {
-                        logger.Error($"ShortcutForm/CanEnableSaveButton: The start program at position #{myStartProgram.Priority} doesn't have an executable listed");
-                    }
-                    return false;
+                        logger.Error($"ShortcutForm/AllowedToSave: The start program at position #{myStartProgram.Priority} doesn't have an executable listed");
+                        errors.Add($"The start program executable at position #{myStartProgram.Priority} doesn't have an executable listed. Please either add a valid path to an executable, or remove the start program from the list.");
+                    }                    
                 }
             }            
 
             // Check the stop program has an exe in there
-            if (cb_run_cmd_afterwards.Checked && String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text))
+            if (cb_run_cmd_afterwards.Checked)
             {
-                logger.Error($"ShortcutForm/CanEnableSaveButton: The run command afterwards command is selected, yet doesn't have an executable listed");
+                if (String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text))
+                {
+                    logger.Error($"ShortcutForm/AllowedToSave: The run command afterwards command is selected, yet doesn't have an executable listed");
+                    errors.Add($"The 'Run this program' option in the 'Run a program or command afterwards' section is selected, but the textbox is empty. Please either paste in a valid executable path into the textbox, or uncheck the 'Run this program' checkbox.");
+                }
+
+                if (!File.Exists(txt_run_cmd_afterwards.Text))
+                {
+                    logger.Error($"ShortcutForm/AllowedToSave: run command afterwards command is selected but the run cmd afterwards doesn't exist. Please check the file '{txt_run_cmd_afterwards.Text}' is still there, and that the file has the correct permissions.");
+                    errors.Add($"You have checked the 'Run this program' option in the 'Run a program or command afterwards' section, but the '{txt_run_cmd_afterwards.Text}' executable you have chosen to run afterwards does not exist! Please select an executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
+                }
+
+                if (cb_run_cmd_afterwards_args.Checked)
+                {
+                    if (String.IsNullOrWhiteSpace(txt_run_cmd_afterwards_args.Text))
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: The user asked to pass arguments to the run_cmd_afterwards '{txt_run_cmd_afterwards.Text}' executable, but failed to provide the args!");
+                        errors.Add($"If you have chosen to pass arguments to the '{txt_run_cmd_afterwards.Text}' executable, then you need to actually provide arguments. If you didn't want to provide args then please uncheck the 'Pass Arguments' checkbox in the 'Run a program or command afterwards' section.");
+                    }
+                }
+            }                                               
+
+            // Show the errors if we have any
+            // and then return how the checks all went.
+            if (errors.Count > 0)
+            {
+                if (showErrorsToUser)
+                {
+                    ShortcutErrorForm errorForm = new ShortcutErrorForm();
+                    errorForm.Errors = errors;
+                    errorForm.ShowDialog();
+
+                }
                 return false;
             }
-
-            return true;
-        }
-
-        private void EnableSaveButtonIfValid()
-        {
-            if (CanEnableSaveButton())
-                btn_save.Enabled = true;
-            else
-                btn_save.Enabled = false;
-
-        }
+            else 
+            {
+                return true;
+            }
+        }       
 
         private void SuggestShortcutName()
         {
             if (_autoName && _profileToUse is ProfileItem)
             {
-                if (rb_no_game.Checked)
+                if (_shortcutCategory == ShortcutCategory.NoGame)
                 {
                     if (rb_switch_display_permanent.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name}";
                     else if (rb_switch_display_temp.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
                 }
-                else if (rb_launcher.Checked && ilv_games.SelectedItems.Count > 0 && _selectedGame != null)
+                else if (_shortcutCategory == ShortcutCategory.Game && _selectedGame is Game)
                 {
                     txt_shortcut_save_name.Text = $"{_selectedGame.Name} ({_profileToUse.Name})";                    
                 }
-                else if (rb_standalone.Checked && txt_executable.Text.Length > 0)
+                else if (_shortcutCategory == ShortcutCategory.Application && _selectedApp is App)                    
+                {
+                    txt_shortcut_save_name.Text = $"{_selectedApp.Name} ({_profileToUse.Name})";
+                }
+                else if (_shortcutCategory == ShortcutCategory.Executable && !String.IsNullOrWhiteSpace(txt_executable.Text))
                 {
                     string baseName = Path.GetFileNameWithoutExtension(txt_executable.Text);
                     txt_shortcut_save_name.Text = $"{baseName} ({_profileToUse.Name})";
-                }
+                }                    
+                
+                
             }
         }
 
@@ -965,6 +1055,7 @@ namespace DisplayMagician.UIForms
             
             //_gameToUse;
             // _executableToUse;
+            _shortcutCategory = ShortcutCategory.Game;
             _displayPermanence = ShortcutPermanence.Temporary;
             _audioPermanence = ShortcutPermanence.Temporary;
             _capturePermanence = ShortcutPermanence.Temporary;
@@ -1048,6 +1139,7 @@ namespace DisplayMagician.UIForms
             // Populate all the audio devices in the audio devices select box
             if (audioController != null)
             {
+                cb_audio_comms_device.Checked = true;
                 cb_audio_device.Items.Clear();
                 try
                 {
@@ -1081,10 +1173,11 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active playback devices.");
-                }                
+                }
 
 
                 // Populate all the Capture devices in the capture devices list.
+                cb_capture_comms_device.Checked = true;
                 cb_capture_device.Items.Clear();
                 try
                 {
@@ -1132,8 +1225,10 @@ namespace DisplayMagician.UIForms
                 // We also force the audio settings to off, just in case
                 rb_change_audio.Checked = false;
                 rb_set_audio_volume.Checked = false;
+                cb_audio_comms_device.Checked = false;
                 rb_change_capture.Checked = false;
                 rb_set_capture_volume.Checked = false;
+                cb_capture_comms_device.Checked = false;                
             }          
 
 
@@ -1210,6 +1305,10 @@ namespace DisplayMagician.UIForms
             // *** Hidden Shortcut variables ***
             // Track the shortcut UUID
             _uuid = _shortcutToEdit.UUID;
+            // Set the shortcut mode
+            _shortcutCategory = _shortcutToEdit.Category;
+
+            _isUnsaved = false;
 
             // Populate all the Games into the Games ListView            
             ilv_games.Enabled = true;
@@ -1236,13 +1335,15 @@ namespace DisplayMagician.UIForms
             // =============================================
             // IF THE SHORTCUT IS AN EXISTING SHORTCUT
             // =============================================
-            if (_editingExistingShortcut)
+            bool shortcutTweakChangesName = false;
+            if (_editingExistingShortcut && _shortcutToEdit is ShortcutItem)
             {
                 // *** Main Shortcut controls ***
                 // Set the shortcut name
                 txt_shortcut_save_name.Text = _shortcutToEdit.Name;
                 // Set the autoname checkbox
                 cb_autosuggest.Checked = _shortcutToEdit.AutoName;
+                
                 // Set the Hotkey text
                 UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
 
@@ -1272,10 +1373,15 @@ namespace DisplayMagician.UIForms
                 if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
                 {
                     MessageBox.Show(
-                        @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut.",
+                        @"The Display Profile used by this Shortcut no longer exists and cannot be used. We have selected the current Display Profile instead. You can choose a different Display Profile for this Shortcut if you wish.",
                         @"Display Profile no longer exists",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
+
+                    chosenProfile = ProfileRepository.CurrentProfile;
+                    shortcutTweakChangesName = true;
+                    _isUnsaved = true;
+
                 }
                 // If we get to the end of the loaded profiles and haven't
                 // found a matching profile, then we need to show the current profile
@@ -1299,6 +1405,8 @@ namespace DisplayMagician.UIForms
                         if (ProfileRepository.ProfileCount > 0)
                         {
                             chosenProfile = ProfileRepository.AllProfiles[0];
+                            shortcutTweakChangesName = true;
+                            _isUnsaved = true;
                         }
 
                     }
@@ -1306,6 +1414,15 @@ namespace DisplayMagician.UIForms
                 }
 
                 _profileToUse = chosenProfile;
+                // Also need to select the chosenProfile in the UI so it gets saved properly
+                foreach (var item in ilv_saved_profiles.Items)
+                {
+                    if (item.Text == chosenProfile.Name)
+                    {
+                        item.Selected = true;
+                        break;
+                    }
+                }
 
                 // *** 2. Choose Audio Tab ***
                 // Populate all the Audio devices in the audio devices list.
@@ -1314,6 +1431,7 @@ namespace DisplayMagician.UIForms
                 if (audioController != null)
                 {
                     rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
+                    cb_audio_comms_device.Checked = _shortcutToEdit.UseAsCommsAudioDevice;
                     if (audioDevices != null && audioDevices.Count > 0)
                     {
                         // If the shortcut is to change the audio device
@@ -1385,6 +1503,7 @@ namespace DisplayMagician.UIForms
                     // Set the Capture device to the shortcut capture device only if 
                     // the Change Capture radiobutton is set
                     rb_change_capture.Checked = _shortcutToEdit.ChangeCaptureDevice;
+                    cb_capture_comms_device.Checked = _shortcutToEdit.UseAsCommsCaptureDevice;
                     if (captureDevices != null && captureDevices.Count > 0)
                     {
                         // If the shortcut is to change the capture device
@@ -1496,27 +1615,13 @@ namespace DisplayMagician.UIForms
                     flp_start_programs.Controls.Clear();
                 }
 
-                // *** 4. Choose Game to Start ***
-                // Set the shortcut category
-                switch (_shortcutToEdit.Category)
-                {
-                    case ShortcutCategory.NoGame:
-                        rb_no_game.Checked = true;
-                        break;
-                    case ShortcutCategory.Game:
-                        rb_launcher.Checked = true;
-                        break;
-                    case ShortcutCategory.Application:
-                        rb_standalone.Checked = true;
-                        break;
-                }
-
-
                 // =============================================
-                // IF THE EXISTING SHORTCUT IS AN APPLICATION
+                // IF THE EXISTING SHORTCUT IS AN EXECUTABLE
                 // =============================================
-                if (_shortcutToEdit.Category == ShortcutCategory.Application)
+                if (_shortcutCategory == ShortcutCategory.Executable)
                 {
+
+                    rb_standalone.Checked = true;
 
                     // Check that the executable to run still exists
                     if (!String.IsNullOrWhiteSpace(_shortcutToEdit.ExecutableNameAndPath) && !File.Exists(_shortcutToEdit.ExecutableNameAndPath))
@@ -1540,7 +1645,7 @@ namespace DisplayMagician.UIForms
                         // If the exe is selected, then grab images from the exe
                         _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.ExecutableNameAndPath));
                         // If the different exe to monitor is set, then grab the icons from there too!
-                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
+                        if (_shortcutToEdit.DifferentExecutableToMonitor != null && !String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
                         {
                             _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.DifferentExecutableToMonitor));
                         }
@@ -1591,6 +1696,7 @@ namespace DisplayMagician.UIForms
 
 
                     // Set the executable items if we have them
+                    _selectedAppId = "";
                     txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
                     nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
                     txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
@@ -1619,13 +1725,143 @@ namespace DisplayMagician.UIForms
                     {
                         rb_wait_alternative_executable.Checked = true;
                     }
-                    txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+                    if (_shortcutToEdit.DifferentExecutableToMonitor == null || String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor))
+                    {
+                        txt_alternative_executable.Text = "";
+                    }
+                    else
+                    {
+                        txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+                    }
+
+                }
+                // =============================================
+                // IF THE EXISTING SHORTCUT IS AN APPLICATION
+                // =============================================
+                else if (_shortcutCategory == ShortcutCategory.Application)
+                {
+
+                    rb_standalone.Checked = true;
+
+                    // Check that the executable to run still exists
+                    if (!String.IsNullOrWhiteSpace(_shortcutToEdit.ExecutableNameAndPath) && !File.Exists(_shortcutToEdit.ExecutableNameAndPath))
+                    {
+                        MessageBox.Show(
+                        $"The '{_shortcutToEdit.ExecutableNameAndPath}' application used by this Shortcut no longer exists. Your shortcut won't work unless you reinstall the missing application or choose a different one.",
+                        @"Application doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+
+                    }
+
+                    // If we don't have any available images, then we need to get some
+                    if (_shortcutToEdit.AvailableImages.Count > 0)
+                    {
+                        _availableImages = _shortcutToEdit.AvailableImages;
+                    }
+                    else
+                    {
+                        _availableImages = new List<ShortcutBitmap>();
+                        // If the exe is selected, then grab images from the exe
+                        _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.ExecutableNameAndPath));
+                        // If the different exe to monitor is set, then grab the icons from there too!
+                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
+                        {
+                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.DifferentExecutableToMonitor));
+                        }
+
+                        if (_availableImages.Count == 0)
+                        {
+                            logger.Trace($"ShortcutForm/ShortcutForm_Load: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                            ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                            _availableImages.Add(bm);
+
+                        }
+
+                        bool matchedImage = false;
+                        if (_shortcutToEdit.OriginalLargeBitmap != null)
+                        {
+                            // go through available images and match the one we had
+                            foreach (ShortcutBitmap sc in _availableImages)
+                            {
+                                if (ImageUtils.ImagesAreEqual(sc.Image, _shortcutToEdit.OriginalLargeBitmap))
+                                {
+                                    // We've found the original image!
+                                    _selectedImage = sc;
+                                    pb_exe_icon.Image = _selectedImage.Image;
+                                    matchedImage = true;
+                                }
+                            }
+                        }
+
+                        if (!matchedImage)
+                        {
+                            _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                            pb_exe_icon.Image = _selectedImage.Image;
+                        }
+
+                        if (_shortcutToEdit.OriginalLargeBitmap != null)
+                        {
+                            btn_choose_exe_icon.Enabled = true;
+                        }
+                    }
+
+                    // If we have a selected image, then we need to set it
+                    if (_shortcutToEdit.SelectedImage.Image != null)
+                    {
+                        _selectedImage = _shortcutToEdit.SelectedImage;
+                        pb_exe_icon.Image = _shortcutToEdit.SelectedImage.Image;
+                        btn_choose_exe_icon.Enabled = true;
+                    }
+
+                    // Set the executable items if we have them
+                    _selectedAppId = _shortcutToEdit.ApplicationId;
+                    // Now lets try and find the games
+                    _selectedApp = LocalLibrary.GetAnyAppById(_selectedAppId);
+
+
+                    txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
+                    nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
+                    txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
+                    cbx_exe_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
+                    if (_shortcutToEdit.RunExeAsAdministrator)
+                    {
+                        cb_run_exe_as_administrator.Checked = true;
+                    }
+                    else
+                    {
+                        cb_run_exe_as_administrator.Checked = false;
+                    }
+                    if (_shortcutToEdit.ExecutableArgumentsRequired)
+                    {
+                        cb_args_executable.Checked = true;
+                    }
+                    else
+                    {
+                        cb_args_executable.Checked = false;
+                    }
+                    if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
+                    {
+                        rb_wait_executable.Checked = true;
+                    }
+                    else
+                    {
+                        rb_wait_alternative_executable.Checked = true;
+                    }
+                    if (_shortcutToEdit.DifferentExecutableToMonitor == null || String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor))
+                    {
+                        txt_alternative_executable.Text = "";
+                    }
+                    else
+                    {
+                        txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+                    }
 
                 }
                 // =============================================
                 // IF THE EXISTING SHORTCUT IS A GAME
                 // =============================================
-                else if (_shortcutToEdit.Category == ShortcutCategory.Game)
+                else if (_shortcutCategory == ShortcutCategory.Game)
                 {
                     // Set up the game launcher radio button
                     rb_launcher.Checked = true;
@@ -1704,7 +1940,11 @@ namespace DisplayMagician.UIForms
                     if (_shortcutToEdit.MonitorDifferentGameExe)
                     {
                         cb_wait_alternative_game.Checked = true;
-                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
+                        if (String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
+                        {
+                            txt_alternative_game.Text = "";
+                        }
+                        else
                         {
                             txt_alternative_game.Text = _shortcutToEdit.DifferentGameExeToMonitor;
                         }
@@ -1712,6 +1952,7 @@ namespace DisplayMagician.UIForms
                     else
                     {
                         cb_wait_alternative_game.Checked = false;
+                        txt_alternative_game.Text = "";
                     }
 
                     // If we don't have any available images, then we need to get some
@@ -1825,6 +2066,8 @@ namespace DisplayMagician.UIForms
                 // ==================================================
                 else
                 {
+                    rb_no_game.Checked = true;
+
                     // Set up the selected images if we have some available images
                     if (_shortcutToEdit.AvailableImages.Count > 0)
                     {
@@ -1962,15 +2205,25 @@ namespace DisplayMagician.UIForms
                         if (ProfileRepository.ProfileCount > 0)
                         {
                             chosenProfile = ProfileRepository.AllProfiles[0];
+                            shortcutTweakChangesName = true;
                         }
 
                     }
                     _profileToUse = chosenProfile;
-
+                    // Also need to select the chosenProfile in the UI so it gets saved properly
+                    foreach (var item in ilv_saved_profiles.Items)
+                    {
+                        if (item.Text == chosenProfile.Name)
+                        {
+                            item.Selected = true;
+                            break;
+                        }
+                    }
                 }
 
                 // Set up the new shortcut as a game
                 _shortcutToEdit.Category = ShortcutCategory.Game;
+                _shortcutCategory = ShortcutCategory.Game;
                 rb_launcher.Checked = true;
 
                 // Set up display permanance as temporary
@@ -1986,6 +2239,10 @@ namespace DisplayMagician.UIForms
                 rb_switch_capture_temp.Checked = true;
             }
 
+            if (shortcutTweakChangesName && cb_autosuggest.Checked)
+            {
+                SuggestShortcutName();
+            }
 
             // Refresh the Shortcut UI
             RefreshShortcutUI();
@@ -1993,11 +2250,7 @@ namespace DisplayMagician.UIForms
             //RefreshImageListView(chosenProfile);
 
             _loadedShortcut = true;
-            _isUnsaved = false;
-
-            // Finally enable the save button if it's still valid
-            EnableSaveButtonIfValid();
-
+            
         }
 
         private void ShortcutForm_Load(object sender, EventArgs e)
@@ -2011,15 +2264,23 @@ namespace DisplayMagician.UIForms
                 {
                     GameLibraries.GameLibrary.RefreshGameBitmaps();
                 }
+                if (!AppLibraries.AppLibrary.AppImagesLoaded)
+                {
+                    AppLibraries.AppLibrary.RefreshAppBitmaps();
+                }
+
+
 
                 _firstShow = false;
             }
+
             // Load the shortcut info
             LoadShortcut();
-
+            
             CloseTheSplashScreen();
 
-            this.Focus();
+            Utils.CenterOnPrimaryScreen(this);
+            //this.Focus();
             this.BringToFront();
         }
 
@@ -2037,6 +2298,16 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
+
+                if (_shortcutToEdit.Category == ShortcutCategory.Application)
+                {
+                    _shortcutCategory = ShortcutCategory.Application;
+                } 
+                else
+                {
+                    _shortcutCategory = ShortcutCategory.Executable;
+                }
+
                 rb_no_game.Checked = false;
                 rb_launcher.Checked = false;
 
@@ -2056,7 +2327,6 @@ namespace DisplayMagician.UIForms
                 }
 
                 SuggestShortcutName();
-                EnableSaveButtonIfValid();
             }
 
         }
@@ -2067,6 +2337,9 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
+
+                _shortcutCategory = ShortcutCategory.Game;
+
                 rb_no_game.Checked = false;
                 rb_standalone.Checked = false;
 
@@ -2082,7 +2355,7 @@ namespace DisplayMagician.UIForms
 
                 if (!String.IsNullOrWhiteSpace(txt_game_name.Text) && ilv_games.SelectedItems.Count == 1 && _selectedGame != null)
                 {
-                    _gameLauncher = _selectedGame.GameLibrary.ToString("G");
+                    _gameLauncher = _selectedGame.GameLibraryType.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = _selectedGame.Id;
                     _availableImages = _selectedGame.AvailableGameBitmaps;
@@ -2095,8 +2368,6 @@ namespace DisplayMagician.UIForms
                 }
 
                 SuggestShortcutName();
-                EnableSaveButtonIfValid();
-
             }
         }
 
@@ -2114,6 +2385,9 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
+
+                _shortcutCategory = ShortcutCategory.NoGame;
+
                 rb_launcher.Checked = false;
                 rb_standalone.Checked = false;
 
@@ -2126,8 +2400,6 @@ namespace DisplayMagician.UIForms
                 pb_game_icon.Image = ImageUtils.ConvertBitmapToGrayscale(pb_game_icon.Image);
 
                 SuggestShortcutName();
-                EnableSaveButtonIfValid();
-
             }
         }
 
@@ -2148,7 +2420,7 @@ namespace DisplayMagician.UIForms
                 // Disable the Executable Arguments Text field
                 txt_args_executable.Enabled = false;
             }
-
+            SuggestShortcutName();
         }
 
         private void rb_wait_alternative_executable_CheckedChanged(object sender, EventArgs e)
@@ -2227,7 +2499,6 @@ namespace DisplayMagician.UIForms
             }
 
             SuggestShortcutName();
-            EnableSaveButtonIfValid();
 
         }
 
@@ -2299,7 +2570,6 @@ namespace DisplayMagician.UIForms
             }
             
             UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
-            EnableSaveButtonIfValid();
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -2375,7 +2645,7 @@ namespace DisplayMagician.UIForms
                 rb_switch_display_permanent.Checked = false;
 
                 SuggestShortcutName();
-            }
+            }            
         }
 
         private void rb_switch_display_permanent_CheckedChanged(object sender, EventArgs e)
@@ -2387,19 +2657,19 @@ namespace DisplayMagician.UIForms
                 rb_switch_display_temp.Checked = false;
                 SuggestShortcutName();
             }
+            
         }
 
         private void txt_shortcut_save_name_TextChanged(object sender, EventArgs e)
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            EnableSaveButtonIfValid();
         }
 
         private void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
         {
 
-            if (_isUnsaved && _loadedShortcut && CanEnableSaveButton())
+            if (_isUnsaved && _loadedShortcut)
             {
                 // If the user doesn't want to close this window without saving (when they can save), then don't close the window.
                 DialogResult result = MessageBox.Show(
@@ -2409,8 +2679,25 @@ namespace DisplayMagician.UIForms
                     MessageBoxIcon.Exclamation);
                 if (result == DialogResult.Yes) 
                 {
-                    // Press the save button for the user
-                    btn_save.PerformClick();
+                    logger.Trace($"ShortcutForm/ShortcutForm_FormClosing: User said yes they want us to save their changes. SO attempting to save changes");
+                    if (AllowedToSave(false))
+                    {
+                        // Press the save button for the user as we're allowed to save
+                        btn_save.PerformClick();
+                    }                    
+                    else
+                    {
+                        // We're not allowed to save so record this in the logs
+                        logger.Warn($"ShortcutForm/ShortcutForm_FormClosing: The shortcut isn't valid, so we'll skip closing the form to let the user modify it without losing their changes.");
+                        AllowedToSave(true);
+                        // Cancel the event!
+                        e.Cancel = true;
+                        this.Show();
+                    }
+                }
+                else
+                {
+                    logger.Trace($"ShortcutForm/ShortcutForm_FormClosing: User said no, they do not want us to save their changes. So just closing the shortcut form.");
                 }
 
             }
@@ -2418,21 +2705,92 @@ namespace DisplayMagician.UIForms
         }
 
         private void btn_exe_to_start_Click(object sender, EventArgs e)
-        {
-            txt_executable.Text = getExeFile();
-            UpdateExeImagesUI();
+        {            
+            ChooseExecutableForm exeForm = new ChooseExecutableForm();  
+            if (!String.IsNullOrWhiteSpace(txt_executable.Text))
+            {
+                if (_shortcutCategory == ShortcutCategory.Application)
+                {
+                    exeForm.Mode = ChooseExecutableFormMode.AppMode;
+                    exeForm.PreviousAppId = _selectedAppId;
+                    exeForm.PreviousExe = txt_executable.Text;
+                }
+                else if (_shortcutCategory == ShortcutCategory.Executable)
+                {
+                    exeForm.Mode = ChooseExecutableFormMode.ExeMode;
+                    exeForm.PreviousExe = txt_executable.Text;
+                    exeForm.PreviousAppId = "";
+
+                }
+            }
+
+            if (exeForm.ShowDialog() == DialogResult.OK)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                if (exeForm.Mode == ChooseExecutableFormMode.AppMode)
+                {
+                    _shortcutCategory = ShortcutCategory.Application;
+                    _selectedApp = exeForm.AppToUse;
+                    _selectedAppId = exeForm.AppToUse.Id;
+                    txt_executable.Text = _selectedApp.ExePath;
+                    if (!String.IsNullOrEmpty(_selectedApp.Arguments))
+                    {
+                        txt_args_executable.Text = _selectedApp.Arguments;
+                        cb_args_executable.Checked = true;
+                    }                    
+                    UpdateExeImagesUI(_selectedApp);
+
+                    if (txt_executable.Text.EndsWith("explorer.exe") && txt_args_executable.Text.StartsWith("shell:AppsFolder"))
+                    {
+                        // At this point DisplayMagician can't track the processes of UWP apps due to WIndows Permission Model. It only allows applications that are installed with a
+                        // PackageIdentity to access the Process information for UWP apps. This can't be done with .msi installer files :(.
+                        // TODO: Update this code to remove this check once we move to .net6 and install using a package identity
+                        MessageBox.Show(
+                        $"You have selected a UWP-style application. Windows Permissions Model prevents DisplayMagician from monitoring UWP applications. This means that DisplayMagician will not wait for your UWP application, and will assume it wasn't opened (even though Windows did start it!). This will be fixed in a future version of DisplayMagician.",
+                        @"DisplayMagician cannot monitor UWP applications",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    }
+                }
+                else
+                {
+                    _shortcutCategory = ShortcutCategory.Executable;
+                    _selectedApp = null;
+                    _selectedAppId = "";
+                    txt_executable.Text = exeForm.ExeToUse;
+                    UpdateExeImagesUI(_selectedApp);
+                }
+                SuggestShortcutName();
+            }            
         }
 
-        private void UpdateExeImagesUI()
+        private void UpdateExeImagesUI(App selectedApp = null)
         {
             _availableImages = new List<ShortcutBitmap>();
-            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_executable.Text));
+            if (selectedApp is App)
+            {
+                _availableImages.AddRange(selectedApp.AvailableAppBitmaps);
+            }            
+            else
+            {
+                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_executable.Text));
+            }
             if (rb_wait_alternative_executable.Checked && File.Exists(txt_alternative_executable.Text))
             {
                 _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_alternative_executable.Text));
             }
-            _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
-            _shortcutToEdit.SelectedImage = _selectedImage;
+            if (_availableImages.Count > 0)
+            {
+                _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                _shortcutToEdit.SelectedImage = _selectedImage;
+            }
+            else
+            {
+                ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                _availableImages.Add(bm);
+                _shortcutToEdit.SelectedImage = _selectedImage;
+            }
             pb_exe_icon.Image = _selectedImage.Image;
             btn_choose_exe_icon.Enabled = true;
         }
@@ -2567,6 +2925,7 @@ namespace DisplayMagician.UIForms
                 selectedAudioDevice = null;
                 nud_audio_volume.Value = 50;
             }
+
         }
 
         private void btn_rescan_audio_Click(object sender, EventArgs e)
@@ -2645,7 +3004,6 @@ namespace DisplayMagician.UIForms
                 }
                 rb_keep_audio_volume.Checked = true;
             }
-
         }
 
         private void rb_keep_audio_volume_CheckedChanged(object sender, EventArgs e)
@@ -2654,7 +3012,6 @@ namespace DisplayMagician.UIForms
                 _isUnsaved = true;
             if (rb_set_audio_volume.Checked)
                 nud_audio_volume.Enabled = false;
-
         }
 
         private void rb_set_audio_volume_CheckedChanged(object sender, EventArgs e)
@@ -2779,7 +3136,7 @@ namespace DisplayMagician.UIForms
             {
                 selectedCaptureDevice = null;
                 nud_capture_volume.Value = 50;
-            }            
+            }
         }
 
         private void rb_no_change_capture_CheckedChanged(object sender, EventArgs e)
@@ -2811,8 +3168,10 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             if (rb_set_capture_volume.Checked)
+            {
                 nud_capture_volume.Enabled = false;
-
+            }
+                
         }
 
         private void rb_set_capture_volume_CheckedChanged(object sender, EventArgs e)
@@ -2820,7 +3179,10 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             if (rb_set_capture_volume.Checked)
+            {
                 nud_capture_volume.Enabled = true;
+            }
+                
         }
 
         private void rb_switch_capture_temp_CheckedChanged(object sender, EventArgs e)
@@ -3125,7 +3487,7 @@ namespace DisplayMagician.UIForms
                     if (_loadedShortcut)
                         _isUnsaved = true;
                     _selectedGame = game;
-                    _gameLauncher = game.GameLibrary.ToString("G");
+                    _gameLauncher = game.GameLibraryType.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = game.Id;
                     _availableImages = game.AvailableGameBitmaps;
@@ -3148,14 +3510,6 @@ namespace DisplayMagician.UIForms
                 logger.Warn(ex, $"ShortcutForm/ilv_games_ItemClick: Exception while attempting to suggest shortcut name.");
             }
 
-            try
-            {
-                EnableSaveButtonIfValid();
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutForm/ilv_games_ItemClick: Exception while figuring out if the save button shoud be enabled.");
-            }            
         }
 
 
@@ -3216,7 +3570,7 @@ namespace DisplayMagician.UIForms
                         _isUnsaved = true;
                     _availableImages = gameIconForm.AvailableImages;
                     _selectedImage = gameIconForm.SelectedImage;
-                    pb_game_icon.Image = gameIconForm.SelectedImage.Image;                     
+                    pb_game_icon.Image = gameIconForm.SelectedImage.Image;
                 }
             }
         }
@@ -3243,6 +3597,8 @@ namespace DisplayMagician.UIForms
 
         private void cb_run_cmd_afterwards_args_CheckedChanged(object sender, EventArgs e)
         {
+            if (_loadedShortcut)
+                _isUnsaved = true;
             if (cb_run_cmd_afterwards_args.Checked)
             {
                 txt_run_cmd_afterwards_args.Enabled = true;
@@ -3255,6 +3611,8 @@ namespace DisplayMagician.UIForms
 
         private void btn_run_cmd_afterwards_Click(object sender, EventArgs e)
         {
+            if (_loadedShortcut)
+                _isUnsaved = true;
             txt_run_cmd_afterwards.Text = getExeFile();
         }
 

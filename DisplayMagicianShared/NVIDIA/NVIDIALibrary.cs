@@ -2727,8 +2727,18 @@ namespace DisplayMagicianShared.NVIDIA
                     }
                     else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_ARGUMENT)
                     {
-                        SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: One or more arguments passed in are invalid. NvAPI_DISP_SetDisplayConfig() returned error code {NVStatus}");
-                        return false;
+                        // We sometimes get an invalid argument here if NVIDIA has just disolved a mosaic surround screen into indivudal screens
+                        // THis is because if there are any additional screens from other adapters, nvidia tells windows to disable them
+                        // We need to wait until the Windows library applies the screen before the DisplayConfig will be applied.
+                        if (!displayConfig.MosaicConfig.IsMosaicEnabled && ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
+                        {
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: NvAPI_DISP_SetDisplayConfig() returned error code {NVStatus}, but this is expected as we are changing from a Surround screen layout to a non-surround layout. Ignoring this error.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: One or more arguments passed in are invalid. NvAPI_DISP_SetDisplayConfig() returned error code {NVStatus}");
+                            return false;
+                        }
                     }
                     else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
                     {
@@ -2780,10 +2790,11 @@ namespace DisplayMagicianShared.NVIDIA
 
                 NVAPI_STATUS NVStatus = NVAPI_STATUS.NVAPI_ERROR;
 
+
                 // Go through the physical adapters
                 foreach (var physicalGPU in displayConfig.PhysicalAdapters)
                 {
-                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Processing settings for Physical GPU #{physicalGPU.Key}");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Processing settings for Physical GPU #{physicalGPU.Key}");
                     NVIDIA_PER_ADAPTER_CONFIG myAdapter = physicalGPU.Value;
                     UInt32 myAdapterIndex = physicalGPU.Key;
 
@@ -2797,7 +2808,7 @@ namespace DisplayMagicianShared.NVIDIA
 
                         if (!ActiveDisplayConfig.PhysicalAdapters[myAdapterIndex].Displays.ContainsKey(displayId))
                         {
-                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Display {displayId} doesn't exist in this setup, so skipping overriding any NVIDIA display Settings.");
+                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Display {displayId} doesn't exist in this setup, so skipping overriding any NVIDIA display Settings.");
                             continue;
                         }
 
