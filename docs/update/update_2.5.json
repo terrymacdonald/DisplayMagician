@@ -1,15 +1,15 @@
 {
   "autoupdate": {
-    "version": "2.5.0.1",
-    "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v2.4.1/DisplayMagicianSetup-v2.4.1.1.msi",
-    "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases",
+    "version": "2.5.0.350",
+    "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v2.5.0/DisplayMagicianSetup-v2.5.0.350.msi",
+    "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases/tag/v2.5.0",
     "mandatory": {
       "value": false,
       "minVersion": "0.1.0.0",
       "mode": 0
     },
     "checksum": {
-      "value": "FF166C288C048C73588EF6E5097A410D2527937CB94F18DFB7DE1C6B62FEB789",
+      "value": "9B43DAC5EFA708C6B544A642E2EFA485CA5A967DDBECA1C13849B8F7BF620CBF",
       "hashingAlgorithm": "SHA256"
     }
   },
@@ -17,6 +17,6 @@
     "manualUpgrade": false,
     "updatesDisplayProfiles": false,
     "updatesGameShortcuts": true,
-    "updatesSettings": true
+    "updatesSettings": false
   }
 }
