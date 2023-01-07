@@ -252,3 +252,6 @@ HeliosDisplayManagement.Setup/HeliosDisplayManagement.Setup/*
 /MigrationBackup
 /Notes
 /DisplayMagician/Resources/settings.png
+/UpgradeReport.sarif
+/upgrade-assistant.clef
+/AnalysisReport.sarif
