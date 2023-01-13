@@ -123,9 +123,8 @@ If you prefer to see a video on how to setup DisplayMagician, check out [this aw
 6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
 <p align="center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></p>
 
-You now have 4 different ways you can start your shortcut:
+You now have 3 different ways you can start your shortcut:
 * You can double-click on the Desktop shortcut you just saved to the Desktop to start your game; or
-* You can right mouse click on the desktop background, and select the Game Shortcut from the DisplayMagician pop-up menu to start your game; or 
 * You can right mouse click on the DisplayMagician notification tray icon, and select the Game Shortcut from the DisplayMagician pop-up menu to start your game; or
 * (optionally) If you've set a Hotkey for your Game Shortcut, you can press the Hotkey keyboard shortcut whenever DisplayMagician is running and your Game Shortcut will run.
 
