@@ -24,8 +24,8 @@ namespace DisplayMagician
         #endregion
 
         #region Instance Variables
-        private bool _startOnBootUp = true;
-        private bool _minimiseOnStart = true;
+        private bool _startOnBootUp = false;
+        private bool _minimiseOnStart = false;
         private bool _showSplashScreen = true;
         private bool _showMinimiseMessageInActionCenter = true;
         private bool _showStatusMessageInActionCenter = true;
