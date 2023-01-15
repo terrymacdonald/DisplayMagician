@@ -101,15 +101,16 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 If you prefer to see a video on how to setup DisplayMagician, check out [this awesome 'How to Setup DisplayMagician' video from JDM PC Gaming](https://www.youtube.com/watch?v=xqguYAMNHLM). Otherwise, perform the steps shown below:
 
 1. Install 'DisplayMagician'
-2. Run 'DisplayMagician', and click on the 'Display Profiles' button
+1. Run 'DisplayMagician'. If you have previously installed DisplayMagician then it may already be running in the System Tray/Notification area.
+1. Open the main DisplayMagician window and click on the 'Display Profiles' button
     * Use 'Windows Display Settings', 'NVIDIA Control Panel' or 'AMD Radeon Setup' to configure your display(s) exactly as you would like them
     * ALT-TAB back to DisplayMagician, and you should see the new display configuration shown in the Display Profile window.
     * Click the 'Save As/Rename' button so that DisplayMagician will remember the current Display Profile so you can use it in your Game Shortcuts.
     * You will need to do this for each different display configuration you want to use in any of your games or applications.
     * Click 'Back' button to go back to the main DisplayMagician window.
-2. Now that you have some Display Profiles set up, you can create some Game Shortcuts that will use them! Click on the 'Game Shortcuts' button.
-3. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you ever want to edit them.
-4. Click the 'New' button to create a new Game Shortcut
+1. Now that you have some Display Profiles set up, you can create some Game Shortcuts that will use them! Click on the 'Game Shortcuts' button.
+1. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you ever want to edit them.
+1. Click the 'New' button to create a new Game Shortcut
     * Choose the Display Profile you want to use with the Game Shortcut. Make sure it matches what the game expects :).
     * Click on the '2. Choose Audio' tab, to modify which speakers you use for sound, or which microphone you use to talk into.
     * Click on the '3. Choose what happens before' tab, to choose any other programs you want to start before you start the main Game or Application. You can choose if you want to shut them down afterwards too! Click on the 'Find Examples' button if you'd like to see some example helper software and their settings for popular games.
@@ -119,8 +120,8 @@ If you prefer to see a video on how to setup DisplayMagician, check out [this aw
     * If the 'auto-suggest name' option is enabled then you should have a Shortcut Name already entered in automatically. 
     * You can optionally create a keyboard shortcut (Hotkey) for this Game Shortcut. To do this, click on the 'Hotkey' button.
     * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. The Save button only shows if you have a valid Shortcut set up.
-5. Once you've saved the Short cut, you should see it in the Shortcut Library.
-6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
+1. Once you've saved the Short cut, you should see it in the Shortcut Library.
+1. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
 <p align="center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></p>
 
 You now have 3 different ways you can start your shortcut:
