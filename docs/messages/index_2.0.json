@@ -3,7 +3,7 @@
 		"Id": 3,
 		"MessageMode": "rtf",
 		"MinVersion": "2.5.0.350",
-		"MaxVersion": "2.5.0.350",
+		"MaxVersion": "2.5.0.352",
 		"StartDate": null,
 		"EndDate": null,
 		"HeadingText": "DisplayMagician 2.5.0 Upgrade Message",
