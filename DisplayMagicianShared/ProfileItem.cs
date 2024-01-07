@@ -536,13 +536,27 @@ namespace DisplayMagicianShared
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
                 _profileDisplayIdentifiers = nvidiaLibrary.CurrentDisplayIdentifiers;
 
-                if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled && _nvidiaDisplayConfig.DisplayIdentifiers.Count == 0)
+                if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled && _nvidiaDisplayConfig.PhysicalAdapters.Count > 0 && _nvidiaDisplayConfig.DisplayIdentifiers.Count == 0)
                 {
-                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The NVIDIA config has no display identifiers in NVIDIA mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The NVIDIA config has a physical adapter but no display identifiers in NVIDIA mode, yet we should have at least one screen on the screen. The PC may be a laptop, with another GPU within the CPU, in which case the screen is being driven by that card instead. Ignore this message in that case.");
+                    // Try to handle if the PC is a laptop with an AMD, by changing the mode for this display from NVIDIA to something else that suits more
+                    // Try AMD first in case we have an AMD chipset in the laptop
+                    if (amdLibrary.IsInstalled && _amdDisplayConfig.AdapterConfigs.Count > 0 && _amdDisplayConfig.DisplayIdentifiers.Count > 0)
+                    {
+                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely an AMD CPU with an integrated GPU. Changing the VideoMode to AMD so DisplayMagician still works.");
+                        VideoMode = VIDEO_MODE.AMD;
+                    }
+                    else if (_windowsDisplayConfig.DisplayIdentifiers.Count > 0)
+                    {
+                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an integrated GPU. Changing the VideoMode to Windows so DisplayMagician still works.");
+                        VideoMode = VIDEO_MODE.WINDOWS;
+                        
+                    }
+
                 }
-                else if (VideoMode == VIDEO_MODE.AMD && amdLibrary.IsInstalled && _amdDisplayConfig.DisplayIdentifiers.Count == 0)
+                else if (VideoMode == VIDEO_MODE.AMD && amdLibrary.IsInstalled && _amdDisplayConfig.AdapterConfigs.Count == 0 && _amdDisplayConfig.DisplayIdentifiers.Count == 0)
                 {
-                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The AMD config has no display identifiers in AMD mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The AMD config has no display identifiers in AMD mode, yet we should have at least one screen. The PC may be a laptop, with another GPU within the CPU, in which case the screen is being driven by that card instead. Ignore this message in that case.");
                 }
                 else if (_windowsDisplayConfig.DisplayIdentifiers.Count == 0)
                 {
@@ -1414,8 +1428,17 @@ namespace DisplayMagicianShared
                     screen.ClonedCopies = 0;
                     try
                     {
-                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                        if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
+                        {
+                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
+                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
+                        }
+                        else
+                        {
+                            // Guess that it is at the bottom (90% correct)
+                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Guessing that the position of the taskbar on display {targetId} is on the bottom of the screen.");
+                            screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                        }
                     }
                     catch (Exception ex)
                     {

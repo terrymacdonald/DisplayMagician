@@ -183,34 +183,28 @@ namespace DisplayMagicianShared.Windows
                                 address,
                                 RegistryKeyPermissionCheck.ReadSubTree))
                         {
-                            if (key.GetValueNames().Contains(regKeyValue))
+                            
+                            var binary = key?.GetValue("Settings") as byte[];
+                            if (binary?.Length > 0)
                             {
-                                var binary = key?.GetValue(regKeyValue) as byte[];
-                                if (binary?.Length > 0)
-                                {
-                                    MainScreen = true;
-                                    RegKeyValue = regKeyValue;
-                                    Binary = binary;
-                                    Version = version;
+                                MainScreen = true;
+                                RegKeyValue = "Settings";
+                                Binary = binary;
+                                Version = version;
 
-                                    // Extract the values from the binary byte field
-                                    PopulateFieldsFromBinary();
+                                // Extract the values from the binary byte field
+                                PopulateFieldsFromBinary();
 
-                                    SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: The taskbar for {RegKeyValue} is against the {Edge} edge, is positioned at ({TaskBarLocation.X},{TaskBarLocation.Y}) and is {TaskBarLocation.Width}x{TaskBarLocation.Height} in size.");
-                                    return true;
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Error($"TaskBarLayout/ReadFromRegistry: Unable to get the TaskBarStuckRectangle binary settings from {regKeyValue} screen.");
-                                    retryNeeded = true;
-                                    return false;
-                                }
+                                SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: The taskbar for {RegKeyValue} is against the {Edge} edge, is positioned at ({TaskBarLocation.X},{TaskBarLocation.Y}) and is {TaskBarLocation.Width}x{TaskBarLocation.Height} in size.");
+                                return true;
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Unable to find {regKeyValue} key in {address}. Screen details may not be available yet in registry.");
+                                SharedLogger.logger.Error($"TaskBarLayout/ReadFromRegistry: Unable to get the TaskBarStuckRectangle binary settings from {regKeyValue} screen.");
+                                retryNeeded = true;
                                 return false;
                             }
+                                           
                         }
                     }
                     catch (Exception ex)
