@@ -536,6 +536,19 @@ namespace DisplayMagicianShared
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
                 _profileDisplayIdentifiers = nvidiaLibrary.CurrentDisplayIdentifiers;
 
+                if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled && _nvidiaDisplayConfig.DisplayIdentifiers.Count == 0)
+                {
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The NVIDIA config has no display identifiers in NVIDIA mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
+                }
+                else if (VideoMode == VIDEO_MODE.AMD && amdLibrary.IsInstalled && _amdDisplayConfig.DisplayIdentifiers.Count == 0)
+                {
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The AMD config has no display identifiers in AMD mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
+                }
+                else if (_windowsDisplayConfig.DisplayIdentifiers.Count == 0)
+                {
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The Windows config has no display identifiers in Windows mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
+                }
+
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
 

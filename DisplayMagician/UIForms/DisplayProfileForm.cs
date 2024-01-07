@@ -360,12 +360,14 @@ namespace DisplayMagician.UIForms
                     if (ProfileRepository.IsActiveProfile(_selectedProfile))
                     {
                         btn_apply.Visible = false;
+                        btn_update.Visible = false;
                         lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
                         cms_profiles.Items[0].Enabled = false;
                     }
                     else
                     {
                         btn_apply.Visible = true;
+                        btn_update.Visible = true;
                         lbl_profile_shown_subtitle.Text = "";
                         cms_profiles.Items[0].Enabled = true;
                     }
@@ -378,6 +380,7 @@ namespace DisplayMagician.UIForms
                 btn_save_or_rename.Text = "Save";
                 lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet.";
                 btn_apply.Visible = false;
+                btn_update.Visible = false;
                 lbl_save_profile.Visible = true;
             }
 
@@ -446,22 +449,31 @@ namespace DisplayMagician.UIForms
                     return;
                 }
 
-                // Check the config actual results in an image (might be a logic error that we missed)
-                if (_selectedProfile.ProfileBitmap.Width == 0 || _selectedProfile.ProfileBitmap.Height == 0)
+                try
                 {
-                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: Display Layout image rendering error (ProfileBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
-                    MessageBox.Show("Display Layout image rendering error (ProfileBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                    // Check the config actual results in an image (might be a logic error that we missed)
+                    if (_selectedProfile.ProfileBitmap.Width == 0 || _selectedProfile.ProfileBitmap.Height == 0)
+                    {
+                        logger.Warn($"DisplayProfileForm/btn_save_as_Click: Display Layout image rendering error (ProfileBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
+                        MessageBox.Show("Display Layout image rendering error (ProfileBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
 
-                // Check the config actual results in an image (might be a logic error that we missed)
-                if (_selectedProfile.ProfileTightestBitmap.Width == 0 || _selectedProfile.ProfileTightestBitmap.Height == 0)
+                    // Check the config actual results in an image (might be a logic error that we missed)
+                    if (_selectedProfile.ProfileTightestBitmap.Width == 0 || _selectedProfile.ProfileTightestBitmap.Height == 0)
+                    {
+                        logger.Warn($"DisplayProfileForm/btn_save_as_Click: Display Layout image rendering error (ProfileTightestBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
+                        MessageBox.Show("Display Layout image rendering error (ProfileTightestBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }               
+                catch (Exception ex)
                 {
-                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: Display Layout image rendering error (ProfileTightestBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
-                    MessageBox.Show("Display Layout image rendering error (ProfileTightestBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: Exception whilst trying to save the display layout. We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
+                    MessageBox.Show("Exception whilst trying to save the display layout. We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
-                }
 
+                }
                 // So we've already passed the check that says this profile is unique
 
                 // Update the name just to make sure we record it if the user changed it

@@ -63,8 +63,8 @@ namespace DisplayMagician.UIForms
             this.btn_profile_settings = new System.Windows.Forms.Button();
             this.pbLogo = new System.Windows.Forms.PictureBox();
             this.p_lower = new System.Windows.Forms.Panel();
-            this.p_fill = new System.Windows.Forms.Panel();
             this.btn_update = new System.Windows.Forms.Button();
+            this.p_fill = new System.Windows.Forms.Panel();
             this.cms_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.p_upper.SuspendLayout();
@@ -85,7 +85,7 @@ namespace DisplayMagician.UIForms
             this.btn_apply.Location = new System.Drawing.Point(249, 35);
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(118, 40);
-            this.btn_apply.TabIndex = 2;
+            this.btn_apply.TabIndex = 4;
             this.btn_apply.Text = "&Apply";
             this.btn_apply.UseVisualStyleBackColor = false;
             this.btn_apply.Click += new System.EventHandler(this.Apply_Click);
@@ -101,7 +101,7 @@ namespace DisplayMagician.UIForms
             this.btn_back.Location = new System.Drawing.Point(852, 65);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
-            this.btn_back.TabIndex = 5;
+            this.btn_back.TabIndex = 8;
             this.btn_back.Text = "&Back";
             this.btn_back.UseVisualStyleBackColor = true;
             this.btn_back.Click += new System.EventHandler(this.Exit_Click);
@@ -117,7 +117,7 @@ namespace DisplayMagician.UIForms
             this.btn_delete.Location = new System.Drawing.Point(490, 35);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
-            this.btn_delete.TabIndex = 4;
+            this.btn_delete.TabIndex = 6;
             this.btn_delete.Text = "&Delete";
             this.btn_delete.UseVisualStyleBackColor = true;
             this.btn_delete.Click += new System.EventHandler(this.Delete_Click);
@@ -179,7 +179,7 @@ namespace DisplayMagician.UIForms
             this.btn_view_current.Location = new System.Drawing.Point(655, 18);
             this.btn_view_current.Name = "btn_view_current";
             this.btn_view_current.Size = new System.Drawing.Size(267, 39);
-            this.btn_view_current.TabIndex = 6;
+            this.btn_view_current.TabIndex = 9;
             this.btn_view_current.Text = "View &Current Display";
             this.btn_view_current.UseVisualStyleBackColor = false;
             this.btn_view_current.Click += new System.EventHandler(this.btn_view_current_Click);
@@ -312,7 +312,7 @@ namespace DisplayMagician.UIForms
             this.btn_save.Location = new System.Drawing.Point(613, 35);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(211, 40);
-            this.btn_save.TabIndex = 34;
+            this.btn_save.TabIndex = 7;
             this.btn_save.Text = "Save to Desk&top";
             this.btn_save.UseVisualStyleBackColor = false;
             this.btn_save.Click += new System.EventHandler(this.Save_Click);
@@ -335,7 +335,7 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey.Location = new System.Drawing.Point(123, 35);
             this.btn_hotkey.Name = "btn_hotkey";
             this.btn_hotkey.Size = new System.Drawing.Size(120, 40);
-            this.btn_hotkey.TabIndex = 35;
+            this.btn_hotkey.TabIndex = 3;
             this.btn_hotkey.Text = "&Hotkey";
             this.btn_hotkey.UseVisualStyleBackColor = true;
             this.btn_hotkey.Click += new System.EventHandler(this.btn_hotkey_Click);
@@ -406,7 +406,7 @@ namespace DisplayMagician.UIForms
             this.btn_donate.Location = new System.Drawing.Point(850, 63);
             this.btn_donate.Name = "btn_donate";
             this.btn_donate.Size = new System.Drawing.Size(72, 23);
-            this.btn_donate.TabIndex = 42;
+            this.btn_donate.TabIndex = 11;
             this.btn_donate.Text = "D&onate";
             this.btn_donate.UseVisualStyleBackColor = false;
             this.btn_donate.Click += new System.EventHandler(this.btn_donate_Click);
@@ -423,7 +423,7 @@ namespace DisplayMagician.UIForms
             this.btn_help.Location = new System.Drawing.Point(772, 63);
             this.btn_help.Name = "btn_help";
             this.btn_help.Size = new System.Drawing.Size(72, 23);
-            this.btn_help.TabIndex = 39;
+            this.btn_help.TabIndex = 10;
             this.btn_help.Text = "Hel&p";
             this.btn_help.UseVisualStyleBackColor = false;
             this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
@@ -440,7 +440,7 @@ namespace DisplayMagician.UIForms
             this.btn_profile_settings.Location = new System.Drawing.Point(655, 438);
             this.btn_profile_settings.Name = "btn_profile_settings";
             this.btn_profile_settings.Size = new System.Drawing.Size(170, 33);
-            this.btn_profile_settings.TabIndex = 38;
+            this.btn_profile_settings.TabIndex = 2;
             this.btn_profile_settings.Text = "&Profile Settings";
             this.btn_profile_settings.UseVisualStyleBackColor = false;
             this.btn_profile_settings.Click += new System.EventHandler(this.btn_profile_settings_Click);
@@ -471,16 +471,6 @@ namespace DisplayMagician.UIForms
             this.p_lower.Size = new System.Drawing.Size(934, 95);
             this.p_lower.TabIndex = 38;
             // 
-            // p_fill
-            // 
-            this.p_fill.BackColor = System.Drawing.Color.White;
-            this.p_fill.Controls.Add(this.ilv_saved_profiles);
-            this.p_fill.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.p_fill.Location = new System.Drawing.Point(0, 517);
-            this.p_fill.Name = "p_fill";
-            this.p_fill.Size = new System.Drawing.Size(934, 158);
-            this.p_fill.TabIndex = 39;
-            // 
             // btn_update
             // 
             this.btn_update.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
@@ -493,10 +483,20 @@ namespace DisplayMagician.UIForms
             this.btn_update.Location = new System.Drawing.Point(369, 35);
             this.btn_update.Name = "btn_update";
             this.btn_update.Size = new System.Drawing.Size(118, 40);
-            this.btn_update.TabIndex = 37;
+            this.btn_update.TabIndex = 5;
             this.btn_update.Text = "&Update";
             this.btn_update.UseVisualStyleBackColor = false;
             this.btn_update.Click += new System.EventHandler(this.btn_update_Click);
+            // 
+            // p_fill
+            // 
+            this.p_fill.BackColor = System.Drawing.Color.White;
+            this.p_fill.Controls.Add(this.ilv_saved_profiles);
+            this.p_fill.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.p_fill.Location = new System.Drawing.Point(0, 517);
+            this.p_fill.Name = "p_fill";
+            this.p_fill.Size = new System.Drawing.Size(934, 158);
+            this.p_fill.TabIndex = 39;
             // 
             // DisplayProfileForm
             // 
