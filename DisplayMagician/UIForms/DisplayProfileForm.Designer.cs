@@ -64,6 +64,7 @@ namespace DisplayMagician.UIForms
             this.pbLogo = new System.Windows.Forms.PictureBox();
             this.p_lower = new System.Windows.Forms.Panel();
             this.p_fill = new System.Windows.Forms.Panel();
+            this.btn_update = new System.Windows.Forms.Button();
             this.cms_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.p_upper.SuspendLayout();
@@ -81,7 +82,7 @@ namespace DisplayMagician.UIForms
             this.btn_apply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_apply.ForeColor = System.Drawing.Color.White;
-            this.btn_apply.Location = new System.Drawing.Point(300, 23);
+            this.btn_apply.Location = new System.Drawing.Point(249, 35);
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(118, 40);
             this.btn_apply.TabIndex = 2;
@@ -97,7 +98,7 @@ namespace DisplayMagician.UIForms
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(847, 48);
+            this.btn_back.Location = new System.Drawing.Point(852, 65);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 5;
@@ -113,7 +114,7 @@ namespace DisplayMagician.UIForms
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(424, 23);
+            this.btn_delete.Location = new System.Drawing.Point(490, 35);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 4;
@@ -250,7 +251,7 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(934, 161);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(934, 158);
             this.ilv_saved_profiles.TabIndex = 21;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -308,7 +309,7 @@ namespace DisplayMagician.UIForms
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(550, 23);
+            this.btn_save.Location = new System.Drawing.Point(613, 35);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(211, 40);
             this.btn_save.TabIndex = 34;
@@ -331,7 +332,7 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_hotkey.ForeColor = System.Drawing.Color.White;
-            this.btn_hotkey.Location = new System.Drawing.Point(174, 23);
+            this.btn_hotkey.Location = new System.Drawing.Point(123, 35);
             this.btn_hotkey.Name = "btn_hotkey";
             this.btn_hotkey.Size = new System.Drawing.Size(120, 40);
             this.btn_hotkey.TabIndex = 35;
@@ -346,7 +347,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
             this.lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(21, 39);
+            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(8, 8);
             this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
             this.lbl_hotkey_assigned.Size = new System.Drawing.Size(56, 16);
             this.lbl_hotkey_assigned.TabIndex = 36;
@@ -457,6 +458,7 @@ namespace DisplayMagician.UIForms
             // p_lower
             // 
             this.p_lower.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("p_lower.BackgroundImage")));
+            this.p_lower.Controls.Add(this.btn_update);
             this.p_lower.Controls.Add(this.lbl_hotkey_assigned);
             this.p_lower.Controls.Add(this.btn_hotkey);
             this.p_lower.Controls.Add(this.btn_delete);
@@ -464,9 +466,9 @@ namespace DisplayMagician.UIForms
             this.p_lower.Controls.Add(this.btn_save);
             this.p_lower.Controls.Add(this.btn_back);
             this.p_lower.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.p_lower.Location = new System.Drawing.Point(0, 678);
+            this.p_lower.Location = new System.Drawing.Point(0, 675);
             this.p_lower.Name = "p_lower";
-            this.p_lower.Size = new System.Drawing.Size(934, 83);
+            this.p_lower.Size = new System.Drawing.Size(934, 95);
             this.p_lower.TabIndex = 38;
             // 
             // p_fill
@@ -476,8 +478,25 @@ namespace DisplayMagician.UIForms
             this.p_fill.Dock = System.Windows.Forms.DockStyle.Fill;
             this.p_fill.Location = new System.Drawing.Point(0, 517);
             this.p_fill.Name = "p_fill";
-            this.p_fill.Size = new System.Drawing.Size(934, 161);
+            this.p_fill.Size = new System.Drawing.Size(934, 158);
             this.p_fill.TabIndex = 39;
+            // 
+            // btn_update
+            // 
+            this.btn_update.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_update.BackColor = System.Drawing.Color.Black;
+            this.btn_update.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_update.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_update.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_update.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_update.ForeColor = System.Drawing.Color.White;
+            this.btn_update.Location = new System.Drawing.Point(369, 35);
+            this.btn_update.Name = "btn_update";
+            this.btn_update.Size = new System.Drawing.Size(118, 40);
+            this.btn_update.TabIndex = 37;
+            this.btn_update.Text = "&Update";
+            this.btn_update.UseVisualStyleBackColor = false;
+            this.btn_update.Click += new System.EventHandler(this.btn_update_Click);
             // 
             // DisplayProfileForm
             // 
@@ -487,7 +506,7 @@ namespace DisplayMagician.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
-            this.ClientSize = new System.Drawing.Size(934, 761);
+            this.ClientSize = new System.Drawing.Size(934, 770);
             this.Controls.Add(this.p_fill);
             this.Controls.Add(this.p_lower);
             this.Controls.Add(this.p_upper);
@@ -544,6 +563,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ToolStripMenuItem deleteProfileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveProfileToDesktopToolStripMenuItem;
         private System.Windows.Forms.Button btn_donate;
+        private System.Windows.Forms.Button btn_update;
     }
 }
 

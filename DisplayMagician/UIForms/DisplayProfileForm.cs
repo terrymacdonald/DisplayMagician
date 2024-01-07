@@ -400,6 +400,8 @@ namespace DisplayMagician.UIForms
 
         }
 
+        
+
         private void btn_save_as_Click(object sender, EventArgs e)
         {
             // Check there is a name
@@ -812,5 +814,45 @@ namespace DisplayMagician.UIForms
             System.Diagnostics.Process.Start(targetURL);
         }
 
+        private void btn_update_Click(object sender, EventArgs e)
+        {
+            // Check there is a name
+            if (String.IsNullOrWhiteSpace(txt_profile_save_name.Text))
+            {
+                logger.Warn($"DisplayProfileForm/btn_save_as_Click: You need to provide a name for this profile before it can be updated.");
+                MessageBox.Show("You need to provide a name for this profile before it can be updated.", "Your profile needs a name", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Check the name is valid
+            if (!Program.IsValidFilename(txt_profile_save_name.Text))
+            {
+                logger.Warn($"DisplayProfileForm/btn_update_Click: The profile name cannot contain the following characters: {Path.GetInvalidFileNameChars()}. Unable to save this profile.");
+                MessageBox.Show($"The profile name cannot contain the following characters: [{Path.GetInvalidFileNameChars()}]. Please change the profile name.", "Invalid characters in profile name", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+
+            // If we're saving the current profile as a new item
+            // then we'll be in "save" mode
+            if (_saveOrRenameMode == "rename")
+            { 
+                // We're in 'rename' mode!
+                // This also means we are going to have to get the latest current Profile and then overwrtite this data
+
+                ProfileRepository.UserChangingProfiles = true;
+                // Refresh the profiles to see whats valid
+                ProfileRepository.IsPossibleRefresh();                
+                // Replace the profile data with the current active profile data
+                ProfileRepository.CopyCurrentLayoutToProfile(_selectedProfile); 
+                // Refresh the Profile UI
+                RefreshDisplayProfileUI();
+                // Recenter the Window
+                RecenterWindow();
+                ProfileRepository.UserChangingProfiles = false;
+
+
+            }
+        }
     }
 }

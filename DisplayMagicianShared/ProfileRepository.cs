@@ -927,7 +927,67 @@ namespace DisplayMagicianShared
             IsPossibleRefresh();
 
             return true;
-        }        
+        }
+
+        public static void CopyCurrentLayoutToProfile(ProfileItem profile)
+        {
+
+            SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
+
+            SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
+                profile.VideoMode = VIDEO_MODE.NVIDIA;
+            }
+            else if (_currentVideoMode == VIDEO_MODE.AMD)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
+                profile.VideoMode = VIDEO_MODE.AMD;
+            }
+            else
+            {
+                profile.VideoMode = VIDEO_MODE.WINDOWS;
+            }
+
+            /*int totalDelay = 0;
+            if (_pauseReadsUntilChangeCompleted)
+            {
+                SharedLogger.logger.Warn($"ProfileRepository/CopyCurrentLayoutToProfile: Pausing updating display settings as a display change is currently taking place.");
+                while (!_pauseReadsUntilChangeCompleted)
+                {
+                    Task.Delay(200);
+                    totalDelay += 200;
+                    if (totalDelay > 10000)
+                    {
+                        SharedLogger.logger.Warn($"ProfileRepository/CopyCurrentLayoutToProfile: Timeout while pausing updating display settingss as it took longer than 10 seconds.");
+                        break;
+                    }
+                }
+                SharedLogger.logger.Trace($"ProfileRepository/CopyCurrentLayoutToProfile: Paused updating display settings for {totalDelay} milliseconds.");
+            }*/
+
+            // Force explorer to update the TaskBar settings just in case they were moved
+            //ShellHelper.TellShellToWriteSettings();
+            //WinLibrary.RefreshTaskBars();
+
+            // Actually do the updateinf of the display settings
+            profile.CreateProfileFromCurrentDisplaySettings(false);
+
+            /*if (_profilesLoaded && _allProfiles.Count > 0)
+            {
+
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+                {
+                    if (loadedProfile.Equals(profile))
+                    {
+                        _currentProfile = loadedProfile;
+                        SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: The {loadedProfile.VideoMode.ToString("G")} profile '{loadedProfile.Name}' is currently active (in use now).");
+                        return;
+                    }
+                }
+            }*/
+        }
 
         public static string MigrateJsonToLatestVersion(string json)
         {

@@ -409,51 +409,6 @@ namespace DisplayMagician {
             Application.SetCompatibleTextRenderingDefault(false); 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-            // Check if it's an upgrade from DisplayMagician v2.x to v2.2
-            // and if it is then copy the old configs to the new filenames and
-            // explain to the user what they need to do.
-            logger.Trace($"Program/Main: Attempting to upgrade earlier DisplayMagician Display Profile files if required");
-           
-            // This is the latest displayprofile config file
-            string targetdp = ProfileRepository.ProfileStorageFileName;
-
-            try
-            {
-                // Only run this code if there isn't a current Display Profile file.
-                // If this happens then it is an error!
-                if (!File.Exists(targetdp))
-                {
-                    logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
-
-                    // Warn the user about the fact we need them to recreate their Display Profiles again!
-                    StartMessageForm myMessageWindow = new StartMessageForm();
-                    myMessageWindow.MessageMode = "rtf";
-                    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                    myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                    myMessageWindow.ButtonText = "&Close";
-                    myMessageWindow.ShowDialog();                    
-                }
-                else
-                {
-                    logger.Trace($"Program/Main: DisplayMagician Display Profile files do not require upgrading so skipping");
-                }
-
-                // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
-                // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
-                if (RenameOldFileVersions(AppProfilePath, "DisplayProfiles_*.json", targetdp))
-                {
-                    logger.Trace($"Program/Main: Old DisplayMagician Display Profile files were successfully renamed");
-                }
-                else
-                {
-                    logger.Error($"Program/Main: Error while renaming old Display Profiles files.");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/Main: Exception upgrading old Display Profile files to v2.2 shortcut file {targetdp}.");
-            }
-
             // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
             if (upgradedSettingsFile)
             {
@@ -484,13 +439,16 @@ namespace DisplayMagician {
                     {
                         logger.Info($"Program/Main: Upgrading v1.0 shortcut file {oldv1ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
                         File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
-                    }                   
+                    }
 
-                    // Load the Shortcuts so that they get populated with default values as part of the upgrade
-                    ShortcutRepository.LoadShortcuts();
-                    // Now save the shortcuts so the new default values get written to disk
-                    ShortcutRepository.SaveShortcuts();
-
+                    // If the file exists (the file was renamed and upgraded) then we want to use it
+                    if (File.Exists(targetShortcutsFile))
+                    {
+                        // Load the Shortcuts so that they get populated with default values as part of the upgrade
+                        ShortcutRepository.LoadShortcuts();
+                        // Now save the shortcuts so the new default values get written to disk
+                        ShortcutRepository.SaveShortcuts();
+                    }
                 }
                 else
                 {
@@ -2016,6 +1974,10 @@ namespace DisplayMagician {
             {
                 using (RegistryKey rk = Registry.LocalMachine.OpenSubKey(installKey))
                 {
+                    if (rk == null) 
+                    {
+                        return false;
+                    }
                     if (rk.GetValue("InstallDir") != null && rk.GetValue("InstallDir").ToString() == thisInstallDir)
                     {
                         return true; //exists
