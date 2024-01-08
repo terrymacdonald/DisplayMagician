@@ -423,9 +423,29 @@ namespace DisplayMagicianShared
 
         public bool IsValid()
         {
+            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+
             if (VideoMode == VIDEO_MODE.NVIDIA) 
             {
-                if (!NVIDIALibrary.GetLibrary().IsValidConfig(_nvidiaDisplayConfig))
+                /*// Check if this is a
+                if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled && _nvidiaDisplayConfig.PhysicalAdapters.Count > 0 && _nvidiaDisplayConfig.DisplayIdentifiers.Count == 0)
+                {
+                    if (amdLibrary.IsInstalled && _amdDisplayConfig.AdapterConfigs.Count > 0 && _amdDisplayConfig.DisplayIdentifiers.Count > 0)
+                    {
+                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely an AMD CPU with an integrated GPU. Changing the VideoMode to AMD so DisplayMagician still works.");
+                        VideoMode = VIDEO_MODE.AMD;
+                    }
+                    else if (_windowsDisplayConfig.DisplayIdentifiers.Count > 0)
+                    {
+                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an integrated GPU. Changing the VideoMode to Windows so DisplayMagician still works.");
+                        VideoMode = VIDEO_MODE.WINDOWS;
+
+                    }
+
+                }*/
+                if (!nvidiaLibrary.IsValidConfig(_nvidiaDisplayConfig))
                 {
                     SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid NVIDIA display config");
                     return false;
@@ -515,7 +535,7 @@ namespace DisplayMagicianShared
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
                 // For a library update to the latest version so that we pick up any new changes since the last update
-                if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled)
+                /*if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled)
                 {
                     nvidiaLibrary.UpdateActiveConfig();
                     winLibrary.UpdateActiveConfig(fastScan);
@@ -528,7 +548,20 @@ namespace DisplayMagicianShared
                 else
                 {
                     winLibrary.UpdateActiveConfig(fastScan);
-                }                               
+                }      */
+                if (nvidiaLibrary.IsInstalled)
+                {
+                    nvidiaLibrary.UpdateActiveConfig();
+                }
+                if (amdLibrary.IsInstalled)
+                {
+                    amdLibrary.UpdateActiveConfig();
+                }
+                else
+                {
+                    winLibrary.UpdateActiveConfig(fastScan);
+                }
+
 
                 // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;
@@ -536,31 +569,54 @@ namespace DisplayMagicianShared
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
                 _profileDisplayIdentifiers = nvidiaLibrary.CurrentDisplayIdentifiers;
 
-                if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled && _nvidiaDisplayConfig.PhysicalAdapters.Count > 0 && _nvidiaDisplayConfig.DisplayIdentifiers.Count == 0)
+                if (nvidiaLibrary.IsInstalled)
                 {
-                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The NVIDIA config has a physical adapter but no display identifiers in NVIDIA mode, yet we should have at least one screen on the screen. The PC may be a laptop, with another GPU within the CPU, in which case the screen is being driven by that card instead. Ignore this message in that case.");
-                    // Try to handle if the PC is a laptop with an AMD, by changing the mode for this display from NVIDIA to something else that suits more
-                    // Try AMD first in case we have an AMD chipset in the laptop
-                    if (amdLibrary.IsInstalled && _amdDisplayConfig.AdapterConfigs.Count > 0 && _amdDisplayConfig.DisplayIdentifiers.Count > 0)
-                    {
-                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely an AMD CPU with an integrated GPU. Changing the VideoMode to AMD so DisplayMagician still works.");
-                        VideoMode = VIDEO_MODE.AMD;
-                    }
-                    else if (_windowsDisplayConfig.DisplayIdentifiers.Count > 0)
-                    {
-                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an integrated GPU. Changing the VideoMode to Windows so DisplayMagician still works.");
-                        VideoMode = VIDEO_MODE.WINDOWS;
-                        
-                    }
+                    // Set the default Video Mode to NVIDIA
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an NVIDIA GPU. Changing the VideoMode to NVIDIA to reflect this.");
+                    VideoMode = VIDEO_MODE.NVIDIA;
 
+                    // Check if there are situations we want to change to another video mode
+                    if (_nvidiaDisplayConfig.PhysicalAdapters.Count > 0 && _nvidiaDisplayConfig.DisplayIdentifiers.Count == 0)
+                    {
+                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The NVIDIA config has a physical adapter but no display identifiers in NVIDIA mode, yet we should have at least one screen on the screen. The PC may be a laptop, with another GPU within the CPU, in which case the screen is being driven by that card instead. Ignore this message in that case.");
+                        // Try to handle if the PC is a laptop with an AMD, by changing the mode for this display from NVIDIA to something else that suits more
+                        // Try AMD first in case we have an AMD chipset in the laptop
+                        if (amdLibrary.IsInstalled && _amdDisplayConfig.AdapterConfigs.Count > 0 && _amdDisplayConfig.DisplayIdentifiers.Count > 0)
+                        {
+                            SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely an AMD CPU with an integrated GPU. Changing the VideoMode to AMD so DisplayMagician still works.");
+                            VideoMode = VIDEO_MODE.AMD;
+                        }
+                        else if (_windowsDisplayConfig.DisplayIdentifiers.Count > 0)
+                        {
+                            SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an integrated GPU. Changing the VideoMode to Windows so DisplayMagician still works.");
+                            VideoMode = VIDEO_MODE.WINDOWS;
+
+                        }
+
+                    }
                 }
-                else if (VideoMode == VIDEO_MODE.AMD && amdLibrary.IsInstalled && _amdDisplayConfig.AdapterConfigs.Count == 0 && _amdDisplayConfig.DisplayIdentifiers.Count == 0)
+                else if (amdLibrary.IsInstalled)
                 {
-                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The AMD config has no display identifiers in AMD mode, yet we should have at least one screen. The PC may be a laptop, with another GPU within the CPU, in which case the screen is being driven by that card instead. Ignore this message in that case.");
+                    // Set the default Video Mode to AMD
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an AMD GPU. Changing the VideoMode to AMD to reflect this.");
+                    VideoMode = VIDEO_MODE.AMD;
+
+                    if (amdLibrary.IsInstalled && _amdDisplayConfig.DisplayIdentifiers.Count == 0)
+                    {
+                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely an AMD CPU with an integrated GPU but no detected screens. Changing the VideoMode to Windows so DisplayMagician still works.");
+                        VideoMode = VIDEO_MODE.WINDOWS;
+                    }
                 }
-                else if (_windowsDisplayConfig.DisplayIdentifiers.Count == 0)
+                else // Else it's windows
                 {
-                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The Windows config has no display identifiers in Windows mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
+                    // Set the default Video Mode to Windows
+                    SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with GPU that Windows can detect. Changing the VideoMode to AMD to reflect this.");
+                    VideoMode = VIDEO_MODE.WINDOWS;
+
+                    if (_windowsDisplayConfig.DisplayIdentifiers.Count == 0)
+                    {
+                        SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The Windows config has no display identifiers in Windows mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
+                    }
                 }
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions

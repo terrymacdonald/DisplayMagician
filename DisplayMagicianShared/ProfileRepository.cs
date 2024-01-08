@@ -704,33 +704,9 @@ namespace DisplayMagicianShared
 
             ProfileItem profile;
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
-                profile = new ProfileItem
-                {
-                    Name = "Current NVIDIA Display Profile",
-                    VideoMode = VIDEO_MODE.NVIDIA
-                };                
-            }
-            else if (_currentVideoMode == VIDEO_MODE.AMD)
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
-                profile = new ProfileItem
-                {
-                    Name = "Current AMD Display Profile",
-                    VideoMode = VIDEO_MODE.AMD
-                };
-            }
-            else
-            {
-                profile = new ProfileItem
-                {
-                    Name = "Current Windows Display Profile",
-                    VideoMode = VIDEO_MODE.WINDOWS
-                };
-            }
+            profile = new ProfileItem();
 
+            // If the display layout is changing then wait until it's completed before continuing...
             int totalDelay = 0;
             if (_pauseReadsUntilChangeCompleted)
             {
@@ -752,7 +728,34 @@ namespace DisplayMagicianShared
             //ShellHelper.TellShellToWriteSettings();
             //WinLibrary.RefreshTaskBars();
 
+            // Get the display settings
             profile.CreateProfileFromCurrentDisplaySettings(fastScan);
+
+            // Now cmake sure the currentVideoMode matches the profile mode returned from the current display settings
+            // If we were trying for an NVIDIA mode but we actually got an AMD mode then we're likely on a AMD laptop with NVIDA GPU disabled
+            // We need to swap to AMD mode for the screen to be detected.
+            // We've made this generic by making the videomodes match if the detection isn't forced by the user
+            if (_currentVideoMode != profile.VideoMode && _forcedVideoMode == FORCED_VIDEO_MODE.DETECT)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Current Video Mode changed from {_currentVideoMode} to {profile.VideoMode} as the display settings detection recognised it needed to change.");
+                _currentVideoMode = profile.VideoMode;                
+            }
+
+            // Name the profile based on the video mode we have
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
+            { 
+                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
+                profile.Name = "Current NVIDIA Display Profile";
+            }
+            else if (_currentVideoMode == VIDEO_MODE.AMD)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
+                profile.Name = "Current AMD Display Profile";                
+            }
+            else
+            {
+                profile.Name = "Current Windows Display Profile";
+            }
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {

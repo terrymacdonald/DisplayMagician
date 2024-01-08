@@ -350,6 +350,7 @@ namespace DisplayMagician.UIForms
                 _saveOrRenameMode = "rename";
                 btn_save_or_rename.Text = "Rename To";
                 lbl_save_profile.Visible = false;
+                btn_update.Visible = true;
                 if (!_selectedProfile.IsPossible)
                 {
                     lbl_profile_shown_subtitle.Text = "This Display Profile can't be used as not all Displays are connected.";
@@ -360,14 +361,12 @@ namespace DisplayMagician.UIForms
                     if (ProfileRepository.IsActiveProfile(_selectedProfile))
                     {
                         btn_apply.Visible = false;
-                        btn_update.Visible = false;
                         lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
                         cms_profiles.Items[0].Enabled = false;
                     }
                     else
                     {
                         btn_apply.Visible = true;
-                        btn_update.Visible = true;
                         lbl_profile_shown_subtitle.Text = "";
                         cms_profiles.Items[0].Enabled = true;
                     }
