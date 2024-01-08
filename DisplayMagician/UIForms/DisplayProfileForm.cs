@@ -862,7 +862,12 @@ namespace DisplayMagician.UIForms
                 RecenterWindow();
                 ProfileRepository.UserChangingProfiles = false;
 
+                // Save the Profiles JSON as it's different now
+                ProfileRepository.SaveProfiles();
+                SharedLogger.logger.Debug($"DisplayProfileForm/btn_update_Click: The profile {_selectedProfile.Name} was successfully updated with the latest display settings");
 
+                // Disable the Apply button as the curretn settings should be the same as now
+                btn_apply.Visible = false;
             }
         }
     }

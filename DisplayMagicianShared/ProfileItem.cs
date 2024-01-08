@@ -557,10 +557,10 @@ namespace DisplayMagicianShared
                 {
                     amdLibrary.UpdateActiveConfig();
                 }
-                else
-                {
-                    winLibrary.UpdateActiveConfig(fastScan);
-                }
+
+                // Always update Windows display settings
+                winLibrary.UpdateActiveConfig(fastScan);
+                
 
 
                 // Grab the profile data from the current stored config (that we just updated)
