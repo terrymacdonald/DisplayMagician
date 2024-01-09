@@ -892,7 +892,7 @@ namespace DisplayMagicianShared.AMD
                     else
                     {
                         // If we get here then there are less than two displays connected. Eyefinity cannot be enabled in this case!
-                        SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: There are less than two displays connected to this adapter so Eyefinity cannot be enabled.");
+                        SharedLogger.logger.Info($"AMDLibrary/GetAMDDisplayConfig: There are less than two displays connected to this adapter so Eyefinity cannot be enabled.");
                     }
 
 

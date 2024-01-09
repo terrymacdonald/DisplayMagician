@@ -576,7 +576,7 @@ namespace DisplayMagicianShared.Windows
                     tbsrReadWorked = tbsr.ReadFromRegistry(GetRegKeyValueFromDevicePath(displaySources[monitorInfo.szDevice][0].DevicePath),out retryNeeded);
                     if (retryNeeded)
                     {
-                        SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar read #1 from registry didn't work.");
+                        SharedLogger.logger.Debug($"TaskBarLayout/GetAllCurrentTaskBarPositions: Additional Display Taskbar read #1 from registry didn't work.");
                         retryNeeded = true;
                         return taskBarStuckRectangles;
                     }
@@ -613,7 +613,7 @@ namespace DisplayMagicianShared.Windows
                     tbsrReadWorked = tbsrMain.ReadFromRegistry("Settings",out retryNeeded) ;
                     if (!retryNeeded)
                     {
-                        SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar read #1 from registry didn't work.");
+                        SharedLogger.logger.Debug($"TaskBarLayout/GetAllCurrentTaskBarPositions: Main Taskbar read #1 from registry didn't work.");
                         retryNeeded = true;
                         return taskBarStuckRectangles;
                     }

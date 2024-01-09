@@ -15,6 +15,7 @@ using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
+using NLog.Targets;
 
 namespace DisplayMagicianShared
 {
@@ -1338,8 +1339,19 @@ namespace DisplayMagicianShared
                                     // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
                                     // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
                                     // the taskbar locations in memory (it takes up to 15 seconds!). NOthing I can do, except put this protection in place :( .
-                                    KeyValuePair<string, TaskBarLayout> matchingDisplayEntry = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{windowsUID }"));
-                                    screen.TaskBarEdge = matchingDisplayEntry.Value.Edge;
+
+                                    if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
+                                    {
+                                        foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
+                                        {
+                                            var taskBarValue = taskBar.Value;
+                                            if (taskBarValue.RegKeyValue.Contains($"UID{windowsUID}"))
+                                            {
+                                                screen.TaskBarEdge = taskBarValue.Edge;
+                                                break;
+                                            }
+                                        }
+                                    }
                                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetInfo.DisplayId} is on the {screen.TaskBarEdge } of the screen.");
                                 }
                                 else
@@ -1484,17 +1496,22 @@ namespace DisplayMagicianShared
                     screen.ClonedCopies = 0;
                     try
                     {
+                        // Set the default taskbar position as the bottom of the screen                        
+                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                        // If we have a valid taskbar location stored then use that instead
                         if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
                         {
-                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
+                            foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
+                            {
+                                var taskBarValue = taskBar.Value;
+                                if (taskBarValue.RegKeyValue.Contains($"UID{targetId}"))
+                                {
+                                    screen.TaskBarEdge = taskBarValue.Edge;
+                                    break;
+                                }
+                            }                            
                         }
-                        else
-                        {
-                            // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Guessing that the position of the taskbar on display {targetId} is on the bottom of the screen.");
-                            screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                        }
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
                     }
                     catch (Exception ex)
                     {
@@ -1693,12 +1710,22 @@ namespace DisplayMagicianShared
                     screen.ClonedCopies = 0;
                     try
                     {
-                        // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
-                        // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
-                        // the taskbar locations in memory (it takes up to 15 seconds!). Nothing I can do, except put this protection in place :( .
-
-                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                        SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                        // Set the default taskbar position as the bottom of the screen                        
+                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                        // If we have a valid taskbar location stored then use that instead
+                        if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
+                        {
+                            foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
+                            {
+                                var taskBarValue = taskBar.Value;
+                                if (taskBarValue.RegKeyValue.Contains($"UID{targetId}"))
+                                {
+                                    screen.TaskBarEdge = taskBarValue.Edge;
+                                    break;
+                                }
+                            }
+                        }
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
                     }
                     catch (Exception ex)
                     {
@@ -1814,7 +1841,22 @@ namespace DisplayMagicianShared
                         {
                             if (_windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains("Settings")) > 0)
                             {
-                                screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains("Settings")).Value.Edge;
+                                // Set the default taskbar position as the bottom of the screen                        
+                                screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                                // If we have a valid taskbar location stored then use that instead
+                                if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
+                                {
+                                    foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
+                                    {
+                                        var taskBarValue = taskBar.Value;
+                                        if (taskBarValue.RegKeyValue.Contains($"Settings"))
+                                        {
+                                            screen.TaskBarEdge = taskBarValue.Edge;
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge} of the screen.");
                             }
                             else
