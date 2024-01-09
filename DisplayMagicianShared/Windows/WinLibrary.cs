@@ -628,7 +628,7 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref displayScalingInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Windows DPI scasling value for source {paths[i].SourceInfo.Id} is {displayScalingInfo.CurrrentScaleRel}.");
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Windows DPI scaling value for source {paths[i].SourceInfo.Id} is {displayScalingInfo.CurrrentScaleRel}.");
                     sourceDpiScalingRel = displayScalingInfo.CurrrentScaleRel;
 
                 }

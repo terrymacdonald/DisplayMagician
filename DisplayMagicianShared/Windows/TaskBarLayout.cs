@@ -85,7 +85,7 @@ namespace DisplayMagicianShared.Windows
                 {
                     // It's not v2 or v3, so it must be a single display
                     MMStuckRectVerFound = false;
-                    SharedLogger.logger.Warn($"TaskBarLayout/ReadFromRegistry: Couldn't find an MMStuckRect2 or MMStuckRect3 registry key! Going to test if it is a single display only.");
+                    SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Couldn't find an MMStuckRect2 or MMStuckRect3 registry key! Going to test if it is a single display only.");
                 }
             }
 
