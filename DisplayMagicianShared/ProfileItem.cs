@@ -953,7 +953,7 @@ namespace DisplayMagicianShared
 
         public List<ScreenPosition> GetScreenPositions()
         {
-            if (VideoMode == VIDEO_MODE.NVIDIA)
+            /*if (VideoMode == VIDEO_MODE.NVIDIA)
             {
                 return GetNVIDIAScreenPositions();
             }
@@ -964,10 +964,11 @@ namespace DisplayMagicianShared
             else if (VideoMode == VIDEO_MODE.WINDOWS)
             {
                 return GetWindowsScreenPositions();
-            }
-            return new List<ScreenPosition>();
+            }            
 
-            /*List<ScreenPosition> allScreens = new List<ScreenPosition>() { };
+            return new List<ScreenPosition>();*/
+
+            List<ScreenPosition> allScreens = new List<ScreenPosition>() { };
 
             if (VideoMode == VIDEO_MODE.WINDOWS)
             {
@@ -984,8 +985,10 @@ namespace DisplayMagicianShared
                     allScreens.AddRange(GetAMDScreenPositions());
                 }
             }
-                        
-            return allScreens;*/
+
+            GetTaskbarLocationsForNonWindowsScreens(ref allScreens);
+
+            return allScreens;
         }        
 
         private List<ScreenPosition> GetNVIDIAScreenPositions()
@@ -1960,6 +1963,70 @@ namespace DisplayMagicianShared
             }
 
             return windowsScreens;
+        }
+
+        private bool GetTaskbarLocationsForNonWindowsScreens(ref List<ScreenPosition> screensToLocate)
+        {
+            // We first get all of the taskbar locations in a list, so we know what we're looking for
+            // We're going to use the taskbar rectangle to figure out which screen its on, so we can do this with any screen position
+            Dictionary<Rectangle, TaskBarLayout.TaskBarEdge> taskbarPositions = new Dictionary<Rectangle, TaskBarLayout.TaskBarEdge>() { };
+
+            // If the screen is the primary screen, then we check if we need to use the StuckRect 'Settings' reg keys
+            // rather than the MMStuckRect reg keys
+            try
+            {
+                if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
+                {
+                    foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
+                    {
+                        var taskBarValue = taskBar.Value;                        
+                        taskbarPositions.Add(taskBarValue.MonitorLocation, taskBarValue.Edge);
+                        SharedLogger.logger.Trace($"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Tracking position of the taskbar on the primary display at ({taskBarValue.MonitorLocation.X},{taskBarValue.MonitorLocation.Y}) with an edge location of {taskBarValue.Edge}.");
+                    }
+                 }
+            }
+            catch (Exception ex)
+            {
+                // Guess that it is at the bottom (90% correct)
+                SharedLogger.logger.Warn(ex, $"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Exception trying to get the position of the taskbar on primary display for storing it for later");
+            }
+
+
+            for (int i=0; i < screensToLocate.Count;i++)
+            {
+                var screenToLocate = screensToLocate[i];
+
+                // Set a default
+                screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+
+                // Create a temp rectangle for the window
+                Rectangle displayWindow = new Rectangle(screenToLocate.ScreenX, screenToLocate.ScreenX, screenToLocate.ScreenWidth, screenToLocate.ScreenHeight);
+
+                // find which taskbar is in this window
+                foreach (Rectangle taskBarRect in taskbarPositions.Keys)
+                {
+                    if (displayWindow.Contains(taskBarRect))
+                    {
+                        if (taskBarRect.Bottom == displayWindow.Bottom)
+                        {
+                            screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                        }
+                        else if(taskBarRect.Left == displayWindow.Left)
+                        {
+                            screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Left;
+                        }
+                        else if (taskBarRect.Top == displayWindow.Top)
+                        {
+                            screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Top;
+                        }
+                        else if (taskBarRect.Right == displayWindow.Right)
+                        {
+                            screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Right;
+                        }
+                    }
+                }
+            }
+            return true;
         }
 
 
