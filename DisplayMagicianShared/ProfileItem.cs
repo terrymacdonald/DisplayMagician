@@ -53,6 +53,23 @@ namespace DisplayMagicianShared
         public int SpannedRows;
         public TaskBarLayout.TaskBarEdge TaskBarEdge;
         public ScreenRotation Rotation;
+
+        public override bool Equals(object obj) => obj is ScreenPosition other && this.Equals(other);
+        public bool Equals(ScreenPosition other)
+        => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
+           //Id == other.Id && // Removed the ID too, as that changes if the user has a Clone!
+           ScreenX.Equals(other.ScreenX) &&
+           ScreenY.Equals(other.ScreenY) &&
+           ScreenWidth.Equals(other.ScreenWidth) &&
+           ScreenHeight.Equals(other.ScreenHeight);
+        public override int GetHashCode()
+        {
+            return (ScreenX, ScreenY, ScreenWidth, ScreenHeight).GetHashCode();
+        }
+
+        public static bool operator ==(ScreenPosition lhs, ScreenPosition rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(ScreenPosition lhs, ScreenPosition rhs) => !(lhs == rhs);
     }
 
     public struct SpannedScreenPosition
@@ -970,19 +987,54 @@ namespace DisplayMagicianShared
 
             List<ScreenPosition> allScreens = new List<ScreenPosition>() { };
 
-            if (VideoMode == VIDEO_MODE.WINDOWS)
+            List<ScreenPosition> nvidiaScreens = new List<ScreenPosition>() { };
+
+            if (NVIDIALibrary.GetLibrary().IsInstalled)
             {
-                allScreens.AddRange(GetWindowsScreenPositions());
-            }
-            else
-            {
-                if (NVIDIALibrary.GetLibrary().IsInstalled)
+                nvidiaScreens.AddRange(GetNVIDIAScreenPositions());
+
+                // Ignore any windows screens that already exist from AMD and NVIDIA
+                // IMPORTANT: This logic depends on allScreens only containing NVIDIA and AMD screens, and also that AMD and NVIDIA don't each add the same screen
+                // If you change any code above this, then you need to make suyre this is still true!
+                foreach (var screen in nvidiaScreens)
                 {
-                    allScreens.AddRange(GetNVIDIAScreenPositions());
+                    if (!allScreens.Contains(screen))
+                    {
+                        allScreens.Add(screen);
+                    }
                 }
-                if (AMDLibrary.GetLibrary().IsInstalled)
+            }
+
+            List<ScreenPosition> amdScreens = new List<ScreenPosition>() { };
+
+            if (AMDLibrary.GetLibrary().IsInstalled)
+            {
+                amdScreens.AddRange(GetAMDScreenPositions());
+
+                // Ignore any windows screens that already exist from AMD and NVIDIA
+                // IMPORTANT: This logic depends on allScreens only containing NVIDIA and AMD screens, and also that AMD and NVIDIA don't each add the same screen
+                // If you change any code above this, then you need to make suyre this is still true!
+                foreach (var screen in amdScreens)
                 {
-                    allScreens.AddRange(GetAMDScreenPositions());
+                    if (!allScreens.Contains(screen))
+                    {
+                        allScreens.Add(screen);
+                    }
+                }
+                
+            }
+
+            List<ScreenPosition> winScreens = new List<ScreenPosition>() { };
+            winScreens.AddRange(GetWindowsScreenPositions());            
+
+            // Ignore any windows screens that already exist from AMD and NVIDIA
+            // IMPORTANT: This logic depends on allScreens only containing NVIDIA and AMD screens, and also that AMD and NVIDIA don't each add the same screen
+            // If you change any code above this, then you need to make suyre this is still true!
+            foreach (var screen in winScreens)
+            {
+                if (!allScreens.Contains(screen))
+                {
+                    allScreens.Add(screen);
                 }
             }
 
@@ -1409,7 +1461,7 @@ namespace DisplayMagicianShared
 
             }
 
-            // Now we also need to try and find if there are any other displays connected that don't use an NVIDIA card
+            /*// Now we also need to try and find if there are any other displays connected that don't use an NVIDIA card
             try
             {
                 // Get the list of Windows screens
@@ -1435,7 +1487,7 @@ namespace DisplayMagicianShared
             {
                 // Some other exception has occurred and we need to report it.
                 SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception while trying to find any additional windows screens that the NVIDIA driver didn't tell us about.");
-            }
+            }*/
 
 
             return _screens;
@@ -1663,7 +1715,7 @@ namespace DisplayMagicianShared
                 }
             }
 
-            // Now we also need to try and find if there are any other displays connected that don't use an AMD card
+            /*// Now we also need to try and find if there are any other displays connected that don't use an AMD card
             try
             {
                 // Get the list of Windows screens
@@ -1689,7 +1741,7 @@ namespace DisplayMagicianShared
             {
                 // Some other exception has occurred and we need to report it.
                 SharedLogger.logger.Error(ex, $"ProfileItem/GetAMDScreenPositions: Exception while trying to find any additional windows screens that the AMD driver didn't tell us about.");
-            }
+            }*/
 
             return _screens;
         }
