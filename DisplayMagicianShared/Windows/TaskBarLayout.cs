@@ -578,7 +578,8 @@ namespace DisplayMagicianShared.Windows
                     {
                         SharedLogger.logger.Debug($"TaskBarLayout/GetAllCurrentTaskBarPositions: Additional Display Taskbar read #1 from registry didn't work.");
                         retryNeeded = true;
-                        return taskBarStuckRectangles;
+                        tbsrReadWorked = tbsr.ReadFromRegistry(GetRegKeyValueFromDevicePath(displaySources[monitorInfo.szDevice][0].DevicePath), out retryNeeded);
+                        //return taskBarStuckRectangles;
                     }
                     tbsr.Edge = (TaskBarEdge)abd.uEdge;
                     tbsr.MonitorLocation = new System.Drawing.Rectangle(monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top, monWidth, monHeight);
@@ -611,11 +612,11 @@ namespace DisplayMagicianShared.Windows
                     // If it's a main screen, also add a duplicate so we track the main StuckRects settings separately too
                     TaskBarLayout tbsrMain = new TaskBarLayout();
                     tbsrReadWorked = tbsrMain.ReadFromRegistry("Settings",out retryNeeded) ;
-                    if (!retryNeeded)
+                    if (retryNeeded)
                     {
                         SharedLogger.logger.Debug($"TaskBarLayout/GetAllCurrentTaskBarPositions: Main Taskbar read #1 from registry didn't work.");
                         retryNeeded = true;
-                        return taskBarStuckRectangles;
+                        tbsrReadWorked = tbsrMain.ReadFromRegistry("Settings", out retryNeeded);
                     }
                     tbsrMain.Edge = tbsr.Edge;
                     tbsrMain.MonitorLocation = tbsr.MonitorLocation;

@@ -177,6 +177,7 @@ namespace DisplayMagicianShared
             // make each library create the default.
             _nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().CreateDefaultConfig();
             _amdDisplayConfig = AMDLibrary.GetLibrary().CreateDefaultConfig();
+            _windowsDisplayConfig = WinLibrary.GetLibrary().CreateDefaultConfig();
         }
 
         public static Version Version = new Version(2, 1);
@@ -640,6 +641,12 @@ namespace DisplayMagicianShared
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
 
+                // We also need to update the ProfileIcon so that all the icons and image lists are updated
+                _profileIcon = new ProfileIcon(this);
+                // And then update the bitmaps
+                _profileBitmap = this.ProfileIcon.ToBitmap(256, 256);
+                _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
+
                 return true;
                 
             }
@@ -1051,7 +1058,7 @@ namespace DisplayMagicianShared
             Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
 
             // Now we create the screens structure from the AMD profile information
-            _screens = new List<ScreenPosition>();
+            _screens = new List<ScreenPosition>() { };
 
             int pathCount = _windowsDisplayConfig.DisplayConfigPaths.Length;
             // First of all we need to figure out how many display paths we have.
@@ -1073,7 +1080,7 @@ namespace DisplayMagicianShared
                     {
                         // It's a spanned screen!
                         // Set some basics about the screen                        
-                        screen.SpannedScreens = new List<SpannedScreenPosition>();
+                        screen.SpannedScreens = new List<SpannedScreenPosition>() { };
                         screen.Name = "NVIDIA Surround/Mosaic";
                         screen.IsSpanned = true;
                         screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
@@ -1199,7 +1206,7 @@ namespace DisplayMagicianShared
                     else
                     {
                         // It's a standalone screen
-                        screen.SpannedScreens = new List<SpannedScreenPosition>();
+                        screen.SpannedScreens = new List<SpannedScreenPosition>() { };
                         screen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
                         screen.IsSpanned = false;
                         screen.SpannedRows = 1;
@@ -1345,7 +1352,7 @@ namespace DisplayMagicianShared
                             }
 
                             // It's a normal screen
-                            screen.SpannedScreens = new List<SpannedScreenPosition>();
+                            screen.SpannedScreens = new List<SpannedScreenPosition>() { };
                             screen.Name = targetInfo.DisplayId.ToString();
                             screen.IsSpanned = false;
                             screen.SpannedRows = 1;
@@ -1501,7 +1508,7 @@ namespace DisplayMagicianShared
             Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
 
             // Now we create the screens structure from the AMD profile information
-            _screens = new List<ScreenPosition>();
+            _screens = new List<ScreenPosition>() { };
 
             int pathCount = _windowsDisplayConfig.DisplayConfigPaths.Length;
             // First of all we need to figure out how many display paths we have.
@@ -1759,7 +1766,7 @@ namespace DisplayMagicianShared
             Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
 
             // Now we create the screens structure from the AMD profile information
-            List<ScreenPosition> windowsScreens = new List<ScreenPosition>();
+            List<ScreenPosition> windowsScreens = new List<ScreenPosition>() { };
 
             int pathCount = _windowsDisplayConfig.DisplayConfigPaths.Length;
             // First of all we need to figure out how many display paths we have.

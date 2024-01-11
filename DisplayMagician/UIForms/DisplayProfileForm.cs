@@ -278,6 +278,7 @@ namespace DisplayMagician.UIForms
 
             // Restart updating the saved_profiles listview
             ilv_saved_profiles.ResumeLayout();
+           
         }
 
 
@@ -855,20 +856,29 @@ namespace DisplayMagician.UIForms
                 // Refresh the profiles to see whats valid
                 ProfileRepository.IsPossibleRefresh();                
                 // Replace the profile data with the current active profile data
-                ProfileRepository.CopyCurrentLayoutToProfile(_selectedProfile); 
+                ProfileRepository.CopyCurrentLayoutToProfile(_selectedProfile);
+
+                // Save the Profiles JSON as it's different now
+                ProfileRepository.SaveProfiles();
+
+
                 // Refresh the Profile UI
                 RefreshDisplayProfileUI();
                 // Recenter the Window
                 RecenterWindow();
                 ProfileRepository.UserChangingProfiles = false;
 
-                // Save the Profiles JSON as it's different now
-                ProfileRepository.SaveProfiles();
                 SharedLogger.logger.Debug($"DisplayProfileForm/btn_update_Click: The profile {_selectedProfile.Name} was successfully updated with the latest display settings");
+
+
+                // And finally refresh the profile in the display view
+                dv_profile.Profile = _selectedProfile;
+                dv_profile.Refresh();
 
                 // Disable the Apply button as the curretn settings should be the same as now
                 btn_apply.Visible = false;
             }
+
         }
     }
 }
