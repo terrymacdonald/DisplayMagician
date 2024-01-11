@@ -1146,9 +1146,6 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException.Source}:{ex.InnerException.StackTrace} - {ex.InnerException.Message}\"");
                 return false;
             }
-
-            // Leaving this as a backstop in case there is a future missing code path issue
-            return false;
         }
 
 
@@ -1464,7 +1461,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Failed to complete changing the Windows Display layout");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/ApplyProfile: Failed to complete changing the Windows Display layout");
                 wasDisplayChangeSuccessful = false;
                 return ApplyProfileResult.Error;
             }

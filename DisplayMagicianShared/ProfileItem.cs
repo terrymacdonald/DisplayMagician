@@ -1127,10 +1127,12 @@ namespace DisplayMagicianShared
                             // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
                             // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
                             // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
+                            SharedLogger.logger.Trace(ex, $"ProfileItem/GetNVIDIAScreenPositions: The windows screen doesn't match the NVIDIA screen. This can happen during a transition to Mosaic.");
                             continue;
                         }
                         catch (Exception ex)
                         {
+                            SharedLogger.logger.Trace(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception ocurred whilst looking for the Windows layout details now we know the size of this display.");
                             // Some other exception has occurred and we need to report it.
                             //screen.Name = targetId.ToString();
                             //screen.DisplayConnector = displayMode.DisplayConnector;
@@ -1216,6 +1218,7 @@ namespace DisplayMagicianShared
                             // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
                             // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
                             // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
+                            SharedLogger.logger.Trace(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception thrown as the Windows display doesn't match the NVIDIA display. This is expected behaviour and can be safely ignored.");
                             continue;
                         }
                         catch (Exception ex)
