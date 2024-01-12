@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using System.Net.NetworkInformation;
 using System.Drawing;
 using System.Runtime.Serialization;
+using System.Runtime.InteropServices;
 using NLog.Config;
 using System.Collections.Generic;
 using AutoUpdaterDotNET;
@@ -92,12 +93,19 @@ namespace DisplayMagician {
             "CurrentProfile",
         };
 
+
+
         /// <summary>
         ///     The main entry point for the application.
         /// </summary>
         [STAThread]
         private static int Main(string[] args)
         {
+
+            // Redirect the console
+            ConsoleRedirect.Redirect();
+
+
             // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
             // then skip the single instance mode tests. This is important for commands used in powershell
             if (args.Length > 0 && _commandsThatBypassSingleInstanceMode.Contains(args[0]))
@@ -802,6 +810,8 @@ namespace DisplayMagician {
                 currentProfileCmd.OnExecute(() =>
                 {
                     logger.Debug($"Program/Main: CurrentProfile commandline command was invoked!");
+                   
+
                     ERRORLEVEL errLevel = CurrentProfile();
                     DeRegisterDisplayMagicianWithWindows();
                     return (int)errLevel;
@@ -1129,9 +1139,9 @@ namespace DisplayMagician {
                 logger.Error(ex, $"Program/CurrentProfile: Exception while trying to get the name of the DisplayMagician profile currently in use.");
                 errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }
-
+            
             Console.WriteLine($"Display Profile in use: {profileName}");
-            logger.Trace($"Program/RunProfile: Current display profile in use is called {profileName}. Informing the user of this fact.");
+            logger.Info($"Program/RunProfile: Current display profile in use is called {profileName}.");
 
             return errLevel;
         }
