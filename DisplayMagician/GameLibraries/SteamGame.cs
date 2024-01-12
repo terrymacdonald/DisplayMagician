@@ -227,7 +227,7 @@ namespace DisplayMagician.GameLibraries
             string address = $@"steam://rungameid/{Id}";
             if (!String.IsNullOrWhiteSpace(gameArguments))
             {
-                address += @"/" + gameArguments;
+                address += @"//" + gameArguments;
             }
             processesStarted = ProcessUtils.StartProcess(address, null, priority);
             return true;
