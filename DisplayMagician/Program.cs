@@ -100,11 +100,7 @@ namespace DisplayMagician {
         /// </summary>
         [STAThread]
         private static int Main(string[] args)
-        {
-
-            // Redirect the console
-            ConsoleRedirect.Redirect();
-
+        {          
 
             // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
             // then skip the single instance mode tests. This is important for commands used in powershell
@@ -747,76 +743,7 @@ namespace DisplayMagician {
                     return (int)errLevel;
                 });
             });
-
-
-            logger.Trace($"Program/Main: Preparing the CurrentProfile command...");
-            // This is the CurrentProfile command
-            // This will output the current display profile if one matches, or 'Unknown'
-            app.Command(DisplayMagicianStartupAction.CurrentProfile.ToString(), (currentProfileCmd) =>
-            {
-                logger.Trace($"Program/Main: Processing the {currentProfileCmd} command...");
-
-                // Set the --trace or --debug options if supplied
-                if (trace.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
-                else if (debug.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
-
-                // Set the --force-video-library option if supplied
-                if (forcedVideoLibrary.HasValue())
-                {
-                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
-                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("AMD"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
-                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("Windows"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
-                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                    }
-                    else
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                    }
-                }
-                else
-                {
-                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                }
-                //description and help text of the command.
-                currentProfileCmd.Description = "Use this command to output the name of the display profile currently in use. It will return 'UNKNOWN' if the display profile doesn't match any saved display profiles";
-
-                currentProfileCmd.OnExecute(() =>
-                {
-                    logger.Debug($"Program/Main: CurrentProfile commandline command was invoked!");
-                   
-
-                    ERRORLEVEL errLevel = CurrentProfile();
-                    DeRegisterDisplayMagicianWithWindows();
-                    return (int)errLevel;
-                });
-            });
+           
 
             logger.Trace($"Program/Main: Preparing the default command...");
 
@@ -1112,40 +1039,6 @@ namespace DisplayMagician {
             return errLevel;
 
         }
-
-        public static ERRORLEVEL CurrentProfile()
-        {
-            logger.Trace($"Program/CurrentProfile: Finding the current profile in use");
-
-            // Close the splash screen
-            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
-
-            // Lookup the profile
-            ProfileItem currentProfile;
-            string profileName = "UNKNOWN";
-            ERRORLEVEL errLevel = ERRORLEVEL.OK;
-            try
-            {
-                ProfileRepository.UpdateActiveProfile();
-                currentProfile = ProfileRepository.GetActiveProfile();
-                if (currentProfile is ProfileItem)
-                {
-                    profileName = currentProfile.Name;
-                }                
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/CurrentProfile: Exception while trying to get the name of the DisplayMagician profile currently in use.");
-                errLevel = ERRORLEVEL.ERROR_EXCEPTION;
-            }
-            
-            Console.WriteLine($"Display Profile in use: {profileName}");
-            logger.Info($"Program/RunProfile: Current display profile in use is called {profileName}.");
-
-            return errLevel;
-        }
-
 
         public static ERRORLEVEL RunProfile(string profileName)
         {
