@@ -828,57 +828,59 @@ namespace DisplayMagician.UIForms
 
         private void btn_update_Click(object sender, EventArgs e)
         {
-            // Check there is a name
-            if (String.IsNullOrWhiteSpace(txt_profile_save_name.Text))
+            // check if the user really wants to update
+            if (MessageBox.Show($"Do you really want to overwrite the display settings in the '{_selectedProfile.Name}' Display Profile with the display settings current in use?", "Update Display Profile settings?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.OK)
             {
-                logger.Warn($"DisplayProfileForm/btn_save_as_Click: You need to provide a name for this profile before it can be updated.");
-                MessageBox.Show("You need to provide a name for this profile before it can be updated.", "Your profile needs a name", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                // Check there is a name
+                if (String.IsNullOrWhiteSpace(txt_profile_save_name.Text))
+                {
+                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: You need to provide a name for this profile before it can be updated.");
+                    MessageBox.Show("You need to provide a name for this profile before it can be updated.", "Your profile needs a name", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Check the name is valid
+                if (!Program.IsValidFilename(txt_profile_save_name.Text))
+                {
+                    logger.Warn($"DisplayProfileForm/btn_update_Click: The profile name cannot contain the following characters: {Path.GetInvalidFileNameChars()}. Unable to save this profile.");
+                    MessageBox.Show($"The profile name cannot contain the following characters: [{Path.GetInvalidFileNameChars()}]. Please change the profile name.", "Invalid characters in profile name", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // If we're saving the current profile as a new item
+                // then we'll be in "save" mode
+                if (_saveOrRenameMode == "rename")
+                {
+                    // We're in 'rename' mode!
+                    // This also means we are going to have to get the latest current Profile and then overwrtite this data
+
+                    ProfileRepository.UserChangingProfiles = true;
+                    // Replace the profile data with the current active profile data
+                    ProfileRepository.CopyCurrentLayoutToProfile(_selectedProfile);
+
+                    // Save the Profiles JSON as it's different now
+                    ProfileRepository.SaveProfiles();
+
+                    // Refresh the profiles to see whats valid
+                    ProfileRepository.IsPossibleRefresh();
+
+                    // Refresh the Profile UI
+                    RefreshDisplayProfileUI();
+                    // Recenter the Window
+                    RecenterWindow();
+                    ProfileRepository.UserChangingProfiles = false;
+
+                    SharedLogger.logger.Debug($"DisplayProfileForm/btn_update_Click: The profile {_selectedProfile.Name} was successfully updated with the latest display settings");
+                    MessageBox.Show($"The profile {_selectedProfile.Name} was successfully updated with the latest display settings.", "Profile updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // And finally refresh the profile in the display view
+                    dv_profile.Profile = _selectedProfile;
+                    dv_profile.Refresh();
+
+                    // Disable the Apply button as the curretn settings should be the same as now
+                    btn_apply.Visible = false;
+                }
             }
-
-            // Check the name is valid
-            if (!Program.IsValidFilename(txt_profile_save_name.Text))
-            {
-                logger.Warn($"DisplayProfileForm/btn_update_Click: The profile name cannot contain the following characters: {Path.GetInvalidFileNameChars()}. Unable to save this profile.");
-                MessageBox.Show($"The profile name cannot contain the following characters: [{Path.GetInvalidFileNameChars()}]. Please change the profile name.", "Invalid characters in profile name", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-
-            // If we're saving the current profile as a new item
-            // then we'll be in "save" mode
-            if (_saveOrRenameMode == "rename")
-            { 
-                // We're in 'rename' mode!
-                // This also means we are going to have to get the latest current Profile and then overwrtite this data
-
-                ProfileRepository.UserChangingProfiles = true;
-                // Refresh the profiles to see whats valid
-                ProfileRepository.IsPossibleRefresh();                
-                // Replace the profile data with the current active profile data
-                ProfileRepository.CopyCurrentLayoutToProfile(_selectedProfile);
-
-                // Save the Profiles JSON as it's different now
-                ProfileRepository.SaveProfiles();
-
-
-                // Refresh the Profile UI
-                RefreshDisplayProfileUI();
-                // Recenter the Window
-                RecenterWindow();
-                ProfileRepository.UserChangingProfiles = false;
-
-                SharedLogger.logger.Debug($"DisplayProfileForm/btn_update_Click: The profile {_selectedProfile.Name} was successfully updated with the latest display settings");
-
-
-                // And finally refresh the profile in the display view
-                dv_profile.Profile = _selectedProfile;
-                dv_profile.Refresh();
-
-                // Disable the Apply button as the curretn settings should be the same as now
-                btn_apply.Visible = false;
-            }
-
         }
     }
 }
