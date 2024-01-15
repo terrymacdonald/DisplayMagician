@@ -2511,7 +2511,7 @@ namespace DisplayMagician
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications capture (microphone) device back to {rollbackCommunicationCaptureDevice.Name} capture device");
                     // use the Audio Device
-                    rollbackCommunicationCaptureDevice.SetAsDefault();
+                    rollbackCommunicationCaptureDevice.SetAsDefaultCommunications();
 
                     if (shortcutToUse.SetCaptureVolume)
                     {
