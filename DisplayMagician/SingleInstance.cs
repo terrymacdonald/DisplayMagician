@@ -80,10 +80,6 @@ namespace DisplayMagician
                         logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the CreateProfile command: '{args[1]} {args[2]}'");
                         Program.CreateProfile();
                         break;
-                    case "CurrentProfile":
-                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the CurrentProfile command: '{args[1]} {args[2]}'");
-                        Program.CurrentProfile();
-                        break;
                     default:
                         logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an unsupported command: '{args[1]}'");
                         break;

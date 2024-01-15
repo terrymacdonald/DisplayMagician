@@ -90,7 +90,7 @@ namespace DisplayMagician {
 
         private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
         {
-            "CurrentProfile",
+            // "CurrentProfile",
         };
 
 
