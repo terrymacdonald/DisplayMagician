@@ -829,7 +829,7 @@ namespace DisplayMagician.UIForms
         private void btn_update_Click(object sender, EventArgs e)
         {
             // check if the user really wants to update
-            if (MessageBox.Show($"Do you really want to overwrite the display settings in the '{_selectedProfile.Name}' Display Profile with the display settings current in use?", "Update Display Profile settings?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.OK)
+            if (MessageBox.Show($"Do you really want to overwrite the display settings in the '{_selectedProfile.Name}' Display Profile with the display settings currently in use? This cannot be undone.", "Update Display Profile settings?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.OK)
             {
                 // Check there is a name
                 if (String.IsNullOrWhiteSpace(txt_profile_save_name.Text))
