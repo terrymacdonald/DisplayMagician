@@ -250,10 +250,10 @@ namespace DisplayMagician {
 
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
-            
+
 
             // Rules for mapping loggers to targets          
-            NLog.LogLevel logLevel = null;
+            /* NLog.LogLevel logLevel = null;
             switch (AppProgramSettings.LogLevel)
             {
                 case "Trace":
@@ -274,13 +274,13 @@ namespace DisplayMagician {
                 default:
                     logLevel = NLog.LogLevel.Info;
                     break;
-            }
+            }*/
             // TODO - remove this temporary action to force Trace level logging
             // I've set this as it was too onerous continuously teaching people how to turn on TRACE logging
             // While there are a large number of big changes taking place with DisplayMagician, this will minimise
             // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
-            //NLog.LogLevel logLevel = NLog.LogLevel.Trace;
-            //AppProgramSettings.LogLevel = "Trace";
+            NLog.LogLevel logLevel = NLog.LogLevel.Trace;
+            AppProgramSettings.LogLevel = "Trace";
 
 
             // Targets where to log to: File and Console
