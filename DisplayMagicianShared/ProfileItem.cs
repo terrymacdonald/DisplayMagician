@@ -102,6 +102,9 @@ namespace DisplayMagicianShared
 
         private string _uuid = "";
         private bool _isPossible = false;
+        private bool _isNVIDIAPossible = false;
+        private bool _isAMDPossible = false;
+        private bool _isWindowsPossible = false;
         private Keys _hotkey = Keys.None;
         private string _wallpaperBitmapFilename = "";
         
@@ -210,10 +213,10 @@ namespace DisplayMagicianShared
                 // Return the cached answer
                 return _isPossible;
             }
-            set
+            /*set
             {
                 _isPossible = value;
-            }
+            }*/
         }
 
         [JsonIgnore]
@@ -230,9 +233,9 @@ namespace DisplayMagicianShared
             }
         }
 
-        [DefaultValue(VIDEO_MODE.WINDOWS)]
+        /*[DefaultValue(VIDEO_MODE.WINDOWS)]
 
-        public virtual VIDEO_MODE VideoMode { get; set; } = VIDEO_MODE.WINDOWS;
+        public virtual VIDEO_MODE VideoMode { get; set; } = VIDEO_MODE.WINDOWS;*/
 
         [DefaultValue(Keys.None)]
         public Keys Hotkey {
@@ -446,7 +449,7 @@ namespace DisplayMagicianShared
             AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
             WinLibrary winLibrary = WinLibrary.GetLibrary();
 
-            if (VideoMode == VIDEO_MODE.NVIDIA) 
+            if (nvidiaLibrary.IsInstalled) 
             {
                 /*// Check if this is a
                 if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled && _nvidiaDisplayConfig.PhysicalAdapters.Count > 0 && _nvidiaDisplayConfig.DisplayIdentifiers.Count == 0)
@@ -470,27 +473,22 @@ namespace DisplayMagicianShared
                     return false;
                 }
             }
-            else if (VideoMode == VIDEO_MODE.AMD)
+            
+            if (amdLibrary.IsInstalled)
             {
-                if (!AMDLibrary.GetLibrary().IsValidConfig(_amdDisplayConfig))
+                if (!amdLibrary.IsValidConfig(_amdDisplayConfig))
                 {
                     SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid AMD display config");
                     return false;
                 }                    
             }
-            else if (VideoMode == VIDEO_MODE.WINDOWS)
+                        
+            if (!winLibrary.IsValidConfig(_windowsDisplayConfig))
             {
-                if (!WinLibrary.GetLibrary().IsValidConfig(_windowsDisplayConfig))
-                {
-                    SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid Windows CCD display config");
-                    return false;
-                }
+                SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid Windows CCD display config");
+                return false;
             }
-            else
-            {
-                SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an unknown video mode!");
-            }
-
+            
             // The rest of the 
             if (ProfileIcon is ProfileIcon &&
                 System.IO.File.Exists(SavedProfileIconCacheFilename) &&
@@ -588,7 +586,7 @@ namespace DisplayMagicianShared
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
                 _profileDisplayIdentifiers = nvidiaLibrary.CurrentDisplayIdentifiers;
 
-                if (nvidiaLibrary.IsInstalled)
+                /*if (nvidiaLibrary.IsInstalled)
                 {
                     // Set the default Video Mode to NVIDIA
                     SharedLogger.logger.Debug($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an NVIDIA GPU. Changing the VideoMode to NVIDIA to reflect this.");
@@ -614,7 +612,8 @@ namespace DisplayMagicianShared
 
                     }
                 }
-                else if (amdLibrary.IsInstalled)
+                
+                if (amdLibrary.IsInstalled)
                 {
                     // Set the default Video Mode to AMD
                     SharedLogger.logger.Debug($"ProfileItem/CreateProfileFromCurrentDisplaySettings: This PC is likely a CPU with an AMD GPU. Changing the VideoMode to AMD to reflect this.");
@@ -636,7 +635,7 @@ namespace DisplayMagicianShared
                     {
                         SharedLogger.logger.Warn($"ProfileItem/CreateProfileFromCurrentDisplaySettings: The Windows config has no display identifiers in Windows mode, yet we should have at least one screen. The PC may be running headless, in which case ignore this message.");
                     }
-                }
+                }*/
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
@@ -728,65 +727,63 @@ namespace DisplayMagicianShared
 
         public virtual void RefreshPossbility()
         {
-            // Check whether this profile is the same as the video mode, otherwise it's not possible
-            if (ProfileRepository.CurrentVideoMode != VideoMode)
-            {
-                SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
-                _isPossible = false;
-                return;
-            }
+            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+
+            // Set isPossible to true unless we find it can't be done.
+            _isPossible = true;
 
             // Otherwise actually check the possibility
-            if (ProfileRepository.CurrentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
+            if (nvidiaLibrary.IsInstalled)
             {
-                if (NVIDIALibrary.GetLibrary().IsPossibleConfig(_nvidiaDisplayConfig))
+                if (nvidiaLibrary.IsPossibleConfig(_nvidiaDisplayConfig))
                 {
 
                     SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is possible!");
-                    _isPossible = true;
+                    _isNVIDIAPossible = true;
 
                 }
                 else
                 {
                     SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
+                    _isNVIDIAPossible = false;
                     _isPossible = false;
                 }
             }
-            else if (ProfileRepository.CurrentVideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
+
+            if (amdLibrary.IsInstalled)
             {
-                if (AMDLibrary.GetLibrary().IsPossibleConfig(_amdDisplayConfig))
+                if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
                 {
 
                     SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The AMD profile {Name} is possible!");
-                    _isPossible = true;
+                    _isAMDPossible = true;
 
                 }
                 else
                 {
                     SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The AMD profile {Name} is NOT possible!");
+                    _isAMDPossible = false;
                     _isPossible = false;
                 }
             }
-            else if (ProfileRepository.CurrentVideoMode == VIDEO_MODE.WINDOWS && WinLibrary.GetLibrary().IsInstalled)
+            
+            if (winLibrary.IsPossibleConfig(_windowsDisplayConfig))
             {
-                if (WinLibrary.GetLibrary().IsPossibleConfig(_windowsDisplayConfig))
-                {
 
-                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
-                    _isPossible = true;
+                SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
+                _isWindowsPossible = true;
 
-                }
-                else
-                {
-                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
-                    _isPossible = false;
-                }
             }
             else
             {
-                SharedLogger.logger.Warn($"ProfileItem/IsPossibleRefresh: We have a current video mode we don't understand, or it's not installed! The current video mode is {ProfileRepository.CurrentVideoMode}. The profile {Name} has a {VideoMode.ToString("G")} video mode and NVIDIALibrary IsInstalled is {NVIDIALibrary.GetLibrary().IsInstalled}, AMDLibrary IsInstalled is {AMDLibrary.GetLibrary().IsInstalled} and WinLibrary IsInstalled is {WinLibrary.GetLibrary().IsInstalled} ");
+                SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
+                _isWindowsPossible = false;
                 _isPossible = false;
             }
+
+            
         }
 
         // Actually set this profile active

@@ -526,38 +526,6 @@ namespace DisplayMagician {
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
 
-                // Set the --force-video-library option if supplied
-                if (forcedVideoLibrary.HasValue())
-                {
-                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
-                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("AMD"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
-                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("Windows"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
-                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                    }
-                    else
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                    }
-                }
-                else
-                {
-                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                }
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
 
@@ -610,38 +578,6 @@ namespace DisplayMagician {
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
 
-                // Set the --force-video-library option if supplied
-                if (forcedVideoLibrary.HasValue())
-                {
-                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
-                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("AMD"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
-                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("Windows"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
-                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                    }
-                    else
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                    }
-                }
-                else
-                {
-                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                }
 
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
                 argumentProfile.Validators.Add(new ProfileMustExistValidator());
@@ -699,38 +635,6 @@ namespace DisplayMagician {
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
 
-                // Set the --force-video-library option if supplied
-                if (forcedVideoLibrary.HasValue())
-                {
-                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
-                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("AMD"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
-                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("Windows"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
-                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                    }
-                    else
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                    }
-                }
-                else
-                {
-                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                }
                 //description and help text of the command.
                 createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
 
@@ -767,38 +671,6 @@ namespace DisplayMagician {
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
 
-                // Set the --force-video-library option if supplied
-                if (forcedVideoLibrary.HasValue())
-                {
-                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
-                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("AMD"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
-                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                    }
-                    else if (forcedVideoLibrary.Value().Equals("Windows"))
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
-                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                    }
-                    else
-                    {
-                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                    }
-                }
-                else
-                {
-                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
-                }
 
                 logger.Debug($"Program/Main: No commandline command was invoked, so starting up normally");
                 // Add a workaround to handle the weird way that Windows tell us that DisplayMagician 

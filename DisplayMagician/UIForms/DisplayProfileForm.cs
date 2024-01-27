@@ -328,7 +328,7 @@ namespace DisplayMagician.UIForms
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _selectedProfile.Name;
 
-            // And show the logo for the driver
+            /*// And show the logo for the driver
             if (_selectedProfile.VideoMode == VIDEO_MODE.NVIDIA)
             {
                 pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.nvidiablack, Properties.Resources.nvidiawhite);
@@ -340,7 +340,7 @@ namespace DisplayMagician.UIForms
             else
             {
                 pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.winblack, Properties.Resources.winwhite);
-            }
+            }*/
 
             // And update the save/rename textbox
             txt_profile_save_name.Text = _selectedProfile.Name;

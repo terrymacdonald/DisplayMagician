@@ -2513,7 +2513,7 @@ namespace DisplayMagician.UIForms
             _profileToUse = profile;
 
             // And show the logo for the driver
-            if (_profileToUse.VideoMode == VIDEO_MODE.NVIDIA)
+            /*if (_profileToUse.VideoMode == VIDEO_MODE.NVIDIA)
             {
                 pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.nvidiablack, Properties.Resources.nvidiawhite);
             }
@@ -2524,7 +2524,7 @@ namespace DisplayMagician.UIForms
             else
             {
                 pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.winblack, Properties.Resources.winwhite);
-            }
+            }*/
 
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _profileToUse.Name;

@@ -24,20 +24,20 @@ namespace DisplayMagicianShared
     // It effectively controls what video card library is used to store profiles on the computer
     // We look up the PCI vendor ID for the video cards, and then we look for them in the order from most commonly
     // sold video card to the least, followed by the generic 'catch-all' windows mode.
-    public enum VIDEO_MODE : Int32
-    {
-        WINDOWS = 0,
-        NVIDIA = 1,
-        AMD = 2,
-    }
+    /*    public enum VIDEO_MODE : Int32
+        {
+            WINDOWS = 0,
+            NVIDIA = 1,
+            AMD = 2,
+        }
 
-    public enum FORCED_VIDEO_MODE : Int32
-    {
-        WINDOWS = 0,
-        NVIDIA = 1,
-        AMD = 2,
-        DETECT = 99,
-    }
+        public enum FORCED_VIDEO_MODE : Int32
+        {
+            WINDOWS = 0,
+            NVIDIA = 1,
+            AMD = 2,
+            DETECT = 99,
+        }*/
 
     public enum ApplyProfileResult
     {
@@ -60,8 +60,8 @@ namespace DisplayMagicianShared
         private static NVIDIALibrary nvidiaLibrary;
         private static WinLibrary winLibrary;
         // Make the default video mode Windows
-        private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
-        private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+        //private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
+        //private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
         private static bool _pauseReadsUntilChangeCompleted = false;
         private static bool _userChangingProfiles = false;
 
@@ -71,7 +71,7 @@ namespace DisplayMagicianShared
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
         private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.4.json");
-        
+
 
 
         #endregion
@@ -79,7 +79,7 @@ namespace DisplayMagicianShared
         #region Class Constructors
         static ProfileRepository()
         {
-            
+
             try
             {
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
@@ -108,7 +108,7 @@ namespace DisplayMagicianShared
             catch (Exception ex)
             {
                 SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Exception creating the Profiles storage folder.");
-            }            
+            }
         }
         #endregion
 
@@ -174,29 +174,29 @@ namespace DisplayMagicianShared
             get => _profileStorageJsonFileName;
         }
 
-        public static VIDEO_MODE CurrentVideoMode
-        {
-            get
-            {
-                return _currentVideoMode;
-            }
-            set
-            {
-                _currentVideoMode = value;
-            }
-        }
-        public static FORCED_VIDEO_MODE ForcedVideoMode
-        {
-            get
-            {
-                return _forcedVideoMode;
-            }
-            set
-            {
-                _forcedVideoMode = value;
-                SetVideoCardMode(value);
-            }
-        }
+        /* public static VIDEO_MODE CurrentVideoMode
+         {
+             get
+             {
+                 return _currentVideoMode;
+             }
+             set
+             {
+                 _currentVideoMode = value;
+             }
+         }
+         public static FORCED_VIDEO_MODE ForcedVideoMode
+         {
+             get
+             {
+                 return _forcedVideoMode;
+             }
+             set
+             {
+                 _forcedVideoMode = value;
+                 SetVideoCardMode(value);
+             }
+         }*/
 
 
         public static List<string> ConnectedDisplayIdentifiers
@@ -243,20 +243,21 @@ namespace DisplayMagicianShared
         #endregion
 
         #region Class Methods
-        public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
+        //public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
+        public static bool InitialiseRepository()
         {
-            if (!SetVideoCardMode(forcedVideoMode))
+            /*if (!SetVideoCardMode(forcedVideoMode))
             {
                 return false;
-            }
-            
+            }*/
+
             if (!_profilesLoaded)
             {
                 if (!LoadProfiles())
                 {
                     return false;
                 }
-            }            
+            }
 
             return true;
         }
@@ -318,7 +319,7 @@ namespace DisplayMagicianShared
                     {
                         File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
                     }
-                    
+
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -559,7 +560,7 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {profile.Name}");
                     return true;
-                } 
+                }
             }
             SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository doesn't contain a profile called {profile.Name}");
             return false;
@@ -606,7 +607,7 @@ namespace DisplayMagicianShared
             {
                 return false;
             }
-                
+
 
             SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Checking if our profile repository contains the display profile currently in use");
 
@@ -736,7 +737,7 @@ namespace DisplayMagicianShared
             // If we were trying for an NVIDIA mode but we actually got an AMD mode then we're likely on a AMD laptop with NVIDA GPU disabled
             // We need to swap to AMD mode for the screen to be detected.
             // We've made this generic by making the videomodes match if the detection isn't forced by the user
-            if (_currentVideoMode != profile.VideoMode && _forcedVideoMode == FORCED_VIDEO_MODE.DETECT)
+            /*if (_currentVideoMode != profile.VideoMode && _forcedVideoMode == FORCED_VIDEO_MODE.DETECT)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Current Video Mode changed from {_currentVideoMode} to {profile.VideoMode} as the display settings detection recognised it needed to change.");
                 _currentVideoMode = profile.VideoMode;                
@@ -756,7 +757,7 @@ namespace DisplayMagicianShared
             else
             {
                 profile.Name = "Current Windows Display Profile";
-            }
+            }*/
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
@@ -766,7 +767,7 @@ namespace DisplayMagicianShared
                     if (loadedProfile.Equals(profile))
                     {
                         _currentProfile = loadedProfile;
-                        SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The {loadedProfile.VideoMode.ToString("G")} profile '{loadedProfile.Name}' is currently active (in use now).");
+                        SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The profile '{loadedProfile.Name}' is currently active (in use now).");
                         return;
                     }
                 }
@@ -798,8 +799,8 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is null. Not changing anything, and reporting an error");
                 return false;
-            }             
-            
+            }
+
             if (profile.Equals(_currentProfile))
             {
                 SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is the currently active profile.");
@@ -812,7 +813,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        
+
         private static bool LoadProfiles()
         {
             SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFileName} into the Profile Repository");
@@ -838,7 +839,7 @@ namespace DisplayMagicianShared
                 {
                     List<string> jsonErrors = new List<string>();
 
-                     try
+                    try
                     {
                         JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
@@ -846,13 +847,13 @@ namespace DisplayMagicianShared
                             NullValueHandling = NullValueHandling.Include,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace,                            
+                            ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
                                 args.ErrorContext.Handled = true;
                             },
-                        };                       
+                        };
                         _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
 
                         // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
@@ -877,8 +878,8 @@ namespace DisplayMagicianShared
                         MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
-                    catch (Exception ex) 
-                    { 
+                    catch (Exception ex)
+                    {
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                         MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -901,7 +902,7 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
                     //UpdateActiveProfile();
                 }
-            } 
+            }
             else
             {
                 // If we get here, then we don't have any profiles saved!
@@ -923,7 +924,7 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
 
-            SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
+            /*SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
             if (_currentVideoMode == VIDEO_MODE.NVIDIA)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
@@ -937,7 +938,7 @@ namespace DisplayMagicianShared
             else
             {
                 profile.VideoMode = VIDEO_MODE.WINDOWS;
-            }
+            }*/
 
             // Actually do the updating of the display settings
             profile.CreateProfileFromCurrentDisplaySettings(false);
@@ -954,7 +955,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Processing the Profiles json data to migrate any older feature to the latest version.");
                 root = JArray.Parse(json);
             }
-            catch(JsonReaderException ex)
+            catch (JsonReaderException ex)
             {
                 // If there is a error in the JSON format
                 if (ex.HResult == -2146233088)
@@ -966,11 +967,11 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Error(ex, $"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
                 }
-                
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex,$"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
             }
 
             // We do the actual change we were trying to do
@@ -991,14 +992,14 @@ namespace DisplayMagicianShared
                     foreach (var dsListItem in dsList)
                     {
                         var displaySourceArray = dsListItem.Values().ToArray();
-                        for (int j=0; j<displaySourceArray.Length; j++)
+                        for (int j = 0; j < displaySourceArray.Length; j++)
                         {
                             if (displaySourceArray[j]["SourceDpiScalingRel"] == null)
                             {
                                 displaySourceArray[j]["SourceDpiScalingRel"] = 0;
                                 changedJson = true;
                             }
-                        }                        
+                        }
                     }
 
                 }
@@ -1022,7 +1023,7 @@ namespace DisplayMagicianShared
 
                     File.WriteAllText(_profileStorageJsonFileName, json, Encoding.Unicode);
                 }
-            }            
+            }
 
 
             return json;
@@ -1113,7 +1114,7 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFileName} failed. The profile repository was unable to be saved the first time. Attempting to save again.");
 
                         // Waiting a second to let any transient issue pass.
-                        Thread.Sleep( 1000 );
+                        Thread.Sleep(1000);
 
                         SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFileName} for a second time.");
 
@@ -1237,7 +1238,7 @@ namespace DisplayMagicianShared
                     {
                         return true;
                     }
-                    else 
+                    else
                     {
                         return false;
                     }
@@ -1272,7 +1273,7 @@ namespace DisplayMagicianShared
                     // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
                     SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. We also don't have any display profiles, so that matches. This is expected.");
                     return true;
-                }            
+                }
             }
         }
 
@@ -1291,7 +1292,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Warn(ex,$"ProfileRepository/SaveProfileIconToCache: Exception saving the profile icon {profile.SavedProfileIconCacheFilename} to the {AppProfileStoragePath} folder. Using the default DisplayMagician icon instead");
+                SharedLogger.logger.Warn(ex, $"ProfileRepository/SaveProfileIconToCache: Exception saving the profile icon {profile.SavedProfileIconCacheFilename} to the {AppProfileStoragePath} folder. Using the default DisplayMagician icon instead");
                 // If we fail to create an icon based on the Profile, then we use the standard DisplayMagician profile one.
                 // Which is created on program startup.
                 File.Copy(AppDisplayMagicianIconFilename, profile.SavedProfileIconCacheFilename);
@@ -1347,21 +1348,19 @@ namespace DisplayMagicianShared
                 }
                 SharedLogger.logger.Trace($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Paused checking for all connected display identifiers for {totalDelay} milliseconds.");
             }
-            
 
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
-            {
-                return NVIDIALibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
-            }
-            else if (_currentVideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
-            {
-                return AMDLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
-            }
-            else 
-            {
-                return WinLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
-            }
+            List<string> allConnectedDisplayIdentifiers = new List<string>();
+            if (NVIDIALibrary.GetLibrary().IsInstalled)
+                allConnectedDisplayIdentifiers.AddRange(NVIDIALibrary.GetLibrary().GetAllConnectedDisplayIdentifiers());
+
+            if (AMDLibrary.GetLibrary().IsInstalled)
+                allConnectedDisplayIdentifiers.AddRange(AMDLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers());
+
+            allConnectedDisplayIdentifiers.AddRange(WinLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers());
+            
+            return allConnectedDisplayIdentifiers;
         }
+
 
         public static List<string> GetCurrentDisplayIdentifiers()
         {
@@ -1381,20 +1380,20 @@ namespace DisplayMagicianShared
                 }
                 SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Paused checking for currently connected display identifiers for {totalDelay} milliseconds.");
             }
-            
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
-            {
-                return NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers;
-            }
-            else if (_currentVideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
-            {
-                return AMDLibrary.GetLibrary().CurrentDisplayIdentifiers;
-            }
-            else
-            {
-                return WinLibrary.GetLibrary().CurrentDisplayIdentifiers;
-            }
+
+            List<string> currentDisplayIdentifiers = new List<string>();
+            if (NVIDIALibrary.GetLibrary().IsInstalled)
+                currentDisplayIdentifiers.AddRange(NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers);
+
+            if (AMDLibrary.GetLibrary().IsInstalled)
+                currentDisplayIdentifiers.AddRange(AMDLibrary.GetLibrary().CurrentDisplayIdentifiers);
+
+            currentDisplayIdentifiers.AddRange(WinLibrary.GetLibrary().CurrentDisplayIdentifiers);
+
+            return currentDisplayIdentifiers;
+
         }
+
 
         public static bool IsValidFilename(string testName)
         {
@@ -1450,12 +1449,12 @@ namespace DisplayMagicianShared
                 // We try to swap profiles. The profiles have checking logic in them
                 if (!(profile.SetActive()))
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.VideoMode.ToString("G")} Profile!");
+                    SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.Name} Profile!");
                     return ApplyProfileResult.Error;
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.VideoMode.ToString("G")} Profile!");
+                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.Name} Profile!");
                     return ApplyProfileResult.Successful;
                 }                
             }
@@ -1509,7 +1508,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static bool SetVideoCardMode(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
+        /*public static bool SetVideoCardMode(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
         {            
             _forcedVideoMode = forcedVideoMode;
             // This sets the order in which the different modes have been chosen.
@@ -1601,7 +1600,7 @@ namespace DisplayMagicianShared
             }
 
             return true;
-        }
+        }*/
         
 
 
