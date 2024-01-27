@@ -1991,6 +1991,100 @@ namespace DisplayMagicianShared.AMD
             return displayIdentifiers;
         }
 
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        {
+
+            if (list1.Count != list2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the list1, checking that all it's items are in list2
+            foreach (T item1 in list1)
+            {
+                bool foundIt = false;
+                foreach (T item2 in list2)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the list2, checking that all it's items are in list1
+            foreach (T item2 in list2)
+            {
+                bool foundIt = false;
+                foreach (T item1 in list1)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        public static bool EqualButDifferentOrder<TKey, TValue>(IDictionary<TKey, TValue> dict1, IDictionary<TKey, TValue> dict2)
+        {
+
+            if (dict1.Count != dict2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the dict1, checking that all it's items are in dict2
+            foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the dict2, checking that all it's items are in dict1
+            foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
     [global::System.Serializable]

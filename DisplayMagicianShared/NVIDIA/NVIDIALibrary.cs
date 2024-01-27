@@ -148,7 +148,7 @@ namespace DisplayMagicianShared.NVIDIA
             HasLogicalGPU == other.HasLogicalGPU &&
             LogicalGPU.Equals(other.LogicalGPU) &&
             DisplayCount == other.DisplayCount &&
-            Displays.SequenceEqual(other.Displays);
+            NVIDIALibrary.EqualButDifferentOrder<uint,NVIDIA_PER_DISPLAY_CONFIG>(Displays,other.Displays);
 
         public override int GetHashCode()
         {
@@ -188,7 +188,7 @@ namespace DisplayMagicianShared.NVIDIA
                 return false;
             }
 
-            // Now we need to go through the display configscomparing values, as the order changes if there is a cloned display
+            // Now we need to go through the display configs comparing values, as the order changes if there is a cloned display
             if (!NVIDIALibrary.EqualButDifferentOrder<NV_DISPLAYCONFIG_PATH_INFO_V2>(DisplayConfigs, other.DisplayConfigs))
             {
                 return false;
@@ -4389,9 +4389,58 @@ namespace DisplayMagicianShared.NVIDIA
 
             return true;
         }
+
+
+        public static bool EqualButDifferentOrder<TKey,TValue>(IDictionary<TKey,TValue> dict1, IDictionary<TKey, TValue> dict2)
+        {
+
+            if (dict1.Count != dict2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the dict1, checking that all it's items are in dict2
+            foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the dict2, checking that all it's items are in dict1
+            foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
 
+    
 
 
     [global::System.Serializable]

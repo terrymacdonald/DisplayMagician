@@ -100,6 +100,12 @@ namespace DisplayMagicianShared.Windows
                 return false;
             }
 
+            // Now we need to go through the DisplayAdapters dictonary comparing keys and values, as the order changes sometimes after a reboot
+            if (!WinLibrary.EqualButDifferentOrder<ulong,string>(DisplayAdapters, other.DisplayAdapters))
+            {
+                return false;
+            }
+
             // Now we need to go through the HDR states comparing vaues, as the order changes if there is a cloned display
             if (!WinLibrary.EqualButDifferentOrder<ADVANCED_HDR_INFO_PER_PATH>(DisplayHDRStates, other.DisplayHDRStates))
             {
@@ -2572,6 +2578,54 @@ namespace DisplayMagicianShared.Windows
                 foreach (T item1 in list1)
                 {
                     if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        public static bool EqualButDifferentOrder<TKey, TValue>(IDictionary<TKey, TValue> dict1, IDictionary<TKey, TValue> dict2)
+        {
+
+            if (dict1.Count != dict2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the dict1, checking that all it's items are in dict2
+            foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the dict2, checking that all it's items are in dict1
+            foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
                     {
                         foundIt = true;
                         break;
