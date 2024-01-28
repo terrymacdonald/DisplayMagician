@@ -74,6 +74,7 @@ namespace DisplayMagician.UIForms
                 ChangeSelectedProfile(_selectedProfile);
                 MainForm myMainForm = Program.AppMainForm;
                 myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
+
             }
             else if (result == ApplyProfileResult.Cancelled)
             {
@@ -355,6 +356,7 @@ namespace DisplayMagician.UIForms
                 if (!_selectedProfile.IsPossible)
                 {
                     lbl_profile_shown_subtitle.Text = "This Display Profile can't be used as not all Displays are connected.";
+                    lbl_profile_shown_subtitle.Visible = true;
                     btn_apply.Visible = false;
                 }
                 else
@@ -363,12 +365,14 @@ namespace DisplayMagician.UIForms
                     {
                         btn_apply.Visible = false;
                         lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
+                        lbl_profile_shown_subtitle.Visible = true;
                         cms_profiles.Items[0].Enabled = false;
                     }
                     else
                     {
                         btn_apply.Visible = true;
                         lbl_profile_shown_subtitle.Text = "";
+                        lbl_profile_shown_subtitle.Visible = false;
                         cms_profiles.Items[0].Enabled = true;
                     }
                 }
@@ -379,6 +383,7 @@ namespace DisplayMagician.UIForms
                 _saveOrRenameMode = "save";
                 btn_save_or_rename.Text = "Save";
                 lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet.";
+                lbl_profile_shown_subtitle.Visible = true;
                 btn_apply.Visible = false;
                 btn_update.Visible = false;
                 lbl_save_profile.Visible = true;
