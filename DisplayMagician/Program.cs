@@ -197,7 +197,7 @@ namespace DisplayMagician {
             string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             try
             {               
-                if (!File.Exists(targetSettingsFile))
+                if (!File.Exists(targetSettingsFile) && OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
                 {
                     string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
                     string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
@@ -419,11 +419,15 @@ namespace DisplayMagician {
                 logger.Info($"Program/Main: Upgraded old settings file to settings file {targetSettingsFile} earlier in loading process (before logging service was available).");
             }
 
+            
+            // Note - we cannot upgrasde the DisplayProfiles from prior versions so this file has been skipped.
+
+
             // Also upgrade the Shortcuts file if it's needed
             string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
             try
             {
-                if (!File.Exists(targetShortcutsFile))
+                if (!File.Exists(targetShortcutsFile) && OldFileVersionsExist(Path.GetDirectoryName(targetShortcutsFile)))
                 {
                     string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
                     string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
@@ -453,22 +457,24 @@ namespace DisplayMagician {
                         // Now save the shortcuts so the new default values get written to disk
                         ShortcutRepository.SaveShortcuts();
                     }
+
+                    // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
+                    // NOTE: This is outside the File Exists above to fix all the partially renamed files performed in previous upgrades
+                    if (RenameOldFileVersions(AppShortcutPath, "Shortcuts_*.json", targetShortcutsFile))
+                    {
+                        logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                    }
+                    else
+                    {
+                        logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                    }
                 }
                 else
                 {
                     logger.Trace($"Program/Main: DisplayMagician Shortcut files do not require upgrading so skipping");
                 }
 
-                // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
-                // NOTE: This is outside the File Exists above to fix all the partially renamed files performed in previous upgrades
-                if (RenameOldFileVersions(AppShortcutPath, "Shortcuts_*.json", targetShortcutsFile))
-                {
-                    logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
-                }
-                else
-                {
-                    logger.Error($"Program/Main: Error while renaming old Shortcut files.");
-                }
+                
 
             }
             catch (Exception ex)
@@ -699,6 +705,9 @@ namespace DisplayMagician {
                 GameLibrary.LoadGamesInBackground();
                 // Load the apps in background on execute
                 AppLibrary.LoadAppsInBackground();
+
+               /* // Update the Active Profile before we load the Main Form
+                ProfileRepository.UpdateActiveProfile();*/
 
                 // Set up the AppMainForm variable that we need to use later
                 AppMainForm = new MainForm();
@@ -1013,7 +1022,56 @@ namespace DisplayMagician {
             }
         }
 
+        public static bool OldFileVersionsExist(string path, string searchPattern = "", string skipFilename = "")
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    logger.Error($"Program/OldFileVersionsExist: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
 
+                string[] filesThatMatch;
+
+                if (String.IsNullOrWhiteSpace(searchPattern))
+                {
+                    filesThatMatch = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesThatMatch = Directory.GetFiles(path, searchPattern);
+                }
+
+                if (filesThatMatch.Length > 0)
+                {
+                    logger.Trace($"Program/OldFileVersionsExist: Found {filesThatMatch.Length} files matching the '{searchPattern}' pattern in {path}");
+                    foreach (var filename in filesThatMatch)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            logger.Trace($"Program/OldFileVersionsExist: Skipping {filename} as we want to ignore the {skipFilename} file.");
+                            continue;
+                        }
+
+                        return true;
+                    }
+                }
+                else
+                {
+                    logger.Trace($"Program/OldFileVersionsExist: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/OldFileVersionsExist: Exception while trying to OldFileVersionsExist. Unable to find the files.");
+                return false;
+            }
+        }
 
 
         //public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)

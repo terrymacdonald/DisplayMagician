@@ -195,7 +195,7 @@ namespace DisplayMagician.UIForms
             {
                 cb_minimise_notification_area.Checked = false;
             }
-
+            
             // Set the notifyIcon text with the current profile
             if (notifyIcon != null)
             {

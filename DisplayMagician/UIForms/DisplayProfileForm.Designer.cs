@@ -56,19 +56,17 @@ namespace DisplayMagician.UIForms
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.p_upper = new System.Windows.Forms.Panel();
             this.btn_donate = new System.Windows.Forms.Button();
             this.btn_help = new System.Windows.Forms.Button();
             this.btn_profile_settings = new System.Windows.Forms.Button();
-            this.pbLogo = new System.Windows.Forms.PictureBox();
             this.p_lower = new System.Windows.Forms.Panel();
             this.btn_update = new System.Windows.Forms.Button();
             this.p_fill = new System.Windows.Forms.Panel();
+            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.cms_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.p_upper.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
             this.p_lower.SuspendLayout();
             this.p_fill.SuspendLayout();
             this.SuspendLayout();
@@ -355,22 +353,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
-            // dv_profile
-            // 
-            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 95);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(934, 399);
-            this.dv_profile.TabIndex = 4;
-            // 
             // p_upper
             // 
             this.p_upper.BackColor = System.Drawing.Color.DimGray;
@@ -381,7 +363,6 @@ namespace DisplayMagician.UIForms
             this.p_upper.Controls.Add(this.lbl_save_profile);
             this.p_upper.Controls.Add(this.btn_profile_settings);
             this.p_upper.Controls.Add(this.pb_down_arrow);
-            this.p_upper.Controls.Add(this.pbLogo);
             this.p_upper.Controls.Add(this.btn_view_current);
             this.p_upper.Controls.Add(this.btn_save_or_rename);
             this.p_upper.Controls.Add(this.label1);
@@ -445,16 +426,6 @@ namespace DisplayMagician.UIForms
             this.btn_profile_settings.UseVisualStyleBackColor = false;
             this.btn_profile_settings.Click += new System.EventHandler(this.btn_profile_settings_Click);
             // 
-            // pbLogo
-            // 
-            this.pbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pbLogo.Location = new System.Drawing.Point(822, 111);
-            this.pbLogo.Name = "pbLogo";
-            this.pbLogo.Size = new System.Drawing.Size(100, 49);
-            this.pbLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pbLogo.TabIndex = 0;
-            this.pbLogo.TabStop = false;
-            // 
             // p_lower
             // 
             this.p_lower.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("p_lower.BackgroundImage")));
@@ -498,6 +469,22 @@ namespace DisplayMagician.UIForms
             this.p_fill.Size = new System.Drawing.Size(934, 158);
             this.p_fill.TabIndex = 39;
             // 
+            // dv_profile
+            // 
+            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
+            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.dv_profile.Location = new System.Drawing.Point(0, 95);
+            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
+            this.dv_profile.Name = "dv_profile";
+            this.dv_profile.PaddingX = 100;
+            this.dv_profile.PaddingY = 100;
+            this.dv_profile.Profile = null;
+            this.dv_profile.Size = new System.Drawing.Size(934, 399);
+            this.dv_profile.TabIndex = 4;
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -523,7 +510,6 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
             this.p_upper.ResumeLayout(false);
             this.p_upper.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
             this.p_lower.ResumeLayout(false);
             this.p_lower.PerformLayout();
             this.p_fill.ResumeLayout(false);
@@ -555,7 +541,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_hotkey;
         private System.Windows.Forms.Label lbl_hotkey_assigned;
         private System.Windows.Forms.Panel p_upper;
-        private System.Windows.Forms.PictureBox pbLogo;
         private System.Windows.Forms.Button btn_profile_settings;
         private System.Windows.Forms.Panel p_lower;
         private System.Windows.Forms.Panel p_fill;

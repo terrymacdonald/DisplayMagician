@@ -172,6 +172,14 @@ namespace DisplayMagicianShared
         #endregion
         public ProfileItem()
         {
+            // Create a default profile Name to avoid null exceptions
+            Name = "Current Display Profile";
+
+            // Create default filenames to avoid null exceptions
+            SavedProfileIconCacheFilename = "";
+            WallpaperBitmapFilename = "";
+
+
             // Fill out a new NVIDIA and AMD object when a profile is being created
             // so that it will save correctly. Json.NET will save null references by default
             // unless we fill them up first, and that in turn causes NullReference errors when
@@ -1990,9 +1998,17 @@ namespace DisplayMagicianShared
                 {
                     foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
                     {
-                        var taskBarValue = taskBar.Value;                        
-                        taskbarPositions.Add(taskBarValue.MonitorLocation, taskBarValue.Edge);
-                        SharedLogger.logger.Trace($"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Tracking position of the taskbar on the primary display at ({taskBarValue.MonitorLocation.X},{taskBarValue.MonitorLocation.Y}) with an edge location of {taskBarValue.Edge}.");
+                        var taskBarValue = taskBar.Value;
+                        // Check that this screen hasn't already been added
+                        if (!taskbarPositions.ContainsKey(taskBarValue.MonitorLocation))
+                        {
+                            taskbarPositions.Add(taskBarValue.MonitorLocation, taskBarValue.Edge);
+                            SharedLogger.logger.Trace($"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Tracking position of the taskbar on the primary display at ({taskBarValue.MonitorLocation.X},{taskBarValue.MonitorLocation.Y}) with an edge location of {taskBarValue.Edge}.");
+                        }
+                        else 
+                        {
+                            SharedLogger.logger.Trace($"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Skipping recording the taskbar poition on the primary display at ({taskBarValue.MonitorLocation.X},{taskBarValue.MonitorLocation.Y}) with an edge location of {taskBarValue.Edge} as it was already recorded.");
+                        }
                     }
                  }
             }
@@ -2034,6 +2050,7 @@ namespace DisplayMagicianShared
                         {
                             screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Right;
                         }
+                        break;
                     }
                 }
             }
