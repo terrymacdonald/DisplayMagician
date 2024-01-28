@@ -15,7 +15,7 @@ The latest version of this application is available for download via the [releas
 
 <p align="center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases/latest"><img src="READMEAssets/gh-download.png"/></a></p>
 
-** IMPORTANT! ** - If you tried DisplayMagician in the past and it didn't work for you, please try it again. There has been a complete rewrite of the NVIDIA, AMD and Windows video manipulation libraries, and it is able to track and manipulate nearly all possible display configuration settings!
+**NOTE** - This version of DisplayMagician uses all video card libraries at once. This makes it much more likely to detect your display layout, and should make it more reliable! 
 
 ## What it does
 
@@ -133,7 +133,7 @@ Have fun!
 
 ## License
 
-Copyright © Terry MacDonald 2020-2023
+Copyright © Terry MacDonald 2020-2024
 
 Original HelioDisplayManagement - copyright © Soroush Falahati 2017-2020
 
