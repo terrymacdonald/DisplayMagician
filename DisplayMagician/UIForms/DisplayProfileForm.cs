@@ -875,6 +875,9 @@ namespace DisplayMagician.UIForms
                     RecenterWindow();
                     ProfileRepository.UserChangingProfiles = false;
 
+                    logger.Trace($"DisplayProfileForm/btn_update_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
+                    ChangeSelectedProfile(_selectedProfile);
+
                     SharedLogger.logger.Debug($"DisplayProfileForm/btn_update_Click: The profile {_selectedProfile.Name} was successfully updated with the latest display settings");
                     MessageBox.Show($"The profile {_selectedProfile.Name} was successfully updated with the latest display settings.", "Profile updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
