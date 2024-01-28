@@ -1499,7 +1499,8 @@ namespace DisplayMagicianShared
                         // Set the default taskbar position as the bottom of the screen                        
                         screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         // If we have a valid taskbar location stored then use that instead
-                        if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
+                        // TODO - fix this taskbar detection logic
+                        /*if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
                         {
                             foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
                             {
@@ -1510,7 +1511,7 @@ namespace DisplayMagicianShared
                                     break;
                                 }
                             }                            
-                        }
+                        }*/
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
                     }
                     catch (Exception ex)
