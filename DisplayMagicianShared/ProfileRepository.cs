@@ -1324,6 +1324,8 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Trace($"ProfileRepository/IsPossibleRefresh: Paused refreshing display profile possibility for {totalDelay} milliseconds.");
                 }
 
+                ProfileRepository.ConnectedDisplayIdentifiers = ProfileRepository.GetAllConnectedDisplayIdentifiers();
+
                 foreach (ProfileItem loadedProfile in AllProfiles)
                     loadedProfile.RefreshPossbility();
             }
@@ -1349,15 +1351,26 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Trace($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Paused checking for all connected display identifiers for {totalDelay} milliseconds.");
             }
 
+            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+
             List<string> allConnectedDisplayIdentifiers = new List<string>();
-            if (NVIDIALibrary.GetLibrary().IsInstalled)
-                allConnectedDisplayIdentifiers.AddRange(NVIDIALibrary.GetLibrary().GetAllConnectedDisplayIdentifiers());
 
-            if (AMDLibrary.GetLibrary().IsInstalled)
-                allConnectedDisplayIdentifiers.AddRange(AMDLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers());
+            if (nvidiaLibrary.IsInstalled)
+            {
+                allConnectedDisplayIdentifiers.AddRange(nvidiaLibrary.GetAllConnectedDisplayIdentifiers());
+            }
 
-            allConnectedDisplayIdentifiers.AddRange(WinLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers());
-            
+            if (amdLibrary.IsInstalled)
+            {
+                allConnectedDisplayIdentifiers.AddRange(amdLibrary.GetAllConnectedDisplayIdentifiers());
+            }
+
+            allConnectedDisplayIdentifiers.AddRange(winLibrary.GetAllConnectedDisplayIdentifiers());
+
+            allConnectedDisplayIdentifiers.Sort();
+
             return allConnectedDisplayIdentifiers;
         }
 
@@ -1381,14 +1394,84 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Paused checking for currently connected display identifiers for {totalDelay} milliseconds.");
             }
 
-            List<string> currentDisplayIdentifiers = new List<string>();
+            List<string> currentDisplayIdentifiers = new List<string>();           
+            // Now we need to figure out the tricky part of grabbing the display identifiers to be able to check whetehr this profile can be used
+            // To do this, we need to handle NVIDIA Surround, or AMD Eyefinity, and ignore those screens. This is actually pretty hard to do!
+            // Firstly take the NVIDIA display identifiers as we know they always list each attached screen (even in Surround mode)
             if (NVIDIALibrary.GetLibrary().IsInstalled)
                 currentDisplayIdentifiers.AddRange(NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers);
 
+            // Next, we grab the AMD display identifiersas we know they also always list each attached screen (even in Eyefinity mode)
             if (AMDLibrary.GetLibrary().IsInstalled)
                 currentDisplayIdentifiers.AddRange(AMDLibrary.GetLibrary().CurrentDisplayIdentifiers);
 
-            currentDisplayIdentifiers.AddRange(WinLibrary.GetLibrary().CurrentDisplayIdentifiers);
+            // The tricky part is finding any other screens, ignoring any NVIDIA surround or AMD Eyefinity screens
+            NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().GetActiveConfig();
+            AMD_DISPLAY_CONFIG amdDisplayConfig = AMDLibrary.GetLibrary().GetActiveConfig();
+            WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
+            List<string> displayNamesToIgnore = new List<string>();
+            // Find all the Windows Display Names that NVIDIA has already provided a display identifier for
+            foreach(var i in nvidiaDisplayConfig.DisplayNames)
+            {
+                displayNamesToIgnore.Add(i.Value);
+            }
+            // Find all the Windows Display Names that AMD has already provided a display identifier for
+            foreach (var j in amdDisplayConfig.AdapterConfigs)
+            {
+                displayNamesToIgnore.Add(j.DisplayName);
+            }
+
+            // Find the Windows DevicePaths to ignore, based on the DisplayNames we want to ignore
+            List<string> devicePathsToIgnore = new List<string>();
+            foreach (var displayName in windowsDisplayConfig.DisplaySources)
+            {
+                // If we should ignore this path, then we need to add the device Path to the devicePaths to ignore
+                if (displayNamesToIgnore.Contains(displayName.Key))
+                {
+                    foreach (var item in displayName.Value)
+                    {
+                        devicePathsToIgnore.Add(item.DevicePath);
+                    }
+                    continue;
+                }
+            }
+
+
+            foreach (string displayId in windowsDisplayConfig.DisplayIdentifiers)
+            {
+                // Skip any display identifiers with 'NV Surround' display name as that is a display that is a surround display (a cominbation of other displays acting as one big one)
+                // so we want to ignore that one.
+                if (displayId.Contains("NV Surround"))
+                {
+                    SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it contains NV Surround, so is not needed");
+                    continue;
+                }
+                // Skip any display identifiers with 'AMD' or 'Eyefinity' display name as that is a display that is an Eyefinity display (a cominbation of other displays acting as one big one)
+                // so we want to ignore that one.
+                if (displayId.Contains("AMD") || displayId.Contains("Eyefinity"))
+                {
+                    SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it contains either AMD or Eyefinity, so is not needed");
+                    continue;
+                }
+
+                // Skip any display identifiers already listed in the NVIDIA, AMD or other video library list
+                bool oneToIgnore = false;
+                foreach (string devicePathToIgnore in devicePathsToIgnore)
+                {
+                    if (displayId.Contains(devicePathToIgnore))
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it is a display already handled by other video libraries, so is not needed");
+                        oneToIgnore = true;
+                        break;
+                    }
+                }
+                if (oneToIgnore)
+                    continue;
+
+                currentDisplayIdentifiers.Add(displayId);
+            }
+
+            currentDisplayIdentifiers.Sort();
 
             return currentDisplayIdentifiers;
 

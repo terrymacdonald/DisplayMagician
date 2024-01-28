@@ -590,9 +590,10 @@ namespace DisplayMagicianShared
 
                 // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;
-                _amdDisplayConfig = amdLibrary.ActiveDisplayConfig;
+                _amdDisplayConfig = amdLibrary.ActiveDisplayConfig;                
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
-                _profileDisplayIdentifiers = nvidiaLibrary.CurrentDisplayIdentifiers;
+                _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers();
+                
 
                 /*if (nvidiaLibrary.IsInstalled)
                 {
@@ -734,64 +735,21 @@ namespace DisplayMagicianShared
         }
 
         public virtual void RefreshPossbility()
-        {
-            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
-            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
-            WinLibrary winLibrary = WinLibrary.GetLibrary();
-
+        {            
             // Set isPossible to true unless we find it can't be done.
             _isPossible = true;
 
-            // Otherwise actually check the possibility
-            if (nvidiaLibrary.IsInstalled)
+            // Now go through each item and check if this is in there
+            foreach (string identifier in _profileDisplayIdentifiers)
             {
-                if (nvidiaLibrary.IsPossibleConfig(_nvidiaDisplayConfig))
-                {
 
-                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is possible!");
-                    _isNVIDIAPossible = true;
-
-                }
-                else
+                if (!ProfileRepository.ConnectedDisplayIdentifiers.Contains(identifier))
                 {
-                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
-                    _isNVIDIAPossible = false;
-                    _isPossible = false;
+                    _isPossible =  false;
+                    break;
                 }
             }
 
-            if (amdLibrary.IsInstalled)
-            {
-                if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
-                {
-
-                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The AMD profile {Name} is possible!");
-                    _isAMDPossible = true;
-
-                }
-                else
-                {
-                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The AMD profile {Name} is NOT possible!");
-                    _isAMDPossible = false;
-                    _isPossible = false;
-                }
-            }
-            
-            if (winLibrary.IsPossibleConfig(_windowsDisplayConfig))
-            {
-
-                SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
-                _isWindowsPossible = true;
-
-            }
-            else
-            {
-                SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
-                _isWindowsPossible = false;
-                _isPossible = false;
-            }
-
-            
         }
 
         // Actually set this profile active

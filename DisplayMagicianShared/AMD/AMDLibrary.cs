@@ -179,7 +179,8 @@ namespace DisplayMagicianShared.AMD
                 ADL_DISPLAY_CONNECTION_TYPE.DVI_I,
                 ADL_DISPLAY_CONNECTION_TYPE.RCA_3Component,
                 ADL_DISPLAY_CONNECTION_TYPE.SVideo,
-                ADL_DISPLAY_CONNECTION_TYPE.VGA
+                ADL_DISPLAY_CONNECTION_TYPE.VGA,
+                ADL_DISPLAY_CONNECTION_TYPE.Unknown
             };
 
             _activeDisplayConfig = CreateDefaultConfig();
@@ -1684,8 +1685,16 @@ namespace DisplayMagicianShared.AMD
                         }
                         else
                         {
-                            SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: ADL2_Adapter_Active_Get returned ADL_FALSE - AMD Adapter #{adapterIndex} is NOT active, so skipping.");
-                            continue;
+                            if (!allDisplays)
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: ADL2_Adapter_Active_Get returned ADL_FALSE - AMD Adapter #{adapterIndex} is NOT active, so skipping.");
+                                continue;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: ADL2_Adapter_Active_Get returned ADL_FALSE - AMD Adapter #{adapterIndex} is NOT active, but we want to know all adapters, actiove or not, so continuing.");
+
+                            }
                         }
                     }
                     else
@@ -1729,9 +1738,27 @@ namespace DisplayMagicianShared.AMD
                     }
 
                     SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: Converted ADL2_Adapter_AdapterInfoX4_Get memory buffer into a {adapterArray.Length} long array about AMD Adapter #{adapterIndex}.");
-
+                    
                     //AMD_ADAPTER_CONFIG savedAdapterConfig = new AMD_ADAPTER_CONFIG();
                     ADL_ADAPTER_INFOX2 oneAdapter = adapterArray[0];
+
+                    // Skip any non-AMD vendor ID Adapters! In rare conditions if an AMD iGPU is used and only non-AMD dGPU screens are used, then this can return the NVIDIA display id instead of returning nothing.
+                    // This check fixes that.
+                    bool amdVendorIdFound = false;
+                    foreach (string pciId in PCIVendorIDs)
+                    {
+                        if (oneAdapter.UDID.Contains(pciId))
+                        {
+                            amdVendorIdFound = true;
+                        }
+                    }
+                    if (!amdVendorIdFound)
+                    {
+                        SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: Adapter #{oneAdapter.AdapterIndex.ToString()} isn't an AMD adapter so skipping detection for this adapter.");
+                        continue;
+                    }
+
+
                     if (oneAdapter.Exist != 1)
                     {
                         SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
@@ -1745,47 +1772,54 @@ namespace DisplayMagicianShared.AMD
                         continue;
                     }
 
+
                     // Now we still try to get the information we need for the Display Identifiers
                     // Go grab the DisplayMaps and DisplayTargets as that is useful infor for creating screens
+                    // But we only do it if we want allDisplays (as otherwise it's not really showing the currently in use displays).
                     int numDisplayTargets = 0;
                     int numDisplayMaps = 0;
                     IntPtr displayTargetBuffer = IntPtr.Zero;
                     IntPtr displayMapBuffer = IntPtr.Zero;
-                    ADLRet = ADLImport.ADL2_Display_DisplayMapConfig_Get(_adlContextHandle, adapterIndex, out numDisplayMaps, out displayMapBuffer, out numDisplayTargets, out displayTargetBuffer, ADLImport.ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO);
-                    if (ADLRet == ADL_STATUS.ADL_OK)
-                    {
-                        SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_DisplayMapConfig_Get returned information about all displaytargets connected to AMD adapter {adapterIndex}.");
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - ADL2_Display_DisplayMapConfig_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer.");
-                        continue;
-                    }
-
                     ADL_DISPLAY_TARGET[] displayTargetArray = { };
-                    if (numDisplayTargets > 0)
+                    if (!allDisplays)
                     {
-                        IntPtr currentDisplayTargetBuffer = displayTargetBuffer;
-                        //displayTargetArray = new ADL_DISPLAY_TARGET[numDisplayTargets];
-                        displayTargetArray = new ADL_DISPLAY_TARGET[numDisplayTargets];
-                        for (int i = 0; i < numDisplayTargets; i++)
+                        ADLRet = ADLImport.ADL2_Display_DisplayMapConfig_Get(_adlContextHandle, adapterIndex, out numDisplayMaps, out displayMapBuffer, out numDisplayTargets, out displayTargetBuffer, ADLImport.ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO);
+                        if (ADLRet == ADL_STATUS.ADL_OK)
                         {
-                            // build a structure in the array slot
-                            displayTargetArray[i] = new ADL_DISPLAY_TARGET();
-                            //displayTargetArray[i] = new ADL_DISPLAY_TARGET();
-                            // fill the array slot structure with the data from the buffer
-                            displayTargetArray[i] = (ADL_DISPLAY_TARGET)Marshal.PtrToStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
-                            //displayTargetArray[i] = (ADL_DISPLAY_TARGET)Marshal.PtrToStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
-                            // destroy the bit of memory we no longer need
-                            Marshal.DestroyStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
-                            // advance the buffer forwards to the next object
-                            currentDisplayTargetBuffer = (IntPtr)((long)currentDisplayTargetBuffer + Marshal.SizeOf(displayTargetArray[i]));
-                            //currentDisplayTargetBuffer = (IntPtr)((long)currentDisplayTargetBuffer + Marshal.SizeOf(displayTargetArray[i]));
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_DisplayMapConfig_Get returned information about all displaytargets connected to AMD adapter {adapterIndex}.");
+                            if (numDisplayTargets > 0)
+                            {
+                                IntPtr currentDisplayTargetBuffer = displayTargetBuffer;
+                                //displayTargetArray = new ADL_DISPLAY_TARGET[numDisplayTargets];
+                                displayTargetArray = new ADL_DISPLAY_TARGET[numDisplayTargets];
+                                for (int i = 0; i < numDisplayTargets; i++)
+                                {
+                                    // build a structure in the array slot
+                                    displayTargetArray[i] = new ADL_DISPLAY_TARGET();
+                                    //displayTargetArray[i] = new ADL_DISPLAY_TARGET();
+                                    // fill the array slot structure with the data from the buffer
+                                    displayTargetArray[i] = (ADL_DISPLAY_TARGET)Marshal.PtrToStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
+                                    //displayTargetArray[i] = (ADL_DISPLAY_TARGET)Marshal.PtrToStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
+                                    // destroy the bit of memory we no longer need
+                                    Marshal.DestroyStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
+                                    // advance the buffer forwards to the next object
+                                    currentDisplayTargetBuffer = (IntPtr)((long)currentDisplayTargetBuffer + Marshal.SizeOf(displayTargetArray[i]));
+                                    //currentDisplayTargetBuffer = (IntPtr)((long)currentDisplayTargetBuffer + Marshal.SizeOf(displayTargetArray[i]));
 
+                                }
+                                // Free the memory used by the buffer                        
+                                Marshal.FreeCoTaskMem(displayTargetBuffer);
+                            }
                         }
-                        // Free the memory used by the buffer                        
-                        Marshal.FreeCoTaskMem(displayTargetBuffer);
-                    }
+                        else
+                        {
+                            if (!allDisplays)
+                            {
+                                SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - ADL2_Display_DisplayMapConfig_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer.");
+                                continue;
+                            }
+                        }
+                    }                                        
 
                     int forceDetect = 0;
                     int numDisplays;
