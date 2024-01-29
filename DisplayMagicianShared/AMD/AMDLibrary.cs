@@ -228,7 +228,18 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
                 _initialised = false;
             }
-
+            catch (ArgumentNullException ex)
+            {
+                // If we get here then the PrelinkAll didn't work, meaning the AMD ADL DLL links don't work. We can't continue to use it, so we log the error and exit
+                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception2 trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+                _initialised = false;
+            }
+            catch (Exception ex)
+            {
+                // If we get here then something else didn't work. We can't continue to use the AMD library, so we log the error and exit
+                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception3 trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+                _initialised = false;
+            }
 
 
         }
@@ -297,6 +308,8 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
+                if (_activeDisplayConfig == null)
+                    _activeDisplayConfig = CreateDefaultConfig();
                 return _activeDisplayConfig;
             }
             set
@@ -309,6 +322,8 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
+                if (_activeDisplayConfig == null)
+                    _activeDisplayConfig = CreateDefaultConfig();
                 return _activeDisplayConfig.DisplayIdentifiers;
             }
         }

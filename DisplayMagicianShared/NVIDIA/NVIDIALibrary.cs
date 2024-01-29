@@ -9,6 +9,7 @@ using System.ComponentModel;
 using DisplayMagicianShared.Windows;
 using EDIDParser;
 using System.Threading.Tasks;
+using DisplayMagicianShared.AMD;
 
 namespace DisplayMagicianShared.NVIDIA
 {
@@ -273,7 +274,19 @@ namespace DisplayMagicianShared.NVIDIA
             catch (DllNotFoundException ex)
             {
                 // If this fires, then the DLL isn't available, so we need don't try to do anything else
-                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed.");
+                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLLs nvapi64.dll or nvapi.dll. This generally means you don't have the NVIDIA driver installed.");
+            }
+            catch (ArgumentNullException ex)
+            {
+                // If we get here then the PrelinkAll didn't work, meaning the AMD ADL DLL links don't work. We can't continue to use it, so we log the error and exit
+                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception2 trying to load the NVIDIA NVAPI DLLs nvapi64.dll or nvapi.dll. This generally means you don't have the NVIDIA driver installed.");
+                _initialised = false;
+            }
+            catch (Exception ex)
+            {
+                // If we get here then something else didn't work. We can't continue to use the AMD library, so we log the error and exit
+                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception3 trying to load the NVIDIA NVAPI DLLs nvapi64.dll or nvapi.dll. This generally means you don't have the NVIDIA driver installed.");
+                _initialised = false;
             }
 
         }
@@ -318,6 +331,8 @@ namespace DisplayMagicianShared.NVIDIA
         {
             get
             {
+                if (_activeDisplayConfig == null)
+                    _activeDisplayConfig = CreateDefaultConfig();
                 return _activeDisplayConfig;
             }
         }
@@ -326,6 +341,8 @@ namespace DisplayMagicianShared.NVIDIA
         {
             get
             {
+                if (_activeDisplayConfig == null)
+                    _activeDisplayConfig = CreateDefaultConfig();
                 return _activeDisplayConfig.DisplayIdentifiers;
             }
         }
