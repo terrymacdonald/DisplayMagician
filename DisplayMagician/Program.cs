@@ -27,6 +27,7 @@ using NETWORKLIST;
 using DisplayMagician.AppLibraries;
 using System.ComponentModel;
 using System.Text;
+using System.Globalization;
 
 namespace DisplayMagician {
 
@@ -285,16 +286,16 @@ namespace DisplayMagician {
 
             // Targets where to log to: File and Console
             //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
-            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
-            string archiveFilename = $"DisplayMagician###.log";
+            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.Now.ToString("yyyy-MM-dd-HHmm",CultureInfo.InvariantCulture)}.log");
+            //string archiveFilename = $"DisplayMagician###.log";
 
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
             {
                 FileName = appLogFilename,
-                ArchiveOldFileOnStartup = true,
-                ArchiveFileName = archiveFilename,
-                ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Rolling,
+                //ArchiveOldFileOnStartup = true,
+                //ArchiveFileName = archiveFilename,
+                //ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Rolling,
                 MaxArchiveFiles = 4,
                 ArchiveAboveSize = 41943040, // 40MB max file size
                 Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
@@ -308,7 +309,7 @@ namespace DisplayMagician {
             config.LoggingRules.Add(loggingRule);
 
             // Create the log console target
-            var logconsole = new NLog.Targets.ColoredConsoleTarget("logconsole")
+           /* var logconsole = new NLog.Targets.ColoredConsoleTarget("logconsole")
             {
                 Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
             };
@@ -318,7 +319,7 @@ namespace DisplayMagician {
             loggingRule2.EnableLoggingForLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
             loggingRule2.Targets.Add(logconsole);
             loggingRule.LoggerNamePattern = "*";
-            config.LoggingRules.Add(loggingRule2);
+            config.LoggingRules.Add(loggingRule2);*/
 
             // Apply config           
             NLog.LogManager.Configuration = config;

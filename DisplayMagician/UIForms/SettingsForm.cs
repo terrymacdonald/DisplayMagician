@@ -629,16 +629,13 @@ namespace DisplayMagician.UIForms
                         NLog.LogManager.SuspendLogging();
 
                         ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
-                                                                                              
+
+                        // Look for log files
+                        List<string> listOfLogFiles = Directory.GetFiles(Program.AppLogPath, "DisplayMagician*.log").ToList();
+
+
                         // Get the list of files we want to look for to zip (they may or may not exist)
-                        List<string> listOfFiles = new List<string> {
-                            // Try to copy the logs if they exist                           
-                            Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
-                            Path.Combine(Program.AppLogPath,"DisplayMagician1.log"),
-                            Path.Combine(Program.AppLogPath,"DisplayMagician2.log"),
-                            Path.Combine(Program.AppLogPath,"DisplayMagician3.log"),
-                            Path.Combine(Program.AppLogPath,"DisplayMagician4.log"),
-                            Path.Combine(Program.AppLogPath,"DisplayMagician5.log"),
+                        List<string> listOfFilesToArchive = new List<string> {
                             // Also try to copy the new configs if they exist
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json"),
@@ -669,8 +666,11 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.4.json.old")
                         };
+                        // Also add the log files found (including the new date style formatted ones).
+                        listOfFilesToArchive.AddRange(listOfLogFiles);
 
-                        foreach (string filename in listOfFiles)
+
+                        foreach (string filename in listOfFilesToArchive)
                         {
                             try
                             {
