@@ -212,11 +212,13 @@ namespace DisplayMagicianShared.AMD
                     else
                     {
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Error intialising AMD ADL2 library. ADL2_Main_Control_Create() returned error code {ADLRet}");
+                        _initialised = false;
                     }
                 }
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Trace(ex, $"AMDLibrary/AMDLibrary: Exception intialising AMD ADL2 library. ADL2_Main_Control_Create() caused an exception.");
+                    _initialised = false;
                 }
 
             }
@@ -224,7 +226,10 @@ namespace DisplayMagicianShared.AMD
             {
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+                _initialised = false;
             }
+
+
 
         }
 
@@ -1003,8 +1008,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/GetAMDDisplayConfig: Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised!");
             }
 
             // Return the configuration
@@ -1375,8 +1380,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/PrintActiveConfig: ERROR - Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run PrintActiveConfig but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/PrintActiveConfig: Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run PrintActiveConfig but the AMD ADL library isn't initialised!");
             }
 
 
@@ -1493,8 +1498,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/SetActiveConfig: Tried to run SetActiveConfig but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
             }
 
             return true;
@@ -1560,8 +1565,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/SetActiveConfig: Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
             }
             return true;
         }
@@ -2014,8 +2019,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/GetSomeDisplayIdentifiers: ERROR - Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/GetSomeDisplayIdentifiers: Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                // throw new AMDLibraryException($"Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
             }
 
 
