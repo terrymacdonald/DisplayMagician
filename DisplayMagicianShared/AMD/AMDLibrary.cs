@@ -183,6 +183,7 @@ namespace DisplayMagicianShared.AMD
                 ADL_DISPLAY_CONNECTION_TYPE.Unknown
             };
 
+            _initialised = false;
             _activeDisplayConfig = CreateDefaultConfig();
             try
             {
@@ -212,33 +213,29 @@ namespace DisplayMagicianShared.AMD
                     else
                     {
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Error intialising AMD ADL2 library. ADL2_Main_Control_Create() returned error code {ADLRet}");
-                        _initialised = false;
                     }
                 }
+                catch (DllNotFoundException ex)
+                {
+                    // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
+                    SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+                }
+
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Trace(ex, $"AMDLibrary/AMDLibrary: Exception intialising AMD ADL2 library. ADL2_Main_Control_Create() caused an exception.");
-                    _initialised = false;
                 }
 
-            }
-            catch (DllNotFoundException ex)
-            {
-                // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
-                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
-                _initialised = false;
             }
             catch (ArgumentNullException ex)
             {
                 // If we get here then the PrelinkAll didn't work, meaning the AMD ADL DLL links don't work. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception2 trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
-                _initialised = false;
             }
             catch (Exception ex)
             {
                 // If we get here then something else didn't work. We can't continue to use the AMD library, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception3 trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
-                _initialised = false;
             }
 
 

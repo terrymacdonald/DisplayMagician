@@ -249,6 +249,7 @@ namespace DisplayMagicianShared.NVIDIA
                 NVAPI_STATUS NVStatus = NVAPI_STATUS.NVAPI_ERROR;
                 SharedLogger.logger.Trace("NVIDIALibrary/NVIDIALibrary: Intialising NVIDIA NVAPI library interface");
                 // Step 1: Initialise the NVAPI
+                _initialised = false;
                 try
                 {
                     if (NVImport.IsAvailable())
@@ -265,28 +266,26 @@ namespace DisplayMagicianShared.NVIDIA
                     }
 
                 }
+                catch (DllNotFoundException ex)
+                {
+                    // If this fires, then the DLL isn't available, so we need don't try to do anything else
+                    SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLLs nvapi64.dll or nvapi.dll. This generally means you don't have the NVIDIA driver installed.");
+                }
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Error(ex, $"NVIDIALibrary/NVIDIALibrary: Exception intialising NVIDIA NVAPI library. NvAPI_Initialize() caused an exception.");
                 }
 
-            }
-            catch (DllNotFoundException ex)
-            {
-                // If this fires, then the DLL isn't available, so we need don't try to do anything else
-                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLLs nvapi64.dll or nvapi.dll. This generally means you don't have the NVIDIA driver installed.");
-            }
+            }            
             catch (ArgumentNullException ex)
             {
                 // If we get here then the PrelinkAll didn't work, meaning the AMD ADL DLL links don't work. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception2 trying to load the NVIDIA NVAPI DLLs nvapi64.dll or nvapi.dll. This generally means you don't have the NVIDIA driver installed.");
-                _initialised = false;
             }
             catch (Exception ex)
             {
                 // If we get here then something else didn't work. We can't continue to use the AMD library, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception3 trying to load the NVIDIA NVAPI DLLs nvapi64.dll or nvapi.dll. This generally means you don't have the NVIDIA driver installed.");
-                _initialised = false;
             }
 
         }
