@@ -1466,7 +1466,7 @@ namespace DisplayMagicianShared.Windows
                     else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
                     {
                         SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The combination of parameters and flags specified is invalid. Display configuration not applied.");
-                        return false;
+                        //return false;
                     }
                     else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
                     {
@@ -1611,7 +1611,7 @@ namespace DisplayMagicianShared.Windows
                         else
                         {
                             SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to set the HDR settings for display #{myHDRstate.Id}");
-                            return false;
+                            //return false;
                         }
                     }
                     else
