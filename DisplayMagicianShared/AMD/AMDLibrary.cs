@@ -1060,6 +1060,16 @@ namespace DisplayMagicianShared.AMD
                     SharedLogger.logger.Error($"AMDLibrary/PrintActiveConfig: ERROR - ADL2_Adapter_NumberOfAdapters_Get returned ADL_STATUS {ADLRet} when trying to get number of AMD adapters in the computer.");
                 }
 
+                // This check is to make sure that if there aren't any physical GPUS then we exit!
+                // AMD returns the total number of video cards in the system, whether they are AMD or not.
+                if (numAdapters == 0)
+                {
+                    // Print out that there aren't any video cards detected
+                    stringToReturn += "No Video Cards detected.";
+                    SharedLogger.logger.Trace($"AMDLibrary/PrintActiveConfig: No Videocards detected");
+                    return stringToReturn;
+                }
+
                 // Figure out primary adapter
                 int primaryAdapterIndex = 0;
                 ADLRet = ADLImport.ADL2_Adapter_Primary_Get(_adlContextHandle, out primaryAdapterIndex);
@@ -1680,6 +1690,15 @@ namespace DisplayMagicianShared.AMD
                 {
                     SharedLogger.logger.Error($"AMDLibrary/GetSomeDisplayIdentifiers: ERROR - ADL2_Adapter_NumberOfAdapters_Get returned ADL_STATUS {ADLRet} when trying to get number of AMD adapters in the computer.");
                     throw new AMDLibraryException($"GetSomeDisplayIdentifiers returned ADL_STATUS {ADLRet} when trying to get number of AMD adapters in the computer");
+                }
+
+                // This check is to make sure that if there aren't any physical GPUS then we exit!
+                // AMD returns the total number of video cards in the system, whether they are AMD or not.
+                if (numAdapters == 0)
+                {
+                    // If there aren't any video cards detected, then return that empty list.
+                    SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: No Videocards detected so returning empty list");
+                    return new List<string>();
                 }
 
                 // Figure out primary adapter
