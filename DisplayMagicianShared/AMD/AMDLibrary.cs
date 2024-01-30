@@ -395,6 +395,13 @@ namespace DisplayMagicianShared.AMD
                     return myDisplayConfig;
                 }
 
+                // This check is to make sure that if there aren't any physical GPUS then we exit!
+                if (numAdaptersInfo == 0)
+                {
+                    // Return the default config
+                    return myDisplayConfig;
+                }
+
                 ADL_ADAPTER_INFOX2[] adapterArray = new ADL_ADAPTER_INFOX2[numAdaptersInfo];
                 if (numAdaptersInfo > 0)
                 {

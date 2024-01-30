@@ -427,6 +427,13 @@ namespace DisplayMagicianShared.NVIDIA
                     SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Error getting physical GPU count. NvAPI_EnumPhysicalGPUs() returned error code {NVStatus}");
                 }
 
+                // This check is to make sure that we only continue if there are physical GPUs
+                if (physicalGpuCount == 0)
+                {
+                    // Return the default config
+                    return myDisplayConfig;
+                }
+
                 // Go through the Physical GPUs one by one
                 for (uint physicalGpuIndex = 0; physicalGpuIndex < physicalGpuCount; physicalGpuIndex++)
                 {
