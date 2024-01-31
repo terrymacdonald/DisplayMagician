@@ -183,6 +183,7 @@ namespace DisplayMagicianShared.AMD
                 ADL_DISPLAY_CONNECTION_TYPE.Unknown
             };
 
+            _initialised = false;
             _activeDisplayConfig = CreateDefaultConfig();
             try
             {
@@ -214,17 +215,29 @@ namespace DisplayMagicianShared.AMD
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Error intialising AMD ADL2 library. ADL2_Main_Control_Create() returned error code {ADLRet}");
                     }
                 }
+                catch (DllNotFoundException ex)
+                {
+                    // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
+                    SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+                }
+
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Trace(ex, $"AMDLibrary/AMDLibrary: Exception intialising AMD ADL2 library. ADL2_Main_Control_Create() caused an exception.");
                 }
 
             }
-            catch (DllNotFoundException ex)
+            catch (ArgumentNullException ex)
             {
-                // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
-                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+                // If we get here then the PrelinkAll didn't work, meaning the AMD ADL DLL links don't work. We can't continue to use it, so we log the error and exit
+                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception2 trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
             }
+            catch (Exception ex)
+            {
+                // If we get here then something else didn't work. We can't continue to use the AMD library, so we log the error and exit
+                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception3 trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+            }
+
 
         }
 
@@ -292,6 +305,8 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
+                if (_activeDisplayConfig == null)
+                    _activeDisplayConfig = CreateDefaultConfig();
                 return _activeDisplayConfig;
             }
             set
@@ -304,6 +319,8 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
+                if (_activeDisplayConfig == null)
+                    _activeDisplayConfig = CreateDefaultConfig();
                 return _activeDisplayConfig.DisplayIdentifiers;
             }
         }
@@ -375,6 +392,13 @@ namespace DisplayMagicianShared.AMD
                 else
                 {
                     SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - ADL2_Adapter_AdapterInfoX4_Get returned ADL_STATUS {ADLRet} when trying to get the adapter info about all AMD Adapters. Trying to skip this adapter so something at least works.");
+                    return myDisplayConfig;
+                }
+
+                // This check is to make sure that if there aren't any physical GPUS then we exit!
+                if (numAdaptersInfo == 0)
+                {
+                    // Return the default config
                     return myDisplayConfig;
                 }
 
@@ -1003,8 +1027,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/GetAMDDisplayConfig: Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run GetAMDDisplayConfig but the AMD ADL library isn't initialised!");
             }
 
             // Return the configuration
@@ -1034,6 +1058,16 @@ namespace DisplayMagicianShared.AMD
                 else
                 {
                     SharedLogger.logger.Error($"AMDLibrary/PrintActiveConfig: ERROR - ADL2_Adapter_NumberOfAdapters_Get returned ADL_STATUS {ADLRet} when trying to get number of AMD adapters in the computer.");
+                }
+
+                // This check is to make sure that if there aren't any physical GPUS then we exit!
+                // AMD returns the total number of video cards in the system, whether they are AMD or not.
+                if (numAdapters == 0)
+                {
+                    // Print out that there aren't any video cards detected
+                    stringToReturn += "No Video Cards detected.";
+                    SharedLogger.logger.Trace($"AMDLibrary/PrintActiveConfig: No Videocards detected");
+                    return stringToReturn;
                 }
 
                 // Figure out primary adapter
@@ -1375,8 +1409,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/PrintActiveConfig: ERROR - Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run PrintActiveConfig but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/PrintActiveConfig: Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run PrintActiveConfig but the AMD ADL library isn't initialised!");
             }
 
 
@@ -1493,8 +1527,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/SetActiveConfig: Tried to run SetActiveConfig but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
             }
 
             return true;
@@ -1560,8 +1594,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/SetActiveConfig: Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                //throw new AMDLibraryException($"Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
             }
             return true;
         }
@@ -1656,6 +1690,15 @@ namespace DisplayMagicianShared.AMD
                 {
                     SharedLogger.logger.Error($"AMDLibrary/GetSomeDisplayIdentifiers: ERROR - ADL2_Adapter_NumberOfAdapters_Get returned ADL_STATUS {ADLRet} when trying to get number of AMD adapters in the computer.");
                     throw new AMDLibraryException($"GetSomeDisplayIdentifiers returned ADL_STATUS {ADLRet} when trying to get number of AMD adapters in the computer");
+                }
+
+                // This check is to make sure that if there aren't any physical GPUS then we exit!
+                // AMD returns the total number of video cards in the system, whether they are AMD or not.
+                if (numAdapters == 0)
+                {
+                    // If there aren't any video cards detected, then return that empty list.
+                    SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: No Videocards detected so returning empty list");
+                    return new List<string>();
                 }
 
                 // Figure out primary adapter
@@ -2014,8 +2057,8 @@ namespace DisplayMagicianShared.AMD
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/GetSomeDisplayIdentifiers: ERROR - Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Info($"AMDLibrary/GetSomeDisplayIdentifiers: Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised! This generally means you don't have an AMD video card in your machine.");
+                // throw new AMDLibraryException($"Tried to run GetSomeDisplayIdentifiers but the AMD ADL library isn't initialised!");
             }
 
 

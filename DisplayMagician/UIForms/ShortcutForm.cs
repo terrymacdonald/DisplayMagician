@@ -107,6 +107,7 @@ namespace DisplayMagician.UIForms
 
             lbl_profile_shown.Text = "No Display Profiles available";
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
+            lbl_profile_shown_subtitle.Visible = true;
 
             try
             {
@@ -2530,9 +2531,16 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown.Text = _profileToUse.Name;
 
             if (_profileToUse.Equals(ProfileRepository.CurrentProfile))
+            {
                 lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
+                lbl_profile_shown_subtitle.Visible = true;
+            }
             else
+            {
                 lbl_profile_shown_subtitle.Text = "";
+                lbl_profile_shown_subtitle.Visible = false;
+            }
+                
 
             // Refresh the image list view
             RefreshProfileImageListView(profile);

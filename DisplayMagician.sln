@@ -1,17 +1,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30002.166
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisplayMagician", "DisplayMagician\DisplayMagician.csproj", "{608D941A-B431-400C-A91D-C6F971C29577}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisplayMagicianShellExtension", "DisplayMagicianShellExtension\DisplayMagicianShellExtension.csproj", "{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisplayMagicianShared", "DisplayMagicianShared\DisplayMagicianShared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianTests", "DisplayMagicianTests\DisplayMagicianTests.csproj", "{D7AFD3CC-53BF-4991-ABFE-638A3F355310}"
-	ProjectSection(ProjectDependencies) = postProject
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68} = {55D4FF65-EDC7-48EF-933E-B6E7F3809B68}
-	EndProjectSection
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "DisplayMagicianSetup", "DisplayMagicianSetup\DisplayMagicianSetup.wixproj", "{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}"
 EndProject
@@ -66,18 +61,6 @@ Global
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x64.Build.0 = Release|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x86.ActiveCfg = Release|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x86.Build.0 = Release|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|AnyCPU.Build.0 = Debug|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|x64.Build.0 = Debug|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|x86.Build.0 = Debug|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|AnyCPU.ActiveCfg = Release|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|AnyCPU.Build.0 = Release|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|x64.ActiveCfg = Release|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|x64.Build.0 = Release|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|x86.ActiveCfg = Release|Any CPU
-		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|x86.Build.0 = Release|Any CPU
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Debug|AnyCPU.ActiveCfg = Debug|x64
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Debug|AnyCPU.Build.0 = Debug|x64
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Debug|x64.ActiveCfg = Debug|x64
