@@ -1626,6 +1626,8 @@ namespace DisplayMagicianShared.Windows
 
             }
 
+            // Wait 0.5 second for the display to settle before trying the GDI settings. This hopefully will make it more reliable setting the primary display as described in issues #78 and #284
+            Task.Delay(500);
 
             // Get the existing displays config
             Dictionary<string, GDI_DISPLAY_SETTING> currentGdiDisplaySettings = GetGdiDisplaySettings();
@@ -1645,13 +1647,19 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
                     GDI_DISPLAY_SETTING currentDeviceSetting = currentGdiDisplaySettings[displayDeviceKey];
 
-                    // Use the current device as a base, but set some of the various settings we stored as part of the profile 
+                    // Use the current device as a base, but set some of the various settings we stored as part of the profile that are for displays (not printers!)
                     currentDeviceSetting.DeviceMode.BitsPerPixel = displayDeviceSettings.DeviceMode.BitsPerPixel;
                     currentDeviceSetting.DeviceMode.DisplayOrientation = displayDeviceSettings.DeviceMode.DisplayOrientation;
                     currentDeviceSetting.DeviceMode.DisplayFrequency = displayDeviceSettings.DeviceMode.DisplayFrequency;
+                    currentDeviceSetting.DeviceMode.LogicalInchPixels = displayDeviceSettings.DeviceMode.LogicalInchPixels;
                     // Sets the greyscale and interlaced settings
                     currentDeviceSetting.DeviceMode.DisplayFlags = displayDeviceSettings.DeviceMode.DisplayFlags;
-
+                    // Also change the position, as that is needed for setting the primary monitor
+                    currentDeviceSetting.DeviceMode.Position = displayDeviceSettings.DeviceMode.Position;
+                    // Set the width and height too
+                    currentDeviceSetting.DeviceMode.PixelsWidth = displayDeviceSettings.DeviceMode.PixelsWidth;
+                    currentDeviceSetting.DeviceMode.PixelsHeight = displayDeviceSettings.DeviceMode.PixelsHeight;
+                    
                     SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the GDI Device Mode will work for display {displayDeviceKey}.");
                     // First of all check that setting the GDI mode will work
                     CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_TEST, IntPtr.Zero);
