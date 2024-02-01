@@ -731,33 +731,14 @@ namespace DisplayMagicianShared
             //WinLibrary.RefreshTaskBars();
 
             // Get the display settings
-            profile.CreateProfileFromCurrentDisplaySettings(fastScan);
-
-            // Now cmake sure the currentVideoMode matches the profile mode returned from the current display settings
-            // If we were trying for an NVIDIA mode but we actually got an AMD mode then we're likely on a AMD laptop with NVIDA GPU disabled
-            // We need to swap to AMD mode for the screen to be detected.
-            // We've made this generic by making the videomodes match if the detection isn't forced by the user
-            /*if (_currentVideoMode != profile.VideoMode && _forcedVideoMode == FORCED_VIDEO_MODE.DETECT)
+            try
             {
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Current Video Mode changed from {_currentVideoMode} to {profile.VideoMode} as the display settings detection recognised it needed to change.");
-                _currentVideoMode = profile.VideoMode;                
+                profile.CreateProfileFromCurrentDisplaySettings(fastScan);
             }
-
-            // Name the profile based on the video mode we have
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
-            { 
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
-                profile.Name = "Current NVIDIA Display Profile";
-            }
-            else if (_currentVideoMode == VIDEO_MODE.AMD)
+            catch (Exception ex)
             {
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
-                profile.Name = "Current AMD Display Profile";                
+                SharedLogger.logger.Error(ex, $"ProfileRepository/UpdateActiveProfile: Exception within UpdateActiveProfile function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
-            else
-            {
-                profile.Name = "Current Windows Display Profile";
-            }*/
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
@@ -923,22 +904,6 @@ namespace DisplayMagicianShared
         {
 
             SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
-
-            /*SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
-                profile.VideoMode = VIDEO_MODE.NVIDIA;
-            }
-            else if (_currentVideoMode == VIDEO_MODE.AMD)
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
-                profile.VideoMode = VIDEO_MODE.AMD;
-            }
-            else
-            {
-                profile.VideoMode = VIDEO_MODE.WINDOWS;
-            }*/
 
             // Actually do the updating of the display settings
             profile.CreateProfileFromCurrentDisplaySettings(false);
@@ -1154,127 +1119,135 @@ namespace DisplayMagicianShared
         {
             SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Loading profiles from {_profileStorageJsonFileName} to compare the Profile Repository");
 
-            if (File.Exists(_profileStorageJsonFileName))
+            try
             {
-                List<ProfileItem> profilesToValidate = new List<ProfileItem>(); ;
-
-                string json = "";
-                try
+                if (File.Exists(_profileStorageJsonFileName))
                 {
-                    json = File.ReadAllText(_profileStorageJsonFileName, Encoding.Unicode);
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to read the JSON file {_profileStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
-                }
+                    List<ProfileItem> profilesToValidate = new List<ProfileItem>(); ;
 
-                // Migrate any previous entries to the latest version of the file format to the latest one
-                json = MigrateJsonToLatestVersion(json);
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    List<string> jsonErrors = new List<string>();
-
+                    string json = "";
                     try
                     {
-                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
-                        {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Include,
-                            DefaultValueHandling = DefaultValueHandling.Populate,
-                            TypeNameHandling = TypeNameHandling.Auto,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                            {
-                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
-                                args.ErrorContext.Handled = true;
-                            },
-                        };
-                        profilesToValidate = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
-
-                        // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
-                        foreach (ProfileItem profile in profilesToValidate)
-                        {
-                            WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
-                            WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
-                        }
-
-                    }
-                    catch (JsonReaderException ex)
-                    {
-                        // If there is a error in the JSON format
-                        if (ex.HResult == -2146233088)
-                        {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFileName} but JsonConvert threw an exception.");
-                        }
-                        return false;
+                        json = File.ReadAllText(_profileStorageJsonFileName, Encoding.Unicode);
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
-                        return false;
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to read the JSON file {_profileStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
                     }
 
-                    // If we have any JSON.net errors, then we need to records them in the logs
-                    if (jsonErrors.Count > 0)
+                    // Migrate any previous entries to the latest version of the file format to the latest one
+                    json = MigrateJsonToLatestVersion(json);
+
+                    if (!string.IsNullOrWhiteSpace(json))
                     {
-                        foreach (string jsonError in jsonErrors)
+                        List<string> jsonErrors = new List<string>();
+
+                        try
                         {
-                            SharedLogger.logger.Error($"ProfileRepository/ValidateProfiles: {jsonErrors}");
+                            JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                            {
+                                MissingMemberHandling = MissingMemberHandling.Ignore,
+                                NullValueHandling = NullValueHandling.Include,
+                                DefaultValueHandling = DefaultValueHandling.Populate,
+                                TypeNameHandling = TypeNameHandling.Auto,
+                                ObjectCreationHandling = ObjectCreationHandling.Replace,
+                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                {
+                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                    args.ErrorContext.Handled = true;
+                                },
+                            };
+                            profilesToValidate = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                            // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
+                            foreach (ProfileItem profile in profilesToValidate)
+                            {
+                                WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
+                                WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                            }
+
                         }
-                    }
+                        catch (JsonReaderException ex)
+                        {
+                            // If there is a error in the JSON format
+                            if (ex.HResult == -2146233088)
+                            {
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFileName} but JsonConvert threw an exception.");
+                            }
+                            return false;
+                        }
+                        catch (Exception ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
+                            return false;
+                        }
 
-                    // Sort the profiles alphabetically so they match the loaded profiles
-                    profilesToValidate.Sort();
-                    // This sorting is now being done as we go to save, so no need to do it here.
-                    //_allProfiles.Sort();
+                        // If we have any JSON.net errors, then we need to records them in the logs
+                        if (jsonErrors.Count > 0)
+                        {
+                            foreach (string jsonError in jsonErrors)
+                            {
+                                SharedLogger.logger.Error($"ProfileRepository/ValidateProfiles: {jsonErrors}");
+                            }
+                        }
 
-                    // Actually perform the validation
-                    if (profilesToValidate.SequenceEqual(profilesToValidate))
-                    {
-                        return true;
+                        // Sort the profiles alphabetically so they match the loaded profiles
+                        profilesToValidate.Sort();
+                        // This sorting is now being done as we go to save, so no need to do it here.
+                        //_allProfiles.Sort();
+
+                        // Actually perform the validation
+                        if (profilesToValidate.SequenceEqual(profilesToValidate))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+
                     }
                     else
                     {
-                        return false;
+                        if (_profilesLoaded && _allProfiles.Count > 0)
+                        {
+                            // We don't have a profile repository file, yet we have some profiles. This means the file and profiles don't match. Return false.
+                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
+                            return false;
+                        }
+                        else
+                        {
+                            // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
+                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! We also don't have any display profiles, so that matches. This is expected.");
+                            return true;
+                        }
                     }
-
                 }
                 else
                 {
                     if (_profilesLoaded && _allProfiles.Count > 0)
                     {
                         // We don't have a profile repository file, yet we have some profiles. This means the file and profiles don't match. Return false.
-                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
+                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
                         return false;
                     }
                     else
                     {
                         // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
-                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! We also don't have any display profiles, so that matches. This is expected.");
+                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. We also don't have any display profiles, so that matches. This is expected.");
                         return true;
                     }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                if (_profilesLoaded && _allProfiles.Count > 0)
-                {
-                    // We don't have a profile repository file, yet we have some profiles. This means the file and profiles don't match. Return false.
-                    SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
-                    return false;
-                }
-                else
-                {
-                    // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
-                    SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. We also don't have any display profiles, so that matches. This is expected.");
-                    return true;
-                }
-            }
+                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Exception within ValidateProfiles function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return false;
+            }            
         }
 
         private static void SaveProfileIconToCache(ProfileItem profile)
@@ -1351,26 +1324,36 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Trace($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Paused checking for all connected display identifiers for {totalDelay} milliseconds.");
             }
 
-            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
-            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
-            WinLibrary winLibrary = WinLibrary.GetLibrary();
-
             List<string> allConnectedDisplayIdentifiers = new List<string>();
 
-            if (nvidiaLibrary.IsInstalled)
+            try
             {
-                allConnectedDisplayIdentifiers.AddRange(nvidiaLibrary.GetAllConnectedDisplayIdentifiers());
+                NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+                AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+                WinLibrary winLibrary = WinLibrary.GetLibrary();
+
+
+                if (nvidiaLibrary.IsInstalled)
+                {
+                    allConnectedDisplayIdentifiers.AddRange(nvidiaLibrary.GetAllConnectedDisplayIdentifiers());
+                }
+
+                if (amdLibrary.IsInstalled)
+                {
+                    allConnectedDisplayIdentifiers.AddRange(amdLibrary.GetAllConnectedDisplayIdentifiers());
+                }
+
+                allConnectedDisplayIdentifiers.AddRange(winLibrary.GetAllConnectedDisplayIdentifiers());
+
+                allConnectedDisplayIdentifiers.Sort();
+
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"ProfileRepository/GetAllConnectedDisplayIdentifiers: Exception within GetAllConnectedDisplayIdentifiers function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
-            if (amdLibrary.IsInstalled)
-            {
-                allConnectedDisplayIdentifiers.AddRange(amdLibrary.GetAllConnectedDisplayIdentifiers());
-            }
-
-            allConnectedDisplayIdentifiers.AddRange(winLibrary.GetAllConnectedDisplayIdentifiers());
-
-            allConnectedDisplayIdentifiers.Sort();
-
+            
             return allConnectedDisplayIdentifiers;
         }
 
@@ -1395,84 +1378,93 @@ namespace DisplayMagicianShared
             }
 
             List<string> currentDisplayIdentifiers = new List<string>();           
-            // Now we need to figure out the tricky part of grabbing the display identifiers to be able to check whetehr this profile can be used
-            // To do this, we need to handle NVIDIA Surround, or AMD Eyefinity, and ignore those screens. This is actually pretty hard to do!
-            // Firstly take the NVIDIA display identifiers as we know they always list each attached screen (even in Surround mode)
-            if (NVIDIALibrary.GetLibrary().IsInstalled)
-                currentDisplayIdentifiers.AddRange(NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers);
 
-            // Next, we grab the AMD display identifiersas we know they also always list each attached screen (even in Eyefinity mode)
-            if (AMDLibrary.GetLibrary().IsInstalled)
-                currentDisplayIdentifiers.AddRange(AMDLibrary.GetLibrary().CurrentDisplayIdentifiers);
+            try
+            {
+                // Now we need to figure out the tricky part of grabbing the display identifiers to be able to check whetehr this profile can be used
+                // To do this, we need to handle NVIDIA Surround, or AMD Eyefinity, and ignore those screens. This is actually pretty hard to do!
+                // Firstly take the NVIDIA display identifiers as we know they always list each attached screen (even in Surround mode)
+                if (NVIDIALibrary.GetLibrary().IsInstalled)
+                    currentDisplayIdentifiers.AddRange(NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers);
 
-            // The tricky part is finding any other screens, ignoring any NVIDIA surround or AMD Eyefinity screens
-            NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().GetActiveConfig();
-            AMD_DISPLAY_CONFIG amdDisplayConfig = AMDLibrary.GetLibrary().GetActiveConfig();
-            WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
-            List<string> displayNamesToIgnore = new List<string>();
-            // Find all the Windows Display Names that NVIDIA has already provided a display identifier for
-            foreach(var i in nvidiaDisplayConfig.DisplayNames)
-            {
-                displayNamesToIgnore.Add(i.Value);
-            }
-            // Find all the Windows Display Names that AMD has already provided a display identifier for
-            foreach (var j in amdDisplayConfig.AdapterConfigs)
-            {
-                displayNamesToIgnore.Add(j.DisplayName);
-            }
+                // Next, we grab the AMD display identifiersas we know they also always list each attached screen (even in Eyefinity mode)
+                if (AMDLibrary.GetLibrary().IsInstalled)
+                    currentDisplayIdentifiers.AddRange(AMDLibrary.GetLibrary().CurrentDisplayIdentifiers);
 
-            // Find the Windows DevicePaths to ignore, based on the DisplayNames we want to ignore
-            List<string> devicePathsToIgnore = new List<string>();
-            foreach (var displayName in windowsDisplayConfig.DisplaySources)
-            {
-                // If we should ignore this path, then we need to add the device Path to the devicePaths to ignore
-                if (displayNamesToIgnore.Contains(displayName.Key))
+                // The tricky part is finding any other screens, ignoring any NVIDIA surround or AMD Eyefinity screens
+                NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().GetActiveConfig();
+                AMD_DISPLAY_CONFIG amdDisplayConfig = AMDLibrary.GetLibrary().GetActiveConfig();
+                WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
+                List<string> displayNamesToIgnore = new List<string>();
+                // Find all the Windows Display Names that NVIDIA has already provided a display identifier for
+                foreach (var i in nvidiaDisplayConfig.DisplayNames)
                 {
-                    foreach (var item in displayName.Value)
+                    displayNamesToIgnore.Add(i.Value);
+                }
+                // Find all the Windows Display Names that AMD has already provided a display identifier for
+                foreach (var j in amdDisplayConfig.AdapterConfigs)
+                {
+                    displayNamesToIgnore.Add(j.DisplayName);
+                }
+
+                // Find the Windows DevicePaths to ignore, based on the DisplayNames we want to ignore
+                List<string> devicePathsToIgnore = new List<string>();
+                foreach (var displayName in windowsDisplayConfig.DisplaySources)
+                {
+                    // If we should ignore this path, then we need to add the device Path to the devicePaths to ignore
+                    if (displayNamesToIgnore.Contains(displayName.Key))
                     {
-                        devicePathsToIgnore.Add(item.DevicePath);
-                    }
-                    continue;
-                }
-            }
-
-
-            foreach (string displayId in windowsDisplayConfig.DisplayIdentifiers)
-            {
-                // Skip any display identifiers with 'NV Surround' display name as that is a display that is a surround display (a cominbation of other displays acting as one big one)
-                // so we want to ignore that one.
-                if (displayId.Contains("NV Surround"))
-                {
-                    SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it contains NV Surround, so is not needed");
-                    continue;
-                }
-                // Skip any display identifiers with 'AMD' or 'Eyefinity' display name as that is a display that is an Eyefinity display (a cominbation of other displays acting as one big one)
-                // so we want to ignore that one.
-                if (displayId.Contains("AMD") || displayId.Contains("Eyefinity"))
-                {
-                    SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it contains either AMD or Eyefinity, so is not needed");
-                    continue;
-                }
-
-                // Skip any display identifiers already listed in the NVIDIA, AMD or other video library list
-                bool oneToIgnore = false;
-                foreach (string devicePathToIgnore in devicePathsToIgnore)
-                {
-                    if (displayId.Contains(devicePathToIgnore))
-                    {
-                        SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it is a display already handled by other video libraries, so is not needed");
-                        oneToIgnore = true;
-                        break;
+                        foreach (var item in displayName.Value)
+                        {
+                            devicePathsToIgnore.Add(item.DevicePath);
+                        }
+                        continue;
                     }
                 }
-                if (oneToIgnore)
-                    continue;
 
-                currentDisplayIdentifiers.Add(displayId);
+
+                foreach (string displayId in windowsDisplayConfig.DisplayIdentifiers)
+                {
+                    // Skip any display identifiers with 'NV Surround' display name as that is a display that is a surround display (a cominbation of other displays acting as one big one)
+                    // so we want to ignore that one.
+                    if (displayId.Contains("NV Surround"))
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it contains NV Surround, so is not needed");
+                        continue;
+                    }
+                    // Skip any display identifiers with 'AMD' or 'Eyefinity' display name as that is a display that is an Eyefinity display (a cominbation of other displays acting as one big one)
+                    // so we want to ignore that one.
+                    if (displayId.Contains("AMD") || displayId.Contains("Eyefinity"))
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it contains either AMD or Eyefinity, so is not needed");
+                        continue;
+                    }
+
+                    // Skip any display identifiers already listed in the NVIDIA, AMD or other video library list
+                    bool oneToIgnore = false;
+                    foreach (string devicePathToIgnore in devicePathsToIgnore)
+                    {
+                        if (displayId.Contains(devicePathToIgnore))
+                        {
+                            SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Skipping display id {displayId} as it is a display already handled by other video libraries, so is not needed");
+                            oneToIgnore = true;
+                            break;
+                        }
+                    }
+                    if (oneToIgnore)
+                        continue;
+
+                    currentDisplayIdentifiers.Add(displayId);
+                }
+
+                currentDisplayIdentifiers.Sort();
+
             }
-
-            currentDisplayIdentifiers.Sort();
-
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"ProfileRepository/GetCurrentDisplayIdentifiers: Exception within GetCurrentDisplayIdentifiers function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+            }
+            
             return currentDisplayIdentifiers;
 
         }
@@ -1590,102 +1582,6 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
             }
         }
-
-        /*public static bool SetVideoCardMode(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
-        {            
-            _forcedVideoMode = forcedVideoMode;
-            // This sets the order in which the different modes have been chosen.
-            // NVIDIA Video cards are the most common, so go first
-            if (_forcedVideoMode == FORCED_VIDEO_MODE.NVIDIA)
-            {
-                // We force the video mode to be NVIDIA
-                _currentVideoMode = VIDEO_MODE.NVIDIA;
-            }
-            else if (forcedVideoMode == FORCED_VIDEO_MODE.AMD)
-            {
-                // We force the video mode to be AMD
-                _currentVideoMode = VIDEO_MODE.AMD;
-            }
-            else if (forcedVideoMode == FORCED_VIDEO_MODE.WINDOWS)
-            {
-                // We force the video mode to be WINDOWS
-                _currentVideoMode = VIDEO_MODE.WINDOWS;
-            }
-            else
-            {
-                // We do normal video library detection based on the video card!
-                // First we check if we need to pause
-
-                int totalDelay = 0;
-                if (_pauseReadsUntilChangeCompleted)
-                {
-                    SharedLogger.logger.Warn($"ProfileRepository/SetVideoCardMode: Pausing detecting video card PCI vendors as a display change is currently taking place.");
-                    while (!_pauseReadsUntilChangeCompleted)
-                    {
-                        Task.Delay(200);
-                        totalDelay += 200;
-                        if (totalDelay > 10000)
-                        {
-                            SharedLogger.logger.Warn($"ProfileRepository/SetVideoCardMode: Timeout while detecting video card PCI vendors as it took longer than 10 seconds.");
-                            break;
-                        }
-                    }
-                    SharedLogger.logger.Trace($"ProfileRepository/SetVideoCardMode: Paused detecting video card PCI vendors for {totalDelay} milliseconds.");
-                }
-
-                // Figure out the Video Cards and see what mode we want
-                // Get a list of all the PCI Vendor IDs
-                List<string> videoCardVendors = WinLibrary.GetLibrary().GetAllPCIVideoCardVendors();
-                if (NVIDIALibrary.GetLibrary().IsInstalled && NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
-                {
-                    // We detected a NVIDIA video card in the computer
-                    _currentVideoMode = VIDEO_MODE.NVIDIA;
-                }
-                else if (AMDLibrary.GetLibrary().IsInstalled && AMDLibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
-                {
-                    // We detected an AMD video card in the computer
-                    _currentVideoMode = VIDEO_MODE.AMD;
-                }
-                else
-                {
-                    // We fallback to the built-in Windows CCD drivers
-                    _currentVideoMode = VIDEO_MODE.WINDOWS;
-                }
-            }
-
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA && !(nvidiaLibrary is NVIDIALibrary))
-            {
-                // Initialise the the NVIDIA NvAPI Library
-                try
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
-                    nvidiaLibrary = new NVIDIALibrary();
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NVAPI caused an exception.");
-                    return false;
-                }
-            }
-            else if (_currentVideoMode == VIDEO_MODE.AMD && !(amdLibrary is AMDLibrary))
-            {
-                // Initialise the the AMD ADL Library
-                try
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
-                    amdLibrary = new AMDLibrary();
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising AMD ADL caused an exception.");
-                    return false;
-                }
-            }
-
-            return true;
-        }*/
-        
-
 
         #endregion
 
