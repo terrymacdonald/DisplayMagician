@@ -2689,7 +2689,11 @@ namespace DisplayMagicianShared.NVIDIA
                     SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We are on a non-Mosaic profile now, and we are changing to a non-Mosaic profile so there is no need to modify Mosaic settings!");
                 }
 
-                // Now we set the NVIDIA Display Config (if we have one!)
+                // TODO - NvAPI_DISP_SetDisplayConfig isn't working at the moment and will always error with a NVAPI_INVALID_ARGUMENT. It is related to the 
+                // structure and the fact that sometimes it changes in size. C# structs aren't the best way to handle this, so moving to a class based system
+                // seems like the best way forward. It's what Soroush Falahait did in the past. 
+
+                /*// Now we set the NVIDIA Display Config (if we have one!)
                 // If the display profile is a cloned config then NVIDIA GetDisplayConfig doesn't work
                 // so we need to check for that. We just skip the SetDisplayConfig as it won't exist
                 if (displayConfig.DisplayConfigs.Count > 0)
@@ -2760,7 +2764,7 @@ namespace DisplayMagicianShared.NVIDIA
                 else
                 {
                     SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Skipping setting the NVIDIA Display Config as there isn't one provided in the configuration.");
-                }
+                }*/
 
             }
             else
