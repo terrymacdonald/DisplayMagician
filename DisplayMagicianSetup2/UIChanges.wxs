@@ -1,6 +1,16 @@
-﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 	<Fragment>
 		<UI>
+			<!-- Add in some text styles to make the text white -->
+			<TextStyle Id="White_Normal" FaceName="Tahoma" Size="8" Red="255" Green="255" Blue="255" />
+			<TextStyle Id="White_Bigger" FaceName="Tahoma" Size="12" Red="255" Green="255" Blue="255" />
+			<TextStyle Id="White_Title" FaceName="Tahoma" Size="9" Bold="yes" Red="255" Green="255" Blue="255" />
+
+			<!-- These dialog references are needed for CloseApplication above to work correctly -->
+			<DialogRef Id="FilesInUse" />
+			<DialogRef Id="MsiRMFilesInUse" />
+
+
 			<Dialog Id="LicenseAgreementDialogOverwritten" Width="370" Height="270" Title="!(loc.LicenseAgreementDlg_Title)">
 				<Control Id="LicenseAcceptedOverwrittenCheckBox" Type="CheckBox" X="20" Y="207" Width="330" Height="18" CheckBoxValue="1" Property="LicenseAcceptedOverwritten" Text="!(loc.LicenseAgreementDlgLicenseAcceptedCheckBox)" />
 				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
@@ -29,6 +39,12 @@
 				<Control Id="Description" Type="Text" X="25" Y="23" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.LicenseAgreementDlgDescription)" />
 				<Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.LicenseAgreementDlgTitle)" />
 			</Dialog>
+
+			<!-- Insert the LicenseAgreementDialogOverwritten Dialog into the UI next/back sequence -->
+			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LicenseAgreementDialogOverwritten" />
+			<Publish Dialog="LicenseAgreementDialogOverwritten" Control="Back" Event="NewDialog" Value="WelcomeDlg" />
+			<Publish Dialog="LicenseAgreementDialogOverwritten" Control="Next" Event="NewDialog" Value="InstallDirDlg" Condition="LicenseAcceptedOverwritten = &quot;1&quot;" />
+			<Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDialogOverwritten" />
 		</UI>
 	</Fragment>
 </Wix>
