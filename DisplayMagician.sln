@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisplayMagicianConsole", "DisplayMagicianConsole\DisplayMagicianConsole.csproj", "{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -73,6 +75,18 @@ Global
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Release|x64.Build.0 = Release|x64
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Release|x86.ActiveCfg = Release|x86
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Release|x86.Build.0 = Release|x86
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|AnyCPU.Build.0 = Debug|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|x64.Build.0 = Debug|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|x86.Build.0 = Debug|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|AnyCPU.ActiveCfg = Release|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|AnyCPU.Build.0 = Release|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x64.ActiveCfg = Release|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x64.Build.0 = Release|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x86.ActiveCfg = Release|Any CPU
+		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

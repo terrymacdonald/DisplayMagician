@@ -23,6 +23,9 @@
             <Component Id="cmp7EE113DB90D07F08FCE70C1861DEA947" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A745882F}">
                 <File Id="DisplayMagicianExe" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.exe" />
             </Component>
+			<Component Id="cmp9D1888EBD88D49E39F2827A52DDBE819" Guid="{9D1888EB-D88D-49E3-9F28-27A52DDBE819}">
+				<File Id="DisplayMagicianConsoleExe" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagicianConsole.exe" />
+			</Component>
             <Component Id="cmpCF520827D65E51E3ECB59344A6F528D0" Guid="{13A3918C-64B7-40B5-8AFE-362620B43184}">
                 <File Id="fil2841FB135B81D3B7EF6634B1E3E562DA" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.exe.config" />
             </Component>
@@ -143,7 +146,8 @@
             <ComponentRef Id="cmpA6AEEDB3EBF416E3AD000E7408FE3402" />
             <ComponentRef Id="cmpA7927FF61A499CF81EE0A562CDFEDEC7" />
             <ComponentRef Id="cmpC64ECA245317593760E42F3996F3A079" />
-            <ComponentRef Id="cmpBEC07D0236076B07E4E7D7632CCA69CB" />
+			<ComponentRef Id="cmp9D1888EBD88D49E39F2827A52DDBE819" />			
+			<ComponentRef Id="cmpBEC07D0236076B07E4E7D7632CCA69CB" />
 			<ComponentRef Id="cmp7662BF27A2D0CB01FFDEAC0A17A0850E" />
 			<ComponentRef Id="cmpAE5FC77E7BB7E9CB720EF7CEE118A4CE" />
             <ComponentRef Id="cmpB76F273FDED5EA841158E966B403CFC8" />

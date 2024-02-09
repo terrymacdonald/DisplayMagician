@@ -1417,7 +1417,7 @@ namespace DisplayMagicianShared.Windows
 
         public bool SetActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig)
         {
-/*            //bool needToRestartExplorer = false;
+            //bool needToRestartExplorer = false;
             UInt32 primaryMonitorDeviceID = 999;
 
             // Get the all possible windows display configs
@@ -1437,7 +1437,7 @@ namespace DisplayMagicianShared.Windows
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
             PatchWindowsDisplayConfig(ref displayConfig);
 
-            
+
             // Get the existing displays config
             Dictionary<string, GDI_DISPLAY_SETTING> currentGdiDisplaySettings = GetGdiDisplaySettings();
 
@@ -1468,7 +1468,7 @@ namespace DisplayMagicianShared.Windows
                     // Set the width and height too
                     currentDeviceSetting.DeviceMode.PixelsWidth = displayDeviceSettings.DeviceMode.PixelsWidth;
                     currentDeviceSetting.DeviceMode.PixelsHeight = displayDeviceSettings.DeviceMode.PixelsHeight;
-                    
+
                     SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the GDI Device Mode will work for display {displayDeviceKey}.");
                     // First of all check that setting the GDI mode will work
                     CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_TEST, IntPtr.Zero);
@@ -1627,7 +1627,7 @@ namespace DisplayMagicianShared.Windows
 
 
             // Wait 0.5 second for the display to settle before trying the CCD settings. This hopefully will make it more reliable setting the primary display as described in issues #78 and #284
-            Task.Delay(500);*/
+            Task.Delay(500);
 
 
             uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
