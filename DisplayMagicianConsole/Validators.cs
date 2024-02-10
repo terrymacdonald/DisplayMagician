@@ -23,12 +23,12 @@ namespace DisplayMagicianConsole
             // Try to find the Profile Name
             if (!ProfileRepository.ContainsProfile(profileName))
             {
-                Console.WriteLine($"ProfileMustExistValidator/GetValidationResult: Couldn't find Profile Name or ID supplied via command line: '{profileName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
-                return new ValidationResult($"Couldn't find Profile Name or ID supplied via command line: '{profileName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
+                Console.WriteLine($"ProfileMustExistValidator/GetValidationResult: Couldn't find Profile UUID supplied via command line: '{profileName}'. Please check the Profile UUID you supplied on the command line is correct.");
+                return new ValidationResult($"Couldn't find Profile UUID supplied via command line: '{profileName}'. Please check the Profile UUID you supplied on the command line is correct.");
             }
 
             ProfileItem profile = ProfileRepository.GetProfile(profileName);
-            Console.WriteLine($"Using Profile: '{profile.Name}' (ID:{profile.UUID})");
+            //Console.WriteLine($"Using Profile: '{profile.Name}' (ID:{profile.UUID})");
             return ValidationResult.Success;
         }
     }

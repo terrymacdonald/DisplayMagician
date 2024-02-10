@@ -6,6 +6,7 @@
         ChangeProfile,
         CreateProfile,
         CurrentProfile,
-        StartUpNormally
+        StartUpNormally,
+        AllProfiles
     }
 }
