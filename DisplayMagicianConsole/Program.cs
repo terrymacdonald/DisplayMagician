@@ -119,7 +119,7 @@ namespace DisplayMagicianConsole
             {
                 
                 //description and help text of the command.
-                allProfilesCmd.Description = "Use this command to output the details for all the display profiles saved in SDisplayMagician. It will return 'NONE' if there are no display profiles saved";
+                allProfilesCmd.Description = "Use this command to output the details for all the display profiles saved in DisplayMagician. It will return 'NONE' if there are no display profiles saved";
                 CommandOption verboseProfile = allProfilesCmd.Option("-v", "Communicate more about what is happening whilst doing it", CommandOptionType.NoValue);
                 CommandOption parseableProfile = allProfilesCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
 
@@ -325,9 +325,9 @@ namespace DisplayMagicianConsole
                 taskToRun.Wait(120);
                 result = taskToRun.Result;
             }
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException)
             {
-                Console.WriteLine($"Program/ApplyProfileTask: ERROR - User cancelled the ApplyProfile {profile.Name}.");
+                Console.WriteLine($"Program/ApplyProfileTask: User cancelled applying the profile {profile.Name}");
             }
             catch (Exception ex)
             {

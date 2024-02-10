@@ -220,7 +220,7 @@ namespace DisplayMagician.AppLibraries
                     }
                     else
                     {
-                        logger.Error($"LocalApp/IsRunning: This UWP LocalApp does not have a Package associated with it. There was an error creating the LocalApp, which means we cannot use it now.");
+                        logger.Error($"LocalApp/IsRunning: This UWP LocalApp does not have a Package associated with it. There was an error created when we started the LocalApp, which means we cannot use the same reference now.");
                         return false;
                     }
                 }
@@ -267,27 +267,35 @@ namespace DisplayMagician.AppLibraries
 
         private async Task<bool> UWPIsRunning(string aumid)
         {
-            IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid);
-            foreach (var thing in infos)
+            try
             {
-                // We only monitor the first item in the resource group, as it seems to be the main part of the UWP app in most apps
-                // NOTE - this may not always monitor the right part of the app, but I'm not sure how to make this logic better.
-                AppResourceGroupExecutionState status = thing.GetResourceGroups()[0].GetStateReport().ExecutionState;
-                if (status == AppResourceGroupExecutionState.NotRunning || status == AppResourceGroupExecutionState.Unknown)
+                IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid);
+                foreach (var thing in infos)
                 {
-                    // IMPORTANT - This status only occurs when Windows terminates the app processes (or if it doesn't know the status of the app).
-                    // This happens 10 seconds after the app is closed using the X, or when windows runs out of resources and has to terminate the app due to low resources.
-                    // This UWP application lifecycle means that there is a 10 second delay between when the UWP app is closed, and when it is really closed by Windows
-                    // (and therefore when DisplayMagician can detect it).
-                    return false;
+                    // We only monitor the first item in the resource group, as it seems to be the main part of the UWP app in most apps
+                    // NOTE - this may not always monitor the right part of the app, but I'm not sure how to make this logic better.
+                    AppResourceGroupExecutionState status = thing.GetResourceGroups()[0].GetStateReport().ExecutionState;
+                    if (status == AppResourceGroupExecutionState.NotRunning || status == AppResourceGroupExecutionState.Suspended || status == AppResourceGroupExecutionState.Suspending || status == AppResourceGroupExecutionState.Unknown)
+                    {
+                        // IMPORTANT - This status only occurs when Windows terminates the app processes (or if it doesn't know the status of the app).
+                        // This happens 10 seconds after the app is closed using the X, or when windows runs out of resources and has to terminate the app due to low resources.
+                        // This UWP application lifecycle means that there is a 10 second delay between when the UWP app is closed, and when it is really closed by Windows
+                        // (and therefore when DisplayMagician can detect it).
+                        return false;
+                    }
+                    else
+                    {
+                        // False is returned if the UWP app is Running, Suspended or Suspending.
+                        return true;
+                    }
                 }
-                else
-                {
-                    // False is returned if the UWP app is Running, Suspended or Suspending.
-                    return true;
-                }
+                return false;
             }
-            return false;
+            catch(Exception ex)
+            {
+                logger.Debug(ex, $"LocalApp/UWPIsRunning: AppDiagnosticInfo.RequestInfoForAppAsync({aumid}) cause an exception due to insufficent rights.");
+                return false;
+            }
         }
 
         public override bool CopyTo(App LocalApp)
