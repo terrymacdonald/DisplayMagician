@@ -1468,6 +1468,8 @@ namespace DisplayMagicianShared.Windows
                     // Set the width and height too
                     currentDeviceSetting.DeviceMode.PixelsWidth = displayDeviceSettings.DeviceMode.PixelsWidth;
                     currentDeviceSetting.DeviceMode.PixelsHeight = displayDeviceSettings.DeviceMode.PixelsHeight;
+                    // Also copy across the dmFields item as well as per https://stackoverflow.com/questions/9756416/using-user32-changedisplaysettings-to-set-resolution-fails-only-on-max-resolutio
+                    currentDeviceSetting.DeviceMode.Fields = displayDeviceSettings.DeviceMode.Fields;
 
                     SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the GDI Device Mode will work for display {displayDeviceKey}.");
                     // First of all check that setting the GDI mode will work

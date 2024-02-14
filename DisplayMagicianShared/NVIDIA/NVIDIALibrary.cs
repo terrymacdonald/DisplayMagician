@@ -2451,7 +2451,7 @@ namespace DisplayMagicianShared.NVIDIA
                         }
                         else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_ARGUMENT)
                         {
-                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: One or more argumentss passed in are invalid. NvAPI_Mosaic_SetDisplayGrids() returned error code {NVStatus}");
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: One or more arguments passed in are invalid. NvAPI_Mosaic_SetDisplayGrids() returned error code {NVStatus}. This is often caused by new NVIDIA settings from an NVIDIA driver update. You may ned to recreate your Surround layout.");
                         }
                         else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
                         {
@@ -2468,6 +2468,11 @@ namespace DisplayMagicianShared.NVIDIA
                         else if (NVStatus == NVAPI_STATUS.NVAPI_MODE_CHANGE_FAILED)
                         {
                             SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: There was an error changing the display mode. NvAPI_Mosaic_SetDisplayGrids() returned error code {NVStatus}");
+                            return false;
+                        }
+                        else if (NVStatus == NVAPI_STATUS.NVAPI_OUT_OF_MEMORY)
+                        {
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: The NvAPI driver is out of memory and is unable to allocate more. NvAPI_Mosaic_SetDisplayGrids() returned error code {NVStatus}");
                             return false;
                         }
                         else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)

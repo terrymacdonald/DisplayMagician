@@ -735,6 +735,12 @@ namespace DisplayMagicianShared
                             nvidiaMainConfigTried = true;
                             nvidiaMainConfigApplied = nvidiaLibrary.SetActiveConfig(_nvidiaDisplayConfig);
 
+                            /*if (!nvidiaMainConfigApplied)
+                            {
+                                SharedLogger.logger.Error($"ProfileItem/SetActive: Error applying NVIDIA display configuration in profile {Name}. Please see specific error earlier in log file.");
+                                return false;
+                            }*/
+
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the NVIDIA display change take place before continuing.");
                             System.Threading.Thread.Sleep(500);
 
@@ -765,6 +771,12 @@ namespace DisplayMagicianShared
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
                             amdMainConfigTried = true;
                             amdMainConfigApplied = amdLibrary.SetActiveConfig(_amdDisplayConfig);
+
+                            /*if (!amdMainConfigApplied)
+                            {
+                                SharedLogger.logger.Error($"ProfileItem/SetActive: Error applying AMD display configuration in profile {Name}. Please see specific error earlier in log file.");
+                                return false;
+                            }*/
 
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the AMD display change take place before continuing.");
                             System.Threading.Thread.Sleep(500);
