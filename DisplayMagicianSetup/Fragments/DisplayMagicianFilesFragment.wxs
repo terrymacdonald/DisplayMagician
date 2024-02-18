@@ -33,10 +33,10 @@
                 <File Id="fil00FEE1F8F6F3766FD0431A9B72F4FCC7" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.pdb" />
             </Component>-->
             <Component Id="cmp936B3459EEFF10D8EB978B7DD0F9FDDA" Guid="{725E0C5E-EEE0-4D5D-AD9D-90D193D50CFF}">
-                <File Id="fil44F64B4F8FBBEAA84A71077F7F3B6B4D" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.Shared.dll" />
+                <File Id="fil44F64B4F8FBBEAA84A71077F7F3B6B4D" KeyPath="yes" Source="$(var.DisplayMagicianShared.TargetDir)\DisplayMagician.Shared.dll" />
             </Component>
             <!--<Component Id="cmpEFA0EED8369E2F430E0ED6D9EB027553" Guid="{43D90CFF-1B51-4C5A-9346-463616C42998}">
-                <File Id="fil52BE9F94EBFDF8C5CFEC426A17966F40" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.Shared.pdb" />
+                <File Id="fil52BE9F94EBFDF8C5CFEC426A17966F40" KeyPath="yes" Source="$(var.DisplayMagicianShared.TargetDir)\DisplayMagician.Shared.pdb" />
             </Component>-->
             <Component Id="cmpE8833A8E220525D7707A018B20CEDD87" Guid="{EBC27E33-6C4D-4612-BC5F-AC0A09DDD636}">
                 <File Id="filD4FD53D2FBF78674DBC3A1B446B44FC5" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\EDIDParser.dll" />

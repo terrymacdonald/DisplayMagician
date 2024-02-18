@@ -444,6 +444,8 @@ namespace DisplayMagicianShared.NVIDIA
                     myAdapter.HasLogicalGPU = false;
                     myAdapter.Displays = new Dictionary<uint, NVIDIA_PER_DISPLAY_CONFIG>();
 
+                    // THIS FUNCTION IS DEPRECATED
+                    // This API is deprecated and it is recommended to instead query NV_GPU_WORKSTATION_FEATURE_TYPE_PROVIZ support from the API NvAPI_GPU_QueryWorkstationFeatureSupport.
                     //This function retrieves the Quadro status for the GPU (1 if Quadro, 0 if GeForce)
                     uint quadroStatus = 0;
                     NVStatus = NVImport.NvAPI_GPU_GetQuadroStatus(physicalGpus[physicalGpuIndex], out quadroStatus);
@@ -1857,6 +1859,7 @@ namespace DisplayMagicianShared.NVIDIA
             {
 
                 NVAPI_STATUS NVStatus = NVAPI_STATUS.NVAPI_ERROR;
+                bool logicalGPURefreshNeeded = false;
 
                 // Remove any custom NVIDIA Colour settings
                 SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to turn off colour if it's default set colour.");
@@ -2438,6 +2441,7 @@ namespace DisplayMagicianShared.NVIDIA
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: NvAPI_Mosaic_SetDisplayGrids returned OK.");
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Waiting 0.5 second to let the Mosaic display change take place before continuing");
                             System.Threading.Thread.Sleep(500);
+                            logicalGPURefreshNeeded = true;
                         }
                         else if (NVStatus == NVAPI_STATUS.NVAPI_NO_ACTIVE_SLI_TOPOLOGY)
                         {
@@ -2564,6 +2568,7 @@ namespace DisplayMagicianShared.NVIDIA
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: NvAPI_Mosaic_SetDisplayGrids returned OK.");
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Waiting 0.5 second to let the Mosaic display change take place before continuing");
                         System.Threading.Thread.Sleep(500);
+                        logicalGPURefreshNeeded = true;
                     }
                     else if (NVStatus == NVAPI_STATUS.NVAPI_NO_ACTIVE_SLI_TOPOLOGY)
                     {
@@ -2766,12 +2771,20 @@ namespace DisplayMagicianShared.NVIDIA
                     SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Skipping setting the NVIDIA Display Config as there isn't one provided in the configuration.");
                 }*/
 
+                // If the NVIDIA topology has changed, then we need to refresh our active config so it stays valid. 
+                if (logicalGPURefreshNeeded)
+                {
+                    UpdateActiveConfig();
+                }
+
+
             }
             else
             {
                 SharedLogger.logger.Info($"NVIDIALibrary/SetActiveConfig: Tried to run SetActiveConfig but the NVIDIA NvAPI library isn't initialised! This generally means you don't have a NVIDIA video card in your machine.");
                 //throw new NVIDIALibraryException($"Tried to run SetActiveConfig but the NVIDIA NvAPI library isn't initialised!");
             }
+
             return true;
         }
 

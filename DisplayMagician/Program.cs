@@ -409,7 +409,6 @@ namespace DisplayMagician {
             Console.WriteLine(@"Derived from Helios Display Management - Copyright © Soroush Falahati 2017-2020");
             logger.Trace($"Program/Main: Setting visual styles and rendering mode");
 
-            //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false); 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;

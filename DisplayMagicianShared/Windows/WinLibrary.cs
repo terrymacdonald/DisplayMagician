@@ -286,7 +286,7 @@ namespace DisplayMagicianShared.Windows
                     }
                     if (!adapterMatched)
                     {
-                        SharedLogger.logger.Error($"WinLibrary/PatchWindowsDisplayConfig: Saved adapter {savedAdapter.Key} (AdapterName is {savedAdapter.Value}) doesn't have a current match! The adapters have changed since the configuration was last saved.");
+                        SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Saved adapter {savedAdapter.Key} (AdapterName is {savedAdapter.Value}) doesn't have a current match! The adapters have changed since the configuration was last saved. This could be an Optimus laptop or another type of system that disables GPUs.");
                     }
                 }
             }
