@@ -37,8 +37,9 @@
     <ApplicationIcon>DisplayMagician.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="McMaster.Extensions.CommandLineUtils, Version=4.1.0.0, Culture=neutral, PublicKeyToken=6f71cb76b82f055d, processorArchitecture=MSIL">
-      <HintPath>..\packages\McMaster.Extensions.CommandLineUtils.4.1.0\lib\net46\McMaster.Extensions.CommandLineUtils.dll</HintPath>
+    <Reference Include="McMaster.Extensions.CommandLineUtils, Version=4.1.1.0, Culture=neutral, PublicKeyToken=6f71cb76b82f055d">
+      <HintPath>..\packages\McMaster.Extensions.CommandLineUtils.4.1.1\lib\net46\McMaster.Extensions.CommandLineUtils.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
