@@ -444,31 +444,37 @@ namespace DisplayMagicianShared.NVIDIA
                     myAdapter.HasLogicalGPU = false;
                     myAdapter.Displays = new Dictionary<uint, NVIDIA_PER_DISPLAY_CONFIG>();
 
-                    // THIS FUNCTION IS DEPRECATED
-                    // This API is deprecated and it is recommended to instead query NV_GPU_WORKSTATION_FEATURE_TYPE_PROVIZ support from the API NvAPI_GPU_QueryWorkstationFeatureSupport.
-                    //This function retrieves the Quadro status for the GPU (1 if Quadro, 0 if GeForce)
-                    uint quadroStatus = 0;
-                    NVStatus = NVImport.NvAPI_GPU_GetQuadroStatus(physicalGpus[physicalGpuIndex], out quadroStatus);
+                    NVStatus = NVImport.NvAPI_GPU_QueryWorkstationFeatureSupport(physicalGpus[physicalGpuIndex], NV_GPU_WORKSTATION_FEATURE_TYPE.NV_GPU_WORKSTATION_FEATURE_TYPE_PROVIZ);
                     if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                     {
-                        if (quadroStatus == 0)
-                        {
-                            SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NVIDIA Video Card is one from the GeForce range");
-                        }
-                        else if (quadroStatus == 1)
-                        {
-                            SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NVIDIA Video Card is one from the Quadro range");
-                            myAdapter.IsQuadro = true;
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NVIDIA Video Card is neither a GeForce or Quadro range vodeo card (QuadroStatus = {quadroStatus})");
-                        }
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NVIDIA Video Card is one from the Quadro range");
+                        myAdapter.IsQuadro = true;
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_NOT_SUPPORTED)
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NVIDIA Video Card is not a Quadro range video card.");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: The current NVIDIA driver doesn't support this NvAPI_GPU_QueryWorkstationFeatureSupport interface.");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_HANDLE)
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: The physical video card handle supplied to NvAPI_GPU_QueryWorkstationFeatureSupport was an invalid handle.");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_NOT_SUPPORTED)
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: The requested gpuWorkstationFeature is not supported in the selected GPU.");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_SETTING_NOT_FOUND)
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: The requested gpuWorkstationFeature is unknown to the current driver version.");
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Error getting Quadro status. NvAPI_GPU_GetQuadroStatus() returned error code {NVStatus}");
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Error getting GPU Function status. NvAPI_GPU_QueryWorkstationFeatureSupport() returned error code {NVStatus}");
                     }
+
 
                     // Firstly let's get the logical GPU from the Physical handle
                     LogicalGpuHandle logicalGPUHandle;

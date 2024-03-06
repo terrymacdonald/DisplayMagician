@@ -703,6 +703,15 @@ namespace DisplayMagicianShared.NVIDIA
         NVDRS_DEFAULT_PROFILE_LOCATION = 0x3,
     }
 
+    //! \ingroup gpu
+    public enum NV_GPU_WORKSTATION_FEATURE_TYPE : UInt32
+    {
+        NV_GPU_WORKSTATION_FEATURE_TYPE_NVIDIA_RTX_VR_READY = 1,  //!< NVIDIA RTX VR Ready
+        NV_GPU_WORKSTATION_FEATURE_TYPE_QUADRO_VR_READY = NV_GPU_WORKSTATION_FEATURE_TYPE_NVIDIA_RTX_VR_READY,  //!< DEPRECATED name - do not use
+        NV_GPU_WORKSTATION_FEATURE_TYPE_PROVIZ = 2,
+    }
+
+
 
     [Flags]
     public enum NV_HDR_CAPABILITIES_V2_FLAGS : UInt32
@@ -3692,6 +3701,7 @@ namespace DisplayMagicianShared.NVIDIA
                 GetDelegate(NvId_GPU_GetEDID, out GPU_GetEDIDInternal);
                 GetDelegate(NvId_GetLogicalGPUFromPhysicalGPU, out GetLogicalGPUFromPhysicalGPUInternal);
                 GetDelegate(NvId_GPU_GetLogicalGpuInfo, out GPU_GetLogicalGpuInfoInternal);
+                GetDelegate(NvId_GPU_QueryWorkstationFeatureSupport, out GPU_QueryWorkstationFeatureSupportInternal);
 
                 // Mosaic                
                 GetDelegate(NvId_Mosaic_EnableCurrentTopo, out Mosaic_EnableCurrentTopoInternal);
@@ -5348,6 +5358,49 @@ namespace DisplayMagicianShared.NVIDIA
             return status;
         }
 
+
+        ///////////////////////////////////////////////////////////////////////////////
+        // FUNCTION NAME:   NvAPI_GPU_QueryWorkstationFeatureSupport
+        //
+        //! \fn NvAPI_GPU_QueryWorkstationFeatureSupport(NvPhysicalGpuHandle physicalGpu, NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature)
+        //! \code
+        //! DESCRIPTION:     Indicates whether a queried workstation feature is supported by the requested GPU.
+        //!
+        //! SUPPORTED OS:  Windows 10 and higher
+        //!
+        //! \since Release: 440
+        //!
+        //! DESCRIPTION:     This API, when called with a valid physical gpu handle as Input, lets caller know whether the given workstation feature is supported by this GPU.
+        //!
+        //! PARAMETERS:      physicalGpu(IN)            : The handle of the GPU for the which caller wants to get the support information.
+        //!                  gpuWorkstationFeature(IN ) : The feature for the GPU in question. One of the values from enum NV_GPU_WORKSTATION_FEATURE_TYPE.
+        //!
+        //! \return  This API can return any of the error codes enumerated in #NvAPI_Status listed below
+        //!
+        //! \retval ::NVAPI_OK the queried workstation feature is supported on the given GPU.
+        //! \retval ::NVAPI_NO_IMPLEMENTATION the current driver doesn't support this interface.
+        //! \retval ::NVAPI_INVALID_HANDLE the incoming physicalGpu handle is invalid.
+        //! \retval ::NVAPI_NOT_SUPPORTED the requested gpuWorkstationFeature is not supported in the selected GPU.
+        //! \retval ::NVAPI_SETTING_NOT_FOUND the requested gpuWorkstationFeature is unknown to the current driver version.
+        //!
+        //! \endcode
+        //! \ingroup gpu
+        ///////////////////////////////////////////////////////////////////////////////
+        //NVAPI_INTERFACE NvAPI_GPU_QueryWorkstationFeatureSupport(NvPhysicalGpuHandle physicalGpu, NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature);
+        private delegate NVAPI_STATUS GPU_QueryWorkstationFeatureSupportDelegate(
+            [In] PhysicalGpuHandle physicalGpu, 
+            [In] NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature);
+        private static readonly GPU_QueryWorkstationFeatureSupportDelegate GPU_QueryWorkstationFeatureSupportInternal;
+
+        public static NVAPI_STATUS NvAPI_GPU_QueryWorkstationFeatureSupport(PhysicalGpuHandle physicalGpu, NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature)
+        {
+            NVAPI_STATUS status;
+
+            if (GPU_QueryWorkstationFeatureSupportInternal != null) { status = GPU_QueryWorkstationFeatureSupportInternal(physicalGpu, gpuWorkstationFeature); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
 
 
         // NVAPI_INTERFACE NvAPI_DISP_GetDisplayIdByDisplayName(const char *displayName, NvU32* displayId);
