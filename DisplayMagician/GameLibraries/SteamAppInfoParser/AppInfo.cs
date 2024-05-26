@@ -11,6 +11,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 {
     class AppInfo
     {
+        private const uint Magic6F = 0x6F_68_73_00;
         private const uint Magic28 = 0x07_56_44_28;
         private const uint Magic = 0x07_56_44_27;
 
@@ -38,7 +39,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
             var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic && magic != Magic28)
+            if (magic != Magic && magic != Magic28 && magic != Magic6F)
             {
                 reader.Close();
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");

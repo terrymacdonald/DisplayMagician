@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.UI.WebControls.WebParts;
+//using System.Web.UI.WebControls.WebParts;
 using System.Windows.Forms;
 using static DisplayMagician.FovCalculator;
 using static System.Net.WebRequestMethods;

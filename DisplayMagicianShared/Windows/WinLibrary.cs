@@ -2743,7 +2743,7 @@ namespace DisplayMagicianShared.Windows
             // Send the "TrayNotifyWnd" window a WM_USER+13 (0x040D) message with a wParameter of 0x0 and a lParameter of the position (e.g. 0x0000 for left, 0x0001 for top, 0x0002 for right and 0x0003 for bottom)
             Utils.SendMessage(systemTrayHandle, Utils.WM_USER_13, IntPtr.Zero, taskBarPositionBuffer);
             Utils.SendMessage(systemTrayHandle, Utils.WM_USER_100, (IntPtr)0x3e, (IntPtr)0x21c);
-            Utils.SendMessage(systemTrayHandle, Utils.WM_THEMECHANGED, (IntPtr)0xffffffffffffffff, (IntPtr)0x000000008000001);
+            Utils.SendMessage(systemTrayHandle, Utils.WM_THEMECHANGED, (IntPtr)0xfffffffffffffff, (IntPtr)0x000000008000001);
             // Next, send the "TrayShowDesktopButtonWClass" window a WM_USER+13 (0x040D) message with a wParameter of 0x0 and a lParameter of the position (e.g. 0x0000 for left, 0x0001 for top, 0x0002 for right and 0x0003 for bottom)
             Utils.SendMessage(trayDesktopShowButtonHandle, Utils.WM_USER_13, IntPtr.Zero, taskBarPositionBuffer);
             Utils.SendMessage(startButtonHandle, Utils.WM_USER_440, (IntPtr)0x0, (IntPtr)0x0);

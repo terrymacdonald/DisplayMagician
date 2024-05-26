@@ -17,7 +17,7 @@ using System.Drawing.Printing;
 using System.Windows.Media.Imaging;
 using System.Windows.Interop;
 using System.Windows;
-using Windows.UI.Xaml.Media.Imaging;
+//using Windows.UI.Xaml.Media.Imaging;
 using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
 using Microsoft.WindowsAPICodePack.Win32Native;
 using System.Runtime.InteropServices.ComTypes;
@@ -360,7 +360,7 @@ namespace DisplayMagician
                 try
                 {
 
-                    List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower());
+                    List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower()).Result;
                     System.Drawing.Size largeSize = new System.Drawing.Size(256, 256);
                     if (myExtractedIcons.Count > 0)
                     {

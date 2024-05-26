@@ -39,6 +39,7 @@ namespace DisplayMagician.GameLibraries
         private List<string> _steamProcessList = new List<string>() { "steam"};
         private string _registrySteamKey = @"SOFTWARE\WOW6432Node\Valve\Steam"; // under LocalMachine
         private string _registryAppsKey = $@"SOFTWARE\Valve\Steam\Apps"; // under CurrentUser
+        private string _registryUsersKey = $@"SOFTWARE\Valve\Steam\Users"; // under CurrentUser
         private bool _isSteamInstalled = false;
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         // Other constants that are useful
@@ -816,6 +817,93 @@ namespace DisplayMagician.GameLibraries
                         logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: Exception: General exception while trying to scan Steam Library {steamLibraryPath} for games.");
                     }
                 }
+
+                // Now we try to find any non-Steam games that have been added to Steam. This is done as Steam can add non-Steam games to the library
+                // which enables users to launch them from the Steam client so that the Users can use the Steam Overlay and other Steam features.
+                List<string> steamIds = new List<string>();
+                // Now look for what games app id's are actually installed on this computer
+                using (RegistryKey steamUsersKey = Registry.CurrentUser.OpenSubKey(_registryUsersKey, RegistryKeyPermissionCheck.ReadSubTree))
+                {
+                    if (steamUsersKey != null)
+                    {
+                        //
+                        // Loop through the subKeys as they are the Steam Game IDs
+                        foreach (string steamUserId in steamUsersKey.GetSubKeyNames())
+                        {
+                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam User ID = {steamUserId}");
+                            if (!String.IsNullOrWhiteSpace(steamUserId))
+                            {
+                                string shortcutsVdfFile = Path.Combine(_steamPath, "userdata", steamUserId, "config", "shortcuts.vdf");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Checking for Steam User ID {steamUserId} folder {shortcutsVdfFile} for Steam shortcuts");
+                                if (File.Exists(shortcutsVdfFile))
+                                {
+                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam User {shortcutsVdfFile} shortcuts file");
+                                    var newShortcutsAppInfo = new AppInfo();
+                                    try
+                                    {
+                                        // Try to read the appInfoVdfFile
+                                        newShortcutsAppInfo.Read(shortcutsVdfFile);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // If we have a problem then we just have to return no Steam Games!
+                                        return false;
+                                    }
+                                    /*string shortcutsVdfText = File.ReadAllText(shortcutsVdfFile, Encoding.UTF8);
+                                    // Now we have to parse the shortcuts.vdf looking for the location of any additional SteamLibraries
+                                    // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
+                                    // There may be multiple so we need to check the whole file
+                                    Regex steamShortcutsRegex = new Regex(@"""AppID""\s+""(\d+)""", RegexOptions.IgnoreCase);
+                                    // Try to match all lines against the Regex.
+                                    MatchCollection steamShortcutsMatches = steamShortcutsRegex.Matches(shortcutsVdfText);
+                                    // If at least one of them matched!
+                                    foreach (Match steamShortcutMatch in steamShortcutsMatches)
+                                    {
+                                        if (steamShortcutMatch.Success)
+                                        {
+                                            string steamShortcutId = steamShortcutMatch.Groups[1].Value;
+                                            if (!String.IsNullOrWhiteSpace(steamShortcutId))
+                                            {
+                                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam Shortcut ID {steamShortcutId} within {shortcutsVdfFile} steam shortcuts for Steam User ID {steamUserId}");
+                                                // Check if this game is one that was installed
+                                                if (!steamAppInfo.ContainsKey(steamShortcutId) && !steamIds.Contains(steamShortcutId))
+                                                {
+                                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Steam Shortcut ID {steamShortcutId} is not installed within steam library {steamLibraryPath}!");
+                                                    // This game is an installed game! so we start to populate it with data!
+                                                    string steamGameExe = "";
+
+                                                    string steamGameName = "Non-Steam Game";
+
+                                                    // Construct the full path to the game dir from the appInfo and libraryAppManifest data
+                                                    string steamGameInstallDir = Path.Combine(_steamPath, @"steamapps", @"common", "Non-Steam Game");
+
+                                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamShortcutId} at {steamGameInstallDir }");
+
+                                                    // And finally we try to populate the 'where', to see what gets run
+                                                    // And so we can extract the process name
+                                                    if (steamAppInfo[steam*/
+
+                                }
+                            }
+                        }
+
+                        if (steamAppIdsInstalled.Count == 0)
+                        {
+                            // There aren't any game ids so return false
+                            logger.Warn($"SteamLibrary/LoadInstalledGames: No Steam games installed in the Steam library");
+                            return false;
+                        }
+
+                    }
+                    else
+                    {
+                        // There isnt any steam registry key
+                        logger.Warn($"SteamLibrary/LoadInstalledGames: Couldn't access the Steam Users Registry Key {_registryUsersKey}");
+                        return false;
+                    }
+                }
+
+
                 logger.Info($"SteamLibrary/LoadInstalledGames: Found {_allSteamGames.Count} installed Steam games");
             }
             catch (ArgumentNullException ex)
