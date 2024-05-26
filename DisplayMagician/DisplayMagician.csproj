@@ -166,5 +166,19 @@
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DLL\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="AudioSwitcher.AudioApi">
+      <HintPath>DLL\AudioSwitcher.AudioApi.dll</HintPath>
+    </Reference>
+    <Reference Include="AudioSwitcher.AudioApi.CoreAudio">
+      <HintPath>DLL\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
+    </Reference>
+    <Reference Include="CoreAudio">
+      <HintPath>DLL\CoreAudio.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   <PropertyGroup />
 </Project>
