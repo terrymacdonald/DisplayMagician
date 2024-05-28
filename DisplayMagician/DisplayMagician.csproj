@@ -55,9 +55,6 @@
     <Compile Update="HotkeySelector.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Update="Processes\ImpersonationProcess.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Update="UIForms\StartProgramControl.cs">
       <SubType>UserControl</SubType>
     </Compile>

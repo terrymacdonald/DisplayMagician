@@ -216,8 +216,7 @@ namespace DisplayMagician
                     PipeTransmissionMode.Byte,
                     PipeOptions.Asynchronous,
                     0,
-                    0,
-                    pipeSecurity);
+                    0);
 
             }
             catch (PlatformNotSupportedException ex)

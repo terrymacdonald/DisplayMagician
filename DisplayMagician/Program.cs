@@ -1197,7 +1197,7 @@ namespace DisplayMagician {
                 MainForm myMainForm = Program.AppMainForm;
                 if (myMainForm.InvokeRequired)
                 {
-                    myMainForm.BeginInvoke((MethodInvoker)delegate {
+                    myMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate {
                         myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
                     });
                 }
@@ -1719,7 +1719,7 @@ namespace DisplayMagician {
                             // Open the Main DisplayMagician Window, if the app has started and the mainform is loaded
                             if (Program.AppMainForm != null)
                             {
-                                Program.AppMainForm.Invoke((MethodInvoker)delegate
+                                Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                 {
                                     Program.AppMainForm.openApplicationWindow();
                                 });
@@ -1733,7 +1733,7 @@ namespace DisplayMagician {
                             // Exit the application (overriding the close restriction)                            
                             if (Program.AppMainForm != null)
                             {
-                                Program.AppMainForm.Invoke((MethodInvoker)delegate
+                                Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                 {
                                     Program.AppMainForm.exitApplication();
                                 });
@@ -1746,7 +1746,7 @@ namespace DisplayMagician {
                             
                             if (Program.AppMainForm != null)
                             {
-                                Program.AppMainForm.Invoke((MethodInvoker)delegate
+                                Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                 {
                                     Program.AppCancellationTokenSource.Cancel();
                                 });

@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -50,20 +52,51 @@ namespace DisplayMagician.Processes
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private static readonly Encoding CONSOLE_ENCODING = Encoding.UTF8;
-        private static readonly string CONSOLE_ENCODING_PREAMBLE = CONSOLE_ENCODING.GetString(CONSOLE_ENCODING.GetPreamble());
+        //private static readonly Encoding CONSOLE_ENCODING = Encoding.UTF8;
+        //private static readonly string CONSOLE_ENCODING_PREAMBLE = CONSOLE_ENCODING.GetString(CONSOLE_ENCODING.GetPreamble());
 
-        private const int INFINITE = -1;
+        //private const int INFINITE = -1;
 
         public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
         {
             List<Process> returnedProcesses = new List<Process>();
             Process processCreated;
-            if (TryExecute(executable, arguments, out processCreated, runAsAdministrator))
-            {
-                logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by TryExecute");
+            //SafeAccessTokenHandle safeAccessTokenHandle;
+            //bool returnValue = LogonUser(user, domain, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, out safeAccessTokenHandle);
 
-                if (processCreated != null && processCreated.Id > 0)
+            ProcessStartInfo psi = new ProcessStartInfo(executable, arguments)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = false,
+                RedirectStandardOutput = false,
+                WorkingDirectory = Path.GetDirectoryName(executable),
+                LoadUserProfile = true
+            };
+
+            if (runAsAdministrator)
+            {
+                psi.Verb = "runas";
+            }
+            else
+            {
+                psi.Verb = "open";
+            }
+
+            processCreated = new Process()
+            {
+                StartInfo = psi,
+                EnableRaisingEvents = true
+            };
+
+            var output = processCreated.StandardOutput.ReadToEnd();
+            var exitCode = processCreated.ExitCode;
+
+            processCreated.Start();
+
+            if (processCreated != null)
+            {
+                logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by Process.Start");
+                if (processCreated.Id > 0)
                 {
                     try
                     {
@@ -122,10 +155,8 @@ namespace DisplayMagician.Processes
             }
             else
             {
-                logger.Warn($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute, so attempting with TryExecute_Impersonate");                
-            }
-
-            
+                logger.Warn($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by Process.Start.");
+            }    
 
             return returnedProcesses;
         }        
@@ -373,7 +404,7 @@ namespace DisplayMagician.Processes
             return result;
         }*/
 
-        /// <summary>
+        /*/// <summary>
         /// Executes the <paramref name="executable"/> and waits a maximum time of <paramref name="maxWaitMs"/> for completion. If the process doesn't end in 
         /// this time, it gets aborted. This method tries to impersonate the interactive user and run the process under its identity.
         /// </summary>
@@ -397,7 +428,7 @@ namespace DisplayMagician.Processes
                 StringBuilder outputBuilder = new StringBuilder();
                 //startedProcesses = new List<Process>();
                 processCreated = new ImpersonationProcess { StartInfo = new ProcessStartInfo(executable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = false } };
-                /*if (redirectInputOutput)
+                *//*if (redirectInputOutput)
                 {
                     // Set UTF-8 encoding for standard output.
                     process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
@@ -405,7 +436,7 @@ namespace DisplayMagician.Processes
                     process.EnableRaisingEvents = true;
                     // Attach the event handler for OutputDataReceived before starting the process.
                     process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
-                }*/
+                }*//*
 
                 try
                 {
@@ -460,7 +491,7 @@ namespace DisplayMagician.Processes
             WindowsIdentity windowsIdentity = WindowsIdentity.GetCurrent();
             return windowsIdentity != null && windowsIdentity.ImpersonationLevel == TokenImpersonationLevel.Impersonation;
         }
-
+*/
         /*/// <summary>
         /// Executes the <paramref name="executable"/> and waits a maximum time of <paramref name="maxWaitMs"/> for completion and returns the contents of
         /// <see cref="Process.StandardOutput"/>. If the process doesn't end in this time, it gets aborted.
@@ -740,6 +771,7 @@ namespace DisplayMagician.Processes
                     wantedPriorityClass = PROCESS_CREATION_FLAGS.HIGH_PRIORITY_CLASS;
                     break;
                 case ProcessPriorityClass.AboveNormal:
+  
                     wantedPriorityClass = PROCESS_CREATION_FLAGS.ABOVE_NORMAL_PRIORITY_CLASS;
                     break;
                 case ProcessPriorityClass.Normal:

@@ -357,7 +357,8 @@ namespace DisplayMagician
                     logger.Trace(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the thumbnail from an *.exe or *.dll using WindowsThumbnailProvider.GetThumbnail. Means the file {fileNameAndPath} could not be processed so skipping it with this method");                                             
                 }
 
-                try
+                // TODO fix this section
+                /*try
                 {
 
                     List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath.ToLower()).Result;
@@ -392,7 +393,7 @@ namespace DisplayMagician
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor on file {fileNameAndPath}! ");
-                }
+                }*/
             }
 
             return bmList;

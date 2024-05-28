@@ -820,7 +820,7 @@ namespace DisplayMagician.GameLibraries
 
                 // Now we try to find any non-Steam games that have been added to Steam. This is done as Steam can add non-Steam games to the library
                 // which enables users to launch them from the Steam client so that the Users can use the Steam Overlay and other Steam features.
-                List<string> steamIds = new List<string>();
+                /*List<string> steamIds = new List<string>();
                 // Now look for what games app id's are actually installed on this computer
                 using (RegistryKey steamUsersKey = Registry.CurrentUser.OpenSubKey(_registryUsersKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
@@ -849,7 +849,7 @@ namespace DisplayMagician.GameLibraries
                                         // If we have a problem then we just have to return no Steam Games!
                                         return false;
                                     }
-                                    /*string shortcutsVdfText = File.ReadAllText(shortcutsVdfFile, Encoding.UTF8);
+                                    *//*string shortcutsVdfText = File.ReadAllText(shortcutsVdfFile, Encoding.UTF8);
                                     // Now we have to parse the shortcuts.vdf looking for the location of any additional SteamLibraries
                                     // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
                                     // There may be multiple so we need to check the whole file
@@ -881,7 +881,7 @@ namespace DisplayMagician.GameLibraries
 
                                                     // And finally we try to populate the 'where', to see what gets run
                                                     // And so we can extract the process name
-                                                    if (steamAppInfo[steam*/
+                                                    if (steamAppInfo[steam*//*
 
                                 }
                             }
@@ -902,7 +902,7 @@ namespace DisplayMagician.GameLibraries
                         return false;
                     }
                 }
-
+*/
 
                 logger.Info($"SteamLibrary/LoadInstalledGames: Found {_allSteamGames.Count} installed Steam games");
             }
