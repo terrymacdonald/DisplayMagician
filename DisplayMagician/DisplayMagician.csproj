@@ -117,7 +117,7 @@
       <Version>1.0.3-rc</Version>
     </PackageReference>
     <PackageReference Include="YamlDotNet">
-      <Version>15.1.4</Version>
+      <Version>15.1.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.SystemWebAdapters" Version="1.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
