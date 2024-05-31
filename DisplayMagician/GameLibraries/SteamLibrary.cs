@@ -9,6 +9,9 @@ using System.IO;
 using System.Security;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using YamlDotNet.Serialization;
+using Windows.Devices.Perception;
+using Windows.Devices.Printers;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -820,12 +823,17 @@ namespace DisplayMagician.GameLibraries
 
                 // Now we try to find any non-Steam games that have been added to Steam. This is done as Steam can add non-Steam games to the library
                 // which enables users to launch them from the Steam client so that the Users can use the Steam Overlay and other Steam features.
-                /*List<string> steamIds = new List<string>();
+                List<string> steamIds = new List<string>();
                 // Now look for what games app id's are actually installed on this computer
                 using (RegistryKey steamUsersKey = Registry.CurrentUser.OpenSubKey(_registryUsersKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     if (steamUsersKey != null)
                     {
+                        // Now we have to parse the shortcuts.vdf looking for the location of any additional SteamLibraries
+                        // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
+                        // There may be multiple so we need to check the whole file
+                        Regex steamShortcutsRegex = new Regex(@"""AppID""\s+""(\d+)""", RegexOptions.IgnoreCase);
+
                         //
                         // Loop through the subKeys as they are the Steam Game IDs
                         foreach (string steamUserId in steamUsersKey.GetSubKeyNames())
@@ -838,50 +846,74 @@ namespace DisplayMagician.GameLibraries
                                 if (File.Exists(shortcutsVdfFile))
                                 {
                                     logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam User {shortcutsVdfFile} shortcuts file");
-                                    var newShortcutsAppInfo = new AppInfo();
+
+                                    var fs = new FileStream(shortcutsVdfFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                                     try
                                     {
-                                        // Try to read the appInfoVdfFile
-                                        newShortcutsAppInfo.Read(shortcutsVdfFile);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        // If we have a problem then we just have to return no Steam Games!
-                                        return false;
-                                    }
-                                    *//*string shortcutsVdfText = File.ReadAllText(shortcutsVdfFile, Encoding.UTF8);
-                                    // Now we have to parse the shortcuts.vdf looking for the location of any additional SteamLibraries
-                                    // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
-                                    // There may be multiple so we need to check the whole file
-                                    Regex steamShortcutsRegex = new Regex(@"""AppID""\s+""(\d+)""", RegexOptions.IgnoreCase);
-                                    // Try to match all lines against the Regex.
-                                    MatchCollection steamShortcutsMatches = steamShortcutsRegex.Matches(shortcutsVdfText);
-                                    // If at least one of them matched!
-                                    foreach (Match steamShortcutMatch in steamShortcutsMatches)
-                                    {
-                                        if (steamShortcutMatch.Success)
+                                        var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
+                                        var kvDoc = deserializer.Deserialize(fs);
+                                        // Each line is a new shortcut
+                                        foreach (var kvItem in kvDoc.Children)
                                         {
-                                            string steamShortcutId = steamShortcutMatch.Groups[1].Value;
-                                            if (!String.IsNullOrWhiteSpace(steamShortcutId))
+
+                                            string shortcutGameID = "";
+                                            string shortcutGameName = "";
+                                            string shortcutGameExe = "";
+                                            string shortcutGameIconPath = "";
+
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam shortcut kvItem {kvItem.Name} with value {kvItem.Value}.");
+                                            foreach (var subItem in kvItem.Children)
                                             {
-                                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam Shortcut ID {steamShortcutId} within {shortcutsVdfFile} steam shortcuts for Steam User ID {steamUserId}");
-                                                // Check if this game is one that was installed
-                                                if (!steamAppInfo.ContainsKey(steamShortcutId) && !steamIds.Contains(steamShortcutId))
+                                                logger.Trace($"- SteamLibrary/LoadInstalledGames: Found Steam shortcut subitem {subItem.Name} with value {subItem.Value}.");
+                                                switch (subItem.Name.ToLower())
                                                 {
-                                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Steam Shortcut ID {steamShortcutId} is not installed within steam library {steamLibraryPath}!");
-                                                    // This game is an installed game! so we start to populate it with data!
-                                                    string steamGameExe = "";
+                                                    case "appid":
+                                                        shortcutGameID = subItem.Value.ToString();
+                                                        break;
+                                                    case "appname":
+                                                        shortcutGameName = $"{subItem.Value.ToString()} (via Steam)";
+                                                        break;
+                                                    case "exe":
+                                                        string tempString2 = subItem.Value.ToString();
+                                                        if (tempString2.StartsWith("\"") && tempString2.EndsWith("\""))
+                                                        {
+                                                            shortcutGameExe = tempString2.Substring(1, (tempString2.Length - 2));
+                                                        }
+                                                        else
+                                                        {
+                                                            shortcutGameExe = tempString2;
+                                                        }
+                                                        if (File.Exists(shortcutGameExe))
+                                                        {
+                                                            shortcutGameIconPath = shortcutGameExe;
+                                                        }
+                                                        break;
+                                                    case "icon":
+                                                        if (!String.IsNullOrWhiteSpace(subItem.Value.ToString()))
+                                                        {
+                                                            if (File.Exists(subItem.Value.ToString()))
+                                                            {
+                                                                shortcutGameIconPath = subItem.Value.ToString();
+                                                            }
+                                                        }
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                            }
 
-                                                    string steamGameName = "Non-Steam Game";
+                                            // And we add the Game to the list of games we have!
+                                            SteamGame gameToAdd = new SteamGame(shortcutGameID, shortcutGameName, shortcutGameExe, shortcutGameIconPath);
+                                            _allSteamGames.Add(gameToAdd);
+                                            logger.Debug($"SteamLibrary/LoadInstalledGames: Adding Steam Shortcut with game id {shortcutGameID}, name {shortcutGameName}, game exe {shortcutGameExe} and icon path {shortcutGameIconPath}");
 
-                                                    // Construct the full path to the game dir from the appInfo and libraryAppManifest data
-                                                    string steamGameInstallDir = Path.Combine(_steamPath, @"steamapps", @"common", "Non-Steam Game");
 
-                                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamShortcutId} at {steamGameInstallDir }");
-
-                                                    // And finally we try to populate the 'where', to see what gets run
-                                                    // And so we can extract the process name
-                                                    if (steamAppInfo[steam*//*
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        fs.Close();
+                                    }
 
                                 }
                             }
@@ -902,7 +934,6 @@ namespace DisplayMagician.GameLibraries
                         return false;
                     }
                 }
-*/
 
                 logger.Info($"SteamLibrary/LoadInstalledGames: Found {_allSteamGames.Count} installed Steam games");
             }

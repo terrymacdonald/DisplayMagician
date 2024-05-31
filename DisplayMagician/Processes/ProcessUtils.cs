@@ -66,7 +66,6 @@ namespace DisplayMagician.Processes
 
             ProcessStartInfo psi = new ProcessStartInfo(executable, arguments)
             {
-                UseShellExecute = false,
                 CreateNoWindow = false,
                 RedirectStandardOutput = false,
                 WorkingDirectory = Path.GetDirectoryName(executable),
@@ -82,14 +81,23 @@ namespace DisplayMagician.Processes
                 psi.Verb = "open";
             }
 
+            if (executable.StartsWith("steam://", StringComparison.OrdinalIgnoreCase))
+            {
+                psi.UseShellExecute = true;
+            }
+            else
+            {
+                psi.UseShellExecute = false;
+            }
+
             processCreated = new Process()
             {
                 StartInfo = psi,
                 EnableRaisingEvents = true
             };
 
-            var output = processCreated.StandardOutput.ReadToEnd();
-            var exitCode = processCreated.ExitCode;
+            //var output = processCreated.StandardOutput.ReadToEnd();
+            //var exitCode = processCreated.ExitCode;
 
             processCreated.Start();
 
