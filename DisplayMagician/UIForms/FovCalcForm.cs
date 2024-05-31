@@ -265,7 +265,15 @@ namespace DisplayMagician.UIForms
             FovCalculator.CalculateFOV();
 
             //rtb_results.Text = FovCalculator.PrintResultsToString();
-            rtb_results.Rtf = FovCalculator.CreateRtfResults();
+            try
+            {
+                //rtb_results.Rtf = FovCalculator.CreateRtfResults();
+                rtb_results.Text = FovCalculator.CreateTxtResults();
+            }
+            catch (Exception ex)
+            {
+                rtb_results.Text = "System Error creating the Results. Please log an issue at https://github.com/terrymacdonald/DisplayMagician/issues/new.";
+            }
 
             lbl_hresult.Text = FovCalculator.ResultHorizontalDegrees.ToString();
             lbl_vresult.Text = FovCalculator.ResultVerticalDegrees.ToString();
@@ -432,13 +440,13 @@ namespace DisplayMagician.UIForms
             saveFileDialog.Filter = "rtf files (*.rtf)|*.rtf|All files (*.*)|*.*";
             saveFileDialog.FilterIndex = 1;
             saveFileDialog.RestoreDirectory = true;
-            saveFileDialog.FileName = "DisplayMagician-FOV-Results.rtf";
+            saveFileDialog.FileName = "DisplayMagician-FOV-Results.txt";
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 string filename = saveFileDialog.FileName;
 
-                File.WriteAllText(filename,FovCalculator.SaveRtfResultsFile());
+                File.WriteAllText(filename,FovCalculator.CreateTxtResults());
             }
         }
 

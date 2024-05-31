@@ -890,7 +890,7 @@ namespace DisplayMagician
             // return angle * (180 / Math.PI);
         }
 
-        public static string CreateStringResults()
+        public static string CreateTxtResults()
         {
             string output = "";
 
@@ -949,7 +949,7 @@ namespace DisplayMagician
             return output;
         }
 
-        public static string SaveRtfResultsFile()
+        /*public static string SaveRtfResultsFile()
         {
             string output = "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\colortbl;\\red0\\green0\\blue0;}{\\fonttbl\r\n{\\f0\\fswiss\\fcharset1252 Times New Roman;}\r\n{\\f1\\fswiss\\fcharset1252 microsoft sans serif,sans-serif;}\r\n{\\f2\\fswiss\\fcharset1252 &quot;}\r\n}{\\*\\generator CuteEditor 5.0;}\\viewkind4\\uc1\\pard\\par";
 
@@ -1052,9 +1052,9 @@ namespace DisplayMagician
             output += $"\\pard\\cf1\\f0\\fs24\\qj\\b0\\i0\\ulnone \\cf1\\f1\\fs24\\qj\\b1\\i0\\ulnone {ResultVerticalDegrees} Degrees\\par\r\n";            
 
             return output;
-        }
+        }*/
 
-        public static string CreateRtfResults()
+        /*public static string CreateRtfResults()
         {
             string output = "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\colortbl;\\red0\\green0\\blue0;}{\\fonttbl\r\n{\\f0\\fswiss\\fcharset1252 Times New Roman;}\r\n{\\f1\\fswiss\\fcharset1252 microsoft sans serif,sans-serif;}\r\n{\\f2\\fswiss\\fcharset1252 &quot;}\r\n}{\\*\\generator CuteEditor 5.0;}\\viewkind4\\uc1\\pard\\par";
 
@@ -1143,7 +1143,7 @@ namespace DisplayMagician
             }
 
             return output;
-        }
+        }*/
     }
 }
     
