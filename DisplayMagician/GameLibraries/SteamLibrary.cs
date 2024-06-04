@@ -864,11 +864,16 @@ namespace DisplayMagician.GameLibraries
                                             logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam shortcut kvItem {kvItem.Name} with value {kvItem.Value}.");
                                             foreach (var subItem in kvItem.Children)
                                             {
+
                                                 logger.Trace($"- SteamLibrary/LoadInstalledGames: Found Steam shortcut subitem {subItem.Name} with value {subItem.Value}.");
                                                 switch (subItem.Name.ToLower())
                                                 {
                                                     case "appid":
-                                                        shortcutGameID = subItem.Value.ToString();
+                                                        // This amazing bit of code was courtesy of Eamonn Rea (sonic2kk). He was extremely helpful when I asked him for help. He is an expert in Steam files and processing of them. 
+                                                        // He said this particular gem was provided by Steam ROM Manager (SRM)
+                                                        var appid = (UInt64)(int)subItem.Value;
+                                                        shortcutGameID = ((appid << 32) | 0x02000000).ToString();
+                                                        
                                                         break;
                                                     case "appname":
                                                         shortcutGameName = $"{subItem.Value.ToString()} (via Steam)";
@@ -906,8 +911,6 @@ namespace DisplayMagician.GameLibraries
                                             SteamGame gameToAdd = new SteamGame(shortcutGameID, shortcutGameName, shortcutGameExe, shortcutGameIconPath);
                                             _allSteamGames.Add(gameToAdd);
                                             logger.Debug($"SteamLibrary/LoadInstalledGames: Adding Steam Shortcut with game id {shortcutGameID}, name {shortcutGameName}, game exe {shortcutGameExe} and icon path {shortcutGameIconPath}");
-
-
                                         }
                                     }
                                     finally
