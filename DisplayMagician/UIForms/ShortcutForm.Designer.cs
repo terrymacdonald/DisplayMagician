@@ -31,1704 +31,1788 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutForm));
-            this.btn_save = new System.Windows.Forms.Button();
-            this.btn_cancel = new System.Windows.Forms.Button();
-            this.il_games = new System.Windows.Forms.ImageList(this.components);
-            this.dialog_open = new System.Windows.Forms.OpenFileDialog();
-            this.tabc_shortcut = new System.Windows.Forms.TabControl();
-            this.tabp_display = new System.Windows.Forms.TabPage();
-            this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
-            this.p_profiles = new System.Windows.Forms.Panel();
-            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
-            this.pbLogo = new System.Windows.Forms.PictureBox();
-            this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
-            this.lbl_profile_shown = new System.Windows.Forms.Label();
-            this.tabp_audio = new System.Windows.Forms.TabPage();
-            this.lbl_no_active_capture_devices = new System.Windows.Forms.Label();
-            this.lbl_no_active_audio_devices = new System.Windows.Forms.Label();
-            this.lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
-            this.gb_capture_settings = new System.Windows.Forms.GroupBox();
-            this.cb_capture_comms_device = new System.Windows.Forms.CheckBox();
-            this.gb_capture_volume = new System.Windows.Forms.GroupBox();
-            this.rb_set_capture_volume = new System.Windows.Forms.RadioButton();
-            this.rb_keep_capture_volume = new System.Windows.Forms.RadioButton();
-            this.lbl_capture_volume = new System.Windows.Forms.Label();
-            this.nud_capture_volume = new System.Windows.Forms.NumericUpDown();
-            this.btn_rescan_capture = new System.Windows.Forms.Button();
-            this.cb_capture_device = new System.Windows.Forms.ComboBox();
-            this.rb_change_capture = new System.Windows.Forms.RadioButton();
-            this.rb_no_change_capture = new System.Windows.Forms.RadioButton();
-            this.gb_audio_settings = new System.Windows.Forms.GroupBox();
-            this.cb_audio_comms_device = new System.Windows.Forms.CheckBox();
-            this.gb_audio_volume = new System.Windows.Forms.GroupBox();
-            this.rb_set_audio_volume = new System.Windows.Forms.RadioButton();
-            this.rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
-            this.lbl_audio_volume = new System.Windows.Forms.Label();
-            this.nud_audio_volume = new System.Windows.Forms.NumericUpDown();
-            this.btn_rescan_audio = new System.Windows.Forms.Button();
-            this.cb_audio_device = new System.Windows.Forms.ComboBox();
-            this.rb_change_audio = new System.Windows.Forms.RadioButton();
-            this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
-            this.tabp_before = new System.Windows.Forms.TabPage();
-            this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
-            this.p_start_program_upper = new System.Windows.Forms.Panel();
-            this.btn_find_examples_startprograms = new System.Windows.Forms.Button();
-            this.btn_add_new_start_program = new System.Windows.Forms.Button();
-            this.label3 = new System.Windows.Forms.Label();
-            this.tabp_game = new System.Windows.Forms.TabPage();
-            this.p_game_list = new System.Windows.Forms.Panel();
-            this.ilv_games = new Manina.Windows.Forms.ImageListView();
-            this.p_gametostart = new System.Windows.Forms.Panel();
-            this.btn_find_examples_game = new System.Windows.Forms.Button();
-            this.p_standalone = new System.Windows.Forms.Panel();
-            this.cb_run_exe_as_administrator = new System.Windows.Forms.CheckBox();
-            this.btn_choose_exe_icon = new System.Windows.Forms.Button();
-            this.pb_exe_icon = new System.Windows.Forms.PictureBox();
-            this.cbx_exe_priority = new System.Windows.Forms.ComboBox();
-            this.lbl_exe_priority = new System.Windows.Forms.Label();
-            this.btn_exe_to_start = new System.Windows.Forms.Button();
-            this.txt_args_executable = new System.Windows.Forms.TextBox();
-            this.cb_args_executable = new System.Windows.Forms.CheckBox();
-            this.btn_choose_alternative_executable = new System.Windows.Forms.Button();
-            this.txt_alternative_executable = new System.Windows.Forms.TextBox();
-            this.rb_wait_alternative_executable = new System.Windows.Forms.RadioButton();
-            this.rb_wait_executable = new System.Windows.Forms.RadioButton();
-            this.txt_executable = new System.Windows.Forms.TextBox();
-            this.lbl_app_executable = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.nud_timeout_executable = new System.Windows.Forms.NumericUpDown();
-            this.rb_standalone = new System.Windows.Forms.RadioButton();
-            this.rb_no_game = new System.Windows.Forms.RadioButton();
-            this.p_game = new System.Windows.Forms.Panel();
-            this.btn_refresh_games_list = new System.Windows.Forms.Button();
-            this.btn_choose_game_icon = new System.Windows.Forms.Button();
-            this.pb_game_icon = new System.Windows.Forms.PictureBox();
-            this.lbl_no_game_libraries = new System.Windows.Forms.Label();
-            this.cbx_game_priority = new System.Windows.Forms.ComboBox();
-            this.cb_wait_alternative_game = new System.Windows.Forms.CheckBox();
-            this.btn_choose_alternative_game = new System.Windows.Forms.Button();
-            this.txt_alternative_game = new System.Windows.Forms.TextBox();
-            this.txt_game_name = new System.Windows.Forms.TextBox();
-            this.lbl_game_priority = new System.Windows.Forms.Label();
-            this.lbl_game_name = new System.Windows.Forms.Label();
-            this.txt_args_game = new System.Windows.Forms.TextBox();
-            this.cb_args_game = new System.Windows.Forms.CheckBox();
-            this.lbl_game_timeout = new System.Windows.Forms.Label();
-            this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
-            this.lbl_game_library = new System.Windows.Forms.Label();
-            this.rb_launcher = new System.Windows.Forms.RadioButton();
-            this.tabp_after = new System.Windows.Forms.TabPage();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.cb_run_cmd_afterwards_run_as_administrator = new System.Windows.Forms.CheckBox();
-            this.cb_run_cmd_afterwards_dont_start = new System.Windows.Forms.CheckBox();
-            this.txt_run_cmd_afterwards_args = new System.Windows.Forms.TextBox();
-            this.cb_run_cmd_afterwards_args = new System.Windows.Forms.CheckBox();
-            this.btn_run_cmd_afterwards = new System.Windows.Forms.Button();
-            this.txt_run_cmd_afterwards = new System.Windows.Forms.TextBox();
-            this.cb_run_cmd_afterwards = new System.Windows.Forms.CheckBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.rb_switch_capture_permanent = new System.Windows.Forms.RadioButton();
-            this.rb_switch_capture_temp = new System.Windows.Forms.RadioButton();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.rb_switch_audio_permanent = new System.Windows.Forms.RadioButton();
-            this.rb_switch_audio_temp = new System.Windows.Forms.RadioButton();
-            this.gb_display_after = new System.Windows.Forms.GroupBox();
-            this.rb_switch_display_permanent = new System.Windows.Forms.RadioButton();
-            this.rb_switch_display_temp = new System.Windows.Forms.RadioButton();
-            this.txt_shortcut_save_name = new System.Windows.Forms.TextBox();
-            this.lbl_title = new System.Windows.Forms.Label();
-            this.lbl_shortcut_name = new System.Windows.Forms.Label();
-            this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.btn_hotkey = new System.Windows.Forms.Button();
-            this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.btn_help = new System.Windows.Forms.Button();
-            this.tabc_shortcut.SuspendLayout();
-            this.tabp_display.SuspendLayout();
-            this.p_profiles.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
-            this.tabp_audio.SuspendLayout();
-            this.gb_capture_settings.SuspendLayout();
-            this.gb_capture_volume.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_capture_volume)).BeginInit();
-            this.gb_audio_settings.SuspendLayout();
-            this.gb_audio_volume.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).BeginInit();
-            this.tabp_before.SuspendLayout();
-            this.p_start_program_upper.SuspendLayout();
-            this.tabp_game.SuspendLayout();
-            this.p_game_list.SuspendLayout();
-            this.p_gametostart.SuspendLayout();
-            this.p_standalone.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_exe_icon)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_executable)).BeginInit();
-            this.p_game.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_game_icon)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
-            this.tabp_after.SuspendLayout();
-            this.groupBox3.SuspendLayout();
-            this.groupBox2.SuspendLayout();
-            this.groupBox1.SuspendLayout();
-            this.gb_display_after.SuspendLayout();
-            this.SuspendLayout();
+            btn_save = new System.Windows.Forms.Button();
+            btn_cancel = new System.Windows.Forms.Button();
+            il_games = new System.Windows.Forms.ImageList(components);
+            dialog_open = new System.Windows.Forms.OpenFileDialog();
+            tabc_shortcut = new System.Windows.Forms.TabControl();
+            tabp_display = new System.Windows.Forms.TabPage();
+            ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
+            p_profiles = new System.Windows.Forms.Panel();
+            dv_profile = new DisplayView();
+            pbLogo = new System.Windows.Forms.PictureBox();
+            lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
+            lbl_profile_shown = new System.Windows.Forms.Label();
+            tabp_audio = new System.Windows.Forms.TabPage();
+            lbl_no_active_capture_devices = new System.Windows.Forms.Label();
+            lbl_no_active_audio_devices = new System.Windows.Forms.Label();
+            lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
+            gb_capture_settings = new System.Windows.Forms.GroupBox();
+            cb_capture_comms_device = new System.Windows.Forms.CheckBox();
+            gb_capture_volume = new System.Windows.Forms.GroupBox();
+            rb_set_capture_volume = new System.Windows.Forms.RadioButton();
+            rb_keep_capture_volume = new System.Windows.Forms.RadioButton();
+            lbl_capture_volume = new System.Windows.Forms.Label();
+            nud_capture_volume = new System.Windows.Forms.NumericUpDown();
+            btn_rescan_capture = new System.Windows.Forms.Button();
+            cb_capture_device = new System.Windows.Forms.ComboBox();
+            rb_change_capture = new System.Windows.Forms.RadioButton();
+            rb_no_change_capture = new System.Windows.Forms.RadioButton();
+            gb_audio_settings = new System.Windows.Forms.GroupBox();
+            cb_audio_comms_device = new System.Windows.Forms.CheckBox();
+            gb_audio_volume = new System.Windows.Forms.GroupBox();
+            rb_set_audio_volume = new System.Windows.Forms.RadioButton();
+            rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
+            lbl_audio_volume = new System.Windows.Forms.Label();
+            nud_audio_volume = new System.Windows.Forms.NumericUpDown();
+            btn_rescan_audio = new System.Windows.Forms.Button();
+            cb_audio_device = new System.Windows.Forms.ComboBox();
+            rb_change_audio = new System.Windows.Forms.RadioButton();
+            rb_no_change_audio = new System.Windows.Forms.RadioButton();
+            tabp_before = new System.Windows.Forms.TabPage();
+            flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
+            p_start_program_upper = new System.Windows.Forms.Panel();
+            btn_find_examples_startprograms = new System.Windows.Forms.Button();
+            btn_add_new_start_program = new System.Windows.Forms.Button();
+            label3 = new System.Windows.Forms.Label();
+            tabp_game = new System.Windows.Forms.TabPage();
+            p_game_list = new System.Windows.Forms.Panel();
+            ilv_games = new Manina.Windows.Forms.ImageListView();
+            p_gametostart = new System.Windows.Forms.Panel();
+            btn_find_examples_game = new System.Windows.Forms.Button();
+            p_standalone = new System.Windows.Forms.Panel();
+            cb_run_exe_as_administrator = new System.Windows.Forms.CheckBox();
+            btn_choose_exe_icon = new System.Windows.Forms.Button();
+            pb_exe_icon = new System.Windows.Forms.PictureBox();
+            cbx_exe_priority = new System.Windows.Forms.ComboBox();
+            lbl_exe_priority = new System.Windows.Forms.Label();
+            btn_exe_to_start = new System.Windows.Forms.Button();
+            txt_args_executable = new System.Windows.Forms.TextBox();
+            cb_args_executable = new System.Windows.Forms.CheckBox();
+            btn_choose_alternative_executable = new System.Windows.Forms.Button();
+            txt_alternative_executable = new System.Windows.Forms.TextBox();
+            rb_wait_alternative_executable = new System.Windows.Forms.RadioButton();
+            rb_wait_executable = new System.Windows.Forms.RadioButton();
+            txt_executable = new System.Windows.Forms.TextBox();
+            lbl_app_executable = new System.Windows.Forms.Label();
+            label2 = new System.Windows.Forms.Label();
+            nud_timeout_executable = new System.Windows.Forms.NumericUpDown();
+            rb_standalone = new System.Windows.Forms.RadioButton();
+            rb_no_game = new System.Windows.Forms.RadioButton();
+            p_game = new System.Windows.Forms.Panel();
+            btn_refresh_games_list = new System.Windows.Forms.Button();
+            btn_choose_game_icon = new System.Windows.Forms.Button();
+            pb_game_icon = new System.Windows.Forms.PictureBox();
+            lbl_no_game_libraries = new System.Windows.Forms.Label();
+            cbx_game_priority = new System.Windows.Forms.ComboBox();
+            cb_wait_alternative_game = new System.Windows.Forms.CheckBox();
+            btn_choose_alternative_game = new System.Windows.Forms.Button();
+            txt_alternative_game = new System.Windows.Forms.TextBox();
+            txt_game_name = new System.Windows.Forms.TextBox();
+            lbl_game_priority = new System.Windows.Forms.Label();
+            lbl_game_name = new System.Windows.Forms.Label();
+            txt_args_game = new System.Windows.Forms.TextBox();
+            cb_args_game = new System.Windows.Forms.CheckBox();
+            lbl_game_timeout = new System.Windows.Forms.Label();
+            nud_timeout_game = new System.Windows.Forms.NumericUpDown();
+            lbl_game_library = new System.Windows.Forms.Label();
+            rb_launcher = new System.Windows.Forms.RadioButton();
+            tabp_after = new System.Windows.Forms.TabPage();
+            groupBox3 = new System.Windows.Forms.GroupBox();
+            cb_run_cmd_afterwards_run_as_administrator = new System.Windows.Forms.CheckBox();
+            cb_run_cmd_afterwards_dont_start = new System.Windows.Forms.CheckBox();
+            txt_run_cmd_afterwards_args = new System.Windows.Forms.TextBox();
+            cb_run_cmd_afterwards_args = new System.Windows.Forms.CheckBox();
+            btn_run_cmd_afterwards = new System.Windows.Forms.Button();
+            txt_run_cmd_afterwards = new System.Windows.Forms.TextBox();
+            cb_run_cmd_afterwards = new System.Windows.Forms.CheckBox();
+            groupBox2 = new System.Windows.Forms.GroupBox();
+            rb_switch_capture_permanent = new System.Windows.Forms.RadioButton();
+            rb_switch_capture_temp = new System.Windows.Forms.RadioButton();
+            groupBox1 = new System.Windows.Forms.GroupBox();
+            rb_switch_audio_permanent = new System.Windows.Forms.RadioButton();
+            rb_switch_audio_temp = new System.Windows.Forms.RadioButton();
+            gb_display_after = new System.Windows.Forms.GroupBox();
+            rb_switch_display_permanent = new System.Windows.Forms.RadioButton();
+            rb_switch_display_temp = new System.Windows.Forms.RadioButton();
+            txt_shortcut_save_name = new System.Windows.Forms.TextBox();
+            lbl_title = new System.Windows.Forms.Label();
+            lbl_shortcut_name = new System.Windows.Forms.Label();
+            cb_autosuggest = new System.Windows.Forms.CheckBox();
+            btn_hotkey = new System.Windows.Forms.Button();
+            lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            btn_help = new System.Windows.Forms.Button();
+            tabc_shortcut.SuspendLayout();
+            tabp_display.SuspendLayout();
+            p_profiles.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pbLogo).BeginInit();
+            tabp_audio.SuspendLayout();
+            gb_capture_settings.SuspendLayout();
+            gb_capture_volume.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_capture_volume).BeginInit();
+            gb_audio_settings.SuspendLayout();
+            gb_audio_volume.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_audio_volume).BeginInit();
+            tabp_before.SuspendLayout();
+            p_start_program_upper.SuspendLayout();
+            tabp_game.SuspendLayout();
+            p_game_list.SuspendLayout();
+            p_gametostart.SuspendLayout();
+            p_standalone.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pb_exe_icon).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nud_timeout_executable).BeginInit();
+            p_game.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pb_game_icon).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nud_timeout_game).BeginInit();
+            tabp_after.SuspendLayout();
+            groupBox3.SuspendLayout();
+            groupBox2.SuspendLayout();
+            groupBox1.SuspendLayout();
+            gb_display_after.SuspendLayout();
+            SuspendLayout();
             // 
             // btn_save
             // 
-            this.btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(545, 891);
-            this.btn_save.Name = "btn_save";
-            this.btn_save.Size = new System.Drawing.Size(120, 40);
-            this.btn_save.TabIndex = 6;
-            this.btn_save.Text = "&Save";
-            this.btn_save.UseVisualStyleBackColor = true;
-            this.btn_save.Click += new System.EventHandler(this.btn_save_Click);
+            btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
+            btn_save.ForeColor = System.Drawing.Color.White;
+            btn_save.Location = new System.Drawing.Point(636, 1028);
+            btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_save.Name = "btn_save";
+            btn_save.Size = new System.Drawing.Size(140, 35);
+            btn_save.TabIndex = 6;
+            btn_save.Text = "&Save";
+            btn_save.UseVisualStyleBackColor = true;
+            btn_save.Click += btn_save_Click;
             // 
             // btn_cancel
             // 
-            this.btn_cancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btn_cancel.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_cancel.ForeColor = System.Drawing.Color.White;
-            this.btn_cancel.Location = new System.Drawing.Point(978, 906);
-            this.btn_cancel.Name = "btn_cancel";
-            this.btn_cancel.Size = new System.Drawing.Size(94, 25);
-            this.btn_cancel.TabIndex = 5;
-            this.btn_cancel.Text = "&Back";
-            this.btn_cancel.UseVisualStyleBackColor = true;
-            this.btn_cancel.Click += new System.EventHandler(this.btn_back_Click);
+            btn_cancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btn_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            btn_cancel.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_cancel.ForeColor = System.Drawing.Color.White;
+            btn_cancel.Location = new System.Drawing.Point(1141, 1045);
+            btn_cancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_cancel.Name = "btn_cancel";
+            btn_cancel.Size = new System.Drawing.Size(110, 29);
+            btn_cancel.TabIndex = 5;
+            btn_cancel.Text = "&Back";
+            btn_cancel.UseVisualStyleBackColor = true;
+            btn_cancel.Click += btn_back_Click;
             // 
             // il_games
             // 
-            this.il_games.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-            this.il_games.ImageSize = new System.Drawing.Size(32, 32);
-            this.il_games.TransparentColor = System.Drawing.Color.Transparent;
+            il_games.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+            il_games.ImageSize = new System.Drawing.Size(32, 32);
+            il_games.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // dialog_open
             // 
-            this.dialog_open.DefaultExt = "exe";
-            this.dialog_open.FileName = "*.exe";
-            this.dialog_open.Filter = "All Files|*.*";
-            this.dialog_open.RestoreDirectory = true;
-            this.dialog_open.SupportMultiDottedExtensions = true;
+            dialog_open.DefaultExt = "exe";
+            dialog_open.FileName = "*.exe";
+            dialog_open.Filter = "All Files|*.*";
+            dialog_open.RestoreDirectory = true;
+            dialog_open.SupportMultiDottedExtensions = true;
             // 
             // tabc_shortcut
             // 
-            this.tabc_shortcut.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tabc_shortcut.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
-            this.tabc_shortcut.Controls.Add(this.tabp_display);
-            this.tabc_shortcut.Controls.Add(this.tabp_audio);
-            this.tabc_shortcut.Controls.Add(this.tabp_before);
-            this.tabc_shortcut.Controls.Add(this.tabp_game);
-            this.tabc_shortcut.Controls.Add(this.tabp_after);
-            this.tabc_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabc_shortcut.HotTrack = true;
-            this.tabc_shortcut.Location = new System.Drawing.Point(12, 62);
-            this.tabc_shortcut.Name = "tabc_shortcut";
-            this.tabc_shortcut.SelectedIndex = 0;
-            this.tabc_shortcut.ShowToolTips = true;
-            this.tabc_shortcut.Size = new System.Drawing.Size(1060, 767);
-            this.tabc_shortcut.TabIndex = 28;
+            tabc_shortcut.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            tabc_shortcut.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
+            tabc_shortcut.Controls.Add(tabp_display);
+            tabc_shortcut.Controls.Add(tabp_audio);
+            tabc_shortcut.Controls.Add(tabp_before);
+            tabc_shortcut.Controls.Add(tabp_game);
+            tabc_shortcut.Controls.Add(tabp_after);
+            tabc_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            tabc_shortcut.HotTrack = true;
+            tabc_shortcut.Location = new System.Drawing.Point(14, 72);
+            tabc_shortcut.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabc_shortcut.Name = "tabc_shortcut";
+            tabc_shortcut.SelectedIndex = 0;
+            tabc_shortcut.ShowToolTips = true;
+            tabc_shortcut.Size = new System.Drawing.Size(1237, 885);
+            tabc_shortcut.TabIndex = 28;
             // 
             // tabp_display
             // 
-            this.tabp_display.BackColor = System.Drawing.Color.Black;
-            this.tabp_display.Controls.Add(this.ilv_saved_profiles);
-            this.tabp_display.Controls.Add(this.p_profiles);
-            this.tabp_display.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabp_display.ForeColor = System.Drawing.Color.White;
-            this.tabp_display.Location = new System.Drawing.Point(4, 32);
-            this.tabp_display.Name = "tabp_display";
-            this.tabp_display.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_display.Size = new System.Drawing.Size(1052, 731);
-            this.tabp_display.TabIndex = 0;
-            this.tabp_display.Text = "1. Choose Display Profile";
-            this.tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
+            tabp_display.BackColor = System.Drawing.Color.Black;
+            tabp_display.Controls.Add(ilv_saved_profiles);
+            tabp_display.Controls.Add(p_profiles);
+            tabp_display.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            tabp_display.ForeColor = System.Drawing.Color.White;
+            tabp_display.Location = new System.Drawing.Point(4, 32);
+            tabp_display.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_display.Name = "tabp_display";
+            tabp_display.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_display.Size = new System.Drawing.Size(1229, 849);
+            tabp_display.TabIndex = 0;
+            tabp_display.Text = "1. Choose Display Profile";
+            tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
             // 
             // ilv_saved_profiles
             // 
-            this.ilv_saved_profiles.AllowCheckBoxClick = false;
-            this.ilv_saved_profiles.AllowColumnClick = false;
-            this.ilv_saved_profiles.AllowColumnResize = false;
-            this.ilv_saved_profiles.AllowItemReorder = false;
-            this.ilv_saved_profiles.AllowPaneResize = false;
-            this.ilv_saved_profiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ilv_saved_profiles.Location = new System.Drawing.Point(3, 478);
-            this.ilv_saved_profiles.MultiSelect = false;
-            this.ilv_saved_profiles.Name = "ilv_saved_profiles";
-            this.ilv_saved_profiles.PersistentCacheDirectory = "";
-            this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(1046, 250);
-            this.ilv_saved_profiles.TabIndex = 24;
-            this.ilv_saved_profiles.UseWIC = true;
-            this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
-            this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
+            ilv_saved_profiles.AllowCheckBoxClick = false;
+            ilv_saved_profiles.AllowColumnClick = false;
+            ilv_saved_profiles.AllowColumnResize = false;
+            ilv_saved_profiles.AllowItemReorder = false;
+            ilv_saved_profiles.AllowPaneResize = false;
+            ilv_saved_profiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            ilv_saved_profiles.Location = new System.Drawing.Point(4, 551);
+            ilv_saved_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            ilv_saved_profiles.MultiSelect = false;
+            ilv_saved_profiles.Name = "ilv_saved_profiles";
+            ilv_saved_profiles.PersistentCacheDirectory = "";
+            ilv_saved_profiles.PersistentCacheSize = 100L;
+            ilv_saved_profiles.Size = new System.Drawing.Size(1221, 295);
+            ilv_saved_profiles.TabIndex = 24;
+            ilv_saved_profiles.UseWIC = true;
+            ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
+            ilv_saved_profiles.ItemClick += ilv_saved_profiles_ItemClick;
             // 
             // p_profiles
             // 
-            this.p_profiles.Controls.Add(this.dv_profile);
-            this.p_profiles.Controls.Add(this.pbLogo);
-            this.p_profiles.Controls.Add(this.lbl_profile_shown_subtitle);
-            this.p_profiles.Controls.Add(this.lbl_profile_shown);
-            this.p_profiles.Dock = System.Windows.Forms.DockStyle.Top;
-            this.p_profiles.Location = new System.Drawing.Point(3, 3);
-            this.p_profiles.Name = "p_profiles";
-            this.p_profiles.Size = new System.Drawing.Size(1046, 475);
-            this.p_profiles.TabIndex = 39;
+            p_profiles.Controls.Add(dv_profile);
+            p_profiles.Controls.Add(pbLogo);
+            p_profiles.Controls.Add(lbl_profile_shown_subtitle);
+            p_profiles.Controls.Add(lbl_profile_shown);
+            p_profiles.Dock = System.Windows.Forms.DockStyle.Top;
+            p_profiles.Location = new System.Drawing.Point(4, 3);
+            p_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_profiles.Name = "p_profiles";
+            p_profiles.Size = new System.Drawing.Size(1221, 548);
+            p_profiles.TabIndex = 39;
             // 
             // dv_profile
             // 
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 0);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(1046, 475);
-            this.dv_profile.TabIndex = 23;
+            dv_profile.BackColor = System.Drawing.Color.DimGray;
+            dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
+            dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            dv_profile.Location = new System.Drawing.Point(0, 0);
+            dv_profile.Margin = new System.Windows.Forms.Padding(21, 21, 21, 21);
+            dv_profile.Name = "dv_profile";
+            dv_profile.PaddingX = 100;
+            dv_profile.PaddingY = 100;
+            dv_profile.Profile = null;
+            dv_profile.Size = new System.Drawing.Size(1221, 548);
+            dv_profile.TabIndex = 23;
             // 
             // pbLogo
             // 
-            this.pbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pbLogo.BackColor = System.Drawing.Color.DimGray;
-            this.pbLogo.Location = new System.Drawing.Point(898, 26);
-            this.pbLogo.Name = "pbLogo";
-            this.pbLogo.Size = new System.Drawing.Size(100, 49);
-            this.pbLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pbLogo.TabIndex = 38;
-            this.pbLogo.TabStop = false;
+            pbLogo.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            pbLogo.BackColor = System.Drawing.Color.DimGray;
+            pbLogo.Location = new System.Drawing.Point(1049, 30);
+            pbLogo.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            pbLogo.Name = "pbLogo";
+            pbLogo.Size = new System.Drawing.Size(117, 57);
+            pbLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pbLogo.TabIndex = 38;
+            pbLogo.TabStop = false;
             // 
             // lbl_profile_shown_subtitle
             // 
-            this.lbl_profile_shown_subtitle.AutoSize = true;
-            this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
-            this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(3, 55);
-            this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
-            this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(397, 20);
-            this.lbl_profile_shown_subtitle.TabIndex = 26;
-            this.lbl_profile_shown_subtitle.Text = "Please select a Display Profile to use with this Shortcut.";
+            lbl_profile_shown_subtitle.AutoSize = true;
+            lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
+            lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
+            lbl_profile_shown_subtitle.Location = new System.Drawing.Point(4, 63);
+            lbl_profile_shown_subtitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
+            lbl_profile_shown_subtitle.Size = new System.Drawing.Size(397, 20);
+            lbl_profile_shown_subtitle.TabIndex = 26;
+            lbl_profile_shown_subtitle.Text = "Please select a Display Profile to use with this Shortcut.";
             // 
             // lbl_profile_shown
             // 
-            this.lbl_profile_shown.AutoSize = true;
-            this.lbl_profile_shown.BackColor = System.Drawing.Color.DimGray;
-            this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown.Location = new System.Drawing.Point(3, 26);
-            this.lbl_profile_shown.Name = "lbl_profile_shown";
-            this.lbl_profile_shown.Size = new System.Drawing.Size(308, 29);
-            this.lbl_profile_shown.TabIndex = 25;
-            this.lbl_profile_shown.Text = "No Display Profile Selected";
+            lbl_profile_shown.AutoSize = true;
+            lbl_profile_shown.BackColor = System.Drawing.Color.DimGray;
+            lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_profile_shown.ForeColor = System.Drawing.Color.White;
+            lbl_profile_shown.Location = new System.Drawing.Point(4, 30);
+            lbl_profile_shown.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_profile_shown.Name = "lbl_profile_shown";
+            lbl_profile_shown.Size = new System.Drawing.Size(308, 29);
+            lbl_profile_shown.TabIndex = 25;
+            lbl_profile_shown.Text = "No Display Profile Selected";
             // 
             // tabp_audio
             // 
-            this.tabp_audio.BackColor = System.Drawing.Color.Black;
-            this.tabp_audio.Controls.Add(this.lbl_no_active_capture_devices);
-            this.tabp_audio.Controls.Add(this.lbl_no_active_audio_devices);
-            this.tabp_audio.Controls.Add(this.lbl_disabled_shortcut_audio_chipset);
-            this.tabp_audio.Controls.Add(this.gb_capture_settings);
-            this.tabp_audio.Controls.Add(this.gb_audio_settings);
-            this.tabp_audio.Location = new System.Drawing.Point(4, 32);
-            this.tabp_audio.Name = "tabp_audio";
-            this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_audio.Size = new System.Drawing.Size(1052, 731);
-            this.tabp_audio.TabIndex = 4;
-            this.tabp_audio.Text = "2. Choose Audio";
+            tabp_audio.BackColor = System.Drawing.Color.Black;
+            tabp_audio.Controls.Add(lbl_no_active_capture_devices);
+            tabp_audio.Controls.Add(lbl_no_active_audio_devices);
+            tabp_audio.Controls.Add(lbl_disabled_shortcut_audio_chipset);
+            tabp_audio.Controls.Add(gb_capture_settings);
+            tabp_audio.Controls.Add(gb_audio_settings);
+            tabp_audio.Location = new System.Drawing.Point(4, 32);
+            tabp_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_audio.Name = "tabp_audio";
+            tabp_audio.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_audio.Size = new System.Drawing.Size(1229, 849);
+            tabp_audio.TabIndex = 4;
+            tabp_audio.Text = "2. Choose Audio";
             // 
             // lbl_no_active_capture_devices
             // 
-            this.lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_no_active_capture_devices.AutoSize = true;
-            this.lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
-            this.lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
-            this.lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_active_capture_devices.Location = new System.Drawing.Point(111, 438);
-            this.lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
-            this.lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
-            this.lbl_no_active_capture_devices.TabIndex = 36;
-            this.lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one micropho" +
-    "ne if you want to use this feature.";
-            this.lbl_no_active_capture_devices.Visible = false;
+            lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lbl_no_active_capture_devices.AutoSize = true;
+            lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
+            lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
+            lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            lbl_no_active_capture_devices.Location = new System.Drawing.Point(130, 505);
+            lbl_no_active_capture_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
+            lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
+            lbl_no_active_capture_devices.TabIndex = 36;
+            lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one microphone if you want to use this feature.";
+            lbl_no_active_capture_devices.Visible = false;
             // 
             // lbl_no_active_audio_devices
             // 
-            this.lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_no_active_audio_devices.AutoSize = true;
-            this.lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
-            this.lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
-            this.lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_active_audio_devices.Location = new System.Drawing.Point(116, 153);
-            this.lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
-            this.lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
-            this.lbl_no_active_audio_devices.TabIndex = 35;
-            this.lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output" +
-    " if you want to use this feature.";
-            this.lbl_no_active_audio_devices.Visible = false;
+            lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lbl_no_active_audio_devices.AutoSize = true;
+            lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
+            lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
+            lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            lbl_no_active_audio_devices.Location = new System.Drawing.Point(135, 177);
+            lbl_no_active_audio_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
+            lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
+            lbl_no_active_audio_devices.TabIndex = 35;
+            lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output if you want to use this feature.";
+            lbl_no_active_audio_devices.Visible = false;
             // 
             // lbl_disabled_shortcut_audio_chipset
             // 
-            this.lbl_disabled_shortcut_audio_chipset.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_disabled_shortcut_audio_chipset.AutoSize = true;
-            this.lbl_disabled_shortcut_audio_chipset.BackColor = System.Drawing.Color.Brown;
-            this.lbl_disabled_shortcut_audio_chipset.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
-            this.lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(248, 303);
-            this.lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
-            this.lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(557, 22);
-            this.lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
-            this.lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn\'t supported on your computer :(";
-            this.lbl_disabled_shortcut_audio_chipset.Visible = false;
+            lbl_disabled_shortcut_audio_chipset.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lbl_disabled_shortcut_audio_chipset.AutoSize = true;
+            lbl_disabled_shortcut_audio_chipset.BackColor = System.Drawing.Color.Brown;
+            lbl_disabled_shortcut_audio_chipset.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
+            lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(289, 350);
+            lbl_disabled_shortcut_audio_chipset.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
+            lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(557, 22);
+            lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
+            lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn't supported on your computer :(";
+            lbl_disabled_shortcut_audio_chipset.Visible = false;
             // 
             // gb_capture_settings
             // 
-            this.gb_capture_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.gb_capture_settings.Controls.Add(this.cb_capture_comms_device);
-            this.gb_capture_settings.Controls.Add(this.gb_capture_volume);
-            this.gb_capture_settings.Controls.Add(this.btn_rescan_capture);
-            this.gb_capture_settings.Controls.Add(this.cb_capture_device);
-            this.gb_capture_settings.Controls.Add(this.rb_change_capture);
-            this.gb_capture_settings.Controls.Add(this.rb_no_change_capture);
-            this.gb_capture_settings.ForeColor = System.Drawing.Color.White;
-            this.gb_capture_settings.Location = new System.Drawing.Point(48, 379);
-            this.gb_capture_settings.Name = "gb_capture_settings";
-            this.gb_capture_settings.Size = new System.Drawing.Size(953, 306);
-            this.gb_capture_settings.TabIndex = 21;
-            this.gb_capture_settings.TabStop = false;
-            this.gb_capture_settings.Text = "Microphone Settings";
+            gb_capture_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_capture_settings.Controls.Add(cb_capture_comms_device);
+            gb_capture_settings.Controls.Add(gb_capture_volume);
+            gb_capture_settings.Controls.Add(btn_rescan_capture);
+            gb_capture_settings.Controls.Add(cb_capture_device);
+            gb_capture_settings.Controls.Add(rb_change_capture);
+            gb_capture_settings.Controls.Add(rb_no_change_capture);
+            gb_capture_settings.ForeColor = System.Drawing.Color.White;
+            gb_capture_settings.Location = new System.Drawing.Point(56, 437);
+            gb_capture_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_capture_settings.Name = "gb_capture_settings";
+            gb_capture_settings.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_capture_settings.Size = new System.Drawing.Size(1112, 353);
+            gb_capture_settings.TabIndex = 21;
+            gb_capture_settings.TabStop = false;
+            gb_capture_settings.Text = "Microphone Settings";
             // 
             // cb_capture_comms_device
             // 
-            this.cb_capture_comms_device.AutoSize = true;
-            this.cb_capture_comms_device.Location = new System.Drawing.Point(325, 114);
-            this.cb_capture_comms_device.Name = "cb_capture_comms_device";
-            this.cb_capture_comms_device.Size = new System.Drawing.Size(418, 24);
-            this.cb_capture_comms_device.TabIndex = 22;
-            this.cb_capture_comms_device.Text = "Also set this as the default communicatons microphone";
-            this.cb_capture_comms_device.UseVisualStyleBackColor = true;
+            cb_capture_comms_device.AutoSize = true;
+            cb_capture_comms_device.Location = new System.Drawing.Point(379, 132);
+            cb_capture_comms_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_capture_comms_device.Name = "cb_capture_comms_device";
+            cb_capture_comms_device.Size = new System.Drawing.Size(418, 24);
+            cb_capture_comms_device.TabIndex = 22;
+            cb_capture_comms_device.Text = "Also set this as the default communicatons microphone";
+            cb_capture_comms_device.UseVisualStyleBackColor = true;
             // 
             // gb_capture_volume
             // 
-            this.gb_capture_volume.Controls.Add(this.rb_set_capture_volume);
-            this.gb_capture_volume.Controls.Add(this.rb_keep_capture_volume);
-            this.gb_capture_volume.Controls.Add(this.lbl_capture_volume);
-            this.gb_capture_volume.Controls.Add(this.nud_capture_volume);
-            this.gb_capture_volume.ForeColor = System.Drawing.Color.White;
-            this.gb_capture_volume.Location = new System.Drawing.Point(327, 144);
-            this.gb_capture_volume.Name = "gb_capture_volume";
-            this.gb_capture_volume.Size = new System.Drawing.Size(429, 128);
-            this.gb_capture_volume.TabIndex = 20;
-            this.gb_capture_volume.TabStop = false;
-            this.gb_capture_volume.Text = "Microphone Volume";
-            this.gb_capture_volume.Visible = false;
+            gb_capture_volume.Controls.Add(rb_set_capture_volume);
+            gb_capture_volume.Controls.Add(rb_keep_capture_volume);
+            gb_capture_volume.Controls.Add(lbl_capture_volume);
+            gb_capture_volume.Controls.Add(nud_capture_volume);
+            gb_capture_volume.ForeColor = System.Drawing.Color.White;
+            gb_capture_volume.Location = new System.Drawing.Point(382, 166);
+            gb_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_capture_volume.Name = "gb_capture_volume";
+            gb_capture_volume.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_capture_volume.Size = new System.Drawing.Size(500, 148);
+            gb_capture_volume.TabIndex = 20;
+            gb_capture_volume.TabStop = false;
+            gb_capture_volume.Text = "Microphone Volume";
+            gb_capture_volume.Visible = false;
             // 
             // rb_set_capture_volume
             // 
-            this.rb_set_capture_volume.AutoSize = true;
-            this.rb_set_capture_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_set_capture_volume.Location = new System.Drawing.Point(62, 78);
-            this.rb_set_capture_volume.Name = "rb_set_capture_volume";
-            this.rb_set_capture_volume.Size = new System.Drawing.Size(167, 24);
-            this.rb_set_capture_volume.TabIndex = 13;
-            this.rb_set_capture_volume.Text = "Set audio volume at";
-            this.rb_set_capture_volume.UseVisualStyleBackColor = true;
-            this.rb_set_capture_volume.CheckedChanged += new System.EventHandler(this.rb_set_capture_volume_CheckedChanged);
+            rb_set_capture_volume.AutoSize = true;
+            rb_set_capture_volume.ForeColor = System.Drawing.Color.White;
+            rb_set_capture_volume.Location = new System.Drawing.Point(72, 90);
+            rb_set_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_set_capture_volume.Name = "rb_set_capture_volume";
+            rb_set_capture_volume.Size = new System.Drawing.Size(167, 24);
+            rb_set_capture_volume.TabIndex = 13;
+            rb_set_capture_volume.Text = "Set audio volume at";
+            rb_set_capture_volume.UseVisualStyleBackColor = true;
+            rb_set_capture_volume.CheckedChanged += rb_set_capture_volume_CheckedChanged;
             // 
             // rb_keep_capture_volume
             // 
-            this.rb_keep_capture_volume.AutoSize = true;
-            this.rb_keep_capture_volume.Checked = true;
-            this.rb_keep_capture_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_keep_capture_volume.Location = new System.Drawing.Point(62, 35);
-            this.rb_keep_capture_volume.Name = "rb_keep_capture_volume";
-            this.rb_keep_capture_volume.Size = new System.Drawing.Size(203, 24);
-            this.rb_keep_capture_volume.TabIndex = 12;
-            this.rb_keep_capture_volume.TabStop = true;
-            this.rb_keep_capture_volume.Text = "Leave audio volume as is";
-            this.rb_keep_capture_volume.UseVisualStyleBackColor = true;
-            this.rb_keep_capture_volume.CheckedChanged += new System.EventHandler(this.rb_keep_capture_volume_CheckedChanged);
+            rb_keep_capture_volume.AutoSize = true;
+            rb_keep_capture_volume.Checked = true;
+            rb_keep_capture_volume.ForeColor = System.Drawing.Color.White;
+            rb_keep_capture_volume.Location = new System.Drawing.Point(72, 40);
+            rb_keep_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_keep_capture_volume.Name = "rb_keep_capture_volume";
+            rb_keep_capture_volume.Size = new System.Drawing.Size(203, 24);
+            rb_keep_capture_volume.TabIndex = 12;
+            rb_keep_capture_volume.TabStop = true;
+            rb_keep_capture_volume.Text = "Leave audio volume as is";
+            rb_keep_capture_volume.UseVisualStyleBackColor = true;
+            rb_keep_capture_volume.CheckedChanged += rb_keep_capture_volume_CheckedChanged;
             // 
             // lbl_capture_volume
             // 
-            this.lbl_capture_volume.AutoSize = true;
-            this.lbl_capture_volume.ForeColor = System.Drawing.Color.White;
-            this.lbl_capture_volume.Location = new System.Drawing.Point(299, 80);
-            this.lbl_capture_volume.Name = "lbl_capture_volume";
-            this.lbl_capture_volume.Size = new System.Drawing.Size(63, 20);
-            this.lbl_capture_volume.TabIndex = 11;
-            this.lbl_capture_volume.Text = "percent";
+            lbl_capture_volume.AutoSize = true;
+            lbl_capture_volume.ForeColor = System.Drawing.Color.White;
+            lbl_capture_volume.Location = new System.Drawing.Point(349, 92);
+            lbl_capture_volume.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_capture_volume.Name = "lbl_capture_volume";
+            lbl_capture_volume.Size = new System.Drawing.Size(63, 20);
+            lbl_capture_volume.TabIndex = 11;
+            lbl_capture_volume.Text = "percent";
             // 
             // nud_capture_volume
             // 
-            this.nud_capture_volume.Enabled = false;
-            this.nud_capture_volume.Location = new System.Drawing.Point(233, 78);
-            this.nud_capture_volume.Name = "nud_capture_volume";
-            this.nud_capture_volume.Size = new System.Drawing.Size(60, 26);
-            this.nud_capture_volume.TabIndex = 10;
-            this.nud_capture_volume.Value = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            this.nud_capture_volume.ValueChanged += new System.EventHandler(this.nud_capture_volume_ValueChanged);
+            nud_capture_volume.Enabled = false;
+            nud_capture_volume.Location = new System.Drawing.Point(272, 90);
+            nud_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            nud_capture_volume.Name = "nud_capture_volume";
+            nud_capture_volume.Size = new System.Drawing.Size(70, 26);
+            nud_capture_volume.TabIndex = 10;
+            nud_capture_volume.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            nud_capture_volume.ValueChanged += nud_capture_volume_ValueChanged;
             // 
             // btn_rescan_capture
             // 
-            this.btn_rescan_capture.Enabled = false;
-            this.btn_rescan_capture.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_rescan_capture.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_rescan_capture.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_rescan_capture.ForeColor = System.Drawing.Color.White;
-            this.btn_rescan_capture.Location = new System.Drawing.Point(760, 73);
-            this.btn_rescan_capture.Name = "btn_rescan_capture";
-            this.btn_rescan_capture.Size = new System.Drawing.Size(71, 28);
-            this.btn_rescan_capture.TabIndex = 19;
-            this.btn_rescan_capture.Text = "rescan";
-            this.btn_rescan_capture.UseVisualStyleBackColor = true;
-            this.btn_rescan_capture.Click += new System.EventHandler(this.btn_rescan_capture_Click);
+            btn_rescan_capture.Enabled = false;
+            btn_rescan_capture.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_rescan_capture.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_rescan_capture.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_rescan_capture.ForeColor = System.Drawing.Color.White;
+            btn_rescan_capture.Location = new System.Drawing.Point(887, 84);
+            btn_rescan_capture.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_rescan_capture.Name = "btn_rescan_capture";
+            btn_rescan_capture.Size = new System.Drawing.Size(83, 32);
+            btn_rescan_capture.TabIndex = 19;
+            btn_rescan_capture.Text = "rescan";
+            btn_rescan_capture.UseVisualStyleBackColor = true;
+            btn_rescan_capture.Click += btn_rescan_capture_Click;
             // 
             // cb_capture_device
             // 
-            this.cb_capture_device.Enabled = false;
-            this.cb_capture_device.FormattingEnabled = true;
-            this.cb_capture_device.Location = new System.Drawing.Point(325, 73);
-            this.cb_capture_device.Name = "cb_capture_device";
-            this.cb_capture_device.Size = new System.Drawing.Size(429, 28);
-            this.cb_capture_device.TabIndex = 18;
-            this.cb_capture_device.SelectedIndexChanged += new System.EventHandler(this.cb_capture_device_SelectedIndexChanged);
+            cb_capture_device.Enabled = false;
+            cb_capture_device.FormattingEnabled = true;
+            cb_capture_device.Location = new System.Drawing.Point(379, 84);
+            cb_capture_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_capture_device.Name = "cb_capture_device";
+            cb_capture_device.Size = new System.Drawing.Size(500, 28);
+            cb_capture_device.TabIndex = 18;
+            cb_capture_device.SelectedIndexChanged += cb_capture_device_SelectedIndexChanged;
             // 
             // rb_change_capture
             // 
-            this.rb_change_capture.AutoSize = true;
-            this.rb_change_capture.ForeColor = System.Drawing.Color.White;
-            this.rb_change_capture.Location = new System.Drawing.Point(121, 73);
-            this.rb_change_capture.Name = "rb_change_capture";
-            this.rb_change_capture.Size = new System.Drawing.Size(192, 24);
-            this.rb_change_capture.TabIndex = 17;
-            this.rb_change_capture.Text = "Change microphone to:";
-            this.rb_change_capture.UseVisualStyleBackColor = true;
-            this.rb_change_capture.CheckedChanged += new System.EventHandler(this.rb_change_capture_CheckedChanged);
+            rb_change_capture.AutoSize = true;
+            rb_change_capture.ForeColor = System.Drawing.Color.White;
+            rb_change_capture.Location = new System.Drawing.Point(141, 84);
+            rb_change_capture.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_change_capture.Name = "rb_change_capture";
+            rb_change_capture.Size = new System.Drawing.Size(192, 24);
+            rb_change_capture.TabIndex = 17;
+            rb_change_capture.Text = "Change microphone to:";
+            rb_change_capture.UseVisualStyleBackColor = true;
+            rb_change_capture.CheckedChanged += rb_change_capture_CheckedChanged;
             // 
             // rb_no_change_capture
             // 
-            this.rb_no_change_capture.AutoSize = true;
-            this.rb_no_change_capture.Checked = true;
-            this.rb_no_change_capture.ForeColor = System.Drawing.Color.White;
-            this.rb_no_change_capture.Location = new System.Drawing.Point(121, 35);
-            this.rb_no_change_capture.Name = "rb_no_change_capture";
-            this.rb_no_change_capture.Size = new System.Drawing.Size(308, 24);
-            this.rb_no_change_capture.TabIndex = 16;
-            this.rb_no_change_capture.TabStop = true;
-            this.rb_no_change_capture.Text = "Don\'t change microphone input settings";
-            this.rb_no_change_capture.UseVisualStyleBackColor = true;
-            this.rb_no_change_capture.CheckedChanged += new System.EventHandler(this.rb_no_change_capture_CheckedChanged);
+            rb_no_change_capture.AutoSize = true;
+            rb_no_change_capture.Checked = true;
+            rb_no_change_capture.ForeColor = System.Drawing.Color.White;
+            rb_no_change_capture.Location = new System.Drawing.Point(141, 40);
+            rb_no_change_capture.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_no_change_capture.Name = "rb_no_change_capture";
+            rb_no_change_capture.Size = new System.Drawing.Size(308, 24);
+            rb_no_change_capture.TabIndex = 16;
+            rb_no_change_capture.TabStop = true;
+            rb_no_change_capture.Text = "Don't change microphone input settings";
+            rb_no_change_capture.UseVisualStyleBackColor = true;
+            rb_no_change_capture.CheckedChanged += rb_no_change_capture_CheckedChanged;
             // 
             // gb_audio_settings
             // 
-            this.gb_audio_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.gb_audio_settings.Controls.Add(this.cb_audio_comms_device);
-            this.gb_audio_settings.Controls.Add(this.gb_audio_volume);
-            this.gb_audio_settings.Controls.Add(this.btn_rescan_audio);
-            this.gb_audio_settings.Controls.Add(this.cb_audio_device);
-            this.gb_audio_settings.Controls.Add(this.rb_change_audio);
-            this.gb_audio_settings.Controls.Add(this.rb_no_change_audio);
-            this.gb_audio_settings.ForeColor = System.Drawing.Color.White;
-            this.gb_audio_settings.Location = new System.Drawing.Point(48, 30);
-            this.gb_audio_settings.Name = "gb_audio_settings";
-            this.gb_audio_settings.Size = new System.Drawing.Size(953, 320);
-            this.gb_audio_settings.TabIndex = 0;
-            this.gb_audio_settings.TabStop = false;
-            this.gb_audio_settings.Text = "Audio Output Settings";
+            gb_audio_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_audio_settings.Controls.Add(cb_audio_comms_device);
+            gb_audio_settings.Controls.Add(gb_audio_volume);
+            gb_audio_settings.Controls.Add(btn_rescan_audio);
+            gb_audio_settings.Controls.Add(cb_audio_device);
+            gb_audio_settings.Controls.Add(rb_change_audio);
+            gb_audio_settings.Controls.Add(rb_no_change_audio);
+            gb_audio_settings.ForeColor = System.Drawing.Color.White;
+            gb_audio_settings.Location = new System.Drawing.Point(56, 35);
+            gb_audio_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_audio_settings.Name = "gb_audio_settings";
+            gb_audio_settings.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_audio_settings.Size = new System.Drawing.Size(1112, 369);
+            gb_audio_settings.TabIndex = 0;
+            gb_audio_settings.TabStop = false;
+            gb_audio_settings.Text = "Audio Output Settings";
             // 
             // cb_audio_comms_device
             // 
-            this.cb_audio_comms_device.AutoSize = true;
-            this.cb_audio_comms_device.Location = new System.Drawing.Point(326, 112);
-            this.cb_audio_comms_device.Name = "cb_audio_comms_device";
-            this.cb_audio_comms_device.Size = new System.Drawing.Size(424, 24);
-            this.cb_audio_comms_device.TabIndex = 21;
-            this.cb_audio_comms_device.Text = "Also set this as the default communicatons audio output";
-            this.cb_audio_comms_device.UseVisualStyleBackColor = true;
+            cb_audio_comms_device.AutoSize = true;
+            cb_audio_comms_device.Location = new System.Drawing.Point(380, 129);
+            cb_audio_comms_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_audio_comms_device.Name = "cb_audio_comms_device";
+            cb_audio_comms_device.Size = new System.Drawing.Size(424, 24);
+            cb_audio_comms_device.TabIndex = 21;
+            cb_audio_comms_device.Text = "Also set this as the default communicatons audio output";
+            cb_audio_comms_device.UseVisualStyleBackColor = true;
             // 
             // gb_audio_volume
             // 
-            this.gb_audio_volume.Controls.Add(this.rb_set_audio_volume);
-            this.gb_audio_volume.Controls.Add(this.rb_keep_audio_volume);
-            this.gb_audio_volume.Controls.Add(this.lbl_audio_volume);
-            this.gb_audio_volume.Controls.Add(this.nud_audio_volume);
-            this.gb_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.gb_audio_volume.Location = new System.Drawing.Point(325, 145);
-            this.gb_audio_volume.Name = "gb_audio_volume";
-            this.gb_audio_volume.Size = new System.Drawing.Size(429, 133);
-            this.gb_audio_volume.TabIndex = 20;
-            this.gb_audio_volume.TabStop = false;
-            this.gb_audio_volume.Text = "Audio Output Volume";
-            this.gb_audio_volume.Visible = false;
+            gb_audio_volume.Controls.Add(rb_set_audio_volume);
+            gb_audio_volume.Controls.Add(rb_keep_audio_volume);
+            gb_audio_volume.Controls.Add(lbl_audio_volume);
+            gb_audio_volume.Controls.Add(nud_audio_volume);
+            gb_audio_volume.ForeColor = System.Drawing.Color.White;
+            gb_audio_volume.Location = new System.Drawing.Point(379, 167);
+            gb_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_audio_volume.Name = "gb_audio_volume";
+            gb_audio_volume.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_audio_volume.Size = new System.Drawing.Size(500, 153);
+            gb_audio_volume.TabIndex = 20;
+            gb_audio_volume.TabStop = false;
+            gb_audio_volume.Text = "Audio Output Volume";
+            gb_audio_volume.Visible = false;
             // 
             // rb_set_audio_volume
             // 
-            this.rb_set_audio_volume.AutoSize = true;
-            this.rb_set_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_set_audio_volume.Location = new System.Drawing.Point(61, 82);
-            this.rb_set_audio_volume.Name = "rb_set_audio_volume";
-            this.rb_set_audio_volume.Size = new System.Drawing.Size(167, 24);
-            this.rb_set_audio_volume.TabIndex = 13;
-            this.rb_set_audio_volume.Text = "Set audio volume at";
-            this.rb_set_audio_volume.UseVisualStyleBackColor = true;
-            this.rb_set_audio_volume.CheckedChanged += new System.EventHandler(this.rb_set_audio_volume_CheckedChanged);
+            rb_set_audio_volume.AutoSize = true;
+            rb_set_audio_volume.ForeColor = System.Drawing.Color.White;
+            rb_set_audio_volume.Location = new System.Drawing.Point(71, 95);
+            rb_set_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_set_audio_volume.Name = "rb_set_audio_volume";
+            rb_set_audio_volume.Size = new System.Drawing.Size(167, 24);
+            rb_set_audio_volume.TabIndex = 13;
+            rb_set_audio_volume.Text = "Set audio volume at";
+            rb_set_audio_volume.UseVisualStyleBackColor = true;
+            rb_set_audio_volume.CheckedChanged += rb_set_audio_volume_CheckedChanged;
             // 
             // rb_keep_audio_volume
             // 
-            this.rb_keep_audio_volume.AutoSize = true;
-            this.rb_keep_audio_volume.Checked = true;
-            this.rb_keep_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_keep_audio_volume.Location = new System.Drawing.Point(61, 38);
-            this.rb_keep_audio_volume.Name = "rb_keep_audio_volume";
-            this.rb_keep_audio_volume.Size = new System.Drawing.Size(203, 24);
-            this.rb_keep_audio_volume.TabIndex = 12;
-            this.rb_keep_audio_volume.TabStop = true;
-            this.rb_keep_audio_volume.Text = "Leave audio volume as is";
-            this.rb_keep_audio_volume.UseVisualStyleBackColor = true;
-            this.rb_keep_audio_volume.CheckedChanged += new System.EventHandler(this.rb_keep_audio_volume_CheckedChanged);
+            rb_keep_audio_volume.AutoSize = true;
+            rb_keep_audio_volume.Checked = true;
+            rb_keep_audio_volume.ForeColor = System.Drawing.Color.White;
+            rb_keep_audio_volume.Location = new System.Drawing.Point(71, 44);
+            rb_keep_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_keep_audio_volume.Name = "rb_keep_audio_volume";
+            rb_keep_audio_volume.Size = new System.Drawing.Size(203, 24);
+            rb_keep_audio_volume.TabIndex = 12;
+            rb_keep_audio_volume.TabStop = true;
+            rb_keep_audio_volume.Text = "Leave audio volume as is";
+            rb_keep_audio_volume.UseVisualStyleBackColor = true;
+            rb_keep_audio_volume.CheckedChanged += rb_keep_audio_volume_CheckedChanged;
             // 
             // lbl_audio_volume
             // 
-            this.lbl_audio_volume.AutoSize = true;
-            this.lbl_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.lbl_audio_volume.Location = new System.Drawing.Point(298, 84);
-            this.lbl_audio_volume.Name = "lbl_audio_volume";
-            this.lbl_audio_volume.Size = new System.Drawing.Size(63, 20);
-            this.lbl_audio_volume.TabIndex = 11;
-            this.lbl_audio_volume.Text = "percent";
+            lbl_audio_volume.AutoSize = true;
+            lbl_audio_volume.ForeColor = System.Drawing.Color.White;
+            lbl_audio_volume.Location = new System.Drawing.Point(348, 97);
+            lbl_audio_volume.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_audio_volume.Name = "lbl_audio_volume";
+            lbl_audio_volume.Size = new System.Drawing.Size(63, 20);
+            lbl_audio_volume.TabIndex = 11;
+            lbl_audio_volume.Text = "percent";
             // 
             // nud_audio_volume
             // 
-            this.nud_audio_volume.Enabled = false;
-            this.nud_audio_volume.Location = new System.Drawing.Point(232, 82);
-            this.nud_audio_volume.Name = "nud_audio_volume";
-            this.nud_audio_volume.Size = new System.Drawing.Size(60, 26);
-            this.nud_audio_volume.TabIndex = 10;
-            this.nud_audio_volume.Value = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            this.nud_audio_volume.ValueChanged += new System.EventHandler(this.nud_audio_volume_ValueChanged);
+            nud_audio_volume.Enabled = false;
+            nud_audio_volume.Location = new System.Drawing.Point(271, 95);
+            nud_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            nud_audio_volume.Name = "nud_audio_volume";
+            nud_audio_volume.Size = new System.Drawing.Size(70, 26);
+            nud_audio_volume.TabIndex = 10;
+            nud_audio_volume.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            nud_audio_volume.ValueChanged += nud_audio_volume_ValueChanged;
             // 
             // btn_rescan_audio
             // 
-            this.btn_rescan_audio.Enabled = false;
-            this.btn_rescan_audio.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_rescan_audio.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_rescan_audio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_rescan_audio.ForeColor = System.Drawing.Color.White;
-            this.btn_rescan_audio.Location = new System.Drawing.Point(760, 72);
-            this.btn_rescan_audio.Name = "btn_rescan_audio";
-            this.btn_rescan_audio.Size = new System.Drawing.Size(71, 28);
-            this.btn_rescan_audio.TabIndex = 19;
-            this.btn_rescan_audio.Text = "rescan";
-            this.btn_rescan_audio.UseVisualStyleBackColor = true;
-            this.btn_rescan_audio.Click += new System.EventHandler(this.btn_rescan_audio_Click);
+            btn_rescan_audio.Enabled = false;
+            btn_rescan_audio.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_rescan_audio.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_rescan_audio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_rescan_audio.ForeColor = System.Drawing.Color.White;
+            btn_rescan_audio.Location = new System.Drawing.Point(887, 83);
+            btn_rescan_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_rescan_audio.Name = "btn_rescan_audio";
+            btn_rescan_audio.Size = new System.Drawing.Size(83, 32);
+            btn_rescan_audio.TabIndex = 19;
+            btn_rescan_audio.Text = "rescan";
+            btn_rescan_audio.UseVisualStyleBackColor = true;
+            btn_rescan_audio.Click += btn_rescan_audio_Click;
             // 
             // cb_audio_device
             // 
-            this.cb_audio_device.Enabled = false;
-            this.cb_audio_device.FormattingEnabled = true;
-            this.cb_audio_device.Location = new System.Drawing.Point(325, 72);
-            this.cb_audio_device.Name = "cb_audio_device";
-            this.cb_audio_device.Size = new System.Drawing.Size(429, 28);
-            this.cb_audio_device.TabIndex = 18;
-            this.cb_audio_device.SelectedIndexChanged += new System.EventHandler(this.cb_audio_device_SelectedIndexChanged);
+            cb_audio_device.Enabled = false;
+            cb_audio_device.FormattingEnabled = true;
+            cb_audio_device.Location = new System.Drawing.Point(379, 83);
+            cb_audio_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_audio_device.Name = "cb_audio_device";
+            cb_audio_device.Size = new System.Drawing.Size(500, 28);
+            cb_audio_device.TabIndex = 18;
+            cb_audio_device.SelectedIndexChanged += cb_audio_device_SelectedIndexChanged;
             // 
             // rb_change_audio
             // 
-            this.rb_change_audio.AutoSize = true;
-            this.rb_change_audio.ForeColor = System.Drawing.Color.White;
-            this.rb_change_audio.Location = new System.Drawing.Point(121, 72);
-            this.rb_change_audio.Name = "rb_change_audio";
-            this.rb_change_audio.Size = new System.Drawing.Size(198, 24);
-            this.rb_change_audio.TabIndex = 17;
-            this.rb_change_audio.Text = "Change audio output to:";
-            this.rb_change_audio.UseVisualStyleBackColor = true;
-            this.rb_change_audio.CheckedChanged += new System.EventHandler(this.rb_change_audio_CheckedChanged);
+            rb_change_audio.AutoSize = true;
+            rb_change_audio.ForeColor = System.Drawing.Color.White;
+            rb_change_audio.Location = new System.Drawing.Point(141, 83);
+            rb_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_change_audio.Name = "rb_change_audio";
+            rb_change_audio.Size = new System.Drawing.Size(198, 24);
+            rb_change_audio.TabIndex = 17;
+            rb_change_audio.Text = "Change audio output to:";
+            rb_change_audio.UseVisualStyleBackColor = true;
+            rb_change_audio.CheckedChanged += rb_change_audio_CheckedChanged;
             // 
             // rb_no_change_audio
             // 
-            this.rb_no_change_audio.AutoSize = true;
-            this.rb_no_change_audio.Checked = true;
-            this.rb_no_change_audio.ForeColor = System.Drawing.Color.White;
-            this.rb_no_change_audio.Location = new System.Drawing.Point(121, 34);
-            this.rb_no_change_audio.Name = "rb_no_change_audio";
-            this.rb_no_change_audio.Size = new System.Drawing.Size(275, 24);
-            this.rb_no_change_audio.TabIndex = 16;
-            this.rb_no_change_audio.TabStop = true;
-            this.rb_no_change_audio.Text = "Don\'t change audio output settings";
-            this.rb_no_change_audio.UseVisualStyleBackColor = true;
-            this.rb_no_change_audio.CheckedChanged += new System.EventHandler(this.rb_no_change_audio_CheckedChanged);
+            rb_no_change_audio.AutoSize = true;
+            rb_no_change_audio.Checked = true;
+            rb_no_change_audio.ForeColor = System.Drawing.Color.White;
+            rb_no_change_audio.Location = new System.Drawing.Point(141, 39);
+            rb_no_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_no_change_audio.Name = "rb_no_change_audio";
+            rb_no_change_audio.Size = new System.Drawing.Size(275, 24);
+            rb_no_change_audio.TabIndex = 16;
+            rb_no_change_audio.TabStop = true;
+            rb_no_change_audio.Text = "Don't change audio output settings";
+            rb_no_change_audio.UseVisualStyleBackColor = true;
+            rb_no_change_audio.CheckedChanged += rb_no_change_audio_CheckedChanged;
             // 
             // tabp_before
             // 
-            this.tabp_before.BackColor = System.Drawing.Color.Black;
-            this.tabp_before.Controls.Add(this.flp_start_programs);
-            this.tabp_before.Controls.Add(this.p_start_program_upper);
-            this.tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabp_before.ForeColor = System.Drawing.Color.White;
-            this.tabp_before.Location = new System.Drawing.Point(4, 32);
-            this.tabp_before.Name = "tabp_before";
-            this.tabp_before.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_before.Size = new System.Drawing.Size(1052, 731);
-            this.tabp_before.TabIndex = 1;
-            this.tabp_before.Text = "3. Choose what happens before";
+            tabp_before.BackColor = System.Drawing.Color.Black;
+            tabp_before.Controls.Add(flp_start_programs);
+            tabp_before.Controls.Add(p_start_program_upper);
+            tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            tabp_before.ForeColor = System.Drawing.Color.White;
+            tabp_before.Location = new System.Drawing.Point(4, 32);
+            tabp_before.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_before.Name = "tabp_before";
+            tabp_before.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_before.Size = new System.Drawing.Size(1229, 849);
+            tabp_before.TabIndex = 1;
+            tabp_before.Text = "3. Choose what happens before";
             // 
             // flp_start_programs
             // 
-            this.flp_start_programs.AllowDrop = true;
-            this.flp_start_programs.AutoScroll = true;
-            this.flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
-            this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
-            this.flp_start_programs.BackColor = System.Drawing.Color.White;
-            this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flp_start_programs.Location = new System.Drawing.Point(3, 124);
-            this.flp_start_programs.Name = "flp_start_programs";
-            this.flp_start_programs.Size = new System.Drawing.Size(1046, 604);
-            this.flp_start_programs.TabIndex = 0;
+            flp_start_programs.AllowDrop = true;
+            flp_start_programs.AutoScroll = true;
+            flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
+            flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
+            flp_start_programs.BackColor = System.Drawing.Color.White;
+            flp_start_programs.Dock = System.Windows.Forms.DockStyle.Fill;
+            flp_start_programs.Location = new System.Drawing.Point(4, 143);
+            flp_start_programs.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            flp_start_programs.Name = "flp_start_programs";
+            flp_start_programs.Size = new System.Drawing.Size(1221, 703);
+            flp_start_programs.TabIndex = 0;
             // 
             // p_start_program_upper
             // 
-            this.p_start_program_upper.Controls.Add(this.btn_find_examples_startprograms);
-            this.p_start_program_upper.Controls.Add(this.btn_add_new_start_program);
-            this.p_start_program_upper.Controls.Add(this.label3);
-            this.p_start_program_upper.Dock = System.Windows.Forms.DockStyle.Top;
-            this.p_start_program_upper.Location = new System.Drawing.Point(3, 3);
-            this.p_start_program_upper.Name = "p_start_program_upper";
-            this.p_start_program_upper.Size = new System.Drawing.Size(1046, 121);
-            this.p_start_program_upper.TabIndex = 41;
+            p_start_program_upper.Controls.Add(btn_find_examples_startprograms);
+            p_start_program_upper.Controls.Add(btn_add_new_start_program);
+            p_start_program_upper.Controls.Add(label3);
+            p_start_program_upper.Dock = System.Windows.Forms.DockStyle.Top;
+            p_start_program_upper.Location = new System.Drawing.Point(4, 3);
+            p_start_program_upper.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_start_program_upper.Name = "p_start_program_upper";
+            p_start_program_upper.Size = new System.Drawing.Size(1221, 140);
+            p_start_program_upper.TabIndex = 41;
             // 
             // btn_find_examples_startprograms
             // 
-            this.btn_find_examples_startprograms.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.btn_find_examples_startprograms.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_find_examples_startprograms.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_find_examples_startprograms.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_find_examples_startprograms.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_find_examples_startprograms.ForeColor = System.Drawing.Color.White;
-            this.btn_find_examples_startprograms.Location = new System.Drawing.Point(912, 78);
-            this.btn_find_examples_startprograms.Name = "btn_find_examples_startprograms";
-            this.btn_find_examples_startprograms.Size = new System.Drawing.Size(117, 25);
-            this.btn_find_examples_startprograms.TabIndex = 43;
-            this.btn_find_examples_startprograms.Text = "Show me &Examples";
-            this.btn_find_examples_startprograms.UseVisualStyleBackColor = true;
-            this.btn_find_examples_startprograms.Click += new System.EventHandler(this.btn_find_examples_startprograms_Click);
+            btn_find_examples_startprograms.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            btn_find_examples_startprograms.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_find_examples_startprograms.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_find_examples_startprograms.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_find_examples_startprograms.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_find_examples_startprograms.ForeColor = System.Drawing.Color.White;
+            btn_find_examples_startprograms.Location = new System.Drawing.Point(1065, 90);
+            btn_find_examples_startprograms.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_find_examples_startprograms.Name = "btn_find_examples_startprograms";
+            btn_find_examples_startprograms.Size = new System.Drawing.Size(136, 29);
+            btn_find_examples_startprograms.TabIndex = 43;
+            btn_find_examples_startprograms.Text = "Show me &Examples";
+            btn_find_examples_startprograms.UseVisualStyleBackColor = true;
+            btn_find_examples_startprograms.Click += btn_find_examples_startprograms_Click;
             // 
             // btn_add_new_start_program
             // 
-            this.btn_add_new_start_program.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btn_add_new_start_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_add_new_start_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
-            this.btn_add_new_start_program.Location = new System.Drawing.Point(400, 63);
-            this.btn_add_new_start_program.Name = "btn_add_new_start_program";
-            this.btn_add_new_start_program.Size = new System.Drawing.Size(246, 40);
-            this.btn_add_new_start_program.TabIndex = 41;
-            this.btn_add_new_start_program.Text = "&Add Start Program";
-            this.btn_add_new_start_program.UseVisualStyleBackColor = true;
-            this.btn_add_new_start_program.Click += new System.EventHandler(this.btn_add_new_start_program_Click);
+            btn_add_new_start_program.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            btn_add_new_start_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_add_new_start_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
+            btn_add_new_start_program.Location = new System.Drawing.Point(467, 73);
+            btn_add_new_start_program.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_add_new_start_program.Name = "btn_add_new_start_program";
+            btn_add_new_start_program.Size = new System.Drawing.Size(287, 46);
+            btn_add_new_start_program.TabIndex = 41;
+            btn_add_new_start_program.Text = "&Add Start Program";
+            btn_add_new_start_program.UseVisualStyleBackColor = true;
+            btn_add_new_start_program.Click += btn_add_new_start_program_Click;
             // 
             // label3
             // 
-            this.label3.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(136, 21);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(807, 20);
-            this.label3.TabIndex = 42;
-            this.label3.Text = "Add one or more additional programs to start before the main Game starts. They wi" +
-    "ll start in the order listed below.";
+            label3.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            label3.AutoSize = true;
+            label3.Location = new System.Drawing.Point(159, 24);
+            label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label3.Name = "label3";
+            label3.Size = new System.Drawing.Size(807, 20);
+            label3.TabIndex = 42;
+            label3.Text = "Add one or more additional programs to start before the main Game starts. They will start in the order listed below.";
             // 
             // tabp_game
             // 
-            this.tabp_game.BackColor = System.Drawing.Color.Black;
-            this.tabp_game.Controls.Add(this.p_game_list);
-            this.tabp_game.Controls.Add(this.p_gametostart);
-            this.tabp_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabp_game.ForeColor = System.Drawing.Color.White;
-            this.tabp_game.Location = new System.Drawing.Point(4, 32);
-            this.tabp_game.Name = "tabp_game";
-            this.tabp_game.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_game.Size = new System.Drawing.Size(1052, 731);
-            this.tabp_game.TabIndex = 2;
-            this.tabp_game.Text = "4. Choose Game to start";
+            tabp_game.BackColor = System.Drawing.Color.Black;
+            tabp_game.Controls.Add(p_game_list);
+            tabp_game.Controls.Add(p_gametostart);
+            tabp_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            tabp_game.ForeColor = System.Drawing.Color.White;
+            tabp_game.Location = new System.Drawing.Point(4, 32);
+            tabp_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_game.Name = "tabp_game";
+            tabp_game.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_game.Size = new System.Drawing.Size(1229, 849);
+            tabp_game.TabIndex = 2;
+            tabp_game.Text = "4. Choose Game to start";
             // 
             // p_game_list
             // 
-            this.p_game_list.Controls.Add(this.ilv_games);
-            this.p_game_list.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.p_game_list.Location = new System.Drawing.Point(3, 523);
-            this.p_game_list.Name = "p_game_list";
-            this.p_game_list.Size = new System.Drawing.Size(1046, 205);
-            this.p_game_list.TabIndex = 44;
+            p_game_list.Controls.Add(ilv_games);
+            p_game_list.Dock = System.Windows.Forms.DockStyle.Fill;
+            p_game_list.Location = new System.Drawing.Point(4, 603);
+            p_game_list.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_game_list.Name = "p_game_list";
+            p_game_list.Size = new System.Drawing.Size(1221, 243);
+            p_game_list.TabIndex = 44;
             // 
             // ilv_games
             // 
-            this.ilv_games.AllowCheckBoxClick = false;
-            this.ilv_games.AllowColumnClick = false;
-            this.ilv_games.AllowColumnResize = false;
-            this.ilv_games.AllowItemReorder = false;
-            this.ilv_games.AllowPaneResize = false;
-            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ilv_games.IntegralScroll = true;
-            this.ilv_games.Location = new System.Drawing.Point(0, 0);
-            this.ilv_games.Name = "ilv_games";
-            this.ilv_games.PersistentCacheDirectory = "";
-            this.ilv_games.PersistentCacheSize = ((long)(100));
-            this.ilv_games.Size = new System.Drawing.Size(1046, 205);
-            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
-            this.ilv_games.TabIndex = 43;
-            this.ilv_games.UseWIC = true;
-            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
+            ilv_games.AllowCheckBoxClick = false;
+            ilv_games.AllowColumnClick = false;
+            ilv_games.AllowColumnResize = false;
+            ilv_games.AllowItemReorder = false;
+            ilv_games.AllowPaneResize = false;
+            ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
+            ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            ilv_games.IntegralScroll = true;
+            ilv_games.Location = new System.Drawing.Point(0, 0);
+            ilv_games.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            ilv_games.Name = "ilv_games";
+            ilv_games.PersistentCacheDirectory = "";
+            ilv_games.PersistentCacheSize = 100L;
+            ilv_games.Size = new System.Drawing.Size(1221, 243);
+            ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
+            ilv_games.TabIndex = 43;
+            ilv_games.UseWIC = true;
+            ilv_games.ItemClick += ilv_games_ItemClick;
             // 
             // p_gametostart
             // 
-            this.p_gametostart.Controls.Add(this.btn_find_examples_game);
-            this.p_gametostart.Controls.Add(this.p_standalone);
-            this.p_gametostart.Controls.Add(this.rb_standalone);
-            this.p_gametostart.Controls.Add(this.rb_no_game);
-            this.p_gametostart.Controls.Add(this.p_game);
-            this.p_gametostart.Controls.Add(this.rb_launcher);
-            this.p_gametostart.Dock = System.Windows.Forms.DockStyle.Top;
-            this.p_gametostart.Location = new System.Drawing.Point(3, 3);
-            this.p_gametostart.Name = "p_gametostart";
-            this.p_gametostart.Size = new System.Drawing.Size(1046, 520);
-            this.p_gametostart.TabIndex = 43;
+            p_gametostart.Controls.Add(btn_find_examples_game);
+            p_gametostart.Controls.Add(p_standalone);
+            p_gametostart.Controls.Add(rb_standalone);
+            p_gametostart.Controls.Add(rb_no_game);
+            p_gametostart.Controls.Add(p_game);
+            p_gametostart.Controls.Add(rb_launcher);
+            p_gametostart.Dock = System.Windows.Forms.DockStyle.Top;
+            p_gametostart.Location = new System.Drawing.Point(4, 3);
+            p_gametostart.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_gametostart.Name = "p_gametostart";
+            p_gametostart.Size = new System.Drawing.Size(1221, 600);
+            p_gametostart.TabIndex = 43;
             // 
             // btn_find_examples_game
             // 
-            this.btn_find_examples_game.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_find_examples_game.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_find_examples_game.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_find_examples_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_find_examples_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_find_examples_game.ForeColor = System.Drawing.Color.White;
-            this.btn_find_examples_game.Location = new System.Drawing.Point(924, 11);
-            this.btn_find_examples_game.Name = "btn_find_examples_game";
-            this.btn_find_examples_game.Size = new System.Drawing.Size(117, 25);
-            this.btn_find_examples_game.TabIndex = 47;
-            this.btn_find_examples_game.Text = "Show me &Examples";
-            this.btn_find_examples_game.UseVisualStyleBackColor = true;
-            this.btn_find_examples_game.Click += new System.EventHandler(this.btn_find_examples_game_Click);
+            btn_find_examples_game.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btn_find_examples_game.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_find_examples_game.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_find_examples_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_find_examples_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_find_examples_game.ForeColor = System.Drawing.Color.White;
+            btn_find_examples_game.Location = new System.Drawing.Point(1079, 13);
+            btn_find_examples_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_find_examples_game.Name = "btn_find_examples_game";
+            btn_find_examples_game.Size = new System.Drawing.Size(136, 29);
+            btn_find_examples_game.TabIndex = 47;
+            btn_find_examples_game.Text = "Show me &Examples";
+            btn_find_examples_game.UseVisualStyleBackColor = true;
+            btn_find_examples_game.Click += btn_find_examples_game_Click;
             // 
             // p_standalone
             // 
-            this.p_standalone.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.p_standalone.Controls.Add(this.cb_run_exe_as_administrator);
-            this.p_standalone.Controls.Add(this.btn_choose_exe_icon);
-            this.p_standalone.Controls.Add(this.pb_exe_icon);
-            this.p_standalone.Controls.Add(this.cbx_exe_priority);
-            this.p_standalone.Controls.Add(this.lbl_exe_priority);
-            this.p_standalone.Controls.Add(this.btn_exe_to_start);
-            this.p_standalone.Controls.Add(this.txt_args_executable);
-            this.p_standalone.Controls.Add(this.cb_args_executable);
-            this.p_standalone.Controls.Add(this.btn_choose_alternative_executable);
-            this.p_standalone.Controls.Add(this.txt_alternative_executable);
-            this.p_standalone.Controls.Add(this.rb_wait_alternative_executable);
-            this.p_standalone.Controls.Add(this.rb_wait_executable);
-            this.p_standalone.Controls.Add(this.txt_executable);
-            this.p_standalone.Controls.Add(this.lbl_app_executable);
-            this.p_standalone.Controls.Add(this.label2);
-            this.p_standalone.Controls.Add(this.nud_timeout_executable);
-            this.p_standalone.Enabled = false;
-            this.p_standalone.Location = new System.Drawing.Point(3, 79);
-            this.p_standalone.Name = "p_standalone";
-            this.p_standalone.Size = new System.Drawing.Size(1046, 201);
-            this.p_standalone.TabIndex = 46;
+            p_standalone.Anchor = System.Windows.Forms.AnchorStyles.None;
+            p_standalone.Controls.Add(cb_run_exe_as_administrator);
+            p_standalone.Controls.Add(btn_choose_exe_icon);
+            p_standalone.Controls.Add(pb_exe_icon);
+            p_standalone.Controls.Add(cbx_exe_priority);
+            p_standalone.Controls.Add(lbl_exe_priority);
+            p_standalone.Controls.Add(btn_exe_to_start);
+            p_standalone.Controls.Add(txt_args_executable);
+            p_standalone.Controls.Add(cb_args_executable);
+            p_standalone.Controls.Add(btn_choose_alternative_executable);
+            p_standalone.Controls.Add(txt_alternative_executable);
+            p_standalone.Controls.Add(rb_wait_alternative_executable);
+            p_standalone.Controls.Add(rb_wait_executable);
+            p_standalone.Controls.Add(txt_executable);
+            p_standalone.Controls.Add(lbl_app_executable);
+            p_standalone.Controls.Add(label2);
+            p_standalone.Controls.Add(nud_timeout_executable);
+            p_standalone.Enabled = false;
+            p_standalone.Location = new System.Drawing.Point(4, 91);
+            p_standalone.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_standalone.Name = "p_standalone";
+            p_standalone.Size = new System.Drawing.Size(1220, 232);
+            p_standalone.TabIndex = 46;
             // 
             // cb_run_exe_as_administrator
             // 
-            this.cb_run_exe_as_administrator.AutoSize = true;
-            this.cb_run_exe_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_run_exe_as_administrator.ForeColor = System.Drawing.Color.White;
-            this.cb_run_exe_as_administrator.Location = new System.Drawing.Point(171, 81);
-            this.cb_run_exe_as_administrator.Name = "cb_run_exe_as_administrator";
-            this.cb_run_exe_as_administrator.Size = new System.Drawing.Size(256, 24);
-            this.cb_run_exe_as_administrator.TabIndex = 39;
-            this.cb_run_exe_as_administrator.Text = "Run executable as administrator";
-            this.cb_run_exe_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_exe_as_administrator.UseVisualStyleBackColor = true;
-            this.cb_run_exe_as_administrator.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            cb_run_exe_as_administrator.AutoSize = true;
+            cb_run_exe_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_run_exe_as_administrator.ForeColor = System.Drawing.Color.White;
+            cb_run_exe_as_administrator.Location = new System.Drawing.Point(200, 93);
+            cb_run_exe_as_administrator.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_run_exe_as_administrator.Name = "cb_run_exe_as_administrator";
+            cb_run_exe_as_administrator.Size = new System.Drawing.Size(256, 24);
+            cb_run_exe_as_administrator.TabIndex = 39;
+            cb_run_exe_as_administrator.Text = "Run executable as administrator";
+            cb_run_exe_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_run_exe_as_administrator.UseVisualStyleBackColor = true;
+            cb_run_exe_as_administrator.Paint += checkbox_Paint;
             // 
             // btn_choose_exe_icon
             // 
-            this.btn_choose_exe_icon.Enabled = false;
-            this.btn_choose_exe_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_choose_exe_icon.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_choose_exe_icon.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_exe_icon.Location = new System.Drawing.Point(36, 158);
-            this.btn_choose_exe_icon.Name = "btn_choose_exe_icon";
-            this.btn_choose_exe_icon.Size = new System.Drawing.Size(100, 26);
-            this.btn_choose_exe_icon.TabIndex = 38;
-            this.btn_choose_exe_icon.Text = "Swap";
-            this.btn_choose_exe_icon.UseVisualStyleBackColor = true;
-            this.btn_choose_exe_icon.Click += new System.EventHandler(this.btn_choose_exe_icon_Click);
+            btn_choose_exe_icon.Enabled = false;
+            btn_choose_exe_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_choose_exe_icon.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_choose_exe_icon.ForeColor = System.Drawing.Color.White;
+            btn_choose_exe_icon.Location = new System.Drawing.Point(42, 182);
+            btn_choose_exe_icon.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_choose_exe_icon.Name = "btn_choose_exe_icon";
+            btn_choose_exe_icon.Size = new System.Drawing.Size(117, 30);
+            btn_choose_exe_icon.TabIndex = 38;
+            btn_choose_exe_icon.Text = "Swap";
+            btn_choose_exe_icon.UseVisualStyleBackColor = true;
+            btn_choose_exe_icon.Click += btn_choose_exe_icon_Click;
             // 
             // pb_exe_icon
             // 
-            this.pb_exe_icon.BackColor = System.Drawing.Color.DarkGray;
-            this.pb_exe_icon.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.pb_exe_icon.Location = new System.Drawing.Point(36, 59);
-            this.pb_exe_icon.Name = "pb_exe_icon";
-            this.pb_exe_icon.Size = new System.Drawing.Size(100, 100);
-            this.pb_exe_icon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb_exe_icon.TabIndex = 37;
-            this.pb_exe_icon.TabStop = false;
-            this.pb_exe_icon.Click += new System.EventHandler(this.pb_exe_icon_Click);
+            pb_exe_icon.BackColor = System.Drawing.Color.DarkGray;
+            pb_exe_icon.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            pb_exe_icon.Location = new System.Drawing.Point(42, 68);
+            pb_exe_icon.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            pb_exe_icon.Name = "pb_exe_icon";
+            pb_exe_icon.Size = new System.Drawing.Size(116, 115);
+            pb_exe_icon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_exe_icon.TabIndex = 37;
+            pb_exe_icon.TabStop = false;
+            pb_exe_icon.Click += pb_exe_icon_Click;
             // 
             // cbx_exe_priority
             // 
-            this.cbx_exe_priority.AllowDrop = true;
-            this.cbx_exe_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbx_exe_priority.FormattingEnabled = true;
-            this.cbx_exe_priority.Location = new System.Drawing.Point(888, 82);
-            this.cbx_exe_priority.Name = "cbx_exe_priority";
-            this.cbx_exe_priority.Size = new System.Drawing.Size(150, 28);
-            this.cbx_exe_priority.TabIndex = 31;
+            cbx_exe_priority.AllowDrop = true;
+            cbx_exe_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbx_exe_priority.FormattingEnabled = true;
+            cbx_exe_priority.Location = new System.Drawing.Point(1036, 95);
+            cbx_exe_priority.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cbx_exe_priority.Name = "cbx_exe_priority";
+            cbx_exe_priority.Size = new System.Drawing.Size(174, 28);
+            cbx_exe_priority.TabIndex = 31;
             // 
             // lbl_exe_priority
             // 
-            this.lbl_exe_priority.AutoSize = true;
-            this.lbl_exe_priority.ForeColor = System.Drawing.Color.White;
-            this.lbl_exe_priority.Location = new System.Drawing.Point(741, 85);
-            this.lbl_exe_priority.Name = "lbl_exe_priority";
-            this.lbl_exe_priority.Size = new System.Drawing.Size(143, 20);
-            this.lbl_exe_priority.TabIndex = 30;
-            this.lbl_exe_priority.Text = "Executable Priority:";
-            this.lbl_exe_priority.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            lbl_exe_priority.AutoSize = true;
+            lbl_exe_priority.ForeColor = System.Drawing.Color.White;
+            lbl_exe_priority.Location = new System.Drawing.Point(864, 98);
+            lbl_exe_priority.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_exe_priority.Name = "lbl_exe_priority";
+            lbl_exe_priority.Size = new System.Drawing.Size(143, 20);
+            lbl_exe_priority.TabIndex = 30;
+            lbl_exe_priority.Text = "Executable Priority:";
+            lbl_exe_priority.Paint += label_Paint;
             // 
             // btn_exe_to_start
             // 
-            this.btn_exe_to_start.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_exe_to_start.ForeColor = System.Drawing.Color.White;
-            this.btn_exe_to_start.Location = new System.Drawing.Point(666, 10);
-            this.btn_exe_to_start.Name = "btn_exe_to_start";
-            this.btn_exe_to_start.Size = new System.Drawing.Size(85, 27);
-            this.btn_exe_to_start.TabIndex = 12;
-            this.btn_exe_to_start.Text = "Choose";
-            this.btn_exe_to_start.UseVisualStyleBackColor = true;
-            this.btn_exe_to_start.Click += new System.EventHandler(this.btn_exe_to_start_Click);
+            btn_exe_to_start.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_exe_to_start.ForeColor = System.Drawing.Color.White;
+            btn_exe_to_start.Location = new System.Drawing.Point(777, 12);
+            btn_exe_to_start.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_exe_to_start.Name = "btn_exe_to_start";
+            btn_exe_to_start.Size = new System.Drawing.Size(99, 31);
+            btn_exe_to_start.TabIndex = 12;
+            btn_exe_to_start.Text = "Choose";
+            btn_exe_to_start.UseVisualStyleBackColor = true;
+            btn_exe_to_start.Click += btn_exe_to_start_Click;
             // 
             // txt_args_executable
             // 
-            this.txt_args_executable.Enabled = false;
-            this.txt_args_executable.Location = new System.Drawing.Point(425, 46);
-            this.txt_args_executable.Name = "txt_args_executable";
-            this.txt_args_executable.Size = new System.Drawing.Size(613, 26);
-            this.txt_args_executable.TabIndex = 11;
+            txt_args_executable.Enabled = false;
+            txt_args_executable.Location = new System.Drawing.Point(496, 53);
+            txt_args_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_args_executable.Name = "txt_args_executable";
+            txt_args_executable.Size = new System.Drawing.Size(714, 26);
+            txt_args_executable.TabIndex = 11;
             // 
             // cb_args_executable
             // 
-            this.cb_args_executable.AutoSize = true;
-            this.cb_args_executable.ForeColor = System.Drawing.Color.White;
-            this.cb_args_executable.Location = new System.Drawing.Point(171, 48);
-            this.cb_args_executable.Name = "cb_args_executable";
-            this.cb_args_executable.Size = new System.Drawing.Size(248, 24);
-            this.cb_args_executable.TabIndex = 10;
-            this.cb_args_executable.Text = "Pass arguments to Executable:";
-            this.cb_args_executable.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_args_executable.UseVisualStyleBackColor = true;
-            this.cb_args_executable.CheckedChanged += new System.EventHandler(this.cb_args_executable_CheckedChanged);
-            this.cb_args_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            cb_args_executable.AutoSize = true;
+            cb_args_executable.ForeColor = System.Drawing.Color.White;
+            cb_args_executable.Location = new System.Drawing.Point(200, 55);
+            cb_args_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_args_executable.Name = "cb_args_executable";
+            cb_args_executable.Size = new System.Drawing.Size(248, 24);
+            cb_args_executable.TabIndex = 10;
+            cb_args_executable.Text = "Pass arguments to Executable:";
+            cb_args_executable.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_args_executable.UseVisualStyleBackColor = true;
+            cb_args_executable.CheckedChanged += cb_args_executable_CheckedChanged;
+            cb_args_executable.Paint += checkbox_Paint;
             // 
             // btn_choose_alternative_executable
             // 
-            this.btn_choose_alternative_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_choose_alternative_executable.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_alternative_executable.Location = new System.Drawing.Point(953, 155);
-            this.btn_choose_alternative_executable.Name = "btn_choose_alternative_executable";
-            this.btn_choose_alternative_executable.Size = new System.Drawing.Size(85, 27);
-            this.btn_choose_alternative_executable.TabIndex = 9;
-            this.btn_choose_alternative_executable.Text = "Choose";
-            this.btn_choose_alternative_executable.UseVisualStyleBackColor = true;
-            this.btn_choose_alternative_executable.Click += new System.EventHandler(this.btn_choose_alternative_executable_Click);
+            btn_choose_alternative_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_choose_alternative_executable.ForeColor = System.Drawing.Color.White;
+            btn_choose_alternative_executable.Location = new System.Drawing.Point(1112, 179);
+            btn_choose_alternative_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_choose_alternative_executable.Name = "btn_choose_alternative_executable";
+            btn_choose_alternative_executable.Size = new System.Drawing.Size(99, 31);
+            btn_choose_alternative_executable.TabIndex = 9;
+            btn_choose_alternative_executable.Text = "Choose";
+            btn_choose_alternative_executable.UseVisualStyleBackColor = true;
+            btn_choose_alternative_executable.Click += btn_choose_alternative_executable_Click;
             // 
             // txt_alternative_executable
             // 
-            this.txt_alternative_executable.Enabled = false;
-            this.txt_alternative_executable.Location = new System.Drawing.Point(633, 156);
-            this.txt_alternative_executable.Name = "txt_alternative_executable";
-            this.txt_alternative_executable.Size = new System.Drawing.Size(314, 26);
-            this.txt_alternative_executable.TabIndex = 4;
-            this.txt_alternative_executable.TextChanged += new System.EventHandler(this.txt_alternative_executable_TextChanged);
+            txt_alternative_executable.Enabled = false;
+            txt_alternative_executable.Location = new System.Drawing.Point(738, 180);
+            txt_alternative_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_alternative_executable.Name = "txt_alternative_executable";
+            txt_alternative_executable.Size = new System.Drawing.Size(366, 26);
+            txt_alternative_executable.TabIndex = 4;
+            txt_alternative_executable.TextChanged += txt_alternative_executable_TextChanged;
             // 
             // rb_wait_alternative_executable
             // 
-            this.rb_wait_alternative_executable.AutoSize = true;
-            this.rb_wait_alternative_executable.ForeColor = System.Drawing.Color.White;
-            this.rb_wait_alternative_executable.Location = new System.Drawing.Point(169, 156);
-            this.rb_wait_alternative_executable.Name = "rb_wait_alternative_executable";
-            this.rb_wait_alternative_executable.Size = new System.Drawing.Size(468, 24);
-            this.rb_wait_alternative_executable.TabIndex = 8;
-            this.rb_wait_alternative_executable.Text = "Wait until an alternative executable is closed before continuing:";
-            this.rb_wait_alternative_executable.UseVisualStyleBackColor = true;
-            this.rb_wait_alternative_executable.CheckedChanged += new System.EventHandler(this.rb_wait_alternative_executable_CheckedChanged);
-            this.rb_wait_alternative_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            rb_wait_alternative_executable.AutoSize = true;
+            rb_wait_alternative_executable.ForeColor = System.Drawing.Color.White;
+            rb_wait_alternative_executable.Location = new System.Drawing.Point(197, 180);
+            rb_wait_alternative_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_wait_alternative_executable.Name = "rb_wait_alternative_executable";
+            rb_wait_alternative_executable.Size = new System.Drawing.Size(468, 24);
+            rb_wait_alternative_executable.TabIndex = 8;
+            rb_wait_alternative_executable.Text = "Wait until an alternative executable is closed before continuing:";
+            rb_wait_alternative_executable.UseVisualStyleBackColor = true;
+            rb_wait_alternative_executable.CheckedChanged += rb_wait_alternative_executable_CheckedChanged;
+            rb_wait_alternative_executable.Paint += radiobutton_Paint;
             // 
             // rb_wait_executable
             // 
-            this.rb_wait_executable.AutoSize = true;
-            this.rb_wait_executable.Checked = true;
-            this.rb_wait_executable.ForeColor = System.Drawing.Color.White;
-            this.rb_wait_executable.Location = new System.Drawing.Point(169, 117);
-            this.rb_wait_executable.Name = "rb_wait_executable";
-            this.rb_wait_executable.Size = new System.Drawing.Size(439, 24);
-            this.rb_wait_executable.TabIndex = 7;
-            this.rb_wait_executable.TabStop = true;
-            this.rb_wait_executable.Text = "Wait until the executable above is closed before continuing";
-            this.rb_wait_executable.UseVisualStyleBackColor = true;
-            this.rb_wait_executable.CheckedChanged += new System.EventHandler(this.rb_wait_executable_CheckedChanged);
-            this.rb_wait_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            rb_wait_executable.AutoSize = true;
+            rb_wait_executable.Checked = true;
+            rb_wait_executable.ForeColor = System.Drawing.Color.White;
+            rb_wait_executable.Location = new System.Drawing.Point(197, 135);
+            rb_wait_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_wait_executable.Name = "rb_wait_executable";
+            rb_wait_executable.Size = new System.Drawing.Size(439, 24);
+            rb_wait_executable.TabIndex = 7;
+            rb_wait_executable.TabStop = true;
+            rb_wait_executable.Text = "Wait until the executable above is closed before continuing";
+            rb_wait_executable.UseVisualStyleBackColor = true;
+            rb_wait_executable.CheckedChanged += rb_wait_executable_CheckedChanged;
+            rb_wait_executable.Paint += radiobutton_Paint;
             // 
             // txt_executable
             // 
-            this.txt_executable.Location = new System.Drawing.Point(171, 10);
-            this.txt_executable.Name = "txt_executable";
-            this.txt_executable.Size = new System.Drawing.Size(489, 26);
-            this.txt_executable.TabIndex = 1;
-            this.txt_executable.TextChanged += new System.EventHandler(this.txt_executable_TextChanged);
+            txt_executable.Location = new System.Drawing.Point(200, 12);
+            txt_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_executable.Name = "txt_executable";
+            txt_executable.Size = new System.Drawing.Size(570, 26);
+            txt_executable.TabIndex = 1;
+            txt_executable.TextChanged += txt_executable_TextChanged;
             // 
             // lbl_app_executable
             // 
-            this.lbl_app_executable.AutoSize = true;
-            this.lbl_app_executable.ForeColor = System.Drawing.Color.White;
-            this.lbl_app_executable.Location = new System.Drawing.Point(19, 13);
-            this.lbl_app_executable.Name = "lbl_app_executable";
-            this.lbl_app_executable.Size = new System.Drawing.Size(146, 20);
-            this.lbl_app_executable.TabIndex = 0;
-            this.lbl_app_executable.Text = "Executable to start:";
-            this.lbl_app_executable.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            this.lbl_app_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            lbl_app_executable.AutoSize = true;
+            lbl_app_executable.ForeColor = System.Drawing.Color.White;
+            lbl_app_executable.Location = new System.Drawing.Point(22, 15);
+            lbl_app_executable.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_app_executable.Name = "lbl_app_executable";
+            lbl_app_executable.Size = new System.Drawing.Size(146, 20);
+            lbl_app_executable.TabIndex = 0;
+            lbl_app_executable.Text = "Executable to start:";
+            lbl_app_executable.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            lbl_app_executable.Paint += label_Paint;
             // 
             // label2
             // 
-            this.label2.AutoSize = true;
-            this.label2.ForeColor = System.Drawing.Color.Transparent;
-            this.label2.Location = new System.Drawing.Point(852, 13);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(125, 20);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "Max Wait (secs):";
-            this.label2.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            label2.AutoSize = true;
+            label2.ForeColor = System.Drawing.Color.Transparent;
+            label2.Location = new System.Drawing.Point(994, 15);
+            label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(125, 20);
+            label2.TabIndex = 5;
+            label2.Text = "Max Wait (secs):";
+            label2.Paint += label_Paint;
             // 
             // nud_timeout_executable
             // 
-            this.nud_timeout_executable.Location = new System.Drawing.Point(983, 10);
-            this.nud_timeout_executable.Maximum = new decimal(new int[] {
-            240,
-            0,
-            0,
-            0});
-            this.nud_timeout_executable.Name = "nud_timeout_executable";
-            this.nud_timeout_executable.Size = new System.Drawing.Size(55, 26);
-            this.nud_timeout_executable.TabIndex = 6;
-            this.nud_timeout_executable.Value = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
+            nud_timeout_executable.Location = new System.Drawing.Point(1147, 12);
+            nud_timeout_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            nud_timeout_executable.Maximum = new decimal(new int[] { 240, 0, 0, 0 });
+            nud_timeout_executable.Name = "nud_timeout_executable";
+            nud_timeout_executable.Size = new System.Drawing.Size(64, 26);
+            nud_timeout_executable.TabIndex = 6;
+            nud_timeout_executable.Value = new decimal(new int[] { 20, 0, 0, 0 });
             // 
             // rb_standalone
             // 
-            this.rb_standalone.AutoSize = true;
-            this.rb_standalone.ForeColor = System.Drawing.Color.White;
-            this.rb_standalone.Location = new System.Drawing.Point(16, 53);
-            this.rb_standalone.Name = "rb_standalone";
-            this.rb_standalone.Size = new System.Drawing.Size(326, 24);
-            this.rb_standalone.TabIndex = 45;
-            this.rb_standalone.Text = "Launch a Game or Application executable ";
-            this.rb_standalone.UseVisualStyleBackColor = true;
-            this.rb_standalone.CheckedChanged += new System.EventHandler(this.rb_standalone_CheckedChanged);
-            this.rb_standalone.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            rb_standalone.AutoSize = true;
+            rb_standalone.ForeColor = System.Drawing.Color.White;
+            rb_standalone.Location = new System.Drawing.Point(19, 61);
+            rb_standalone.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_standalone.Name = "rb_standalone";
+            rb_standalone.Size = new System.Drawing.Size(326, 24);
+            rb_standalone.TabIndex = 45;
+            rb_standalone.Text = "Launch a Game or Application executable ";
+            rb_standalone.UseVisualStyleBackColor = true;
+            rb_standalone.CheckedChanged += rb_standalone_CheckedChanged;
+            rb_standalone.Paint += radiobutton_Paint;
             // 
             // rb_no_game
             // 
-            this.rb_no_game.AutoSize = true;
-            this.rb_no_game.ForeColor = System.Drawing.Color.White;
-            this.rb_no_game.Location = new System.Drawing.Point(15, 11);
-            this.rb_no_game.Name = "rb_no_game";
-            this.rb_no_game.Size = new System.Drawing.Size(162, 24);
-            this.rb_no_game.TabIndex = 44;
-            this.rb_no_game.Text = "Don\'t start a Game";
-            this.rb_no_game.UseVisualStyleBackColor = true;
-            this.rb_no_game.CheckedChanged += new System.EventHandler(this.rb_no_game_CheckedChanged);
-            this.rb_no_game.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            rb_no_game.AutoSize = true;
+            rb_no_game.ForeColor = System.Drawing.Color.White;
+            rb_no_game.Location = new System.Drawing.Point(18, 13);
+            rb_no_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_no_game.Name = "rb_no_game";
+            rb_no_game.Size = new System.Drawing.Size(162, 24);
+            rb_no_game.TabIndex = 44;
+            rb_no_game.Text = "Don't start a Game";
+            rb_no_game.UseVisualStyleBackColor = true;
+            rb_no_game.CheckedChanged += rb_no_game_CheckedChanged;
+            rb_no_game.Paint += radiobutton_Paint;
             // 
             // p_game
             // 
-            this.p_game.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.p_game.Controls.Add(this.btn_refresh_games_list);
-            this.p_game.Controls.Add(this.btn_choose_game_icon);
-            this.p_game.Controls.Add(this.pb_game_icon);
-            this.p_game.Controls.Add(this.lbl_no_game_libraries);
-            this.p_game.Controls.Add(this.cbx_game_priority);
-            this.p_game.Controls.Add(this.cb_wait_alternative_game);
-            this.p_game.Controls.Add(this.btn_choose_alternative_game);
-            this.p_game.Controls.Add(this.txt_alternative_game);
-            this.p_game.Controls.Add(this.txt_game_name);
-            this.p_game.Controls.Add(this.lbl_game_priority);
-            this.p_game.Controls.Add(this.lbl_game_name);
-            this.p_game.Controls.Add(this.txt_args_game);
-            this.p_game.Controls.Add(this.cb_args_game);
-            this.p_game.Controls.Add(this.lbl_game_timeout);
-            this.p_game.Controls.Add(this.nud_timeout_game);
-            this.p_game.Controls.Add(this.lbl_game_library);
-            this.p_game.Location = new System.Drawing.Point(3, 331);
-            this.p_game.Name = "p_game";
-            this.p_game.Size = new System.Drawing.Size(1046, 181);
-            this.p_game.TabIndex = 43;
+            p_game.Anchor = System.Windows.Forms.AnchorStyles.None;
+            p_game.Controls.Add(btn_refresh_games_list);
+            p_game.Controls.Add(btn_choose_game_icon);
+            p_game.Controls.Add(pb_game_icon);
+            p_game.Controls.Add(lbl_no_game_libraries);
+            p_game.Controls.Add(cbx_game_priority);
+            p_game.Controls.Add(cb_wait_alternative_game);
+            p_game.Controls.Add(btn_choose_alternative_game);
+            p_game.Controls.Add(txt_alternative_game);
+            p_game.Controls.Add(txt_game_name);
+            p_game.Controls.Add(lbl_game_priority);
+            p_game.Controls.Add(lbl_game_name);
+            p_game.Controls.Add(txt_args_game);
+            p_game.Controls.Add(cb_args_game);
+            p_game.Controls.Add(lbl_game_timeout);
+            p_game.Controls.Add(nud_timeout_game);
+            p_game.Controls.Add(lbl_game_library);
+            p_game.Location = new System.Drawing.Point(4, 382);
+            p_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_game.Name = "p_game";
+            p_game.Size = new System.Drawing.Size(1220, 209);
+            p_game.TabIndex = 43;
             // 
             // btn_refresh_games_list
             // 
-            this.btn_refresh_games_list.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.btn_refresh_games_list.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_refresh_games_list.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_refresh_games_list.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_refresh_games_list.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_refresh_games_list.ForeColor = System.Drawing.Color.White;
-            this.btn_refresh_games_list.Location = new System.Drawing.Point(921, 147);
-            this.btn_refresh_games_list.Name = "btn_refresh_games_list";
-            this.btn_refresh_games_list.Size = new System.Drawing.Size(117, 25);
-            this.btn_refresh_games_list.TabIndex = 42;
-            this.btn_refresh_games_list.Text = "Refresh Games List";
-            this.btn_refresh_games_list.UseVisualStyleBackColor = true;
-            this.btn_refresh_games_list.Click += new System.EventHandler(this.btn_refresh_games_list_Click);
+            btn_refresh_games_list.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            btn_refresh_games_list.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_refresh_games_list.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_refresh_games_list.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_refresh_games_list.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_refresh_games_list.ForeColor = System.Drawing.Color.White;
+            btn_refresh_games_list.Location = new System.Drawing.Point(1074, 170);
+            btn_refresh_games_list.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_refresh_games_list.Name = "btn_refresh_games_list";
+            btn_refresh_games_list.Size = new System.Drawing.Size(136, 29);
+            btn_refresh_games_list.TabIndex = 42;
+            btn_refresh_games_list.Text = "Refresh Games List";
+            btn_refresh_games_list.UseVisualStyleBackColor = true;
+            btn_refresh_games_list.Click += btn_refresh_games_list_Click;
             // 
             // btn_choose_game_icon
             // 
-            this.btn_choose_game_icon.Enabled = false;
-            this.btn_choose_game_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_choose_game_icon.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_choose_game_icon.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_game_icon.Location = new System.Drawing.Point(36, 145);
-            this.btn_choose_game_icon.Name = "btn_choose_game_icon";
-            this.btn_choose_game_icon.Size = new System.Drawing.Size(100, 26);
-            this.btn_choose_game_icon.TabIndex = 37;
-            this.btn_choose_game_icon.Text = "Swap";
-            this.btn_choose_game_icon.UseVisualStyleBackColor = true;
-            this.btn_choose_game_icon.Click += new System.EventHandler(this.btn_choose_game_icon_Click);
+            btn_choose_game_icon.Enabled = false;
+            btn_choose_game_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_choose_game_icon.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_choose_game_icon.ForeColor = System.Drawing.Color.White;
+            btn_choose_game_icon.Location = new System.Drawing.Point(42, 167);
+            btn_choose_game_icon.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_choose_game_icon.Name = "btn_choose_game_icon";
+            btn_choose_game_icon.Size = new System.Drawing.Size(117, 30);
+            btn_choose_game_icon.TabIndex = 37;
+            btn_choose_game_icon.Text = "Swap";
+            btn_choose_game_icon.UseVisualStyleBackColor = true;
+            btn_choose_game_icon.Click += btn_choose_game_icon_Click;
             // 
             // pb_game_icon
             // 
-            this.pb_game_icon.BackColor = System.Drawing.Color.DarkGray;
-            this.pb_game_icon.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.pb_game_icon.Location = new System.Drawing.Point(36, 48);
-            this.pb_game_icon.Name = "pb_game_icon";
-            this.pb_game_icon.Size = new System.Drawing.Size(100, 100);
-            this.pb_game_icon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb_game_icon.TabIndex = 35;
-            this.pb_game_icon.TabStop = false;
-            this.pb_game_icon.Click += new System.EventHandler(this.pb_game_icon_Click);
+            pb_game_icon.BackColor = System.Drawing.Color.DarkGray;
+            pb_game_icon.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            pb_game_icon.Location = new System.Drawing.Point(42, 55);
+            pb_game_icon.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            pb_game_icon.Name = "pb_game_icon";
+            pb_game_icon.Size = new System.Drawing.Size(116, 115);
+            pb_game_icon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_game_icon.TabIndex = 35;
+            pb_game_icon.TabStop = false;
+            pb_game_icon.Click += pb_game_icon_Click;
             // 
             // lbl_no_game_libraries
             // 
-            this.lbl_no_game_libraries.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_no_game_libraries.AutoSize = true;
-            this.lbl_no_game_libraries.BackColor = System.Drawing.Color.Brown;
-            this.lbl_no_game_libraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
-            this.lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_game_libraries.Location = new System.Drawing.Point(208, 147);
-            this.lbl_no_game_libraries.Name = "lbl_no_game_libraries";
-            this.lbl_no_game_libraries.Size = new System.Drawing.Size(613, 22);
-            this.lbl_no_game_libraries.TabIndex = 34;
-            this.lbl_no_game_libraries.Text = "No supported game libraries detected! (Steam, Origin, Uplay, Epic or GOG supporte" +
-    "d)";
-            this.lbl_no_game_libraries.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.lbl_no_game_libraries.Visible = false;
+            lbl_no_game_libraries.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lbl_no_game_libraries.AutoSize = true;
+            lbl_no_game_libraries.BackColor = System.Drawing.Color.Brown;
+            lbl_no_game_libraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
+            lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            lbl_no_game_libraries.Location = new System.Drawing.Point(243, 170);
+            lbl_no_game_libraries.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_no_game_libraries.Name = "lbl_no_game_libraries";
+            lbl_no_game_libraries.Size = new System.Drawing.Size(613, 22);
+            lbl_no_game_libraries.TabIndex = 34;
+            lbl_no_game_libraries.Text = "No supported game libraries detected! (Steam, Origin, Uplay, Epic or GOG supported)";
+            lbl_no_game_libraries.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            lbl_no_game_libraries.Visible = false;
             // 
             // cbx_game_priority
             // 
-            this.cbx_game_priority.AllowDrop = true;
-            this.cbx_game_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbx_game_priority.FormattingEnabled = true;
-            this.cbx_game_priority.Location = new System.Drawing.Point(666, 12);
-            this.cbx_game_priority.Name = "cbx_game_priority";
-            this.cbx_game_priority.Size = new System.Drawing.Size(164, 28);
-            this.cbx_game_priority.TabIndex = 29;
+            cbx_game_priority.AllowDrop = true;
+            cbx_game_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbx_game_priority.FormattingEnabled = true;
+            cbx_game_priority.Location = new System.Drawing.Point(777, 14);
+            cbx_game_priority.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cbx_game_priority.Name = "cbx_game_priority";
+            cbx_game_priority.Size = new System.Drawing.Size(191, 28);
+            cbx_game_priority.TabIndex = 29;
             // 
             // cb_wait_alternative_game
             // 
-            this.cb_wait_alternative_game.AutoSize = true;
-            this.cb_wait_alternative_game.Location = new System.Drawing.Point(165, 100);
-            this.cb_wait_alternative_game.Name = "cb_wait_alternative_game";
-            this.cb_wait_alternative_game.Size = new System.Drawing.Size(229, 24);
-            this.cb_wait_alternative_game.TabIndex = 27;
-            this.cb_wait_alternative_game.Text = "Monitor different executable:";
-            this.cb_wait_alternative_game.UseVisualStyleBackColor = true;
-            this.cb_wait_alternative_game.CheckedChanged += new System.EventHandler(this.cb_wait_alternative_game_CheckedChanged);
-            this.cb_wait_alternative_game.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            cb_wait_alternative_game.AutoSize = true;
+            cb_wait_alternative_game.Location = new System.Drawing.Point(192, 115);
+            cb_wait_alternative_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_wait_alternative_game.Name = "cb_wait_alternative_game";
+            cb_wait_alternative_game.Size = new System.Drawing.Size(229, 24);
+            cb_wait_alternative_game.TabIndex = 27;
+            cb_wait_alternative_game.Text = "Monitor different executable:";
+            cb_wait_alternative_game.UseVisualStyleBackColor = true;
+            cb_wait_alternative_game.CheckedChanged += cb_wait_alternative_game_CheckedChanged;
+            cb_wait_alternative_game.Paint += checkbox_Paint;
             // 
             // btn_choose_alternative_game
             // 
-            this.btn_choose_alternative_game.Enabled = false;
-            this.btn_choose_alternative_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_choose_alternative_game.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_alternative_game.Location = new System.Drawing.Point(953, 98);
-            this.btn_choose_alternative_game.Name = "btn_choose_alternative_game";
-            this.btn_choose_alternative_game.Size = new System.Drawing.Size(85, 27);
-            this.btn_choose_alternative_game.TabIndex = 26;
-            this.btn_choose_alternative_game.Text = "Choose";
-            this.btn_choose_alternative_game.UseVisualStyleBackColor = true;
-            this.btn_choose_alternative_game.Click += new System.EventHandler(this.btn_choose_alternative_game_Click);
+            btn_choose_alternative_game.Enabled = false;
+            btn_choose_alternative_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_choose_alternative_game.ForeColor = System.Drawing.Color.White;
+            btn_choose_alternative_game.Location = new System.Drawing.Point(1112, 113);
+            btn_choose_alternative_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_choose_alternative_game.Name = "btn_choose_alternative_game";
+            btn_choose_alternative_game.Size = new System.Drawing.Size(99, 31);
+            btn_choose_alternative_game.TabIndex = 26;
+            btn_choose_alternative_game.Text = "Choose";
+            btn_choose_alternative_game.UseVisualStyleBackColor = true;
+            btn_choose_alternative_game.Click += btn_choose_alternative_game_Click;
             // 
             // txt_alternative_game
             // 
-            this.txt_alternative_game.Enabled = false;
-            this.txt_alternative_game.Location = new System.Drawing.Point(399, 98);
-            this.txt_alternative_game.Name = "txt_alternative_game";
-            this.txt_alternative_game.Size = new System.Drawing.Size(548, 26);
-            this.txt_alternative_game.TabIndex = 24;
-            this.txt_alternative_game.TextChanged += new System.EventHandler(this.txt_alternative_game_TextChanged);
+            txt_alternative_game.Enabled = false;
+            txt_alternative_game.Location = new System.Drawing.Point(465, 113);
+            txt_alternative_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_alternative_game.Name = "txt_alternative_game";
+            txt_alternative_game.Size = new System.Drawing.Size(639, 26);
+            txt_alternative_game.TabIndex = 24;
+            txt_alternative_game.TextChanged += txt_alternative_game_TextChanged;
             // 
             // txt_game_name
             // 
-            this.txt_game_name.Enabled = false;
-            this.txt_game_name.Location = new System.Drawing.Point(150, 11);
-            this.txt_game_name.Name = "txt_game_name";
-            this.txt_game_name.ReadOnly = true;
-            this.txt_game_name.Size = new System.Drawing.Size(385, 26);
-            this.txt_game_name.TabIndex = 21;
-            this.txt_game_name.Text = "Please select a game from the list below...";
+            txt_game_name.Enabled = false;
+            txt_game_name.Location = new System.Drawing.Point(175, 13);
+            txt_game_name.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_game_name.Name = "txt_game_name";
+            txt_game_name.ReadOnly = true;
+            txt_game_name.Size = new System.Drawing.Size(448, 26);
+            txt_game_name.TabIndex = 21;
+            txt_game_name.Text = "Please select a game from the list below...";
             // 
             // lbl_game_priority
             // 
-            this.lbl_game_priority.AutoSize = true;
-            this.lbl_game_priority.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_priority.Location = new System.Drawing.Point(557, 15);
-            this.lbl_game_priority.Name = "lbl_game_priority";
-            this.lbl_game_priority.Size = new System.Drawing.Size(108, 20);
-            this.lbl_game_priority.TabIndex = 18;
-            this.lbl_game_priority.Text = "Game Priority:";
-            this.lbl_game_priority.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            lbl_game_priority.AutoSize = true;
+            lbl_game_priority.ForeColor = System.Drawing.Color.White;
+            lbl_game_priority.Location = new System.Drawing.Point(650, 17);
+            lbl_game_priority.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_game_priority.Name = "lbl_game_priority";
+            lbl_game_priority.Size = new System.Drawing.Size(108, 20);
+            lbl_game_priority.TabIndex = 18;
+            lbl_game_priority.Text = "Game Priority:";
+            lbl_game_priority.Paint += label_Paint;
             // 
             // lbl_game_name
             // 
-            this.lbl_game_name.AutoSize = true;
-            this.lbl_game_name.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_name.Location = new System.Drawing.Point(25, 14);
-            this.lbl_game_name.Name = "lbl_game_name";
-            this.lbl_game_name.Size = new System.Drawing.Size(124, 20);
-            this.lbl_game_name.TabIndex = 17;
-            this.lbl_game_name.Text = "Selected Game:";
-            this.lbl_game_name.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.lbl_game_name.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            lbl_game_name.AutoSize = true;
+            lbl_game_name.ForeColor = System.Drawing.Color.White;
+            lbl_game_name.Location = new System.Drawing.Point(29, 16);
+            lbl_game_name.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_game_name.Name = "lbl_game_name";
+            lbl_game_name.Size = new System.Drawing.Size(124, 20);
+            lbl_game_name.TabIndex = 17;
+            lbl_game_name.Text = "Selected Game:";
+            lbl_game_name.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            lbl_game_name.Paint += label_Paint;
             // 
             // txt_args_game
             // 
-            this.txt_args_game.Enabled = false;
-            this.txt_args_game.Location = new System.Drawing.Point(399, 61);
-            this.txt_args_game.Name = "txt_args_game";
-            this.txt_args_game.Size = new System.Drawing.Size(639, 26);
-            this.txt_args_game.TabIndex = 13;
+            txt_args_game.Enabled = false;
+            txt_args_game.Location = new System.Drawing.Point(465, 70);
+            txt_args_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_args_game.Name = "txt_args_game";
+            txt_args_game.Size = new System.Drawing.Size(745, 26);
+            txt_args_game.TabIndex = 13;
             // 
             // cb_args_game
             // 
-            this.cb_args_game.AutoSize = true;
-            this.cb_args_game.ForeColor = System.Drawing.Color.White;
-            this.cb_args_game.Location = new System.Drawing.Point(166, 63);
-            this.cb_args_game.Name = "cb_args_game";
-            this.cb_args_game.Size = new System.Drawing.Size(213, 24);
-            this.cb_args_game.TabIndex = 12;
-            this.cb_args_game.Text = "Pass arguments to Game:";
-            this.cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_args_game.UseVisualStyleBackColor = true;
-            this.cb_args_game.CheckedChanged += new System.EventHandler(this.cb_args_game_CheckedChanged);
-            this.cb_args_game.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            cb_args_game.AutoSize = true;
+            cb_args_game.ForeColor = System.Drawing.Color.White;
+            cb_args_game.Location = new System.Drawing.Point(194, 73);
+            cb_args_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_args_game.Name = "cb_args_game";
+            cb_args_game.Size = new System.Drawing.Size(213, 24);
+            cb_args_game.TabIndex = 12;
+            cb_args_game.Text = "Pass arguments to Game:";
+            cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_args_game.UseVisualStyleBackColor = true;
+            cb_args_game.CheckedChanged += cb_args_game_CheckedChanged;
+            cb_args_game.Paint += checkbox_Paint;
             // 
             // lbl_game_timeout
             // 
-            this.lbl_game_timeout.AutoSize = true;
-            this.lbl_game_timeout.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_timeout.Location = new System.Drawing.Point(853, 14);
-            this.lbl_game_timeout.Name = "lbl_game_timeout";
-            this.lbl_game_timeout.Size = new System.Drawing.Size(125, 20);
-            this.lbl_game_timeout.TabIndex = 4;
-            this.lbl_game_timeout.Text = "Max Wait (secs):";
-            this.lbl_game_timeout.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            lbl_game_timeout.AutoSize = true;
+            lbl_game_timeout.ForeColor = System.Drawing.Color.White;
+            lbl_game_timeout.Location = new System.Drawing.Point(995, 16);
+            lbl_game_timeout.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_game_timeout.Name = "lbl_game_timeout";
+            lbl_game_timeout.Size = new System.Drawing.Size(125, 20);
+            lbl_game_timeout.TabIndex = 4;
+            lbl_game_timeout.Text = "Max Wait (secs):";
+            lbl_game_timeout.Paint += label_Paint;
             // 
             // nud_timeout_game
             // 
-            this.nud_timeout_game.Location = new System.Drawing.Point(984, 13);
-            this.nud_timeout_game.Maximum = new decimal(new int[] {
-            240,
-            0,
-            0,
-            0});
-            this.nud_timeout_game.Name = "nud_timeout_game";
-            this.nud_timeout_game.Size = new System.Drawing.Size(54, 26);
-            this.nud_timeout_game.TabIndex = 5;
-            this.nud_timeout_game.Value = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
+            nud_timeout_game.Location = new System.Drawing.Point(1148, 15);
+            nud_timeout_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            nud_timeout_game.Maximum = new decimal(new int[] { 240, 0, 0, 0 });
+            nud_timeout_game.Name = "nud_timeout_game";
+            nud_timeout_game.Size = new System.Drawing.Size(63, 26);
+            nud_timeout_game.TabIndex = 5;
+            nud_timeout_game.Value = new decimal(new int[] { 20, 0, 0, 0 });
             // 
             // lbl_game_library
             // 
-            this.lbl_game_library.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_game_library.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_game_library.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_library.Location = new System.Drawing.Point(408, 36);
-            this.lbl_game_library.Name = "lbl_game_library";
-            this.lbl_game_library.Size = new System.Drawing.Size(127, 22);
-            this.lbl_game_library.TabIndex = 30;
-            this.lbl_game_library.Text = "Game Library:";
-            this.lbl_game_library.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            lbl_game_library.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lbl_game_library.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_game_library.ForeColor = System.Drawing.Color.White;
+            lbl_game_library.Location = new System.Drawing.Point(476, 42);
+            lbl_game_library.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_game_library.Name = "lbl_game_library";
+            lbl_game_library.Size = new System.Drawing.Size(148, 25);
+            lbl_game_library.TabIndex = 30;
+            lbl_game_library.Text = "Game Library:";
+            lbl_game_library.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // rb_launcher
             // 
-            this.rb_launcher.AutoSize = true;
-            this.rb_launcher.Checked = true;
-            this.rb_launcher.ForeColor = System.Drawing.Color.White;
-            this.rb_launcher.Location = new System.Drawing.Point(15, 302);
-            this.rb_launcher.Name = "rb_launcher";
-            this.rb_launcher.Size = new System.Drawing.Size(466, 24);
-            this.rb_launcher.TabIndex = 42;
-            this.rb_launcher.TabStop = true;
-            this.rb_launcher.Text = "Launch a Game installed in Steam, Origin, Uplay, Epic or GOG";
-            this.rb_launcher.UseVisualStyleBackColor = true;
-            this.rb_launcher.CheckedChanged += new System.EventHandler(this.rb_launcher_CheckedChanged);
-            this.rb_launcher.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            rb_launcher.AutoSize = true;
+            rb_launcher.Checked = true;
+            rb_launcher.ForeColor = System.Drawing.Color.White;
+            rb_launcher.Location = new System.Drawing.Point(18, 348);
+            rb_launcher.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_launcher.Name = "rb_launcher";
+            rb_launcher.Size = new System.Drawing.Size(466, 24);
+            rb_launcher.TabIndex = 42;
+            rb_launcher.TabStop = true;
+            rb_launcher.Text = "Launch a Game installed in Steam, Origin, Uplay, Epic or GOG";
+            rb_launcher.UseVisualStyleBackColor = true;
+            rb_launcher.CheckedChanged += rb_launcher_CheckedChanged;
+            rb_launcher.Paint += radiobutton_Paint;
             // 
             // tabp_after
             // 
-            this.tabp_after.BackColor = System.Drawing.Color.Black;
-            this.tabp_after.Controls.Add(this.groupBox3);
-            this.tabp_after.Controls.Add(this.groupBox2);
-            this.tabp_after.Controls.Add(this.groupBox1);
-            this.tabp_after.Controls.Add(this.gb_display_after);
-            this.tabp_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabp_after.ForeColor = System.Drawing.Color.White;
-            this.tabp_after.Location = new System.Drawing.Point(4, 32);
-            this.tabp_after.Name = "tabp_after";
-            this.tabp_after.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_after.Size = new System.Drawing.Size(1052, 731);
-            this.tabp_after.TabIndex = 3;
-            this.tabp_after.Text = "5. Choose what happens afterwards";
+            tabp_after.BackColor = System.Drawing.Color.Black;
+            tabp_after.Controls.Add(groupBox3);
+            tabp_after.Controls.Add(groupBox2);
+            tabp_after.Controls.Add(groupBox1);
+            tabp_after.Controls.Add(gb_display_after);
+            tabp_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            tabp_after.ForeColor = System.Drawing.Color.White;
+            tabp_after.Location = new System.Drawing.Point(4, 32);
+            tabp_after.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_after.Name = "tabp_after";
+            tabp_after.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_after.Size = new System.Drawing.Size(1229, 849);
+            tabp_after.TabIndex = 3;
+            tabp_after.Text = "5. Choose what happens afterwards";
             // 
             // groupBox3
             // 
-            this.groupBox3.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards_run_as_administrator);
-            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards_dont_start);
-            this.groupBox3.Controls.Add(this.txt_run_cmd_afterwards_args);
-            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards_args);
-            this.groupBox3.Controls.Add(this.btn_run_cmd_afterwards);
-            this.groupBox3.Controls.Add(this.txt_run_cmd_afterwards);
-            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards);
-            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox3.ForeColor = System.Drawing.Color.White;
-            this.groupBox3.Location = new System.Drawing.Point(175, 544);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(765, 157);
-            this.groupBox3.TabIndex = 14;
-            this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Run a program or command afterwards?";
+            groupBox3.Anchor = System.Windows.Forms.AnchorStyles.None;
+            groupBox3.Controls.Add(cb_run_cmd_afterwards_run_as_administrator);
+            groupBox3.Controls.Add(cb_run_cmd_afterwards_dont_start);
+            groupBox3.Controls.Add(txt_run_cmd_afterwards_args);
+            groupBox3.Controls.Add(cb_run_cmd_afterwards_args);
+            groupBox3.Controls.Add(btn_run_cmd_afterwards);
+            groupBox3.Controls.Add(txt_run_cmd_afterwards);
+            groupBox3.Controls.Add(cb_run_cmd_afterwards);
+            groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            groupBox3.ForeColor = System.Drawing.Color.White;
+            groupBox3.Location = new System.Drawing.Point(204, 628);
+            groupBox3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            groupBox3.Name = "groupBox3";
+            groupBox3.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            groupBox3.Size = new System.Drawing.Size(892, 181);
+            groupBox3.TabIndex = 14;
+            groupBox3.TabStop = false;
+            groupBox3.Text = "Run a program or command afterwards?";
             // 
             // cb_run_cmd_afterwards_run_as_administrator
             // 
-            this.cb_run_cmd_afterwards_run_as_administrator.AutoSize = true;
-            this.cb_run_cmd_afterwards_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_run_cmd_afterwards_run_as_administrator.ForeColor = System.Drawing.Color.White;
-            this.cb_run_cmd_afterwards_run_as_administrator.Location = new System.Drawing.Point(492, 114);
-            this.cb_run_cmd_afterwards_run_as_administrator.Name = "cb_run_cmd_afterwards_run_as_administrator";
-            this.cb_run_cmd_afterwards_run_as_administrator.Size = new System.Drawing.Size(238, 24);
-            this.cb_run_cmd_afterwards_run_as_administrator.TabIndex = 36;
-            this.cb_run_cmd_afterwards_run_as_administrator.Text = "Run program as administrator";
-            this.cb_run_cmd_afterwards_run_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_cmd_afterwards_run_as_administrator.UseVisualStyleBackColor = true;
-            this.cb_run_cmd_afterwards_run_as_administrator.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            cb_run_cmd_afterwards_run_as_administrator.AutoSize = true;
+            cb_run_cmd_afterwards_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_run_cmd_afterwards_run_as_administrator.ForeColor = System.Drawing.Color.White;
+            cb_run_cmd_afterwards_run_as_administrator.Location = new System.Drawing.Point(574, 132);
+            cb_run_cmd_afterwards_run_as_administrator.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_run_cmd_afterwards_run_as_administrator.Name = "cb_run_cmd_afterwards_run_as_administrator";
+            cb_run_cmd_afterwards_run_as_administrator.Size = new System.Drawing.Size(238, 24);
+            cb_run_cmd_afterwards_run_as_administrator.TabIndex = 36;
+            cb_run_cmd_afterwards_run_as_administrator.Text = "Run program as administrator";
+            cb_run_cmd_afterwards_run_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_run_cmd_afterwards_run_as_administrator.UseVisualStyleBackColor = true;
+            cb_run_cmd_afterwards_run_as_administrator.Paint += checkbox_Paint;
             // 
             // cb_run_cmd_afterwards_dont_start
             // 
-            this.cb_run_cmd_afterwards_dont_start.AutoSize = true;
-            this.cb_run_cmd_afterwards_dont_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_run_cmd_afterwards_dont_start.ForeColor = System.Drawing.Color.White;
-            this.cb_run_cmd_afterwards_dont_start.Location = new System.Drawing.Point(98, 114);
-            this.cb_run_cmd_afterwards_dont_start.Name = "cb_run_cmd_afterwards_dont_start";
-            this.cb_run_cmd_afterwards_dont_start.Size = new System.Drawing.Size(289, 24);
-            this.cb_run_cmd_afterwards_dont_start.TabIndex = 27;
-            this.cb_run_cmd_afterwards_dont_start.Text = "Don\'t start if program already running";
-            this.cb_run_cmd_afterwards_dont_start.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_cmd_afterwards_dont_start.UseVisualStyleBackColor = true;
-            this.cb_run_cmd_afterwards_dont_start.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            cb_run_cmd_afterwards_dont_start.AutoSize = true;
+            cb_run_cmd_afterwards_dont_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_run_cmd_afterwards_dont_start.ForeColor = System.Drawing.Color.White;
+            cb_run_cmd_afterwards_dont_start.Location = new System.Drawing.Point(114, 132);
+            cb_run_cmd_afterwards_dont_start.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_run_cmd_afterwards_dont_start.Name = "cb_run_cmd_afterwards_dont_start";
+            cb_run_cmd_afterwards_dont_start.Size = new System.Drawing.Size(289, 24);
+            cb_run_cmd_afterwards_dont_start.TabIndex = 27;
+            cb_run_cmd_afterwards_dont_start.Text = "Don't start if program already running";
+            cb_run_cmd_afterwards_dont_start.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_run_cmd_afterwards_dont_start.UseVisualStyleBackColor = true;
+            cb_run_cmd_afterwards_dont_start.Paint += checkbox_Paint;
             // 
             // txt_run_cmd_afterwards_args
             // 
-            this.txt_run_cmd_afterwards_args.Enabled = false;
-            this.txt_run_cmd_afterwards_args.Location = new System.Drawing.Point(251, 75);
-            this.txt_run_cmd_afterwards_args.Name = "txt_run_cmd_afterwards_args";
-            this.txt_run_cmd_afterwards_args.Size = new System.Drawing.Size(479, 26);
-            this.txt_run_cmd_afterwards_args.TabIndex = 13;
+            txt_run_cmd_afterwards_args.Enabled = false;
+            txt_run_cmd_afterwards_args.Location = new System.Drawing.Point(293, 87);
+            txt_run_cmd_afterwards_args.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_run_cmd_afterwards_args.Name = "txt_run_cmd_afterwards_args";
+            txt_run_cmd_afterwards_args.Size = new System.Drawing.Size(558, 26);
+            txt_run_cmd_afterwards_args.TabIndex = 13;
             // 
             // cb_run_cmd_afterwards_args
             // 
-            this.cb_run_cmd_afterwards_args.AutoSize = true;
-            this.cb_run_cmd_afterwards_args.ForeColor = System.Drawing.Color.White;
-            this.cb_run_cmd_afterwards_args.Location = new System.Drawing.Point(98, 77);
-            this.cb_run_cmd_afterwards_args.Name = "cb_run_cmd_afterwards_args";
-            this.cb_run_cmd_afterwards_args.Size = new System.Drawing.Size(147, 24);
-            this.cb_run_cmd_afterwards_args.TabIndex = 12;
-            this.cb_run_cmd_afterwards_args.Text = "Pass arguments:";
-            this.cb_run_cmd_afterwards_args.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_cmd_afterwards_args.UseVisualStyleBackColor = true;
-            this.cb_run_cmd_afterwards_args.CheckedChanged += new System.EventHandler(this.cb_run_cmd_afterwards_args_CheckedChanged);
-            this.cb_run_cmd_afterwards_args.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            cb_run_cmd_afterwards_args.AutoSize = true;
+            cb_run_cmd_afterwards_args.ForeColor = System.Drawing.Color.White;
+            cb_run_cmd_afterwards_args.Location = new System.Drawing.Point(114, 89);
+            cb_run_cmd_afterwards_args.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_run_cmd_afterwards_args.Name = "cb_run_cmd_afterwards_args";
+            cb_run_cmd_afterwards_args.Size = new System.Drawing.Size(147, 24);
+            cb_run_cmd_afterwards_args.TabIndex = 12;
+            cb_run_cmd_afterwards_args.Text = "Pass arguments:";
+            cb_run_cmd_afterwards_args.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_run_cmd_afterwards_args.UseVisualStyleBackColor = true;
+            cb_run_cmd_afterwards_args.CheckedChanged += cb_run_cmd_afterwards_args_CheckedChanged;
+            cb_run_cmd_afterwards_args.Paint += checkbox_Paint;
             // 
             // btn_run_cmd_afterwards
             // 
-            this.btn_run_cmd_afterwards.Enabled = false;
-            this.btn_run_cmd_afterwards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_run_cmd_afterwards.ForeColor = System.Drawing.Color.White;
-            this.btn_run_cmd_afterwards.Location = new System.Drawing.Point(645, 35);
-            this.btn_run_cmd_afterwards.Name = "btn_run_cmd_afterwards";
-            this.btn_run_cmd_afterwards.Size = new System.Drawing.Size(85, 27);
-            this.btn_run_cmd_afterwards.TabIndex = 11;
-            this.btn_run_cmd_afterwards.Text = "Choose";
-            this.btn_run_cmd_afterwards.UseVisualStyleBackColor = true;
-            this.btn_run_cmd_afterwards.Click += new System.EventHandler(this.btn_run_cmd_afterwards_Click);
+            btn_run_cmd_afterwards.Enabled = false;
+            btn_run_cmd_afterwards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_run_cmd_afterwards.ForeColor = System.Drawing.Color.White;
+            btn_run_cmd_afterwards.Location = new System.Drawing.Point(752, 40);
+            btn_run_cmd_afterwards.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_run_cmd_afterwards.Name = "btn_run_cmd_afterwards";
+            btn_run_cmd_afterwards.Size = new System.Drawing.Size(99, 31);
+            btn_run_cmd_afterwards.TabIndex = 11;
+            btn_run_cmd_afterwards.Text = "Choose";
+            btn_run_cmd_afterwards.UseVisualStyleBackColor = true;
+            btn_run_cmd_afterwards.Click += btn_run_cmd_afterwards_Click;
             // 
             // txt_run_cmd_afterwards
             // 
-            this.txt_run_cmd_afterwards.Enabled = false;
-            this.txt_run_cmd_afterwards.Location = new System.Drawing.Point(250, 36);
-            this.txt_run_cmd_afterwards.Name = "txt_run_cmd_afterwards";
-            this.txt_run_cmd_afterwards.Size = new System.Drawing.Size(389, 26);
-            this.txt_run_cmd_afterwards.TabIndex = 10;
+            txt_run_cmd_afterwards.Enabled = false;
+            txt_run_cmd_afterwards.Location = new System.Drawing.Point(292, 42);
+            txt_run_cmd_afterwards.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_run_cmd_afterwards.Name = "txt_run_cmd_afterwards";
+            txt_run_cmd_afterwards.Size = new System.Drawing.Size(453, 26);
+            txt_run_cmd_afterwards.TabIndex = 10;
             // 
             // cb_run_cmd_afterwards
             // 
-            this.cb_run_cmd_afterwards.AutoSize = true;
-            this.cb_run_cmd_afterwards.Location = new System.Drawing.Point(98, 38);
-            this.cb_run_cmd_afterwards.Name = "cb_run_cmd_afterwards";
-            this.cb_run_cmd_afterwards.Size = new System.Drawing.Size(154, 24);
-            this.cb_run_cmd_afterwards.TabIndex = 0;
-            this.cb_run_cmd_afterwards.Text = "Run this program:";
-            this.cb_run_cmd_afterwards.UseVisualStyleBackColor = true;
-            this.cb_run_cmd_afterwards.CheckedChanged += new System.EventHandler(this.cb_run_cmd_afterwards_CheckedChanged);
+            cb_run_cmd_afterwards.AutoSize = true;
+            cb_run_cmd_afterwards.Location = new System.Drawing.Point(114, 44);
+            cb_run_cmd_afterwards.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_run_cmd_afterwards.Name = "cb_run_cmd_afterwards";
+            cb_run_cmd_afterwards.Size = new System.Drawing.Size(154, 24);
+            cb_run_cmd_afterwards.TabIndex = 0;
+            cb_run_cmd_afterwards.Text = "Run this program:";
+            cb_run_cmd_afterwards.UseVisualStyleBackColor = true;
+            cb_run_cmd_afterwards.CheckedChanged += cb_run_cmd_afterwards_CheckedChanged;
             // 
             // groupBox2
             // 
-            this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox2.Controls.Add(this.rb_switch_capture_permanent);
-            this.groupBox2.Controls.Add(this.rb_switch_capture_temp);
-            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox2.ForeColor = System.Drawing.Color.White;
-            this.groupBox2.Location = new System.Drawing.Point(175, 368);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(765, 150);
-            this.groupBox2.TabIndex = 13;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "What happens to the Microphone afterwards?";
+            groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
+            groupBox2.Controls.Add(rb_switch_capture_permanent);
+            groupBox2.Controls.Add(rb_switch_capture_temp);
+            groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            groupBox2.ForeColor = System.Drawing.Color.White;
+            groupBox2.Location = new System.Drawing.Point(204, 425);
+            groupBox2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            groupBox2.Name = "groupBox2";
+            groupBox2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            groupBox2.Size = new System.Drawing.Size(892, 173);
+            groupBox2.TabIndex = 13;
+            groupBox2.TabStop = false;
+            groupBox2.Text = "What happens to the Microphone afterwards?";
             // 
             // rb_switch_capture_permanent
             // 
-            this.rb_switch_capture_permanent.AutoSize = true;
-            this.rb_switch_capture_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_capture_permanent.Location = new System.Drawing.Point(98, 92);
-            this.rb_switch_capture_permanent.Name = "rb_switch_capture_permanent";
-            this.rb_switch_capture_permanent.Size = new System.Drawing.Size(492, 24);
-            this.rb_switch_capture_permanent.TabIndex = 12;
-            this.rb_switch_capture_permanent.Text = "Keep using the Microphone after Game ends (permanent change)";
-            this.rb_switch_capture_permanent.UseVisualStyleBackColor = true;
-            this.rb_switch_capture_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_capture_permanent_CheckedChanged);
+            rb_switch_capture_permanent.AutoSize = true;
+            rb_switch_capture_permanent.ForeColor = System.Drawing.Color.White;
+            rb_switch_capture_permanent.Location = new System.Drawing.Point(114, 106);
+            rb_switch_capture_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_switch_capture_permanent.Name = "rb_switch_capture_permanent";
+            rb_switch_capture_permanent.Size = new System.Drawing.Size(492, 24);
+            rb_switch_capture_permanent.TabIndex = 12;
+            rb_switch_capture_permanent.Text = "Keep using the Microphone after Game ends (permanent change)";
+            rb_switch_capture_permanent.UseVisualStyleBackColor = true;
+            rb_switch_capture_permanent.CheckedChanged += rb_switch_capture_permanent_CheckedChanged;
             // 
             // rb_switch_capture_temp
             // 
-            this.rb_switch_capture_temp.AutoSize = true;
-            this.rb_switch_capture_temp.Checked = true;
-            this.rb_switch_capture_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_capture_temp.Location = new System.Drawing.Point(98, 44);
-            this.rb_switch_capture_temp.Name = "rb_switch_capture_temp";
-            this.rb_switch_capture_temp.Size = new System.Drawing.Size(553, 24);
-            this.rb_switch_capture_temp.TabIndex = 11;
-            this.rb_switch_capture_temp.TabStop = true;
-            this.rb_switch_capture_temp.Text = "Revert back to original Microphone (temporary change while running game)";
-            this.rb_switch_capture_temp.UseVisualStyleBackColor = true;
-            this.rb_switch_capture_temp.CheckedChanged += new System.EventHandler(this.rb_switch_capture_temp_CheckedChanged);
+            rb_switch_capture_temp.AutoSize = true;
+            rb_switch_capture_temp.Checked = true;
+            rb_switch_capture_temp.ForeColor = System.Drawing.Color.White;
+            rb_switch_capture_temp.Location = new System.Drawing.Point(114, 51);
+            rb_switch_capture_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_switch_capture_temp.Name = "rb_switch_capture_temp";
+            rb_switch_capture_temp.Size = new System.Drawing.Size(553, 24);
+            rb_switch_capture_temp.TabIndex = 11;
+            rb_switch_capture_temp.TabStop = true;
+            rb_switch_capture_temp.Text = "Revert back to original Microphone (temporary change while running game)";
+            rb_switch_capture_temp.UseVisualStyleBackColor = true;
+            rb_switch_capture_temp.CheckedChanged += rb_switch_capture_temp_CheckedChanged;
             // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox1.Controls.Add(this.rb_switch_audio_permanent);
-            this.groupBox1.Controls.Add(this.rb_switch_audio_temp);
-            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.ForeColor = System.Drawing.Color.White;
-            this.groupBox1.Location = new System.Drawing.Point(175, 191);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(765, 150);
-            this.groupBox1.TabIndex = 12;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "What happens to the Audio output afterwards?";
+            groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            groupBox1.Controls.Add(rb_switch_audio_permanent);
+            groupBox1.Controls.Add(rb_switch_audio_temp);
+            groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            groupBox1.ForeColor = System.Drawing.Color.White;
+            groupBox1.Location = new System.Drawing.Point(204, 220);
+            groupBox1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            groupBox1.Size = new System.Drawing.Size(892, 173);
+            groupBox1.TabIndex = 12;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "What happens to the Audio output afterwards?";
             // 
             // rb_switch_audio_permanent
             // 
-            this.rb_switch_audio_permanent.AutoSize = true;
-            this.rb_switch_audio_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_audio_permanent.Location = new System.Drawing.Point(98, 92);
-            this.rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
-            this.rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
-            this.rb_switch_audio_permanent.TabIndex = 12;
-            this.rb_switch_audio_permanent.Text = "Keep using the Audio Device after Game ends (permanent change)";
-            this.rb_switch_audio_permanent.UseVisualStyleBackColor = true;
-            this.rb_switch_audio_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_audio_permanent_CheckedChanged);
+            rb_switch_audio_permanent.AutoSize = true;
+            rb_switch_audio_permanent.ForeColor = System.Drawing.Color.White;
+            rb_switch_audio_permanent.Location = new System.Drawing.Point(114, 106);
+            rb_switch_audio_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
+            rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
+            rb_switch_audio_permanent.TabIndex = 12;
+            rb_switch_audio_permanent.Text = "Keep using the Audio Device after Game ends (permanent change)";
+            rb_switch_audio_permanent.UseVisualStyleBackColor = true;
+            rb_switch_audio_permanent.CheckedChanged += rb_switch_audio_permanent_CheckedChanged;
             // 
             // rb_switch_audio_temp
             // 
-            this.rb_switch_audio_temp.AutoSize = true;
-            this.rb_switch_audio_temp.Checked = true;
-            this.rb_switch_audio_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_audio_temp.Location = new System.Drawing.Point(98, 44);
-            this.rb_switch_audio_temp.Name = "rb_switch_audio_temp";
-            this.rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
-            this.rb_switch_audio_temp.TabIndex = 11;
-            this.rb_switch_audio_temp.TabStop = true;
-            this.rb_switch_audio_temp.Text = "Revert back to original Audio Device (temporary change while running game)";
-            this.rb_switch_audio_temp.UseVisualStyleBackColor = true;
-            this.rb_switch_audio_temp.CheckedChanged += new System.EventHandler(this.rb_switch_audio_temp_CheckedChanged);
+            rb_switch_audio_temp.AutoSize = true;
+            rb_switch_audio_temp.Checked = true;
+            rb_switch_audio_temp.ForeColor = System.Drawing.Color.White;
+            rb_switch_audio_temp.Location = new System.Drawing.Point(114, 51);
+            rb_switch_audio_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_switch_audio_temp.Name = "rb_switch_audio_temp";
+            rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
+            rb_switch_audio_temp.TabIndex = 11;
+            rb_switch_audio_temp.TabStop = true;
+            rb_switch_audio_temp.Text = "Revert back to original Audio Device (temporary change while running game)";
+            rb_switch_audio_temp.UseVisualStyleBackColor = true;
+            rb_switch_audio_temp.CheckedChanged += rb_switch_audio_temp_CheckedChanged;
             // 
             // gb_display_after
             // 
-            this.gb_display_after.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.gb_display_after.Controls.Add(this.rb_switch_display_permanent);
-            this.gb_display_after.Controls.Add(this.rb_switch_display_temp);
-            this.gb_display_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gb_display_after.ForeColor = System.Drawing.Color.White;
-            this.gb_display_after.Location = new System.Drawing.Point(175, 22);
-            this.gb_display_after.Name = "gb_display_after";
-            this.gb_display_after.Size = new System.Drawing.Size(765, 146);
-            this.gb_display_after.TabIndex = 11;
-            this.gb_display_after.TabStop = false;
-            this.gb_display_after.Text = "What happens to the Display Profile afterwards?";
+            gb_display_after.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_display_after.Controls.Add(rb_switch_display_permanent);
+            gb_display_after.Controls.Add(rb_switch_display_temp);
+            gb_display_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            gb_display_after.ForeColor = System.Drawing.Color.White;
+            gb_display_after.Location = new System.Drawing.Point(204, 25);
+            gb_display_after.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_display_after.Name = "gb_display_after";
+            gb_display_after.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_display_after.Size = new System.Drawing.Size(892, 168);
+            gb_display_after.TabIndex = 11;
+            gb_display_after.TabStop = false;
+            gb_display_after.Text = "What happens to the Display Profile afterwards?";
             // 
             // rb_switch_display_permanent
             // 
-            this.rb_switch_display_permanent.AutoSize = true;
-            this.rb_switch_display_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_display_permanent.Location = new System.Drawing.Point(98, 92);
-            this.rb_switch_display_permanent.Name = "rb_switch_display_permanent";
-            this.rb_switch_display_permanent.Size = new System.Drawing.Size(508, 24);
-            this.rb_switch_display_permanent.TabIndex = 12;
-            this.rb_switch_display_permanent.Text = "Keep using the Display Profile after Game ends (permanent change)";
-            this.rb_switch_display_permanent.UseVisualStyleBackColor = true;
-            this.rb_switch_display_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_display_permanent_CheckedChanged);
+            rb_switch_display_permanent.AutoSize = true;
+            rb_switch_display_permanent.ForeColor = System.Drawing.Color.White;
+            rb_switch_display_permanent.Location = new System.Drawing.Point(114, 106);
+            rb_switch_display_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_switch_display_permanent.Name = "rb_switch_display_permanent";
+            rb_switch_display_permanent.Size = new System.Drawing.Size(508, 24);
+            rb_switch_display_permanent.TabIndex = 12;
+            rb_switch_display_permanent.Text = "Keep using the Display Profile after Game ends (permanent change)";
+            rb_switch_display_permanent.UseVisualStyleBackColor = true;
+            rb_switch_display_permanent.CheckedChanged += rb_switch_display_permanent_CheckedChanged;
             // 
             // rb_switch_display_temp
             // 
-            this.rb_switch_display_temp.AutoSize = true;
-            this.rb_switch_display_temp.Checked = true;
-            this.rb_switch_display_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_display_temp.Location = new System.Drawing.Point(98, 44);
-            this.rb_switch_display_temp.Name = "rb_switch_display_temp";
-            this.rb_switch_display_temp.Size = new System.Drawing.Size(569, 24);
-            this.rb_switch_display_temp.TabIndex = 11;
-            this.rb_switch_display_temp.TabStop = true;
-            this.rb_switch_display_temp.Text = "Revert back to original Display Profile (temporary change while running game)";
-            this.rb_switch_display_temp.UseVisualStyleBackColor = true;
-            this.rb_switch_display_temp.CheckedChanged += new System.EventHandler(this.rb_switch_display_temp_CheckedChanged);
+            rb_switch_display_temp.AutoSize = true;
+            rb_switch_display_temp.Checked = true;
+            rb_switch_display_temp.ForeColor = System.Drawing.Color.White;
+            rb_switch_display_temp.Location = new System.Drawing.Point(114, 51);
+            rb_switch_display_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rb_switch_display_temp.Name = "rb_switch_display_temp";
+            rb_switch_display_temp.Size = new System.Drawing.Size(569, 24);
+            rb_switch_display_temp.TabIndex = 11;
+            rb_switch_display_temp.TabStop = true;
+            rb_switch_display_temp.Text = "Revert back to original Display Profile (temporary change while running game)";
+            rb_switch_display_temp.UseVisualStyleBackColor = true;
+            rb_switch_display_temp.CheckedChanged += rb_switch_display_temp_CheckedChanged;
             // 
             // txt_shortcut_save_name
             // 
-            this.txt_shortcut_save_name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_shortcut_save_name.Location = new System.Drawing.Point(207, 844);
-            this.txt_shortcut_save_name.MaxLength = 200;
-            this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
-            this.txt_shortcut_save_name.Size = new System.Drawing.Size(714, 35);
-            this.txt_shortcut_save_name.TabIndex = 29;
-            this.txt_shortcut_save_name.Click += new System.EventHandler(this.txt_shortcut_save_name_Click);
-            this.txt_shortcut_save_name.TextChanged += new System.EventHandler(this.txt_shortcut_save_name_TextChanged);
+            txt_shortcut_save_name.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            txt_shortcut_save_name.Location = new System.Drawing.Point(241, 974);
+            txt_shortcut_save_name.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            txt_shortcut_save_name.MaxLength = 200;
+            txt_shortcut_save_name.Name = "txt_shortcut_save_name";
+            txt_shortcut_save_name.Size = new System.Drawing.Size(832, 35);
+            txt_shortcut_save_name.TabIndex = 29;
+            txt_shortcut_save_name.Click += txt_shortcut_save_name_Click;
+            txt_shortcut_save_name.TextChanged += txt_shortcut_save_name_TextChanged;
             // 
             // lbl_title
             // 
-            this.lbl_title.AutoSize = true;
-            this.lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_title.ForeColor = System.Drawing.Color.White;
-            this.lbl_title.Location = new System.Drawing.Point(385, 14);
-            this.lbl_title.Name = "lbl_title";
-            this.lbl_title.Size = new System.Drawing.Size(345, 33);
-            this.lbl_title.TabIndex = 30;
-            this.lbl_title.Text = "Configure Game Shortcut";
+            lbl_title.AutoSize = true;
+            lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_title.ForeColor = System.Drawing.Color.White;
+            lbl_title.Location = new System.Drawing.Point(449, 16);
+            lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_title.Name = "lbl_title";
+            lbl_title.Size = new System.Drawing.Size(345, 33);
+            lbl_title.TabIndex = 30;
+            lbl_title.Text = "Configure Game Shortcut";
             // 
             // lbl_shortcut_name
             // 
-            this.lbl_shortcut_name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.lbl_shortcut_name.AutoSize = true;
-            this.lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
-            this.lbl_shortcut_name.Location = new System.Drawing.Point(23, 847);
-            this.lbl_shortcut_name.Name = "lbl_shortcut_name";
-            this.lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
-            this.lbl_shortcut_name.TabIndex = 31;
-            this.lbl_shortcut_name.Text = "Shortcut Name:";
+            lbl_shortcut_name.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            lbl_shortcut_name.AutoSize = true;
+            lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
+            lbl_shortcut_name.Location = new System.Drawing.Point(27, 977);
+            lbl_shortcut_name.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_shortcut_name.Name = "lbl_shortcut_name";
+            lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
+            lbl_shortcut_name.TabIndex = 31;
+            lbl_shortcut_name.Text = "Shortcut Name:";
             // 
             // cb_autosuggest
             // 
-            this.cb_autosuggest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cb_autosuggest.Checked = true;
-            this.cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cb_autosuggest.ForeColor = System.Drawing.Color.White;
-            this.cb_autosuggest.Location = new System.Drawing.Point(954, 853);
-            this.cb_autosuggest.Name = "cb_autosuggest";
-            this.cb_autosuggest.Size = new System.Drawing.Size(117, 17);
-            this.cb_autosuggest.TabIndex = 32;
-            this.cb_autosuggest.Text = "Auto-suggest name";
-            this.cb_autosuggest.UseVisualStyleBackColor = true;
-            this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
+            cb_autosuggest.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            cb_autosuggest.Checked = true;
+            cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
+            cb_autosuggest.ForeColor = System.Drawing.Color.White;
+            cb_autosuggest.Location = new System.Drawing.Point(1113, 984);
+            cb_autosuggest.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_autosuggest.Name = "cb_autosuggest";
+            cb_autosuggest.Size = new System.Drawing.Size(136, 20);
+            cb_autosuggest.TabIndex = 32;
+            cb_autosuggest.Text = "Auto-suggest name";
+            cb_autosuggest.UseVisualStyleBackColor = true;
+            cb_autosuggest.CheckedChanged += cb_autosuggest_CheckedChanged;
             // 
             // btn_hotkey
             // 
-            this.btn_hotkey.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_hotkey.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_hotkey.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_hotkey.ForeColor = System.Drawing.Color.White;
-            this.btn_hotkey.Location = new System.Drawing.Point(419, 891);
-            this.btn_hotkey.Name = "btn_hotkey";
-            this.btn_hotkey.Size = new System.Drawing.Size(120, 40);
-            this.btn_hotkey.TabIndex = 36;
-            this.btn_hotkey.Text = "&Hotkey";
-            this.btn_hotkey.UseVisualStyleBackColor = true;
-            this.btn_hotkey.Click += new System.EventHandler(this.btn_hotkey_Click);
+            btn_hotkey.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_hotkey.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_hotkey.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
+            btn_hotkey.ForeColor = System.Drawing.Color.White;
+            btn_hotkey.Location = new System.Drawing.Point(489, 1028);
+            btn_hotkey.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_hotkey.Name = "btn_hotkey";
+            btn_hotkey.Size = new System.Drawing.Size(140, 35);
+            btn_hotkey.TabIndex = 36;
+            btn_hotkey.Text = "&Hotkey";
+            btn_hotkey.UseVisualStyleBackColor = true;
+            btn_hotkey.Click += btn_hotkey_Click;
             // 
             // lbl_hotkey_assigned
             // 
-            this.lbl_hotkey_assigned.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lbl_hotkey_assigned.AutoSize = true;
-            this.lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
-            this.lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(26, 907);
-            this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
-            this.lbl_hotkey_assigned.Size = new System.Drawing.Size(56, 16);
-            this.lbl_hotkey_assigned.TabIndex = 37;
-            this.lbl_hotkey_assigned.Text = "Hotkey: ";
-            this.lbl_hotkey_assigned.Visible = false;
-            this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
+            lbl_hotkey_assigned.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            lbl_hotkey_assigned.AutoSize = true;
+            lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
+            lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
+            lbl_hotkey_assigned.Location = new System.Drawing.Point(30, 1047);
+            lbl_hotkey_assigned.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
+            lbl_hotkey_assigned.Size = new System.Drawing.Size(56, 16);
+            lbl_hotkey_assigned.TabIndex = 37;
+            lbl_hotkey_assigned.Text = "Hotkey: ";
+            lbl_hotkey_assigned.Visible = false;
+            lbl_hotkey_assigned.Click += lbl_hotkey_assigned_Click;
             // 
             // btn_help
             // 
-            this.btn_help.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_help.ForeColor = System.Drawing.Color.White;
-            this.btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.btn_help.Location = new System.Drawing.Point(997, 14);
-            this.btn_help.Name = "btn_help";
-            this.btn_help.Size = new System.Drawing.Size(75, 23);
-            this.btn_help.TabIndex = 38;
-            this.btn_help.Text = "&Help";
-            this.btn_help.UseVisualStyleBackColor = true;
-            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
+            btn_help.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_help.ForeColor = System.Drawing.Color.White;
+            btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            btn_help.Location = new System.Drawing.Point(1163, 16);
+            btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_help.Name = "btn_help";
+            btn_help.Size = new System.Drawing.Size(88, 27);
+            btn_help.TabIndex = 38;
+            btn_help.Text = "&Help";
+            btn_help.UseVisualStyleBackColor = true;
+            btn_help.Click += btn_help_Click;
             // 
             // ShortcutForm
             // 
-            this.AcceptButton = this.btn_save;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Black;
-            this.CancelButton = this.btn_cancel;
-            this.ClientSize = new System.Drawing.Size(1084, 943);
-            this.Controls.Add(this.btn_help);
-            this.Controls.Add(this.lbl_hotkey_assigned);
-            this.Controls.Add(this.btn_hotkey);
-            this.Controls.Add(this.cb_autosuggest);
-            this.Controls.Add(this.txt_shortcut_save_name);
-            this.Controls.Add(this.lbl_shortcut_name);
-            this.Controls.Add(this.lbl_title);
-            this.Controls.Add(this.tabc_shortcut);
-            this.Controls.Add(this.btn_cancel);
-            this.Controls.Add(this.btn_save);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(1100, 982);
-            this.Name = "ShortcutForm";
-            this.ShowIcon = false;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "DisplayMagician - Configure a Game Shortcut";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ShortcutForm_FormClosing);
-            this.Load += new System.EventHandler(this.ShortcutForm_Load);
-            this.tabc_shortcut.ResumeLayout(false);
-            this.tabp_display.ResumeLayout(false);
-            this.p_profiles.ResumeLayout(false);
-            this.p_profiles.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
-            this.tabp_audio.ResumeLayout(false);
-            this.tabp_audio.PerformLayout();
-            this.gb_capture_settings.ResumeLayout(false);
-            this.gb_capture_settings.PerformLayout();
-            this.gb_capture_volume.ResumeLayout(false);
-            this.gb_capture_volume.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_capture_volume)).EndInit();
-            this.gb_audio_settings.ResumeLayout(false);
-            this.gb_audio_settings.PerformLayout();
-            this.gb_audio_volume.ResumeLayout(false);
-            this.gb_audio_volume.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).EndInit();
-            this.tabp_before.ResumeLayout(false);
-            this.p_start_program_upper.ResumeLayout(false);
-            this.p_start_program_upper.PerformLayout();
-            this.tabp_game.ResumeLayout(false);
-            this.p_game_list.ResumeLayout(false);
-            this.p_gametostart.ResumeLayout(false);
-            this.p_gametostart.PerformLayout();
-            this.p_standalone.ResumeLayout(false);
-            this.p_standalone.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_exe_icon)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_executable)).EndInit();
-            this.p_game.ResumeLayout(false);
-            this.p_game.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_game_icon)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
-            this.tabp_after.ResumeLayout(false);
-            this.groupBox3.ResumeLayout(false);
-            this.groupBox3.PerformLayout();
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
-            this.gb_display_after.ResumeLayout(false);
-            this.gb_display_after.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AcceptButton = btn_save;
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.Black;
+            CancelButton = btn_cancel;
+            ClientSize = new System.Drawing.Size(1265, 1088);
+            Controls.Add(btn_help);
+            Controls.Add(lbl_hotkey_assigned);
+            Controls.Add(btn_hotkey);
+            Controls.Add(cb_autosuggest);
+            Controls.Add(txt_shortcut_save_name);
+            Controls.Add(lbl_shortcut_name);
+            Controls.Add(lbl_title);
+            Controls.Add(tabc_shortcut);
+            Controls.Add(btn_cancel);
+            Controls.Add(btn_save);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            MaximizeBox = false;
+            MinimizeBox = false;
+            MinimumSize = new System.Drawing.Size(1281, 1030);
+            Name = "ShortcutForm";
+            ShowIcon = false;
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "DisplayMagician - Configure a Game Shortcut";
+            FormClosing += ShortcutForm_FormClosing;
+            Load += ShortcutForm_Load;
+            tabc_shortcut.ResumeLayout(false);
+            tabp_display.ResumeLayout(false);
+            p_profiles.ResumeLayout(false);
+            p_profiles.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pbLogo).EndInit();
+            tabp_audio.ResumeLayout(false);
+            tabp_audio.PerformLayout();
+            gb_capture_settings.ResumeLayout(false);
+            gb_capture_settings.PerformLayout();
+            gb_capture_volume.ResumeLayout(false);
+            gb_capture_volume.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_capture_volume).EndInit();
+            gb_audio_settings.ResumeLayout(false);
+            gb_audio_settings.PerformLayout();
+            gb_audio_volume.ResumeLayout(false);
+            gb_audio_volume.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_audio_volume).EndInit();
+            tabp_before.ResumeLayout(false);
+            p_start_program_upper.ResumeLayout(false);
+            p_start_program_upper.PerformLayout();
+            tabp_game.ResumeLayout(false);
+            p_game_list.ResumeLayout(false);
+            p_gametostart.ResumeLayout(false);
+            p_gametostart.PerformLayout();
+            p_standalone.ResumeLayout(false);
+            p_standalone.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pb_exe_icon).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nud_timeout_executable).EndInit();
+            p_game.ResumeLayout(false);
+            p_game.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pb_game_icon).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nud_timeout_game).EndInit();
+            tabp_after.ResumeLayout(false);
+            groupBox3.ResumeLayout(false);
+            groupBox3.PerformLayout();
+            groupBox2.ResumeLayout(false);
+            groupBox2.PerformLayout();
+            groupBox1.ResumeLayout(false);
+            groupBox1.PerformLayout();
+            gb_display_after.ResumeLayout(false);
+            gb_display_after.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

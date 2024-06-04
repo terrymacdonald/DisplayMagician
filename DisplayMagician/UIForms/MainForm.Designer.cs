@@ -28,292 +28,280 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.btn_fov_calc = new System.Windows.Forms.Button();
-            this.btn_help = new System.Windows.Forms.Button();
-            this.btn_donate = new System.Windows.Forms.Button();
-            this.btn_settings = new System.Windows.Forms.Button();
-            this.lbl_create_profile = new System.Windows.Forms.Label();
-            this.btn_setup_display_profiles = new System.Windows.Forms.Button();
-            this.pb_display_profile = new System.Windows.Forms.PictureBox();
-            this.lbl_create_shortcut = new System.Windows.Forms.Label();
-            this.cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
-            this.lbl_version = new System.Windows.Forms.Label();
-            this.btn_setup_game_shortcuts = new System.Windows.Forms.Button();
-            this.btn_exit = new System.Windows.Forms.Button();
-            this.pb_game_shortcut = new System.Windows.Forms.PictureBox();
-            this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
-            this.mainContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemHeading = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
-            this.openApplicationWindowToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.profileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.profilesToolStripMenuItemHeading = new System.Windows.Forms.ToolStripMenuItem();
-            this.profileToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
-            this.shortcutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.shortcutsToolStripMenuItemHeading = new System.Windows.Forms.ToolStripMenuItem();
-            this.shortcutToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.Panel2.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_display_profile)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_game_shortcut)).BeginInit();
-            this.mainContextMenuStrip.SuspendLayout();
-            this.SuspendLayout();
+            splitContainer1 = new System.Windows.Forms.SplitContainer();
+            btn_fov_calc = new System.Windows.Forms.Button();
+            btn_help = new System.Windows.Forms.Button();
+            btn_donate = new System.Windows.Forms.Button();
+            btn_settings = new System.Windows.Forms.Button();
+            lbl_create_profile = new System.Windows.Forms.Label();
+            btn_setup_display_profiles = new System.Windows.Forms.Button();
+            pb_display_profile = new System.Windows.Forms.PictureBox();
+            lbl_create_shortcut = new System.Windows.Forms.Label();
+            cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
+            lbl_version = new System.Windows.Forms.Label();
+            btn_setup_game_shortcuts = new System.Windows.Forms.Button();
+            btn_exit = new System.Windows.Forms.Button();
+            pb_game_shortcut = new System.Windows.Forms.PictureBox();
+            notifyIcon = new System.Windows.Forms.NotifyIcon(components);
+            mainContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
+            toolStripMenuItemHeading = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
+            openApplicationWindowToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            profileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            profilesToolStripMenuItemHeading = new System.Windows.Forms.ToolStripMenuItem();
+            profileToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
+            shortcutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            shortcutsToolStripMenuItemHeading = new System.Windows.Forms.ToolStripMenuItem();
+            shortcutToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pb_display_profile).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pb_game_shortcut).BeginInit();
+            mainContextMenuStrip.SuspendLayout();
+            SuspendLayout();
             // 
             // splitContainer1
             // 
-            this.splitContainer1.BackColor = System.Drawing.Color.Black;
-            resources.ApplyResources(this.splitContainer1, "splitContainer1");
-            this.splitContainer1.Name = "splitContainer1";
+            splitContainer1.BackColor = System.Drawing.Color.Black;
+            resources.ApplyResources(splitContainer1, "splitContainer1");
+            splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.btn_fov_calc);
-            this.splitContainer1.Panel1.Controls.Add(this.btn_help);
-            this.splitContainer1.Panel1.Controls.Add(this.btn_donate);
-            this.splitContainer1.Panel1.Controls.Add(this.btn_settings);
-            this.splitContainer1.Panel1.Controls.Add(this.lbl_create_profile);
-            this.splitContainer1.Panel1.Controls.Add(this.btn_setup_display_profiles);
-            this.splitContainer1.Panel1.Controls.Add(this.pb_display_profile);
+            splitContainer1.Panel1.Controls.Add(btn_fov_calc);
+            splitContainer1.Panel1.Controls.Add(btn_help);
+            splitContainer1.Panel1.Controls.Add(btn_donate);
+            splitContainer1.Panel1.Controls.Add(btn_settings);
+            splitContainer1.Panel1.Controls.Add(lbl_create_profile);
+            splitContainer1.Panel1.Controls.Add(btn_setup_display_profiles);
+            splitContainer1.Panel1.Controls.Add(pb_display_profile);
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.lbl_create_shortcut);
-            this.splitContainer1.Panel2.Controls.Add(this.cb_minimise_notification_area);
-            this.splitContainer1.Panel2.Controls.Add(this.lbl_version);
-            this.splitContainer1.Panel2.Controls.Add(this.btn_setup_game_shortcuts);
-            this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
-            this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
-            this.splitContainer1.TabStop = false;
+            splitContainer1.Panel2.Controls.Add(lbl_create_shortcut);
+            splitContainer1.Panel2.Controls.Add(cb_minimise_notification_area);
+            splitContainer1.Panel2.Controls.Add(lbl_version);
+            splitContainer1.Panel2.Controls.Add(btn_setup_game_shortcuts);
+            splitContainer1.Panel2.Controls.Add(btn_exit);
+            splitContainer1.Panel2.Controls.Add(pb_game_shortcut);
+            splitContainer1.TabStop = false;
             // 
             // btn_fov_calc
             // 
-            resources.ApplyResources(this.btn_fov_calc, "btn_fov_calc");
-            this.btn_fov_calc.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_fov_calc.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_fov_calc.ForeColor = System.Drawing.Color.White;
-            this.btn_fov_calc.Name = "btn_fov_calc";
-            this.btn_fov_calc.UseVisualStyleBackColor = true;
-            this.btn_fov_calc.Click += new System.EventHandler(this.btn_fov_calc_Click);
+            resources.ApplyResources(btn_fov_calc, "btn_fov_calc");
+            btn_fov_calc.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_fov_calc.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_fov_calc.ForeColor = System.Drawing.Color.White;
+            btn_fov_calc.Name = "btn_fov_calc";
+            btn_fov_calc.UseVisualStyleBackColor = true;
+            btn_fov_calc.Click += btn_fov_calc_Click;
             // 
             // btn_help
             // 
-            resources.ApplyResources(this.btn_help, "btn_help");
-            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_help.ForeColor = System.Drawing.Color.White;
-            this.btn_help.Name = "btn_help";
-            this.btn_help.UseVisualStyleBackColor = true;
-            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
+            resources.ApplyResources(btn_help, "btn_help");
+            btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_help.ForeColor = System.Drawing.Color.White;
+            btn_help.Name = "btn_help";
+            btn_help.UseVisualStyleBackColor = true;
+            btn_help.Click += btn_help_Click;
             // 
             // btn_donate
             // 
-            resources.ApplyResources(this.btn_donate, "btn_donate");
-            this.btn_donate.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_donate.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_donate.ForeColor = System.Drawing.Color.White;
-            this.btn_donate.Name = "btn_donate";
-            this.btn_donate.UseVisualStyleBackColor = true;
-            this.btn_donate.Click += new System.EventHandler(this.btn_donate_Click);
+            resources.ApplyResources(btn_donate, "btn_donate");
+            btn_donate.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_donate.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_donate.ForeColor = System.Drawing.Color.White;
+            btn_donate.Name = "btn_donate";
+            btn_donate.UseVisualStyleBackColor = true;
+            btn_donate.Click += btn_donate_Click;
             // 
             // btn_settings
             // 
-            resources.ApplyResources(this.btn_settings, "btn_settings");
-            this.btn_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_settings.ForeColor = System.Drawing.Color.White;
-            this.btn_settings.Name = "btn_settings";
-            this.btn_settings.UseVisualStyleBackColor = true;
-            this.btn_settings.Click += new System.EventHandler(this.btn_settings_Click);
+            resources.ApplyResources(btn_settings, "btn_settings");
+            btn_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_settings.ForeColor = System.Drawing.Color.White;
+            btn_settings.Name = "btn_settings";
+            btn_settings.UseVisualStyleBackColor = true;
+            btn_settings.Click += btn_settings_Click;
             // 
             // lbl_create_profile
             // 
-            resources.ApplyResources(this.lbl_create_profile, "lbl_create_profile");
-            this.lbl_create_profile.BackColor = System.Drawing.Color.Brown;
-            this.lbl_create_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_create_profile.ForeColor = System.Drawing.Color.White;
-            this.lbl_create_profile.Name = "lbl_create_profile";
-            this.lbl_create_profile.Click += new System.EventHandler(this.lbl_create_profile_Click);
+            resources.ApplyResources(lbl_create_profile, "lbl_create_profile");
+            lbl_create_profile.BackColor = System.Drawing.Color.Brown;
+            lbl_create_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_create_profile.ForeColor = System.Drawing.Color.White;
+            lbl_create_profile.Name = "lbl_create_profile";
+            lbl_create_profile.Click += lbl_create_profile_Click;
             // 
             // btn_setup_display_profiles
             // 
-            resources.ApplyResources(this.btn_setup_display_profiles, "btn_setup_display_profiles");
-            this.btn_setup_display_profiles.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_setup_display_profiles.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_setup_display_profiles.ForeColor = System.Drawing.Color.White;
-            this.btn_setup_display_profiles.Name = "btn_setup_display_profiles";
-            this.btn_setup_display_profiles.UseVisualStyleBackColor = true;
-            this.btn_setup_display_profiles.Click += new System.EventHandler(this.btn_setup_display_profiles_Click);
+            resources.ApplyResources(btn_setup_display_profiles, "btn_setup_display_profiles");
+            btn_setup_display_profiles.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_setup_display_profiles.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_setup_display_profiles.ForeColor = System.Drawing.Color.White;
+            btn_setup_display_profiles.Name = "btn_setup_display_profiles";
+            btn_setup_display_profiles.UseVisualStyleBackColor = true;
+            btn_setup_display_profiles.Click += btn_setup_display_profiles_Click;
             // 
             // pb_display_profile
             // 
-            resources.ApplyResources(this.pb_display_profile, "pb_display_profile");
-            this.pb_display_profile.Name = "pb_display_profile";
-            this.pb_display_profile.TabStop = false;
-            this.pb_display_profile.Click += new System.EventHandler(this.pb_display_profile_Click);
+            resources.ApplyResources(pb_display_profile, "pb_display_profile");
+            pb_display_profile.Name = "pb_display_profile";
+            pb_display_profile.TabStop = false;
+            pb_display_profile.Click += pb_display_profile_Click;
             // 
             // lbl_create_shortcut
             // 
-            resources.ApplyResources(this.lbl_create_shortcut, "lbl_create_shortcut");
-            this.lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
-            this.lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
-            this.lbl_create_shortcut.Name = "lbl_create_shortcut";
-            this.lbl_create_shortcut.Click += new System.EventHandler(this.lbl_create_shortcut_Click);
+            resources.ApplyResources(lbl_create_shortcut, "lbl_create_shortcut");
+            lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
+            lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
+            lbl_create_shortcut.Name = "lbl_create_shortcut";
+            lbl_create_shortcut.Click += lbl_create_shortcut_Click;
             // 
             // cb_minimise_notification_area
             // 
-            resources.ApplyResources(this.cb_minimise_notification_area, "cb_minimise_notification_area");
-            this.cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
-            this.cb_minimise_notification_area.Name = "cb_minimise_notification_area";
-            this.cb_minimise_notification_area.UseVisualStyleBackColor = true;
-            this.cb_minimise_notification_area.CheckedChanged += new System.EventHandler(this.cb_minimise_notification_area_CheckedChanged);
+            resources.ApplyResources(cb_minimise_notification_area, "cb_minimise_notification_area");
+            cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
+            cb_minimise_notification_area.Name = "cb_minimise_notification_area";
+            cb_minimise_notification_area.UseVisualStyleBackColor = true;
+            cb_minimise_notification_area.CheckedChanged += cb_minimise_notification_area_CheckedChanged;
             // 
             // lbl_version
             // 
-            resources.ApplyResources(this.lbl_version, "lbl_version");
-            this.lbl_version.BackColor = System.Drawing.Color.Transparent;
-            this.lbl_version.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.lbl_version.ForeColor = System.Drawing.Color.White;
-            this.lbl_version.Name = "lbl_version";
+            resources.ApplyResources(lbl_version, "lbl_version");
+            lbl_version.BackColor = System.Drawing.Color.Transparent;
+            lbl_version.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            lbl_version.ForeColor = System.Drawing.Color.White;
+            lbl_version.Name = "lbl_version";
             // 
             // btn_setup_game_shortcuts
             // 
-            resources.ApplyResources(this.btn_setup_game_shortcuts, "btn_setup_game_shortcuts");
-            this.btn_setup_game_shortcuts.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_setup_game_shortcuts.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_setup_game_shortcuts.ForeColor = System.Drawing.Color.Transparent;
-            this.btn_setup_game_shortcuts.Name = "btn_setup_game_shortcuts";
-            this.btn_setup_game_shortcuts.UseVisualStyleBackColor = true;
-            this.btn_setup_game_shortcuts.Click += new System.EventHandler(this.btn_setup_game_shortcuts_Click);
+            resources.ApplyResources(btn_setup_game_shortcuts, "btn_setup_game_shortcuts");
+            btn_setup_game_shortcuts.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_setup_game_shortcuts.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_setup_game_shortcuts.ForeColor = System.Drawing.Color.Transparent;
+            btn_setup_game_shortcuts.Name = "btn_setup_game_shortcuts";
+            btn_setup_game_shortcuts.UseVisualStyleBackColor = true;
+            btn_setup_game_shortcuts.Click += btn_setup_game_shortcuts_Click;
             // 
             // btn_exit
             // 
-            resources.ApplyResources(this.btn_exit, "btn_exit");
-            this.btn_exit.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_exit.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_exit.ForeColor = System.Drawing.Color.White;
-            this.btn_exit.Name = "btn_exit";
-            this.btn_exit.UseVisualStyleBackColor = true;
-            this.btn_exit.Click += new System.EventHandler(this.btn_exit_Click);
+            resources.ApplyResources(btn_exit, "btn_exit");
+            btn_exit.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_exit.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_exit.ForeColor = System.Drawing.Color.White;
+            btn_exit.Name = "btn_exit";
+            btn_exit.UseVisualStyleBackColor = true;
+            btn_exit.Click += btn_exit_Click;
             // 
             // pb_game_shortcut
             // 
-            resources.ApplyResources(this.pb_game_shortcut, "pb_game_shortcut");
-            this.pb_game_shortcut.Name = "pb_game_shortcut";
-            this.pb_game_shortcut.TabStop = false;
-            this.pb_game_shortcut.Click += new System.EventHandler(this.pb_game_shortcut_Click);
+            resources.ApplyResources(pb_game_shortcut, "pb_game_shortcut");
+            pb_game_shortcut.Name = "pb_game_shortcut";
+            pb_game_shortcut.TabStop = false;
+            pb_game_shortcut.Click += pb_game_shortcut_Click;
             // 
             // notifyIcon
             // 
-            resources.ApplyResources(this.notifyIcon, "notifyIcon");
-            this.notifyIcon.ContextMenuStrip = this.mainContextMenuStrip;
-            this.notifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon_MouseDoubleClick);
+            resources.ApplyResources(notifyIcon, "notifyIcon");
+            notifyIcon.ContextMenuStrip = mainContextMenuStrip;
+            notifyIcon.MouseDoubleClick += notifyIcon_MouseDoubleClick;
             // 
             // mainContextMenuStrip
             // 
-            this.mainContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemHeading,
-            this.toolStripSeparator,
-            this.openApplicationWindowToolStripMenuItem,
-            this.profileToolStripMenuItem,
-            this.shortcutToolStripMenuItem,
-            this.toolStripSeparator1,
-            this.exitToolStripMenuItem});
-            this.mainContextMenuStrip.Name = "mainContextMenuStrip";
-            resources.ApplyResources(this.mainContextMenuStrip, "mainContextMenuStrip");
+            mainContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripMenuItemHeading, toolStripSeparator, openApplicationWindowToolStripMenuItem, profileToolStripMenuItem, shortcutToolStripMenuItem, toolStripSeparator1, exitToolStripMenuItem });
+            mainContextMenuStrip.Name = "mainContextMenuStrip";
+            resources.ApplyResources(mainContextMenuStrip, "mainContextMenuStrip");
             // 
             // toolStripMenuItemHeading
             // 
-            resources.ApplyResources(this.toolStripMenuItemHeading, "toolStripMenuItemHeading");
-            this.toolStripMenuItemHeading.Name = "toolStripMenuItemHeading";
+            resources.ApplyResources(toolStripMenuItemHeading, "toolStripMenuItemHeading");
+            toolStripMenuItemHeading.Name = "toolStripMenuItemHeading";
             // 
             // toolStripSeparator
             // 
-            this.toolStripSeparator.Name = "toolStripSeparator";
-            resources.ApplyResources(this.toolStripSeparator, "toolStripSeparator");
+            toolStripSeparator.Name = "toolStripSeparator";
+            resources.ApplyResources(toolStripSeparator, "toolStripSeparator");
             // 
             // openApplicationWindowToolStripMenuItem
             // 
-            resources.ApplyResources(this.openApplicationWindowToolStripMenuItem, "openApplicationWindowToolStripMenuItem");
-            this.openApplicationWindowToolStripMenuItem.Name = "openApplicationWindowToolStripMenuItem";
-            this.openApplicationWindowToolStripMenuItem.Click += new System.EventHandler(this.openApplicationWindowToolStripMenuItem_Click);
+            resources.ApplyResources(openApplicationWindowToolStripMenuItem, "openApplicationWindowToolStripMenuItem");
+            openApplicationWindowToolStripMenuItem.Name = "openApplicationWindowToolStripMenuItem";
+            openApplicationWindowToolStripMenuItem.Click += openApplicationWindowToolStripMenuItem_Click;
             // 
             // profileToolStripMenuItem
             // 
-            this.profileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.profilesToolStripMenuItemHeading,
-            this.profileToolStripSeparator});
-            this.profileToolStripMenuItem.Name = "profileToolStripMenuItem";
-            resources.ApplyResources(this.profileToolStripMenuItem, "profileToolStripMenuItem");
+            profileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { profilesToolStripMenuItemHeading, profileToolStripSeparator });
+            profileToolStripMenuItem.Name = "profileToolStripMenuItem";
+            resources.ApplyResources(profileToolStripMenuItem, "profileToolStripMenuItem");
             // 
             // profilesToolStripMenuItemHeading
             // 
-            resources.ApplyResources(this.profilesToolStripMenuItemHeading, "profilesToolStripMenuItemHeading");
-            this.profilesToolStripMenuItemHeading.Name = "profilesToolStripMenuItemHeading";
+            resources.ApplyResources(profilesToolStripMenuItemHeading, "profilesToolStripMenuItemHeading");
+            profilesToolStripMenuItemHeading.Name = "profilesToolStripMenuItemHeading";
             // 
             // profileToolStripSeparator
             // 
-            this.profileToolStripSeparator.Name = "profileToolStripSeparator";
-            resources.ApplyResources(this.profileToolStripSeparator, "profileToolStripSeparator");
+            profileToolStripSeparator.Name = "profileToolStripSeparator";
+            resources.ApplyResources(profileToolStripSeparator, "profileToolStripSeparator");
             // 
             // shortcutToolStripMenuItem
             // 
-            this.shortcutToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.shortcutsToolStripMenuItemHeading,
-            this.shortcutToolStripSeparator});
-            this.shortcutToolStripMenuItem.Name = "shortcutToolStripMenuItem";
-            resources.ApplyResources(this.shortcutToolStripMenuItem, "shortcutToolStripMenuItem");
+            shortcutToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { shortcutsToolStripMenuItemHeading, shortcutToolStripSeparator });
+            shortcutToolStripMenuItem.Name = "shortcutToolStripMenuItem";
+            resources.ApplyResources(shortcutToolStripMenuItem, "shortcutToolStripMenuItem");
             // 
             // shortcutsToolStripMenuItemHeading
             // 
-            resources.ApplyResources(this.shortcutsToolStripMenuItemHeading, "shortcutsToolStripMenuItemHeading");
-            this.shortcutsToolStripMenuItemHeading.Name = "shortcutsToolStripMenuItemHeading";
+            resources.ApplyResources(shortcutsToolStripMenuItemHeading, "shortcutsToolStripMenuItemHeading");
+            shortcutsToolStripMenuItemHeading.Name = "shortcutsToolStripMenuItemHeading";
             // 
             // shortcutToolStripSeparator
             // 
-            this.shortcutToolStripSeparator.Name = "shortcutToolStripSeparator";
-            resources.ApplyResources(this.shortcutToolStripSeparator, "shortcutToolStripSeparator");
+            shortcutToolStripSeparator.Name = "shortcutToolStripSeparator";
+            resources.ApplyResources(shortcutToolStripSeparator, "shortcutToolStripSeparator");
             // 
             // toolStripSeparator1
             // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            resources.ApplyResources(this.toolStripSeparator1, "toolStripSeparator1");
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            resources.ApplyResources(toolStripSeparator1, "toolStripSeparator1");
             // 
             // exitToolStripMenuItem
             // 
-            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            resources.ApplyResources(this.exitToolStripMenuItem, "exitToolStripMenuItem");
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            resources.ApplyResources(exitToolStripMenuItem, "exitToolStripMenuItem");
+            exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
             // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.splitContainer1);
-            this.MaximizeBox = false;
-            this.Name = "MainForm";
-            this.ShowIcon = false;
-            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.Activated += new System.EventHandler(this.MainForm_Activated);
-            this.Load += new System.EventHandler(this.MainForm_Load);
-            this.splitContainer1.Panel1.ResumeLayout(false);
-            this.splitContainer1.Panel1.PerformLayout();
-            this.splitContainer1.Panel2.ResumeLayout(false);
-            this.splitContainer1.Panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pb_display_profile)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_game_shortcut)).EndInit();
-            this.mainContextMenuStrip.ResumeLayout(false);
-            this.ResumeLayout(false);
-
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(splitContainer1);
+            MaximizeBox = false;
+            Name = "MainForm";
+            ShowIcon = false;
+            SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            Activated += MainForm_Activated;
+            Load += MainForm_Load;
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel1.PerformLayout();
+            splitContainer1.Panel2.ResumeLayout(false);
+            splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)pb_display_profile).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pb_game_shortcut).EndInit();
+            mainContextMenuStrip.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion
