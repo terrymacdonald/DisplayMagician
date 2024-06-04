@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Include>
+﻿<Include xmlns="http://wixtoolset.org/schemas/v4/wxs">
 	<!--
   Upgrade code HAS to be the same for all updates.
   Once you've chosen it don't change it.

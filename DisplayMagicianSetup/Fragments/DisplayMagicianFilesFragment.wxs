@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
     <Fragment>
         <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
             <Component Id="cmp53B07BB21F5AFE76F5469BD1F4BA65C9" Guid="{F94AE60F-3741-4392-98E2-AE3C90B73EA9}">

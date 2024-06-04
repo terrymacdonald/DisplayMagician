@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianConsole", "DisplayMagicianConsole\DisplayMagicianConsole.csproj", "{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "DisplayMagicianSetup2", "DisplayMagicianSetup2\DisplayMagicianSetup2.vdproj", "{CB53499C-5139-40B3-B0C4-5DBAC009E775}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -87,6 +89,12 @@ Global
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x64.Build.0 = Release|Any CPU
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x86.Build.0 = Release|Any CPU
+		{CB53499C-5139-40B3-B0C4-5DBAC009E775}.Debug|AnyCPU.ActiveCfg = Debug
+		{CB53499C-5139-40B3-B0C4-5DBAC009E775}.Debug|x64.ActiveCfg = Debug
+		{CB53499C-5139-40B3-B0C4-5DBAC009E775}.Debug|x86.ActiveCfg = Debug
+		{CB53499C-5139-40B3-B0C4-5DBAC009E775}.Release|AnyCPU.ActiveCfg = Release
+		{CB53499C-5139-40B3-B0C4-5DBAC009E775}.Release|x64.ActiveCfg = Release
+		{CB53499C-5139-40B3-B0C4-5DBAC009E775}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
