@@ -4,7 +4,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Name>DisplayMagicianSetup</Name>
-    <OutputName>$(MSBuildProjectName)-v$(Version)</OutputName>
+    <OutputName>$(MSBuildProjectName)</OutputName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>

@@ -91,6 +91,7 @@
 		<!-- Installer UI custom pictures. File names are made up. Add path to your pics -->
 		<WixVariable Id="WixUIBannerBmp" Value="Resources\WixUIBannerBmpDark.png" />
 		<WixVariable Id="WixUIDialogBmp" Value="Resources\WixUIDialogBmp.png" />
+		<WixVariable Id="WixUILicenseRtf" Value="Lang\en-us\EULA_en-us.rtf" />
 
 		<!-- the default directory structure -->
 		
