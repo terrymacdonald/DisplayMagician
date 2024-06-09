@@ -238,6 +238,8 @@ namespace DisplayMagician.UIForms
                 }
             }
 
+            //Utils.AddAnimation(btn_donate);
+
         }
 
         protected override void SetVisibleCore(bool value)

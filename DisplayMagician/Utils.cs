@@ -247,6 +247,95 @@ namespace DisplayMagician
             return string.Empty;
         }
 
+        public static void AddAnimation(Button button)
+        {
+            var expandTimer = new System.Windows.Forms.Timer();
+            var contractTimer = new System.Windows.Forms.Timer();
+            var pauseTimer = new System.Windows.Forms.Timer();
+
+            int buttonX = button.Location.X;
+            int buttonY = button.Location.Y;
+
+            expandTimer.Interval = 10;//can adjust to determine the refresh rate
+            contractTimer.Interval = 10;
+            pauseTimer.Interval = 1000;
+
+            DateTime animationStarted = DateTime.Now;
+
+            //TODO update as appropriate or make it a parameter
+            TimeSpan animationDuration = TimeSpan.FromMilliseconds(250);
+            int initialWidth = 88;
+            int endWidth = 100;
+            int initialHeight = 27;
+            int endHeight = 35;
+            bool expanding = false;
+            int horDiff = endWidth - initialWidth;
+            int vertDiff = endHeight - initialHeight;
+
+
+            pauseTimer.Tick += (_, args) =>
+            {
+                animationStarted = DateTime.Now;
+                if (!expanding)
+                {
+                    expandTimer.Start();
+                    expanding = !expanding;
+                }
+                else
+                {
+                    contractTimer.Start();
+                    expanding = !expanding;
+                }
+            };
+
+            expandTimer.Tick += (_, args) =>
+            {
+                double percentComplete = (DateTime.Now - animationStarted).Ticks
+                    / (double)animationDuration.Ticks;
+
+                if (percentComplete >= 1)
+                {
+                    expandTimer.Stop();
+                    //contractTimer.Start();
+                }
+                else
+                {
+                    button.Width = (int)(initialWidth +
+                        horDiff * percentComplete);
+                    button.Height = (int)(initialHeight +
+                        vertDiff * percentComplete);
+                    int x = buttonX - (int)(horDiff * percentComplete)/2;
+                    int y = buttonY - (int)(vertDiff * percentComplete)/2;
+                    button.Location = new Point(x,y);
+
+                }
+            };
+
+            contractTimer.Tick += (_, args) =>
+            {
+                double percentComplete = (DateTime.Now - animationStarted).Ticks
+                    / (double)animationDuration.Ticks;
+
+                if (percentComplete >= 1)
+                {
+                    contractTimer.Stop();
+                    //expandTimer.Start();
+                }
+                else
+                {
+                    button.Width = (int)(endWidth -
+                        horDiff * percentComplete);
+                    button.Height = (int)(endHeight -
+                        vertDiff * percentComplete);
+                    int x = buttonX - (int)(horDiff * (1-percentComplete)) / 2;
+                    int y = buttonY - (int)(vertDiff * (1-percentComplete)) / 2;
+                    button.Location = new Point(x, y);
+                }
+            };
+
+            pauseTimer.Start();
+        }
+
     }
 
     // Originally from https://stackoverflow.com/questions/9746538/fastest-safest-file-finding-parsing
