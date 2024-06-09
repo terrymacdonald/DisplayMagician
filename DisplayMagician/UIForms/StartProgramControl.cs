@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.Processes;
+using Microsoft.Win32;
 
 namespace DisplayMagician.UIForms
 {
@@ -196,7 +197,11 @@ namespace DisplayMagician.UIForms
         private string getExeFile()
         {
             string textToReturn = "";
-            OpenFileDialog dialog_open = new OpenFileDialog();
+            System.Windows.Forms.OpenFileDialog dialog_open = new System.Windows.Forms.OpenFileDialog();
+            dialog_open.InitialDirectory = Environment.ExpandEnvironmentVariables("%ProgramW6432%"); ;
+            dialog_open.Filter = "Executables (*.exe; *.com; *.ps1; *.bat; *.cmd)|*.exe; *.com; *.ps1; *.bat; *.cmd|All files (*.*)|*.*";
+            dialog_open.FilterIndex = 1;
+            dialog_open.RestoreDirectory = true;
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (File.Exists(dialog_open.FileName))
