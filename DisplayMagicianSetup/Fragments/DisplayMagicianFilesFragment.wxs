@@ -13,9 +13,21 @@
 			<Component Id="cmp357CADF3E913AADB2DD6BD3938986798" Guid="{12FF1010-E6D4-4972-8B1F-1B7A29C032DF}">
 				<File Id="fil900464F733D72F43219693B12A52EDE2" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\BootMeUp.dll" />
 			</Component>
-            <Component Id="cmp7EE113DB90D07F08FCE70C1861DEA947" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A745882F}">
+			<Component Id="cmp7EE113DB90D07F08FCE70C1861DEA333" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A7458333}">
+				<File Id="DisplayMagician.deps.json" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.deps.json" />
+			</Component>
+			<Component Id="cmp7EE113DB90D07F08FCE70C1861DEA444" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A7458444}">
+				<File Id="DisplayMagicianDll" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.dll" />
+			</Component>
+			<Component Id="cmp7EE113DB90D07F08FCE70C1861DEA445" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A7458445}">
+				<File Id="DisplayMagicianDll.config" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.dll.config" />
+			</Component>
+			<Component Id="cmp7EE113DB90D07F08FCE70C1861DEA947" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A745882F}">
                 <File Id="DisplayMagicianExe" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.exe" />
             </Component>
+			<Component Id="cmp7EE113DB90D07F08FCE70C1861DEA446" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A7458446}">
+				<File Id="DisplayMagician.runtimeconfig.json" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.runtimeconfig.json" />
+			</Component>
 			<Component Id="cmp9D1888EBD88D49E39F2827A52DDBE819" Guid="{9D1888EB-D88D-49E3-9F28-27A52DDBE819}">
 				<File Id="DisplayMagicianConsoleExe" KeyPath="yes" Source="$(var.DisplayMagicianConsole.TargetDir)\DisplayMagicianConsole.exe" />
 			</Component>
@@ -78,7 +90,10 @@
             </Component>
             <Component Id="cmp7DD29D6442A6E450B2316729EA2C0F1D" Guid="{6C0C5BB3-D0B5-415F-AAB5-703ED99CBF25}">
                 <File Id="fil9DF3290031BCB652454E62345D1FAE6B" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\WinCopies.WindowsAPICodePack.Win32Native.dll" />
-            </Component>			
+            </Component>
+			<Component Id="cmp44AC6F10258FA1C97C54F3C1D153D444" Guid="{44BD9992-0448-4099-842C-AD16D1560444}">
+				<File Id="fil44CF08752F4284E3144706F10481A444" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\WinRT.Runtime.dll" />
+			</Component>
 			<Component Id="cmp44AC6F10258FA1C97C54F3C1D153D144" Guid="{44BD9992-0448-4099-842C-AD16D1560899}">
 				<File Id="fil44CF08752F4284E3144706F10481AE45" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\YamlDotNet.dll" />
 			</Component>
@@ -113,6 +128,11 @@
 			<ComponentRef Id="cmp8C52E948AAB2D43DF696BB7D003A8E45" />
 			<ComponentRef Id="cmp8C52E948AAB2D4F322455234322A8E45" />
 			<ComponentRef Id="cmp44AC6F10258FA1C97C54F3C1D153D144" />
+			<ComponentRef Id="cmp7EE113DB90D07F08FCE70C1861DEA333" />
+			<ComponentRef Id="cmp7EE113DB90D07F08FCE70C1861DEA444" />
+			<ComponentRef Id="cmp7EE113DB90D07F08FCE70C1861DEA445" />
+			<ComponentRef Id="cmp7EE113DB90D07F08FCE70C1861DEA446" />
+			<ComponentRef Id="cmp44AC6F10258FA1C97C54F3C1D153D444" />
 		</ComponentGroup>
     </Fragment>
 </Wix>
