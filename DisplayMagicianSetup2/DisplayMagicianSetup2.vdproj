@@ -21,44 +21,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_2F0C5B1E87DC40113955C5FC452B473F"
-        "OwnerKey" = "8:_3DD41AE735AD36A17471E1C82EB15BB8"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_2F0C5B1E87DC40113955C5FC452B473F"
-        "OwnerKey" = "8:_50C70D070E974B2FA250AE05F9CB844A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_3DD41AE735AD36A17471E1C82EB15BB8"
-        "OwnerKey" = "8:_50C70D070E974B2FA250AE05F9CB844A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_50C70D070E974B2FA250AE05F9CB844A"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_2F0C5B1E87DC40113955C5FC452B473F"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_50C70D070E974B2FA250AE05F9CB844A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_3DD41AE735AD36A17471E1C82EB15BB8"
+        "MsmKey" = "8:_7A075E4295AB44E0A169C2F9D4F61460"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -123,6 +93,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
             }
         }
     }
@@ -163,21 +141,10 @@
         }
         "File"
         {
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_2F0C5B1E87DC40113955C5FC452B473F"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7A075E4295AB44E0A169C2F9D4F61460"
             {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:SharpShell, Version=2.7.2.0, Culture=neutral, PublicKeyToken=f14dc899472fe6fb, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_2F0C5B1E87DC40113955C5FC452B473F"
-                    {
-                    "Name" = "8:SharpShell.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:SharpShell.dll"
-            "TargetName" = "8:"
+            "SourcePath" = "8:..\\DisplayMagician\\Resources\\DisplayMagician.ico"
+            "TargetName" = "8:DisplayMagician.ico"
             "Tag" = "8:"
             "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
             "Condition" = "8:"
@@ -191,38 +158,7 @@
             "PackageAs" = "3:1"
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3DD41AE735AD36A17471E1C82EB15BB8"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:ServerRegistrationManager, Version=2.7.2.0, Culture=neutral, PublicKeyToken=68bd4561cc3495fc, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_3DD41AE735AD36A17471E1C82EB15BB8"
-                    {
-                    "Name" = "8:ServerRegistrationManager.exe"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:ServerRegistrationManager.exe"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
         }
@@ -233,7 +169,7 @@
         {
             "{3C67513D-01DD-4637-8A68-80971EB9504F}:_702F56A59935441FAF2B51A1CB992ECD"
             {
-            "DefaultLocation" = "8:[ProgramFilesFolder][Manufacturer]\\[ProductName]"
+            "DefaultLocation" = "8:[ProgramFiles64Folder][Manufacturer]\\[ProductName]"
             "Name" = "8:#1925"
             "AlwaysCreate" = "11:FALSE"
             "Condition" = "8:"
@@ -280,30 +216,30 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:DisplayMagicianSetup2"
-        "ProductCode" = "8:{8D519F8A-B73E-443D-A862-6E8AAA8E3F77}"
-        "PackageCode" = "8:{2C84F978-212F-4B41-9228-2A79965D5385}"
-        "UpgradeCode" = "8:{A9C133A8-7350-4E11-8113-E3E20E732650}"
+        "ProductName" = "8:DisplayMagician"
+        "ProductCode" = "8:{1D2165CB-A33E-48E0-B264-E1CA593ECF76}"
+        "PackageCode" = "8:{6D285DED-7923-4B3D-B670-D651B396F3B4}"
+        "UpgradeCode" = "8:{33E22B4C-982F-4B02-A3DE-085693742DB5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
-        "RemovePreviousVersions" = "11:FALSE"
+        "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "InstallAllUsers" = "11:FALSE"
+        "InstallAllUsers" = "11:TRUE"
         "ProductVersion" = "8:1.0.0"
-        "Manufacturer" = "8:Default Company Name"
+        "Manufacturer" = "8:LittleBitBig"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:DisplayMagicianSetup2"
+        "Title" = "8:DisplayMagicianSetup"
         "Subject" = "8:"
-        "ARPCONTACT" = "8:Default Company Name"
+        "ARPCONTACT" = "8:Terry MacDonald"
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:"
         "ARPURLINFOABOUT" = "8:"
-        "ARPPRODUCTICON" = "8:"
+        "ARPPRODUCTICON" = "8:_7A075E4295AB44E0A169C2F9D4F61460"
         "ARPIconIndex" = "3:0"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
-        "TargetPlatform" = "3:0"
+        "TargetPlatform" = "3:1"
         "PreBuildEvent" = "8:"
         "PostBuildEvent" = "8:"
         "RunPostBuildEvent" = "3:0"
@@ -831,7 +767,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_50C70D070E974B2FA250AE05F9CB844A"
             {
-            "SourcePath" = "8:..\\DisplayMagicianShellExtension\\obj\\Debug\\DisplayMagicianShellExtension.dll"
+            "SourcePath" = "8:..\\DisplayMagicianShellExtension\\obj\\Debug\\net8.0-windows10.0.19041.0\\DisplayMagicianShellExtension.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
