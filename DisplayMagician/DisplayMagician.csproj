@@ -160,6 +160,12 @@
     <Folder Include="DLL\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\DisplayMagicianSetup\Lang\en-us\EULA_en-us.rtf">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="AudioSwitcher.AudioApi">
       <HintPath>DLL\AudioSwitcher.AudioApi.dll</HintPath>
     </Reference>
@@ -170,5 +176,7 @@
       <HintPath>DLL\CoreAudio.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <PropertyGroup />
+  <PropertyGroup>
+    <PackageLicenseFile>EULA_en-us.rtf</PackageLicenseFile>
+  </PropertyGroup>
 </Project>
