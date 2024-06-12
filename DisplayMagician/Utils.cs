@@ -247,6 +247,141 @@ namespace DisplayMagician
             return string.Empty;
         }
 
+        public static void AddAnimation(Button button)
+        {
+            var expandTimer = new System.Windows.Forms.Timer();
+            var contractTimer = new System.Windows.Forms.Timer();
+            var pauseTimer = new System.Windows.Forms.Timer();
+
+            int buttonX = button.Location.X;
+            int buttonY = button.Location.Y;
+
+            expandTimer.Interval = 10;//can adjust to determine the refresh rate
+            contractTimer.Interval = 10;
+            pauseTimer.Interval = 1000;
+
+            DateTime animationStarted = DateTime.Now;
+
+            //TODO update as appropriate or make it a parameter
+            TimeSpan animationDuration = TimeSpan.FromMilliseconds(250);
+            int initialWidth = 88;
+            int endWidth = 100;
+            int initialHeight = 27;
+            int endHeight = 35;
+            bool expanding = false;
+            int horDiff = endWidth - initialWidth;
+            int vertDiff = endHeight - initialHeight;
+
+
+            pauseTimer.Tick += (_, args) =>
+            {
+                animationStarted = DateTime.Now;
+                if (!expanding)
+                {
+                    expandTimer.Start();
+                    expanding = !expanding;
+                }
+                else
+                {
+                    contractTimer.Start();
+                    expanding = !expanding;
+                }
+            };
+
+            expandTimer.Tick += (_, args) =>
+            {
+                double percentComplete = (DateTime.Now - animationStarted).Ticks
+                    / (double)animationDuration.Ticks;
+
+                if (percentComplete >= 1)
+                {
+                    expandTimer.Stop();
+                    //contractTimer.Start();
+                }
+                else
+                {
+                    button.Width = (int)(initialWidth +
+                        horDiff * percentComplete);
+                    button.Height = (int)(initialHeight +
+                        vertDiff * percentComplete);
+                    int x = buttonX - (int)(horDiff * percentComplete)/2;
+                    int y = buttonY - (int)(vertDiff * percentComplete)/2;
+                    button.Location = new Point(x,y);
+
+                }
+            };
+
+            contractTimer.Tick += (_, args) =>
+            {
+                double percentComplete = (DateTime.Now - animationStarted).Ticks
+                    / (double)animationDuration.Ticks;
+
+                if (percentComplete >= 1)
+                {
+                    contractTimer.Stop();
+                    //expandTimer.Start();
+                }
+                else
+                {
+                    button.Width = (int)(endWidth -
+                        horDiff * percentComplete);
+                    button.Height = (int)(endHeight -
+                        vertDiff * percentComplete);
+                    int x = buttonX - (int)(horDiff * (1-percentComplete)) / 2;
+                    int y = buttonY - (int)(vertDiff * (1-percentComplete)) / 2;
+                    button.Location = new Point(x, y);
+                }
+            };
+
+            pauseTimer.Start();
+
+            // Update the number of times the donation button animation has been run to zero, and record when it was run last
+            Program.AppProgramSettings.LastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow); 
+            Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation = 0;
+            Program.AppProgramSettings.SaveSettings();
+        }
+
+        public static bool TimeToRunDonationAnimation()
+        {
+            // Run the donation animation if:
+            // - the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
+            // - the user has donated, but it was more than a year ago
+
+            //Check if the user has donated
+            if (Program.AppProgramSettings.NumberOfDonations == 0)
+            {
+                // User has not donated yet
+                // If the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
+                if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                // User has donated, but it's been a year since the last donation
+                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateOnly.FromDateTime(DateTime.UtcNow))
+                {
+                    // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
+                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // If we get to here, then no need for the donation animation
+            return false;
+        }
+
+        public static void UserHasDonated()
+        {
+            Program.AppProgramSettings.LastDonationDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            Program.AppProgramSettings.NumberOfDonations++;
+            Program.AppProgramSettings.SaveSettings();
+        }
+
+
     }
 
     // Originally from https://stackoverflow.com/questions/9746538/fastest-safest-file-finding-parsing

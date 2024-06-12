@@ -216,8 +216,7 @@ namespace DisplayMagician.UIForms
             // dialog_open
             // 
             dialog_open.DefaultExt = "exe";
-            dialog_open.FileName = "*.exe";
-            dialog_open.Filter = "All Files|*.*";
+            dialog_open.Filter = "Executables (*.exe; *.com; *.bat; *.cmd; *.ps1)|*.exe; *.com; *.bat; *.cmd; *.ps1|All files (*.*)|*.*";
             dialog_open.RestoreDirectory = true;
             dialog_open.SupportMultiDottedExtensions = true;
             // 
@@ -297,7 +296,7 @@ namespace DisplayMagician.UIForms
             dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
             dv_profile.Location = new System.Drawing.Point(0, 0);
-            dv_profile.Margin = new System.Windows.Forms.Padding(21, 21, 21, 21);
+            dv_profile.Margin = new System.Windows.Forms.Padding(21);
             dv_profile.Name = "dv_profile";
             dv_profile.PaddingX = 100;
             dv_profile.PaddingY = 100;

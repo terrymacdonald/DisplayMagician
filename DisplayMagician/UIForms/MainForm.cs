@@ -16,6 +16,7 @@ using NHotkey.WindowsForms;
 using NHotkey;
 using System.Linq;
 using System.Diagnostics;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.UIForms
 {
@@ -238,6 +239,12 @@ namespace DisplayMagician.UIForms
                 }
             }
 
+            // Start the donation animation if it's time to do so
+            if (Utils.TimeToRunDonationAnimation())
+            {
+                Utils.AddAnimation(btn_donate);
+            }
+            
         }
 
         protected override void SetVisibleCore(bool value)
@@ -603,8 +610,10 @@ namespace DisplayMagician.UIForms
 
         private void btn_donate_Click(object sender, EventArgs e)
         {
-            string targetURL = @"https://github.com/sponsors/terrymacdonald";
-            System.Diagnostics.Process.Start(targetURL);
+            string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
+            ProcessUtils.StartProcess(targetURL,"",ProcessPriority.Normal);
+            // Update the settings to say that user has donated.
+            Utils.UserHasDonated();
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)

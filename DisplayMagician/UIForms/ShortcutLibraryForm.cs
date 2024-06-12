@@ -1,4 +1,5 @@
 ﻿using DisplayMagician.GameLibraries;
+using DisplayMagician.Processes;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
@@ -55,6 +56,12 @@ namespace DisplayMagician.UIForms
             RefreshShortcutLibraryUI();
             logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Remove the UI warning if we do have some shortcuts to show the user.");
             RemoveWarningIfShortcuts();
+
+            // Start the donation animation if it's time to do so
+            if (Utils.TimeToRunDonationAnimation())
+            {
+                Utils.AddAnimation(btn_donate);
+            }
         }
 
 
@@ -581,8 +588,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_donate_Click(object sender, EventArgs e)
         {
-            string targetURL = @"https://github.com/sponsors/terrymacdonald";
-            System.Diagnostics.Process.Start(targetURL);
+            string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            // Update the settings to say that user has donated.
+            Utils.UserHasDonated();
+
         }
 
         private void btn_copy_Click(object sender, EventArgs e)
