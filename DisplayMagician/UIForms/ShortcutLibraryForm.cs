@@ -1,4 +1,5 @@
 ﻿using DisplayMagician.GameLibraries;
+using DisplayMagician.Processes;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
@@ -587,8 +588,8 @@ namespace DisplayMagician.UIForms
 
         private void btn_donate_Click(object sender, EventArgs e)
         {
-            string targetURL = @"https://github.com/sponsors/terrymacdonald";
-            System.Diagnostics.Process.Start(targetURL);
+            string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
 

@@ -64,7 +64,7 @@ namespace DisplayMagician.Processes
             //SafeAccessTokenHandle safeAccessTokenHandle;
             //bool returnValue = LogonUser(user, domain, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, out safeAccessTokenHandle);
 
-            ProcessStartInfo psi = new ProcessStartInfo(executable, arguments)
+            /*ProcessStartInfo psi = new ProcessStartInfo(executable, arguments)
             {
                 CreateNoWindow = false,
                 RedirectStandardOutput = false,
@@ -81,7 +81,7 @@ namespace DisplayMagician.Processes
                 psi.Verb = "open";
             }
 
-            if (executable.StartsWith("steam://", StringComparison.OrdinalIgnoreCase))
+            if ( executable.StartsWith("steam://", StringComparison.OrdinalIgnoreCase))
             {
                 psi.UseShellExecute = true;
             }
@@ -99,7 +99,9 @@ namespace DisplayMagician.Processes
             //var output = processCreated.StandardOutput.ReadToEnd();
             //var exitCode = processCreated.ExitCode;
 
-            processCreated.Start();
+            processCreated.Start();*/
+
+            processCreated = TryExecute(executable, arguments, out processCreated, runAsAdministrator, TranslatePriorityToClass(processPriority), startTimeout);      
 
             if (processCreated != null)
             {
@@ -554,7 +556,7 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns></returns>
-        private static bool TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        private static Process? TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             //StringBuilder outputBuilder = new StringBuilder();            
             ProcessStartInfo psi;
@@ -597,7 +599,10 @@ namespace DisplayMagician.Processes
                 };
             }
 
-            processCreated = new Process { StartInfo = psi };
+            processCreated = new Process { 
+                StartInfo = psi,
+                EnableRaisingEvents = true
+            };
             
             /*if (redirectInputOutput)
             {
@@ -619,12 +624,12 @@ namespace DisplayMagician.Processes
                 {
                     logger.Trace($"ProcessUtils/TryExecute: {executable} was reused successfully.");
                 }
-                return true;
+                return processCreated;
             }
             catch (ObjectDisposedException ex)
             {
                 logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process object has already been disposed.");
-                return false;
+                return null;
             }
             catch (InvalidOperationException ex)
             {
@@ -636,7 +641,7 @@ namespace DisplayMagician.Processes
                 {
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. No file name was specified in the Process component's StartInfo.");
                 }
-                return false;
+                return null;
             }
             catch (Win32Exception ex)
             {
@@ -645,19 +650,20 @@ namespace DisplayMagician.Processes
                     if (runAsAdministrator)
                     {
                         logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable} for a second time with administrative rights. Giving up.");
-                        return false;
+                        return null;
                     }
 
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
-                    if (TryExecute(executable, arguments, out processCreated, true, priorityClass, maxWaitMs))
+                    processCreated = TryExecute(executable, arguments, out processCreated, true, priorityClass, maxWaitMs);
+                    if (processCreated == null)
                     {
                         logger.Trace($"ProcessUtils/TryExecute: Running the {executable} a second time with administrative rights worked!");
-                        return true;
+                        return processCreated;
                     }
                     else
                     {
                         logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable} for a second time with administrative rights. Giving up.");
-                        return false;
+                        return null;
                     }
 
                 }
@@ -665,17 +671,17 @@ namespace DisplayMagician.Processes
                 {
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. There was an error in opening the associated file.");
                 }                
-                return false;
+                return null;
             }
             catch (PlatformNotSupportedException ex)
             {
                 logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Method not supported on operating systems without shell support such as Nano Server (.NET Core only).");
-                return false;
+                return null;
             }
             catch (Exception ex)
             {
                 logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Not sure what specific exception it is.");
-                return false;
+                return null;
             }
 
             /*if (redirectInputOutput)
