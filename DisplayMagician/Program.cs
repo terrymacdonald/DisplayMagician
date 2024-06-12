@@ -204,8 +204,20 @@ namespace DisplayMagician {
                     string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
                     string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
                     string oldv24SettingsFile = Path.Combine(AppDataPath, "Settings_2.4.json");
+                    string oldv25SettingsFile = Path.Combine(AppDataPath, "Settings_2.5.json");
 
-                    if (File.Exists(oldv24SettingsFile))
+                    if (File.Exists(oldv25SettingsFile))
+                    {
+                        File.Copy(oldv25SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+
+                        // Load the program settings to populate the extra additional settings with default values
+                        // as there are some new settings in there.
+                        AppProgramSettings = ProgramSettings.LoadSettings();
+                        // Save the updated program settings so they're baked in and saved to a file.
+                        AppProgramSettings.SaveSettings();
+                    }
+                    else if (File.Exists(oldv24SettingsFile))
                     {
                         File.Copy(oldv24SettingsFile, targetSettingsFile, true);
                         upgradedSettingsFile = true;
@@ -251,6 +263,11 @@ namespace DisplayMagician {
 
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
+            // Update the program settings for number times run
+            AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
+            AppProgramSettings.NumberOfTimesRun++;
+            // Store the updated settings
+            AppProgramSettings.SaveSettings();
 
 
             // Rules for mapping loggers to targets          

@@ -317,7 +317,13 @@ namespace DisplayMagician.UIForms
 
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
-                
+
+            // Start the donation animation if it's time to do so
+            if (Utils.TimeToRunDonationAnimation())
+            {
+                Utils.AddAnimation(btn_donate);
+            }
+
         }
 
 
@@ -828,7 +834,9 @@ namespace DisplayMagician.UIForms
         private void btn_donate_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/sponsors/terrymacdonald";
-            System.Diagnostics.Process.Start(targetURL);
+            System.Diagnostics.Process.Start(targetURL,);
+            // Update the settings to say that user has donated.
+            Utils.UserHasDonated();
         }
 
         private void btn_update_Click(object sender, EventArgs e)

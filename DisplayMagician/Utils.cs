@@ -334,7 +334,53 @@ namespace DisplayMagician
             };
 
             pauseTimer.Start();
+
+            // Update the number of times the donation button animation has been run to zero, and record when it was run last
+            Program.AppProgramSettings.LastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow); 
+            Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation = 0;
+            Program.AppProgramSettings.SaveSettings();
         }
+
+        public static bool TimeToRunDonationAnimation()
+        {
+            // Run the donation animation if:
+            // - the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
+            // - the user has donated, but it was more than a year ago
+
+            //Check if the user has donated
+            if (Program.AppProgramSettings.NumberOfDonations == 0)
+            {
+                // User has not donated yet
+                // If the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
+                if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                // User has donated, but it's been a year since the last donation
+                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateOnly.FromDateTime(DateTime.UtcNow))
+                {
+                    // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
+                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // If we get to here, then no need for the donation animation
+            return false;
+        }
+
+        public static void UserHasDonated()
+        {
+            Program.AppProgramSettings.LastDonationDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            Program.AppProgramSettings.NumberOfDonations++;
+            Program.AppProgramSettings.SaveSettings();
+        }
+
 
     }
 

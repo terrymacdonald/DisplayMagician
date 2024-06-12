@@ -238,8 +238,12 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            //Utils.AddAnimation(btn_donate);
-
+            // Start the donation animation if it's time to do so
+            if (Utils.TimeToRunDonationAnimation())
+            {
+                Utils.AddAnimation(btn_donate);
+            }
+            
         }
 
         protected override void SetVisibleCore(bool value)
@@ -607,6 +611,8 @@ namespace DisplayMagician.UIForms
         {
             string targetURL = @"https://github.com/sponsors/terrymacdonald";
             System.Diagnostics.Process.Start(targetURL);
+            // Update the settings to say that user has donated.
+            Utils.UserHasDonated();
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)

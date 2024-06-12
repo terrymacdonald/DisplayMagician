@@ -19,7 +19,7 @@ namespace DisplayMagician
         // Common items to the class
         private static bool _programSettingsLoaded = false;
         // Other constants that are useful
-        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.5.json");
+        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.6.json");
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
@@ -36,6 +36,12 @@ namespace DisplayMagician
         private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Warn.ToString();
         private string _displayMagicianVersion = null;
+        private DateOnly _installDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        private DateOnly _lastDonationDate = new DateOnly(1980,1,1);
+        private DateOnly _lastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        private int _numberOfDonations = 0;
+        private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
+        private int _numberOfTimesRun = 0;
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
         private Keys _hotkeyShortcutLibraryWindow = Keys.None;
@@ -66,6 +72,81 @@ namespace DisplayMagician
             set
             {
                 _displayMagicianVersion = value;
+            }
+        }
+
+        public DateOnly InstallDate
+        {
+            get
+            {
+                return _installDate;
+            }
+            set
+            {
+                _installDate = value;
+            }
+        }
+
+        public DateOnly LastDonationDate
+        {
+            get
+            {
+                return _lastDonationDate;
+            }
+            set
+            {
+                _lastDonationDate = value;
+            }
+        }
+
+        public DateOnly LastDonateButtonAnimationDate
+        {
+            get
+            {
+                return _lastDonateButtonAnimationDate;
+            }
+            set
+            {
+                _lastDonateButtonAnimationDate = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int NumberOfStartsSinceLastDonationButtonAnimation
+        {
+            get
+            {
+                return _numberOfStartsSinceLastDonationButtonAnimation;
+            }
+            set
+            {
+                _numberOfStartsSinceLastDonationButtonAnimation = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int NumberOfTimesRun
+        {
+            get
+            {
+                return _numberOfTimesRun;
+            }
+            set
+            {
+                _numberOfTimesRun = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int NumberOfDonations
+        {
+            get
+            {
+                return _numberOfDonations;
+            }
+            set
+            {
+                _numberOfDonations = value;
             }
         }
 
@@ -488,6 +569,8 @@ namespace DisplayMagician
                         programSettings.DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
                     }
                 }
+
+                // Set the new program settings to the default values if they are null (as they didn't exist in the past)
             }
             else
             {
