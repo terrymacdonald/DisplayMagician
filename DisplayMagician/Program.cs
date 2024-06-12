@@ -165,32 +165,6 @@ namespace DisplayMagician {
                     Console.WriteLine($"Program/Main Exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
             }
-            /*else
-            {
-                // If the log directory does exist, then attempt to rename the old log files so they
-                // don't get overwritten and we can send them in a support zip file
-                // Delete oldest log file
-                string oldestLogFile = Path.Combine(Program.AppLogPath, $"DisplayMagician4.log");
-                if (File.Exists(oldestLogFile))
-                {
-                    File.Delete(oldestLogFile);
-                }
-                // Increment the log file number of the existing log files
-                for (int i = 4; i > 1; i--)
-                {
-                    string oldLogFile = Path.Combine(Program.AppLogPath,$"DisplayMagician{i-1}.log");
-                    string renamedLogFile = Path.Combine(Program.AppLogPath, $"DisplayMagician{i}.log");
-                    if (File.Exists(oldLogFile))
-                    {
-                        File.Move(oldLogFile, renamedLogFile);
-                    }
-                }
-                // Move the last log file to #1
-                if (File.Exists(AppLogFilename))
-                {
-                    File.Move(AppLogFilename, Path.Combine(Program.AppLogPath, $"DisplayMagician1.log"));
-                }
-            }*/
 
             // NOTE: This had to be moved up from the later state
             // Copy the old Settings file to the new v2 name
@@ -266,6 +240,13 @@ namespace DisplayMagician {
             // Update the program settings for number times run
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
+            // If app settings were upgraded
+            if (upgradedSettingsFile)
+            {
+                AppProgramSettings.InstallDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                AppProgramSettings.LastDonationDate = new DateOnly(1980,1,1);
+                AppProgramSettings.LastDonateButtonAnimationDate = new DateOnly(1980, 1, 1);
+            }
             // Store the updated settings
             AppProgramSettings.SaveSettings();
 
