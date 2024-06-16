@@ -33,6 +33,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_9244943C22DE4335A0CE6E87BFB7F91F"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_C370C9C7766D480CB0362F024DB3032D"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -41,6 +47,24 @@
         {
         "MsmKey" = "8:_D760CA3BF7DB407EB787FA00AD2F3513"
         "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_E5AE56DA08E9E7532542646F3B79D272"
+        "OwnerKey" = "8:_9244943C22DE4335A0CE6E87BFB7F91F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_E5AE56DA08E9E7532542646F3B79D272"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_9244943C22DE4335A0CE6E87BFB7F91F"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -120,6 +144,20 @@
     {
         "CustomAction"
         {
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_B79574C720134499A5565444D2761C68"
+            {
+            "Name" = "8:ServerRegistrationManager.exe"
+            "Condition" = "8:"
+            "Object" = "8:_9244943C22DE4335A0CE6E87BFB7F91F"
+            "FileType" = "3:2"
+            "InstallAction" = "3:2"
+            "Arguments" = "8:install \"[TARGETDIR]\\DisplayMagicianShellExtension.dll\" -os64 -codebase"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_7C025361_4C55_4BF2_973B_B008430E70DF"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
         }
         "DefaultFeature"
         {
@@ -131,6 +169,14 @@
         {
             "LaunchCondition"
             {
+                "{A06ECF26-33A3-4562-8140-9B0E340D4F24}:_20F53B6F165A4EED922284CE1AF0D265"
+                {
+                "Name" = "8:.NET Framework"
+                "Message" = "8:[VSDNETMSG]"
+                "FrameworkVersion" = "8:.NETFramework,Version=v4.7.2"
+                "AllowLaterVersions" = "11:FALSE"
+                "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=863262"
+                }
                 "{A06ECF26-33A3-4562-8140-9B0E340D4F24}:_560F231E3D0643558EFB24B362F3EA8C"
                 {
                 "Name" = "8:.NET Core"
@@ -185,6 +231,37 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_9244943C22DE4335A0CE6E87BFB7F91F"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:ServerRegistrationManager, Version=2.7.2.0, Culture=neutral, PublicKeyToken=68bd4561cc3495fc, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_9244943C22DE4335A0CE6E87BFB7F91F"
+                    {
+                    "Name" = "8:ServerRegistrationManager.exe"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:..\\DisplayMagicianShellExtension\\bin\\Debug\\net8.0-windows10.0.19041.0\\ServerRegistrationManager.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C370C9C7766D480CB0362F024DB3032D"
             {
             "SourcePath" = "8:..\\DisplayMagician\\bin\\Debug\\net8.0-windows10.0.19041.0\\DisplayMagician.exe"
@@ -203,6 +280,37 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_E5AE56DA08E9E7532542646F3B79D272"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:SharpShell, Version=2.7.2.0, Culture=neutral, PublicKeyToken=f14dc899472fe6fb, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_E5AE56DA08E9E7532542646F3B79D272"
+                    {
+                    "Name" = "8:SharpShell.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:SharpShell.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
         }
@@ -273,7 +381,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
         "ProductCode" = "8:{4825250A-0D57-4A85-9A68-05DD3B437A47}"
-        "PackageCode" = "8:{F2E8C946-2760-41DF-B300-0F822F607700}"
+        "PackageCode" = "8:{18AAD7AE-BC81-4371-99DE-77FB44BACB29}"
         "UpgradeCode" = "8:{33E22B4C-982F-4B02-A3DE-085693742DB5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
