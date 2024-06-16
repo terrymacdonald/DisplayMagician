@@ -166,13 +166,22 @@ namespace DisplayMagician {
                 }
             }
 
+            // Check if this is the first time the program has been run
+            bool newSettingsFile = false;
+            string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
+            if (!File.Exists(targetSettingsFile))
+            {
+                newSettingsFile = true;
+                logger.Trace($"Program/Main: A new Settings file is required as it doesn't exist yet. This must be a new install.");
+            }
+
+
             // NOTE: This had to be moved up from the later state
             // Copy the old Settings file to the new v2 name
             bool upgradedSettingsFile = false;
-            string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             try
             {               
-                if (!File.Exists(targetSettingsFile) && OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
+                if (newSettingsFile == false && OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
                 {
                     string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
                     string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
@@ -216,19 +225,21 @@ namespace DisplayMagician {
                     {
                         File.Copy(oldv1SettingsFile, targetSettingsFile, true);
                         upgradedSettingsFile = true;
-                    }                    
+                    }
+
+                    // Now we rename all the currently listed Settings files as they aren't needed any longer.
+                    // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
+                    if (RenameOldFileVersions(AppDataPath, "Settings_*.json", targetSettingsFile))
+                    {
+                        logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                    }
+                    else
+                    {
+                        logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                    }
+
                 }
 
-                // Now we rename all the currently listed Settings files as they aren't needed any longer.
-                // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
-                if (RenameOldFileVersions(AppDataPath, "Settings_*.json", targetSettingsFile))
-                {
-                    logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
-                }
-                else
-                {
-                    logger.Error($"Program/Main: Error while renaming old Shortcut files.");
-                }
             }
             catch (Exception ex)
             {
@@ -240,9 +251,11 @@ namespace DisplayMagician {
             // Update the program settings for number times run
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
-            // If app settings were upgraded
-            if (upgradedSettingsFile)
+            // If app settings is new, then set the initial settings we need
+            if (newSettingsFile)
             {
+                Guid guid = new Guid();
+                AppProgramSettings.InstallId = guid.ToString();
                 AppProgramSettings.InstallDate = DateOnly.FromDateTime(DateTime.UtcNow);
                 AppProgramSettings.LastDonationDate = new DateOnly(1980,1,1);
                 AppProgramSettings.LastDonateButtonAnimationDate = new DateOnly(1980, 1, 1);

@@ -36,6 +36,7 @@ namespace DisplayMagician
         private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Warn.ToString();
         private string _displayMagicianVersion = null;
+        private string _installId = "";
         private DateOnly _installDate = DateOnly.FromDateTime(DateTime.UtcNow);
         private DateOnly _lastDonationDate = new DateOnly(1980,1,1);
         private DateOnly _lastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -75,6 +76,18 @@ namespace DisplayMagician
             }
         }
 
+        public string InstallId
+        {
+            get
+            {
+                return _installId;
+            }
+            set
+            {
+                _installId = value;
+            }
+        }
+        
         public DateOnly InstallDate
         {
             get

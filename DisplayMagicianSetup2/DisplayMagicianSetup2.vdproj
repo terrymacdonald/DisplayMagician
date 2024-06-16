@@ -207,7 +207,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
         "ProductCode" = "8:{1D2165CB-A33E-48E0-B264-E1CA593ECF76}"
-        "PackageCode" = "8:{B9449578-C012-4141-8556-5581A314574B}"
+        "PackageCode" = "8:{C60423CF-8C63-4898-B6BA-FDCA7B1C5052}"
         "UpgradeCode" = "8:{33E22B4C-982F-4B02-A3DE-085693742DB5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
