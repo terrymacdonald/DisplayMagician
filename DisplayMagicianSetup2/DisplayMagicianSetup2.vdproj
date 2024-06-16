@@ -15,25 +15,31 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_0828D1DB54FF4EA88DA7A7190477B631"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_419E4AE1970341A0B8AB248BE63FA8CD"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_427A417B9DB34969A8641EEE5C6B33AA"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_50C70D070E974B2FA250AE05F9CB844A"
+        "MsmKey" = "8:_59A94FB331BC4210B067BF85B879EBD6"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8865A79DA15D4601A9ED125F81B89F05"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C370C9C7766D480CB0362F024DB3032D"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D760CA3BF7DB407EB787FA00AD2F3513"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -139,6 +145,66 @@
         }
         "File"
         {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_59A94FB331BC4210B067BF85B879EBD6"
+            {
+            "SourcePath" = "8:..\\DisplayMagicianSetup\\Lang\\en-us\\EULA_en-us.rtf"
+            "TargetName" = "8:EULA_en-us.rtf"
+            "Tag" = "8:"
+            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8865A79DA15D4601A9ED125F81B89F05"
+            {
+            "SourcePath" = "8:..\\DisplayMagician\\Resources\\DisplayMagician.ico"
+            "TargetName" = "8:DisplayMagician.ico"
+            "Tag" = "8:"
+            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C370C9C7766D480CB0362F024DB3032D"
+            {
+            "SourcePath" = "8:..\\DisplayMagician\\bin\\Debug\\net8.0-windows10.0.19041.0\\DisplayMagician.exe"
+            "TargetName" = "8:DisplayMagician.exe"
+            "Tag" = "8:"
+            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
@@ -206,15 +272,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
-        "ProductCode" = "8:{1D2165CB-A33E-48E0-B264-E1CA593ECF76}"
-        "PackageCode" = "8:{C60423CF-8C63-4898-B6BA-FDCA7B1C5052}"
+        "ProductCode" = "8:{4825250A-0D57-4A85-9A68-05DD3B437A47}"
+        "PackageCode" = "8:{F2E8C946-2760-41DF-B300-0F822F607700}"
         "UpgradeCode" = "8:{33E22B4C-982F-4B02-A3DE-085693742DB5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.0.0"
+        "ProductVersion" = "8:2.6.0"
         "Manufacturer" = "8:LittleBitBig"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -224,7 +290,7 @@
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:DisplayMagician will automatically run your games with a different display profile or audio settings and then will revert everything back to the way it was when you've finished gaming."
         "ARPURLINFOABOUT" = "8:"
-        "ARPPRODUCTICON" = "8:"
+        "ARPPRODUCTICON" = "8:_8865A79DA15D4601A9ED125F81B89F05"
         "ARPIconIndex" = "3:0"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
@@ -335,7 +401,7 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:32512"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_0828D1DB54FF4EA88DA7A7190477B631"
+            "Target" = "8:_C370C9C7766D480CB0362F024DB3032D"
             "Folder" = "8:_3BF3DEED30214BC79DDE4912ED1C4B53"
             "WorkingFolder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
             "Icon" = "8:_427A417B9DB34969A8641EEE5C6B33AA"
@@ -454,7 +520,8 @@
                             "Type" = "3:6"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:0"
+                            "Setting" = "3:2"
+                            "Value" = "8:_59A94FB331BC4210B067BF85B879EBD6"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "Sunken"
@@ -752,7 +819,8 @@
                             "Type" = "3:6"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:0"
+                            "Setting" = "3:2"
+                            "Value" = "8:_59A94FB331BC4210B067BF85B879EBD6"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "Sunken"
@@ -832,62 +900,6 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_0828D1DB54FF4EA88DA7A7190477B631"
-            {
-            "SourcePath" = "8:..\\DisplayMagicianConsole\\obj\\Debug\\net8.0-windows10.0.19041.0\\DisplayMagicianConsole.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_419E4AE1970341A0B8AB248BE63FA8CD"
-            {
-            "SourcePath" = "8:..\\DisplayMagicianShared\\obj\\Debug\\net8.0-windows10.0.19041.0\\DisplayMagician.Shared.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_427A417B9DB34969A8641EEE5C6B33AA"
             {
             "SourcePath" = "8:..\\DisplayMagician\\obj\\Debug\\net8.0-windows10.0.19041.0\\apphost.exe"
@@ -916,9 +928,37 @@
                 {
                 }
             }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_50C70D070E974B2FA250AE05F9CB844A"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_6FF3DCCE8B494FB88B6C9BA320EAD9CB"
             {
-            "SourcePath" = "8:..\\DisplayMagicianShellExtension\\obj\\Debug\\net8.0-windows10.0.19041.0\\DisplayMagicianShellExtension.dll"
+            "SourcePath" = "8:"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:PublishItems"
+            "OutputProjectGuid" = "8:{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_D760CA3BF7DB407EB787FA00AD2F3513"
+            {
+            "SourcePath" = "8:..\\DisplayMagicianConsole\\obj\\Debug\\net8.0-windows10.0.19041.0\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
@@ -937,8 +977,8 @@
             "IsolateTo" = "8:"
             "ProjectOutputGroupRegister" = "3:2"
             "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
+            "OutputGroupCanonicalName" = "8:PublishItems"
+            "OutputProjectGuid" = "8:{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {
