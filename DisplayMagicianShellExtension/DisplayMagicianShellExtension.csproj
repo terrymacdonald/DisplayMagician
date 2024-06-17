@@ -25,6 +25,8 @@
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
+    <AssemblyVersion>2.6.0</AssemblyVersion>
+    <FileVersion>2.6.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">

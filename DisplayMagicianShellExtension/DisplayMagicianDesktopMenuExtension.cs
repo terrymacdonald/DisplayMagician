@@ -18,7 +18,8 @@ namespace DisplayMagicianShellExtension
     [ComVisible(true)]
     [Guid("de271cd7-fa82-439f-b128-202d473bb51e")]
     [RegistrationName("DisplayMagician.ShellExtension")]
-    [COMServerAssociation(AssociationType.DesktopBackground)]
+    //[COMServerAssociation(AssociationType.DesktopBackground)]
+    [COMServerAssociation(AssociationType.Class, @"DesktopBackground")]
     public class DisplayMagicianDesktopMenuExtension : SharpContextMenu
     {
         // Other constants that are useful
