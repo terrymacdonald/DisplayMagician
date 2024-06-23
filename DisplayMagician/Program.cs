@@ -28,6 +28,7 @@ using DisplayMagician.AppLibraries;
 using System.ComponentModel;
 using System.Text;
 using System.Globalization;
+using System.Net.Http;
 
 namespace DisplayMagician {
 
@@ -1261,11 +1262,13 @@ namespace DisplayMagician {
             // Get the message index
             string json;
             List<MessageItem> messageIndex;
-            WebClient client = new WebClient();
+            HttpClient client = new HttpClient();
+            //WebClient client = new WebClient();
             string indexUrl = "https://displaymagician.littlebitbig.com/messages/index_2.0.json";
             try
             {
-                json = client.DownloadString(indexUrl);
+                json = client.GetStringAsync(indexUrl).Result;
+                //json = client.DownloadString(indexUrl);
                 if (String.IsNullOrWhiteSpace(json))
                 {
                     logger.Trace($"Program/ShowMessages: There were no messages in the {indexUrl} message index.");
@@ -1895,7 +1898,7 @@ public class LoadingInstalledGamesException : Exception
         { }
         public LoadingInstalledGamesException(string message, Exception innerException) : base(message, innerException)
         { }
-        public LoadingInstalledGamesException(SerializationInfo info, StreamingContext context) : base(info, context)
+        public LoadingInstalledGamesException(string message, string gameName) : base(message)
         { }
     }
 }

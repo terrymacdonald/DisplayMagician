@@ -510,9 +510,6 @@ namespace DisplayMagician.AppLibraries
         public LocalLibraryException() { }
         public LocalLibraryException(string message) : base(message) { }
         public LocalLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected LocalLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }

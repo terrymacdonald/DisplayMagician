@@ -278,9 +278,7 @@ namespace DisplayMagician.AppLibraries
         public AppLibraryException() { }
         public AppLibraryException(string message) : base(message) { }
         public AppLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected AppLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        public AppLibraryException(string message, Exception inner, string appLibraryName) : base(message + " AppLibrary: " + appLibraryName, inner) { }
     }
 
 }

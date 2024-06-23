@@ -121,8 +121,8 @@
 		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />-->
 
 		<!-- Preapre custom actions to register and unregisterthe ShellExtension DLL -->
-		<CustomAction Id="InstallShell" ExeCommand="install &quot;[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll&quot; -os64 -codebase" Execute="deferred" Return="check" Impersonate="no" FileRef="ServerRegistrationManager.exe" />
-		<CustomAction Id="UninstallShell" ExeCommand="uninstall &quot;[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll&quot;" Execute="deferred" Return="check" Impersonate="no" FileRef="ServerRegistrationManager.exe" /> 
+		<CustomAction Id="InstallShell" ExeCommand="install &quot;[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtensionOld.dll&quot; -os64 -codebase" Execute="deferred" Return="check" Impersonate="no" FileRef="ServerRegistrationManager.exe" />
+		<CustomAction Id="UninstallShell" ExeCommand="uninstall &quot;[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtensionOld.dll&quot;" Execute="deferred" Return="check" Impersonate="no" FileRef="ServerRegistrationManager.exe" /> 
 		
 		<!-- Plumb the registering and unregistering of the ShellExtension DLL into the instllation sequence -->
 		<InstallExecuteSequence>
@@ -143,13 +143,13 @@
 
 			<!-- Add in the 3 ShellExtension files we need to make the COM registration work -->
 			<Component Directory="APPLICATIONROOTDIRECTORY">
-				<File Id="DisplayMagicianShellExtension.dll" Source="$(var.DisplayMagicianShellExtension.TargetDir)\DisplayMagicianShellExtension.dll" KeyPath="yes" />
+				<File Id="DisplayMagicianShellExtensionOld.dll" Source="$(var.DisplayMagicianShellExtensionOld.TargetDir)\DisplayMagicianShellExtensionOld.dll" KeyPath="yes" />
 			</Component>
 			<Component Directory="APPLICATIONROOTDIRECTORY">
-				<File Id="ServerRegistrationManager.exe" Source="$(var.DisplayMagicianShellExtension.TargetDir)\ServerRegistrationManager.exe" KeyPath="yes" />
+				<File Id="ServerRegistrationManager.exe" Source="$(var.DisplayMagicianShellExtensionOld.TargetDir)\ServerRegistrationManager.exe" KeyPath="yes" />
 			</Component>
 			<Component Directory="APPLICATIONROOTDIRECTORY">
-				<File Id="SharpShell.dll" Source="$(var.DisplayMagicianShellExtension.TargetDir)\SharpShell.dll" KeyPath="yes" />
+				<File Id="SharpShell.dll" Source="$(var.DisplayMagicianShellExtensionOld.TargetDir)\SharpShell.dll" KeyPath="yes" />
 			</Component>
 		</Feature>
 	

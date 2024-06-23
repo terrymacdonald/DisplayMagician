@@ -4,11 +4,11 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician", "DisplayMagician\DisplayMagician.csproj", "{608D941A-B431-400C-A91D-C6F971C29577}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianShellExtension", "DisplayMagicianShellExtension\DisplayMagicianShellExtension.csproj", "{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianShellExtensionOld", "DisplayMagicianShellExtensionOld\DisplayMagicianShellExtensionOld.csproj", "{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianShared", "DisplayMagicianShared\DisplayMagicianShared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
 EndProject
-Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianSetup", "DisplayMagicianSetup\DisplayMagicianSetup.wixproj", "{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}"
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianSetupOld", "DisplayMagicianSetupOld\DisplayMagicianSetupOld.wixproj", "{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3B959DA6-15D5-4421-A7BA-D8EB5A9F9D97}"
 	ProjectSection(SolutionItems) = preProject
@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianConsole", "DisplayMagicianConsole\DisplayMagicianConsole.csproj", "{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "DisplayMagicianSetup2", "DisplayMagicianSetup2\DisplayMagicianSetup2.vdproj", "{CB53499C-5139-40B3-B0C4-5DBAC009E775}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "DisplayMagicianSetup", "DisplayMagicianSetup\DisplayMagicianSetup.vdproj", "{CB53499C-5139-40B3-B0C4-5DBAC009E775}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
