@@ -494,6 +494,15 @@ namespace DisplayMagician {
                 logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to latest shortcut file {targetShortcutsFile}.");
             }
 
+            // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
+            if (AppProgramSettings.InstalledDesktopContextMenu)
+            {
+                ContextMenu.InstallContextMenu();
+            }
+            // For testing....
+            //ContextMenu.UninstallContextMenu();
+
+
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {

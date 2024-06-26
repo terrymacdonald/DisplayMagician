@@ -4,8 +4,6 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician", "DisplayMagician\DisplayMagician.csproj", "{608D941A-B431-400C-A91D-C6F971C29577}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianShellExtensionOld", "DisplayMagicianShellExtensionOld\DisplayMagicianShellExtensionOld.csproj", "{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianShared", "DisplayMagicianShared\DisplayMagicianShared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
 EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianSetupOld", "DisplayMagicianSetupOld\DisplayMagicianSetupOld.wixproj", "{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}"
@@ -41,18 +39,6 @@ Global
 		{608D941A-B431-400C-A91D-C6F971C29577}.Release|x64.Build.0 = Release|Any CPU
 		{608D941A-B431-400C-A91D-C6F971C29577}.Release|x86.ActiveCfg = Release|Any CPU
 		{608D941A-B431-400C-A91D-C6F971C29577}.Release|x86.Build.0 = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Debug|AnyCPU.Build.0 = Debug|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Debug|x64.ActiveCfg = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Debug|x64.Build.0 = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Debug|x86.Build.0 = Debug|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Release|AnyCPU.ActiveCfg = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Release|AnyCPU.Build.0 = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Release|x64.ActiveCfg = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Release|x64.Build.0 = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Release|x86.ActiveCfg = Release|Any CPU
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}.Release|x86.Build.0 = Release|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|x64.ActiveCfg = Debug|Any CPU
