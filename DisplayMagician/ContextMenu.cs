@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,32 +19,57 @@ namespace DisplayMagician
         public static bool InstallContextMenu()
         {
             // Create the ContextMenu Anchor Registry Key
-            Registry.ClassesRoot.CreateSubKey(@"DesktopBackground\Shell\DisplayMagician.ContextMenu.Anchor");
-            using (Registry.ClassesRoot.OpenSubKey("DesktopBackground\\Shell\\DisplayMagician.ContextMenu.Anchor"))
+            try
             {
-                // Set up the ContextMenu Anchor Registry Key contents
-                Registry.ClassesRoot.SetValue("MUIVerb", "DisplayMagician");
-                Registry.ClassesRoot.SetValue("ExtendedSubCommandsKey", "DisplayMagician.ContextMenus\\ContextMenus\\MainMenu");
-                Registry.ClassesRoot.SetValue("Icon", Path.Combine(AppContext.BaseDirectory,"DisplayMagician.exe"));
+                RegistryKey anchor = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\\Classes\\DesktopBackground\Shell\DisplayMagician.ContextMenu.Anchor");
+                if (anchor != null)
+                {
+                    // Set up the ContextMenu Anchor Registry Key contents
+                    anchor.SetValue("MUIVerb", "DisplayMagician");
+                    anchor.SetValue("ExtendedSubCommandsKey", "DisplayMagician.ContextMenus\\ContextMenus\\MainMenu");
+                    anchor.SetValue("Icon", Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
             }
 
-            // Create the MainMenu (Level 1) Registry Key
-            Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
-            Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
-            using (Registry.ClassesRoot.OpenSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles"))
+            try
             {
-                // Set up the Display Profiles ContextMenu Registry Key contents
-                Registry.ClassesRoot.SetValue("MUIVerb", "Display Profiles");
-                Registry.ClassesRoot.SetValue("ExtendedSubCommandsKey", "DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu");
-                //Registry.ClassesRoot.SetValue("Icon", AppContext.BaseDirectory + "\\DisplayMagician.exe");
+                // Create the MainMenu (Level 1) Registry Key
+                RegistryKey dp = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
+                if (dp  != null)
+                {
+                    // Set up the Display Profiles ContextMenu Registry Key contents
+                    dp.SetValue("MUIVerb", "Display Profiles");
+                    dp.SetValue("ExtendedSubCommandsKey", "DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu");
+                    //dp.SetValue("Icon", AppContext.BaseDirectory + "\\DisplayMagician.exe");
+                }
+
             }
-            using (Registry.ClassesRoot.OpenSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts"))
+            catch (Exception ex)
             {
-                // Set up the Display Profiles ContextMenu Registry Key contents
-                Registry.ClassesRoot.SetValue("MUIVerb", "Game Shortcuts");
-                Registry.ClassesRoot.SetValue("ExtendedSubCommandsKey", "DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu");
-                //Registry.ClassesRoot.SetValue("Icon", AppContext.BaseDirectory + "\\DisplayMagician.exe");
+                return false;
             }
+            
+            try
+            {
+                RegistryKey gs = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
+                if (gs != null)
+                {
+                    // Set up the Display Profiles ContextMenu Registry Key contents
+                    gs.SetValue("MUIVerb", "Game Shortcuts");
+                    gs.SetValue("ExtendedSubCommandsKey", "DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu");
+                    //gs.SetValue("Icon", AppContext.BaseDirectory + "\\DisplayMagician.exe");
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            
 
             if (!UpdateProfileContextMenu())
             {
@@ -61,40 +87,49 @@ namespace DisplayMagician
         public static bool UninstallContextMenu()
         {
             // Delete the ContextMenu Anchor Registry Key
-            Registry.ClassesRoot.DeleteSubKeyTree("DesktopBackground\\Shell\\DisplayMagician.ContextMenu.Anchor");
+            Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DesktopBackground\\Shell\\DisplayMagician.ContextMenu.Anchor");
 
             // Delete the MainMenu (Level 1) Registry Key and all subkeys
-            Registry.ClassesRoot.DeleteSubKeyTree("DisplayMagician.ContextMenus");
+            Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus");
             return true;
         }
 
         // Update the list of Display Profiles in the DesktopBackground context menu
         public static bool UpdateProfileContextMenu()
         {
-            // Create the ProfileMenu (Level 2) Registry Key
-            if (Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles") == null) 
+            try
             {
-                // We must have already created the menu, so clear it instead
-                Registry.ClassesRoot.DeleteSubKeyTree("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
-                Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
-            }
-            // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
-            foreach (ProfileItem profile in ProfileRepository.AllProfiles)
-            {
-                Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name);
-                using (Registry.ClassesRoot.OpenSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name))
+                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
+                // Create the ProfileMenu (Level 2) Registry Key
+                if (dp == null) 
                 {
-                    // Set up the ProfileMenu Registry Key contents
-                    Registry.ClassesRoot.SetValue("MUIVerb", profile.Name);
-                    Registry.ClassesRoot.SetValue("Icon", Path.Combine(Program.AppProfilePath,profile.SavedProfileIconCacheFilename));
+                    // We must have already created the menu, so clear it instead
+                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
+                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
                 }
-                // Set up the ProfileMenu command
-                Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name + "\\command");
-                using (Registry.ClassesRoot.OpenSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name + "\\command"))
+                // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
+                foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                 {
-                    Registry.ClassesRoot.SetValue(null, Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe") + " ChangeProfile " + profile.UUID);
-                }
+                    RegistryKey pm = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name);
+                    if (pm != null)
+                    {
+                        // Set up the ProfileMenu Registry Key contents
+                        pm.SetValue("MUIVerb", profile.Name);
+                        pm.SetValue("Icon", Path.Combine(Program.AppProfilePath, profile.SavedProfileIconCacheFilename));
+                    }
+                    // Set up the ProfileMenu command
 
+                    RegistryKey pmc = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name + "\\command");
+                    if (pmc != null)
+                    {
+                        pmc.SetValue(null, Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe") + " ChangeProfile " + profile.UUID);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
             }
             return true;
         }
@@ -102,30 +137,38 @@ namespace DisplayMagician
         // Update the list of Display Profiles in the DesktopBackground context menu
         public static bool UpdateShortcutContextMenu()
         {
-            // Create the ProfileMenu (Level 2) Registry Key
-            if (Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\ShortcutProfiles") == null)
+            try
             {
-                // We must have already created the menu, so clear it instead
-                Registry.ClassesRoot.DeleteSubKeyTree("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\ShortcutProfiles");
-                Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\ShortcutProfiles");
-            }
-            // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
-            foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
-            {
-                Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + shortcut.Name);
-                using (Registry.ClassesRoot.OpenSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + shortcut.Name))
+                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
+                // Create the ProfileMenu (Level 2) Registry Key
+                if (dp == null)
                 {
-                    // Set up the ProfileMenu Registry Key contents
-                    Registry.ClassesRoot.SetValue("MUIVerb", shortcut.Name);
-                    Registry.ClassesRoot.SetValue("Icon", Path.Combine(Program.AppShortcutPath, shortcut.SavedShortcutIconCacheFilename));
+                    // We must have already created the menu, so clear it instead
+                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
+                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
                 }
-                // Set up the ProfileMenu command
-                Registry.ClassesRoot.CreateSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + shortcut.Name + "\\command");
-                using (Registry.ClassesRoot.OpenSubKey("DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + shortcut.Name + "\\command"))
+                // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
+                foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
                 {
-                    Registry.ClassesRoot.SetValue(null, Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe") + " RunShortcut " + shortcut.UUID);
-                }
+                    RegistryKey gs = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell\\" + shortcut.Name);
+                    if (gs != null)
+                    {
+                        // Set up the ProfileMenu Registry Key contents
+                        gs.SetValue("MUIVerb", shortcut.Name);
+                        gs.SetValue("Icon", Path.Combine(Program.AppShortcutPath, shortcut.SavedShortcutIconCacheFilename));
+                    }
+                    // Set up the ProfileMenu command
+                    RegistryKey gsc = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell\\" + shortcut.Name + "\\command");
+                    if (gsc != null)
+                    {
+                        gsc.SetValue(null, Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe") + " RunShortcut " + shortcut.UUID);
+                    }
 
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
             }
             return true;
         }
