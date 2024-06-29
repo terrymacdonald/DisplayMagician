@@ -99,13 +99,13 @@ namespace DisplayMagician
         {
             try
             {
-                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
+                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
                 // Create the ProfileMenu (Level 2) Registry Key
                 if (dp == null) 
                 {
                     // We must have already created the menu, so clear it instead
-                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
-                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\DisplayProfiles");
+                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
+                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
                 }
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
                 foreach (ProfileItem profile in ProfileRepository.AllProfiles)
@@ -139,13 +139,13 @@ namespace DisplayMagician
         {
             try
             {
-                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
+                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
                 // Create the ProfileMenu (Level 2) Registry Key
                 if (dp == null)
                 {
                     // We must have already created the menu, so clear it instead
-                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
-                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\MainMenu\\Shell\\GameShortcuts");
+                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
+                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
                 }
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
                 foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
