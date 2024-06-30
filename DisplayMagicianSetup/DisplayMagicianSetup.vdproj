@@ -333,7 +333,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
         "ProductCode" = "8:{4825250A-0D57-4A85-9A68-05DD3B437A47}"
-        "PackageCode" = "8:{31A81EAA-7CB5-4C0E-AD89-E77668197ED7}"
+        "PackageCode" = "8:{02BB045C-633D-497D-BE04-24CB8E9616AE}"
         "UpgradeCode" = "8:{33E22B4C-982F-4B02-A3DE-085693742DB5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -400,7 +400,7 @@
                                     "Condition" = "8:"
                                     "Transitive" = "11:FALSE"
                                     "ValueTypes" = "3:1"
-                                    "Value" = "8:[ProductVersion]"
+                                    "Value" = "8:[Version]"
                                     }
                                     "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_FC3900A15AF0474E979350CECB5A502C"
                                     {

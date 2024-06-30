@@ -31,7 +31,7 @@ namespace DisplayMagician
         private bool _showStatusMessageInActionCenter = true;
         private bool _upgradeToPrereleases = false;
         private bool _upgradeEnabled = true;
-        private bool _installedDesktopContextMenu = true;
+        private bool _installDesktopContextMenu = true;
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Warn.ToString();
@@ -80,6 +80,9 @@ namespace DisplayMagician
         {
             get
             {
+                if (_installId == "") {
+                    _installId = Guid.NewGuid().ToString();
+                }
                 return _installId;
             }
             set
@@ -254,15 +257,15 @@ namespace DisplayMagician
         }
 
         [DefaultValue(true)]
-        public bool InstalledDesktopContextMenu
+        public bool InstallDesktopContextMenu
         {
             get
             {
-                return _installedDesktopContextMenu;
+                return _installDesktopContextMenu;
             }
             set
             {
-                _installedDesktopContextMenu = value;
+                _installDesktopContextMenu = value;
             }
         }
 

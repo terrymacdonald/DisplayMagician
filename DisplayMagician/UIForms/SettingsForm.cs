@@ -17,7 +17,7 @@ namespace DisplayMagician.UIForms
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private bool _installedDesktopContextMenu = true;
+        private bool _installDesktopContextMenu = true;
 
         private Dictionary<string, string> logLevelText = new Dictionary<string, string>();
 
@@ -125,19 +125,6 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to false");
             }
 
-            if (Program.AppProgramSettings.InstalledDesktopContextMenu == true)
-            {
-                _installedDesktopContextMenu = true;
-                btn_context_menu.Text = "Uninstall Desktop Context Menu";
-                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings InstalledDesktopContextMenu set to true");
-            }
-            else
-            {
-                _installedDesktopContextMenu = false;
-                btn_context_menu.Text = "Install Desktop Context Menu";
-                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings InstalledDesktopContextMenu set to false");
-            }
-
             // setup loglevel on start
             switch (Program.AppProgramSettings.LogLevel)
             {
@@ -217,7 +204,7 @@ namespace DisplayMagician.UIForms
                     dynamicHotkey.Group = gameShortcut;
                     lv_dynamic_hotkeys.Items.Add(dynamicHotkey);
                 }
-                
+
             }
 
         }
@@ -247,7 +234,7 @@ namespace DisplayMagician.UIForms
                     logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully set DisplayMagician to start when Windows starts");
                     return true;
                 }
-                    
+
             }
             else
             {
@@ -264,7 +251,7 @@ namespace DisplayMagician.UIForms
                     logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from starting when Windows starts");
                     return true;
                 }
-                    
+
             }
         }
 
@@ -302,14 +289,6 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.ShowStatusMessageInActionCenter = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowStatusMessageInActionCenter as {Program.AppProgramSettings.ShowStatusMessageInActionCenter}");
 
-
-            // save install desktop context menu setting
-            if (_installedDesktopContextMenu)
-                Program.AppProgramSettings.InstalledDesktopContextMenu = true;
-            else
-                Program.AppProgramSettings.InstalledDesktopContextMenu = false;
-            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved InstallDesktopContextMenu as {Program.AppProgramSettings.InstalledDesktopContextMenu}");
-
             // save loglevel on close
             // and make that log level live in NLog straight away
             var config = NLog.LogManager.Configuration;
@@ -318,19 +297,19 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.LogLevel = "Trace";
                 config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
             }
-                
+
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Debug"]))
             {
                 Program.AppProgramSettings.LogLevel = "Debug";
                 config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
             }
-                
+
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Info"]))
             {
                 Program.AppProgramSettings.LogLevel = "Info";
                 config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
             }
-                
+
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Warn"]))
             {
                 Program.AppProgramSettings.LogLevel = "Warn";
@@ -380,8 +359,8 @@ namespace DisplayMagician.UIForms
                 // Stop any autoupdate reminder timers as we no longer want to upgrade
                 if (Program.AppUpdateRemindLaterTimer is System.Timers.Timer && Program.AppUpdateRemindLaterTimer.Enabled)
                 {
-                    Program.AppUpdateRemindLaterTimer.Stop(); 
-                    Program.AppUpdateRemindLaterTimer.Dispose();                   
+                    Program.AppUpdateRemindLaterTimer.Stop();
+                    Program.AppUpdateRemindLaterTimer.Dispose();
                 }
                 AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
                 AutoUpdater.PersistenceProvider.SetRemindLater(DateTime.Now);
@@ -416,7 +395,7 @@ namespace DisplayMagician.UIForms
                 // now we save the Hotkey
                 Program.AppProgramSettings.HotkeyMainWindow = mainHotkeyForm.Hotkey;
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyMainWindow,lbl_hotkey_main_window);
+                UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyMainWindow, lbl_hotkey_main_window);
                 // Get the MainForm instance
                 var mainForm = Application.OpenForms.OfType<MainForm>().Single();
                 if (mainHotkeyForm.Hotkey == Keys.None)
@@ -510,7 +489,7 @@ namespace DisplayMagician.UIForms
                 if (scHotkeyForm.Hotkey == Keys.None)
                     // Remove the Hotkey if it needs to be removed
                     HotkeyManager.Current.Remove("HotkeyShortcutLibraryWindow");
-                else 
+                else
                     // And then apply the Hotkey now
                     HotkeyManager.Current.AddOrReplace("HotkeyShortcutLibraryWindow", Program.AppProgramSettings.HotkeyShortcutLibraryWindow, mainForm.OnWindowHotkeyPressed);
             }
@@ -559,7 +538,7 @@ namespace DisplayMagician.UIForms
                 }
                 // Then clear the ListView here too!
                 lv_dynamic_hotkeys.Items.Clear();
-            }            
+            }
         }
 
         private string ConvertHotkeyToText(Keys hotkey)
@@ -573,7 +552,7 @@ namespace DisplayMagician.UIForms
                 {
                     // There is nothing selected so just return
                     return parsedHotkey;
-                }                
+                }
                 else
                 {
                     // This key combination is ok so lets update the textbox
@@ -596,7 +575,8 @@ namespace DisplayMagician.UIForms
                     return parsedHotkey;
                 }
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 return String.Empty;
             }
         }
@@ -682,7 +662,7 @@ namespace DisplayMagician.UIForms
                                 {
                                     SharedLogger.logger.Warn($"SettingsForm/btn_create_support_package_Click: Couldn't add {filename} to the support ZIP file {zipFilePath} as it doesn't exist.");
                                 }
-                                
+
                             }
                             catch (ArgumentNullException ex)
                             {
@@ -722,41 +702,39 @@ namespace DisplayMagician.UIForms
                 SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while creating support zip file.");
             }
 
-            
+
         }
 
-        private void btn_context_menu_Click(object sender, EventArgs e)
+        private void btn_context_menu_remove_Click(object sender, EventArgs e)
         {
-            if (_installedDesktopContextMenu)
+            
+            if (ContextMenu.UninstallContextMenu())
             {
-                if (Program.InstallDeskTopContextMenu(false))
-                {
-                    _installedDesktopContextMenu = false;
-                    btn_context_menu.Text = "Install Desktop Context Menu";
-                    RestartManagerSession.RestartExplorer();
-                }
-                else
-                {
-                    MessageBox.Show("We were unable to uninstall the DisplayMagician Desktop Context Menu! Please check your DisplayMagician.log file for more details.",
-                                         "Error uninstalling Desktop Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                _installDesktopContextMenu = false;
+                MessageBox.Show("Successfully removed the Desktop Background Context Menu.",
+                                        "Removed Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
             {
-                if (Program.InstallDeskTopContextMenu())
-                {
-                    _installedDesktopContextMenu = true;
-                    btn_context_menu.Text = "Uninstall Desktop Context Menu";
-                    RestartManagerSession.RestartExplorer();
-                }
-                else
-                {
-                    MessageBox.Show("We were unable to install the DisplayMagician Desktop Context Menu! Please check your DisplayMagician.log file for more details.",
-                                         "Error uninstalling Desktop Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                }
+                MessageBox.Show("We were unable to remove the DisplayMagician Desktop Background Context Menu! Please check your DisplayMagician.log file for more details.",
+                                        "Error removing Desktop Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
+        private void btn_context_menu_add_Click(object sender, EventArgs e)
+        {
+            if (ContextMenu.InstallContextMenu())
+            {
+                _installDesktopContextMenu = true;
+                MessageBox.Show("Successfully added the Desktop Background Context Menu.",
+                                        "Added Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {
+                MessageBox.Show("We were unable to add the DisplayMagician Desktop Background Context Menu! Please check your DisplayMagician.log file for more details.",
+                                        "Error adding Desktop Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+        }
     }
 }

@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 
 namespace DisplayMagicianShared
 {
@@ -72,8 +73,6 @@ namespace DisplayMagicianShared
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
         private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.4.json");
 
-
-
         #endregion
 
         #region Class Constructors
@@ -109,6 +108,7 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Exception creating the Profiles storage folder.");
             }
+
         }
         #endregion
 
@@ -288,6 +288,7 @@ namespace DisplayMagicianShared
 
             // Refresh the profiles to see whats valid
             IsPossibleRefresh();
+
 
             //Doublecheck it's been added
             if (ContainsProfile(profile))
