@@ -499,9 +499,7 @@ namespace DisplayMagician {
                 ContextMenu.InstallContextMenu();
             }
 
-            ProfileRepository.ProfilesAddedOrRemoved += ContextMenu.PerformContextMenuInstallation;
-
-
+           
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {
