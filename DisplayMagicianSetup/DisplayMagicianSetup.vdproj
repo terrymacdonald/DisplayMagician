@@ -27,7 +27,7 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_59A94FB331BC4210B067BF85B879EBD6"
+        "MsmKey" = "8:_66C6D4EEA69944B2B6C23340DB807AB9"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -185,9 +185,9 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_59A94FB331BC4210B067BF85B879EBD6"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_66C6D4EEA69944B2B6C23340DB807AB9"
             {
-            "SourcePath" = "8:Lang\\en-us\\EULA_en-us.rtf"
+            "SourcePath" = "8:EULA_en-us.rtf"
             "TargetName" = "8:EULA_en-us.rtf"
             "Tag" = "8:"
             "Folder" = "8:_702F56A59935441FAF2B51A1CB992ECD"
@@ -333,7 +333,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
         "ProductCode" = "8:{4825250A-0D57-4A85-9A68-05DD3B437A47}"
-        "PackageCode" = "8:{24510B5E-D87E-4663-9216-017F1598630F}"
+        "PackageCode" = "8:{31A81EAA-7CB5-4C0E-AD89-E77668197ED7}"
         "UpgradeCode" = "8:{33E22B4C-982F-4B02-A3DE-085693742DB5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -386,14 +386,6 @@
                                 }
                                 "Values"
                                 {
-                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_47A6D85CB5CA4B7A81FB5CCECFF38899"
-                                    {
-                                    "Name" = "8:Version"
-                                    "Condition" = "8:"
-                                    "Transitive" = "11:FALSE"
-                                    "ValueTypes" = "3:1"
-                                    "Value" = "8:[Version]"
-                                    }
                                     "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_9A07191FB22C471DAE994AB51673F4D7"
                                     {
                                     "Name" = "8:DisplayMagicianInstalled"
@@ -401,6 +393,14 @@
                                     "Transitive" = "11:FALSE"
                                     "ValueTypes" = "3:3"
                                     "Value" = "3:1"
+                                    }
+                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_EFC9AAA67B134C6EBF2D3AEAD86BC027"
+                                    {
+                                    "Name" = "8:Version"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "ValueTypes" = "3:1"
+                                    "Value" = "8:[ProductVersion]"
                                     }
                                     "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_FC3900A15AF0474E979350CECB5A502C"
                                     {
@@ -423,34 +423,6 @@
             {
                 "Keys"
                 {
-                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_3220EF195D1643C785C482E85142E147"
-                    {
-                    "Name" = "8:Software"
-                    "Condition" = "8:"
-                    "AlwaysCreate" = "11:FALSE"
-                    "DeleteAtUninstall" = "11:FALSE"
-                    "Transitive" = "11:FALSE"
-                        "Keys"
-                        {
-                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_A54731336A26450F91FC459986230EAC"
-                            {
-                            "Name" = "8:[Manufacturer]"
-                            "Condition" = "8:"
-                            "AlwaysCreate" = "11:FALSE"
-                            "DeleteAtUninstall" = "11:FALSE"
-                            "Transitive" = "11:FALSE"
-                                "Keys"
-                                {
-                                }
-                                "Values"
-                                {
-                                }
-                            }
-                        }
-                        "Values"
-                        {
-                        }
-                    }
                 }
             }
             "HKCR"
@@ -622,7 +594,7 @@
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
                             "Setting" = "3:2"
-                            "Value" = "8:_59A94FB331BC4210B067BF85B879EBD6"
+                            "Value" = "8:_66C6D4EEA69944B2B6C23340DB807AB9"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "Sunken"
@@ -929,7 +901,7 @@
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
                             "Setting" = "3:2"
-                            "Value" = "8:_59A94FB331BC4210B067BF85B879EBD6"
+                            "Value" = "8:_66C6D4EEA69944B2B6C23340DB807AB9"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "Sunken"

@@ -16,6 +16,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianConsole", "DisplayMagicianConsole\DisplayMagicianConsole.csproj", "{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "DisplayMagicianSetup", "DisplayMagicianSetup\DisplayMagicianSetup.vdproj", "{CB53499C-5139-40B3-B0C4-5DBAC009E775}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC} = {1CACDA43-01C7-4CD4-BF6E-9421A29510FC}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
