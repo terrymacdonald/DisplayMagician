@@ -136,6 +136,7 @@ namespace DisplayMagician
                 // Save the shortcuts JSON as it's different
                 SaveShortcuts();
                 IsValidRefresh();
+
                 return true;
             }
             else
@@ -172,6 +173,7 @@ namespace DisplayMagician
             {
                 SaveShortcuts();
                 IsValidRefresh();
+
                 logger.Trace($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
                 return true;
             }
@@ -228,6 +230,7 @@ namespace DisplayMagician
             {
                 SaveShortcuts();
                 IsValidRefresh();
+
                 logger.Trace($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return true;
             }

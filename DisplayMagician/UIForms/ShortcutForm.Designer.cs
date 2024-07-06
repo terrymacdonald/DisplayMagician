@@ -181,7 +181,7 @@ namespace DisplayMagician.UIForms
             btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
             btn_save.ForeColor = System.Drawing.Color.White;
-            btn_save.Location = new System.Drawing.Point(636, 1028);
+            btn_save.Location = new System.Drawing.Point(654, 928);
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(140, 35);
@@ -198,7 +198,7 @@ namespace DisplayMagician.UIForms
             btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_cancel.ForeColor = System.Drawing.Color.White;
-            btn_cancel.Location = new System.Drawing.Point(1141, 1045);
+            btn_cancel.Location = new System.Drawing.Point(1176, 936);
             btn_cancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_cancel.Name = "btn_cancel";
             btn_cancel.Size = new System.Drawing.Size(110, 29);
@@ -231,12 +231,12 @@ namespace DisplayMagician.UIForms
             tabc_shortcut.Controls.Add(tabp_after);
             tabc_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             tabc_shortcut.HotTrack = true;
-            tabc_shortcut.Location = new System.Drawing.Point(14, 72);
+            tabc_shortcut.Location = new System.Drawing.Point(14, 58);
             tabc_shortcut.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabc_shortcut.Name = "tabc_shortcut";
             tabc_shortcut.SelectedIndex = 0;
             tabc_shortcut.ShowToolTips = true;
-            tabc_shortcut.Size = new System.Drawing.Size(1237, 885);
+            tabc_shortcut.Size = new System.Drawing.Size(1272, 786);
             tabc_shortcut.TabIndex = 28;
             // 
             // tabp_display
@@ -250,7 +250,7 @@ namespace DisplayMagician.UIForms
             tabp_display.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabp_display.Name = "tabp_display";
             tabp_display.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            tabp_display.Size = new System.Drawing.Size(1229, 849);
+            tabp_display.Size = new System.Drawing.Size(1264, 750);
             tabp_display.TabIndex = 0;
             tabp_display.Text = "1. Choose Display Profile";
             tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
@@ -269,7 +269,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.Name = "ilv_saved_profiles";
             ilv_saved_profiles.PersistentCacheDirectory = "";
             ilv_saved_profiles.PersistentCacheSize = 100L;
-            ilv_saved_profiles.Size = new System.Drawing.Size(1221, 295);
+            ilv_saved_profiles.Size = new System.Drawing.Size(1256, 196);
             ilv_saved_profiles.TabIndex = 24;
             ilv_saved_profiles.UseWIC = true;
             ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -285,7 +285,7 @@ namespace DisplayMagician.UIForms
             p_profiles.Location = new System.Drawing.Point(4, 3);
             p_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_profiles.Name = "p_profiles";
-            p_profiles.Size = new System.Drawing.Size(1221, 548);
+            p_profiles.Size = new System.Drawing.Size(1256, 548);
             p_profiles.TabIndex = 39;
             // 
             // dv_profile
@@ -301,14 +301,14 @@ namespace DisplayMagician.UIForms
             dv_profile.PaddingX = 100;
             dv_profile.PaddingY = 100;
             dv_profile.Profile = null;
-            dv_profile.Size = new System.Drawing.Size(1221, 548);
+            dv_profile.Size = new System.Drawing.Size(1256, 548);
             dv_profile.TabIndex = 23;
             // 
             // pbLogo
             // 
             pbLogo.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             pbLogo.BackColor = System.Drawing.Color.DimGray;
-            pbLogo.Location = new System.Drawing.Point(1049, 30);
+            pbLogo.Location = new System.Drawing.Point(1084, 30);
             pbLogo.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             pbLogo.Name = "pbLogo";
             pbLogo.Size = new System.Drawing.Size(117, 57);
@@ -345,8 +345,6 @@ namespace DisplayMagician.UIForms
             // tabp_audio
             // 
             tabp_audio.BackColor = System.Drawing.Color.Black;
-            tabp_audio.Controls.Add(lbl_no_active_capture_devices);
-            tabp_audio.Controls.Add(lbl_no_active_audio_devices);
             tabp_audio.Controls.Add(lbl_disabled_shortcut_audio_chipset);
             tabp_audio.Controls.Add(gb_capture_settings);
             tabp_audio.Controls.Add(gb_audio_settings);
@@ -354,7 +352,7 @@ namespace DisplayMagician.UIForms
             tabp_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabp_audio.Name = "tabp_audio";
             tabp_audio.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            tabp_audio.Size = new System.Drawing.Size(1229, 849);
+            tabp_audio.Size = new System.Drawing.Size(1264, 750);
             tabp_audio.TabIndex = 4;
             tabp_audio.Text = "2. Choose Audio";
             // 
@@ -367,7 +365,7 @@ namespace DisplayMagician.UIForms
             lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
             lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_no_active_capture_devices.Location = new System.Drawing.Point(130, 505);
+            lbl_no_active_capture_devices.Location = new System.Drawing.Point(125, 159);
             lbl_no_active_capture_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
             lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
@@ -384,7 +382,7 @@ namespace DisplayMagician.UIForms
             lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
             lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_no_active_audio_devices.Location = new System.Drawing.Point(135, 177);
+            lbl_no_active_audio_devices.Location = new System.Drawing.Point(125, 156);
             lbl_no_active_audio_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
             lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
@@ -401,7 +399,7 @@ namespace DisplayMagician.UIForms
             lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
             lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(289, 350);
+            lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(338, 362);
             lbl_disabled_shortcut_audio_chipset.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
             lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(557, 22);
@@ -412,6 +410,7 @@ namespace DisplayMagician.UIForms
             // gb_capture_settings
             // 
             gb_capture_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_capture_settings.Controls.Add(lbl_no_active_capture_devices);
             gb_capture_settings.Controls.Add(cb_capture_comms_device);
             gb_capture_settings.Controls.Add(gb_capture_volume);
             gb_capture_settings.Controls.Add(btn_rescan_capture);
@@ -419,11 +418,11 @@ namespace DisplayMagician.UIForms
             gb_capture_settings.Controls.Add(rb_change_capture);
             gb_capture_settings.Controls.Add(rb_no_change_capture);
             gb_capture_settings.ForeColor = System.Drawing.Color.White;
-            gb_capture_settings.Location = new System.Drawing.Point(56, 437);
+            gb_capture_settings.Location = new System.Drawing.Point(56, 392);
             gb_capture_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_capture_settings.Name = "gb_capture_settings";
             gb_capture_settings.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_capture_settings.Size = new System.Drawing.Size(1112, 353);
+            gb_capture_settings.Size = new System.Drawing.Size(1112, 328);
             gb_capture_settings.TabIndex = 21;
             gb_capture_settings.TabStop = false;
             gb_capture_settings.Text = "Microphone Settings";
@@ -565,17 +564,18 @@ namespace DisplayMagician.UIForms
             // 
             gb_audio_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
             gb_audio_settings.Controls.Add(cb_audio_comms_device);
+            gb_audio_settings.Controls.Add(lbl_no_active_audio_devices);
             gb_audio_settings.Controls.Add(gb_audio_volume);
             gb_audio_settings.Controls.Add(btn_rescan_audio);
             gb_audio_settings.Controls.Add(cb_audio_device);
             gb_audio_settings.Controls.Add(rb_change_audio);
             gb_audio_settings.Controls.Add(rb_no_change_audio);
             gb_audio_settings.ForeColor = System.Drawing.Color.White;
-            gb_audio_settings.Location = new System.Drawing.Point(56, 35);
+            gb_audio_settings.Location = new System.Drawing.Point(56, 22);
             gb_audio_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_audio_settings.Name = "gb_audio_settings";
             gb_audio_settings.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_audio_settings.Size = new System.Drawing.Size(1112, 369);
+            gb_audio_settings.Size = new System.Drawing.Size(1112, 337);
             gb_audio_settings.TabIndex = 0;
             gb_audio_settings.TabStop = false;
             gb_audio_settings.Text = "Audio Output Settings";
@@ -724,7 +724,7 @@ namespace DisplayMagician.UIForms
             tabp_before.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabp_before.Name = "tabp_before";
             tabp_before.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            tabp_before.Size = new System.Drawing.Size(1229, 849);
+            tabp_before.Size = new System.Drawing.Size(1264, 750);
             tabp_before.TabIndex = 1;
             tabp_before.Text = "3. Choose what happens before";
             // 
@@ -739,7 +739,7 @@ namespace DisplayMagician.UIForms
             flp_start_programs.Location = new System.Drawing.Point(4, 143);
             flp_start_programs.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             flp_start_programs.Name = "flp_start_programs";
-            flp_start_programs.Size = new System.Drawing.Size(1221, 703);
+            flp_start_programs.Size = new System.Drawing.Size(1256, 604);
             flp_start_programs.TabIndex = 0;
             // 
             // p_start_program_upper
@@ -751,7 +751,7 @@ namespace DisplayMagician.UIForms
             p_start_program_upper.Location = new System.Drawing.Point(4, 3);
             p_start_program_upper.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_start_program_upper.Name = "p_start_program_upper";
-            p_start_program_upper.Size = new System.Drawing.Size(1221, 140);
+            p_start_program_upper.Size = new System.Drawing.Size(1256, 140);
             p_start_program_upper.TabIndex = 41;
             // 
             // btn_find_examples_startprograms
@@ -762,7 +762,7 @@ namespace DisplayMagician.UIForms
             btn_find_examples_startprograms.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_find_examples_startprograms.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_find_examples_startprograms.ForeColor = System.Drawing.Color.White;
-            btn_find_examples_startprograms.Location = new System.Drawing.Point(1065, 90);
+            btn_find_examples_startprograms.Location = new System.Drawing.Point(1100, 90);
             btn_find_examples_startprograms.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_find_examples_startprograms.Name = "btn_find_examples_startprograms";
             btn_find_examples_startprograms.Size = new System.Drawing.Size(136, 29);
@@ -779,7 +779,7 @@ namespace DisplayMagician.UIForms
             btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
-            btn_add_new_start_program.Location = new System.Drawing.Point(467, 73);
+            btn_add_new_start_program.Location = new System.Drawing.Point(485, 73);
             btn_add_new_start_program.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_add_new_start_program.Name = "btn_add_new_start_program";
             btn_add_new_start_program.Size = new System.Drawing.Size(287, 46);
@@ -792,7 +792,7 @@ namespace DisplayMagician.UIForms
             // 
             label3.Anchor = System.Windows.Forms.AnchorStyles.Top;
             label3.AutoSize = true;
-            label3.Location = new System.Drawing.Point(159, 24);
+            label3.Location = new System.Drawing.Point(177, 24);
             label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(807, 20);
@@ -810,7 +810,7 @@ namespace DisplayMagician.UIForms
             tabp_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabp_game.Name = "tabp_game";
             tabp_game.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            tabp_game.Size = new System.Drawing.Size(1229, 849);
+            tabp_game.Size = new System.Drawing.Size(1264, 750);
             tabp_game.TabIndex = 2;
             tabp_game.Text = "4. Choose Game to start";
             // 
@@ -818,10 +818,10 @@ namespace DisplayMagician.UIForms
             // 
             p_game_list.Controls.Add(ilv_games);
             p_game_list.Dock = System.Windows.Forms.DockStyle.Fill;
-            p_game_list.Location = new System.Drawing.Point(4, 603);
+            p_game_list.Location = new System.Drawing.Point(4, 578);
             p_game_list.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_game_list.Name = "p_game_list";
-            p_game_list.Size = new System.Drawing.Size(1221, 243);
+            p_game_list.Size = new System.Drawing.Size(1256, 169);
             p_game_list.TabIndex = 44;
             // 
             // ilv_games
@@ -839,7 +839,7 @@ namespace DisplayMagician.UIForms
             ilv_games.Name = "ilv_games";
             ilv_games.PersistentCacheDirectory = "";
             ilv_games.PersistentCacheSize = 100L;
-            ilv_games.Size = new System.Drawing.Size(1221, 243);
+            ilv_games.Size = new System.Drawing.Size(1256, 169);
             ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
             ilv_games.TabIndex = 43;
             ilv_games.UseWIC = true;
@@ -857,7 +857,7 @@ namespace DisplayMagician.UIForms
             p_gametostart.Location = new System.Drawing.Point(4, 3);
             p_gametostart.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_gametostart.Name = "p_gametostart";
-            p_gametostart.Size = new System.Drawing.Size(1221, 600);
+            p_gametostart.Size = new System.Drawing.Size(1256, 575);
             p_gametostart.TabIndex = 43;
             // 
             // btn_find_examples_game
@@ -868,7 +868,7 @@ namespace DisplayMagician.UIForms
             btn_find_examples_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_find_examples_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_find_examples_game.ForeColor = System.Drawing.Color.White;
-            btn_find_examples_game.Location = new System.Drawing.Point(1079, 13);
+            btn_find_examples_game.Location = new System.Drawing.Point(1114, 13);
             btn_find_examples_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_find_examples_game.Name = "btn_find_examples_game";
             btn_find_examples_game.Size = new System.Drawing.Size(136, 29);
@@ -897,7 +897,7 @@ namespace DisplayMagician.UIForms
             p_standalone.Controls.Add(label2);
             p_standalone.Controls.Add(nud_timeout_executable);
             p_standalone.Enabled = false;
-            p_standalone.Location = new System.Drawing.Point(4, 91);
+            p_standalone.Location = new System.Drawing.Point(21, 78);
             p_standalone.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_standalone.Name = "p_standalone";
             p_standalone.Size = new System.Drawing.Size(1220, 232);
@@ -1107,7 +1107,7 @@ namespace DisplayMagician.UIForms
             // 
             rb_standalone.AutoSize = true;
             rb_standalone.ForeColor = System.Drawing.Color.White;
-            rb_standalone.Location = new System.Drawing.Point(19, 61);
+            rb_standalone.Location = new System.Drawing.Point(18, 47);
             rb_standalone.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_standalone.Name = "rb_standalone";
             rb_standalone.Size = new System.Drawing.Size(326, 24);
@@ -1150,7 +1150,7 @@ namespace DisplayMagician.UIForms
             p_game.Controls.Add(lbl_game_timeout);
             p_game.Controls.Add(nud_timeout_game);
             p_game.Controls.Add(lbl_game_library);
-            p_game.Location = new System.Drawing.Point(4, 382);
+            p_game.Location = new System.Drawing.Point(22, 355);
             p_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_game.Name = "p_game";
             p_game.Size = new System.Drawing.Size(1220, 209);
@@ -1367,7 +1367,7 @@ namespace DisplayMagician.UIForms
             rb_launcher.AutoSize = true;
             rb_launcher.Checked = true;
             rb_launcher.ForeColor = System.Drawing.Color.White;
-            rb_launcher.Location = new System.Drawing.Point(18, 348);
+            rb_launcher.Location = new System.Drawing.Point(18, 326);
             rb_launcher.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_launcher.Name = "rb_launcher";
             rb_launcher.Size = new System.Drawing.Size(466, 24);
@@ -1391,7 +1391,7 @@ namespace DisplayMagician.UIForms
             tabp_after.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabp_after.Name = "tabp_after";
             tabp_after.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            tabp_after.Size = new System.Drawing.Size(1229, 849);
+            tabp_after.Size = new System.Drawing.Size(1264, 750);
             tabp_after.TabIndex = 3;
             tabp_after.Text = "5. Choose what happens afterwards";
             // 
@@ -1407,7 +1407,7 @@ namespace DisplayMagician.UIForms
             groupBox3.Controls.Add(cb_run_cmd_afterwards);
             groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             groupBox3.ForeColor = System.Drawing.Color.White;
-            groupBox3.Location = new System.Drawing.Point(204, 628);
+            groupBox3.Location = new System.Drawing.Point(204, 526);
             groupBox3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             groupBox3.Name = "groupBox3";
             groupBox3.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -1512,11 +1512,11 @@ namespace DisplayMagician.UIForms
             groupBox2.Controls.Add(rb_switch_capture_temp);
             groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             groupBox2.ForeColor = System.Drawing.Color.White;
-            groupBox2.Location = new System.Drawing.Point(204, 425);
+            groupBox2.Location = new System.Drawing.Point(204, 360);
             groupBox2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             groupBox2.Name = "groupBox2";
             groupBox2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            groupBox2.Size = new System.Drawing.Size(892, 173);
+            groupBox2.Size = new System.Drawing.Size(892, 148);
             groupBox2.TabIndex = 13;
             groupBox2.TabStop = false;
             groupBox2.Text = "What happens to the Microphone afterwards?";
@@ -1525,7 +1525,7 @@ namespace DisplayMagician.UIForms
             // 
             rb_switch_capture_permanent.AutoSize = true;
             rb_switch_capture_permanent.ForeColor = System.Drawing.Color.White;
-            rb_switch_capture_permanent.Location = new System.Drawing.Point(114, 106);
+            rb_switch_capture_permanent.Location = new System.Drawing.Point(114, 89);
             rb_switch_capture_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_capture_permanent.Name = "rb_switch_capture_permanent";
             rb_switch_capture_permanent.Size = new System.Drawing.Size(492, 24);
@@ -1539,7 +1539,7 @@ namespace DisplayMagician.UIForms
             rb_switch_capture_temp.AutoSize = true;
             rb_switch_capture_temp.Checked = true;
             rb_switch_capture_temp.ForeColor = System.Drawing.Color.White;
-            rb_switch_capture_temp.Location = new System.Drawing.Point(114, 51);
+            rb_switch_capture_temp.Location = new System.Drawing.Point(114, 47);
             rb_switch_capture_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_capture_temp.Name = "rb_switch_capture_temp";
             rb_switch_capture_temp.Size = new System.Drawing.Size(553, 24);
@@ -1556,11 +1556,11 @@ namespace DisplayMagician.UIForms
             groupBox1.Controls.Add(rb_switch_audio_temp);
             groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             groupBox1.ForeColor = System.Drawing.Color.White;
-            groupBox1.Location = new System.Drawing.Point(204, 220);
+            groupBox1.Location = new System.Drawing.Point(204, 194);
             groupBox1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             groupBox1.Name = "groupBox1";
             groupBox1.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            groupBox1.Size = new System.Drawing.Size(892, 173);
+            groupBox1.Size = new System.Drawing.Size(892, 145);
             groupBox1.TabIndex = 12;
             groupBox1.TabStop = false;
             groupBox1.Text = "What happens to the Audio output afterwards?";
@@ -1569,7 +1569,7 @@ namespace DisplayMagician.UIForms
             // 
             rb_switch_audio_permanent.AutoSize = true;
             rb_switch_audio_permanent.ForeColor = System.Drawing.Color.White;
-            rb_switch_audio_permanent.Location = new System.Drawing.Point(114, 106);
+            rb_switch_audio_permanent.Location = new System.Drawing.Point(114, 86);
             rb_switch_audio_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
             rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
@@ -1583,7 +1583,7 @@ namespace DisplayMagician.UIForms
             rb_switch_audio_temp.AutoSize = true;
             rb_switch_audio_temp.Checked = true;
             rb_switch_audio_temp.ForeColor = System.Drawing.Color.White;
-            rb_switch_audio_temp.Location = new System.Drawing.Point(114, 51);
+            rb_switch_audio_temp.Location = new System.Drawing.Point(114, 44);
             rb_switch_audio_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_audio_temp.Name = "rb_switch_audio_temp";
             rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
@@ -1600,11 +1600,11 @@ namespace DisplayMagician.UIForms
             gb_display_after.Controls.Add(rb_switch_display_temp);
             gb_display_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_display_after.ForeColor = System.Drawing.Color.White;
-            gb_display_after.Location = new System.Drawing.Point(204, 25);
+            gb_display_after.Location = new System.Drawing.Point(204, 32);
             gb_display_after.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_display_after.Name = "gb_display_after";
             gb_display_after.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_display_after.Size = new System.Drawing.Size(892, 168);
+            gb_display_after.Size = new System.Drawing.Size(892, 143);
             gb_display_after.TabIndex = 11;
             gb_display_after.TabStop = false;
             gb_display_after.Text = "What happens to the Display Profile afterwards?";
@@ -1613,7 +1613,7 @@ namespace DisplayMagician.UIForms
             // 
             rb_switch_display_permanent.AutoSize = true;
             rb_switch_display_permanent.ForeColor = System.Drawing.Color.White;
-            rb_switch_display_permanent.Location = new System.Drawing.Point(114, 106);
+            rb_switch_display_permanent.Location = new System.Drawing.Point(114, 84);
             rb_switch_display_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_display_permanent.Name = "rb_switch_display_permanent";
             rb_switch_display_permanent.Size = new System.Drawing.Size(508, 24);
@@ -1627,7 +1627,7 @@ namespace DisplayMagician.UIForms
             rb_switch_display_temp.AutoSize = true;
             rb_switch_display_temp.Checked = true;
             rb_switch_display_temp.ForeColor = System.Drawing.Color.White;
-            rb_switch_display_temp.Location = new System.Drawing.Point(114, 51);
+            rb_switch_display_temp.Location = new System.Drawing.Point(114, 45);
             rb_switch_display_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_display_temp.Name = "rb_switch_display_temp";
             rb_switch_display_temp.Size = new System.Drawing.Size(569, 24);
@@ -1640,12 +1640,12 @@ namespace DisplayMagician.UIForms
             // txt_shortcut_save_name
             // 
             txt_shortcut_save_name.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            txt_shortcut_save_name.Location = new System.Drawing.Point(241, 974);
+            txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            txt_shortcut_save_name.Location = new System.Drawing.Point(241, 876);
             txt_shortcut_save_name.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_shortcut_save_name.MaxLength = 200;
             txt_shortcut_save_name.Name = "txt_shortcut_save_name";
-            txt_shortcut_save_name.Size = new System.Drawing.Size(832, 35);
+            txt_shortcut_save_name.Size = new System.Drawing.Size(867, 31);
             txt_shortcut_save_name.TabIndex = 29;
             txt_shortcut_save_name.Click += txt_shortcut_save_name_Click;
             txt_shortcut_save_name.TextChanged += txt_shortcut_save_name_TextChanged;
@@ -1666,12 +1666,12 @@ namespace DisplayMagician.UIForms
             // 
             lbl_shortcut_name.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             lbl_shortcut_name.AutoSize = true;
-            lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
-            lbl_shortcut_name.Location = new System.Drawing.Point(27, 977);
+            lbl_shortcut_name.Location = new System.Drawing.Point(27, 879);
             lbl_shortcut_name.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_shortcut_name.Name = "lbl_shortcut_name";
-            lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
+            lbl_shortcut_name.Size = new System.Drawing.Size(160, 25);
             lbl_shortcut_name.TabIndex = 31;
             lbl_shortcut_name.Text = "Shortcut Name:";
             // 
@@ -1681,7 +1681,7 @@ namespace DisplayMagician.UIForms
             cb_autosuggest.Checked = true;
             cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
             cb_autosuggest.ForeColor = System.Drawing.Color.White;
-            cb_autosuggest.Location = new System.Drawing.Point(1113, 984);
+            cb_autosuggest.Location = new System.Drawing.Point(1148, 882);
             cb_autosuggest.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_autosuggest.Name = "cb_autosuggest";
             cb_autosuggest.Size = new System.Drawing.Size(136, 20);
@@ -1698,7 +1698,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
             btn_hotkey.ForeColor = System.Drawing.Color.White;
-            btn_hotkey.Location = new System.Drawing.Point(489, 1028);
+            btn_hotkey.Location = new System.Drawing.Point(507, 928);
             btn_hotkey.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_hotkey.Name = "btn_hotkey";
             btn_hotkey.Size = new System.Drawing.Size(140, 35);
@@ -1714,7 +1714,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
             lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_assigned.Location = new System.Drawing.Point(30, 1047);
+            lbl_hotkey_assigned.Location = new System.Drawing.Point(18, 940);
             lbl_hotkey_assigned.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
             lbl_hotkey_assigned.Size = new System.Drawing.Size(56, 16);
@@ -1731,7 +1731,7 @@ namespace DisplayMagician.UIForms
             btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_help.ForeColor = System.Drawing.Color.White;
             btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_help.Location = new System.Drawing.Point(1163, 16);
+            btn_help.Location = new System.Drawing.Point(1198, 16);
             btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_help.Name = "btn_help";
             btn_help.Size = new System.Drawing.Size(88, 27);
@@ -1747,7 +1747,7 @@ namespace DisplayMagician.UIForms
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
             CancelButton = btn_cancel;
-            ClientSize = new System.Drawing.Size(1265, 1088);
+            ClientSize = new System.Drawing.Size(1300, 979);
             Controls.Add(btn_help);
             Controls.Add(lbl_hotkey_assigned);
             Controls.Add(btn_hotkey);
@@ -1762,7 +1762,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
-            MinimumSize = new System.Drawing.Size(1281, 1030);
+            MinimumSize = new System.Drawing.Size(800, 600);
             Name = "ShortcutForm";
             ShowIcon = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

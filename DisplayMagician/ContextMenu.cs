@@ -6,8 +6,10 @@ using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms;
 using DisplayMagicianShared;
 using Microsoft.Win32;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DisplayMagician
 {
@@ -99,17 +101,23 @@ namespace DisplayMagician
         {
             try
             {
-                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
-                // Create the ProfileMenu (Level 2) Registry Key
-                if (dp == null) 
+                try
                 {
-                    // We must have already created the menu, so clear it instead
-                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
-                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
+                    Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
                 }
+                catch(Exception ex)
+                {
+                    // Ignore if the key doesn't exist
+                }
+
+                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
+
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
                 foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                 {
+                    if (!profile.IsPossible) continue; // Skip invalid profiles (e.g. missing screens)
+
+
                     RegistryKey pm = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name);
                     if (pm != null)
                     {
@@ -139,17 +147,21 @@ namespace DisplayMagician
         {
             try
             {
-                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
-                // Create the ProfileMenu (Level 2) Registry Key
-                if (dp == null)
+                try
                 {
-                    // We must have already created the menu, so clear it instead
-                    dp.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
-                    dp.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
+                    Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
                 }
+                catch (Exception ex)
+                {
+                    // Ignore if the key doesn't exist
+                }
+                RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
+ 
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
                 foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
                 {
+                    if (shortcut.IsValid != ShortcutValidity.Valid) continue; // Skip invalid shortcuts (e.g. missing files)
+
                     RegistryKey gs = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell\\" + shortcut.Name);
                     if (gs != null)
                     {

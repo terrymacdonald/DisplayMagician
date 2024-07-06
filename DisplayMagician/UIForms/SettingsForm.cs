@@ -707,10 +707,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_context_menu_remove_Click(object sender, EventArgs e)
         {
-            
+            _installDesktopContextMenu = false;
+            Program.AppProgramSettings.InstallDesktopContextMenu = false;
+
             if (ContextMenu.UninstallContextMenu())
             {
-                _installDesktopContextMenu = false;
                 MessageBox.Show("Successfully removed the Desktop Background Context Menu.",
                                         "Removed Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -723,9 +724,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_context_menu_add_Click(object sender, EventArgs e)
         {
+            _installDesktopContextMenu = true;
+            Program.AppProgramSettings.InstallDesktopContextMenu = true;
+
             if (ContextMenu.InstallContextMenu())
             {
-                _installDesktopContextMenu = true;
                 MessageBox.Show("Successfully added the Desktop Background Context Menu.",
                                         "Added Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

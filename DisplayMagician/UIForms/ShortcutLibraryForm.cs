@@ -285,6 +285,7 @@ namespace DisplayMagician.UIForms
                 _shortcutForm = new ShortcutForm();
             } 
             _shortcutForm.Owner = this;
+
             //ShortcutRepository.IsValidRefresh()
             // Set the Shortcut to as a new shortcut
             _shortcutForm.Shortcut = si;
@@ -298,6 +299,12 @@ namespace DisplayMagician.UIForms
                 RefreshShortcutLibraryUI();
                 // As this is an edit, we need to manually force saving the shortcut library
                 ShortcutRepository.SaveShortcuts();
+                // We update the Game Shortcut context menu is always updated and correct.
+                if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                {
+                    ContextMenu.UpdateShortcutContextMenu();
+                }
+
             }
             this.Cursor = Cursors.Default;
             RemoveWarningIfShortcuts();
@@ -358,7 +365,8 @@ namespace DisplayMagician.UIForms
                 {
                     _shortcutForm = new ShortcutForm();
                 }
-                _shortcutForm.Owner = this;
+                _shortcutForm.Owner = this; 
+
                 _shortcutForm.Shortcut = _selectedShortcut;
                 _shortcutForm.EditingExistingShortcut = true;
                 //ilv_saved_shortcuts.SuspendLayout();
@@ -368,6 +376,12 @@ namespace DisplayMagician.UIForms
                     RefreshShortcutLibraryUI();
                     // As this is an edit, we need to manually force saving the shortcut library
                     ShortcutRepository.SaveShortcuts();
+                    // We update the Game Shortcut context menu is always updated and correct.
+                    if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                    {
+                        ContextMenu.UpdateShortcutContextMenu();
+                    }
+
                 }
 
                 this.Cursor = Cursors.Default;
@@ -421,6 +435,12 @@ namespace DisplayMagician.UIForms
             ShortcutRepository.IsValidRefresh();
             RefreshShortcutLibraryUI();
             RemoveWarningIfShortcuts();
+            // We update the Game Shortcut context menu is always updated and correct.
+            if (Program.AppProgramSettings.InstallDesktopContextMenu)
+            {
+                ContextMenu.UpdateShortcutContextMenu();
+            }
+
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)

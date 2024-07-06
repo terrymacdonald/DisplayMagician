@@ -100,9 +100,14 @@ namespace DisplayMagician.UIForms
                 Utils.CenterOnPrimaryScreen(Program.AppMainForm);
                 // Also refresh the right-click menu (if we have a main form loaded)
                 Program.AppMainForm.RefreshNotifyIconMenus();
+                // We update the Game Shortcut context menu is always updated and correct.
+                if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                {
+                    ContextMenu.UpdateShortcutContextMenu();
+                }
 
             }
-            
+
             // Bring the window back to the front
             Utils.ActivateCenteredOnPrimaryScreen(this);
 
@@ -171,6 +176,11 @@ namespace DisplayMagician.UIForms
 
             // As this may impact which game shortcuts are now usable, also force a refresh of the game shortcuts validity
             ShortcutRepository.IsValidRefresh();
+            // We update the Game Shortcut context menu is always updated and correct.
+            if (Program.AppProgramSettings.InstallDesktopContextMenu)
+            {
+                ContextMenu.UpdateShortcutContextMenu();
+            }
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
@@ -542,6 +552,12 @@ namespace DisplayMagician.UIForms
 
             // now update the profiles image listview
             RefreshDisplayProfileUI();
+            // We update the Game Shortcut context menu is always updated and correct.
+            if (Program.AppProgramSettings.InstallDesktopContextMenu)
+            {
+                ContextMenu.UpdateShortcutContextMenu();
+            }
+
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
