@@ -11,16 +11,16 @@ using ValveKeyValue;
 
 namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 {
-    /*class AppInfo
+
+    class AppInfo
     {
-        private const uint Magic6F = 0x6F_68_73_00;
         private const uint Magic29 = 0x07_56_44_29;
         private const uint Magic28 = 0x07_56_44_28;
         private const uint Magic = 0x07_56_44_27;
 
         public EUniverse Universe { get; set; }
 
-        public List<App> Apps { get; set; } = new List<App>();
+        public List<App> Apps { get; set; } = [];
 
         /// <summary>
         /// Opens and reads the given filename.
@@ -28,9 +28,8 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="filename">The file to open and read.</param>
         public void Read(string filename)
         {
-            var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Read(fs);
-            fs.Close();
         }
 
         /// <summary>
@@ -39,16 +38,35 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="input">The input <see cref="Stream"/> to read from.</param>
         public void Read(Stream input)
         {
-            var reader = new BinaryReader(input);
+            using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic && magic != Magic28 && magic != Magic29 && magic != Magic6F)
+            if (magic != Magic && magic != Magic28 && magic != Magic29)
             {
-                reader.Close();
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
+
+            var options = new KVSerializerOptions();
+
+            if (magic == Magic29)
+            {
+                var stringTableOffset = reader.ReadInt64();
+                var offset = reader.BaseStream.Position;
+                reader.BaseStream.Position = stringTableOffset;
+                var stringCount = reader.ReadUInt32();
+                var stringTable = new StringTable((int)stringCount);
+
+                for (var i = 0; i < stringCount; i++)
+                {
+                    stringTable.Add(ReadNullTermUtf8String(reader.BaseStream));
+                }
+
+                reader.BaseStream.Position = offset;
+
+                options.StringTable = stringTable;
+            }
 
             var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
 
@@ -61,7 +79,8 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
                     break;
                 }
 
-                reader.ReadUInt32(); // size until end of Data
+                var size = reader.ReadUInt32(); // size until end of Data
+                var end = reader.BaseStream.Position + size;
 
                 var app = new App
                 {
@@ -73,19 +92,23 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
                     ChangeNumber = reader.ReadUInt32(),
                 };
 
-                if (magic == Magic28 && magic == Magic29)
+                if (magic == Magic28 || magic == Magic29)
                 {
                     app.BinaryDataHash = new ReadOnlyCollection<byte>(reader.ReadBytes(20));
                 }
 
-                app.Data = deserializer.Deserialize(input);
+                app.Data = deserializer.Deserialize(input, options);
+
+                if (reader.BaseStream.Position != end)
+                {
+                    throw new InvalidDataException();
+                }
 
                 Apps.Add(app);
             } while (true);
-            reader.Close();
         }
 
-        public static DateTime DateTimeFromUnixTime(uint unixTime)
+        private static DateTime DateTimeFromUnixTime(uint unixTime)
         {
             return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixTime);
         }
@@ -229,6 +252,4 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
             }
         }
     }
-
 }
-
