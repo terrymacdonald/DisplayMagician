@@ -1938,19 +1938,6 @@ namespace DisplayMagician
                             if (processesToMonitor.Count > 0)
                             {
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found {processesToMonitor.Count} '{altGameProcessToMonitor}' processes to monitor");
-
-                                try
-                                {
-                                    foreach (Process monitoredProcess in processesToMonitor)
-                                    {
-                                        logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of alternative game monitored process {altGameProcessToMonitor} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                        monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Setting priority of alternative game monitored process {altGameProcessToMonitor} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                }
                                 break;
                             }
 

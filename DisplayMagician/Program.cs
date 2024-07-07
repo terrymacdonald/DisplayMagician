@@ -166,11 +166,11 @@ namespace DisplayMagician {
             }
 
             // Check if this is the first time the program has been run
-            bool newSettingsFile = false;
+            bool newInstallation = false;
             string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             if (!File.Exists(targetSettingsFile))
             {
-                newSettingsFile = true;
+                newInstallation = true;
                 logger.Trace($"Program/Main: A new Settings file is required as it doesn't exist yet. This must be a new install.");
             }
 
@@ -180,7 +180,7 @@ namespace DisplayMagician {
             bool upgradedSettingsFile = false;
             try
             {               
-                if (newSettingsFile == false && OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
+                if (OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
                 {
                     string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
                     string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
@@ -251,10 +251,13 @@ namespace DisplayMagician {
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
             // If app settings is new, then set the initial settings we need
-            if (newSettingsFile)
+            if (newInstallation)
             {
                 Guid guid = new Guid();
-                AppProgramSettings.InstallId = guid.ToString();
+                if (AppProgramSettings.InstallId == "")
+                {
+                    AppProgramSettings.InstallId = guid.ToString();
+                }
                 AppProgramSettings.InstallDate = DateOnly.FromDateTime(DateTime.UtcNow);
                 AppProgramSettings.LastDonationDate = new DateOnly(1980,1,1);
                 AppProgramSettings.LastDonateButtonAnimationDate = new DateOnly(1980, 1, 1);
@@ -295,17 +298,12 @@ namespace DisplayMagician {
 
 
             // Targets where to log to: File and Console
-            //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
             string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.Now.ToString("yyyy-MM-dd-HHmm",CultureInfo.InvariantCulture)}.log");
-            //string archiveFilename = $"DisplayMagician###.log";
 
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
             {
                 FileName = appLogFilename,
-                //ArchiveOldFileOnStartup = true,
-                //ArchiveFileName = archiveFilename,
-                //ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Rolling,
                 MaxArchiveFiles = 4,
                 ArchiveAboveSize = 41943040, // 40MB max file size
                 Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
@@ -317,19 +315,6 @@ namespace DisplayMagician {
             loggingRule.Targets.Add(logfile);
             loggingRule.LoggerNamePattern = "*";
             config.LoggingRules.Add(loggingRule);
-
-            // Create the log console target
-           /* var logconsole = new NLog.Targets.ColoredConsoleTarget("logconsole")
-            {
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
-            };
-
-            // Create a logging rule to use the log console target
-            var loggingRule2 = new LoggingRule("LogToConsole");
-            loggingRule2.EnableLoggingForLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
-            loggingRule2.Targets.Add(logconsole);
-            loggingRule.LoggerNamePattern = "*";
-            config.LoggingRules.Add(loggingRule2);*/
 
             // Apply config           
             NLog.LogManager.Configuration = config;
@@ -428,10 +413,8 @@ namespace DisplayMagician {
             {
                 logger.Info($"Program/Main: Upgraded old settings file to settings file {targetSettingsFile} earlier in loading process (before logging service was available).");
             }
-
             
-            // Note - we cannot upgrasde the DisplayProfiles from prior versions so this file has been skipped.
-
+            // Note - we cannot upgrade the DisplayProfiles from prior versions so this file has been skipped.
 
             // Also upgrade the Shortcuts file if it's needed
             string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
