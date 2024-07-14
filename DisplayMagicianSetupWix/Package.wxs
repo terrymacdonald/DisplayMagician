@@ -1,0 +1,36 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"  xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+	<Package Name="DisplayMagicianSetupWix" Manufacturer="!(bind.Property.Manufacturer)"  Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5">
+		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+
+		<!-- Use the built in WixUI_InstallDir GUI -->
+		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER"/>
+
+		<UI>
+			<!-- Add in some text styles to make the text white -->
+			<TextStyle Id="White_Normal" FaceName="Tahoma" Size="8" Red="255" Green="255" Blue="255" />
+			<TextStyle Id="White_Bigger" FaceName="Tahoma" Size="12" Red="255" Green="255" Blue="255" />
+			<TextStyle Id="White_Title" FaceName="Tahoma" Size="9" Bold="yes" Red="255" Green="255" Blue="255" />
+		</UI>
+		
+		<!-- Set the icon to show next to the program name in Add/Remove programs -->
+		<Icon Id="DisplayMagicianIcon.ico" SourceFile="DisplayMagician.ico" />
+		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon.ico" />
+		
+		<!-- Installer UI custom pictures. File names are made up. Add path to your pics -->
+		<WixVariable Id="WixUIBannerBmp" Value="WixUIBannerBmp.png" />
+		<WixVariable Id="WixUIDialogBmp" Value="WixUIDialogBmp.png" />
+		<WixVariable Id="WixUILicenseRtf" Value="EULA_en-us.rtf" />
+
+		<netfx:DotNetCompatibilityCheck
+			Property="DOTNETRUNTIMECHECK"
+			RollForward="major"
+			RuntimeType="desktop"
+			Platform="x64"
+			Version="6.0.0"
+		/>
+
+		<Feature Id="Main">
+			<ComponentGroupRef Id="DisplayMagicianComponents" />
+		</Feature>
+	</Package>
+</Wix>
