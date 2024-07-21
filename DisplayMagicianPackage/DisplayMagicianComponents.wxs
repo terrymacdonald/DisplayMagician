@@ -1,0 +1,14 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="DisplayMagicianComponents" Directory="INSTALLFOLDER">
+      <Component>
+        <File Source="DisplayMagician.exe" />
+      </Component>
+    </ComponentGroup>
+	  <ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
+		  <Component>
+			  <File Source="DisplayMagicianConsole.exe" />
+		  </Component>
+	  </ComponentGroup>
+  </Fragment>
+</Wix>

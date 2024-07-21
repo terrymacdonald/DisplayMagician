@@ -1,0 +1,10 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="DisplayMagicianPackage" Manufacturer="TODO Manufacturer" Version="1.0.0.0" UpgradeCode="f4b2ef6f-f051-4d31-941c-09adf06f93ac">
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" AllowSameVersionUpgrades="yes"/>
+
+    <Feature Id="Main">
+        <ComponentGroupRef Id="DisplayMagicianComponents" />
+		<ComponentGroupRef Id="DisplayMagicianConsoleComponents" />
+	</Feature>
+  </Package>
+</Wix>
