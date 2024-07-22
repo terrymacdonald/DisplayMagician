@@ -3,9 +3,10 @@
 		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" AllowSameVersionUpgrades="yes"/>
 
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
-		<Icon Id="DisplayMagicianIcon" SourceFile="DisplayMagician.ico" />
-		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon" />
+		<Icon Id="DisplayMagicianIcon.exe" SourceFile="DisplayMagician.ico" />
+		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon.exe" />
 
+		<!-- Set application components that will be installed -->
 		<Feature Id="Main">
 			<ComponentGroupRef Id="DisplayMagicianComponents" />
 			<ComponentGroupRef Id="DisplayMagicianConsoleComponents" />

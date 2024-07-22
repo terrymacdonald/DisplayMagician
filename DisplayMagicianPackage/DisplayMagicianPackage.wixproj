@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
+    <Content Include="EULA_en-us.rtf" />
     <Content Include="WixUIBannerBmp.png" />
     <Content Include="WixUIDialogBmp.png" />
   </ItemGroup>
