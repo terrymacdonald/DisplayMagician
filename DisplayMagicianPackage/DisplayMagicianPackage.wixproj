@@ -3,6 +3,11 @@
     <BindFiles>false</BindFiles>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="DisplayMagician.ico" />
+    <Content Include="WixUIBannerBmp.png" />
+    <Content Include="WixUIDialogBmp.png" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.1" />
     <PackageReference Include="WixToolset.UI.wixext" Version="5.0.1" />
     <PackageReference Include="WixToolset.Util.wixext" Version="5.0.1" />

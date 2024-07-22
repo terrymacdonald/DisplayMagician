@@ -1,6 +1,10 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-	<Package Name="DisplayMagician Setup" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5">
+	<Package Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5">
 		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" AllowSameVersionUpgrades="yes"/>
+
+		<!-- Set the icon to show next to the program name in Add/Remove programs -->
+		<Icon Id="DisplayMagicianIcon" SourceFile="DisplayMagician.ico" />
+		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon" />
 
 		<Feature Id="Main">
 			<ComponentGroupRef Id="DisplayMagicianComponents" />

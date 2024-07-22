@@ -2,16 +2,20 @@
   <Fragment>
     <ComponentGroup Id="DisplayMagicianComponents" Directory="INSTALLFOLDER">
 		<Component>
+			<RegistryKey Root="HKLM" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
+			<RegistryKey Root="HKCU" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
+
 			<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="Version" Value="!(bind.fileVersion.DisplayMagicianExe)"/>
 			<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstallDate" Value="[Date]"/>
 			<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstallDir" Value="[INSTALLFOLDER]"/>
+			<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="FirstRun" Value="1"/>
 		</Component>
-		<File Source="DisplayMagician.exe" Id="DisplayMagicianExe" />
+		<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\DisplayMagician.exe" Id="DisplayMagicianExe" />
 		<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\WebView2Loader.dll" />
 	</ComponentGroup>
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
 			<Component>
-				<File Source="DisplayMagicianConsole.exe" />
+				<File Source="$(var.DisplayMagicianConsole.TargetDir)publish\win-x64\DisplayMagicianConsole.exe" />
 			</Component>
 	  </ComponentGroup>
   </Fragment>
