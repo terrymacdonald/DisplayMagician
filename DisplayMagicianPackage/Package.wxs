@@ -1,11 +1,22 @@
-﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+	 xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util" 
+	 xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" 
+	 xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
 	<Package Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5">
 		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" AllowSameVersionUpgrades="yes"/>
 
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
-		<Icon Id="DisplayMagicianIcon.exe" SourceFile="DisplayMagician.ico" />
-		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon.exe" />
+		<Icon Id="DisplayMagicianIcon.ico" SourceFile="DisplayMagician.ico" />
+		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon.ico" />
 
+		<netfx:DotNetCompatibilityCheck
+			Property="DOTNETRUNTIMECHECK"
+			RollForward="major"
+			RuntimeType="desktop"
+			Platform="x64"
+			Version="8.0.0"
+		/>
+		
 		<!-- Set application components that will be installed -->
 		<Feature Id="Main">
 			<ComponentGroupRef Id="DisplayMagicianComponents" />

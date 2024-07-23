@@ -11,16 +11,23 @@
 				<RegistryKey Root="HKCU" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="FirstRun" Value="1"/>
 			</Component>
-			<Component Id="ApplicationShortcut" Guid="6C7BFB9E-8549-4E34-BE44-E1A718146755">
-				<Shortcut Name="DisplayMagician" Description="!(loc.ProductDescription)" Target="[INSTALLFOLDER]DisplayMagician.exe"
-					  WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="DisplayMagicianIcon.exe">
-					<!--AUMID-->
+
+			<Component>
+				<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\DisplayMagician.exe" Id="DisplayMagicianExe" />
+				<Shortcut Name="DisplayMagician" Directory="ProgramMenuFolder" Advertise="yes" Icon="DisplayMagicianIcon.ico"  />
+			</Component>
+			
+			<!--<Component Id="ApplicationShortcut" Guid="6C7BFB9E-8549-4E34-BE44-E1A718146755">
+				<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\DisplayMagician.exe" Id="DisplayMagicianExe" />
+				<Shortcut Name="DisplayMagician" Description="!(loc.ProductDescription)" Directory="ProgramMenuFolder"
+						  WorkingDirectory="INSTALLFOLDER"  Icon="DisplayMagicianIcon.ico" Target="[#DisplayMagicianExe]">
+					--><!--AUMID--><!--
 					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
-					<!--COM CLSID-->
+					--><!--COM CLSID--><!--
 					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}" />
 				</Shortcut>
-			</Component>
-			<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\DisplayMagician.exe" Id="DisplayMagicianExe" />
+			</Component>-->
+			
 			<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\WebView2Loader.dll" />
 		</ComponentGroup>
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
