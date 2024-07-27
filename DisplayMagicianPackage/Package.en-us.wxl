@@ -1,7 +1,7 @@
 ﻿<!--
 This file contains the declaration of all the localizable strings.
 -->
-<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-US"
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-US">
 	<String Id="DowngradeError" Value="A newer version of [ProductName] is already installed." />
 	<String Id="ProductDescription" Value="[ProductName] will automatically run your games with a different display profile or audio settings and then will revert everything back to the way it was when you've finished playing." />
 	<String Id="LicenseRtfFile" Overridable="yes" Value="\Lang\en-us\EULA_en-us.rtf" />
