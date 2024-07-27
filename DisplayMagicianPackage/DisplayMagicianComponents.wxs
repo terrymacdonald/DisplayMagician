@@ -14,7 +14,8 @@
 
 			<Component>
 				<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\DisplayMagician.exe" Id="DisplayMagicianExe" />
-				<Shortcut Name="DisplayMagician" Description="!(loc.ProductDescription)" Directory="ProgramMenuFolder" Advertise="yes" Icon="DisplayMagicianIcon.ico" >
+				<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)" 
+						  Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="DisplayMagicianIcon.ico" >
 					<!--AUMID-->
 					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
 					<!--COM CLSID-->
