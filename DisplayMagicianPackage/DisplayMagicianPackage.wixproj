@@ -2,6 +2,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BindFiles>false</BindFiles>
   </PropertyGroup>
+  <PropertyGroup>
+    <OutputName>DisplayMagician-v</OutputName>
+  </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
     <Content Include="EULA_en-us.rtf" />

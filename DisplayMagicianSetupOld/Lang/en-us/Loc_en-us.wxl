@@ -29,6 +29,10 @@
 	<String Id="FilesInUseDescription" Value="{\White_Normal}Some files that need to be updated are currently in use." />
 	<String Id="InstallDirDlgTitle" Value="{\White_Title}Destination Folder" />
 	<String Id="InstallDirDlgDescription" Value="{\White_Normal}Click Next to install to the default folder or click Change to choose another." />
+	<String Id="ProgressDlgTitleInstalling" Overridable="yes" Value="{\White_Title}Installing [ProductName]" />
+	<String Id="ProgressDlgTextInstalling" Overridable="yes" Value="{\White_Normal}Please wait while the Setup Wizard installs [ProductName]." />
+	<String Id="PrepareDlgTitle" Overridable="yes" Value="{\White_Title}Welcome to the [ProductName] Setup Wizard" />
+	<String Id="PrepareDlgDescription" Overridable="yes" Value="{\White_Normal}Please wait while the Setup Wizard prepares to guide you through the installation." />
 	<String Id="VerifyReadyDlgInstallTitle" Value="{\White_Title}Ready to install [ProductName]" />
 	<String Id="VerifyReadyDlgChangeTitle" Value="{\White_Title}Ready to change [ProductName]" />
 	<String Id="VerifyReadyDlgRepairTitle" Value="{\White_Title}Ready to repair [ProductName]" />
