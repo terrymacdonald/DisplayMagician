@@ -5,10 +5,11 @@ This file contains the declaration of all the localizable strings.
 	<String Id="DowngradeError" Value="A newer version of [ProductName] is already installed." />
 	<String Id="ProductDescription" Value="[ProductName] will automatically run your games with a different display profile or audio settings and then will revert everything back to the way it was when you've finished playing." />
 	<String Id="LicenseRtfFile" Overridable="yes" Value="\Lang\en-us\EULA_en-us.rtf" />
-
+	
 	<!-- Overwrite  -->
 	<String Id="MustCloseDisplayMagician" Value="You must close [ProductName] in order to upgrade it!" />
 	<String Id="DowngradeErrorMessage" Value="You cannot downgrade [ProductName] to a lower version using this installer. Please uninstall the older version of !(loc.ProductName) first!" />
+	<String Id="LaunchDisplayMagician" Value="Launch [ProductName]" />
 
 
 	<!-- Overwrite all the dislog titles so that the title text is white on a black background -->
@@ -17,7 +18,7 @@ This file contains the declaration of all the localizable strings.
 	<String Id="LicenseAgreementDlgTitle" Value="{\White_Title}End User License Agreement" />
 	<String Id="LicenseAgreementDlgDescription" Value="{\White_Normal}Please read and accept this License Agreement" />
 	<String Id="ExitDialogTitle" Value="{\White_Title}Completed the [ProductName] Setup Wizard" />
-	<String Id="ExitDialogDescription" Value="{\White_Normal}Click the Finish button to exit the Setup Wizard." />
+	<String Id="ExitDialogDescription" Value="{\White_Normal}Click the Finish button to exit the Setup Wizard. [ProductName] will then start running." />
 	<String Id="FatalErrorTitle" Value="{\White_Title}[ProductName] Setup Wizard ended prematurely" />
 	<String Id="FatalErrorDescription1" Value="{\White_Normal}[ProductName] Setup Wizard ended prematurely because of an error. Your system has not been modified. To install this program at a later time, run Setup Wizard again." />
 	<String Id="UserExitTitle" Value="{\White_Title}[ProductName] Setup Wizard was interrupted" />
@@ -31,7 +32,7 @@ This file contains the declaration of all the localizable strings.
 	<String Id="InstallDirDlgTitle" Value="{\White_Title}Destination Folder" />
 	<String Id="InstallDirDlgDescription" Value="{\White_Normal}Click Next to install to the default folder or click Change to choose another." />
 	<String Id="ProgressDlgTitleInstalling" Overridable="yes" Value="{\White_Title}Installing [ProductName]" />
-	<String Id="ProgressDlgTextInstalling" Overridable="yes" Value="{\White_Normal}Please wait while the Setup Wizard installs [ProductName]." />
+	<String Id="ProgressDlgTextInstalling" Overridable="yes" Value="Please wait while the Setup Wizard installs [ProductName]." />
 	<String Id="PrepareDlgTitle" Overridable="yes" Value="{\White_Title}Welcome to the [ProductName] Setup Wizard" />
 	<String Id="PrepareDlgDescription" Overridable="yes" Value="{\White_Normal}Please wait while the Setup Wizard prepares to guide you through the installation." />
 	<String Id="VerifyReadyDlgInstallTitle" Value="{\White_Title}Ready to install [ProductName]" />

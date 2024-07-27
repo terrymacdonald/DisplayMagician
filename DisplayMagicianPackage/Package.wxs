@@ -11,7 +11,7 @@
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
 		<Icon Id="DisplayMagicianIcon.ico" SourceFile="DisplayMagician.ico" />
 		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon.ico" />
-
+		
 		<!-- Installer UI custom pictures. File names are made up. Add path to your pics -->
 		<WixVariable Id="WixUIBannerBmp" Value="WixUIBannerBmp.png" />
 		<WixVariable Id="WixUIDialogBmp" Value="WixUIDialogBmp.png" />
@@ -31,17 +31,21 @@
 			<!-- These dialog references are needed for CloseApplication above to work correctly -->
 			<DialogRef Id="FilesInUse" />
 			<DialogRef Id="MsiRMFilesInUse" />
-
-		</UI>
 			
-		<netfx:DotNetCompatibilityCheck
-			Property="DOTNETRUNTIMECHECK"
-			RollForward="major"
-			RuntimeType="desktop"
-			Platform="x64"
-			Version="8.0.0"
-		/>
+			<!-- Automatically start DisplayMagician -->
+			<Publish Dialog="ExitDialog" Control="Finish"  Event="DoAction"	 Value="LaunchApplication" />
+			
+		</UI>
 		
+		<!-- Set our executable (its ID) as custom action target -->
+		<Property Id="WixShellExecTarget" Value="[#DisplayMagicianExe]"/>
+
+		<!-- Run launch application  custom action -->
+		<CustomAction Id="LaunchApplication"
+			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+			DllEntry="WixShellExec"
+			Impersonate="yes" />
+					
 		<!-- Set application components that will be installed -->
 		<Feature Id="Main">
 			<ComponentGroupRef Id="DisplayMagicianComponents" />
