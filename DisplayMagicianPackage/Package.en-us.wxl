@@ -12,7 +12,7 @@ This file contains the declaration of all the localizable strings.
 	<String Id="LaunchDisplayMagician" Value="Launch [ProductName]" />
 
 
-	<!-- Overwrite all the dislog titles so that the title text is white on a black background -->
+	<!-- Overwrite all the dialog titles so that the title text is white on a black background -->
 	<String Id="WelcomeDlgTitle" Value="{\White_Title}Welcome to the [ProductName] [ProductVersion] Setup Wizard" />
 	<String Id="WelcomeDlgDescription" Value="{\White_Normal}DisplayMagician will automatically run your games with a different display profile or audio settings and then will revert everything back to the way it was when you've finished playing. If you want to install DisplayMagician then click Next to continue or Cancel to exit." />
 	<String Id="LicenseAgreementDlgTitle" Value="{\White_Title}End User License Agreement" />
