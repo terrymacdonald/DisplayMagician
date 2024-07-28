@@ -1,13 +1,16 @@
-﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
   <Bundle Name="DisplayMagicianBundle" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="6b8c0a2e-9060-4225-8394-b8a360716247">
     <BootstrapperApplication>
-      <bal:WixStandardBootstrapperApplication LicenseUrl="https://www.example.com/license" Theme="hyperlinkLicense" />
-    </BootstrapperApplication>
+      <!-- <bal:WixStandardBootstrapperApplication LicenseUrl="https://www.example.com/license" Theme="hyperlinkLicense" /> -->
+		<bal:WixStandardBootstrapperApplication LicenseFile="My Licensing Terms.rtf"
+                                                Theme="rtfLicense" />
+	</BootstrapperApplication>
 
     <Chain>
       <!-- TODO: Define the list of chained packages. -->
       <!-- <MsiPackage SourceFile="path\to\your.msi" /> -->
-		<MsiPackage SourceFile="..\DisplayMagicianPackage\bin\$(var.Configuration)\DisplayMagicianPackage.msi" />
+		<PackageGroupRef Id="DotNetDesktopRedist" />
+		<MsiPackage Id="DisplayMagicianPackage" SourceFile="D:\visual-studio-projects\DisplayMagician\DisplayMagicianPackage\bin\x64\Debug\en-US\DisplayMagician-v.msi" />
     </Chain>
 
   </Bundle>

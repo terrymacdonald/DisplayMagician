@@ -2,8 +2,8 @@
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="WixToolset.Bal.wixext" Version="5.0.1" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.1" />
   </ItemGroup>
 </Project>

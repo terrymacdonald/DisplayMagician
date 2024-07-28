@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+ xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+
+	<Fragment>
+		<netfx:DotNetCoreSearch RuntimeType="desktop" MajorVersion="6" Platform="x64" Variable="DOTNETDESKTOPVERSION" />
+		<PackageGroup Id="DotNetDesktopRedist">
+			<ExePackage Id="DotNetDesktop"
+						DetectCondition="DOTNETDESKTOPVERSION &gt;= &quot;8.0.0&quot;"
+						Permanent="yes"
+						Vital="no"
+						InstallArguments="windowsdesktop-runtime-6.0.27-win-x64.exe /install /quiet /norestart"
+						RepairArguments="windowsdesktop-runtime-6.0.27-win-x64.exe /repair /quiet /norestart"
+						UninstallArguments="windowsdesktop-runtime-6.0.27-win-x64.exe /uninstall /quiet /norestart">
+				<ExePackagePayload
+					Name="windowsdesktop-runtime-6.0.27-win-x64.exe"
+					SourceFile="..\..\..\Packages\dotnet-runtime-win-x64\6.0.27\content\windowsdesktop-runtime-6.0.27-win-x64.exe" />
+			</ExePackage>
+		</PackageGroup>
+
+
+		<!-- <netfx:DotNetCoreSearch RuntimeType="aspnet" MajorVersion="6" Platform="x64" Variable="ASPDOTNETCOREVERSION" />
+		<PackageGroup Id="AspNetCoreRedist">
+			<ExePackage Id="AspNetCore"
+						DetectCondition="ASPDOTNETCOREVERSION &gt;= &quot;6.0.27&quot;"
+						Permanent="yes"
+						Vital="no"
+						InstallArguments="aspnetcore-runtime-6.0.27-win-x64.exe /install /quiet /norestart"
+						RepairArguments="aspnetcore-runtime-6.0.27-win-x64.exe /repair /quiet /norestart"
+						UninstallArguments="aspnetcore-runtime-6.0.27-win-x64.exe /uninstall /quiet /norestart">
+				<ExePackagePayload
+					Name="aspnetcore-runtime-6.0.27-win-x64.exe"
+					SourceFile="..\..\..\Packages\aspnetcore-runtime-win-x64\6.0.27\content\aspnetcore-runtime-6.0.27-win-x64.exe" />
+			</ExePackage>
+		</PackageGroup> -->
+	</Fragment>
+</Wix>
