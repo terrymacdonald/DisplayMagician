@@ -1,0 +1,14 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle Name="DisplayMagicianBundle" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="6b8c0a2e-9060-4225-8394-b8a360716247">
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication LicenseUrl="https://www.example.com/license" Theme="hyperlinkLicense" />
+    </BootstrapperApplication>
+
+    <Chain>
+      <!-- TODO: Define the list of chained packages. -->
+      <!-- <MsiPackage SourceFile="path\to\your.msi" /> -->
+		<MsiPackage SourceFile="..\DisplayMagicianPackage\bin\$(var.Configuration)\DisplayMagicianPackage.msi" />
+    </Chain>
+
+  </Bundle>
+</Wix>
