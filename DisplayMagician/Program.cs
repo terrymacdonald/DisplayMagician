@@ -29,7 +29,6 @@ using System.ComponentModel;
 using System.Text;
 using System.Globalization;
 using System.Net.Http;
-using Windows.Web.Http;
 
 namespace DisplayMagician {
 
