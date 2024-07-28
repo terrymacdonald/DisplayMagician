@@ -29,6 +29,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Globalization;
 using System.Net.Http;
+using Windows.Web.Http;
 
 namespace DisplayMagician {
 
@@ -68,6 +69,8 @@ namespace DisplayMagician {
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
         public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
+
+        private static readonly System.Net.Http.HttpClient AppHttpClient = new System.Net.Http.HttpClient();
 
         public enum ERRORLEVEL: int
         {
@@ -143,6 +146,9 @@ namespace DisplayMagician {
 
             // If we get here, then we're the first instance!
             RegisterDisplayMagicianWithWindows();
+
+            // Set up some defaults for the shared HttpClient
+            AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
 
             // Prepare NLog for internal logging - Comment out when not required
             //NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
@@ -1251,12 +1257,10 @@ namespace DisplayMagician {
             // Get the message index
             string json;
             List<MessageItem> messageIndex;
-            HttpClient client = new HttpClient();
-            //WebClient client = new WebClient();
             string indexUrl = "https://displaymagician.littlebitbig.com/messages/index_2.0.json";
             try
             {
-                json = client.GetStringAsync(indexUrl).Result;
+                json = AppHttpClient.GetStringAsync(indexUrl).Result;
                 //json = client.DownloadString(indexUrl);
                 if (String.IsNullOrWhiteSpace(json))
                 {
