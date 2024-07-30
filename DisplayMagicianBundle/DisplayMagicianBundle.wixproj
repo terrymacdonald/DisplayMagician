@@ -3,6 +3,9 @@
     <OutputType>Bundle</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="EULA_en-us.rtf" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="WixToolset.Bal.wixext" Version="5.0.1" />
     <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.1" />
   </ItemGroup>

@@ -9,12 +9,12 @@
 						DetectCondition="DOTNETDESKTOPVERSION &gt;= &quot;8.0.0&quot;"
 						Permanent="yes"
 						Vital="no"
-						InstallArguments="windowsdesktop-runtime-6.0.27-win-x64.exe /install /quiet /norestart"
-						RepairArguments="windowsdesktop-runtime-6.0.27-win-x64.exe /repair /quiet /norestart"
-						UninstallArguments="windowsdesktop-runtime-6.0.27-win-x64.exe /uninstall /quiet /norestart">
+						InstallArguments="windowsdesktop-runtime-8.0.7-win-x64.exe /install /quiet /norestart"
+						RepairArguments="windowsdesktop-runtime-8.0.7-win-x64.exe /repair /quiet /norestart"
+						UninstallArguments="windowsdesktop-runtime-8.0.7-win-x64.exe /uninstall /quiet /norestart">
 				<ExePackagePayload
-					Name="windowsdesktop-runtime-6.0.27-win-x64.exe"
-					SourceFile="..\..\..\Packages\dotnet-runtime-win-x64\6.0.27\content\windowsdesktop-runtime-6.0.27-win-x64.exe" />
+					Name="windowsdesktop-runtime-8.0.7-win-x64.exe"
+					SourceFile="Packages\windowsdesktop-runtime-8.0.7-win-x64.exe" />
 			</ExePackage>
 		</PackageGroup>
 

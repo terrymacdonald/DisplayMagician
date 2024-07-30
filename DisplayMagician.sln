@@ -16,6 +16,9 @@ EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianPackage", "DisplayMagicianPackage\DisplayMagicianPackage.wixproj", "{E43CF746-F46B-4889-95AA-16DB13AB7B9E}"
 EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianBundle", "DisplayMagicianBundle\DisplayMagicianBundle.wixproj", "{36D1EA30-F200-40CC-83E9-B2D9794510F5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E43CF746-F46B-4889-95AA-16DB13AB7B9E} = {E43CF746-F46B-4889-95AA-16DB13AB7B9E}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

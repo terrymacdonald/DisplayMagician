@@ -1,9 +1,11 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
-  <Bundle Name="DisplayMagicianBundle" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="6b8c0a2e-9060-4225-8394-b8a360716247">
+  <Bundle Name="DisplayMagicianSetup" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="6b8c0a2e-9060-4225-8394-b8a360716247"
+		  IconSourceFile="DisplayMagician.ico">
     <BootstrapperApplication>
       <!-- <bal:WixStandardBootstrapperApplication LicenseUrl="https://www.example.com/license" Theme="hyperlinkLicense" /> -->
-		<bal:WixStandardBootstrapperApplication LicenseFile="My Licensing Terms.rtf"
-                                                Theme="rtfLicense" />
+		<bal:WixStandardBootstrapperApplication LicenseFile="EULA_en-us.rtf"
+                                                Theme="rtfLicense"
+											    LogoFile="WixUIBannerBmp.png"/>
 	</BootstrapperApplication>
 
     <Chain>

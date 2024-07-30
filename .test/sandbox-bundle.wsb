@@ -1,0 +1,12 @@
+<Configuration>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>D:\visual-studio-projects\DisplayMagician\DisplayMagicianBundle\bin\x64\Debug</HostFolder>
+      <SandboxFolder>C:\DisplayMagician</SandboxFolder>
+      <ReadOnly>True</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>c:\DisplayMagician\start.cmd</Command>
+  </LogonCommand>
+</Configuration>
