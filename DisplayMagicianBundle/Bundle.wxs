@@ -1,14 +1,48 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
   <Bundle Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="6b8c0a2e-9060-4225-8394-b8a360716247"
 		  IconSourceFile="DisplayMagician.ico" >
-    <BootstrapperApplication>
+    <!--<BootstrapperApplication>-->
       <!-- <bal:WixStandardBootstrapperApplication LicenseUrl="https://www.example.com/license" Theme="hyperlinkLicense" /> -->
-		<bal:WixStandardBootstrapperApplication LicenseFile="EULA_en-us.rtf"
+		<!--<bal:WixStandardBootstrapperApplication LicenseFile="EULA_en-us.rtf"
                                                 LogoFile="WixUIBannerBmp.png"
 												ThemeFile="DisplayMagicianTheme.xml"
                                                 LocalizationFile="DisplayMagicianTheme.wxl" />
-	</BootstrapperApplication>
+	</BootstrapperApplication> -->
 
+	  <BootstrapperApplication >
+		  <bal:WixStandardBootstrapperApplication
+			LogoFile="WixUIBannerBmp.png"
+			LicenseFile="EULA_en-us.rtf"
+			Theme="rtfLargeLicense"
+			ThemeFile="DisplayMagicianTheme.xml"
+			LocalizationFile="DisplayMagicianTheme.wxl" />
+
+		  <Payload Id="thm_en" Name="1033\thm.wxl" Compressed="yes" SourceFile="Resources/1033/ClassicTheme.wxl" />
+		  <Payload Id="thmx_en" Name="1033\thm.xml" Compressed="yes" SourceFile="Resources/1033/ClassicTheme.xml" />
+		  <Payload Id="thmb_en" Name="1033\logo.png" Compressed="yes" SourceFile="Resources/1033/banner.png" />
+
+		  <Payload Id="thm_dk" Name="1030\thm.wxl" Compressed="yes" SourceFile="Resources/1030/ClassicTheme.wxl" />
+		  <Payload Id="thmx_dk" Name="1030\thm.xml" Compressed="yes" SourceFile="Resources/1030/ClassicTheme.xml" />
+		  <Payload Id="thmb_dk" Name="1030\logo.png" Compressed="yes" SourceFile="Resources/1030/banner.png" />
+
+		  <Payload Id="thm_fr" Name="1036\thm.wxl" Compressed="yes" SourceFile="Resources/1036/ClassicTheme.wxl" />
+		  <Payload Id="thmx_fr" Name="1036\thm.xml" Compressed="yes" SourceFile="Resources/1036/ClassicTheme.xml" />
+		  <Payload Id="thmb_fr" Name="1036\logo.png" Compressed="yes" SourceFile="Resources/1036/banner.png" />
+
+		  <Payload Id="thm_es" Name="3082\thm.wxl" Compressed="yes" SourceFile="Resources/3082/ClassicTheme.wxl" />
+		  <Payload Id="thmx_es" Name="3082\thm.xml" Compressed="yes" SourceFile="Resources/3082/ClassicTheme.xml" />
+		  <Payload Id="thmb_es" Name="3082\logo.png" Compressed="yes" SourceFile="Resources/3082/banner.png" />
+
+		  <Payload Id="thm_ru" Name="1049\thm.wxl" Compressed="yes" SourceFile="Resources/1049/ClassicTheme.wxl" />
+		  <Payload Id="thmx_ru" Name="1049\thm.xml" Compressed="yes" SourceFile="Resources/1049/ClassicTheme.xml" />
+		  <Payload Id="thmb_ru" Name="1049\logo.png" Compressed="yes" SourceFile="Resources/1049/banner.png" />
+
+		  <Payload Id="thm_kr" Name="1042\thm.wxl" Compressed="yes" SourceFile="Resources/1042/ClassicTheme.wxl" />
+		  <Payload Id="thmx_kr" Name="1042\thm.xml" Compressed="yes" SourceFile="Resources/1042/ClassicTheme.xml" />
+		  <Payload Id="thmb_kr" Name="1042\logo.png" Compressed="yes" SourceFile="Resources/1042/banner.png" />
+
+	  </BootstrapperApplication>
+	  
     <Chain>
       <!-- TODO: Define the list of chained packages. -->
       <!-- <MsiPackage SourceFile="path\to\your.msi" /> -->
