@@ -13,11 +13,11 @@
 		  <bal:WixStandardBootstrapperApplication
 			LogoFile="WixUIBannerBmp.png"
 			LicenseFile="EULA_en-us.rtf"
-			Theme="rtfLargeLicense"
+			Theme="rtfLicense"
 			ThemeFile="DisplayMagicianTheme.xml"
-			LocalizationFile="DisplayMagicianTheme.wxl" />
+		    LocalizationFile="DisplayMagicianTheme.wxl" />
 
-		  <Payload Id="thm_en" Name="1033\thm.wxl" Compressed="yes" SourceFile="Resources/1033/ClassicTheme.wxl" />
+		 <!-- <Payload Id="thm_en" Name="1033\thm.wxl" Compressed="yes" SourceFile="Resources/1033/ClassicTheme.wxl" />
 		  <Payload Id="thmx_en" Name="1033\thm.xml" Compressed="yes" SourceFile="Resources/1033/ClassicTheme.xml" />
 		  <Payload Id="thmb_en" Name="1033\logo.png" Compressed="yes" SourceFile="Resources/1033/banner.png" />
 
@@ -39,7 +39,7 @@
 
 		  <Payload Id="thm_kr" Name="1042\thm.wxl" Compressed="yes" SourceFile="Resources/1042/ClassicTheme.wxl" />
 		  <Payload Id="thmx_kr" Name="1042\thm.xml" Compressed="yes" SourceFile="Resources/1042/ClassicTheme.xml" />
-		  <Payload Id="thmb_kr" Name="1042\logo.png" Compressed="yes" SourceFile="Resources/1042/banner.png" />
+		  <Payload Id="thmb_kr" Name="1042\logo.png" Compressed="yes" SourceFile="Resources/1042/banner.png" /> -->
 
 	  </BootstrapperApplication>
 	  
