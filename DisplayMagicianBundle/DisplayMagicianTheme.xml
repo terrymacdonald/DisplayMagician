@@ -9,9 +9,9 @@
     <Font Id="2" Height="-22" Weight="500" Foreground="graytext">Segoe UI</Font>
     <Font Id="3" Height="-12" Weight="500" Foreground="windowtext" Background="window">Segoe UI</Font>
 
-    <Window Width="800" Height="600" HexStyle="100a0000" FontId="0" Caption="#(loc.Caption)">
-		<ImageControl X="0" Y="0" Width="800" Height="100" ImageFile="logo.png" Visible="yes"/>
-        <Label X="30" Y="30" Width="-11" Height="64" FontId="1" Visible="yes" DisablePrefix="yes">#(loc.Title)</Label>
+    <Window Width="600" Height="390" HexStyle="100a0000" FontId="0" Caption="#(loc.Caption)">
+		<ImageControl X="0" Y="0" Width="600" Height="60" ImageFile="logo.png" Visible="yes"/>
+        <Label X="20" Y="10" Width="-11" Height="64" FontId="1" Visible="yes" DisablePrefix="yes">#(loc.Title)</Label>
 
         <Page Name="Help">
             <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.HelpHeader)</Label>
@@ -25,7 +25,7 @@
             <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes" Visible="no" Name="CheckingForUpdatesLabel" />
         </Page>
         <Page Name="Install">
-            <Richedit Name="EulaRichedit" X="11" Y="111" Width="-11" Height="-70" TabStop="yes" FontId="0" HexStyle="800000" />
+            <Richedit Name="EulaRichedit" X="11" Y="70" Width="-11" Height="-70" TabStop="yes" FontId="0" HexStyle="800000" />
             <Checkbox Name="EulaAcceptCheckbox" X="-11" Y="-41" Width="260" Height="17" TabStop="yes" FontId="3" HideWhenDisabled="yes">#(loc.InstallAcceptCheckbox)</Checkbox>
             <Button Name="InstallUpdateButton" X="11" Y="-11" Width="200" Height="23" TabStop="yes" FontId="0" EnableCondition="WixStdBAUpdateAvailable" HideWhenDisabled="yes">#(loc.UpdateButton)</Button>
             <Button Name="OptionsButton" X="-171" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0" VisibleCondition="NOT WixStdBASuppressOptionsUI">

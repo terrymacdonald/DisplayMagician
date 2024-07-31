@@ -2,8 +2,8 @@
 
 
 <WixLocalization Culture="en-us" Language="1033" xmlns="http://wixtoolset.org/schemas/v4/wxl">
-  <String Id="Caption" Value="[WixBundleName] Setup" />
-  <String Id="Title" Value="[WixBundleName] Setup" />
+  <String Id="Caption" Value="[WixBundleName] Setup [Version]" />
+  <String Id="Title" Value="[WixBundleName] Setup [Version]" />
   <String Id="CheckingForUpdatesLabel" Value="Checking for updates" />
   <String Id="UpdateButton" Value="&amp;Update to version [WixStdBAUpdateAvailable]" />
   <String Id="InstallVersion" Value="Version [WixBundleVersion]" />
