@@ -4,16 +4,17 @@
 
 <Theme xmlns="http://wixtoolset.org/schemas/v4/thmutil">
     <Font Id="0" Height="-12" Weight="500" Foreground="windowtext" Background="window">Segoe UI</Font>
-    <Font Id="1" Height="-24" Weight="500" Foreground="windowtext">Segoe UI</Font>
+	<!-- Title Font -->
+    <Font Id="1" Height="-24" Weight="500" Foreground="ffffff">Segoe UI</Font>
     <Font Id="2" Height="-22" Weight="500" Foreground="graytext">Segoe UI</Font>
     <Font Id="3" Height="-12" Weight="500" Foreground="windowtext" Background="window">Segoe UI</Font>
 
-    <Window Width="485" Height="300" HexStyle="100a0000" FontId="0" Caption="#(loc.Caption)">
-        <ImageControl X="11" Y="11" Width="64" Height="64" ImageFile="logo.png" Visible="yes"/>
-        <Label X="80" Y="11" Width="-11" Height="64" FontId="1" Visible="yes" DisablePrefix="yes">#(loc.Title)</Label>
+    <Window Width="800" Height="600" HexStyle="100a0000" FontId="0" Caption="#(loc.Caption)">
+		<ImageControl X="0" Y="0" Width="800" Height="100" ImageFile="logo.png" Visible="yes"/>
+        <Label X="30" Y="30" Width="-11" Height="64" FontId="1" Visible="yes" DisablePrefix="yes">#(loc.Title)</Label>
 
         <Page Name="Help">
-            <Label X="11" Y="80" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.HelpHeader)</Label>
+            <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.HelpHeader)</Label>
             <Label X="11" Y="112" Width="-11" Height="-35" FontId="3" DisablePrefix="yes">#(loc.HelpText)</Label>
             <Button Name="HelpCloseButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">
                 <Text>#(loc.HelpCloseButton)</Text>
@@ -21,10 +22,10 @@
             </Button>
         </Page>
         <Page Name="Loading">
-            <Label X="11" Y="80" Width="-11" Height="30" FontId="2" DisablePrefix="yes" Visible="no" Name="CheckingForUpdatesLabel" />
+            <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes" Visible="no" Name="CheckingForUpdatesLabel" />
         </Page>
         <Page Name="Install">
-            <Richedit Name="EulaRichedit" X="11" Y="80" Width="-11" Height="-70" TabStop="yes" FontId="0" HexStyle="800000" />
+            <Richedit Name="EulaRichedit" X="11" Y="111" Width="-11" Height="-70" TabStop="yes" FontId="0" HexStyle="800000" />
             <Checkbox Name="EulaAcceptCheckbox" X="-11" Y="-41" Width="260" Height="17" TabStop="yes" FontId="3" HideWhenDisabled="yes">#(loc.InstallAcceptCheckbox)</Checkbox>
             <Button Name="InstallUpdateButton" X="11" Y="-11" Width="200" Height="23" TabStop="yes" FontId="0" EnableCondition="WixStdBAUpdateAvailable" HideWhenDisabled="yes">#(loc.UpdateButton)</Button>
             <Button Name="OptionsButton" X="-171" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0" VisibleCondition="NOT WixStdBASuppressOptionsUI">
@@ -38,7 +39,7 @@
             </Button>
         </Page>
         <Page Name="Options">
-            <Label X="11" Y="80" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.OptionsHeader)</Label>
+            <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.OptionsHeader)</Label>
             <Label X="11" Y="121" Width="-11" Height="17" FontId="3" DisablePrefix="yes">#(loc.OptionsLocationLabel)</Label>
             <Editbox Name="InstallFolder" X="11" Y="143" Width="-91" Height="21" TabStop="yes" FontId="3" FileSystemAutoComplete="yes" />
             <Button Name="BrowseButton" X="-11" Y="142" Width="75" Height="23" TabStop="yes" FontId="3">
@@ -55,14 +56,14 @@
             </Button>
         </Page>
         <Page Name="Progress">
-            <Label X="11" Y="80" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.ProgressHeader)</Label>
+            <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.ProgressHeader)</Label>
             <Label X="11" Y="121" Width="70" Height="17" FontId="3" DisablePrefix="yes">#(loc.ProgressLabel)</Label>
             <Label Name="OverallProgressPackageText" X="85" Y="121" Width="-11" Height="17" FontId="3" DisablePrefix="yes">#(loc.OverallProgressPackageText)</Label>
             <Progressbar Name="OverallCalculatedProgressbar" X="11" Y="143" Width="-11" Height="15" />
             <Button Name="ProgressCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.ProgressCancelButton)</Button>
         </Page>
         <Page Name="Modify">
-            <Label X="11" Y="80" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.ModifyHeader)</Label>
+            <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes">#(loc.ModifyHeader)</Label>
             <Button Name="ModifyUpdateButton" X="11" Y="-11" Width="200" Height="23" TabStop="yes" FontId="0" EnableCondition="WixStdBAUpdateAvailable" HideWhenDisabled="yes">#(loc.UpdateButton)</Button>
             <Button Name="RepairButton" X="-171" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0" HideWhenDisabled="yes">#(loc.ModifyRepairButton)</Button>
             <Button Name="UninstallButton" X="-91" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.ModifyUninstallButton)</Button>
@@ -72,7 +73,7 @@
             </Button>
         </Page>
         <Page Name="Success">
-            <Label X="11" Y="80" Width="-11" Height="30" FontId="2" DisablePrefix="yes">
+            <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes">
                 <Text>#(loc.SuccessHeader)</Text>
                 <Text Condition="WixBundleAction = 2">#(loc.SuccessLayoutHeader)</Text>
                 <Text Condition="WixBundleAction = 3">#(loc.SuccessUnsafeUninstallHeader)</Text>
@@ -94,7 +95,7 @@
             </Button>
         </Page>
         <Page Name="Failure">
-            <Label X="11" Y="80" Width="-11" Height="30" FontId="2" DisablePrefix="yes">
+            <Label X="11" Y="111" Width="-11" Height="30" FontId="2" DisablePrefix="yes">
                 <Text>#(loc.FailureHeader)</Text>
                 <Text Condition="WixBundleAction = 2">#(loc.FailureLayoutHeader)</Text>
                 <Text Condition="WixBundleAction = 3">#(loc.FailureUnsafeUninstallHeader)</Text>
