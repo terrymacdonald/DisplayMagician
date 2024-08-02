@@ -17,6 +17,7 @@
 			ThemeFile="DisplayMagicianTheme.xml"
 		    LocalizationFile="DisplayMagicianTheme.wxl" />
 
+		  <Payload Name="DisplayMagician.ico" Compressed="yes" SourceFile="DisplayMagician.ico" />
 		 <!-- <Payload Id="thm_en" Name="1033\thm.wxl" Compressed="yes" SourceFile="Resources/1033/ClassicTheme.wxl" />
 		  <Payload Id="thmx_en" Name="1033\thm.xml" Compressed="yes" SourceFile="Resources/1033/ClassicTheme.xml" />
 		  <Payload Id="thmb_en" Name="1033\logo.png" Compressed="yes" SourceFile="Resources/1033/banner.png" />

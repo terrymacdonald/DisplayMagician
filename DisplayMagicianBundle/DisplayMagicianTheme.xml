@@ -11,7 +11,7 @@
 	<!-- SubTitle Font -->
     <Font Id="4" Height="-12" Weight="500" Foreground="ffffff">Segoe UI</Font>
 
-    <Window Width="600" Height="390" HexStyle="100a0000" FontId="0" Caption="#(loc.Caption)"  IconFile="DisplayMagician.ico">
+    <Window Width="600" Height="390" HexStyle="100a0000" FontId="0" Caption="#(loc.Caption)" IconFile="DisplayMagician.ico">
 		<ImageControl X="0" Y="0" Width="600" Height="75" ImageFile="logo.png" Visible="yes"/>
         <Label X="20" Y="10" Width="-11" Height="64" FontId="1" Visible="yes" DisablePrefix="yes">#(loc.Title)</Label>
         <Label X="20" Y="44" Width="-11" Height="64" FontId="4" Visible="yes" DisablePrefix="yes">#(loc.SubTitle)</Label>
