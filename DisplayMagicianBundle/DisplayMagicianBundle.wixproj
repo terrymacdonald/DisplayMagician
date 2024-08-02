@@ -3,6 +3,7 @@
     <OutputType>Bundle</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="DisplayMagician.ico" />
     <Content Include="DisplayMagicianTheme.xml" />
     <Content Include="EULA_en-us.rtf" />
   </ItemGroup>
