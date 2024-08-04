@@ -555,6 +555,8 @@ namespace DisplayMagician {
                     // Load the games in background on execute
                     GameLibrary.LoadGamesInBackground();
                     // Load the apps in background on execute
+                    //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
+                    //      Need to investigate why this particular part was crashing everything. 
                     //AppLibrary.LoadAppsInBackground();
 
                     // Close the splash screen
