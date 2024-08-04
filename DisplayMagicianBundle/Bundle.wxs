@@ -2,7 +2,7 @@
   <Bundle Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="6b8c0a2e-9060-4225-8394-b8a360716247"
 		  IconSourceFile="DisplayMagician.ico" >
 	  <BootstrapperApplication>
-		<bal:WixInternalUIBootstrapperApplication/> 
+		<bal:WixInternalUIBootstrapperApplication /> 
 	 </BootstrapperApplication>
 
 	  <!--<BootstrapperApplication >
