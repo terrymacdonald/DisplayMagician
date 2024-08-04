@@ -3,7 +3,7 @@
     <BindFiles>false</BindFiles>
   </PropertyGroup>
   <PropertyGroup>
-    <OutputName>DisplayMagician-v</OutputName>
+    <OutputName>DisplayMagicianPackage</OutputName>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />

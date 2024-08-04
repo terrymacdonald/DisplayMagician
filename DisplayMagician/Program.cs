@@ -555,7 +555,7 @@ namespace DisplayMagician {
                     // Load the games in background on execute
                     GameLibrary.LoadGamesInBackground();
                     // Load the apps in background on execute
-                    AppLibrary.LoadAppsInBackground();
+                    //AppLibrary.LoadAppsInBackground();
 
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
