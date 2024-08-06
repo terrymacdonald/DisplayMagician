@@ -14,7 +14,7 @@
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <ApplicationVersion>$(AssemblyVersion)</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <BootstrapperEnabled>true</BootstrapperEnabled>
@@ -179,5 +179,7 @@
     <PackageLicenseFile>EULA_en-us.rtf</PackageLicenseFile>
     <Title>$(AssemblyName)</Title>
     <PackageIcon>applogo.png</PackageIcon>
+    <Company>LittleBitBig</Company>
+    <Version>$(AssemblyVersion.Replace(".*",""))</Version>
   </PropertyGroup>
 </Project>

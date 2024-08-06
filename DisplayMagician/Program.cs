@@ -557,7 +557,7 @@ namespace DisplayMagician {
                     // Load the apps in background on execute
                     //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
                     //      Need to investigate why this particular part was crashing everything. 
-                    //AppLibrary.LoadAppsInBackground();
+                    AppLibrary.LoadAppsInBackground();
 
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)

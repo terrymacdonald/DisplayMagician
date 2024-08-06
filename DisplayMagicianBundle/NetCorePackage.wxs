@@ -3,10 +3,10 @@
  xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
 
 	<Fragment>
-		<netfx:DotNetCoreSearch RuntimeType="desktop" MajorVersion="6" Platform="x64" Variable="DOTNETDESKTOPVERSION" />
+		<netfx:DotNetCoreSearch RuntimeType="desktop" MajorVersion="8" Platform="x64" Variable="DOTNETDESKTOPVERSION" />
 		<PackageGroup Id="DotNetDesktopRedist">
 			<ExePackage Id="DotNetDesktop"
-						DetectCondition="DOTNETDESKTOPVERSION &gt;= &quot;8.0.0&quot;"
+						DetectCondition="DOTNETDESKTOPVERSION &gt;= &quot;8.0.7&quot;"
 						Permanent="yes"
 						Vital="no"
 						InstallArguments="windowsdesktop-runtime-8.0.7-win-x64.exe /install /quiet /norestart"

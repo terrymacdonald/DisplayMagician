@@ -143,18 +143,22 @@ namespace DisplayMagician.AppLibraries
             logger.Trace($"AppLibrary/LoadAppsInBackground: Attempting to load Apps from detected App libraries.");
 
             // Clear the App libraries in case this is a refresh
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Getting the Local Library");
             LocalLibrary localLibrary = LocalLibrary.GetLibrary();
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Clearing previously installed apps");
             localLibrary.AllInstalledApps.Clear();
 
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Creating the local apps action");
             // Now lets prepare loading all the Local Apps we have installed
             Action loadLocalAppsAction = new Action(() =>
             {
                 // Check wht local apps are installed
                 //LocalLibrary localLibrary = LocalLibrary.GetLibrary();
+                logger.Trace($"AppLibrary/LoadAppsInBackground: Checking if IsAppLibraryInstalled");
                 if (localLibrary.IsAppLibraryInstalled)
                 {
                     // Load local library Apps
-                    logger.Info($"AppLibrary/LoadAppsInBackground: Loading Locally Installed Apps");
+                    logger.Trace($"AppLibrary/LoadAppsInBackground: Loading Locally Installed Apps");
                     if (!localLibrary.LoadInstalledApps())
                     {
                         logger.Info($"AppLibrary/LoadAppsInBackground: Cannot load Locally Installed Apps!");
@@ -168,30 +172,36 @@ namespace DisplayMagician.AppLibraries
                 }
             });
 
-            
+
             // Store all the actions in a array so we can wait on them later
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Creating list of load apps actions");
             List<Action> loadAppsActions = new List<Action>();
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Adding the previously created action to the list of actions");
             loadAppsActions.Add(loadLocalAppsAction);
 
             try
             {
-                logger.Debug($"AppLibrary/LoadAppsInBackground: Running App loading actions.");
+                logger.Trace($"AppLibrary/LoadAppsInBackground: Running App loading actions.");
                 // Go through and start all the actions, making sure we only have one threat per action to avoid thread issues
                 int threads = loadAppsActions.Count;
+                logger.Trace($"AppLibrary/LoadAppsInBackground: Creating parallel options");
                 ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = threads };
+                logger.Trace($"AppLibrary/LoadAppsInBackground: Invoking the actions in parallel");
                 Parallel.Invoke(options, loadAppsActions.ToArray());
                 // Once we get here , we know that all the parallel actions have returned
-                logger.Debug($"AppLibrary/LoadAppsInBackground: All App loading tasks finished");
+                logger.Trace($"AppLibrary/LoadAppsInBackground: All App loading tasks finished");
             }
             catch (Exception ae)
             {
                 logger.Error(ae, $"AppLibrary/LoadAppsInBackground: One or more exception during execution of loadAppsActions");
             }
-            
-            // Produce a single array of Apps we can reference later
-            AppLibrary.AllInstalledAppsInAllLibraries = new List<App>();
-            AppLibrary.AllInstalledAppsInAllLibraries.AddRange(localLibrary.AllInstalledApps);
 
+            // Produce a single array of Apps we can reference later
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Creating the list of installed apps");
+            AppLibrary.AllInstalledAppsInAllLibraries = new List<App>();
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Adding the installed apps we just got to the list of installed apps");
+            AppLibrary.AllInstalledAppsInAllLibraries.AddRange(localLibrary.AllInstalledApps);
+            logger.Trace($"AppLibrary/LoadAppsInBackground: Setting apps loaded to be true");
             AppsLoaded = true;
 
             return true;
