@@ -400,7 +400,7 @@ namespace DisplayMagician {
 
             // Write the Application Name
             Console.WriteLine($"{Application.ProductName} v{Application.ProductVersion}");
-            for (int i = 0; i <= Application.ProductName.Length + Application.ProductVersion .Length; i++)
+            for (int i = 0; i <= Application.ProductName.Length + Application.ProductVersion.Length; i++)
             {
                 Console.Write("=");
             }
