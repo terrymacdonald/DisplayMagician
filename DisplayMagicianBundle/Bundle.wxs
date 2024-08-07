@@ -2,8 +2,8 @@
   <Bundle Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="6b8c0a2e-9060-4225-8394-b8a360716247"
 		  IconSourceFile="DisplayMagician.ico" >
 	  <BootstrapperApplication>
-		<bal:WixInternalUIBootstrapperApplication /> 
-	 </BootstrapperApplication>
+		<bal:WixInternalUIBootstrapperApplication />
+	  </BootstrapperApplication>
 
 	  <!--<BootstrapperApplication >
 		  <bal:WixStandardBootstrapperApplication
@@ -21,7 +21,7 @@
       <!-- TODO: Define the list of chained packages. -->
       <!-- <MsiPackage SourceFile="path\to\your.msi" /> -->
 		<PackageGroupRef Id="DotNetDesktopRedist" />
-		<MsiPackage Id="DisplayMagicianPackage" SourceFile="D:\visual-studio-projects\DisplayMagician\DisplayMagicianPackage\bin\x64\Debug\en-US\DisplayMagicianPackage.msi" />
+		<MsiPackage Id="DisplayMagicianPackage" SourceFile="D:\visual-studio-projects\DisplayMagician\DisplayMagicianPackage\bin\x64\Debug\en-US\DisplayMagicianPackage.msi" Vital="yes" />
     </Chain>
 
   </Bundle>
