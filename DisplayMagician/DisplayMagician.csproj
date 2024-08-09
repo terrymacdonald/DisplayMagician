@@ -24,7 +24,7 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
 	<PropertyGroup>
-		<AssemblyVersion>2.6.0.*</AssemblyVersion>
+		<AssemblyVersion>2.6</AssemblyVersion>
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
 		<Deterministic>false</Deterministic>
 	</PropertyGroup>
@@ -180,6 +180,7 @@
     <Title>$(AssemblyName)</Title>
     <PackageIcon>applogo.png</PackageIcon>
     <Company>LittleBitBig</Company>
-    <Version>$(AssemblyVersion.Replace(".*",""))</Version>
+    <Version>2.6.0-alpha.1</Version>
+    <FileVersion>2.6.0.*</FileVersion>
   </PropertyGroup>
 </Project>

@@ -52,6 +52,7 @@ namespace DisplayMagician {
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
+        public static bool AppFirstRunOfThisVersion = false;
         public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
@@ -171,83 +172,102 @@ namespace DisplayMagician {
             }
 
             // Check if this is the first time the program has been run
-            bool newInstallation = false;
+            AppFirstRunOfThisVersion = false;
             string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
-            if (!File.Exists(targetSettingsFile))
-            {
-                newInstallation = true;
-                logger.Trace($"Program/Main: A new Settings file is required as it doesn't exist yet. This must be a new install.");
-            }
-
-
-            // NOTE: This had to be moved up from the later state
-            // Copy the old Settings file to the new v2 name
-            bool upgradedSettingsFile = false;
             try
-            {               
-                if (OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
+            {
+                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                string installerKey = DMKey.GetValueKind("FirstRun").ToString();
+                if (installerKey != null && installerKey.Equals("1"))
                 {
-                    string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
-                    string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
-                    string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
-                    string oldv24SettingsFile = Path.Combine(AppDataPath, "Settings_2.4.json");
-                    string oldv25SettingsFile = Path.Combine(AppDataPath, "Settings_2.5.json");
-
-                    if (File.Exists(oldv25SettingsFile))
-                    {
-                        File.Copy(oldv25SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-
-                        // Load the program settings to populate the extra additional settings with default values
-                        // as there are some new settings in there.
-                        AppProgramSettings = ProgramSettings.LoadSettings();
-                        // Save the updated program settings so they're baked in and saved to a file.
-                        AppProgramSettings.SaveSettings();
-                    }
-                    else if (File.Exists(oldv24SettingsFile))
-                    {
-                        File.Copy(oldv24SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-
-                        // Load the program settings to populate the extra additional settings with default values
-                        // as there are some new settings in there.
-                        AppProgramSettings = ProgramSettings.LoadSettings();
-                        // Save the updated program settings so they're baked in.
-                        AppProgramSettings.SaveSettings();
-                    }
-                    else if (File.Exists(oldv23SettingsFile))
-                    {
-                        File.Copy(oldv23SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-                    }
-                    else if (File.Exists(oldv2SettingsFile))
-                    {
-                        File.Copy(oldv2SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-                    }
-                    else if (File.Exists(oldv1SettingsFile))
-                    {
-                        File.Copy(oldv1SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-                    }
-
-                    // Now we rename all the currently listed Settings files as they aren't needed any longer.
-                    // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
-                    if (RenameOldFileVersions(AppDataPath, "Settings_*.json", targetSettingsFile))
-                    {
-                        logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
-                    }
-                    else
-                    {
-                        logger.Error($"Program/Main: Error while renaming old Shortcut files.");
-                    }
-
+                    AppFirstRunOfThisVersion = true;
+                    logger.Info($"Program/Main: This is the first time this version has run since it was installed! We may have upgrade tasks to do!");
+                }
+                else
+                {
+                    logger.Trace($"Program/Main: This is NOT the first time this version has run. We've run this version before.");
                 }
 
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Program/Main: Exception upgrading old settings file to v2.4 settings file {ProgramSettings.programSettingsStorageJsonFileName}.");
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this is the first time this version has run. Problem accessing registry!");
+            }
+
+            bool upgradedSettingsFile = false;
+            // If this is the first run of this version then we need to check if we need to upgrade anything
+            if (AppFirstRunOfThisVersion)
+            {
+                // NOTE: This had to be moved up from the later state
+                // Copy the old Settings file to the new v2 name
+                try
+                {
+                    if (OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
+                    {
+                        string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
+                        string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
+                        string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
+                        string oldv24SettingsFile = Path.Combine(AppDataPath, "Settings_2.4.json");
+                        string oldv25SettingsFile = Path.Combine(AppDataPath, "Settings_2.5.json");
+
+                        if (File.Exists(oldv25SettingsFile))
+                        {
+                            File.Copy(oldv25SettingsFile, targetSettingsFile, true);
+                            upgradedSettingsFile = true;
+
+                            // Load the program settings to populate the extra additional settings with default values
+                            // as there are some new settings in there.
+                            AppProgramSettings = ProgramSettings.LoadSettings();
+                            // Save the updated program settings so they're baked in and saved to a file.
+                            AppProgramSettings.SaveSettings();
+                        }
+                        else if (File.Exists(oldv24SettingsFile))
+                        {
+                            File.Copy(oldv24SettingsFile, targetSettingsFile, true);
+                            upgradedSettingsFile = true;
+
+                            // Load the program settings to populate the extra additional settings with default values
+                            // as there are some new settings in there.
+                            AppProgramSettings = ProgramSettings.LoadSettings();
+                            // Save the updated program settings so they're baked in.
+                            AppProgramSettings.SaveSettings();
+                        }
+                        else if (File.Exists(oldv23SettingsFile))
+                        {
+                            File.Copy(oldv23SettingsFile, targetSettingsFile, true);
+                            upgradedSettingsFile = true;
+                        }
+                        else if (File.Exists(oldv2SettingsFile))
+                        {
+                            File.Copy(oldv2SettingsFile, targetSettingsFile, true);
+                            upgradedSettingsFile = true;
+                        }
+                        else if (File.Exists(oldv1SettingsFile))
+                        {
+                            File.Copy(oldv1SettingsFile, targetSettingsFile, true);
+                            upgradedSettingsFile = true;
+                        }
+
+                        // Now we rename all the currently listed Settings files as they aren't needed any longer.
+                        // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
+                        if (RenameOldFileVersions(AppDataPath, "Settings_*.json", targetSettingsFile))
+                        {
+                            logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                        }
+                        else
+                        {
+                            logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                        }
+
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/Main: Exception upgrading old settings file to v2.4 settings file {ProgramSettings.programSettingsStorageJsonFileName}.");
+                }
+
+
             }
 
             // Load the program settings
@@ -256,7 +276,7 @@ namespace DisplayMagician {
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
             // If app settings is new, then set the initial settings we need
-            if (newInstallation)
+            if (AppFirstRunOfThisVersion)
             {
                 Guid guid = new Guid();
                 if (AppProgramSettings.InstallId == "")
@@ -479,6 +499,14 @@ namespace DisplayMagician {
             {
                 logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to latest shortcut file {targetShortcutsFile}.");
             }
+
+            // If we get here then there is no more upgrading that needsdoing, so we can set the reg key
+            if (AppFirstRunOfThisVersion)
+            {
+                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                DMKey.SetValue("FirstRun", "0");
+            }
+
 
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
