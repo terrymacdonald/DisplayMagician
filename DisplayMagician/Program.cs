@@ -29,6 +29,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Globalization;
 using System.Net.Http;
+using NLog.Targets;
 
 namespace DisplayMagician {
 
@@ -173,7 +174,6 @@ namespace DisplayMagician {
 
             // Check if this is the first time the program has been run
             AppFirstRunOfThisVersion = false;
-            string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             try
             {
                 RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
@@ -195,6 +195,7 @@ namespace DisplayMagician {
             }
 
             bool upgradedSettingsFile = false;
+            string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             // If this is the first run of this version then we need to check if we need to upgrade anything
             if (AppFirstRunOfThisVersion)
             {
@@ -438,73 +439,110 @@ namespace DisplayMagician {
             {
                 logger.Info($"Program/Main: Upgraded old settings file to settings file {targetSettingsFile} earlier in loading process (before logging service was available).");
             }
-            
-            // Note - we cannot upgrade the DisplayProfiles from prior versions so this file has been skipped.
 
-            // Also upgrade the Shortcuts file if it's needed
-            string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
-            try
+
+            if (AppFirstRunOfThisVersion)
             {
-                if (!File.Exists(targetShortcutsFile) && OldFileVersionsExist(Path.GetDirectoryName(targetShortcutsFile)))
+                // Note - we cannot upgrade the DisplayProfiles from prior versions so this file has been skipped.
+                try
                 {
-                    string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
-                    string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
-                    string oldv22ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
+                    // This is the latest displayprofile config file
+                    string targetdp = ProfileRepository.ProfileStorageFileName;
 
-                    if (File.Exists(oldv22ShortcutsFile))
+                    // Only run this code if there isn't a current Display Profile file.
+                    // If this happens then it is an error!
+                    if (!File.Exists(targetdp))
                     {
-                        logger.Info($"Program/Main: Upgrading v2.2 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
-                        File.Copy(oldv22ShortcutsFile, targetShortcutsFile);
-                    }
-                    else if (File.Exists(oldv2ShortcutsFile))
-                    {
-                        logger.Info($"Program/Main: Upgrading v2.0 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
-                        File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
-                    }
-                    else if (File.Exists(oldv1ShortcutsFile))
-                    {
-                        logger.Info($"Program/Main: Upgrading v1.0 shortcut file {oldv1ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
-                        File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
-                    }
+                        logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
 
-                    // If the file exists (the file was renamed and upgraded) then we want to use it
-                    if (File.Exists(targetShortcutsFile))
-                    {
-                        // Load the Shortcuts so that they get populated with default values as part of the upgrade
-                        ShortcutRepository.LoadShortcuts();
-                        // Now save the shortcuts so the new default values get written to disk
-                        ShortcutRepository.SaveShortcuts();
-                    }
-
-                    // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
-                    // NOTE: This is outside the File Exists above to fix all the partially renamed files performed in previous upgrades
-                    if (RenameOldFileVersions(AppShortcutPath, "Shortcuts_*.json", targetShortcutsFile))
-                    {
-                        logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                        // Warn the user about the fact we need them to recreate their Display Profiles again!
+                        StartMessageForm myMessageWindow = new StartMessageForm();
+                        myMessageWindow.MessageMode = "rtf";
+                        myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                        myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
+                        myMessageWindow.ButtonText = "&Close";
+                        myMessageWindow.ShowDialog();
                     }
                     else
                     {
-                        logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                        logger.Trace($"Program/Main: DisplayMagician Display Profile files do not require upgrading so skipping");
+                    }
+
+                    // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
+                    // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
+                    if (RenameOldFileVersions(AppProfilePath, "DisplayProfiles_*.json", targetdp))
+                    {
+                        logger.Trace($"Program/Main: Old DisplayMagician Display Profile files were successfully renamed");
+                    }
+                    else
+                    {
+                        logger.Error($"Program/Main: Error while renaming old Display Profiles files.");
                     }
                 }
-                else
+
+                // Also upgrade the Shortcuts file if it's needed
+                string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
+                try
                 {
-                    logger.Trace($"Program/Main: DisplayMagician Shortcut files do not require upgrading so skipping");
+                    if (!File.Exists(targetShortcutsFile) && OldFileVersionsExist(Path.GetDirectoryName(targetShortcutsFile)))
+                    {
+                        string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
+                        string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
+                        string oldv22ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
+
+                        if (File.Exists(oldv22ShortcutsFile))
+                        {
+                            logger.Info($"Program/Main: Upgrading v2.2 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
+                            File.Copy(oldv22ShortcutsFile, targetShortcutsFile);
+                        }
+                        else if (File.Exists(oldv2ShortcutsFile))
+                        {
+                            logger.Info($"Program/Main: Upgrading v2.0 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
+                            File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
+                        }
+                        else if (File.Exists(oldv1ShortcutsFile))
+                        {
+                            logger.Info($"Program/Main: Upgrading v1.0 shortcut file {oldv1ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
+                            File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
+                        }
+
+                        // If the file exists (the file was renamed and upgraded) then we want to use it
+                        if (File.Exists(targetShortcutsFile))
+                        {
+                            // Load the Shortcuts so that they get populated with default values as part of the upgrade
+                            ShortcutRepository.LoadShortcuts();
+                            // Now save the shortcuts so the new default values get written to disk
+                            ShortcutRepository.SaveShortcuts();
+                        }
+
+                        // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
+                        // NOTE: This is outside the File Exists above to fix all the partially renamed files performed in previous upgrades
+                        if (RenameOldFileVersions(AppShortcutPath, "Shortcuts_*.json", targetShortcutsFile))
+                        {
+                            logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                        }
+                        else
+                        {
+                            logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                        }
+                    }
+                    else
+                    {
+                        logger.Trace($"Program/Main: DisplayMagician Shortcut files do not require upgrading so skipping");
+                    }
+
+
+
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to latest shortcut file {targetShortcutsFile}.");
                 }
 
-                
-
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to latest shortcut file {targetShortcutsFile}.");
-            }
-
-            // If we get here then there is no more upgrading that needsdoing, so we can set the reg key
-            if (AppFirstRunOfThisVersion)
-            {
+                // If we get here then there is no more upgrading that needs doing, so we can set the reg key
                 RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
                 DMKey.SetValue("FirstRun", "0");
+
             }
 
 
