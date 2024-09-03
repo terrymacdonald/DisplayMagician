@@ -36,16 +36,16 @@ namespace DisplayMagician
 
     public struct ShortcutFile
     {
-        public string ShortcutVersion;
+        public string ShortcutFileVersion;
         public List<ShortcutItem> Shortcuts;
 
         public override bool Equals(object obj) => obj is ShortcutFile other && this.Equals(other);
         public bool Equals(ShortcutFile other)
-        => ShortcutVersion.Equals(other.ShortcutVersion) &&
+        => ShortcutFileVersion.Equals(other.ShortcutFileVersion) &&
            Shortcuts.SequenceEqual(other.Shortcuts);
         public override int GetHashCode()
         {
-            return (ShortcutVersion, Shortcuts).GetHashCode();
+            return (ShortcutFileVersion, Shortcuts).GetHashCode();
         }
 
         public static bool operator ==(ShortcutFile lhs, ShortcutFile rhs) => lhs.Equals(rhs);
@@ -64,7 +64,7 @@ namespace DisplayMagician
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutFileVersion = "2.6";
 
-        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_${_shortcutFileVersion}.json");
+        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_{_shortcutFileVersion}.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -520,9 +520,50 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
-                        MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
+                        // If we get here then we may need to import the shortcuts from the old format without the Shortcut Version
+                        try
+                        {
+
+
+                            JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                            {
+                                MissingMemberHandling = MissingMemberHandling.Ignore,
+                                NullValueHandling = NullValueHandling.Ignore,
+                                DefaultValueHandling = DefaultValueHandling.Populate,
+                                TypeNameHandling = TypeNameHandling.Auto,
+                                ObjectCreationHandling = ObjectCreationHandling.Replace,
+                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                {
+                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                    args.ErrorContext.Handled = true;
+                                },
+                            };
+
+                            _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, mySerializerSettings);
+
+                        }
+                        catch (JsonReaderException nex)
+                        {
+                            // If there is a error in the JSON format
+                            if (ex.HResult == -2146233088)
+                            {
+                                SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException - The Shortcuts file {_shortcutStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException while trying to process the Shortcuts json data file {_shortcutStorageJsonFileName} but JsonConvert threw an exception.");
+                            }
+                            MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        catch (Exception nex)
+                        {
+                            // If we get here then we may need to import the shortcuts from the old format without the Shortcut Version
+
+
+                            logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
+                            MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
+                        }
                     }
 
                     // If we have any JSON.net errors, then we need to records them in the logs
@@ -591,7 +632,7 @@ namespace DisplayMagician
             }
             else
             {
-                logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the {_shortcutStorageJsonFileName} shortcut JSON file that contains the Shortcuts");
+                logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the {_shortcutStorageJsonFileName} shortcut JSON file that contains the Shortcuts. Didn't load any shortcuts at all.");
             }
             logger.Trace($"ShortcutRepository/LoadShortcuts: Checking validity of the loaded shortcuts to make sure they're ok to use now");
             try
@@ -659,7 +700,14 @@ namespace DisplayMagician
                         args.ErrorContext.Handled = true;
                     },
                 };
-                var json = JsonConvert.SerializeObject(_allShortcuts, Formatting.Indented, mySerializerSettings);
+
+                ShortcutFile shortcutFile = new ShortcutFile
+                {
+                    ShortcutFileVersion = _shortcutFileVersion,
+                    Shortcuts = _allShortcuts
+                };
+
+                var json = JsonConvert.SerializeObject(shortcutFile, Formatting.Indented, mySerializerSettings);
 
 
                 if (!string.IsNullOrWhiteSpace(json))
