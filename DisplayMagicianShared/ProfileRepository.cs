@@ -47,6 +47,26 @@ namespace DisplayMagicianShared
         Error
     }
 
+
+    public struct ProfileFile
+    {
+        public string ProfileFileVersion;
+        public List<ProfileItem> Profiles;
+
+        public override bool Equals(object obj) => obj is ProfileFile other && this.Equals(other);
+        public bool Equals(ProfileFile other)
+        => ProfileFileVersion.Equals(other.ProfileFileVersion) &&
+           Profiles.SequenceEqual(other.Profiles);
+        public override int GetHashCode()
+        {
+            return (ProfileFileVersion, Profiles).GetHashCode();
+        }
+
+        public static bool operator ==(ProfileFile lhs, ProfileFile rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(ProfileFile lhs, ProfileFile rhs) => !(lhs == rhs);
+    }
+
     public static class ProfileRepository
     {
         #region Class Variables
@@ -71,7 +91,8 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.4.json");
+        private static string _profileFileVersion = "2.6";
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_profileFileVersion}.json");
 
         #endregion
 
@@ -836,7 +857,9 @@ namespace DisplayMagicianShared
                                 args.ErrorContext.Handled = true;
                             },
                         };
-                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                        ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
+                        _allProfiles = profileFile.Profiles;
 
                         // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                         foreach (ProfileItem profile in _allProfiles)
@@ -862,8 +885,51 @@ namespace DisplayMagicianShared
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
-                        MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        try
+                        {
+                            JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                            {
+                                MissingMemberHandling = MissingMemberHandling.Ignore,
+                                NullValueHandling = NullValueHandling.Include,
+                                DefaultValueHandling = DefaultValueHandling.Populate,
+                                TypeNameHandling = TypeNameHandling.Auto,
+                                ObjectCreationHandling = ObjectCreationHandling.Replace,
+                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                {
+                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                    args.ErrorContext.Handled = true;
+                                },
+                            };
+
+                            _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                            // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
+                            foreach (ProfileItem profile in _allProfiles)
+                            {
+                                WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
+                                WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                            }
+
+                        }
+                        catch (JsonReaderException nex)
+                        {
+                            // If there is a error in the JSON format
+                            if (ex.HResult == -2146233088)
+                            {
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFileName} but JsonConvert threw an exception.");
+                            }
+                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                        }
+                        catch (Exception nex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
+                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
 
                     // If we have any JSON.net errors, then we need to records them in the logs
@@ -1051,6 +1117,13 @@ namespace DisplayMagicianShared
                         args.ErrorContext.Handled = true;
                     },
                 };
+
+                ProfileFile profileFile = new ProfileFile
+                {
+                    ProfileFileVersion = _profileFileVersion,
+                    Profiles = _allProfiles
+                };
+
                 var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, mySerializerSettings);
 
                 // If we have any JSON.net errors, then we need to record them in the logs
