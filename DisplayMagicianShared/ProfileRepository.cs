@@ -91,8 +91,8 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileFileVersion = "2.6";
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_profileFileVersion}.json");
+        private static string _profileFileVersion = "3";
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles.json");
 
         #endregion
 

@@ -62,9 +62,8 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutFileVersion = "2.6";
-
-        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_{_shortcutFileVersion}.json");
+        private static string _shortcutFileVersion = "3";
+        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
