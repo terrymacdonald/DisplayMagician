@@ -32,6 +32,27 @@ namespace DisplayMagician
         Cancelled,
         Error
     }
+
+
+    public struct ShortcutFile
+    {
+        public string ShortcutVersion;
+        public List<ShortcutItem> Shortcuts;
+
+        public override bool Equals(object obj) => obj is ShortcutFile other && this.Equals(other);
+        public bool Equals(ShortcutFile other)
+        => ShortcutVersion.Equals(other.ShortcutVersion) &&
+           Shortcuts.SequenceEqual(other.Shortcuts);
+        public override int GetHashCode()
+        {
+            return (ShortcutVersion, Shortcuts).GetHashCode();
+        }
+
+        public static bool operator ==(ShortcutFile lhs, ShortcutFile rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(ShortcutFile lhs, ShortcutFile rhs) => !(lhs == rhs);
+    }
+
     public static class ShortcutRepository
     {
         #region Class Variables
@@ -41,7 +62,9 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.5.json");
+        private static string _shortcutFileVersion = "2.6";
+
+        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_${_shortcutFileVersion}.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -110,6 +133,11 @@ namespace DisplayMagician
         public static string ShortcutStorageFileName
         {
             get => _shortcutStorageJsonFileName;
+        }
+
+        public static string ShortcutStorageFileVersion
+        {
+            get => _shortcutFileVersion;
         }
 
         /*public static bool CancelWait {
@@ -473,7 +501,8 @@ namespace DisplayMagician
                             },
                         };
 
-                        _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, mySerializerSettings);
+                        ShortcutFile shortcutFile = JsonConvert.DeserializeObject<ShortcutFile>(json, mySerializerSettings);
+                        _allShortcuts = shortcutFile.Shortcuts;
                         
                     }
                     catch (JsonReaderException ex)

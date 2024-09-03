@@ -53,7 +53,9 @@ namespace DisplayMagician {
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
-        public static bool AppFirstRunOfThisVersion = false;
+        public static bool AppNewInstall = false;
+        public static bool AppVersionUpgrade = false;
+        public static string AppLastVersionRun = "0.0";
         public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
@@ -172,32 +174,112 @@ namespace DisplayMagician {
                 }
             }
 
-            // Check if this is the first time the program has been run
-            AppFirstRunOfThisVersion = false;
+            // Process the version tracking logic
+            AppNewInstall = false;
+            AppLastVersionRun = "0.0";
+            AppVersionUpgrade = false;
+
             try
             {
+                // Figure out if this is First Run of this version since installed
                 RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
-                string installerKey = DMKey.GetValueKind("FirstRun").ToString();
-                if (installerKey != null && installerKey.Equals("1"))
+                if (DMKey != null)
                 {
-                    AppFirstRunOfThisVersion = true;
-                    logger.Info($"Program/Main: This is the first time this version has run since it was installed! We may have upgrade tasks to do!");
+                    string newInstallKey = DMKey.GetValue("NewInstall").ToString() ?? "0";
+                    if (newInstallKey.Equals("1"))
+                    {
+                        AppNewInstall = true;
+                        logger.Info($"Program/Main: This is the first time this version has run since it was installed! We may have upgrade tasks to do!");
+                    }
+                    else
+                    {
+                        logger.Trace($"Program/Main: This is NOT the first time this version has run since it was installed. We've run this version before since it was installed.");
+                    }
+
                 }
                 else
                 {
-                    logger.Trace($"Program/Main: This is NOT the first time this version has run. We've run this version before.");
+                    logger.Trace($"Program/Main: DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio).");
                 }
-
+            }
+            catch (NullReferenceException ex)
+            {
+                logger.Trace(ex, $"Program/Main: Exception whilst trying to find the NewInstall registry key. It means DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio). Problem accessing registry!");
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this is the first time this version has run. Problem accessing registry!");
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this version has run since it was installed. Problem accessing registry!");
             }
+
+            try
+            {
+                // Figure out if this is version is the same as the last version
+                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                if (DMKey != null)
+                {
+                    string lastVersionRunKey = DMKey.GetValue("LastVersion").ToString() ?? "0.0";
+                    if (lastVersionRunKey.Equals("0.0"))
+                    {
+                        logger.Warn($"Program/Main: We were unable to get the last DisplayMagician version run.");
+                    }
+                    else
+                    {
+                        AppLastVersionRun = lastVersionRunKey;
+                        logger.Trace($"Program/Main: The last DisplayMagician version run was {lastVersionRunKey}. This DisplayMagician version is {Application.ProductVersion}");
+                        if (lastVersionRunKey != Application.ProductVersion)
+                        {
+                            AppVersionUpgrade = true;
+                            logger.Info($"Program/Main: This is an upgrade from version {lastVersionRunKey} to version {Application.ProductVersion}!");
+                        }
+                        else
+                        {
+                            logger.Trace($"Program/Main: This is NOT an upgrade from version {lastVersionRunKey} to version {Application.ProductVersion}.");
+                        }
+                    }
+                }
+                else
+                {
+                    logger.Trace($"Program/Main: DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio).");
+                }
+
+            }
+            catch (NullReferenceException ex)
+            {
+                logger.Trace(ex, $"Program/Main: Exception whilst trying to see what the last version of DM was. It means DisplayMagician hasn't been run before anywhere");
+                AppVersionUpgrade = true;
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this version has run previously at all. It most likely hasnt been installed and is running from somewhere (e.g. via visual studio). Problem accessing registry!");
+                AppVersionUpgrade = false;
+            }
+
+
+            try
+            {
+                // Try to store this version as the last version run (replacing the previous last run version
+                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                if (DMKey != null)
+                {
+
+                    DMKey.SetValue("LastVersion", Application.ProductVersion);
+                    logger.Trace($"Program/Main: Last Version registry key to set to {Application.ProductVersion}.");
+                }
+                else
+                {
+                    logger.Trace($"Program/Main: DisplayMagician hasn't been installed on this host so skipping setting the version registry key.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to set the last version registry key to {Application.ProductVersion}.");
+            }
+
 
             bool upgradedSettingsFile = false;
             string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             // If this is the first run of this version then we need to check if we need to upgrade anything
-            if (AppFirstRunOfThisVersion)
+            if (AppVersionUpgrade)
             {
                 // NOTE: This had to be moved up from the later state
                 // Copy the old Settings file to the new v2 name
@@ -277,7 +359,7 @@ namespace DisplayMagician {
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
             // If app settings is new, then set the initial settings we need
-            if (AppFirstRunOfThisVersion)
+            if (AppNewInstall)
             {
                 Guid guid = new Guid();
                 if (AppProgramSettings.InstallId == "")
@@ -441,7 +523,7 @@ namespace DisplayMagician {
             }
 
 
-            if (AppFirstRunOfThisVersion)
+            if (AppVersionUpgrade)
             {
                 // Note - we cannot upgrade the DisplayProfiles from prior versions so this file has been skipped.
                 try

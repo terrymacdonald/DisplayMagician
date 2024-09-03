@@ -3,13 +3,13 @@
 		<ComponentGroup Id="DisplayMagicianComponents" Directory="INSTALLFOLDER">
 			<Component>
 				<RegistryKey Root="HKLM" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
-				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="Version" Value="!(bind.fileVersion.DisplayMagicianExe)"/>
-				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstallDate" Value="[Date]"/>
-				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstallDir" Value="[INSTALLFOLDER]"/>
+				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstalledVersion" Value="!(bind.fileVersion.DisplayMagicianExe)"/>
+				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstalledDate" Value="[Date]"/>
+				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstalledDir" Value="[INSTALLFOLDER]"/>
 			</Component>
 			<Component>
 				<RegistryKey Root="HKCU" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
-				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="FirstRun" Value="1"/>
+				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="NewInstall" Value="1"/>
 			</Component>
 
 			<Component>
