@@ -381,7 +381,6 @@ namespace DisplayMagician
             Program.AppProgramSettings.SaveSettings();
         }
 
-
     }
 
     // Originally from https://stackoverflow.com/questions/9746538/fastest-safest-file-finding-parsing

@@ -479,6 +479,10 @@ namespace DisplayMagician {
                         logger.Error($"Program/Main: Error while renaming old Display Profiles files.");
                     }
                 }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/Main: Exception upgrading Display Profiles.");
+                }
 
                 // Also upgrade the Shortcuts file if it's needed
                 string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
