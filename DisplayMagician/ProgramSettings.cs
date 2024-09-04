@@ -1,4 +1,5 @@
 ﻿using DisplayMagicianShared;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -118,6 +119,13 @@ namespace DisplayMagician
         {
             get
             {
+                if (_installDate == null || _installDate == DateOnly.MinValue)
+                {
+                    // Lookup Install Date from Registry
+                    // else just set it to the current date
+                    string nowAsString = DateOnly.FromDateTime(DateTime.UtcNow).ToString();
+                    DateOnly.TryParse((string)Registry.CurrentUser.GetValue("InstallDate", nowAsString),out _installDate);
+                }
                 return _installDate;
             }
             set

@@ -442,6 +442,8 @@ namespace DisplayMagician
                     return false;
                 }
 
+                string newFullFilename = Path.Combine(path, newFilename);
+
                 // get all the names of the files that match the search pattern
                 // get the last one (as it is the latest one in use) and convert it to the new file format
                 // rename all the files matching the search to .old files
@@ -463,17 +465,17 @@ namespace DisplayMagician
 
                     // get the last files in the list
                     var lastFile = filesToUpgrade.Last();
-                    if (newFilename != lastFile)
+                    if (newFilename != Path.GetFileName(lastFile))
                     {
                         // If the new filename is different from the last file, then upgrade the last file
                         try
                         {
-                            logger.Trace($"Utils/UpgradeOldFileVersions: Attempting to copy {lastFile} to {newFilename} to upgrade it.");
-                            File.Copy(lastFile, newFilename);
+                            logger.Trace($"Utils/UpgradeOldFileVersions: Attempting to copy {lastFile} to {newFullFilename} to upgrade it.");
+                            File.Copy(lastFile, newFullFilename);
                         }
                         catch (Exception ex1)
                         {
-                            logger.Error(ex1, $"Utils/UpgradeOldFileVersions: Exception while trying to copy {lastFile} to {newFilename}. Unable to copy the file.");
+                            logger.Error(ex1, $"Utils/UpgradeOldFileVersions: Exception while trying to copy {lastFile} to {newFullFilename}. Unable to copy the file.");
                         }
                     }
 

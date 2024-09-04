@@ -214,32 +214,19 @@ namespace DisplayMagician {
             try
             {
                 // Figure out if this is version is the same as the last version
-                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
-                if (DMKey != null)
+                // get the last version from the registry (or this version as fallback)
+                string lastVersionString = (string)Registry.CurrentUser.GetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                Version lastVersion = new Version(lastVersionString);
+
+
+                if (lastVersion < Assembly.GetExecutingAssembly().GetName().Version)
                 {
-                    string lastVersionRunKey = DMKey.GetValue("LastVersion").ToString() ?? "0.0";
-                    if (lastVersionRunKey.Equals("0.0"))
-                    {
-                        logger.Warn($"Program/Main: We were unable to get the last DisplayMagician version run.");
-                    }
-                    else
-                    {
-                        AppLastVersionRun = lastVersionRunKey;
-                        logger.Trace($"Program/Main: The last DisplayMagician version run was {lastVersionRunKey}. This DisplayMagician version is {Application.ProductVersion}");
-                        if (lastVersionRunKey != Application.ProductVersion)
-                        {
-                            AppVersionUpgrade = true;
-                            logger.Info($"Program/Main: This is an upgrade from version {lastVersionRunKey} to version {Application.ProductVersion}!");
-                        }
-                        else
-                        {
-                            logger.Trace($"Program/Main: This is NOT an upgrade from version {lastVersionRunKey} to version {Application.ProductVersion}.");
-                        }
-                    }
+                    AppVersionUpgrade = true;
+                    logger.Info($"Program/Main: This is an upgrade from version {lastVersion} to version {Assembly.GetExecutingAssembly().GetName().Version}!");
                 }
                 else
                 {
-                    logger.Trace($"Program/Main: DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio).");
+                    logger.Trace($"Program/Main: This is NOT an upgrade from version {lastVersion} to version {Assembly.GetExecutingAssembly().GetName().Version}.");
                 }
 
             }
@@ -257,18 +244,8 @@ namespace DisplayMagician {
 
             try
             {
-                // Try to store this version as the last version run (replacing the previous last run version
-                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
-                if (DMKey != null)
-                {
-
-                    DMKey.SetValue("LastVersion", Application.ProductVersion);
-                    logger.Trace($"Program/Main: Last Version registry key to set to {Application.ProductVersion}.");
-                }
-                else
-                {
-                    logger.Trace($"Program/Main: DisplayMagician hasn't been installed on this host so skipping setting the version registry key.");
-                }
+                // Try to store this version as the last version run (replacing the previous last run version with this one)
+                Registry.CurrentUser.SetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());\
             }
             catch (Exception ex)
             {
