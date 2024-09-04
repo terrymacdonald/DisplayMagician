@@ -568,11 +568,11 @@ namespace DisplayMagician
                             // If there is a error in the JSON format
                             if (ex.HResult == -2146233088)
                             {
-                                SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException - The Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                                SharedLogger.logger.Error(nex, $"ShortcutRepository/LoadShortcuts: JSONReaderException - The Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
                             else
                             {
-                                SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException while trying to process the Shortcuts json data file {_shortcutStorageJsonFullFileName} but JsonConvert threw an exception.");
+                                SharedLogger.logger.Error(nex, $"ShortcutRepository/LoadShortcuts: JSONReaderException while trying to process the Shortcuts json data file {_shortcutStorageJsonFullFileName} but JsonConvert threw an exception.");
                             }
                             MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
@@ -581,7 +581,7 @@ namespace DisplayMagician
                             // If we get here then we may need to import the shortcuts from the old format without the Shortcut Version
 
 
-                            logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFullFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
+                            logger.Error(nex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFullFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
                             MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
                         }

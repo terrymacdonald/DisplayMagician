@@ -13,13 +13,36 @@ using Windows.Data.Json;
 namespace DisplayMagician
 {
 
+    public struct SettingsFile
+    {
+        public string SettingsFileVersion;
+        public DateTime LastUpdated;
+        public ProgramSettings Settings;
+
+        public override bool Equals(object obj) => obj is SettingsFile other && this.Equals(other);
+        public bool Equals(SettingsFile other)
+        => SettingsFileVersion.Equals(other.SettingsFileVersion) &&
+           LastUpdated.Equals(other.LastUpdated) &&
+           Settings.Equals(other.Settings);
+        public override int GetHashCode()
+        {
+            return (SettingsFileVersion, LastUpdated, Settings).GetHashCode();
+        }
+
+        public static bool operator ==(SettingsFile lhs, SettingsFile rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(SettingsFile lhs, SettingsFile rhs) => !(lhs == rhs);
+    }
+
     public class ProgramSettings
     {
         #region Class Variables
         // Common items to the class
         private static bool _programSettingsLoaded = false;
         // Other constants that are useful
-        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.6.json");
+        private static string _programSettingsFileVersion = "3";
+        private static readonly string _programSettingsStorageJsonFileName = "Settings.json";
+        public static string _programSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, _programSettingsStorageJsonFileName);
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
@@ -522,23 +545,41 @@ namespace DisplayMagician
             ProgramSettings programSettings = null;
             _programSettingsLoaded = false;
 
-            if (File.Exists(programSettingsStorageJsonFileName))
+            // Figure out if we need to upgrade the shortcuts file
+            if (Utils.OldFileVersionsExist(Program.AppDataPath, "Settings_*.json"))
+            {
+                logger.Debug($"ProgramSettings/LoadSettings: Upgrading the older settings file to the latest version.");
+                if (!Utils.UpgradeOldFileVersions(Program.AppDataPath, "Settings_*.json", _programSettingsStorageJsonFileName))
+                {
+                    logger.Error($"ProgramSettings/LoadSettings: Error upgrading the older settings file to the latest version.");
+                }
+                else
+                {
+                    logger.Trace($"ProgramSettings/LoadSettings: Upgraded the older settings file to the latest version.");
+                }
+            }
+            else
+            {
+                logger.Debug($"ProgramSettings/LoadSettings: No need to upgrade the older settings file to the latest version.");
+            }
+
+            if (File.Exists(_programSettingsStorageJsonFileName))
             {
                 string json = "";
                 List<string> jsonErrors = new List<string>();
                 try {
-                    json = File.ReadAllText(programSettingsStorageJsonFileName, Encoding.Unicode);
+                    json = File.ReadAllText(_programSettingsStorageJsonFileName, Encoding.Unicode);
                 }                
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {programSettingsStorageJsonFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
+                    Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {_programSettingsStorageJsonFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
                 }
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
                     try
                     {
-                        programSettings = JsonConvert.DeserializeObject<ProgramSettings>(json, new JsonSerializerSettings
+                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
@@ -550,26 +591,64 @@ namespace DisplayMagician
                                 jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
                                 args.ErrorContext.Handled = true;
                             },
-                        });
+                        };
+
+                        SettingsFile settingsFile = JsonConvert.DeserializeObject<SettingsFile>(json, mySerializerSettings);
+                        programSettings = settingsFile.Settings;
                     }
                     catch (JsonReaderException ex)
                     {
                         // If there is a error in the JSON format
                         if (ex.HResult == -2146233088)
                         {
-                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                         }
                         else
                         {
-                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {programSettingsStorageJsonFileName} but JsonConvert threw an exception.");
+                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {_programSettingsStorageJsonFileName} but JsonConvert threw an exception.");
                         }
-                        MessageBox.Show($"The Program Settings file {programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: Tried to parse the JSON in the Program Settings file {programSettingsStorageJsonFileName} but the JsonConvert threw an exception.");
-                        MessageBox.Show($"The Program Settings file {programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        try
+                        {
+                            JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                            {
+                                MissingMemberHandling = MissingMemberHandling.Ignore,
+                                NullValueHandling = NullValueHandling.Ignore,
+                                DefaultValueHandling = DefaultValueHandling.Populate,
+                                TypeNameHandling = TypeNameHandling.Auto,
+                                ObjectCreationHandling = ObjectCreationHandling.Replace,
+                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                {
+                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                    args.ErrorContext.Handled = true;
+                                },
+                            };
+
+                            programSettings = JsonConvert.DeserializeObject<ProgramSettings>(json, mySerializerSettings);
+                        }
+                        catch (JsonReaderException nex)
+                        {
+                            // If there is a error in the JSON format
+                            if (ex.HResult == -2146233088)
+                            {
+                                SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {_programSettingsStorageJsonFileName} but JsonConvert threw an exception.");
+                            }
+                            MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                        }
+                        catch (Exception nex)
+                        {
+                            SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: Tried to parse the JSON in the Program Settings file {_programSettingsStorageJsonFileName} but the JsonConvert threw an exception.");
+                            MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
 
                     // If we have any JSON.net errors, then we need to records them in the logs
@@ -590,7 +669,7 @@ namespace DisplayMagician
             }
             else
             {
-                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {programSettingsStorageJsonFileName}");
+                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
                 programSettings = new ProgramSettings();
                 programSettings.SaveSettings();
             }
@@ -606,7 +685,7 @@ namespace DisplayMagician
         public bool SaveSettings()
         {
 
-            logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {programSettingsStorageJsonFileName}.");
+            logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {_programSettingsStorageJsonFileName}.");
 
             // Force the PreviousDisplayMagicianVersion to this version just before we save the settings.
             DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -614,8 +693,8 @@ namespace DisplayMagician
             List<string> jsonErrors = new List<string>();
             try
             {
-                
-                var json = JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings
+
+                JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
@@ -627,18 +706,27 @@ namespace DisplayMagician
                         jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
                         args.ErrorContext.Handled = true;
                     },
-                });
+                };
+
+                SettingsFile settingsFile = new SettingsFile
+                {
+                    SettingsFileVersion = _programSettingsFileVersion,
+                    LastUpdated = DateTime.Now,
+                    Settings = this
+                };
+
+                var json = JsonConvert.SerializeObject(settingsFile, Formatting.Indented, mySerializerSettings);
 
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    File.WriteAllText(programSettingsStorageJsonFileName, json, Encoding.Unicode);
+                    File.WriteAllText(_programSettingsStorageJsonFileName, json, Encoding.Unicode);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {programSettingsStorageJsonFileName}.");
+                logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {_programSettingsStorageJsonFileName}.");
             }
 
             // If we have any JSON.net errors, then we need to records them in the logs
