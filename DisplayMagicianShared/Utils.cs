@@ -1,7 +1,9 @@
 ﻿using Microsoft.Win32;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -746,6 +748,195 @@ namespace DisplayMagicianShared
         // size of a device name string
         public const int CCHDEVICENAME = 32;
         public const uint MONITORINFOF_PRIMARY = 1;
+
+        public static bool OldFileVersionsExist(string path, string searchPattern = "", string skipFilename = "")
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    SharedLogger.logger.Error($"SharedUtils/OldFileVersionsExist: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
+
+                string[] filesThatMatch;
+
+                if (String.IsNullOrWhiteSpace(searchPattern))
+                {
+                    filesThatMatch = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesThatMatch = Directory.GetFiles(path, searchPattern);
+                }
+
+                if (filesThatMatch.Length > 0)
+                {
+                    SharedLogger.logger.Trace($"SharedUtils/OldFileVersionsExist: Found {filesThatMatch.Length} files matching the '{searchPattern}' pattern in {path}");
+                    foreach (var filename in filesThatMatch)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            SharedLogger.logger.Trace($"SharedUtils/OldFileVersionsExist: Skipping {filename} as we want to ignore the {skipFilename} file.");
+                            continue;
+                        }
+
+                        return true;
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"SharedUtils/OldFileVersionsExist: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"SharedUtils/OldFileVersionsExist: Exception while trying to OldFileVersionsExist. Unable to find the files.");
+                return false;
+            }
+        }
+
+        public static bool RenameOldFileVersions(string path, string searchPattern, string skipFilename)
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    SharedLogger.logger.Error($"SharedUtils/RenameOldFileVersions: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
+
+                string[] filesToRename;
+
+                if (String.IsNullOrWhiteSpace(searchPattern))
+                {
+                    filesToRename = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesToRename = Directory.GetFiles(path, searchPattern);
+                }
+
+                if (filesToRename.Length > 0)
+                {
+                    SharedLogger.logger.Trace($"SharedUtils/RenameOldFileVersions: Found {filesToRename.Length} files matching the '{searchPattern}' pattern in {path}");
+                    foreach (var filename in filesToRename)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            SharedLogger.logger.Trace($"SharedUtils/RenameOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {skipFilename} file.");
+                            continue;
+                        }
+
+                        try
+                        {
+                            SharedLogger.logger.Trace($"SharedUtils/RenameOldFileVersions: Attempting to rename {filename} to {filename}.old");
+                            File.Move(filename, $"{filename}.old");
+                        }
+                        catch (Exception ex2)
+                        {
+                            SharedLogger.logger.Error(ex2, $"SharedUtils/RenameOldFileVersions: Exception while trying to rename {filename} to {filename}.old. Skipping this rename.");
+                        }
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"SharedUtils/RenameOldFileVersions: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"SharedUtils/RenameOldFileVersions: Exception while trying to RenameOldFileVersions. Unable to rename the files.");
+                return false;
+            }
+        }
+
+        public static bool UpgradeOldFileVersions(string path, string searchPattern = "", string newFilename = "")
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    SharedLogger.logger.Error($"SharedUtils/UpgradeOldFileVersions: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
+
+                // get all the names of the files that match the search pattern
+                // get the last one (as it is the latest one in use) and convert it to the new file format
+                // rename all the files matching the search to .old files
+
+                string[] filesToUpgrade;
+
+                if (String.IsNullOrWhiteSpace(searchPattern))
+                {
+                    filesToUpgrade = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesToUpgrade = Directory.GetFiles(path, searchPattern);
+                }
+
+                if (filesToUpgrade.Length > 0)
+                {
+                    SharedLogger.logger.Trace($"SharedUtils/UpgradeOldFileVersions: Found {filesToUpgrade.Length} files matching the '{searchPattern}' pattern in {path} to upgrade");
+
+                    // get the last files in the list
+                    var lastFile = filesToUpgrade.Last();
+                    if (newFilename != lastFile)
+                    {
+                        // If the new filename is different from the last file, then upgrade the last file
+                        try
+                        {
+                            SharedLogger.logger.Trace($"SharedUtils/UpgradeOldFileVersions: Attempting to copy {lastFile} to {newFilename} to upgrade it.");
+                            File.Copy(lastFile, newFilename);
+                        }
+                        catch (Exception ex1)
+                        {
+                            SharedLogger.logger.Error(ex1, $"SharedUtils/UpgradeOldFileVersions: Exception while trying to copy {lastFile} to {newFilename}. Unable to copy the file.");
+                        }
+                    }
+
+                    // Now we need to rename all the old files to .old files
+                    foreach (var filename in filesToUpgrade)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(newFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            SharedLogger.logger.Trace($"SharedUtils/UpgradeOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {newFilename} file.");
+                            continue;
+                        }
+
+                        try
+                        {
+                            SharedLogger.logger.Trace($"SharedUtils/UpgradeOldFileVersions: Attempting to rename {filename} to {filename}.old");
+                            File.Move(filename, $"{filename}.old");
+                        }
+                        catch (Exception ex2)
+                        {
+                            SharedLogger.logger.Error(ex2, $"SharedUtils/UpgradeOldFileVersions: Exception while trying to rename {filename} to {filename}.old. Skipping this rename.");
+                        }
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"SharedUtils/UpgradeOldFileVersions: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"SharedUtils/UpgradeOldFileVersions: Exception while trying to RenameOldFileVersions. Unable to rename the files.");
+                return false;
+            }
+        }
 
 
     }
