@@ -37,15 +37,17 @@ namespace DisplayMagician
     public struct ShortcutFile
     {
         public string ShortcutFileVersion;
+        public DateTime LastUpdated;
         public List<ShortcutItem> Shortcuts;
 
         public override bool Equals(object obj) => obj is ShortcutFile other && this.Equals(other);
         public bool Equals(ShortcutFile other)
         => ShortcutFileVersion.Equals(other.ShortcutFileVersion) &&
+           LastUpdated.Equals(other.LastUpdated) && 
            Shortcuts.SequenceEqual(other.Shortcuts);
         public override int GetHashCode()
         {
-            return (ShortcutFileVersion, Shortcuts).GetHashCode();
+            return (ShortcutFileVersion, LastUpdated, Shortcuts).GetHashCode();
         }
 
         public static bool operator ==(ShortcutFile lhs, ShortcutFile rhs) => lhs.Equals(rhs);
@@ -723,6 +725,7 @@ namespace DisplayMagician
                 ShortcutFile shortcutFile = new ShortcutFile
                 {
                     ShortcutFileVersion = _shortcutFileVersion,
+                    LastUpdated = DateTime.Now,
                     Shortcuts = _allShortcuts
                 };
 

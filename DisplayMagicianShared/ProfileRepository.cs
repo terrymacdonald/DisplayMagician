@@ -52,15 +52,17 @@ namespace DisplayMagicianShared
     public struct ProfileFile
     {
         public string ProfileFileVersion;
+        public DateTime LastUpdated;
         public List<ProfileItem> Profiles;
 
         public override bool Equals(object obj) => obj is ProfileFile other && this.Equals(other);
         public bool Equals(ProfileFile other)
         => ProfileFileVersion.Equals(other.ProfileFileVersion) &&
+           LastUpdated.Equals(other.LastUpdated) &&
            Profiles.SequenceEqual(other.Profiles);
         public override int GetHashCode()
         {
-            return (ProfileFileVersion, Profiles).GetHashCode();
+            return (ProfileFileVersion, LastUpdated, Profiles).GetHashCode();
         }
 
         public static bool operator ==(ProfileFile lhs, ProfileFile rhs) => lhs.Equals(rhs);
@@ -1142,6 +1144,7 @@ namespace DisplayMagicianShared
                 ProfileFile profileFile = new ProfileFile
                 {
                     ProfileFileVersion = _profileFileVersion,
+                    LastUpdated = DateTime.Now,
                     Profiles = _allProfiles
                 };
 
