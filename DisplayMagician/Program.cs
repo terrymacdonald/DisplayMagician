@@ -53,6 +53,7 @@ namespace DisplayMagician {
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
+        public static bool AppInstalled = false;
         public static bool AppNewInstall = false;
         public static bool AppVersionUpgrade = false;
         public static string AppLastVersionRun = "0.0";
@@ -175,6 +176,7 @@ namespace DisplayMagician {
             }
 
             // Process the version tracking logic
+            AppInstalled = false; 
             AppNewInstall = false;
             AppLastVersionRun = "0.0";
             AppVersionUpgrade = false;
@@ -185,6 +187,7 @@ namespace DisplayMagician {
                 RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
                 if (DMKey != null)
                 {
+                    AppInstalled = true;
                     string newInstallKey = DMKey.GetValue("NewInstall").ToString() ?? "0";
                     if (newInstallKey.Equals("1"))
                     {
@@ -245,7 +248,7 @@ namespace DisplayMagician {
             try
             {
                 // Try to store this version as the last version run (replacing the previous last run version with this one)
-                Registry.CurrentUser.SetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());\
+                Registry.CurrentUser.SetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             }
             catch (Exception ex)
             {
@@ -268,9 +271,10 @@ namespace DisplayMagician {
                 AppProgramSettings.InstallDate = DateOnly.FromDateTime(DateTime.UtcNow);
                 AppProgramSettings.LastDonationDate = new DateOnly(1980,1,1);
                 AppProgramSettings.LastDonateButtonAnimationDate = new DateOnly(1980, 1, 1);
+
+                // Store the updated settings
+                AppProgramSettings.SaveSettings();
             }
-            // Store the updated settings
-            AppProgramSettings.SaveSettings();
 
 
             // Rules for mapping loggers to targets          
@@ -417,19 +421,19 @@ namespace DisplayMagician {
 
             if (AppVersionUpgrade)
             {
-                // Note - we cannot upgrade the DisplayProfiles from prior versions so this file has been skipped.
+                // Do all the upgrade things
                 logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
 
-                // Warn the user about the fact we need them to recreate their Display Profiles again!
+                /* // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
                 myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
                 myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
+                */
 
-
-                // If we get here then there is no more upgrading that needs doing, so we can set the reg key
+                // Set the registry key to turn off the first run setting.
                 RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
                 DMKey.SetValue("FirstRun", "0");
 
