@@ -524,7 +524,12 @@ namespace DisplayMagician
 
                         ShortcutFile shortcutFile = JsonConvert.DeserializeObject<ShortcutFile>(json, mySerializerSettings);
                         _allShortcuts = shortcutFile.Shortcuts;
-                        
+
+                        if (shortcutFile.Shortcuts == null)
+                        {
+                            throw new Exception("ShortcutRepository/LoadShortcuts: The Shortcuts file was an older file format, so we need to upgrade it.");
+                        }
+
                     }
                     catch (JsonReaderException ex)
                     {

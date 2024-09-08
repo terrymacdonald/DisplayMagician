@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -603,6 +604,11 @@ namespace DisplayMagician
 
                         SettingsFile settingsFile = JsonConvert.DeserializeObject<SettingsFile>(json, mySerializerSettings);
                         programSettings = settingsFile.Settings;
+
+                        if (settingsFile.Settings == null)
+                        {
+                            throw new Exception("ProgramSettings/LoadSettings: The Program Settings file was an older file format, so we need to upgrade it.");
+                        }
                     }
                     catch (JsonReaderException ex)
                     {
@@ -637,6 +643,14 @@ namespace DisplayMagician
                             };
 
                             programSettings = JsonConvert.DeserializeObject<ProgramSettings>(json, mySerializerSettings);
+
+                            // If we get here and the program settings are still null, then we need to create a new one to keep the program working
+                            if (programSettings == null)
+                            {
+                                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
+                                programSettings = new ProgramSettings();
+                                programSettings.SaveSettings();
+                            }
                         }
                         catch (JsonReaderException nex)
                         {
@@ -666,10 +680,6 @@ namespace DisplayMagician
                         {
                             SharedLogger.logger.Error($"ProgramSettings/LoadSettings: {jsonErrors}");
                         }
-                    }
-
-                    if (programSettings.DisplayMagicianVersion == null) {
-                        programSettings.DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
                     }
                 }
 

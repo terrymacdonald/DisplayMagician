@@ -884,6 +884,11 @@ namespace DisplayMagicianShared
                         ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
                         _allProfiles = profileFile.Profiles;
 
+                        if (profileFile.Profiles == null)
+                        {
+                            throw new Exception("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
+                        }
+
                         // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                         foreach (ProfileItem profile in _allProfiles)
                         {
