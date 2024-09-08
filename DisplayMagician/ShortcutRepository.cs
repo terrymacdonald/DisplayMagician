@@ -567,6 +567,10 @@ namespace DisplayMagician
 
                             _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, mySerializerSettings);
 
+                            // Save the Shortcuts JSON as it's different now, and we want to save the upgrade!
+                            SaveShortcuts();
+
+
                         }
                         catch (JsonReaderException nex)
                         {

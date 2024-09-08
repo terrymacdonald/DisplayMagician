@@ -828,10 +828,10 @@ namespace DisplayMagicianShared
             _profilesLoaded = false;
 
             // Figure out if we need to upgrade the shortcuts file
-            if (Utils.OldFileVersionsExist(AppProfileStoragePath, "Profiles_*.json"))
+            if (Utils.OldFileVersionsExist(AppProfileStoragePath, "DisplayProfiles_*.json"))
             {
                 SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Upgrading the older profiles file to the latest version.");
-                if (!Utils.UpgradeOldFileVersions(AppProfileStoragePath, "Profiles_*.json", _profileStorageJsonFileName))
+                if (!Utils.UpgradeOldFileVersions(AppProfileStoragePath, "DisplayProfiles_*.json", _profileStorageJsonFileName))
                 {
                     SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: Error upgrading the older profiles file to the latest version.");
                 }
@@ -930,6 +930,9 @@ namespace DisplayMagicianShared
                             };
 
                             _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                            // Save the Profiles JSON as it's different now, and we want to save the upgrade!
+                            SaveProfiles();
 
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in _allProfiles)
@@ -1153,7 +1156,7 @@ namespace DisplayMagicianShared
                     Profiles = _allProfiles
                 };
 
-                var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, mySerializerSettings);
+                var json = JsonConvert.SerializeObject(profileFile, Formatting.Indented, mySerializerSettings);
 
                 // If we have any JSON.net errors, then we need to record them in the logs
                 if (jsonErrors.Count > 0)
@@ -1260,7 +1263,9 @@ namespace DisplayMagicianShared
                                     args.ErrorContext.Handled = true;
                                 },
                             };
-                            profilesToValidate = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                            ProfileFile profilesFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
+                            profilesToValidate = profilesFile.Profiles;
 
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in profilesToValidate)

@@ -897,11 +897,11 @@ namespace DisplayMagicianShared
                         try
                         {
                             SharedLogger.logger.Trace($"SharedUtils/UpgradeOldFileVersions: Attempting to copy {lastFile} to {newFilename} to upgrade it.");
-                            File.Copy(lastFile, newFilename);
+                            File.Copy(lastFile, newFullFilename);
                         }
                         catch (Exception ex1)
                         {
-                            SharedLogger.logger.Error(ex1, $"SharedUtils/UpgradeOldFileVersions: Exception while trying to copy {lastFile} to {newFilename}. Unable to copy the file.");
+                            SharedLogger.logger.Error(ex1, $"SharedUtils/UpgradeOldFileVersions: Exception while trying to copy {lastFile} to {newFullFilename}. Unable to copy the file.");
                         }
                     }
 
