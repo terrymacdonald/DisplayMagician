@@ -269,7 +269,7 @@ namespace DisplayMagician {
                     AppProgramSettings.InstallId = guid.ToString();
                 }
                 AppProgramSettings.InstallDate = DateOnly.FromDateTime(DateTime.UtcNow);
-                AppProgramSettings.LastDonationDate = new DateOnly(1980,1,1);
+                AppProgramSettings.LastDonationDate = new DateTime(1980,1,1);
                 AppProgramSettings.LastDonateButtonAnimationDate = new DateOnly(1980, 1, 1);
 
                 // Store the updated settings

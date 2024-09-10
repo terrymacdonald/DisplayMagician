@@ -63,7 +63,7 @@ namespace DisplayMagician
         private string _displayMagicianVersion = null;
         private string _installId = "";
         private DateOnly _installDate = DateOnly.FromDateTime(DateTime.UtcNow);
-        private DateOnly _lastDonationDate = new DateOnly(1980,1,1);
+        private DateTime _lastDonationDate = new DateTime(1980,1,1);
         private DateOnly _lastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow);
         private int _numberOfDonations = 0;
         private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
@@ -135,7 +135,7 @@ namespace DisplayMagician
             }
         }
 
-        public DateOnly LastDonationDate
+        public DateTime LastDonationDate
         {
             get
             {

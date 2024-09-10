@@ -31,6 +31,7 @@
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             splitContainer1 = new System.Windows.Forms.SplitContainer();
+            lbl_donate = new System.Windows.Forms.Label();
             btn_fov_calc = new System.Windows.Forms.Button();
             btn_help = new System.Windows.Forms.Button();
             btn_donate = new System.Windows.Forms.Button();
@@ -74,6 +75,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            splitContainer1.Panel1.Controls.Add(lbl_donate);
             splitContainer1.Panel1.Controls.Add(btn_fov_calc);
             splitContainer1.Panel1.Controls.Add(btn_help);
             splitContainer1.Panel1.Controls.Add(btn_donate);
@@ -91,6 +93,14 @@
             splitContainer1.Panel2.Controls.Add(btn_exit);
             splitContainer1.Panel2.Controls.Add(pb_game_shortcut);
             splitContainer1.TabStop = false;
+            // 
+            // lbl_donate
+            // 
+            resources.ApplyResources(lbl_donate, "lbl_donate");
+            lbl_donate.BackColor = System.Drawing.Color.Brown;
+            lbl_donate.ForeColor = System.Drawing.Color.White;
+            lbl_donate.Name = "lbl_donate";
+            lbl_donate.Click += lbl_donate_Click;
             // 
             // btn_fov_calc
             // 
@@ -333,5 +343,6 @@
         private System.Windows.Forms.Button btn_donate;
         private System.Windows.Forms.Button btn_help;
         private System.Windows.Forms.Button btn_fov_calc;
+        private System.Windows.Forms.Label lbl_donate;
     }
 }

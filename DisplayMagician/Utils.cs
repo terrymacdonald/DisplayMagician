@@ -360,7 +360,7 @@ namespace DisplayMagician
             else
             {
                 // User has donated, but it's been a year since the last donation
-                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateOnly.FromDateTime(DateTime.UtcNow))
+                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.Now)
                 {
                     // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
                     if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
@@ -376,7 +376,7 @@ namespace DisplayMagician
 
         public static void UserHasDonated()
         {
-            Program.AppProgramSettings.LastDonationDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            Program.AppProgramSettings.LastDonationDate = DateTime.UtcNow;
             Program.AppProgramSettings.NumberOfDonations++;
             Program.AppProgramSettings.SaveSettings();
         }

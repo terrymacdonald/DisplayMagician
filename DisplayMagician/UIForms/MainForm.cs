@@ -98,8 +98,8 @@ namespace DisplayMagician.UIForms
                 {
                     try
                     {
-                        HotkeyManager.Current.AddOrReplace(myProfile.UUID, myProfile.Hotkey, OnWindowHotkeyPressed); 
-                        hotkeyDisplayProfiles.Add(myProfile.UUID);                        
+                        HotkeyManager.Current.AddOrReplace(myProfile.UUID, myProfile.Hotkey, OnWindowHotkeyPressed);
+                        hotkeyDisplayProfiles.Add(myProfile.UUID);
                     }
                     catch (HotkeyAlreadyRegisteredException ex)
                     {
@@ -137,7 +137,7 @@ namespace DisplayMagician.UIForms
             if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
                 Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
-            if (Program.AppProgramSettings.MinimiseOnStart) 
+            if (Program.AppProgramSettings.MinimiseOnStart)
             {
                 // Make the form minimised on start 
                 allowVisible = false;
@@ -177,7 +177,7 @@ namespace DisplayMagician.UIForms
 
                     // And then show it
                     ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-                }                    
+                }
 
             }
             else
@@ -196,7 +196,7 @@ namespace DisplayMagician.UIForms
             {
                 cb_minimise_notification_area.Checked = false;
             }
-            
+
             // Set the notifyIcon text with the current profile
             if (notifyIcon != null)
             {
@@ -204,9 +204,9 @@ namespace DisplayMagician.UIForms
                 if (shortProfileName.Length >= 64)
                 {
                     shortProfileName = ProfileRepository.CurrentProfile.Name.Substring(0, 45);
-                    
+
                 }
-                notifyIcon.Text = $"DisplayMagician ({shortProfileName })";
+                notifyIcon.Text = $"DisplayMagician ({shortProfileName})";
                 Application.DoEvents();
             }
 
@@ -219,16 +219,16 @@ namespace DisplayMagician.UIForms
             else if (formToOpen is ShortcutLibraryForm)
             {
                 var shortcutLibraryForm = new ShortcutLibraryForm();
-            shortcutLibraryForm.ShowDialog(this);
-            }            
+                shortcutLibraryForm.ShowDialog(this);
+            }
             else
             {
                 // Make this window top most if we're not minimised
                 if (!Program.AppProgramSettings.MinimiseOnStart)
                 {
                     if (Program.AppMainForm is Form)
-                    // Center the MainAppForm
-                    Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+                        // Center the MainAppForm
+                        Utils.CenterOnPrimaryScreen(Program.AppMainForm);
                     {
                         // Center the MainAppForm
                         Utils.CenterOnPrimaryScreen(Program.AppMainForm);
@@ -244,7 +244,7 @@ namespace DisplayMagician.UIForms
             {
                 Utils.AddAnimation(btn_donate);
             }
-            
+
         }
 
         protected override void SetVisibleCore(bool value)
@@ -296,7 +296,7 @@ namespace DisplayMagician.UIForms
 
                 // Remove any other Notifications from us
                 ToastNotificationManagerCompat.History.Clear();
-                
+
                 // And then show it
                 ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
             }
@@ -315,7 +315,7 @@ namespace DisplayMagician.UIForms
             if (Application.OpenForms.OfType<DisplayProfileForm>().Any())
             {
                 displayProfileForm = Application.OpenForms.OfType<DisplayProfileForm>().Single();
-                displayProfileForm.Activate(); 
+                displayProfileForm.Activate();
                 displayProfileForm.Show();
                 displayProfileForm.BringToFront();
 
@@ -324,7 +324,7 @@ namespace DisplayMagician.UIForms
             {
                 displayProfileForm = new DisplayProfileForm();
                 displayProfileForm.ShowDialog(this);
-            }            
+            }
         }
 
         private void pb_game_shortcut_Click(object sender, EventArgs e)
@@ -347,12 +347,29 @@ namespace DisplayMagician.UIForms
             {
                 shortcutLibraryForm = new ShortcutLibraryForm();
                 shortcutLibraryForm.ShowDialog(this);
-            }            
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
-        {                        
+        {
             EnableShortcutButtonIfProfiles();
+
+            // Check if user donated and if so, hide the Donate message
+            if (Program.AppProgramSettings.NumberOfDonations > 0 && Program.AppProgramSettings.LastDonationDate > DateTime.Parse("2024-01-01"))
+            {
+                lbl_donate.Visible = false;
+            }
+            else
+            {
+                if (Program.AppProgramSettings.NumberOfTimesRun > 1)
+                {
+                    lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times without donating.";
+                }
+                else
+                {
+                    lbl_donate.Text = $"You've used DisplayMagician 1 time without donating.";
+                }
+            }
 
             logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
         }
@@ -395,7 +412,7 @@ namespace DisplayMagician.UIForms
             ToolStripSeparator separator = new ToolStripSeparator();
             profileToolStripMenuItem.DropDownItems.Add(separator);
 
-            
+
             if (ProfileRepository.AllProfiles.Count > 0)
             {
                 // Add the current slist of profiles into the NotifyIcon context menu
@@ -405,16 +422,16 @@ namespace DisplayMagician.UIForms
                     if (!profile.IsPossible)
                     {
                         profileMenuItem.Enabled = false;
-                    }                        
+                    }
                     else if (profile.IsActive)
                     {
                         profileMenuItem.Enabled = true;
-                        profileMenuItem.Font = new Font(profileMenuItem.Font, FontStyle.Bold); 
+                        profileMenuItem.Font = new Font(profileMenuItem.Font, FontStyle.Bold);
                     }
                     else
                     {
                         profileMenuItem.Enabled = true;
-                    }                        
+                    }
                     profileToolStripMenuItem.DropDownItems.Add(profileMenuItem);
                 }
 
@@ -539,7 +556,7 @@ namespace DisplayMagician.UIForms
         }
 
         private void cb_minimise_notification_area_CheckedChanged(object sender, EventArgs e)
-        {            
+        {
             if (cb_minimise_notification_area.Checked)
             {
                 // Make the form minimised on start 
@@ -611,7 +628,7 @@ namespace DisplayMagician.UIForms
         private void btn_donate_Click(object sender, EventArgs e)
         {
             string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
-            ProcessUtils.StartProcess(targetURL,"",ProcessPriority.Normal);
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
         }
@@ -620,7 +637,7 @@ namespace DisplayMagician.UIForms
         {
             openApplicationWindow();
         }
-        
+
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
         public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
@@ -673,7 +690,15 @@ namespace DisplayMagician.UIForms
         private void btn_fov_calc_Click(object sender, EventArgs e)
         {
             var fovCalcForm = new FovCalcForm();
-            fovCalcForm.ShowDialog(this);            
+            fovCalcForm.ShowDialog(this);
+        }
+
+        private void lbl_donate_Click(object sender, EventArgs e)
+        {
+            string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            // Update the settings to say that user has donated.
+            Utils.UserHasDonated();
         }
     }
 }
