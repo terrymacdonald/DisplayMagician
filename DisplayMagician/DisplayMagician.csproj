@@ -121,6 +121,7 @@
     <PackageReference Include="System.ServiceModel.Federation" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\DisplayMagician.ico" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

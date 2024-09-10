@@ -858,8 +858,9 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
                 }
 
+                // Temporarily removing as not needed at present. May need this for future format migrations.
                 // Migrate any previous entries to the latest version of the file format to the latest one
-                json = MigrateJsonToLatestVersion(json);
+                //json = MigrateJsonToLatestVersion(json);
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
@@ -1008,7 +1009,8 @@ namespace DisplayMagicianShared
 
         }
 
-        public static string MigrateJsonToLatestVersion(string json)
+        // Disabled the migrate to latest version as it's not needed. We will assume that all v2.6.0 profiles are using v2.5.0 formatting at the latest.
+        /*public static string MigrateJsonToLatestVersion(string json)
         {
 
             bool changedJson = false;
@@ -1090,7 +1092,7 @@ namespace DisplayMagicianShared
 
 
             return json;
-        }
+        }*/
 
         public static bool SaveProfiles()
         {
@@ -1241,8 +1243,9 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
                     }
 
+                    // Temporarily removing as not needed at present. May need this for future format migrations.
                     // Migrate any previous entries to the latest version of the file format to the latest one
-                    json = MigrateJsonToLatestVersion(json);
+                    //json = MigrateJsonToLatestVersion(json);
 
                     if (!string.IsNullOrWhiteSpace(json))
                     {
