@@ -572,16 +572,16 @@ namespace DisplayMagician
                 logger.Debug($"ProgramSettings/LoadSettings: No need to upgrade the older settings file to the latest version.");
             }
 
-            if (File.Exists(_programSettingsStorageJsonFileName))
+            if (File.Exists(_programSettingsStorageJsonFullFileName))
             {
                 string json = "";
                 List<string> jsonErrors = new List<string>();
                 try {
-                    json = File.ReadAllText(_programSettingsStorageJsonFileName, Encoding.Unicode);
+                    json = File.ReadAllText(_programSettingsStorageJsonFullFileName, Encoding.Unicode);
                 }                
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {_programSettingsStorageJsonFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
+                    Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {_programSettingsStorageJsonFullFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
                 }
 
                 if (!string.IsNullOrWhiteSpace(json))
@@ -615,13 +615,13 @@ namespace DisplayMagician
                         // If there is a error in the JSON format
                         if (ex.HResult == -2146233088)
                         {
-                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {_programSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                         }
                         else
                         {
-                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {_programSettingsStorageJsonFileName} but JsonConvert threw an exception.");
+                            SharedLogger.logger.Error(ex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {_programSettingsStorageJsonFullFileName} but JsonConvert threw an exception.");
                         }
-                        MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
                     catch (Exception ex)
@@ -647,29 +647,30 @@ namespace DisplayMagician
                             // If we get here and the program settings are still null, then we need to create a new one to keep the program working
                             if (programSettings == null)
                             {
-                                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
-                                programSettings = new ProgramSettings();
-                                programSettings.SaveSettings();
+                                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFullFileName}");
+                                programSettings = new ProgramSettings();                                
                             }
+
+                            programSettings.SaveSettings();
                         }
                         catch (JsonReaderException nex)
                         {
                             // If there is a error in the JSON format
                             if (ex.HResult == -2146233088)
                             {
-                                SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                                SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {_programSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
                             else
                             {
-                                SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {_programSettingsStorageJsonFileName} but JsonConvert threw an exception.");
+                                SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: JSONReaderException while trying to process the Program Settings file {_programSettingsStorageJsonFullFileName} but JsonConvert threw an exception.");
                             }
-                            MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                         }
                         catch (Exception nex)
                         {
-                            SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: Tried to parse the JSON in the Program Settings file {_programSettingsStorageJsonFileName} but the JsonConvert threw an exception.");
-                            MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: Tried to parse the JSON in the Program Settings file {_programSettingsStorageJsonFullFileName} but the JsonConvert threw an exception.");
+                            MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
 
@@ -687,7 +688,7 @@ namespace DisplayMagician
             }
             else
             {
-                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
+                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFullFileName}");
                 programSettings = new ProgramSettings();
                 programSettings.SaveSettings();
             }
@@ -703,7 +704,7 @@ namespace DisplayMagician
         public bool SaveSettings()
         {
 
-            logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {_programSettingsStorageJsonFileName}.");
+            logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {_programSettingsStorageJsonFullFileName}.");
 
             // Force the PreviousDisplayMagicianVersion to this version just before we save the settings.
             DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -738,13 +739,13 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    File.WriteAllText(_programSettingsStorageJsonFileName, json, Encoding.Unicode);
+                    File.WriteAllText(_programSettingsStorageJsonFullFileName, json, Encoding.Unicode);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {_programSettingsStorageJsonFileName}.");
+                logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {_programSettingsStorageJsonFullFileName}.");
             }
 
             // If we have any JSON.net errors, then we need to records them in the logs
