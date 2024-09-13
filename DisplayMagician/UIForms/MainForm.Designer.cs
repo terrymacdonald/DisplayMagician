@@ -97,7 +97,7 @@
             // lbl_donate
             // 
             resources.ApplyResources(lbl_donate, "lbl_donate");
-            lbl_donate.BackColor = System.Drawing.Color.Brown;
+            lbl_donate.BackColor = System.Drawing.Color.Black;
             lbl_donate.ForeColor = System.Drawing.Color.White;
             lbl_donate.Name = "lbl_donate";
             lbl_donate.Click += lbl_donate_Click;

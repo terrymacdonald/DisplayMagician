@@ -354,22 +354,28 @@ namespace DisplayMagician.UIForms
         {
             EnableShortcutButtonIfProfiles();
 
-            // Check if user donated and if so, hide the Donate message
-            if (Program.AppProgramSettings.NumberOfDonations > 0 && Program.AppProgramSettings.LastDonationDate > DateTime.Parse("2024-01-01"))
+            if (Program.AppProgramSettings.NumberOfTimesRun == 1)
             {
-                lbl_donate.Visible = false;
+                lbl_donate.Text = $"You've used DisplayMagician 1 time.";
             }
             else
             {
-                if (Program.AppProgramSettings.NumberOfTimesRun > 1)
+                lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times.";
+            }
+
+            if (Program.AppProgramSettings.NumberOfDonations > 0 && Program.AppProgramSettings.LastDonationDate > DateTime.Parse("2024-01-01"))
+            {
+                lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times and donated - Thank you!";
+            }
+            else
+            {
+                if (Program.AppProgramSettings.NumberOfTimesRun > 100)
                 {
+                    lbl_donate.BackColor = Color.Brown;
                     lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times without donating.";
                 }
-                else
-                {
-                    lbl_donate.Text = $"You've used DisplayMagician 1 time without donating.";
-                }
             }
+            
 
             logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
         }
@@ -631,6 +637,9 @@ namespace DisplayMagician.UIForms
             ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
+            // revert the button back to a nice donated message
+            lbl_donate.BackColor = Color.Black;
+            lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times and donated - Thank you!";
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
