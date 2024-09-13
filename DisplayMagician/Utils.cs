@@ -336,7 +336,7 @@ namespace DisplayMagician
             pauseTimer.Start();
 
             // Update the number of times the donation button animation has been run to zero, and record when it was run last
-            Program.AppProgramSettings.LastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow); 
+            Program.AppProgramSettings.LastDonateButtonAnimationDate = DateTime.UtcNow; 
             Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation = 0;
             Program.AppProgramSettings.SaveSettings();
         }
@@ -352,7 +352,7 @@ namespace DisplayMagician
             {
                 // User has not donated yet
                 // If the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
-                if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
                 {
                     return true;
                 }
@@ -363,7 +363,7 @@ namespace DisplayMagician
                 if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.Now)
                 {
                     // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
-                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
                     {
                         return true;
                     }

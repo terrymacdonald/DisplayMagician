@@ -62,9 +62,9 @@ namespace DisplayMagician
         private string _logLevel = NLog.LogLevel.Warn.ToString();
         private string _displayMagicianVersion = null;
         private string _installId = "";
-        private DateOnly _installDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        private DateTime _installDate = DateTime.UtcNow;
         private DateTime _lastDonationDate = new DateTime(1980,1,1);
-        private DateOnly _lastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        private DateTime _lastDonateButtonAnimationDate = DateTime.UtcNow;
         private int _numberOfDonations = 0;
         private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
         private int _numberOfTimesRun = 0;
@@ -116,16 +116,16 @@ namespace DisplayMagician
             }
         }
         
-        public DateOnly InstallDate
+        public DateTime InstallDate
         {
             get
             {
-                if (_installDate == null || _installDate == DateOnly.MinValue)
+                if (_installDate == null || _installDate == DateTime.MinValue)
                 {
                     // Lookup Install Date from Registry
                     // else just set it to the current date
-                    string nowAsString = DateOnly.FromDateTime(DateTime.UtcNow).ToString();
-                    DateOnly.TryParse((string)Registry.CurrentUser.GetValue("InstallDate", nowAsString),out _installDate);
+                    string nowAsString = DateTime.UtcNow.ToString();
+                    DateTime.TryParse((string)Registry.CurrentUser.GetValue("InstallDate", nowAsString),out _installDate);
                 }
                 return _installDate;
             }
@@ -147,7 +147,7 @@ namespace DisplayMagician
             }
         }
 
-        public DateOnly LastDonateButtonAnimationDate
+        public DateTime LastDonateButtonAnimationDate
         {
             get
             {
