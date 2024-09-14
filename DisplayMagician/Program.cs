@@ -29,6 +29,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Globalization;
 using System.Net.Http;
+using NLog.Targets;
 
 namespace DisplayMagician {
 
@@ -52,6 +53,10 @@ namespace DisplayMagician {
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
+        public static bool AppInstalled = false;
+        public static bool AppNewInstall = false;
+        public static bool AppVersionUpgrade = false;
+        public static string AppLastVersionRun = "0.0";
         public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
@@ -170,105 +175,106 @@ namespace DisplayMagician {
                 }
             }
 
-            // Check if this is the first time the program has been run
-            bool newInstallation = false;
-            string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
-            if (!File.Exists(targetSettingsFile))
-            {
-                newInstallation = true;
-                logger.Trace($"Program/Main: A new Settings file is required as it doesn't exist yet. This must be a new install.");
-            }
+            // Process the version tracking logic
+            AppInstalled = false; 
+            AppNewInstall = false;
+            AppLastVersionRun = "0.0";
+            AppVersionUpgrade = false;
 
-
-            // NOTE: This had to be moved up from the later state
-            // Copy the old Settings file to the new v2 name
-            bool upgradedSettingsFile = false;
             try
-            {               
-                if (OldFileVersionsExist(Path.GetDirectoryName(targetSettingsFile)))
+            {
+                // Figure out if this is First Run of this version since installed
+                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                if (DMKey != null)
                 {
-                    string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
-                    string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
-                    string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
-                    string oldv24SettingsFile = Path.Combine(AppDataPath, "Settings_2.4.json");
-                    string oldv25SettingsFile = Path.Combine(AppDataPath, "Settings_2.5.json");
-
-                    if (File.Exists(oldv25SettingsFile))
+                    AppInstalled = true;
+                    string newInstallKey = DMKey.GetValue("NewInstall").ToString() ?? "0";
+                    if (newInstallKey.Equals("1"))
                     {
-                        File.Copy(oldv25SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-
-                        // Load the program settings to populate the extra additional settings with default values
-                        // as there are some new settings in there.
-                        AppProgramSettings = ProgramSettings.LoadSettings();
-                        // Save the updated program settings so they're baked in and saved to a file.
-                        AppProgramSettings.SaveSettings();
-                    }
-                    else if (File.Exists(oldv24SettingsFile))
-                    {
-                        File.Copy(oldv24SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-
-                        // Load the program settings to populate the extra additional settings with default values
-                        // as there are some new settings in there.
-                        AppProgramSettings = ProgramSettings.LoadSettings();
-                        // Save the updated program settings so they're baked in.
-                        AppProgramSettings.SaveSettings();
-                    }
-                    else if (File.Exists(oldv23SettingsFile))
-                    {
-                        File.Copy(oldv23SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-                    }
-                    else if (File.Exists(oldv2SettingsFile))
-                    {
-                        File.Copy(oldv2SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-                    }
-                    else if (File.Exists(oldv1SettingsFile))
-                    {
-                        File.Copy(oldv1SettingsFile, targetSettingsFile, true);
-                        upgradedSettingsFile = true;
-                    }
-
-                    // Now we rename all the currently listed Settings files as they aren't needed any longer.
-                    // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
-                    if (RenameOldFileVersions(AppDataPath, "Settings_*.json", targetSettingsFile))
-                    {
-                        logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                        AppNewInstall = true;
+                        logger.Info($"Program/Main: This is the first time this version has run since it was installed! We may have upgrade tasks to do!");
                     }
                     else
                     {
-                        logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                        logger.Trace($"Program/Main: This is NOT the first time this version has run since it was installed. We've run this version before since it was installed.");
                     }
 
                 }
-
+                else
+                {
+                    logger.Trace($"Program/Main: DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio).");
+                }
+            }
+            catch (NullReferenceException ex)
+            {
+                logger.Trace(ex, $"Program/Main: Exception whilst trying to find the NewInstall registry key. It means DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio). Problem accessing registry!");
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Program/Main: Exception upgrading old settings file to v2.4 settings file {ProgramSettings.programSettingsStorageJsonFileName}.");
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this version has run since it was installed. Problem accessing registry!");
             }
 
+            try
+            {
+                // Figure out if this is version is the same as the last version
+                // get the last version from the registry (or this version as fallback)
+                string lastVersionString = (string)Registry.CurrentUser.GetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                Version lastVersion = new Version(lastVersionString);
+
+
+                if (lastVersion < Assembly.GetExecutingAssembly().GetName().Version)
+                {
+                    AppVersionUpgrade = true;
+                    logger.Info($"Program/Main: This is an upgrade from version {lastVersion} to version {Assembly.GetExecutingAssembly().GetName().Version}!");
+                }
+                else
+                {
+                    logger.Trace($"Program/Main: This is NOT an upgrade from version {lastVersion} to version {Assembly.GetExecutingAssembly().GetName().Version}.");
+                }
+
+            }
+            catch (NullReferenceException ex)
+            {
+                logger.Trace(ex, $"Program/Main: Exception whilst trying to see what the last version of DM was. It means DisplayMagician hasn't been run before anywhere");
+                AppVersionUpgrade = true;
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this version has run previously at all. It most likely hasnt been installed and is running from somewhere (e.g. via visual studio). Problem accessing registry!");
+                AppVersionUpgrade = false;
+            }
+
+
+            try
+            {
+                // Try to store this version as the last version run (replacing the previous last run version with this one)
+                Registry.CurrentUser.SetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to set the last version registry key to {Application.ProductVersion}.");
+            }
+            
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
             // Update the program settings for number times run
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
             // If app settings is new, then set the initial settings we need
-            if (newInstallation)
+            if (AppNewInstall)
             {
                 Guid guid = new Guid();
                 if (AppProgramSettings.InstallId == "")
                 {
                     AppProgramSettings.InstallId = guid.ToString();
                 }
-                AppProgramSettings.InstallDate = DateOnly.FromDateTime(DateTime.UtcNow);
-                AppProgramSettings.LastDonationDate = new DateOnly(1980,1,1);
-                AppProgramSettings.LastDonateButtonAnimationDate = new DateOnly(1980, 1, 1);
+                AppProgramSettings.InstallDate = DateTime.UtcNow;
+                // AppProgramSettings.LastDonationDate = new DateTime(1980,1,1);
+                // AppProgramSettings.LastDonateButtonAnimationDate = new DateTime(1980, 1, 1);
+
+                // Store the updated settings
+                AppProgramSettings.SaveSettings();
             }
-            // Store the updated settings
-            AppProgramSettings.SaveSettings();
 
 
             // Rules for mapping loggers to targets          
@@ -413,72 +419,26 @@ namespace DisplayMagician {
             Application.SetCompatibleTextRenderingDefault(false); 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-            // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
-            if (upgradedSettingsFile)
+            if (AppVersionUpgrade)
             {
-                logger.Info($"Program/Main: Upgraded old settings file to settings file {targetSettingsFile} earlier in loading process (before logging service was available).");
-            }
-            
-            // Note - we cannot upgrade the DisplayProfiles from prior versions so this file has been skipped.
+                // Do all the upgrade things
+                logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
 
-            // Also upgrade the Shortcuts file if it's needed
-            string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
-            try
-            {
-                if (!File.Exists(targetShortcutsFile) && OldFileVersionsExist(Path.GetDirectoryName(targetShortcutsFile)))
-                {
-                    string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
-                    string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
-                    string oldv22ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
+                /* // Warn the user about the fact we need them to recreate their Display Profiles again!
+                StartMessageForm myMessageWindow = new StartMessageForm();
+                myMessageWindow.MessageMode = "rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
+                myMessageWindow.ButtonText = "&Close";
+                myMessageWindow.ShowDialog();
+                */
 
-                    if (File.Exists(oldv22ShortcutsFile))
-                    {
-                        logger.Info($"Program/Main: Upgrading v2.2 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
-                        File.Copy(oldv22ShortcutsFile, targetShortcutsFile);
-                    }
-                    else if (File.Exists(oldv2ShortcutsFile))
-                    {
-                        logger.Info($"Program/Main: Upgrading v2.0 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
-                        File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
-                    }
-                    else if (File.Exists(oldv1ShortcutsFile))
-                    {
-                        logger.Info($"Program/Main: Upgrading v1.0 shortcut file {oldv1ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
-                        File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
-                    }
-
-                    // If the file exists (the file was renamed and upgraded) then we want to use it
-                    if (File.Exists(targetShortcutsFile))
-                    {
-                        // Load the Shortcuts so that they get populated with default values as part of the upgrade
-                        ShortcutRepository.LoadShortcuts();
-                        // Now save the shortcuts so the new default values get written to disk
-                        ShortcutRepository.SaveShortcuts();
-                    }
-
-                    // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
-                    // NOTE: This is outside the File Exists above to fix all the partially renamed files performed in previous upgrades
-                    if (RenameOldFileVersions(AppShortcutPath, "Shortcuts_*.json", targetShortcutsFile))
-                    {
-                        logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
-                    }
-                    else
-                    {
-                        logger.Error($"Program/Main: Error while renaming old Shortcut files.");
-                    }
-                }
-                else
-                {
-                    logger.Trace($"Program/Main: DisplayMagician Shortcut files do not require upgrading so skipping");
-                }
-
-                
+                // Set the registry key to turn off the first run setting.
+                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                DMKey.SetValue("FirstRun", "0");
 
             }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to latest shortcut file {targetShortcutsFile}.");
-            }
+
 
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
@@ -972,115 +932,8 @@ namespace DisplayMagician {
             return true;
         }
 
-        public static bool RenameOldFileVersions(string path, string searchPattern, string skipFilename)
-        {
-            try
-            {
-                if (String.IsNullOrWhiteSpace(path))
-                {
-                    logger.Error($"Program/RenameOldFileVersions: We were passed an empty path, so returning an empty list of matching files.");
-                    return false;
-                }
-
-                string[] filesToRename;
-
-                if (String.IsNullOrWhiteSpace(searchPattern)) 
-                {
-                    filesToRename = Directory.GetFiles(path);
-                }
-                else
-                {
-                    filesToRename = Directory.GetFiles(path, searchPattern);
-                }
-                
-                if (filesToRename.Length > 0)
-                {
-                    logger.Trace($"Program/RenameOldFileVersions: Found {filesToRename.Length} files matching the '{searchPattern}' pattern in {path}");
-                    foreach (var filename in filesToRename)
-                    {
-                        // If this is the file we should skip, then let's skip it
-                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            logger.Trace($"Program/RenameOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {skipFilename} file.");
-                            continue;
-                        }
-
-                        try
-                        {
-                            logger.Trace($"Program/RenameOldFileVersions: Attempting to rename {filename} to {filename}.old");
-                            File.Move(filename, $"{filename}.old");
-                        }
-                        catch (Exception ex2)
-                        {
-                            logger.Error(ex2,$"Program/RenameOldFileVersions: Exception while trying to rename {filename} to {filename}.old. Skipping this rename.");
-                        }
-                    }
-                }
-                else
-                {
-                    logger.Trace($"Program/RenameOldFileVersions: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/RenameOldFileVersions: Exception while trying to RenameOldFileVersions. Unable to rename the files.");
-                return false;
-            }
-        }
-
-        public static bool OldFileVersionsExist(string path, string searchPattern = "", string skipFilename = "")
-        {
-            try
-            {
-                if (String.IsNullOrWhiteSpace(path))
-                {
-                    logger.Error($"Program/OldFileVersionsExist: We were passed an empty path, so returning an empty list of matching files.");
-                    return false;
-                }
-
-                string[] filesThatMatch;
-
-                if (String.IsNullOrWhiteSpace(searchPattern))
-                {
-                    filesThatMatch = Directory.GetFiles(path);
-                }
-                else
-                {
-                    filesThatMatch = Directory.GetFiles(path, searchPattern);
-                }
-
-                if (filesThatMatch.Length > 0)
-                {
-                    logger.Trace($"Program/OldFileVersionsExist: Found {filesThatMatch.Length} files matching the '{searchPattern}' pattern in {path}");
-                    foreach (var filename in filesThatMatch)
-                    {
-                        // If this is the file we should skip, then let's skip it
-                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            logger.Trace($"Program/OldFileVersionsExist: Skipping {filename} as we want to ignore the {skipFilename} file.");
-                            continue;
-                        }
-
-                        return true;
-                    }
-                }
-                else
-                {
-                    logger.Trace($"Program/OldFileVersionsExist: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
-                    return false;
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/OldFileVersionsExist: Exception while trying to OldFileVersionsExist. Unable to find the files.");
-                return false;
-            }
-        }
-
+        
+        
 
         //public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)

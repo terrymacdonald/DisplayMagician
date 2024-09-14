@@ -17,7 +17,7 @@ namespace DisplayMagician.UIForms
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public string MessageMode
-        { get; set; } = "RTF";
+        { get; set; } = "rtf";
 
         public string Filename
         { get; set; }

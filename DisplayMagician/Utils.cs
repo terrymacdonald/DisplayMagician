@@ -336,7 +336,7 @@ namespace DisplayMagician
             pauseTimer.Start();
 
             // Update the number of times the donation button animation has been run to zero, and record when it was run last
-            Program.AppProgramSettings.LastDonateButtonAnimationDate = DateOnly.FromDateTime(DateTime.UtcNow); 
+            Program.AppProgramSettings.LastDonateButtonAnimationDate = DateTime.UtcNow; 
             Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation = 0;
             Program.AppProgramSettings.SaveSettings();
         }
@@ -352,7 +352,7 @@ namespace DisplayMagician
             {
                 // User has not donated yet
                 // If the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
-                if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
                 {
                     return true;
                 }
@@ -360,10 +360,10 @@ namespace DisplayMagician
             else
             {
                 // User has donated, but it's been a year since the last donation
-                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateOnly.FromDateTime(DateTime.UtcNow))
+                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.Now)
                 {
                     // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
-                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateOnly.FromDateTime(DateTime.UtcNow))
+                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
                     {
                         return true;
                     }
@@ -376,9 +376,142 @@ namespace DisplayMagician
 
         public static void UserHasDonated()
         {
-            Program.AppProgramSettings.LastDonationDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            Program.AppProgramSettings.LastDonationDate = DateTime.UtcNow;
             Program.AppProgramSettings.NumberOfDonations++;
             Program.AppProgramSettings.SaveSettings();
+        }
+
+        public static bool OldFileVersionsExist(string path, string searchPattern = "", string skipFilename = "")
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    logger.Error($"Utils/OldFileVersionsExist: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
+
+                string[] filesThatMatch;
+
+                if (String.IsNullOrWhiteSpace(searchPattern))
+                {
+                    filesThatMatch = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesThatMatch = Directory.GetFiles(path, searchPattern);
+                }
+
+                if (filesThatMatch.Length > 0)
+                {
+                    logger.Trace($"Utils/OldFileVersionsExist: Found {filesThatMatch.Length} files matching the '{searchPattern}' pattern in {path}");
+                    foreach (var filename in filesThatMatch)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            logger.Trace($"Utils/OldFileVersionsExist: Skipping {filename} as we want to ignore the {skipFilename} file.");
+                            continue;
+                        }
+
+                        return true;
+                    }
+                }
+                else
+                {
+                    logger.Trace($"Utils/OldFileVersionsExist: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Utils/OldFileVersionsExist: Exception while trying to OldFileVersionsExist. Unable to find the files.");
+                return false;
+            }
+        }
+
+        public static bool UpgradeOldFileVersions(string path, string searchPattern = "", string newFilename = "")
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    logger.Error($"Utils/UpgradeOldFileVersions: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
+
+                string newFullFilename = Path.Combine(path, newFilename);
+
+                // get all the names of the files that match the search pattern
+                // get the last one (as it is the latest one in use) and convert it to the new file format
+                // rename all the files matching the search to .old files
+
+                string[] filesToUpgrade;
+
+                if (String.IsNullOrWhiteSpace(searchPattern))
+                {
+                    filesToUpgrade = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesToUpgrade = Directory.GetFiles(path, searchPattern);
+                }
+
+                if (filesToUpgrade.Length > 0)
+                {
+                    logger.Trace($"Utils/UpgradeOldFileVersions: Found {filesToUpgrade.Length} files matching the '{searchPattern}' pattern in {path} to upgrade");
+
+                    // get the last files in the list
+                    var lastFile = filesToUpgrade.Last();
+                    if (newFilename != Path.GetFileName(lastFile))
+                    {
+                        // If the new filename is different from the last file, then upgrade the last file
+                        try
+                        {
+                            logger.Trace($"Utils/UpgradeOldFileVersions: Attempting to copy {lastFile} to {newFullFilename} to upgrade it.");
+                            File.Copy(lastFile, newFullFilename);
+                        }
+                        catch (Exception ex1)
+                        {
+                            logger.Error(ex1, $"Utils/UpgradeOldFileVersions: Exception while trying to copy {lastFile} to {newFullFilename}. Unable to copy the file.");
+                        }
+                    }
+
+                    // Now we need to rename all the old files to .old files
+                    foreach (var filename in filesToUpgrade)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(newFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            logger.Trace($"Utils/UpgradeOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {newFilename} file.");
+                            continue;
+                        }
+
+                        try
+                        {
+                            logger.Trace($"Utils/UpgradeOldFileVersions: Attempting to rename {filename} to {filename}.old");
+                            File.Move(filename, $"{filename}.old");
+                        }
+                        catch (Exception ex2)
+                        {
+                            logger.Error(ex2, $"Utils/UpgradeOldFileVersions: Exception while trying to rename {filename} to {filename}.old. Skipping this rename.");
+                        }
+                    }
+                }
+                else
+                {
+                    logger.Trace($"Utils/UpgradeOldFileVersions: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Utils/UpgradeOldFileVersions: Exception while trying to RenameOldFileVersions. Unable to rename the files.");
+                return false;
+            }
         }
 
 

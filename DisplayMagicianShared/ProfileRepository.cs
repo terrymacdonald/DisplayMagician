@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using NLog;
 
 namespace DisplayMagicianShared
 {
@@ -47,6 +48,28 @@ namespace DisplayMagicianShared
         Error
     }
 
+
+    public struct ProfileFile
+    {
+        public string ProfileFileVersion;
+        public DateTime LastUpdated;
+        public List<ProfileItem> Profiles;
+
+        public override bool Equals(object obj) => obj is ProfileFile other && this.Equals(other);
+        public bool Equals(ProfileFile other)
+        => ProfileFileVersion.Equals(other.ProfileFileVersion) &&
+           LastUpdated.Equals(other.LastUpdated) &&
+           Profiles.SequenceEqual(other.Profiles);
+        public override int GetHashCode()
+        {
+            return (ProfileFileVersion, LastUpdated, Profiles).GetHashCode();
+        }
+
+        public static bool operator ==(ProfileFile lhs, ProfileFile rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(ProfileFile lhs, ProfileFile rhs) => !(lhs == rhs);
+    }
+
     public static class ProfileRepository
     {
         #region Class Variables
@@ -71,7 +94,9 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.4.json");
+        private static string _profileFileVersion = "3";
+        private static readonly string _profileStorageJsonFileName = "DisplayProfiles.json";
+        private static readonly string _profileStorageJsonFullFileName = System.IO.Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
 
         #endregion
 
@@ -171,7 +196,7 @@ namespace DisplayMagicianShared
 
         public static string ProfileStorageFileName
         {
-            get => _profileStorageJsonFileName;
+            get => _profileStorageJsonFullFileName;
         }
 
         /* public static VIDEO_MODE CurrentVideoMode
@@ -798,24 +823,44 @@ namespace DisplayMagicianShared
 
         private static bool LoadProfiles()
         {
-            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFileName} into the Profile Repository");
+            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFullFileName} into the Profile Repository");
 
             _profilesLoaded = false;
 
-            if (File.Exists(_profileStorageJsonFileName))
+            // Figure out if we need to upgrade the shortcuts file
+            if (Utils.OldFileVersionsExist(AppProfileStoragePath, "DisplayProfiles_*.json"))
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Upgrading the older profiles file to the latest version.");
+                if (!Utils.UpgradeOldFileVersions(AppProfileStoragePath, "DisplayProfiles_*.json", _profileStorageJsonFileName))
+                {
+                    SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: Error upgrading the older profiles file to the latest version.");
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"ProfileRepository/LoadProfiles: Upgraded the older profiles file to the latest version.");
+                }
+            }
+            else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: No need to upgrade the older profiles file to the latest version.");
+            }
+
+
+            if (File.Exists(_profileStorageJsonFullFileName))
             {
                 string json = "";
                 try
                 {
-                    json = File.ReadAllText(_profileStorageJsonFileName, Encoding.Unicode);
+                    json = File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode);
                 }
                 catch (Exception ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
                 }
 
+                // Temporarily removing as not needed at present. May need this for future format migrations.
                 // Migrate any previous entries to the latest version of the file format to the latest one
-                json = MigrateJsonToLatestVersion(json);
+                //json = MigrateJsonToLatestVersion(json);
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
@@ -836,7 +881,14 @@ namespace DisplayMagicianShared
                                 args.ErrorContext.Handled = true;
                             },
                         };
-                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                        ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
+                        _allProfiles = profileFile.Profiles;
+
+                        if (profileFile.Profiles == null)
+                        {
+                            throw new Exception("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
+                        }
 
                         // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                         foreach (ProfileItem profile in _allProfiles)
@@ -851,19 +903,65 @@ namespace DisplayMagicianShared
                         // If there is a error in the JSON format
                         if (ex.HResult == -2146233088)
                         {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                         }
                         else
                         {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFileName} but JsonConvert threw an exception.");
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
                         }
-                        MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
-                        MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        try
+                        {
+                            JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                            {
+                                MissingMemberHandling = MissingMemberHandling.Ignore,
+                                NullValueHandling = NullValueHandling.Include,
+                                DefaultValueHandling = DefaultValueHandling.Populate,
+                                TypeNameHandling = TypeNameHandling.Auto,
+                                ObjectCreationHandling = ObjectCreationHandling.Replace,
+                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                {
+                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                    args.ErrorContext.Handled = true;
+                                },
+                            };
+
+                            _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                            // Save the Profiles JSON as it's different now, and we want to save the upgrade!
+                            SaveProfiles();
+
+                            // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
+                            foreach (ProfileItem profile in _allProfiles)
+                            {
+                                WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
+                                WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                            }
+
+                        }
+                        catch (JsonReaderException nex)
+                        {
+                            // If there is a error in the JSON format
+                            if (ex.HResult == -2146233088)
+                            {
+                                SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
+                            }
+                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                        }
+                        catch (Exception nex)
+                        {
+                            SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception.");
+                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
 
                     // If we have any JSON.net errors, then we need to records them in the logs
@@ -881,7 +979,7 @@ namespace DisplayMagicianShared
                 }
                 else
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
+                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: The {_profileStorageJsonFullFileName} profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
                     //UpdateActiveProfile();
                 }
             }
@@ -889,7 +987,7 @@ namespace DisplayMagicianShared
             {
                 // If we get here, then we don't have any profiles saved!
                 // So we gotta start from scratch
-                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. This is likely due to none being saved yet.");
+                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Couldn't find the {_profileStorageJsonFullFileName} profile JSON file that contains the Profiles. This is likely due to none being saved yet.");
                 //UpdateActiveProfile();
             }
             _profilesLoaded = true;
@@ -911,7 +1009,8 @@ namespace DisplayMagicianShared
 
         }
 
-        public static string MigrateJsonToLatestVersion(string json)
+        // Disabled the migrate to latest version as it's not needed. We will assume that all v2.6.0 profiles are using v2.5.0 formatting at the latest.
+        /*public static string MigrateJsonToLatestVersion(string json)
         {
 
             bool changedJson = false;
@@ -985,15 +1084,15 @@ namespace DisplayMagicianShared
                 json = root.ToString(Formatting.Indented);
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/MigrateJsonToLatestVersion: Saving the profile repository to the {_profileStorageJsonFileName}.");
+                    SharedLogger.logger.Debug($"ProfileRepository/MigrateJsonToLatestVersion: Saving the profile repository to the {_profileStorageJsonFullFileName}.");
 
-                    File.WriteAllText(_profileStorageJsonFileName, json, Encoding.Unicode);
+                    File.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
                 }
             }
 
 
             return json;
-        }
+        }*/
 
         public static bool SaveProfiles()
         {
@@ -1051,7 +1150,15 @@ namespace DisplayMagicianShared
                         args.ErrorContext.Handled = true;
                     },
                 };
-                var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, mySerializerSettings);
+
+                ProfileFile profileFile = new ProfileFile
+                {
+                    ProfileFileVersion = _profileFileVersion,
+                    LastUpdated = DateTime.Now,
+                    Profiles = _allProfiles
+                };
+
+                var json = JsonConvert.SerializeObject(profileFile, Formatting.Indented, mySerializerSettings);
 
                 // If we have any JSON.net errors, then we need to record them in the logs
                 if (jsonErrors.Count > 0)
@@ -1067,33 +1174,33 @@ namespace DisplayMagicianShared
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFileName}.");
+                    SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName}.");
 
-                    File.WriteAllText(_profileStorageJsonFileName, json, Encoding.Unicode);
+                    File.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
                     if (ValidateProfiles())
                     {
-                        SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFileName}.");
+                        SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFullFileName}.");
                         return true;
                     }
                     else
                     {
-                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFileName} failed. The profile repository was unable to be saved the first time. Attempting to save again.");
+                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFullFileName} failed. The profile repository was unable to be saved the first time. Attempting to save again.");
 
                         // Waiting a second to let any transient issue pass.
                         Thread.Sleep(1000);
 
-                        SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFileName} for a second time.");
+                        SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName} for a second time.");
 
-                        File.WriteAllText(_profileStorageJsonFileName, json, Encoding.Unicode);
+                        File.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
 
                         if (ValidateProfiles())
                         {
-                            SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFileName} on the second try.");
+                            SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFullFileName} on the second try.");
                             return true;
                         }
                         else
                         {
-                            SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFileName} a second time failed. The profile repository was unable to be saved twice. There is an underlying issue here.");
+                            SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFullFileName} a second time failed. The profile repository was unable to be saved twice. There is an underlying issue here.");
                             return false;
                         }
                     }
@@ -1101,7 +1208,7 @@ namespace DisplayMagicianShared
                 }
                 else
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Problem saving the profile repository to {_profileStorageJsonFileName} as the JSON file contents are null or whitespace.");
+                    SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Problem saving the profile repository to {_profileStorageJsonFullFileName} as the JSON file contents are null or whitespace.");
                     SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: JSON data: {json}");
                     return false;
                 }
@@ -1109,7 +1216,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFileName}.");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFullFileName}.");
                 SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException.Source}:{ex.InnerException.StackTrace} - {ex.InnerException.Message}\"");
                 return false;
             }
@@ -1118,26 +1225,27 @@ namespace DisplayMagicianShared
 
         private static bool ValidateProfiles()
         {
-            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Loading profiles from {_profileStorageJsonFileName} to compare the Profile Repository");
+            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Loading profiles from {_profileStorageJsonFullFileName} to compare the Profile Repository");
 
             try
             {
-                if (File.Exists(_profileStorageJsonFileName))
+                if (File.Exists(_profileStorageJsonFullFileName))
                 {
                     List<ProfileItem> profilesToValidate = new List<ProfileItem>(); ;
 
                     string json = "";
                     try
                     {
-                        json = File.ReadAllText(_profileStorageJsonFileName, Encoding.Unicode);
+                        json = File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode);
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to read the JSON file {_profileStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
                     }
 
+                    // Temporarily removing as not needed at present. May need this for future format migrations.
                     // Migrate any previous entries to the latest version of the file format to the latest one
-                    json = MigrateJsonToLatestVersion(json);
+                    //json = MigrateJsonToLatestVersion(json);
 
                     if (!string.IsNullOrWhiteSpace(json))
                     {
@@ -1158,7 +1266,9 @@ namespace DisplayMagicianShared
                                     args.ErrorContext.Handled = true;
                                 },
                             };
-                            profilesToValidate = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                            ProfileFile profilesFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
+                            profilesToValidate = profilesFile.Profiles;
 
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in profilesToValidate)
@@ -1173,17 +1283,17 @@ namespace DisplayMagicianShared
                             // If there is a error in the JSON format
                             if (ex.HResult == -2146233088)
                             {
-                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
                             else
                             {
-                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFileName} but JsonConvert threw an exception.");
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
                             }
                             return false;
                         }
                         catch (Exception ex)
                         {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception.");
                             return false;
                         }
 
@@ -1217,13 +1327,13 @@ namespace DisplayMagicianShared
                         if (_profilesLoaded && _allProfiles.Count > 0)
                         {
                             // We don't have a profile repository file, yet we have some profiles. This means the file and profiles don't match. Return false.
-                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
+                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFullFileName} profile JSON file exists but is empty! We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
                             return false;
                         }
                         else
                         {
                             // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
-                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! We also don't have any display profiles, so that matches. This is expected.");
+                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFullFileName} profile JSON file exists but is empty! We also don't have any display profiles, so that matches. This is expected.");
                             return true;
                         }
                     }
@@ -1233,13 +1343,13 @@ namespace DisplayMagicianShared
                     if (_profilesLoaded && _allProfiles.Count > 0)
                     {
                         // We don't have a profile repository file, yet we have some profiles. This means the file and profiles don't match. Return false.
-                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
+                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFullFileName} profile JSON file that contains the Profiles. We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
                         return false;
                     }
                     else
                     {
                         // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
-                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles. We also don't have any display profiles, so that matches. This is expected.");
+                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFullFileName} profile JSON file that contains the Profiles. We also don't have any display profiles, so that matches. This is expected.");
                         return true;
                     }
                 }

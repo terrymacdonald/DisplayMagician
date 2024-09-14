@@ -617,6 +617,8 @@ namespace DisplayMagician.UIForms
                         // Get the list of files we want to look for to zip (they may or may not exist)
                         List<string> listOfFilesToArchive = new List<string> {
                             // Also try to copy the new configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles.json"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.6.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
@@ -627,12 +629,18 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.6.json"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts.json"),
                             Path.Combine(Program.AppDataPath,"Settings_1.0.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.3.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.4.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.5.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.6.json"),
+                            Path.Combine(Program.AppDataPath,"Settings.json"),
                             // Also try to copy the old configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.6.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json.old"),
@@ -641,10 +649,14 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json.old"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json.old"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.6.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_1.0.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.4.json.old")
+                            Path.Combine(Program.AppDataPath,"Settings_2.4.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.5.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.6.json.old")
                         };
                         // Also add the log files found (including the new date style formatted ones).
                         listOfFilesToArchive.AddRange(listOfLogFiles);

@@ -123,6 +123,11 @@ namespace DisplayMagicianShared
             {
                 string image = (string)reader.Value;
 
+                if (string.IsNullOrEmpty(image)) 
+                { 
+                    return (Bitmap)default(Bitmap);
+                }
+
                 byte[] byteBuffer = Convert.FromBase64String(image);
                 MemoryStream memoryStream = new MemoryStream(byteBuffer)
                 {
