@@ -354,6 +354,7 @@ namespace DisplayMagician.UIForms
         {
             EnableShortcutButtonIfProfiles();
 
+            logger.Trace($"MainForm/MainForm_Load: User has run DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times.");
             if (Program.AppProgramSettings.NumberOfTimesRun == 1)
             {
                 lbl_donate.Text = $"You've used DisplayMagician 1 time.";
@@ -365,7 +366,8 @@ namespace DisplayMagician.UIForms
 
             if (Program.AppProgramSettings.NumberOfDonations > 0 && Program.AppProgramSettings.LastDonationDate > DateTime.Parse("2024-01-01"))
             {
-                lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times and donated - Thank you!";
+                logger.Trace($"MainForm/MainForm_Load: User has donated {Program.AppProgramSettings.NumberOfDonations} times.");
+                lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times and donated - thank you!";
             }
             else
             {
