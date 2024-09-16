@@ -121,7 +121,9 @@
     <PackageReference Include="System.ServiceModel.Federation" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\DisplayMagician.ico" />
+    <Content Include="Resources\DisplayMagician.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
@@ -174,6 +176,11 @@
     <None Update="Resources\applogo.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Resources\DisplayMagician.ico">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <PropertyGroup>
