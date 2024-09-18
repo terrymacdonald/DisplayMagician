@@ -149,6 +149,7 @@ namespace DisplayMagician {
             
 
             // If we get here, then we're the first instance!
+            // Explicitly register DisplayMagician with Windows so that it can be found by other programs
             RegisterDisplayMagicianWithWindows();
 
             // Set up some defaults for the shared HttpClient

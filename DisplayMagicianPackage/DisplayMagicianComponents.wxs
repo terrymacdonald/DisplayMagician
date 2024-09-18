@@ -10,17 +10,27 @@
 			<Component>
 				<RegistryKey Root="HKCU" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="NewInstall" Value="1"/>
+				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />
+				<Shortcut
+							Id="DisplayMagicianStartMenuShortcut"
+							Name="DisplayMagician"
+							Description="DisplayMagician"
+							Target="[INSTALLFOLDER]DisplayMagician.exe"
+							WorkingDirectory="INSTALLFOLDER"
+							Icon="DisplayMagicianIcon"
+							IconIndex="0"
+							Directory="ApplicationProgramsFolder"/>
 			</Component>
 
 			<Component>
 				<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\DisplayMagician.exe" Id="DisplayMagicianExe" />
-				<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)" 
-						  Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="DisplayMagicianIcon.ico" >
-					<!--AUMID-->
-					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
-					<!--COM CLSID-->
-					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}" />
-				</Shortcut>
+					<!--<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
+							  Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="DisplayMagician.ico">
+						<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
+						<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}" />
+					</Shortcut>
+				</File>
+				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />-->
 			</Component>
 			
 			<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\WebView2Loader.dll" />
