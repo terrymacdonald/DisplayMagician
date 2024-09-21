@@ -434,9 +434,12 @@ namespace DisplayMagician {
                 myMessageWindow.ShowDialog();
                 */
 
-                // Set the registry key to turn off the first run setting.
-                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
-                DMKey.SetValue("FirstRun", "0");
+                if (AppInstalled)
+                { 
+                    // Set the registry key to turn off the first run setting.
+                    RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                    DMKey.SetValue("FirstRun", "0");
+                }
 
             }
 
