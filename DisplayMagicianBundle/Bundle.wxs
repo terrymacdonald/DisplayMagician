@@ -1,27 +1,13 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
-  <Bundle Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5"
+  <Bundle Name="DisplayMagicianSetup v!(bind.packageVersion.DisplayMagicianPackage)" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5"
 		  IconSourceFile="DisplayMagician.ico" >
 	  <BootstrapperApplication>
 		<bal:WixInternalUIBootstrapperApplication />
 	  </BootstrapperApplication>
-
-	  <!--<BootstrapperApplication >
-		  <bal:WixStandardBootstrapperApplication
-			LogoFile="WixUIBannerBmp.png"
-			LicenseFile="EULA_en-us.rtf"
-			Theme="rtfLicense"
-			ThemeFile="DisplayMagicianTheme.xml"
-		    LocalizationFile="DisplayMagicianTheme.wxl" />
-
-		  <Payload Name="DisplayMagician.ico" Compressed="yes" SourceFile="DisplayMagician.ico" />
-
-	  </BootstrapperApplication>-->
 	  
     <Chain>
-      <!-- TODO: Define the list of chained packages. -->
-      <!-- <MsiPackage SourceFile="path\to\your.msi" /> -->
 		<PackageGroupRef Id="DotNetDesktopRedist" />
-		<MsiPackage Id="DisplayMagicianPackage" SourceFile="D:\visual-studio-projects\DisplayMagician\DisplayMagicianPackage\bin\x64\Debug\en-US\DisplayMagicianPackage.msi" Vital="yes" />
+		<MsiPackage Id="DisplayMagicianPackage" SourceFile="..\DisplayMagicianPackage\bin\x64\Debug\en-US\DisplayMagicianPackage.msi" Vital="yes" />
     </Chain>
 
   </Bundle>

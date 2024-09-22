@@ -20,36 +20,37 @@
     <ProjectReference Include="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Publish="true" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" Publish="true" />
   </ItemGroup>
-	<!--<Target Name="SetVersionFromAssembly" BeforeTargets="Build">
-		<GetAssemblyIdentity AssemblyFiles="$(OutputPath)\$(TargetFramework)\DisplayMagician.exe">
-			<Output TaskParameter="Assemblies" ItemName="AssemblyInfo" />
-		</GetAssemblyIdentity>
+	<!-- Define the configuration (Debug/Release) based on the build -->
+	<PropertyGroup>
+		<Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+	</PropertyGroup>
 
-		<Message Importance="high" Text="DisplayMagician Location: $(OutputPath)\$(TargetFramework)\DisplayMagician.exe" />
-		
-		<PropertyGroup>
-			<ProductVersion>%(AssemblyInfo.Version)</ProductVersion>
-		</PropertyGroup>
+	<!-- Add the publish profile paths for Debug and Release -->
+	<PropertyGroup>
+		<DebugPublishProfile>DebugPublishProfile.pubxml</DebugPublishProfile>
+		<ReleasePublishProfile>ReleasePublishProfile.pubxml</ReleasePublishProfile>
+	</PropertyGroup>
 
-		<Message Importance="high" Text="Product Version: $(ProductVersion)" />
+	<Target Name="BuildAndPublishDisplayMagician" BeforeTargets="BeforeBuild">
+		<!-- Build DisplayMagician project -->
+		<MSBuild Projects="..\DisplayMagician\DisplayMagician.csproj"
+				 Targets="Build"
+				 Properties="Configuration=$(Configuration)" />
+
+		<!-- Publish DisplayMagician with different profiles for Debug and Release -->
+		<MSBuild Projects="..\DisplayMagician\DisplayMagician.csproj"
+				 Targets="Publish"
+				 Properties="Configuration=$(Configuration);PublishProfile=$(Configuration)PublishProfile">
+			<Output TaskParameter="TargetOutputs" ItemName="PublishedFiles" />
+		</MSBuild>
+
+		<Message Importance="high" Text="DisplayMagician has been built and published using the $(Configuration) profile." />
 	</Target>
 
-	<PropertyGroup>
-		<DefineConstants>ProductVersion=$(ProductVersion)</DefineConstants>
-	</PropertyGroup>-->
-  <!--<Target Name="SetVersionFromFile" BeforeTargets="Compile">
-    <MSBuild Projects="..\DisplayMagician\DisplayMagician.csproj" Targets="GetTargetPath">
-      <Output TaskParameter="TargetOutputs" ItemName="DisplayMagicianOutput" />
-    </MSBuild>
-    <ReadLinesFromFile File="D:\visual-studio-projects\DisplayMagician\DisplayMagician\obj\Debug\net8.0-windows10.0.19041.0\DisplayMagicianInformationalVersion.txt">
-    <ReadLinesFromFile File="$(MSBuildProjectDirectory)\%(DisplayMagicianOutput.RelativeDir)DisplayMagicianInformationalVersion.txt">
-      <Output TaskParameter="Lines" ItemName="VersionFromFile" />
-    </ReadLinesFromFile>
-    <Message Importance="high" Text="Using Version from file: %(VersionFromFile.Identity)" />
-    <PropertyGroup>
-      <ProductVersion>%(VersionFromFile.Identity)</ProductVersion>
-	  <DefineConstants>ProductVersion=%(VersionFromFile.Identity)</DefineConstants>
-    </PropertyGroup>
-    <Message Importance="high" Text="Product version is set to: $(ProductVersion)" />
-  </Target>-->
+	<!-- Main target to package the project -->
+	<Target Name="Package" DependsOnTargets="BuildAndPublishDisplayMagician">
+		<!-- Your WiX package commands go here -->
+		<Message Importance="high" Text="Packaging DisplayMagicianPackage in $(Configuration) mode..." />
+	</Target>
+
 </Project>

@@ -23,7 +23,7 @@
 			</Component>
 
 			<Component>
-				<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\DisplayMagician.exe" Id="DisplayMagicianExe" />
+				<File Source="$(var.DisplayMagician.TargetDir)publish\DisplayMagician.exe" Id="DisplayMagicianExe" />
 					<!--<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
 							  Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="DisplayMagician.ico">
 						<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
@@ -33,12 +33,12 @@
 				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />-->
 			</Component>
 			
-			<File Source="$(var.DisplayMagician.TargetDir)publish\win-x64\WebView2Loader.dll" />
+			<File Source="$(var.DisplayMagician.TargetDir)publish\WebView2Loader.dll" />
 		</ComponentGroup>
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
 			<Component>
 				<!-- Install the DisplayMagician Console file -->
-				<File Source="$(var.DisplayMagicianConsole.TargetDir)publish\win-x64\DisplayMagicianConsole.exe" />
+				<File Source="$(var.DisplayMagicianConsole.TargetDir)DisplayMagicianConsole.exe" />
 				<!-- Add the install location to the system PATH so that users can use the DisplayMagicianConsole.exe from anywhere on the PC -->
 				<Environment Name="PATH" System="yes" Value="[INSTALLFOLDER]" Action="set" Part="last"/>
 			</Component>
