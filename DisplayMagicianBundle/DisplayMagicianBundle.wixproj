@@ -19,7 +19,7 @@
 		
 		<!-- Set the OutputName property with the version included -->
 		<PropertyGroup>
-			<OutputName>DisplayMagicianBundle_v%(AsmInfo.Version)</OutputName>
+			<OutputName>DisplayMagicianSetup_v%(AsmInfo.Version)</OutputName>
 		</PropertyGroup>
 
 		<Message Importance="high" Text="OutputName is set to: $(OutputName)" />
