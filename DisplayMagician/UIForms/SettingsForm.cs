@@ -587,7 +587,7 @@ namespace DisplayMagician.UIForms
             {
                 using (SaveFileDialog saveFileDialog = new SaveFileDialog())
                 {
-                    DateTime now = DateTime.Now;
+                    DateTime now = DateTime.UtcNow;
                     saveFileDialog.InitialDirectory = Environment.SpecialFolder.MyDocuments.ToString();
                     saveFileDialog.Filter = "Zip Files(*.zip)| *.zip | All files(*.*) | *.*";
                     saveFileDialog.FilterIndex = 2;

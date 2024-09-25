@@ -259,6 +259,7 @@ namespace DisplayMagician {
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
             // Update the program settings for number times run
+            AppProgramSettings.NumberOfStartsSinceLastDonationForm++;
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
             // If app settings is new, then set the initial settings we need
@@ -310,7 +311,7 @@ namespace DisplayMagician {
 
 
             // Targets where to log to: File and Console
-            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.Now.ToString("yyyy-MM-dd-HHmm",CultureInfo.InvariantCulture)}.log");
+            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.UtcNow.ToString("yyyy-MM-dd-HHmm",CultureInfo.InvariantCulture)}.log");
 
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
@@ -436,9 +437,20 @@ namespace DisplayMagician {
 
                 if (AppInstalled)
                 { 
-                    // Set the registry key to turn off the first run setting.
-                    RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
-                    DMKey.SetValue("FirstRun", "0");
+                    try
+                    {
+                        // Set the registry key to turn off the first run setting.
+                        RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
+                        DMKey.SetValue("FirstRun", "0");
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        logger.Error(ex, $"Program/Main: UnauthorizedAccessException: Unable to set the FirstRun registry key to 0 as no permission to write to registry key.");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"Program/Main: Exception whilst trying to set the FirstRun registry key to 0.");
+                    }
                 }
 
             }
@@ -1190,7 +1202,7 @@ namespace DisplayMagician {
                         continue;
                     }
 
-                    if (!(DateTime.Now >= startTime))
+                    if (!(DateTime.UtcNow >= startTime))
                     {
                         logger.Debug($"Program/ShowMessages: Message start date for \"{message.HeadingText}\" (#{message.Id}) not yet reached so not ready to show message.");
                         if (!AppProgramSettings.MessagesToMonitor.Contains(message.Id))
@@ -1211,7 +1223,7 @@ namespace DisplayMagician {
                         continue;
                     }
 
-                    if (!(DateTime.Now <= endTime))
+                    if (!(DateTime.UtcNow <= endTime))
                     {
                         logger.Debug($"Program/ShowMessages: Message end date for \"{message.HeadingText}\" (#{message.Id}) past so not showing message as it's too old.");
                         continue;
@@ -1479,23 +1491,23 @@ namespace DisplayMagician {
                         // We need to set up a timer to do so (code adapted from AutoUpdater.net internal code)
                         AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
 
-                        DateTime remindLaterDateTime = DateTime.Now;
+                        DateTime remindLaterDateTime = DateTime.UtcNow;
                         switch (AutoUpdater.RemindLaterTimeSpan)
                         {
                             case RemindLaterFormat.Days:
-                                remindLaterDateTime = DateTime.Now + TimeSpan.FromDays(AutoUpdater.RemindLaterAt);
+                                remindLaterDateTime = DateTime.UtcNow + TimeSpan.FromDays(AutoUpdater.RemindLaterAt);
                                 break;
                             case RemindLaterFormat.Hours:
-                                remindLaterDateTime = DateTime.Now + TimeSpan.FromHours(AutoUpdater.RemindLaterAt);
+                                remindLaterDateTime = DateTime.UtcNow + TimeSpan.FromHours(AutoUpdater.RemindLaterAt);
                                 break;
                             case RemindLaterFormat.Minutes:
-                                remindLaterDateTime = DateTime.Now + TimeSpan.FromMinutes(AutoUpdater.RemindLaterAt);
+                                remindLaterDateTime = DateTime.UtcNow + TimeSpan.FromMinutes(AutoUpdater.RemindLaterAt);
                                 break;
                         }
 
                         AutoUpdater.PersistenceProvider.SetRemindLater(remindLaterDateTime);
                         
-                        TimeSpan timeSpan = remindLaterDateTime - DateTime.Now;
+                        TimeSpan timeSpan = remindLaterDateTime - DateTime.UtcNow;
 
                         var context = SynchronizationContext.Current;
 

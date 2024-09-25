@@ -245,6 +245,18 @@ namespace DisplayMagician.UIForms
                 Utils.AddAnimation(btn_donate);
             }
 
+            // Start the donation animation if it's time to do so
+            if (Utils.TimeToShowDonationForm())
+            {
+                DonationForm donationForm = new DonationForm();
+                donationForm.NumberofStarts = Program.AppProgramSettings.NumberOfTimesRun;
+                donationForm.ShowDialog(this);
+                // Update the settings to record the donation has been shown
+                Program.AppProgramSettings.LastDonationFormDate = DateTime.UtcNow;
+                Program.AppProgramSettings.SaveSettings();
+            }
+
+
         }
 
         protected override void SetVisibleCore(bool value)

@@ -63,10 +63,12 @@ namespace DisplayMagician
         private string _displayMagicianVersion = null;
         private string _installId = "";
         private DateTime _installDate = DateTime.UtcNow;
-        private DateTime _lastDonationDate = new DateTime(1980,1,1);
+        private DateTime _lastDonationDate = new DateTime(1980,1,1,0,0,0,DateTimeKind.Utc);
         private DateTime _lastDonateButtonAnimationDate = DateTime.UtcNow;
+        private DateTime _lastDonationFormDate = DateTime.UtcNow;
         private int _numberOfDonations = 0;
         private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
+        private int _numberOfStartsSinceLastDonationForm = 0;
         private int _numberOfTimesRun = 0;
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
@@ -169,6 +171,31 @@ namespace DisplayMagician
             set
             {
                 _numberOfStartsSinceLastDonationButtonAnimation = value;
+            }
+        }
+
+        public DateTime LastDonationFormDate
+        {
+            get
+            {
+                return _lastDonationFormDate;
+            }
+            set
+            {
+                _lastDonationFormDate = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int NumberOfStartsSinceLastDonationForm
+        {
+            get
+            {
+                return _numberOfStartsSinceLastDonationForm;
+            }
+            set
+            {
+                _numberOfStartsSinceLastDonationForm = value;
             }
         }
 
@@ -730,7 +757,7 @@ namespace DisplayMagician
                 SettingsFile settingsFile = new SettingsFile
                 {
                     SettingsFileVersion = _programSettingsFileVersion,
-                    LastUpdated = DateTime.Now,
+                    LastUpdated = DateTime.UtcNow,
                     Settings = this
                 };
 

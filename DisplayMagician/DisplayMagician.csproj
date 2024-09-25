@@ -65,6 +65,9 @@
     <Compile Update="HotkeySelector.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Update="UIForms\DonationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="UIForms\StartProgramControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
