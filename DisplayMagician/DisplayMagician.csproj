@@ -118,7 +118,7 @@
       <Version>1.0.3-rc</Version>
     </PackageReference>
     <PackageReference Include="YamlDotNet">
-      <Version>16.1.0</Version>
+      <Version>16.1.3</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="8.0.0" />
