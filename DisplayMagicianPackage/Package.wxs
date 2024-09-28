@@ -2,9 +2,9 @@
 	 xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util" 
 	 xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" 
 	 xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
-	<Package Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5">
+	<Package Name="DisplayMagician" Manufacturer="LittleBitBig" Version="$(CapturedVersion)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5">
 		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" AllowSameVersionUpgrades="yes" />
-````
+
 		<!-- Make a single setup exe by embedding the cab within the setup.exe -->
 		<MediaTemplate EmbedCab="yes" />
 		

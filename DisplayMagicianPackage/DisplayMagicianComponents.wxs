@@ -42,6 +42,6 @@
 				<!-- Add the install location to the system PATH so that users can use the DisplayMagicianConsole.exe from anywhere on the PC -->
 				<Environment Name="PATH" System="yes" Value="[INSTALLFOLDER]" Action="set" Part="last"/>
 			</Component>
-		</ComponentGroup>		
+		</ComponentGroup>
 	</Fragment>
 </Wix>
