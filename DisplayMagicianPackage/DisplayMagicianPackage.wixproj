@@ -47,7 +47,7 @@
 		<Message Importance="high" Text="DisplayMagician has been built and published using the $(Configuration) profile." />
 	</Target>
 
-	<Target Name="ExtractMsiVersion" BeforeTargets="BeforeBuild">
+	<Target Name="ExtractMsiVersion" BeforeTargets="BeforeCompile">
 		<!-- Use Wix to extract version information from the DisplayMagicianPackage MSI -->
 		<GetAssemblyIdentity AssemblyFiles="..\DisplayMagician\bin\$(Configuration)\DisplayMagician.dll">
 			<Output TaskParameter="Assemblies" ItemName="AsmInfo" />

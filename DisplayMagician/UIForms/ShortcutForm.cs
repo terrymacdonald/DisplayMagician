@@ -17,6 +17,7 @@ using System.Threading;
 using DisplayMagician.AppLibraries;
 using static DisplayMagician.GameLibraries.ProductInformation;
 using System.ComponentModel;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.UIForms
 {
@@ -3693,7 +3694,7 @@ namespace DisplayMagician.UIForms
         private void btn_help_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup";
-            System.Diagnostics.Process.Start(targetURL);
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
         }
 
     }

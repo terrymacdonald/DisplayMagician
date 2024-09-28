@@ -815,7 +815,7 @@ namespace DisplayMagician.UIForms
         private void btn_help_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup";
-            System.Diagnostics.Process.Start(targetURL);
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
         }
 
         private void saveProfileToDesktopToolStripMenuItem_Click(object sender, EventArgs e)
