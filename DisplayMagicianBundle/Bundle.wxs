@@ -1,5 +1,5 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
-  <Bundle Name="DisplayMagicianSetup v!(bind.packageVersion.DisplayMagicianPackage)" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5"
+  <Bundle Name="DisplayMagicianSetup v!(bind.packageVersion.DisplayMagicianPackage)" Manufacturer="LittleBitBig" Version="!(bind.packageVersion.DisplayMagicianPackage)" UpgradeCode="5074EC93-0C96-4C2C-9D47-88E0CC35FAAB"
 		  IconSourceFile="DisplayMagician.ico" >
 	  <BootstrapperApplication>
 		<bal:WixInternalUIBootstrapperApplication />
