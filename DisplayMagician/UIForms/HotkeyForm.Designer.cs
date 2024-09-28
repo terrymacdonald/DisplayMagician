@@ -164,6 +164,7 @@ namespace DisplayMagician.UIForms
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Choose a Hotkey";
+            TopMost = true;
             Activated += HotkeyForm_Activated;
             ResumeLayout(false);
             PerformLayout();

@@ -3527,13 +3527,13 @@ namespace DisplayMagician.UIForms
         private void btn_find_examples_startprograms_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Start-Program-Examples";
-            System.Diagnostics.Process.Start(targetURL);
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
         }
 
         private void btn_find_examples_game_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Main-Game-and-Application-Examples";
-            System.Diagnostics.Process.Start(targetURL);
+            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
         }
 
         private Bitmap PickBitmapBasedOnBgColour(Color bgColour, Bitmap lightBitmap, Bitmap darkBitmap)
