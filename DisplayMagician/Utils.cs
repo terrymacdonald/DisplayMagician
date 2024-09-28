@@ -347,29 +347,32 @@ namespace DisplayMagician
             // - the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
             // - the user has donated, but it was more than a year ago
 
-            //Check if the user has donated
-            if (Program.AppProgramSettings.NumberOfDonations == 0)
+            if (Program.AppProgramSettings.NumberOfTimesRun < 50)
             {
-                // User has not donated yet
-                // If the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
-                if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
+
+                //Check if the user has donated
+                if (Program.AppProgramSettings.NumberOfDonations == 0)
                 {
-                    return true;
-                }
-            }
-            else
-            {
-                // User has donated, but it's been a year since the last donation
-                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow)
-                {
-                    // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
-                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
+                    // User has not donated yet
+                    // If the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
+                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
                     {
                         return true;
                     }
                 }
+                else
+                {
+                    // User has donated, but it's been a year since the last donation
+                    if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow)
+                    {
+                        // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
+                        if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
+                        {
+                            return true;
+                        }
+                    }
+                }
             }
-
             // If we get to here, then no need for the donation animation
             return false;
         }
@@ -378,25 +381,27 @@ namespace DisplayMagician
         {
             // Show the donation form if it's been a year since last donation, or an anniversary of the first use of DisplayMagician
 
-            //Check if the user has donated
-            if (Program.AppProgramSettings.NumberOfDonations == 0)
+            if (Program.AppProgramSettings.NumberOfTimesRun < 50)
             {
-                // User has not donated yet
-                // If the user form has not been shown in a year, then show it!
-                if (Program.AppProgramSettings.LastDonationFormDate.AddYears(1) <= DateTime.UtcNow)
+                //Check if the user has donated
+                if (Program.AppProgramSettings.NumberOfDonations == 0)
                 {
-                    return true;
+                    // User has not donated yet
+                    // If the user form has not been shown in a year, then show it!
+                    if (Program.AppProgramSettings.LastDonationFormDate.AddYears(1) <= DateTime.UtcNow)
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // User has donated, but it's been two years since the last donation, then show the form
+                    if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow && Program.AppProgramSettings.LastDonationFormDate.AddYears(2) <= DateTime.UtcNow)
+                    {
+                        return true;
+                    }
                 }
             }
-            else
-            {
-                // User has donated, but it's been two years since the last donation, then show the form
-                if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow && Program.AppProgramSettings.LastDonationFormDate.AddYears(2) <= DateTime.UtcNow)
-                {
-                    return true;
-                }
-            }
-
             // If we get to here, then no need for the donation animation
             return false;
         }
