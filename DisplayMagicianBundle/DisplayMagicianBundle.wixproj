@@ -32,10 +32,4 @@
 		<Message Importance="high" Text="Bundle file renamed to: $(OutputName).exe" />
 	</Target>
 
-	<Target Name="RenameBundleFile" AfterTargets="Build">
-		<!-- Use PowerShell to rename the bundle output file after the build -->
-		<Exec Command="powershell -Command Rename-Item -Path '$(OutputPath)DisplayMagicianBundle.exe' -NewName '$(OutputName).exe'" />
-
-		<Message Importance="high" Text="Bundle file renamed to: $(OutputName).exe" />
-	</Target>
 </Project>
