@@ -15,7 +15,7 @@ The latest version of this application is available for download via the [releas
 
 <p align="center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases/latest"><img src="READMEAssets/gh-download.png"/></a></p>
 
-**NOTE** - This version of DisplayMagician uses all video card libraries at once. This makes it much more likely to detect your display layout, and should make it more reliable! 
+**NOTE** - This version of DisplayMagician uses all video card libraries at once. This makes it much more likely to detect your display layout, and should make it much more reliable! 
 
 ## What it does
 
@@ -60,7 +60,6 @@ DisplayMagician lets you set up the following information for each game or appli
 
 ## Planned features
 
-* Migrate from .Net Framework 4.8 to .Net 7, and transition to new supported libraries
 * Create DisplayMagician v3 using MAUI rather than Winforms
 * Add Unit Tests!
 * Maybe add Intel Alchemist GPU spanned screen support when those cards are eventually released.
@@ -70,6 +69,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * DisplayMagician only supports 64-bit Windows 10 (version 1809 or later) and 64-bit Windows 11
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
+* Requires .Net 8.0 (automatically included in the installer)
 
 ## Donation
 I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to craft something that is useful to so many people. That said, I'd appreciate a donation to help buy a coffee or two! 
@@ -161,6 +161,42 @@ I’m so very thankful for the help of the following people, who make DisplayMag
 * Miiinttt (thanks for the monthly donations)
 
 Also big thanks to:
+* Stefan Hergesell (Thanks for the donation)
+* bladews (Thanks for the donation)
+* bstrut (Thanks for the donation)
+* Luca Bassini (Thanks for the donation)
+* Aaron S. (Thanks for the donation)
+* leechy70 (Thanks for the donation)
+* redbus500 (Thanks for the donation)
+* lgraves098 (Thanks for the donation)
+* SitromR (Thanks for the donation)
+* versedi (Thank you for your donation)
+* Detonation EMS (Thanks for the donation)
+* Nathan Anstice (Thanks for the donation)
+* Luuk (Thanks for the donation)
+* mastercko (Thanks for the donation)
+* Yohan (Thank you for your donation)
+* davedontmind (Thanks for the donation)
+* hmalatian (Thanks for the donation)
+* dewetdavel (Thank you for your donation)
+* versedi (Thank you for your donation)
+* MrGarrettSmith (Thank you for your donation)
+* AshMcConnell (Thank you for your donation)
+* kkouvaras (Thank you for your donation)
+* ganzoni (Thank you for your donation)
+* ondrejholan (Thank you for your donation)
+* ClankyBanky (Thank you for your donation)
+* richmorn (Thank you for your donation)
+* DismalBree123 (Thank you for your donation)
+* nibeaos9 (Thank you for your donation)
+* Beauchica (Thank you for your donation)
+* bolf51 (Thank you for your donation)
+* LukeDowding (Thank you for your donation)
+* mdelecate (Thank you for your donation)
+* TiredRob (Thank you for your donation)
+* mattmazgaj (Thank you for your donation)
+* Zenairo (Thank you for your donation)
+* Impal3rVlad (Thank you for your donation) 
 * Dmanzano1 (Thank you for your donation)
 * Yohan (Thank you for your donation)
 * Guennid (Thank you for your donation)
