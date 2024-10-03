@@ -30,6 +30,8 @@ using System.Text;
 using System.Globalization;
 using System.Net.Http;
 using NLog.Targets;
+using System.Security.Policy;
+using System.Web;
 
 namespace DisplayMagician {
 
@@ -1294,11 +1296,18 @@ namespace DisplayMagician {
             AutoUpdater.RemindLaterAt = 7;
             if (Program.AppProgramSettings.UpgradeToPreReleases == false)
             {
-                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/update_2.5.json");
+                string connectionUrl = "http://displaymagician.littlebitbig.com/update/update_2.5.json";
+                connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppProgramSettings.DisplayMagicianVersion)}");
+                connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
+                AutoUpdater.Start(connectionUrl);
             }
             else
             {
-                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/prerelease_2.5.json");
+                string connectionUrl = "http://displaymagician.littlebitbig.com/update/prerelease_2.5.json";
+                connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppProgramSettings.DisplayMagicianVersion)}");
+                connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
+                AutoUpdater.Start(connectionUrl);
+
             }
         }
 
