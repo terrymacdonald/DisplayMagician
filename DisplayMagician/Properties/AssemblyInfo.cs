@@ -13,6 +13,16 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 //[assembly: Guid("your-guid-here")]
 // Set this assembly version as it is the one that the user will see in the application info
-[assembly: AssemblyVersion("2.7.0.*")]
-[assembly: AssemblyFileVersion("2.7.0.0")]
+//[assembly: AssemblyVersion("2.7.0.*")]
+//[assembly: AssemblyFileVersion("2.7.0.0")]
 //[assembly: AssemblyInformationalVersion("2.7.0-alpha.1")]
+[assembly: AssemblyVersion(ThisAssembly.Git.BaseVersion.Major + "." + ThisAssembly.Git.BaseVersion.Minor + "." + ThisAssembly.Git.BaseVersion.Patch)]
+
+[assembly: AssemblyFileVersion(ThisAssembly.Git.SemVer.Major + "." + ThisAssembly.Git.SemVer.Minor + "." + ThisAssembly.Git.SemVer.Patch)]
+
+[assembly: AssemblyInformationalVersion(
+    ThisAssembly.Git.SemVer.Major + "." +
+    ThisAssembly.Git.SemVer.Minor + "." +
+    ThisAssembly.Git.Commits + "-" +
+    ThisAssembly.Git.Branch + "+" +
+    ThisAssembly.Git.Commit)]
