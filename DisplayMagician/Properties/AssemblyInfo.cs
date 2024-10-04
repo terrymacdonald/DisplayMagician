@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
-//[assembly: Guid("your-guid-here")]
+[assembly: Guid("4F319902-EB8C-43E6-8A51-8EA74E4308F8")]
 // Set this assembly version as it is the one that the user will see in the application info
 //[assembly: AssemblyVersion("2.7.0.*")]
 //[assembly: AssemblyFileVersion("2.7.0.0")]
@@ -23,6 +23,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyInformationalVersion(
     ThisAssembly.Git.SemVer.Major + "." +
     ThisAssembly.Git.SemVer.Minor + "." +
-    ThisAssembly.Git.Commits + "-" +
+    ThisAssembly.Git.SemVer.Patch + "-" +
     ThisAssembly.Git.Branch + "+" +
-    ThisAssembly.Git.Commit)]
+    ThisAssembly.Git.Commits)]

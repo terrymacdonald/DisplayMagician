@@ -212,4 +212,22 @@
 		<Exec Command="powershell -Command [System.Diagnostics.FileVersionInfo]::GetVersionInfo('$(TargetPath)').ProductVersion &gt; $(IntermediateOutputPath)DisplayMagicianInformationalVersion.txt" />
 		<Message Importance="high" Text="Wrote Version to file: $(IntermediateOutputPath)DisplayMagicianInformationalVersion.txt" />
 	</Target>-->
+	<PropertyGroup>
+		<GitVersion>false</GitVersion>
+		<!-- we'll do our own versioning -->
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="GitInfo" PrivateAssets="all" />
+	</ItemGroup>
+
+	<Target Name="PopulateInfo" DependsOnTargets="GitVersion" BeforeTargets="GetAssemblyVersion;GenerateNuspec;GetPackageContents">
+		<PropertyGroup>
+			<Version>$(GitSemVerMajor).$(GitSemVerMinor).$(GitSemVerPatch)$(GitSemVerDashLabel)+$(GitBranch).$(GitCommits)</Version>
+			<PackageVersion>$(Version)</PackageVersion>
+			<RepositoryBranch>$(GitBranch)</RepositoryBranch>
+			<RepositoryCommit>$(GitCommit)</RepositoryCommit>
+			<SourceRevisionId>$(GitBranch) $(GitCommit)</SourceRevisionId>
+		</PropertyGroup>
+	</Target>
 </Project>

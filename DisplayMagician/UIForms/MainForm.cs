@@ -35,7 +35,7 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
-            lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);
+            lbl_version.Text = string.Format(lbl_version.Text, Program.AppVersion);
 
             // Refresh all possible profiles and shortcuts
             ProfileRepository.IsPossibleRefresh();
