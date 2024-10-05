@@ -12,17 +12,14 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("4F319902-EB8C-43E6-8A51-8EA74E4308F8")]
-// Set this assembly version as it is the one that the user will see in the application info
-//[assembly: AssemblyVersion("2.7.0.*")]
-//[assembly: AssemblyFileVersion("2.7.0.0")]
-//[assembly: AssemblyInformationalVersion("2.7.0-alpha.1")]
-[assembly: AssemblyVersion(ThisAssembly.Git.BaseVersion.Major + "." + ThisAssembly.Git.BaseVersion.Minor + "." + ThisAssembly.Git.BaseVersion.Patch)]
 
-[assembly: AssemblyFileVersion(ThisAssembly.Git.SemVer.Major + "." + ThisAssembly.Git.SemVer.Minor + "." + ThisAssembly.Git.SemVer.Patch)]
+/*[assembly: AssemblyVersion(ThisAssembly.Git.BaseVersion.Major + "." + ThisAssembly.Git.BaseVersion.Minor + "." + ThisAssembly.Git.BaseVersion.Patch)]
+
+[assembly: AssemblyFileVersion(ThisAssembly.Git.BaseVersion.Major + "." + ThisAssembly.Git.BaseVersion.Minor + "." + ThisAssembly.Git.BaseVersion.Patch + "." + ThisAssembly.Git.Commits)]
 
 [assembly: AssemblyInformationalVersion(
-    ThisAssembly.Git.SemVer.Major + "." +
-    ThisAssembly.Git.SemVer.Minor + "." +
-    ThisAssembly.Git.SemVer.Patch + "-" +
+    ThisAssembly.Git.BaseVersion.Major + "." +
+    ThisAssembly.Git.BaseVersion.Minor + "." +
+    ThisAssembly.Git.BaseVersion.Patch + "-" +
     ThisAssembly.Git.Branch + "+" +
-    ThisAssembly.Git.Commits)]
+    ThisAssembly.Git.Commits)]*/
