@@ -13,7 +13,7 @@
   </ItemGroup>
   <Target Name="ExtractMsiVersion" BeforeTargets="BeforeBuild">
     <!-- Use Wix to extract version information from the DisplayMagicianPackage MSI -->
-    <GetAssemblyIdentity AssemblyFiles="..\DisplayMagicianPackage\bin\Debug\en-US\DisplayMagicianPackage.msi">
+    <GetAssemblyIdentity AssemblyFiles="..\DisplayMagician\bin\$(Configuration)\publish\DisplayMagician.dll">
       <Output TaskParameter="Assemblies" ItemName="AsmInfo" />
     </GetAssemblyIdentity>
     <!-- Set the OutputName property with the version included -->
