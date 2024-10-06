@@ -1,6 +1,7 @@
 ﻿<Project Sdk="WixToolset.Sdk/5.0.1">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BindFiles>false</BindFiles>
+    <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
     <OutputName>DisplayMagicianPackage</OutputName>
@@ -12,60 +13,39 @@
     <Content Include="WixUIDialogBmp.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.1" />
-    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.1" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.1" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Publish="true" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" Publish="true" />
   </ItemGroup>
-	<!-- Define the configuration (Debug/Release) based on the build -->
-	<PropertyGroup>
-		<Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
-	</PropertyGroup>
-
-	<!-- Add the publish profile paths for Debug and Release -->
-	<PropertyGroup>
-		<DebugPublishProfile>DebugPublishProfile.pubxml</DebugPublishProfile>
-		<ReleasePublishProfile>ReleasePublishProfile.pubxml</ReleasePublishProfile>
-	</PropertyGroup>
-
-	<Target Name="BuildAndPublishDisplayMagician" BeforeTargets="BeforeBuild">
-		<!-- Build DisplayMagician project -->
-		<MSBuild Projects="..\DisplayMagician\DisplayMagician.csproj"
-				 Targets="Build"
-				 Properties="Configuration=$(Configuration)" />
-
-		<!-- Publish DisplayMagician with different profiles for Debug and Release -->
-		<MSBuild Projects="..\DisplayMagician\DisplayMagician.csproj"
-				 Targets="Publish"
-				 Properties="Configuration=$(Configuration);PublishProfile=$(Configuration)PublishProfile">
-			<Output TaskParameter="TargetOutputs" ItemName="PublishedFiles" />
-		</MSBuild>
-
-		<Message Importance="high" Text="DisplayMagician has been built and published using the $(Configuration) profile." />
-	</Target>
-
-	<!--<Target Name="ExtractMsiVersion" BeforeTargets="BeforeCompile">
-		<!- - Use Wix to extract version information from the DisplayMagicianPackage MSI - ->
-		<GetAssemblyIdentity AssemblyFiles="..\DisplayMagician\bin\$(Configuration)\DisplayMagician.dll">
-			<Output TaskParameter="Assemblies" ItemName="AsmInfo" />
-		</GetAssemblyIdentity>
-
-		<!- - Set the OutputName property with the version included - ->
-		<PropertyGroup>
-			<DefineConstants>CapturedVersion=%(AsmInfo.Version)</DefineConstants>
-		</PropertyGroup>
-
-		<Message Importance="high" Text="OutputName is set to: $(OutputName)" />
-	</Target>-->
-
-	<!-- Main target to package the project 
-	<Target Name="Package" DependsOnTargets="BuildAndPublishDisplayMagician">
-		Your WiX package commands go here 
-		<Message Importance="high" Text="Packaging DisplayMagicianPackage in $(Configuration) mode..." />
-	</Target>
-	-->
-
+  <!-- Define the configuration (Debug/Release) based on the build -->
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+  </PropertyGroup>
+  <!-- Add the publish profile paths for Debug and Release -->
+  <PropertyGroup>
+    <DebugPublishProfile>DebugPublishProfile.pubxml</DebugPublishProfile>
+    <ReleasePublishProfile>ReleasePublishProfile.pubxml</ReleasePublishProfile>
+  </PropertyGroup>
+  <Target Name="BuildAndPublishDisplayMagician" BeforeTargets="BeforeBuild">
+    <!-- Build DisplayMagician project -->
+    <MSBuild Projects="..\DisplayMagician\DisplayMagician.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <!-- Publish DisplayMagician with different profiles for Debug and Release -->
+    <MSBuild Projects="..\DisplayMagician\DisplayMagician.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishProfile=$(Configuration)PublishProfile">
+      <Output TaskParameter="TargetOutputs" ItemName="PublishedFiles" />
+    </MSBuild>
+    <Message Importance="high" Text="DisplayMagician has been built and published using the $(Configuration) profile." />
+  </Target>
+  <Target Name="BuildAndPublishDisplayMagicianConsole" BeforeTargets="BeforeBuild">
+    <!-- Build DisplayMagician project -->
+    <MSBuild Projects="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <!-- Publish DisplayMagician with different profiles for Debug and Release -->
+    <MSBuild Projects="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishProfile=$(Configuration)PublishProfile">
+      <Output TaskParameter="TargetOutputs" ItemName="PublishedFiles" />
+    </MSBuild>
+    <Message Importance="high" Text="DisplayMagicianConsole has been built and published using the $(Configuration) profile." />
+  </Target>
 </Project>

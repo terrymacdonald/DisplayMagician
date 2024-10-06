@@ -7,7 +7,7 @@
 	  
     <Chain>
 		<PackageGroupRef Id="DotNetDesktopRedist" />
-		<MsiPackage Id="DisplayMagicianPackage" SourceFile="..\DisplayMagicianPackage\bin\x64\Debug\en-US\DisplayMagicianPackage.msi" Vital="yes" />
+		<MsiPackage Id="DisplayMagicianPackage" SourceFile="..\DisplayMagicianPackage\bin\Debug\en-US\DisplayMagicianPackage.msi" Vital="yes" />
     </Chain>
 
   </Bundle>

@@ -208,10 +208,6 @@
 		<!-- For 64-bit Windows builds -->
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
-	<!--<Target Name="ExtractInformationalVersion" AfterTargets="AfterBuild">
-		<Exec Command="powershell -Command [System.Diagnostics.FileVersionInfo]::GetVersionInfo('$(TargetPath)').ProductVersion &gt; $(IntermediateOutputPath)DisplayMagicianInformationalVersion.txt" />
-		<Message Importance="high" Text="Wrote Version to file: $(IntermediateOutputPath)DisplayMagicianInformationalVersion.txt" />
-	</Target>-->
 	<PropertyGroup>
 		<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
