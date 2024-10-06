@@ -50,7 +50,7 @@ namespace DisplayMagician {
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
         public static string AppDownloadsPath = Utils.GetDownloadsPath();
-        public static string AppVersion = ThisAssembly.AssemblyVersion;
+        public static string AppVersion = ThisAssembly.AssemblyFileVersion;
 
         public static string AppPermStartMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "DisplayMagician","DisplayMagician.lnk");
         public static string AppTempStartMenuPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.Programs),"DisplayMagician.lnk");
