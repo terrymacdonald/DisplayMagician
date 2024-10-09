@@ -31,6 +31,7 @@ namespace DisplayMagicianConsole
         public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
+        public static string AppVersion = ThisAssembly.AssemblyFileVersion;
         public static bool verboseMode = false;
         public static bool parseableMode = false;
 
@@ -55,7 +56,7 @@ namespace DisplayMagicianConsole
             app.HelpOption("-?|-h|--help", inherited: true);
 
             app.VersionOption("-V|--version", () => {
-                return string.Format("{0} v{1}", Assembly.GetExecutingAssembly().GetName().Name, Assembly.GetExecutingAssembly().GetName().Version);
+                return string.Format("{0} v{1}", Assembly.GetExecutingAssembly().GetName().Name, AppVersion);
             });
 
             CommandOption verbose= app.Option("-v", "Communicate more about what is happening whilst doing it", CommandOptionType.NoValue);

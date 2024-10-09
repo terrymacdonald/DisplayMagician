@@ -38,7 +38,7 @@
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
 			<Component>
 				<!-- Install the DisplayMagician Console file -->
-				<File Source="$(var.DisplayMagicianConsole.TargetDir)DisplayMagicianConsole.exe" />
+				<File Source="$(var.DisplayMagicianConsole.TargetDir)publish\DisplayMagicianConsole.exe" />
 				<!-- Add the install location to the system PATH so that users can use the DisplayMagicianConsole.exe from anywhere on the PC -->
 				<Environment Name="PATH" System="yes" Value="[INSTALLFOLDER]" Action="set" Part="last"/>
 			</Component>
