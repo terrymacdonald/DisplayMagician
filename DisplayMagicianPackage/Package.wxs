@@ -9,8 +9,7 @@
 		<MediaTemplate EmbedCab="yes" />
 		
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
-		<Icon Id="DisplayMagicianIcon" SourceFile="DisplayMagician.exe" />
-		<Property Id="ARPPRODUCTICON" Value="DisplayMagicianIcon" />
+		<Property Id="ARPPRODUCTICON" Value="DisplayMagician.ico" />
 		
 		<!-- Installer UI custom pictures. File names are made up. Add path to your pics -->
 		<WixVariable Id="WixUIBannerBmp" Value="WixUIBannerBmp.png" />

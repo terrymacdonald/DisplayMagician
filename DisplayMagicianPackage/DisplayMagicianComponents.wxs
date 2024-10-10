@@ -10,7 +10,7 @@
 			<Component>
 				<RegistryKey Root="HKCU" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="NewInstall" Value="1"/>
-				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />
+				<!--<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />
 				<Shortcut
 							Id="DisplayMagicianStartMenuShortcut"
 							Name="DisplayMagician"
@@ -19,18 +19,19 @@
 							WorkingDirectory="INSTALLFOLDER"
 							Icon="DisplayMagicianIcon"
 							IconIndex="0"
-							Directory="ApplicationProgramsFolder"/>
+							Directory="ApplicationProgramsFolder"/>-->
 			</Component>
 
 			<Component>
-				<File Source="$(var.DisplayMagician.TargetDir)publish\DisplayMagician.exe" Id="DisplayMagicianExe" />
-					<!--<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
-							  Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="DisplayMagician.ico">
-						<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
-						<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}" />
-					</Shortcut>
-				</File>
-				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />-->
+				<File Source="$(var.DisplayMagician.TargetDir)publish\DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
+				<!--<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
+							Directory="ProgramMenuFolder" Advertise="yes" Icon="dm.exe">
+					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
+					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}" />
+				</Shortcut>-->
+				<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
+							Directory="ProgramMenuFolder" Advertise="yes" Icon="dm.exe" />
+				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />				
 			</Component>
 			
 			<File Source="$(var.DisplayMagician.TargetDir)publish\WebView2Loader.dll" />
@@ -43,5 +44,6 @@
 				<Environment Name="PATH" System="yes" Value="[INSTALLFOLDER]" Action="set" Part="last"/>
 			</Component>
 		</ComponentGroup>
+		<Icon Id="dm.exe" SourceFile="DisplayMagician.ico" />
 	</Fragment>
 </Wix>
