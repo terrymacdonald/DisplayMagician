@@ -1,7 +1,7 @@
 ﻿<Project Sdk="WixToolset.Sdk/5.0.1">
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
-	<OutputName>DisplayMagicianSetupBundle</OutputName>
+	<OutputName>DisplayMagicianSetup</OutputName>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
@@ -12,4 +12,8 @@
     <PackageReference Include="WixToolset.Bal.wixext" Version="5.0.2" />
     <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.2" />
   </ItemGroup>
+  <Target Name="RenameBundleFile" AfterTargets="Build">
+    <!-- Use PowerShell to rename the bundle output file after the build -->
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;.\renamedisplaymagician.ps1&quot; -outputDir &quot;$(BaseOutputPath)$(Configuration)&quot;" />
+  </Target>
 </Project>
