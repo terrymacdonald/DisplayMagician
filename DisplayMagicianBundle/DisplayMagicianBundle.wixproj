@@ -14,6 +14,6 @@
   </ItemGroup>
   <Target Name="RenameBundleFile" AfterTargets="Build">
     <!-- Use PowerShell to rename the bundle output file after the build -->
-    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;.\renamedisplaymagician.ps1&quot; -outputDir &quot;$(BaseOutputPath)$(Configuration)&quot;" />
+    <Exec Command="powershell -ExecutionPolicy Bypass -File .\renamedisplaymagician.ps1 -outputDir $(ProjectDir)$(OutputPath)" />
   </Target>
 </Project>

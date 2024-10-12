@@ -14,18 +14,21 @@ $assemblyPath = Join-Path -Path $currentDir -ChildPath $relativeAssemblyPath
 $fileVersionInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($assemblyPath)
 $versionInfo = $fileVersionInfo.FileVersion
 
-# Path to the setup file, using a relative path
-$relativeSetupFile = "DisplayMagicianSetup.exe"
-$setupFilePath = Join-Path -Path $outputDir -ChildPath $relativeSetupFile
-
 # Output the new setup file name
-#Write-Host "OutputDir passed was '$outputDir'"
+Write-Host "OutputDir passed was '$outputDir'"
 
 # Define the new setup file name with version
 $newSetupFileName = "DisplayMagicianSetup_v$($versionInfo).exe"
 
 # Rename the setup file
-Rename-Item -Path $setupFilePath -NewName $newSetupFileName -Force
+#Rename-Item -Path $setupFilePath -NewName $newSetupFileName -Force
+
+Set-Location -Path $outputDir
+
+Get-Childitem DisplayMagicianSetup.exe | ForEach-Object {
+    Move-Item $_ $_.Name.Replace("DisplayMagicianSetup.exe", $newSetupFileName) -Force
+}
+
 
 # Output the new setup file name
-Write-Host "Renamed '$setupFilePath' to '$newSetupFileName'"
+Write-Host "Renamed '$outputDir\DisplayMagicianSetup.exe' to '$newSetupFileName'"
