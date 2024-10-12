@@ -347,7 +347,7 @@ namespace DisplayMagician
             // - the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
             // - the user has donated, but it was more than a year ago
 
-            if (Program.AppProgramSettings.NumberOfTimesRun < 50)
+            if (Program.AppProgramSettings.NumberOfTimesRun > 50)
             {
 
                 //Check if the user has donated
@@ -381,7 +381,7 @@ namespace DisplayMagician
         {
             // Show the donation form if it's been a year since last donation, or an anniversary of the first use of DisplayMagician
 
-            if (Program.AppProgramSettings.NumberOfTimesRun < 50)
+            if (Program.AppProgramSettings.NumberOfTimesRun > 50)
             {
                 //Check if the user has donated
                 if (Program.AppProgramSettings.NumberOfDonations == 0)
