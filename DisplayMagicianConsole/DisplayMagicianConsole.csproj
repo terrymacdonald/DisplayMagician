@@ -30,7 +30,7 @@
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143">
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.77-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
