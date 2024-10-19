@@ -31,8 +31,8 @@
       "hashingAlgorithm": "SHA256"
     },
     "manualUpgrade": false,
-    "updatesDisplayProfiles": false,
+    "updatesDisplayProfiles": true,
     "updatesGameShortcuts": true,
-    "updatesSettings": false
+    "updatesSettings": true
   }
 }
