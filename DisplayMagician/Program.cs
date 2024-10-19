@@ -1330,6 +1330,15 @@ namespace DisplayMagician {
                             HashingAlgorithm = (string)json["prerelease"]["checksum"]["hashingAlgorithm"]
                         }
                     };
+                    logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the Prerelease extraDetails in the received Update JSON file.");
+                    AppUpgradeExtraDetails = new UpgradeExtraDetails
+                    {
+                        ManualUpgrade = (bool)json["prerelease"]["manualUpgrade"],
+                        UpdatesDisplayProfiles = (bool)json["prerelease"]["updatesDisplayProfiles"],
+                        UpdatesGameShortcuts = (bool)json["prerelease"]["updatesGameShortcuts"],
+                        UpdatesSettings = (bool)json["prerelease"]["updatesSettings"],
+                    };
+
                 }
                 else
                 {
@@ -1351,24 +1360,15 @@ namespace DisplayMagician {
                             HashingAlgorithm = (string)json["stable"]["checksum"]["hashingAlgorithm"]
                         }
                     };
+                    logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the Stable extraDetails in the received Update JSON file.");
+                    AppUpgradeExtraDetails = new UpgradeExtraDetails
+                    {
+                        ManualUpgrade = (bool)json["stable"]["manualUpgrade"],
+                        UpdatesDisplayProfiles = (bool)json["stable"]["updatesDisplayProfiles"],
+                        UpdatesGameShortcuts = (bool)json["stable"]["updatesGameShortcuts"],
+                        UpdatesSettings = (bool)json["stable"]["updatesSettings"],
+                    };
                 }
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
-            }
-
-            // Also record the DisplayMagician Update settings.
-            try 
-            {
-                logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the received Update JSON file.");
-                AppUpgradeExtraDetails = new UpgradeExtraDetails
-                {
-                    ManualUpgrade = (bool)json["extraDetails"]["manualUpgrade"],
-                    UpdatesDisplayProfiles = (bool)json["extraDetails"]["updatesDisplayProfiles"],
-                    UpdatesGameShortcuts = (bool)json["extraDetails"]["updatesGameShortcuts"],
-                    UpdatesSettings = (bool)json["extraDetails"]["updatesSettings"],
-                };
             }
             catch (Exception ex)
             {
