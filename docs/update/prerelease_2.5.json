@@ -1,15 +1,15 @@
 {
   "autoupdate": {
-    "version": "2.7.1.9",
-    "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v2.7.1-beta.9/DisplayMagicianSetup_v2.7.1.9.exe",
-    "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases/tag/v2.7.1-beta.9",
+    "version": "2.7.2.1",
+    "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v2.7.2/DisplayMagicianSetup_v2.7.2.1.exe",
+    "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases/tag/v2.7.2",
     "mandatory": {
       "value": false,
       "minVersion": "0.1.0.0",
       "mode": 0
     },
     "checksum": {
-      "value": "FC4B1F8D7D6255DF007633353DD7182A4511E29EF67DD47F428503DD39235123",
+      "value": "FB5F10610D4E2606AC6A1531DEE22200BD2F33FD68D8868360AD7A8B41D34D9A",
       "hashingAlgorithm": "SHA256"
     }
   },
