@@ -1311,7 +1311,7 @@ namespace DisplayMagician {
             logger.Trace($"Program/AutoUpdaterOnParseUpdateInfoEvent: Received the following Update JSON file from {AutoUpdater.AppCastURL}: {args.RemoteData}");
             try
             {
-                if (Program.AppProgramSettings.UpgradeToPreReleases == false)
+                if (Program.AppProgramSettings.UpgradeToPreReleases)
                 {
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the Prerelease info in the received Update JSON file.");
                     args.UpdateInfo = new UpdateInfoEventArgs
@@ -1382,8 +1382,7 @@ namespace DisplayMagician {
         private static void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
         {
             if (args.Error == null)
-            {                
-
+            {
                 if (args.IsUpdateAvailable)
                 {
                     // Shut down the splash screen
