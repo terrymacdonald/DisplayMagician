@@ -1297,21 +1297,11 @@ namespace DisplayMagician {
             AutoUpdater.RemindLaterTimeSpan = RemindLaterFormat.Days;
             AutoUpdater.RemindLaterAt = 7;
             AutoUpdater.InstalledVersion = new Version(AppVersion);
-            if (Program.AppProgramSettings.UpgradeToPreReleases == false)
-            {
-                string connectionUrl = "http://displaymagician.littlebitbig.com/update/update_2.5.json";
-                connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppProgramSettings.DisplayMagicianVersion)}");
-                connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
-                AutoUpdater.Start(connectionUrl);
-            }
-            else
-            {
-                string connectionUrl = "http://displaymagician.littlebitbig.com/update/prerelease_2.5.json";
-                connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppProgramSettings.DisplayMagicianVersion)}");
-                connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
-                AutoUpdater.Start(connectionUrl);
 
-            }
+            string connectionUrl = "http://displaymagician.littlebitbig.com/update/update.json";
+            connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppProgramSettings.DisplayMagicianVersion)}");
+            connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
+            AutoUpdater.Start(connectionUrl);
         }
 
         private static void AutoUpdaterOnParseUpdateInfoEvent(ParseUpdateInfoEventArgs args)
@@ -1320,24 +1310,48 @@ namespace DisplayMagician {
             logger.Trace($"Program/AutoUpdaterOnParseUpdateInfoEvent: Received the following Update JSON file from {AutoUpdater.AppCastURL}: {args.RemoteData}");
             try
             {
-                logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
-                args.UpdateInfo = new UpdateInfoEventArgs
+                if (Program.AppProgramSettings.UpgradeToPreReleases == false)
                 {
-                    CurrentVersion = (string)json["autoupdate"]["version"],
-                    ChangelogURL = (string)json["autoupdate"]["changelog"],
-                    DownloadURL = (string)json["autoupdate"]["url"],
-                    Mandatory = new Mandatory
+                    logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the Prerelease info in the received Update JSON file.");
+                    args.UpdateInfo = new UpdateInfoEventArgs
                     {
-                        Value = (bool)json["autoupdate"]["mandatory"]["value"],
-                        UpdateMode = (Mode)(int)json["autoupdate"]["mandatory"]["mode"],
-                        MinimumVersion = (string)json["autoupdate"]["mandatory"]["minVersion"]
-                    },
-                    CheckSum = new CheckSum
+                        CurrentVersion = (string)json["prerelease"]["version"],
+                        ChangelogURL = (string)json["prerelease"]["changelog"],
+                        DownloadURL = (string)json["prerelease"]["url"],
+                        Mandatory = new Mandatory
+                        {
+                            Value = (bool)json["prerelease"]["mandatory"]["value"],
+                            UpdateMode = (Mode)(int)json["prerelease"]["mandatory"]["mode"],
+                            MinimumVersion = (string)json["prerelease"]["mandatory"]["minVersion"]
+                        },
+                        CheckSum = new CheckSum
+                        {
+                            Value = (string)json["prerelease"]["checksum"]["value"],
+                            HashingAlgorithm = (string)json["prerelease"]["checksum"]["hashingAlgorithm"]
+                        }
+                    };
+                }
+                else
+                {
+                    logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the Stable info in the received Update JSON file.");
+                    args.UpdateInfo = new UpdateInfoEventArgs
                     {
-                        Value = (string)json["autoupdate"]["checksum"]["value"],
-                        HashingAlgorithm = (string)json["autoupdate"]["checksum"]["hashingAlgorithm"]
-                    }
-                };
+                        CurrentVersion = (string)json["stable"]["version"],
+                        ChangelogURL = (string)json["stable"]["changelog"],
+                        DownloadURL = (string)json["stable"]["url"],
+                        Mandatory = new Mandatory
+                        {
+                            Value = (bool)json["stable"]["mandatory"]["value"],
+                            UpdateMode = (Mode)(int)json["stable"]["mandatory"]["mode"],
+                            MinimumVersion = (string)json["stable"]["mandatory"]["minVersion"]
+                        },
+                        CheckSum = new CheckSum
+                        {
+                            Value = (string)json["stable"]["checksum"]["value"],
+                            HashingAlgorithm = (string)json["stable"]["checksum"]["hashingAlgorithm"]
+                        }
+                    };
+                }
             }
             catch (Exception ex)
             {
