@@ -95,6 +95,7 @@ namespace DisplayMagician {
 
         public struct UpgradeExtraDetails
         {
+            public bool PreleaseUpgrade;
             public bool ManualUpgrade;
             public bool UpdatesDisplayProfiles;
             public bool UpdatesGameShortcuts;
@@ -1333,6 +1334,7 @@ namespace DisplayMagician {
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the Prerelease extraDetails in the received Update JSON file.");
                     AppUpgradeExtraDetails = new UpgradeExtraDetails
                     {
+                        PreleaseUpgrade = true,
                         ManualUpgrade = (bool)json["prerelease"]["manualUpgrade"],
                         UpdatesDisplayProfiles = (bool)json["prerelease"]["updatesDisplayProfiles"],
                         UpdatesGameShortcuts = (bool)json["prerelease"]["updatesGameShortcuts"],
@@ -1363,6 +1365,7 @@ namespace DisplayMagician {
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the Stable extraDetails in the received Update JSON file.");
                     AppUpgradeExtraDetails = new UpgradeExtraDetails
                     {
+                        PreleaseUpgrade = false,
                         ManualUpgrade = (bool)json["stable"]["manualUpgrade"],
                         UpdatesDisplayProfiles = (bool)json["stable"]["updatesDisplayProfiles"],
                         UpdatesGameShortcuts = (bool)json["stable"]["updatesGameShortcuts"],
@@ -1393,18 +1396,26 @@ namespace DisplayMagician {
 
                     StringBuilder message= new StringBuilder();
                     message.Append(@"{\rtf1\ansi \qc \line \line \line ");
-                    
 
-                    if (args.Mandatory.Value)
+                    if (AppProgramSettings.UpgradeToPreReleases)
                     {
-                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
-                        message.Append($@"There is a new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is a mandatory update. \line \line ");
+                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New pre-release version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. This new version may have bugs.");
+                        message.Append($@"There is a version {args.CurrentVersion} available. You are currently using version {args.InstalledVersion}. ");
                     }
                     else
                     {
-                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
+                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New stable version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
+                        message.Append($@"There is a new version {args.CurrentVersion} available. You are currently using version {args.InstalledVersion}. ");
+                    }
 
-                        message.Append($@"There is a new version {args.CurrentVersion} available. You are currently using version {args.InstalledVersion}. \line \line ");                        
+                    if (args.Mandatory.Value)
+                    {
+                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version is a mandatory upgrade.");
+                        message.Append($@"This is a mandatory update. \line \line ");
+                    }
+                    else
+                    {
+                        message.Append($@"\line \line ");                        
                     }
 
                     if (Program.AppUpgradeExtraDetails.HasValue)
@@ -1490,6 +1501,7 @@ namespace DisplayMagician {
                     message.Append(@"}");
 
                     upgradeForm.Message = message.ToString();
+                    upgradeForm.ChangelogURL = args.ChangelogURL;
 
                     dialogResult = upgradeForm.ShowDialog();
 

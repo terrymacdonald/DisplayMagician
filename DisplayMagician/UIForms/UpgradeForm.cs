@@ -13,18 +13,18 @@ namespace DisplayMagician.UIForms
 {
     public partial class UpgradeForm : Form
     {
-
-        private string _changelogWebsite = "https://github.com/terrymacdonald/DisplayMagician/releases";
-
         public UpgradeForm()
         {
             InitializeComponent();
-            //wb_changelog.Navigate(_changelogWebsite);            
+            //wb_changelog.Navigate(_changelogWebsite);
+            lnk_changelog.Text = ChangelogURL;
         }
 
         public bool Remind { get; set;  } = false;
 
         public string Message { get; set; } = "You have an upgrade available for DisplayMagician. Do you wish to upgrade now?";
+
+        public string ChangelogURL { get; set; } = "https://github.com/terrymacdonald/DisplayMagician/releases";
 
         private void btn_skip_Click(object sender, EventArgs e)
         {

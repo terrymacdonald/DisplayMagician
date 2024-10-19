@@ -43,7 +43,7 @@
             lbl_title.AutoSize = true;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(219, 10);
+            lbl_title.Location = new System.Drawing.Point(259, 10);
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(475, 33);
@@ -121,13 +121,14 @@
             lnk_changelog.AutoSize = true;
             lnk_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lnk_changelog.LinkColor = System.Drawing.Color.LightSkyBlue;
-            lnk_changelog.Location = new System.Drawing.Point(272, 338);
+            lnk_changelog.Location = new System.Drawing.Point(311, 338);
             lnk_changelog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lnk_changelog.Name = "lnk_changelog";
             lnk_changelog.Size = new System.Drawing.Size(371, 16);
             lnk_changelog.TabIndex = 40;
             lnk_changelog.TabStop = true;
             lnk_changelog.Text = "https://github.com/terrymacdonald/DisplayMagician/releases";
+            lnk_changelog.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lnk_changelog.LinkClicked += lnk_changelog_LinkClicked;
             // 
             // rtb_message
