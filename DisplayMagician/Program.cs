@@ -1296,6 +1296,7 @@ namespace DisplayMagician {
             AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
             AutoUpdater.RemindLaterTimeSpan = RemindLaterFormat.Days;
             AutoUpdater.RemindLaterAt = 7;
+            AutoUpdater.InstalledVersion = new Version(AppVersion);
             if (Program.AppProgramSettings.UpgradeToPreReleases == false)
             {
                 string connectionUrl = "http://displaymagician.littlebitbig.com/update/update_2.5.json";
