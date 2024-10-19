@@ -60,7 +60,7 @@ DisplayMagician lets you set up the following information for each game or appli
 
 ## Planned features
 
-* Create DisplayMagician v3 using MAUI rather than Winforms
+* Create DisplayMagician v3 using WinUI3 rather than Winforms
 * Add Unit Tests!
 * Maybe add Intel Alchemist GPU spanned screen support when those cards are eventually released.
 
