@@ -21,7 +21,7 @@ Steps to reproduce the behaviour:
 A clear and concise description of what you expected to happen.
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+If applicable, add screenshots to this section to help explain your problem.
 
 **Reporting Logs**
 If DisplayMagician starts:
@@ -31,7 +31,7 @@ If DisplayMagician starts:
 - Save the Support Zip File on your computer.
 - Come back here, and upload the Support Zip File through your web browser and attach it to this issue.
 
-If DisplayMagician does not:
+If DisplayMagician does not start:
 - Open a terminal window and run `C:\Program Files\DisplayMagician\DisplayMagician.exe --trace` to create a TRACE-level DisplayMagician.log file.
 - The above command will create a DisplayMagician.log file in `C:\Users\<yourusername>\AppData\Local\DisplayMagician\Logs` which should contain a LOT of detailed TRACE level log entries. 
 - Come back here, and upload the DisplayMagician.log file through your web browser and attach it to this issue.
@@ -43,10 +43,11 @@ If DisplayMagician does not:
 **Enviroment (please complete the following information):**
  - Windows Version: [e.g. Win10]
  - DisplayMagician Version [e.g. 1.1.0]
- - Video Card: [e.g. Asus NVIDIA GTX1070]
- - Number and make/model of monitors: [e.g. 2xDell UH2718H, 1x LG G27U17D]
- - Date of last video driver update: [e.g. 2021-02-15]
- - Date of last windows update: [e.g. 2021-02-15]
+ - Number and Type of Video Cards: [e.g. 1x Asus NVIDIA GTX4070, 1x AMD 9800X3D iGPU]
+ - Number and make/model of displays: [e.g. 2x Dell UH2718H, 1x LG G27U17D]
+ - How displays are conencted (and if any adapters being used): [e.g. Dell monitors connected using DP 2.1a, LG connected using HDMI]
+ - Video Card driver version: [e.g. AMD Adrenalin Version 24.10.1, NVIDIA GeForce Game Ready Driver v566.14]
+ - Have you run Windows Update?: [e.g. Yes, 2 days ago]
 
 **Additional context**
 Add any other context about the problem here.
