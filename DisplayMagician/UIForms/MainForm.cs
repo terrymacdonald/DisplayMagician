@@ -600,8 +600,10 @@ namespace DisplayMagician.UIForms
                 SettingsForm.SetBootMeUp(false);
                 // Change the exit_button text to say 'Exit'
                 btn_exit.Text = "&Exit";
-
             }
+            // Force a settings save after the settings changed.
+            Program.AppProgramSettings.SaveSettings();
+
         }
 
         [DllImport("user32.dll")]

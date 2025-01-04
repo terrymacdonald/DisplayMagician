@@ -119,21 +119,21 @@
     </PackageReference>
     <PackageReference Include="System.Management" Version="9.0.0" />
     <PackageReference Include="ValveKeyValue">
-      <Version>0.11.0.378</Version>
+      <Version>0.12.0.391</Version>
     </PackageReference>
     <PackageReference Include="WinCopies.IconExtractor">
       <Version>1.0.3-rc</Version>
     </PackageReference>
     <PackageReference Include="YamlDotNet">
-      <Version>16.2.1</Version>
+      <Version>16.3.0</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
-    <PackageReference Include="System.ServiceModel.Http" Version="8.1.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.1" />
+    <PackageReference Include="System.ServiceModel.Http" Version="8.1.1" />
     <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="8.1.0" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="8.1.1" />
     <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
-    <PackageReference Include="System.ServiceModel.Federation" Version="8.1.0" />
+    <PackageReference Include="System.ServiceModel.Federation" Version="8.1.1" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\DisplayMagician.ico">
