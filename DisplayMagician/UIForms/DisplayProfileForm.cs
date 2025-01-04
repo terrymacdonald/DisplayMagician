@@ -62,7 +62,13 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            ProfileRepository.UserChangingProfiles = true;
+            // Stop the user from applying this profile if one is already being applied
+            if (ProfileRepository.UserChangingProfiles)
+            {
+                logger.Error($"DisplayProfileForm/Apply_Click: The User is currently changing profiles. We can't apply another profile until they're finished.");
+                MessageBox.Show("The User is currently changing profiles. We can't apply another profile until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             // Apply the Profile
             //if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
@@ -89,7 +95,6 @@ namespace DisplayMagician.UIForms
             // Recenter the Window
             RecenterWindow();
 
-            ProfileRepository.UserChangingProfiles = false;
         }
 
         private void RecenterWindow()
@@ -314,6 +319,24 @@ namespace DisplayMagician.UIForms
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
 
+            // If the user is changing profiles right now, then we need to wait until the profile change has finished
+            // We need a 30 second timeout in there too, just in case the user is changing profiles and it's taking a long time
+            if (ProfileRepository.UserChangingProfiles) 
+            {
+                logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Waiting for the User to finish changing profiles before we can load the Display Profile window.");
+                int timeout = 30;
+                while (ProfileRepository.UserChangingProfiles && timeout > 0)
+                {
+                    System.Threading.Thread.Sleep(1000);
+                    timeout--;
+                }
+                if (timeout == 0)
+                {
+                    logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: The User is still changing profiles after 30 seconds. We can't load the Display Profile window until they're finished.");
+                    MessageBox.Show("The User is still changing profiles after 30 seconds. We can't load the Display Profile window until they're finished.", "Display Profile Window Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+
             // Update the Current Profile, but if another task is running then just wait.
             if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
             {
@@ -429,6 +452,15 @@ namespace DisplayMagician.UIForms
 
         private void btn_save_as_Click(object sender, EventArgs e)
         {
+            // Stop the user from saving this profile if one is already being applied
+            if (ProfileRepository.UserChangingProfiles)
+            {
+                logger.Error($"DisplayProfileForm/btn_save_as_Click: The User is currently changing profiles. We can't save this profile until they're finished.");
+                MessageBox.Show("The User is currently changing profiles. We can't save this profile until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+
             // Check there is a name
             if (String.IsNullOrWhiteSpace(txt_profile_save_name.Text))
             {
@@ -586,7 +618,13 @@ namespace DisplayMagician.UIForms
 
         private void btn_view_current_Click(object sender, EventArgs e)
         {
-            ProfileRepository.UserChangingProfiles = true;
+            if (ProfileRepository.UserChangingProfiles)
+            {
+                logger.Error($"DisplayProfileForm/btn_view_current_Click: The User is currently changing profiles. We can't view the current display layout until they're finished.");
+                MessageBox.Show("The User is currently changing profiles. We can't view the current display layout until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
             // Reload the profiles in case we swapped to another program to change it
@@ -597,7 +635,6 @@ namespace DisplayMagician.UIForms
             RefreshDisplayProfileUI();
             // Recenter the Window
             RecenterWindow();
-            ProfileRepository.UserChangingProfiles = false;
         }
 
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
@@ -618,91 +655,94 @@ namespace DisplayMagician.UIForms
             const int DBT_DEVICEARRIVAL = 0x8000;
             const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
 
-            switch (m.Msg)
+            // Only do this if we're not in the middle of changing profiles (it causes a race condition otherwise)
+            if (!ProfileRepository.UserChangingProfiles)
             {
+                switch (m.Msg)
+                {
 
-                case WM_DEVICECHANGE:
-                    switch ((int)m.WParam)
-                    {
-                        case DBT_DEVICEARRIVAL:
-                            logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been added. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
+                    case WM_DEVICECHANGE:
+                        switch ((int)m.WParam)
+                        {
+                            case DBT_DEVICEARRIVAL:
+                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been added. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
+                                btn_view_current.PerformClick();
+                                break;
+
+                            case DBT_DEVICEREMOVECOMPLETE:
+                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been removed. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
+                                btn_view_current.PerformClick();
+                                break;
+                        }
+                        break;
+
+                    case WM_DISPLAYCHANGE:
+                        logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
+                        if (!ProfileRepository.UserChangingProfiles)
+                        {
                             btn_view_current.PerformClick();
-                            break;
+                        }
+                        break;
 
-                        case DBT_DEVICEREMOVECOMPLETE:
-                            logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been removed. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
-                            btn_view_current.PerformClick();
-                            break;
-                    }
-                    break;
-
-                case WM_DISPLAYCHANGE:
-                    logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
-                    if (!ProfileRepository.UserChangingProfiles)
-                    {
-                        btn_view_current.PerformClick();
-                    }                    
-                    break;
-
-                    // This auto taskbar detection logic just doesn't work at the moment
-                    // It tries to set a 5 second timer when it detects a settings change, and tries every 1 second to see if the taskbar position has changed
-                    // If taskbar position changed, then it attempts to get the new display layout.
-                    // In reality, it appears that multiple tasks are firing for each message, and the multople tasks are confusing each other. So I'm going to leave this be for now.
-                /*case WM_SETTINGCHANGE:
-                    switch ((int)m.WParam)
-                    {
-                        case 0x2f:
-                            // This occurs when the taskbar is moved! We use it to set a timer to monitor the relevant registry keys for changes within the next 10 seconds
-                            logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a taskbar has been moved. We need to set a timer to check for registry key changes within the next 10 seconds, and update the current view if that happens.");
-                            if (_monitorTaskBarRegKeysForChangesTask == null)
+                        // This auto taskbar detection logic just doesn't work at the moment
+                        // It tries to set a 5 second timer when it detects a settings change, and tries every 1 second to see if the taskbar position has changed
+                        // If taskbar position changed, then it attempts to get the new display layout.
+                        // In reality, it appears that multiple tasks are firing for each message, and the multople tasks are confusing each other. So I'm going to leave this be for now.
+                        /*case WM_SETTINGCHANGE:
+                            switch ((int)m.WParam)
                             {
-                                logger.Trace($"DisplayProfileForm/WndProc: We are starting to monitor the taskbar for changes for the next 10 seconds.");
-                                //_monitorTaskBarRegKeysForChanges = true;                                
-                                List<TaskBarStuckRectangle> original = TaskBarStuckRectangle.GetAllTaskBarStuckRectangles();
-                                _monitorTaskBarRegKeysForChangesTask = new Task((Action)delegate
-                                {
-                                    bool _itChanged = false;                                    
-                                    for (int d = 0; d < 10; d++)
+                                case 0x2f:
+                                    // This occurs when the taskbar is moved! We use it to set a timer to monitor the relevant registry keys for changes within the next 10 seconds
+                                    logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a taskbar has been moved. We need to set a timer to check for registry key changes within the next 10 seconds, and update the current view if that happens.");
+                                    if (_monitorTaskBarRegKeysForChangesTask == null)
                                     {
-                                        Task.Delay(1000);
-                                        List<TaskBarStuckRectangle> subsequent = TaskBarStuckRectangle.GetAllTaskBarStuckRectangles();
-                                        bool matched = true;
-                                        for (int x = 0; x < subsequent.Count; x++)
+                                        logger.Trace($"DisplayProfileForm/WndProc: We are starting to monitor the taskbar for changes for the next 10 seconds.");
+                                        //_monitorTaskBarRegKeysForChanges = true;                                
+                                        List<TaskBarStuckRectangle> original = TaskBarStuckRectangle.GetAllTaskBarStuckRectangles();
+                                        _monitorTaskBarRegKeysForChangesTask = new Task((Action)delegate
                                         {
-                                            if (!original[x].Equals(subsequent[x]))
+                                            bool _itChanged = false;                                    
+                                            for (int d = 0; d < 10; d++)
                                             {
-                                                matched = false;
-                                                break;
-                                            }
-                                        }
-                                        if (!matched)
-                                        {
-                                            logger.Trace($"DisplayProfileForm/WndProc: The taskbar registry key has been updated within the 10 seconds of a taskbar move message, so updating the config again window.");
-                                            if (btn_view_current.InvokeRequired)
+                                                Task.Delay(1000);
+                                                List<TaskBarStuckRectangle> subsequent = TaskBarStuckRectangle.GetAllTaskBarStuckRectangles();
+                                                bool matched = true;
+                                                for (int x = 0; x < subsequent.Count; x++)
+                                                {
+                                                    if (!original[x].Equals(subsequent[x]))
+                                                    {
+                                                        matched = false;
+                                                        break;
+                                                    }
+                                                }
+                                                if (!matched)
+                                                {
+                                                    logger.Trace($"DisplayProfileForm/WndProc: The taskbar registry key has been updated within the 10 seconds of a taskbar move message, so updating the config again window.");
+                                                    if (btn_view_current.InvokeRequired)
+                                                    {
+                                                        this.Invoke(new Action(() => btn_view_current.PerformClick()));
+                                                    }
+                                                    else
+                                                    {
+                                                        btn_view_current.PerformClick();
+                                                    }
+                                                    _itChanged = true;
+                                                    break;
+                                                }
+                                            }                                    
+                                            if (!_itChanged)
                                             {
-                                                this.Invoke(new Action(() => btn_view_current.PerformClick()));
+                                                logger.Trace($"DisplayProfileForm/WndProc: The taskbar registry key did not update within 5 seconds of a taskbar move message. Returning without doing anything.");
                                             }
-                                            else
-                                            {
-                                                btn_view_current.PerformClick();
-                                            }
-                                            _itChanged = true;
-                                            break;
-                                        }
-                                    }                                    
-                                    if (!_itChanged)
-                                    {
-                                        logger.Trace($"DisplayProfileForm/WndProc: The taskbar registry key did not update within 5 seconds of a taskbar move message. Returning without doing anything.");
+                                            _monitorTaskBarRegKeysForChangesTask = null;
+                                        });
+                                        _monitorTaskBarRegKeysForChangesTask.Start();
                                     }
-                                    _monitorTaskBarRegKeysForChangesTask = null;
-                                });
-                                _monitorTaskBarRegKeysForChangesTask.Start();
+                                    break;
                             }
-                            break;
-                    }
-                    break;*/
+                            break;*/
+                }
             }
-
             base.WndProc(ref m);
         }
 
@@ -858,6 +898,13 @@ namespace DisplayMagician.UIForms
 
         private void btn_update_Click(object sender, EventArgs e)
         {
+            if (ProfileRepository.UserChangingProfiles) 
+            {
+                logger.Error($"DisplayProfileForm/btn_update_Click: The User is currently changing profiles. We can't update the Display Profile settings until they're finished.");
+                MessageBox.Show("The User is currently changing profiles. We can't update the Display Profile settings until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             // check if the user really wants to update
             if (MessageBox.Show($"Do you really want to overwrite the display settings in the '{_selectedProfile.Name}' Display Profile with the display settings currently in use? This cannot be undone.", "Update Display Profile settings?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.Yes)
             {
@@ -884,7 +931,6 @@ namespace DisplayMagician.UIForms
                     // We're in 'rename' mode!
                     // This also means we are going to have to get the latest current Profile and then overwrtite this data
 
-                    ProfileRepository.UserChangingProfiles = true;
                     // Replace the profile data with the current active profile data
                     ProfileRepository.CopyCurrentLayoutToProfile(_selectedProfile);
 
@@ -898,8 +944,7 @@ namespace DisplayMagician.UIForms
                     RefreshDisplayProfileUI();
                     // Recenter the Window
                     RecenterWindow();
-                    ProfileRepository.UserChangingProfiles = false;
-
+                    
                     logger.Trace($"DisplayProfileForm/btn_update_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
                     ChangeSelectedProfile(_selectedProfile);
 

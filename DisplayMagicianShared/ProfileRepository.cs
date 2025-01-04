@@ -86,7 +86,6 @@ namespace DisplayMagicianShared
         // Make the default video mode Windows
         //private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
         //private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
-        private static bool _pauseReadsUntilChangeCompleted = false;
         private static bool _userChangingProfiles = false;
 
         // Other constants that are useful
@@ -258,10 +257,6 @@ namespace DisplayMagicianShared
             get
             {
                 return _userChangingProfiles;
-            }
-            set
-            {
-                _userChangingProfiles = value;
             }
         }
 
@@ -736,21 +731,6 @@ namespace DisplayMagicianShared
 
             // If the display layout is changing then wait until it's completed before continuing...
             int totalDelay = 0;
-            if (_pauseReadsUntilChangeCompleted)
-            {
-                SharedLogger.logger.Warn($"ProfileRepository/UpdateActiveProfile: Pausing updating display settings as a display change is currently taking place.");
-                while (!_pauseReadsUntilChangeCompleted)
-                {
-                    Task.Delay(200);
-                    totalDelay += 200;
-                    if (totalDelay > 10000)
-                    {
-                        SharedLogger.logger.Warn($"ProfileRepository/UpdateActiveProfile: Timeout while pausing updating display settingss as it took longer than 10 seconds.");
-                        break;
-                    }
-                }
-                SharedLogger.logger.Trace($"ProfileRepository/UpdateActiveProfile: Paused updating display settings for {totalDelay} milliseconds.");
-            }
 
             // Force explorer to update the TaskBar settings just in case they were moved
             //ShellHelper.TellShellToWriteSettings();
@@ -1392,21 +1372,6 @@ namespace DisplayMagicianShared
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
                 int totalDelay = 0;
-                if (_pauseReadsUntilChangeCompleted)
-                {
-                    SharedLogger.logger.Warn($"ProfileRepository/IsPossibleRefresh: Pausing refreshing display profile possibility as a display change is currently taking place.");
-                    while (!_pauseReadsUntilChangeCompleted)
-                    {
-                        Task.Delay(200);
-                        totalDelay += 200;
-                        if (totalDelay > 10000)
-                        {
-                            SharedLogger.logger.Warn($"ProfileRepository/IsPossibleRefresh: Timeout while refreshing display profile possibility as it took longer than 10 seconds.");
-                            break;
-                        }
-                    }
-                    SharedLogger.logger.Trace($"ProfileRepository/IsPossibleRefresh: Paused refreshing display profile possibility for {totalDelay} milliseconds.");
-                }
 
                 ProfileRepository.ConnectedDisplayIdentifiers = ProfileRepository.GetAllConnectedDisplayIdentifiers();
 
@@ -1419,21 +1384,6 @@ namespace DisplayMagicianShared
         public static List<string> GetAllConnectedDisplayIdentifiers()
         {
             int totalDelay = 0;
-            if (_pauseReadsUntilChangeCompleted)
-            {
-                SharedLogger.logger.Warn($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Pausing checking for all connected display identifiers as a display change is currently taking place.");
-                while (!_pauseReadsUntilChangeCompleted)
-                {
-                    Task.Delay(200);
-                    totalDelay += 200;
-                    if (totalDelay > 10000)
-                    {
-                        SharedLogger.logger.Warn($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Timeout while pausing checking for all connected display identifiers as it took longer than 10 seconds.");
-                        break;
-                    }
-                }
-                SharedLogger.logger.Trace($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Paused checking for all connected display identifiers for {totalDelay} milliseconds.");
-            }
 
             List<string> allConnectedDisplayIdentifiers = new List<string>();
 
@@ -1472,21 +1422,6 @@ namespace DisplayMagicianShared
         public static List<string> GetCurrentDisplayIdentifiers()
         {
             int totalDelay = 0;
-            if (_pauseReadsUntilChangeCompleted)
-            {
-                SharedLogger.logger.Warn($"ProfileRepository/GetCurrentDisplayIdentifiers: Pausing checking for currently connected display identifiers as a display change is currently taking place.");
-                while (!_pauseReadsUntilChangeCompleted)
-                {
-                    Task.Delay(200);
-                    totalDelay += 200;
-                    if (totalDelay > 10000)
-                    {
-                        SharedLogger.logger.Warn($"ProfileRepository/GetCurrentDisplayIdentifiers: Timeout while pausing checking for currently connected display identifiers as it took longer than 10 seconds.");
-                        break;
-                    }
-                }
-                SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Paused checking for currently connected display identifiers for {totalDelay} milliseconds.");
-            }
 
             List<string> currentDisplayIdentifiers = new List<string>();           
 
@@ -1629,8 +1564,8 @@ namespace DisplayMagicianShared
                 // We start the timer just before we attempt the display change
                 stopWatch.Start();
 
-                // We also set the lock to pause reads until the profile change has happened
-                _pauseReadsUntilChangeCompleted = true;
+                // We also set the variable that the user is changing profiles
+                _userChangingProfiles = true;
 
                 // We try to swap profiles. The profiles have checking logic in them
                 if (!(profile.SetActive()))
@@ -1677,9 +1612,10 @@ namespace DisplayMagicianShared
                 }
                 // We stop the stop watch
                 stopWatch.Stop();
-                _pauseReadsUntilChangeCompleted = false;
+                // We unset the variable that the user is changing profiles
+                _userChangingProfiles = true;
                 // Pause for a bit to let things settle
-                Thread.Sleep(500);
+                Thread.Sleep(200);
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
                 string result = "failed";
