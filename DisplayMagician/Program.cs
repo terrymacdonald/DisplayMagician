@@ -90,8 +90,8 @@ namespace DisplayMagician {
             ERROR_CANNOT_FIND_PROFILE = 102,  // Errorlevel returned when RunProfile command is used, and it cannot find the profile to apply
             ERROR_APPLYING_PROFILE = 103,  // Errorlevel returned when RunProfile command is used, and it cannot apply the profile for some reason
             ERROR_UNKNOWN_COMMAND = 104, // Errorlevel returned when DisplayMagician is given an unregonised command
+            ERROR_PROFILE_CHANGE_OCCURRING = 105, // Errorlevel returned when DisplayMagician is already making a display profile change and is unable to comeplete what the user requested at this time. Try again soon. 
         };
-
 
         public struct UpgradeExtraDetails
         {
@@ -886,6 +886,14 @@ namespace DisplayMagician {
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
+            if (ProfileRepository.UserChangingProfiles)
+            {
+                logger.Error($"Program/RunShortcut: The User is currently changing to another Display Profile. We can't run a Game Shortcut until that has finished happening. Please wait.");
+                MessageBox.Show("The User is currently changing to another Display Profile. We can't run a Game Shortcut until that has finished happening. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return ERRORLEVEL.ERROR_PROFILE_CHANGE_OCCURRING;
+            }
+
+
             // Match the ShortcutName to the actual shortcut listed in the shortcut library
             // And error if we can't find it.
             if (ShortcutRepository.ContainsShortcut(shortcutUUID))
@@ -919,6 +927,12 @@ namespace DisplayMagician {
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
+            if (ProfileRepository.UserChangingProfiles)
+            {
+                logger.Error($"Program/RunProfile: The User is currently changing to another Display Profiles. We can't change to another Display Profile right now. Please wait.");
+                MessageBox.Show("The User is currently changing to another Display Profiles. We can't change to another Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return ERRORLEVEL.ERROR_PROFILE_CHANGE_OCCURRING;
+            }
 
             if (ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).Any())
             {
@@ -926,7 +940,7 @@ namespace DisplayMagician {
 
                 // Get the profile
                 ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
-                
+
                 ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
                 if (result == ApplyProfileResult.Cancelled)
                     errLevel = ERRORLEVEL.CANCELED_BY_USER;

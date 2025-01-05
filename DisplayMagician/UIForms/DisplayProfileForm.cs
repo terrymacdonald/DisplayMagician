@@ -12,6 +12,7 @@ using NHotkey;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DisplayMagician.Processes;
+using static DisplayMagician.Program;
 
 namespace DisplayMagician.UIForms
 {
@@ -65,8 +66,8 @@ namespace DisplayMagician.UIForms
             // Stop the user from applying this profile if one is already being applied
             if (ProfileRepository.UserChangingProfiles)
             {
-                logger.Error($"DisplayProfileForm/Apply_Click: The User is currently changing profiles. We can't apply another profile until they're finished.");
-                MessageBox.Show("The User is currently changing profiles. We can't apply another profile until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                logger.Error($"DisplayProfileForm/Apply_Click: The User is currently changing to another Display Profile. We can't change to another Display Profile right now. Please wait.");
+                MessageBox.Show("The User is currently changing to another Display Profile. We can't change to another Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

@@ -675,6 +675,14 @@ namespace DisplayMagician.UIForms
                 btn_setup_game_shortcuts.PerformClick();
             else if (hotkeyDisplayProfiles.Contains(e.Name))
             {
+                // Stop the user from applying this profile if one is already being applied
+                if (ProfileRepository.UserChangingProfiles)
+                {
+                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.");
+                    MessageBox.Show("The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
                 string displayProfileUUID = e.Name;
                 ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
                 if (chosenProfile is ProfileItem)
@@ -683,6 +691,14 @@ namespace DisplayMagician.UIForms
             }
             else if (hotkeyShortcuts.Contains(e.Name))
             {
+                // Stop the user from running a game shortcut if a display profile is already being applied
+                if (ProfileRepository.UserChangingProfiles)
+                {
+                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.");
+                    MessageBox.Show("The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
                 string shortcutUUID = e.Name;
                 ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (chosenShortcut is ShortcutItem)

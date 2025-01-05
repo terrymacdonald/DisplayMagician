@@ -83,9 +83,7 @@ namespace DisplayMagicianShared
         private static AMDLibrary amdLibrary;
         private static NVIDIALibrary nvidiaLibrary;
         private static WinLibrary winLibrary;
-        // Make the default video mode Windows
-        //private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
-        //private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+
         private static bool _userChangingProfiles = false;
 
         // Other constants that are useful
@@ -1552,6 +1550,7 @@ namespace DisplayMagicianShared
             // We try to time the profile display swap
             Stopwatch stopWatch = new Stopwatch();
             bool wasDisplayChangeSuccessful = true;
+            ApplyProfileResult result = ApplyProfileResult.Successful;
 
             if (profile == null)
             {
@@ -1571,19 +1570,19 @@ namespace DisplayMagicianShared
                 if (!(profile.SetActive()))
                 {
                     SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.Name} Profile!");
-                    return ApplyProfileResult.Error;
+                    result = ApplyProfileResult.Error;
                 }
                 else
                 {
                     SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.Name} Profile!");
-                    return ApplyProfileResult.Successful;
+                    result = ApplyProfileResult.Successful;
                 }                
             }
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"ProfileRepository/ApplyProfile: Failed to complete changing the Windows Display layout");
                 wasDisplayChangeSuccessful = false;
-                return ApplyProfileResult.Error;
+                result = ApplyProfileResult.Error;
             }
             finally
             {
@@ -1613,21 +1612,22 @@ namespace DisplayMagicianShared
                 // We stop the stop watch
                 stopWatch.Stop();
                 // We unset the variable that the user is changing profiles
-                _userChangingProfiles = true;
+                _userChangingProfiles = false;
                 // Pause for a bit to let things settle
                 Thread.Sleep(200);
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
-                string result = "failed";
+                string resultString = "failed";
                 if (wasDisplayChangeSuccessful)
                 {
-                    result = "was successful";
+                    resultString = "was successful";
                     ProfileRepository.UpdateActiveProfile();
 
                 }
                 // Display the TimeSpan time and result.
                 SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
             }
+            return result;
         }
 
         #endregion

@@ -469,6 +469,13 @@ namespace DisplayMagician.UIForms
                 }
             }
 
+            if (ProfileRepository.UserChangingProfiles)
+            {
+                logger.Error($"ShortcutLibraryForm/btn_run_Click: The User is currently changing profiles. We can't run this Game Shortcut until they're finished.");
+                MessageBox.Show("The User is currently changing profiles. We can't run this Game Shortcut until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             // Only run the if shortcut is valid
             if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
             {
