@@ -41,11 +41,16 @@ If DisplayMagician does not start:
   - `C:\Users\<yourusername>\AppData\Local\DisplayMagician\Settings_2.0.json`
 
 **Enviroment (please complete the following information):**
- - Windows Version: [e.g. Win10]
- - DisplayMagician Version [e.g. 1.1.0]
- - Number and Type of Video Cards: [e.g. 1x Asus NVIDIA GTX4070, 1x AMD 9800X3D iGPU]
- - Number and make/model of displays: [e.g. 2x Dell UH2718H, 1x LG G27U17D]
- - How displays are conencted (and if any adapters being used): [e.g. Dell monitors connected using DP 2.1a, LG connected using HDMI]
+- Windows Version: [e.g. Win10]
+- Windows Language: [e.g. English]
+- DisplayMagician Version [e.g. 1.1.0]
+- CPU Make and Model: [e.g. AMD 9800X3D ]
+- Does your CPU have an integrated GPU in it?: [e.g. Yes]
+- Number and make/model of displays connected to the integrated GPU: [e.g. 1x LG G27U17D]
+- Motherboard Make and Model: [e.g. Gigabyte X870 Gaming X Wifi]
+- Number and Type of discrete Video Cards (in addition to the CPU): [e.g. 1x Asus NVIDIA GTX4070]
+- Number and make/model of displays connected to the discrete Video Cards: [e.g. 2x Dell UH2718H]
+- How displays are conencted (and if any adapters being used): [e.g. Dell monitors connected using DP 2.1a, LG connected using HDMI]
  - Video Card driver version: [e.g. AMD Adrenalin Version 24.10.1, NVIDIA GeForce Game Ready Driver v566.14]
  - Have you run Windows Update?: [e.g. Yes, 2 days ago]
 
