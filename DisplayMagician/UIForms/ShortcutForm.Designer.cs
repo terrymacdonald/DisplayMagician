@@ -46,10 +46,9 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
             tabp_audio = new System.Windows.Forms.TabPage();
-            lbl_no_active_capture_devices = new System.Windows.Forms.Label();
-            lbl_no_active_audio_devices = new System.Windows.Forms.Label();
             lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
             gb_capture_settings = new System.Windows.Forms.GroupBox();
+            lbl_no_active_capture_devices = new System.Windows.Forms.Label();
             cb_capture_comms_device = new System.Windows.Forms.CheckBox();
             gb_capture_volume = new System.Windows.Forms.GroupBox();
             rb_set_capture_volume = new System.Windows.Forms.RadioButton();
@@ -62,6 +61,7 @@ namespace DisplayMagician.UIForms
             rb_no_change_capture = new System.Windows.Forms.RadioButton();
             gb_audio_settings = new System.Windows.Forms.GroupBox();
             cb_audio_comms_device = new System.Windows.Forms.CheckBox();
+            lbl_no_active_audio_devices = new System.Windows.Forms.Label();
             gb_audio_volume = new System.Windows.Forms.GroupBox();
             rb_set_audio_volume = new System.Windows.Forms.RadioButton();
             rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
@@ -356,40 +356,6 @@ namespace DisplayMagician.UIForms
             tabp_audio.TabIndex = 4;
             tabp_audio.Text = "2. Choose Audio";
             // 
-            // lbl_no_active_capture_devices
-            // 
-            lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
-            lbl_no_active_capture_devices.AutoSize = true;
-            lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
-            lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
-            lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_no_active_capture_devices.Location = new System.Drawing.Point(125, 159);
-            lbl_no_active_capture_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
-            lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
-            lbl_no_active_capture_devices.TabIndex = 36;
-            lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one microphone if you want to use this feature.";
-            lbl_no_active_capture_devices.Visible = false;
-            // 
-            // lbl_no_active_audio_devices
-            // 
-            lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
-            lbl_no_active_audio_devices.AutoSize = true;
-            lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
-            lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
-            lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_no_active_audio_devices.Location = new System.Drawing.Point(125, 156);
-            lbl_no_active_audio_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
-            lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
-            lbl_no_active_audio_devices.TabIndex = 35;
-            lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output if you want to use this feature.";
-            lbl_no_active_audio_devices.Visible = false;
-            // 
             // lbl_disabled_shortcut_audio_chipset
             // 
             lbl_disabled_shortcut_audio_chipset.Anchor = System.Windows.Forms.AnchorStyles.None;
@@ -426,6 +392,23 @@ namespace DisplayMagician.UIForms
             gb_capture_settings.TabIndex = 21;
             gb_capture_settings.TabStop = false;
             gb_capture_settings.Text = "Microphone Settings";
+            // 
+            // lbl_no_active_capture_devices
+            // 
+            lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lbl_no_active_capture_devices.AutoSize = true;
+            lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
+            lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
+            lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            lbl_no_active_capture_devices.Location = new System.Drawing.Point(125, 159);
+            lbl_no_active_capture_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
+            lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
+            lbl_no_active_capture_devices.TabIndex = 36;
+            lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one microphone if you want to use this feature.";
+            lbl_no_active_capture_devices.Visible = false;
             // 
             // cb_capture_comms_device
             // 
@@ -590,6 +573,23 @@ namespace DisplayMagician.UIForms
             cb_audio_comms_device.TabIndex = 21;
             cb_audio_comms_device.Text = "Also set this as the default communicatons audio output";
             cb_audio_comms_device.UseVisualStyleBackColor = true;
+            // 
+            // lbl_no_active_audio_devices
+            // 
+            lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lbl_no_active_audio_devices.AutoSize = true;
+            lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
+            lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
+            lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            lbl_no_active_audio_devices.Location = new System.Drawing.Point(125, 156);
+            lbl_no_active_audio_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
+            lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
+            lbl_no_active_audio_devices.TabIndex = 35;
+            lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output if you want to use this feature.";
+            lbl_no_active_audio_devices.Visible = false;
             // 
             // gb_audio_volume
             // 

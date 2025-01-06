@@ -48,7 +48,7 @@ namespace DisplayMagician.UIForms
             set;
         }
 
-        public bool ProfileSettingChanged 
+        public bool ProfileSettingChanged
         {
             get
             {
@@ -58,7 +58,7 @@ namespace DisplayMagician.UIForms
             {
                 _profileSettingChanged = value;
             }
-        }   
+        }
 
 
         private void ProfileSettingsForm_Load(object sender, EventArgs e)
@@ -72,7 +72,7 @@ namespace DisplayMagician.UIForms
                 {
                     // Load the existing Wallpaper into the PictureBox
                     //Read the contents of the file into a stream
-                    FileStream fileStream = new FileStream(Profile.WallpaperBitmapFilename,FileMode.Open);
+                    FileStream fileStream = new FileStream(Profile.WallpaperBitmapFilename, FileMode.Open);
 
                     wallpaperImage = new Bitmap(fileStream);
                     fileStream.Close();
@@ -82,7 +82,7 @@ namespace DisplayMagician.UIForms
             else if (Profile.WallpaperMode.Equals(Wallpaper.Mode.Clear))
             {
                 logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} has loaded with Clear Wallpaper enabled.");
-                rb_clear_wallpaper.Checked = true;                
+                rb_clear_wallpaper.Checked = true;
             }
             else
             {
@@ -109,7 +109,7 @@ namespace DisplayMagician.UIForms
             }
 
             Profile.WallpaperStyle = ((KeyValuePair<Wallpaper.Style, string>)cmb_wallpaper_display_mode.SelectedItem).Key;
-           
+
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -147,7 +147,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_select_wallpaper_Click(object sender, EventArgs e)
         {
-            _profileSettingChanged = true;            
+            _profileSettingChanged = true;
             string filePath = string.Empty;
             string wallpaperPath = string.Empty;
 
@@ -233,7 +233,7 @@ namespace DisplayMagician.UIForms
             {
                 // There is no current desktop wallpaper to use
                 SharedLogger.logger.Trace($"ProfileSettingsForm/btn_current_Click: There is no existing desktop wallpaper for us to use!");
-                MessageBox.Show("There isn't a desktop wallpaper currently being used in Windows, so we have nothing to use!","Cannot find Wallpaper",MessageBoxButtons.OK,MessageBoxIcon.Exclamation);
+                MessageBox.Show("There isn't a desktop wallpaper currently being used in Windows, so we have nothing to use!", "Cannot find Wallpaper", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
             else
             {
@@ -286,7 +286,7 @@ namespace DisplayMagician.UIForms
                 pb_wallpaper.Image = wallpaperImage;
             }
         }
-        
+
 
         private void rb_clear_wallpaper_CheckedChanged(object sender, EventArgs e)
         {
