@@ -1566,17 +1566,26 @@ namespace DisplayMagicianShared
                 // We also set the variable that the user is changing profiles
                 _userChangingProfiles = true;
 
-                // We try to swap profiles. The profiles have checking logic in them
-                if (!(profile.SetActive()))
+                // We try to use this profile. We apply the profiles the number of times that the user The profiles have checking logic in them
+                for (int i = profile.ApplyProfileCount; i > 0; i--)
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.Name} Profile!");
-                    result = ApplyProfileResult.Error;
+                    if (!(profile.SetActive()))
+                    {
+                        SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.Name} Profile!");
+                        result = ApplyProfileResult.Error;
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.Name} Profile!");
+                        result = ApplyProfileResult.Successful;
+                    }
+
+                    if (i > 1 && profile.ApplyProfileDelay > 0 && profile.ApplyProfileDelay < 99999)
+                    {
+                        // we have more than one profile attempt to go, so delay the requested amount
+                        Task.Delay(profile.ApplyProfileDelay);
+                    }
                 }
-                else
-                {
-                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.Name} Profile!");
-                    result = ApplyProfileResult.Successful;
-                }                
             }
             catch (Exception ex)
             {

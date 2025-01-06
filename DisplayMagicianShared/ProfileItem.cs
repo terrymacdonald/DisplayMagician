@@ -107,7 +107,8 @@ namespace DisplayMagicianShared
         private bool _isWindowsPossible = false;
         private Keys _hotkey = Keys.None;
         private string _wallpaperBitmapFilename = "";
-        
+        private int _applyProfileCount = 1;
+        private int _applyProfileDelay = 0;
 
         #region JsonConverterBitmap
         internal class CustomBitmapConverter : JsonConverter
@@ -285,7 +286,6 @@ namespace DisplayMagicianShared
         }
 
         [DefaultValue("")]
-
         public virtual string Name { get; set; }
 
         [JsonRequired]       
@@ -454,6 +454,36 @@ namespace DisplayMagicianShared
 
         }
 
+        // Number of times to apply this profile before we're considered finished
+        // This feature is here to ensure that devices such as the Samsung Oddessy G9 will work
+        // as it sometimes requires the profile applied a second time.
+        [DefaultValue(1)]
+        public int ApplyProfileCount
+        {
+            get
+            {
+                return _applyProfileCount;
+            }
+            set
+            {
+                _applyProfileCount = value;
+            }
+        }
+
+        // The delay in milliseconds between profile attempts. Is only used if there is more than one attempt set in ApplyProfileCount
+        [DefaultValue(0)]
+        public int ApplyProfileDelay
+        {
+            get
+            {
+                return _applyProfileDelay;
+            }
+            set
+            {
+                _applyProfileDelay = value;
+            }
+        }
+
         #endregion
 
         public static bool IsValidName(string testName)
@@ -608,6 +638,9 @@ namespace DisplayMagicianShared
                 // And then update the bitmaps
                 _profileBitmap = this.ProfileIcon.ToBitmap(256, 256);
                 _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
+                // And set it as default to only apply the profile once
+                _applyProfileCount = 1;
+                _applyProfileDelay = 0;
 
                 return true;
                 
