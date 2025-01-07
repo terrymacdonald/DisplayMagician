@@ -42,16 +42,16 @@ namespace DisplayMagician.UIForms
             lbl_style = new System.Windows.Forms.Label();
             cmb_wallpaper_display_mode = new System.Windows.Forms.ComboBox();
             gb_multiple_applies = new System.Windows.Forms.GroupBox();
-            label2 = new System.Windows.Forms.Label();
+            nud_apply_profile_delay = new System.Windows.Forms.NumericUpDown();
+            lbl_apply_profile_delay = new System.Windows.Forms.Label();
             nud_apply_profile_count = new System.Windows.Forms.NumericUpDown();
             label1 = new System.Windows.Forms.Label();
-            nud_apply_profile_delay = new System.Windows.Forms.NumericUpDown();
-            label3 = new System.Windows.Forms.Label();
+            lbl_seconds = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pb_wallpaper).BeginInit();
             gb_multiple_applies.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)nud_apply_profile_count).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nud_apply_profile_delay).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nud_apply_profile_count).BeginInit();
             SuspendLayout();
             // 
             // btn_back
@@ -230,10 +230,10 @@ namespace DisplayMagician.UIForms
             // gb_multiple_applies
             // 
             gb_multiple_applies.Controls.Add(nud_apply_profile_delay);
-            gb_multiple_applies.Controls.Add(label2);
+            gb_multiple_applies.Controls.Add(lbl_apply_profile_delay);
             gb_multiple_applies.Controls.Add(nud_apply_profile_count);
             gb_multiple_applies.Controls.Add(label1);
-            gb_multiple_applies.Controls.Add(label3);
+            gb_multiple_applies.Controls.Add(lbl_seconds);
             gb_multiple_applies.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_multiple_applies.ForeColor = System.Drawing.Color.White;
             gb_multiple_applies.Location = new System.Drawing.Point(31, 494);
@@ -243,21 +243,34 @@ namespace DisplayMagician.UIForms
             gb_multiple_applies.TabStop = false;
             gb_multiple_applies.Text = "Apply Profile multiple times";
             // 
-            // label2
+            // nud_apply_profile_delay
             // 
-            label2.AutoSize = true;
-            label2.Location = new System.Drawing.Point(375, 34);
-            label2.Name = "label2";
-            label2.Size = new System.Drawing.Size(154, 16);
-            label2.TabIndex = 2;
-            label2.Text = "Delay between attempts:";
+            nud_apply_profile_delay.Location = new System.Drawing.Point(535, 32);
+            nud_apply_profile_delay.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            nud_apply_profile_delay.Name = "nud_apply_profile_delay";
+            nud_apply_profile_delay.Size = new System.Drawing.Size(42, 22);
+            nud_apply_profile_delay.TabIndex = 3;
+            nud_apply_profile_delay.ValueChanged += nud_apply_profile_delay_ValueChanged;
+            // 
+            // lbl_apply_profile_delay
+            // 
+            lbl_apply_profile_delay.AutoSize = true;
+            lbl_apply_profile_delay.Location = new System.Drawing.Point(375, 34);
+            lbl_apply_profile_delay.Name = "lbl_apply_profile_delay";
+            lbl_apply_profile_delay.Size = new System.Drawing.Size(154, 16);
+            lbl_apply_profile_delay.TabIndex = 2;
+            lbl_apply_profile_delay.Text = "Delay between attempts:";
             // 
             // nud_apply_profile_count
             // 
             nud_apply_profile_count.Location = new System.Drawing.Point(287, 32);
+            nud_apply_profile_count.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            nud_apply_profile_count.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             nud_apply_profile_count.Name = "nud_apply_profile_count";
             nud_apply_profile_count.Size = new System.Drawing.Size(42, 22);
             nud_apply_profile_count.TabIndex = 1;
+            nud_apply_profile_count.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            nud_apply_profile_count.ValueChanged += nud_apply_profile_count_ValueChanged;
             // 
             // label1
             // 
@@ -268,22 +281,15 @@ namespace DisplayMagician.UIForms
             label1.TabIndex = 0;
             label1.Text = "Number of times to apply Display Profile:";
             // 
-            // nud_apply_profile_delay
+            // lbl_seconds
             // 
-            nud_apply_profile_delay.Location = new System.Drawing.Point(535, 32);
-            nud_apply_profile_delay.Name = "nud_apply_profile_delay";
-            nud_apply_profile_delay.Size = new System.Drawing.Size(42, 22);
-            nud_apply_profile_delay.TabIndex = 3;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label3.Location = new System.Drawing.Point(526, 53);
-            label3.Name = "label3";
-            label3.Size = new System.Drawing.Size(61, 15);
-            label3.TabIndex = 4;
-            label3.Text = "(seconds)";
+            lbl_seconds.AutoSize = true;
+            lbl_seconds.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_seconds.Location = new System.Drawing.Point(526, 53);
+            lbl_seconds.Name = "lbl_seconds";
+            lbl_seconds.Size = new System.Drawing.Size(61, 15);
+            lbl_seconds.TabIndex = 4;
+            lbl_seconds.Text = "(seconds)";
             // 
             // ProfileSettingsForm
             // 
@@ -312,8 +318,8 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)pb_wallpaper).EndInit();
             gb_multiple_applies.ResumeLayout(false);
             gb_multiple_applies.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)nud_apply_profile_count).EndInit();
             ((System.ComponentModel.ISupportInitialize)nud_apply_profile_delay).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nud_apply_profile_count).EndInit();
             ResumeLayout(false);
         }
 
@@ -330,10 +336,10 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.RadioButton rb_clear_wallpaper;
         private System.Windows.Forms.RadioButton rb_apply_wallpaper;
         private System.Windows.Forms.GroupBox gb_multiple_applies;
-        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label lbl_apply_profile_delay;
         private System.Windows.Forms.NumericUpDown nud_apply_profile_count;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.NumericUpDown nud_apply_profile_delay;
-        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label lbl_seconds;
     }
 }

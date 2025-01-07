@@ -2239,6 +2239,9 @@ namespace DisplayMagician.UIForms
                 // Set up capture permanance as temporary
                 _shortcutToEdit.CapturePermanence = ShortcutPermanence.Temporary;
                 rb_switch_capture_temp.Checked = true;
+
+                // Set up the Game Timeouts
+                nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
             }
 
             if (shortcutTweakChangesName && cb_autosuggest.Checked)

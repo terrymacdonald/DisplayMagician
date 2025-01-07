@@ -1097,11 +1097,11 @@ namespace DisplayMagician.UIForms
             // 
             nud_timeout_executable.Location = new System.Drawing.Point(1147, 12);
             nud_timeout_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            nud_timeout_executable.Maximum = new decimal(new int[] { 240, 0, 0, 0 });
+            nud_timeout_executable.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
             nud_timeout_executable.Name = "nud_timeout_executable";
             nud_timeout_executable.Size = new System.Drawing.Size(64, 26);
             nud_timeout_executable.TabIndex = 6;
-            nud_timeout_executable.Value = new decimal(new int[] { 20, 0, 0, 0 });
+            nud_timeout_executable.Value = new decimal(new int[] { 60, 0, 0, 0 });
             // 
             // rb_standalone
             // 
@@ -1343,11 +1343,11 @@ namespace DisplayMagician.UIForms
             // 
             nud_timeout_game.Location = new System.Drawing.Point(1148, 15);
             nud_timeout_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            nud_timeout_game.Maximum = new decimal(new int[] { 240, 0, 0, 0 });
+            nud_timeout_game.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
             nud_timeout_game.Name = "nud_timeout_game";
             nud_timeout_game.Size = new System.Drawing.Size(63, 26);
             nud_timeout_game.TabIndex = 5;
-            nud_timeout_game.Value = new decimal(new int[] { 20, 0, 0, 0 });
+            nud_timeout_game.Value = new decimal(new int[] { 60, 0, 0, 0 });
             // 
             // lbl_game_library
             // 

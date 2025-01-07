@@ -1352,8 +1352,8 @@ namespace DisplayMagician
                     logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception caused whilst starting UWP App {appToUse.Name}.");
                 }
 
-                // Wait an extra few seconds to give the application time to settle down
-                //Thread.Sleep(2000);
+                // Wait an extra 2 seconds to give the application time to settle down
+                //Task.Delay(2000).Wait(cancelToken);
 
                 // Now we need to decide what we are monitoring. If the user has supplied an alternative process to monitor, then we monitor that instead!
                 bool foundSomethingToMonitor = false;
@@ -1443,8 +1443,8 @@ namespace DisplayMagician
                     // We use the a user supplied executable as the thing we're monitoring instead!
                     try
                     {
-                        // Wait 3 seconds for the different executable to start up. If there is a loader involved we want to give it some time.
-                        Task.Delay(3000);
+                        // Wait 10 seconds for the different executable to start up. If there is a loader involved we want to give it a good amount of time to load.
+                        Task.Delay(10000).Wait(cancelToken);
                         processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
                         if (processesToMonitor.Count > 0)
                         {

@@ -164,7 +164,7 @@ namespace DisplayMagician
         private string _gameAppId = "";
         private string _gameName = "";
         private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
-        private int _startTimeout = 20;
+        private int _startTimeout = 60;
         private string _gameArguments = "";
         private bool _gameArgumentsRequired = false;
         private string _differentGameExeToMonitor = "";
@@ -573,7 +573,7 @@ namespace DisplayMagician
             }
         }
 
-        [DefaultValue(20)]
+        [DefaultValue(60)]
         public int StartTimeout
         {
             get
@@ -1017,7 +1017,7 @@ namespace DisplayMagician
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
             _processPriority = ProcessPriority.Normal;
-            _startTimeout = 20;
+            _startTimeout = 60;
 
             ReplaceShortcutIconInCache();
             RefreshValidity();

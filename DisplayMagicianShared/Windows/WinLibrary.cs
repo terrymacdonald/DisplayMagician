@@ -1629,7 +1629,7 @@ namespace DisplayMagicianShared.Windows
 
 
             // Wait 0.5 second for the display to settle before trying the CCD settings. This hopefully will make it more reliable setting the primary display as described in issues #78 and #284
-            Task.Delay(500);
+            Task.Delay(500).Wait();
 
 
             uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;

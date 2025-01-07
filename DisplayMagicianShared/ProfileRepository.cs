@@ -1580,10 +1580,11 @@ namespace DisplayMagicianShared
                         result = ApplyProfileResult.Successful;
                     }
 
-                    if (i > 1 && profile.ApplyProfileDelay > 0 && profile.ApplyProfileDelay < 99999)
+                    if (i > 1 && profile.ApplyProfileDelay > 0 && profile.ApplyProfileDelay <= 1000)
                     {
-                        // we have more than one profile attempt to go, so delay the requested amount
-                        Task.Delay(profile.ApplyProfileDelay);
+                        // we have more than one profile attempt to go, so delay the requested amount, converting seconds to milliseconds.
+                        // Note - usiong THread.Sleep instead of Task.Delay, as this is not a UI thread and we want to delay this thread.
+                        Thread.Sleep(profile.ApplyProfileDelay * 1000);
                     }
                 }
             }

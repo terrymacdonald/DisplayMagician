@@ -470,7 +470,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        // The delay in milliseconds between profile attempts. Is only used if there is more than one attempt set in ApplyProfileCount
+        // The delay in seconds between profile attempts. Is only used if there is more than one attempt set in ApplyProfileCount
         [DefaultValue(0)]
         public int ApplyProfileDelay
         {

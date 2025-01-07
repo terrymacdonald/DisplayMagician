@@ -91,6 +91,36 @@ namespace DisplayMagician.UIForms
                 cmb_wallpaper_display_mode.SelectedIndex = 0;
             }
 
+            if (Profile.ApplyProfileCount >= 0 && Profile.ApplyProfileCount <= 10)
+            {
+                nud_apply_profile_count.Value = Profile.ApplyProfileCount;
+            }
+            else
+            {
+                nud_apply_profile_count.Value = 1;
+            }
+
+            if (Profile.ApplyProfileDelay >= 0 && Profile.ApplyProfileDelay <= 1000)
+            {
+                nud_apply_profile_delay.Value = Profile.ApplyProfileDelay;
+            }
+            else
+            {
+                nud_apply_profile_delay.Value = 0;
+            }
+
+            if (nud_apply_profile_count.Value > 1)
+            {
+                lbl_apply_profile_delay.Visible = true;
+                nud_apply_profile_delay.Visible = true;
+                lbl_seconds.Visible = true;
+            }
+            else
+            {
+                lbl_apply_profile_delay.Visible = false;
+                nud_apply_profile_delay.Visible = false;
+                lbl_seconds.Visible = false;
+            }
         }
 
         private void ProfileSettingsForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -109,6 +139,10 @@ namespace DisplayMagician.UIForms
             }
 
             Profile.WallpaperStyle = ((KeyValuePair<Wallpaper.Style, string>)cmb_wallpaper_display_mode.SelectedItem).Key;
+
+            Profile.ApplyProfileCount = (int)nud_apply_profile_count.Value;
+
+            Profile.ApplyProfileDelay = (int)nud_apply_profile_delay.Value;
 
         }
 
@@ -317,6 +351,28 @@ namespace DisplayMagician.UIForms
                 cmb_wallpaper_display_mode.Enabled = false;
             }
 
+        }
+
+        private void nud_apply_profile_count_ValueChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
+            if (nud_apply_profile_count.Value > 1)
+            {
+                lbl_apply_profile_delay.Visible = true;
+                nud_apply_profile_delay.Visible = true;
+                lbl_seconds.Visible = true;
+            }
+            else
+            {
+                lbl_apply_profile_delay.Visible = false;
+                nud_apply_profile_delay.Visible = false;
+                lbl_seconds.Visible = false;
+            }
+        }
+
+        private void nud_apply_profile_delay_ValueChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
         }
 
     }
