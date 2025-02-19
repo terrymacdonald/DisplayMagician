@@ -10,6 +10,8 @@
 			<Component>
 				<RegistryKey Root="HKCU" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="NewInstall" Value="1"/>
+				<RemoveRegistryKey Root="HKCU" Key="SOFTWARE\Classes\DesktopBackground\Shell\DisplayMagician.ContextMenu.Anchor" Action="removeOnUninstall"/>
+				<RemoveRegistryKey Root="HKCU" Key="SOFTWARE\Classes\DisplayMagician.ContextMenus" Action="removeOnUninstall"/>
 				<!--<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />
 				<Shortcut
 							Id="DisplayMagicianStartMenuShortcut"
@@ -21,7 +23,6 @@
 							IconIndex="0"
 							Directory="ApplicationProgramsFolder"/>-->
 			</Component>
-
 			<Component>
 				<File Source="$(var.DisplayMagician.TargetDir)publish\DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
 				<!--<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
