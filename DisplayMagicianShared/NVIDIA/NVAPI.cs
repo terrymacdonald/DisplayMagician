@@ -1,7153 +1,7485 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared.NVIDIA
 {
-    // ==================================
-    // ENUMS
-    // ==================================
-
-    public enum NVAPI_STATUS : Int32
+    public static class NVAPI
     {
-        // Result Codes
-        NVAPI_OK = 0,      //!< Success. Request is completed.
-        NVAPI_ERROR = -1,      //!< Generic error
-        NVAPI_LIBRARY_NOT_FOUND = -2,      //!< NVAPI support library cannot be loaded.
-        NVAPI_NO_IMPLEMENTATION = -3,      //!< not implemented in current driver installation
-        NVAPI_API_NOT_INITIALIZED = -4,      //!< NvAPI_Initialize has not been called (successfully)
-        NVAPI_INVALID_ARGUMENT = -5,      //!< The argument/parameter value is not valid or NULL.
-        NVAPI_NVIDIA_DEVICE_NOT_FOUND = -6,      //!< No NVIDIA display driver, or NVIDIA GPU driving a display, was found.
-        NVAPI_END_ENUMERATION = -7,      //!< No more items to enumerate
-        NVAPI_INVALID_HANDLE = -8,      //!< Invalid handle
-        NVAPI_INCOMPATIBLE_STRUCT_VERSION = -9,      //!< An argument's structure version is not supported
-        NVAPI_HANDLE_INVALIDATED = -10,     //!< The handle is no longer valid (likely due to GPU or display re-configuration)
-        NVAPI_OPENGL_CONTEXT_NOT_CURRENT = -11,     //!< No NVIDIA OpenGL context is current (but needs to be)
-        NVAPI_INVALID_POINTER = -14,     //!< An invalid poInt32er, usually NULL, was passed as a parameter
-        NVAPI_NO_GL_EXPERT = -12,     //!< OpenGL Expert is not supported by the current drivers
-        NVAPI_INSTRUMENTATION_DISABLED = -13,     //!< OpenGL Expert is supported, but driver instrumentation is currently disabled
-        NVAPI_NO_GL_NSIGHT = -15,     //!< OpenGL does not support Nsight
 
-        NVAPI_EXPECTED_LOGICAL_GPU_HANDLE = -100,    //!< Expected a logical GPU handle for one or more parameters
-        NVAPI_EXPECTED_PHYSICAL_GPU_HANDLE = -101,    //!< Expected a physical GPU handle for one or more parameters
-        NVAPI_EXPECTED_DISPLAY_HANDLE = -102,    //!< Expected an NV display handle for one or more parameters
-        NVAPI_INVALID_COMBINATION = -103,    //!< The combination of parameters is not valid. 
-        NVAPI_NOT_SUPPORTED = -104,    //!< Requested feature is not supported in the selected GPU
-        NVAPI_PORTID_NOT_FOUND = -105,    //!< No port ID was found for the I2C transaction
-        NVAPI_EXPECTED_UNATTACHED_DISPLAY_HANDLE = -106,    //!< Expected an unattached display handle as one of the input parameters.
-        NVAPI_INVALID_PERF_LEVEL = -107,    //!< Invalid perf level 
-        NVAPI_DEVICE_BUSY = -108,    //!< Device is busy; request not fulfilled
-        NVAPI_NV_PERSIST_FILE_NOT_FOUND = -109,    //!< NV persist file is not found
-        NVAPI_PERSIST_DATA_NOT_FOUND = -110,    //!< NV persist data is not found
-        NVAPI_EXPECTED_TV_DISPLAY = -111,    //!< Expected a TV output display
-        NVAPI_EXPECTED_TV_DISPLAY_ON_DCONNECTOR = -112,    //!< Expected a TV output on the D Connector - HDTV_EIAJ4120.
-        NVAPI_NO_ACTIVE_SLI_TOPOLOGY = -113,    //!< SLI is not active on this device.
-        NVAPI_SLI_RENDERING_MODE_NOTALLOWED = -114,    //!< Setup of SLI rendering mode is not possible right now.
-        NVAPI_EXPECTED_DIGITAL_FLAT_PANEL = -115,    //!< Expected a digital flat panel.
-        NVAPI_ARGUMENT_EXCEED_MAX_SIZE = -116,    //!< Argument exceeds the expected size.
-        NVAPI_DEVICE_SWITCHING_NOT_ALLOWED = -117,    //!< Inhibit is ON due to one of the flags in NV_GPU_DISPLAY_CHANGE_INHIBIT or SLI active.
-        NVAPI_TESTING_CLOCKS_NOT_SUPPORTED = -118,    //!< Testing of clocks is not supported.
-        NVAPI_UNKNOWN_UNDERSCAN_CONFIG = -119,    //!< The specified underscan config is from an unknown source (e.g. INF)
-        NVAPI_TIMEOUT_RECONFIGURING_GPU_TOPO = -120,    //!< Timeout while reconfiguring GPUs
-        NVAPI_DATA_NOT_FOUND = -121,    //!< Requested data was not found
-        NVAPI_EXPECTED_ANALOG_DISPLAY = -122,    //!< Expected an analog display
-        NVAPI_NO_VIDLINK = -123,    //!< No SLI video bridge is present
-        NVAPI_REQUIRES_REBOOT = -124,    //!< NVAPI requires a reboot for the settings to take effect
-        NVAPI_INVALID_HYBRID_MODE = -125,    //!< The function is not supported with the current Hybrid mode.
-        NVAPI_MIXED_TARGET_TYPES = -126,    //!< The target types are not all the same
-        NVAPI_SYSWOW64_NOT_SUPPORTED = -127,    //!< The function is not supported from 32-bit on a 64-bit system.
-        NVAPI_IMPLICIT_SET_GPU_TOPOLOGY_CHANGE_NOT_ALLOWED = -128,    //!< There is no implicit GPU topology active. Use NVAPI_SetHybridMode to change topology.
-        NVAPI_REQUEST_USER_TO_CLOSE_NON_MIGRATABLE_APPS = -129,      //!< Prompt the user to close all non-migratable applications.    
-        NVAPI_OUT_OF_MEMORY = -130,    //!< Could not allocate sufficient memory to complete the call.
-        NVAPI_WAS_STILL_DRAWING = -131,    //!< The previous operation that is transferring information to or from this surface is incomplete.
-        NVAPI_FILE_NOT_FOUND = -132,    //!< The file was not found.
-        NVAPI_TOO_MANY_UNIQUE_STATE_OBJECTS = -133,    //!< There are too many unique instances of a particular type of state object.
-        NVAPI_INVALID_CALL = -134,    //!< The method call is invalid. For example, a method's parameter may not be a valid poInt32er.
-        NVAPI_D3D10_1_LIBRARY_NOT_FOUND = -135,    //!< d3d10_1.dll cannot be loaded.
-        NVAPI_FUNCTION_NOT_FOUND = -136,    //!< Couldn't find the function in the loaded DLL.
-        NVAPI_INVALID_USER_PRIVILEGE = -137,    //!< The application will require Administrator privileges to access this API.
-                                                //!< The application can be elevated to a higher permission level by selecting "Run as Administrator".
-        NVAPI_EXPECTED_NON_PRIMARY_DISPLAY_HANDLE = -138,    //!< The handle corresponds to GDIPrimary.
-        NVAPI_EXPECTED_COMPUTE_GPU_HANDLE = -139,    //!< Setting Physx GPU requires that the GPU is compute-capable.
-        NVAPI_STEREO_NOT_INITIALIZED = -140,    //!< The Stereo part of NVAPI failed to initialize completely. Check if the stereo driver is installed.
-        NVAPI_STEREO_REGISTRY_ACCESS_FAILED = -141,    //!< Access to stereo-related registry keys or values has failed.
-        NVAPI_STEREO_REGISTRY_PROFILE_TYPE_NOT_SUPPORTED = -142, //!< The given registry profile type is not supported.
-        NVAPI_STEREO_REGISTRY_VALUE_NOT_SUPPORTED = -143,    //!< The given registry value is not supported.
-        NVAPI_STEREO_NOT_ENABLED = -144,    //!< Stereo is not enabled and the function needed it to execute completely.
-        NVAPI_STEREO_NOT_TURNED_ON = -145,    //!< Stereo is not turned on and the function needed it to execute completely.
-        NVAPI_STEREO_INVALID_DEVICE_INTERFACE = -146,    //!< Invalid device Int32erface.
-        NVAPI_STEREO_PARAMETER_OUT_OF_RANGE = -147,    //!< Separation percentage or JPEG image capture quality is out of [0-100] range.
-        NVAPI_STEREO_FRUSTUM_ADJUST_MODE_NOT_SUPPORTED = -148, //!< The given frustum adjust mode is not supported.
-        NVAPI_TOPO_NOT_POSSIBLE = -149,    //!< The mosaic topology is not possible given the current state of the hardware.
-        NVAPI_MODE_CHANGE_FAILED = -150,    //!< An attempt to do a display resolution mode change has failed.        
-        NVAPI_D3D11_LIBRARY_NOT_FOUND = -151,    //!< d3d11.dll/d3d11_beta.dll cannot be loaded.
-        NVAPI_INVALID_ADDRESS = -152,    //!< Address is outside of valid range.
-        NVAPI_STRING_TOO_SMALL = -153,    //!< The pre-allocated string is too small to hold the result.
-        NVAPI_MATCHING_DEVICE_NOT_FOUND = -154,    //!< The input does not match any of the available devices.
-        NVAPI_DRIVER_RUNNING = -155,    //!< Driver is running.
-        NVAPI_DRIVER_NOTRUNNING = -156,    //!< Driver is not running.
-        NVAPI_ERROR_DRIVER_RELOAD_REQUIRED = -157,    //!< A driver reload is required to apply these settings.
-        NVAPI_SET_NOT_ALLOWED = -158,    //!< Intended setting is not allowed.
-        NVAPI_ADVANCED_DISPLAY_TOPOLOGY_REQUIRED = -159,    //!< Information can't be returned due to "advanced display topology".
-        NVAPI_SETTING_NOT_FOUND = -160,    //!< Setting is not found.
-        NVAPI_SETTING_SIZE_TOO_LARGE = -161,    //!< Setting size is too large.
-        NVAPI_TOO_MANY_SETTINGS_IN_PROFILE = -162,    //!< There are too many settings for a profile. 
-        NVAPI_PROFILE_NOT_FOUND = -163,    //!< Profile is not found.
-        NVAPI_PROFILE_NAME_IN_USE = -164,    //!< Profile name is duplicated.
-        NVAPI_PROFILE_NAME_EMPTY = -165,    //!< Profile name is empty.
-        NVAPI_EXECUTABLE_NOT_FOUND = -166,    //!< Application not found in the Profile.
-        NVAPI_EXECUTABLE_ALREADY_IN_USE = -167,    //!< Application already exists in the other profile.
-        NVAPI_DATATYPE_MISMATCH = -168,    //!< Data Type mismatch 
-        NVAPI_PROFILE_REMOVED = -169,    //!< The profile passed as parameter has been removed and is no longer valid.
-        NVAPI_UNREGISTERED_RESOURCE = -170,    //!< An unregistered resource was passed as a parameter. 
-        NVAPI_ID_OUT_OF_RANGE = -171,    //!< The DisplayId corresponds to a display which is not within the normal outputId range.
-        NVAPI_DISPLAYCONFIG_VALIDATION_FAILED = -172,    //!< Display topology is not valid so the driver cannot do a mode set on this configuration.
-        NVAPI_DPMST_CHANGED = -173,    //!< Display Port Multi-Stream topology has been changed.
-        NVAPI_INSUFFICIENT_BUFFER = -174,    //!< Input buffer is insufficient to hold the contents.    
-        NVAPI_ACCESS_DENIED = -175,    //!< No access to the caller.
-        NVAPI_MOSAIC_NOT_ACTIVE = -176,    //!< The requested action cannot be performed without Mosaic being enabled.
-        NVAPI_SHARE_RESOURCE_RELOCATED = -177,    //!< The surface is relocated away from video memory.
-        NVAPI_REQUEST_USER_TO_DISABLE_DWM = -178,    //!< The user should disable DWM before calling NvAPI.
-        NVAPI_D3D_DEVICE_LOST = -179,    //!< D3D device status is D3DERR_DEVICELOST or D3DERR_DEVICENOTRESET - the user has to reset the device.
-        NVAPI_INVALID_CONFIGURATION = -180,    //!< The requested action cannot be performed in the current state.
-        NVAPI_STEREO_HANDSHAKE_NOT_DONE = -181,    //!< Call failed as stereo handshake not completed.
-        NVAPI_EXECUTABLE_PATH_IS_AMBIGUOUS = -182,    //!< The path provided was too short to determine the correct NVDRS_APPLICATION
-        NVAPI_DEFAULT_STEREO_PROFILE_IS_NOT_DEFINED = -183,    //!< Default stereo profile is not currently defined
-        NVAPI_DEFAULT_STEREO_PROFILE_DOES_NOT_EXIST = -184,    //!< Default stereo profile does not exist
-        NVAPI_CLUSTER_ALREADY_EXISTS = -185,    //!< A cluster is already defined with the given configuration.
-        NVAPI_DPMST_DISPLAY_ID_EXPECTED = -186,    //!< The input display id is not that of a multi stream enabled connector or a display device in a multi stream topology 
-        NVAPI_INVALID_DISPLAY_ID = -187,    //!< The input display id is not valid or the monitor associated to it does not support the current operation
-        NVAPI_STREAM_IS_OUT_OF_SYNC = -188,    //!< While playing secure audio stream, stream goes out of sync
-        NVAPI_INCOMPATIBLE_AUDIO_DRIVER = -189,    //!< Older audio driver version than required
-        NVAPI_VALUE_ALREADY_SET = -190,    //!< Value already set, setting again not allowed.
-        NVAPI_TIMEOUT = -191,    //!< Requested operation timed out 
-        NVAPI_GPU_WORKSTATION_FEATURE_INCOMPLETE = -192,    //!< The requested workstation feature set has incomplete driver Int32ernal allocation resources
-        NVAPI_STEREO_INIT_ACTIVATION_NOT_DONE = -193,    //!< Call failed because InitActivation was not called.
-        NVAPI_SYNC_NOT_ACTIVE = -194,    //!< The requested action cannot be performed without Sync being enabled.    
-        NVAPI_SYNC_MASTER_NOT_FOUND = -195,    //!< The requested action cannot be performed without Sync Master being enabled.
-        NVAPI_INVALID_SYNC_TOPOLOGY = -196,    //!< Invalid displays passed in the NV_GSYNC_DISPLAY poInt32er.
-        NVAPI_ECID_SIGN_ALGO_UNSUPPORTED = -197,    //!< The specified signing algorithm is not supported. Either an incorrect value was entered or the current installed driver/hardware does not support the input value.
-        NVAPI_ECID_KEY_VERIFICATION_FAILED = -198,    //!< The encrypted public key verification has failed.
-        NVAPI_FIRMWARE_OUT_OF_DATE = -199,    //!< The device's firmware is out of date.
-        NVAPI_FIRMWARE_REVISION_NOT_SUPPORTED = -200,    //!< The device's firmware is not supported.
-        NVAPI_LICENSE_CALLER_AUTHENTICATION_FAILED = -201,    //!< The caller is not authorized to modify the License.
-        NVAPI_D3D_DEVICE_NOT_REGISTERED = -202,    //!< The user tried to use a deferred context without registering the device first  
-        NVAPI_RESOURCE_NOT_ACQUIRED = -203,    //!< Head or SourceId was not reserved for the VR Display before doing the Modeset.
-        NVAPI_TIMING_NOT_SUPPORTED = -204,    //!< Provided timing is not supported.
-        NVAPI_HDCP_ENCRYPTION_FAILED = -205,    //!< HDCP Encryption Failed for the device. Would be applicable when the device is HDCP Capable.
-        NVAPI_PCLK_LIMITATION_FAILED = -206,    //!< Provided mode is over sink device pclk limitation.
-        NVAPI_NO_CONNECTOR_FOUND = -207,    //!< No connector on GPU found. 
-        NVAPI_HDCP_DISABLED = -208,    //!< When a non-HDCP capable HMD is connected, we would inform user by this code.
-        NVAPI_API_IN_USE = -209,    //!< Atleast an API is still being called
-        NVAPI_NVIDIA_DISPLAY_NOT_FOUND = -210,    //!< No display found on Nvidia GPU(s).
-        NVAPI_PRIV_SEC_VIOLATION = -211,    //!< Priv security violation, improper access to a secured register.
-        NVAPI_INCORRECT_VENDOR = -212,    //!< NVAPI cannot be called by this vendor
-        NVAPI_DISPLAY_IN_USE = -213,    //!< DirectMode Display is already in use
-        NVAPI_UNSUPPORTED_CONFIG_NON_HDCP_HMD = -214,    //!< The Config is having Non-NVidia GPU with Non-HDCP HMD connected
-        NVAPI_MAX_DISPLAY_LIMIT_REACHED = -215,    //!< GPU's Max Display Limit has Reached
-        NVAPI_INVALID_DIRECT_MODE_DISPLAY = -216,    //!< DirectMode not Enabled on the Display
-        NVAPI_GPU_IN_DEBUG_MODE = -217,    //!< GPU is in debug mode, OC is NOT allowed.
-        NVAPI_D3D_CONTEXT_NOT_FOUND = -218,    //!< No NvAPI context was found for this D3D object
-        NVAPI_STEREO_VERSION_MISMATCH = -219,    //!< there is version mismatch between stereo driver and dx driver
-        NVAPI_GPU_NOT_POWERED = -220,    //!< GPU is not powered and so the request cannot be completed.
-        NVAPI_ERROR_DRIVER_RELOAD_IN_PROGRESS = -221,    //!< The display driver update in progress.
-        NVAPI_WAIT_FOR_HW_RESOURCE = -222,    //!< Wait for HW resources allocation
-        NVAPI_REQUIRE_FURTHER_HDCP_ACTION = -223,    //!< operation requires further HDCP action
-        NVAPI_DISPLAY_MUX_TRANSITION_FAILED = -224,    //!< Dynamic Mux transition failure
-        NVAPI_INVALID_DSC_VERSION = -225,    //!< Invalid DSC version
-        NVAPI_INVALID_DSC_SLICECOUNT = -226,    //!< Invalid DSC slice count
-        NVAPI_INVALID_DSC_OUTPUT_BPP = -227,    //!< Invalid DSC output BPP
-        NVAPI_FAILED_TO_LOAD_FROM_DRIVER_STORE = -228,    //!< There was an error while loading nvapi.dll from the driver store.
-        NVAPI_NO_VULKAN = -229,    //!< OpenGL does not export Vulkan fake extensions
-        NVAPI_REQUEST_PENDING = -230,    //!< A request for NvTOPPs telemetry CData has already been made and is pending a response.
-        NVAPI_RESOURCE_IN_USE = -231,    //!< Operation cannot be performed because the resource is in use.
-    }
+        private static bool available = true;
 
-    [Flags]
-    public enum NV_DISPLAYCONFIG_FLAGS : UInt32
-    {
-        VALIDATE_ONLY = 0x00000001,
-        SAVE_TO_PERSISTENCE = 0x00000002,
-        DRIVER_RELOAD_ALLOWED = 0x00000004,               //!< Driver reload is permitted if necessary
-        FORCE_MODE_ENUMERATION = 0x00000008,               //!< Refresh OS mode list.
-        FORCE_COMMIT_VIDPN = 0x00000010,               //!< Tell OS to avoid optimizing CommitVidPn call during a modeset
-    }
-
-    [Flags]
-    public enum NV_GPU_CONNECTED_IDS_FLAG : UInt32
-    {
-        NONE = 0, //!< Get uncached connected devices
-        UNCACHED = 0x1, //!< Get uncached connected devices
-        SLI = 0x2, //!< Get devices such that those can be selected in an SLI configuration
-        LIDSTATE = 0x4, //!< Get devices such that to reflect the Lid State
-        FAKE = 0x8, //!< Get devices that includes the fake connected monitors
-        EXCLUDE_MST = 0x10, //!< Excludes devices that are part of the multi stream topology.
-    }
-
-    public enum NVDRS_SETTING_TYPE : UInt32
-    {
-        NVDRS_DWORD_TYPE = 0,
-        NVDRS_BINARY_TYPE = 1,
-        NVDRS_STRING_TYPE = 2,
-        NVDRS_WSTRING_TYPE = 3,
-    }
-
-    public enum NV_STATIC_METADATA_DESCRIPTOR_ID : UInt32
-    {
-        NV_STATIC_METADATA_TYPE_1 = 0                   //!< Tells the type of structure used to define the Static Metadata Descriptor block.
-    }
-
-
-    public enum NV_ROTATE : UInt32
-    {
-        ROTATE_0 = 0,
-        ROTATE_90 = 1,
-        ROTATE_180 = 2,
-        ROTATE_270 = 3,
-        ROTATE_IGNORED = 4,
-    }
-
-    public enum NV_FORMAT : UInt32
-    {
-        UNKNOWN = 0,       //!< unknown. Driver will choose one as following value.
-        P8 = 41,       //!< for 8bpp mode
-        R5G6B5 = 23,       //!< for 16bpp mode
-        A8R8G8B8 = 21,       //!< for 32bpp mode
-        A16B16G16R16F = 113,      //!< for 64bpp(floating poInt32) mode.
-
-    }
-
-    public enum NV_SCALING : UInt32
-    {
-        DEFAULT = 0,        //!< No change
-
-        // New Scaling Declarations
-        GPU_SCALING_TO_CLOSEST = 1,  //!< Balanced  - Full Screen
-        GPU_SCALING_TO_NATIVE = 2,  //!< Force GPU - Full Screen
-        GPU_SCANOUT_TO_NATIVE = 3,  //!< Force GPU - Centered\No Scaling
-        GPU_SCALING_TO_ASPECT_SCANOUT_TO_NATIVE = 5,  //!< Force GPU - Aspect Ratio
-        GPU_SCALING_TO_ASPECT_SCANOUT_TO_CLOSEST = 6,  //!< Balanced  - Aspect Ratio
-        GPU_SCANOUT_TO_CLOSEST = 7,  //!< Balanced  - Centered\No Scaling
-        GPU_INTEGER_ASPECT_SCALING = 8,  //!< Force GPU - Integer Scaling
-
-        // Legacy Declarations
-        MONITOR_SCALING = GPU_SCALING_TO_CLOSEST,
-        ADAPTER_SCALING = GPU_SCALING_TO_NATIVE,
-        CENTERED = GPU_SCANOUT_TO_NATIVE,
-        ASPECT_SCALING = GPU_SCALING_TO_ASPECT_SCANOUT_TO_NATIVE,
-
-        CUSTOMIZED = 255       //!< For future use
-    }
-
-    public enum NV_TARGET_VIEW_MODE : UInt32
-    {
-        STANDARD = 0,
-        CLONE = 1,
-        HSPAN = 2,
-        VSPAN = 3,
-        DUALVIEW = 4,
-        MULTIVIEW = 5,
-    }
-
-    public enum NV_MONITOR_CONN_TYPE : Int32
-    {
-        UNINITIALIZED = 0,
-        VGA = 1,
-        COMPONENT = 2,
-        SVIDEO = 3,
-        HDMI = 4,
-        DVI = 5,
-        LVDS = 6,
-        DP = 7,
-        COMPOSITE = 8,
-        UNKNOWN = -1
-    }
-
-    public enum NV_DISPLAY_TV_FORMAT : UInt32
-    {
-        NONE = 0,
-        SD_NTSCM = 0x00000001,
-        SD_NTSCJ = 0x00000002,
-        SD_PALM = 0x00000004,
-        SD_PALBDGH = 0x00000008,
-        SD_PALN = 0x00000010,
-        SD_PALNC = 0x00000020,
-        SD_576i = 0x00000100,
-        SD_480i = 0x00000200,
-        ED_480p = 0x00000400,
-        ED_576p = 0x00000800,
-        HD_720p = 0x00001000,
-        HD_1080i = 0x00002000,
-        HD_1080p = 0x00004000,
-        HD_720p50 = 0x00008000,
-        HD_1080p24 = 0x00010000,
-        HD_1080i50 = 0x00020000,
-        HD_1080p50 = 0x00040000,
-        UHD_4Kp30 = 0x00080000,
-        UHD_4Kp30_3840 = UHD_4Kp30,
-        UHD_4Kp25 = 0x00100000,
-        UHD_4Kp25_3840 = UHD_4Kp25,
-        UHD_4Kp24 = 0x00200000,
-        UHD_4Kp24_3840 = UHD_4Kp24,
-        UHD_4Kp24_SMPTE = 0x00400000,
-        UHD_4Kp50_3840 = 0x00800000,
-        UHD_4Kp60_3840 = 0x00900000,
-        UHD_4Kp30_4096 = 0x00A00000,
-        UHD_4Kp25_4096 = 0x00B00000,
-        UHD_4Kp24_4096 = 0x00C00000,
-        UHD_4Kp50_4096 = 0x00D00000,
-        UHD_4Kp60_4096 = 0x00E00000,
-        UHD_8Kp24_7680 = 0x01000000,
-        UHD_8Kp25_7680 = 0x02000000,
-        UHD_8Kp30_7680 = 0x04000000,
-        UHD_8Kp48_7680 = 0x08000000,
-        UHD_8Kp50_7680 = 0x09000000,
-        UHD_8Kp60_7680 = 0x0A000000,
-        UHD_8Kp100_7680 = 0x0B000000,
-        UHD_8Kp120_7680 = 0x0C000000,
-        UHD_4Kp48_3840 = 0x0D000000,
-        UHD_4Kp48_4096 = 0x0E000000,
-        UHD_4Kp100_4096 = 0x0F000000,
-        UHD_4Kp100_3840 = 0x10000000,
-        UHD_4Kp120_4096 = 0x11000000,
-        UHD_4Kp120_3840 = 0x12000000,
-        UHD_4Kp100_5120 = 0x13000000,
-        UHD_4Kp120_5120 = 0x14000000,
-        UHD_4Kp24_5120 = 0x15000000,
-        UHD_4Kp25_5120 = 0x16000000,
-        UHD_4Kp30_5120 = 0x17000000,
-        UHD_4Kp48_5120 = 0x18000000,
-        UHD_4Kp50_5120 = 0x19000000,
-        UHD_4Kp60_5120 = 0x20000000,
-        UHD_10Kp24_10240 = 0x21000000,
-        UHD_10Kp25_10240 = 0x22000000,
-        UHD_10Kp30_10240 = 0x23000000,
-        UHD_10Kp48_10240 = 0x24000000,
-        UHD_10Kp50_10240 = 0x25000000,
-        UHD_10Kp60_10240 = 0x26000000,
-        UHD_10Kp100_10240 = 0x27000000,
-        UHD_10Kp120_10240 = 0x28000000,
-
-
-        SD_OTHER = 0x30000000,
-        ED_OTHER = 0x40000000,
-        HD_OTHER = 0x50000000,
-
-        ANY = 0x80000000,
-
-    }
-
-    public enum NV_GPU_CONNECTOR_TYPE : UInt32
-    {
-        VGA_15_PIN = 0x00000000,
-        TV_COMPOSITE = 0x00000010,
-        TV_SVIDEO = 0x00000011,
-        TV_HDTV_COMPONENT = 0x00000013,
-        TV_SCART = 0x00000014,
-        TV_COMPOSITE_SCART_ON_EIAJ4120 = 0x00000016,
-        TV_HDTV_EIAJ4120 = 0x00000017,
-        PC_POD_HDTV_YPRPB = 0x00000018,
-        PC_POD_SVIDEO = 0x00000019,
-        PC_POD_COMPOSITE = 0x0000001A,
-        DVI_I_TV_SVIDEO = 0x00000020,
-        DVI_I_TV_COMPOSITE = 0x00000021,
-        DVI_I = 0x00000030,
-        DVI_D = 0x00000031,
-        ADC = 0x00000032,
-        LFH_DVI_I_1 = 0x00000038,
-        LFH_DVI_I_2 = 0x00000039,
-        SPWG = 0x00000040,
-        OEM = 0x00000041,
-        DISPLAYPORT_EXTERNAL = 0x00000046,
-        DISPLAYPORT_INTERNAL = 0x00000047,
-        DISPLAYPORT_MINI_EXT = 0x00000048,
-        HDMI_A = 0x00000061,
-        HDMI_C_MINI = 0x00000063,
-        LFH_DISPLAYPORT_1 = 0x00000064,
-        LFH_DISPLAYPORT_2 = 0x00000065,
-        VIRTUAL_WFD = 0x00000070,
-        USB_C = 0x00000071,
-        UNKNOWN = 0xFFFFFFFF,
-    }
-
-    public enum NV_DISPLAYCONFIG_SPANNING_ORIENTATION : UInt32
-    {
-        NV_DISPLAYCONFIG_SPAN_NONE = 0,
-        NV_DISPLAYCONFIG_SPAN_HORIZONTAL = 1,
-        NV_DISPLAYCONFIG_SPAN_VERTICAL = 2,
-    }
-
-    public enum TIMING_SCAN_MODE : ushort
-    {
-        /// <summary>
-        ///     Progressive scan mode
-        /// </summary>
-        Progressive = 0,
-
-        /// <summary>
-        ///     Interlaced scan mode
-        /// </summary>
-        Interlaced = 1,
-
-        /// <summary>
-        ///     Interlaced scan mode with extra vertical blank
-        /// </summary>
-        InterlacedWithExtraVerticalBlank = 1,
-
-        /// <summary>
-        ///     Interlaced scan mode without extra vertical blank
-        /// </summary>
-        InterlacedWithNoExtraVerticalBlank = 2
-    }
-
-    public enum TIMING_VERTICAL_SYNC_POLARITY : byte
-    {
-        /// <summary>
-        ///     Positive vertical synchronized polarity
-        /// </summary>
-        Positive = 0,
-
-        /// <summary>
-        ///     Negative vertical synchronized polarity
-        /// </summary>
-        Negative = 1,
-
-        /// <summary>
-        ///     Default vertical synchronized polarity
-        /// </summary>
-        Default = Positive
-    }
-
-    public enum TIMING_HORIZONTAL_SYNC_POLARITY : byte
-    {
-        /// <summary>
-        ///     Positive horizontal synchronized polarity
-        /// </summary>
-        Positive = 0,
-
-        /// <summary>
-        ///     Negative horizontal synchronized polarity
-        /// </summary>
-        Negative = 1,
-
-        /// <summary>
-        ///     Default horizontal synchronized polarity
-        /// </summary>
-        Default = Negative
-    }
-
-    public enum NV_TIMING_OVERRIDE : UInt32
-    {
-        CURRENT = 0,          //!< get the current timing
-        AUTO,                 //!< the timing the driver will use based the current policy
-        EDID,                 //!< EDID timing
-        DMT,                  //!< VESA DMT timing
-        DMT_RB,               //!< VESA DMT timing with reduced blanking
-        CVT,                  //!< VESA CVT timing
-        CVT_RB,               //!< VESA CVT timing with reduced blanking
-        GTF,                  //!< VESA GTF timing
-        EIA861,               //!< EIA 861x pre-defined timing
-        ANALOG_TV,            //!< analog SD/HDTV timing
-        CUST,                 //!< NV custom timings
-        NV_PREDEFINED,        //!< NV pre-defined timing (basically the PsF timings)
-        NV_PSF = NV_PREDEFINED,
-        NV_ASPR,
-        SDI,                  //!< Override for SDI timing
-
-        NV_TIMING_OVRRIDE_MAX,
-    }
-
-    //
-    //! These values refer to the different types of Mosaic topologies that are possible.  When
-    //! getting the supported Mosaic topologies, you can specify one of these types to narrow down
-    //! the returned list to only those that match the given type.
-    public enum NV_MOSAIC_TOPO_TYPE : UInt32
-    {
-        ALL = 0,                          //!< All mosaic topologies
-        BASIC = 1,                        //!< Basic Mosaic topologies
-        PASSIVE_STEREO = 2,               //!< Passive Stereo topologies
-        SCALED_CLONE = 3,                 //!< Not supported at this time
-        PASSIVE_STEREO_SCALED_CLONE = 4,  //!< Not supported at this time
-        MAX,                          //!< Always leave this at end of the enum
-    }
-
-
-    //
-    //! This is a complete list of supported Mosaic topologies.
-    //!
-    //! Using a "Basic" topology combines multiple monitors to create a single desktop.
-    //!
-    //! Using a "Passive" topology combines multiples monitors to create a passive stereo desktop.
-    //! In passive stereo, two identical topologies combine - one topology is used for the right eye and the other identical //! topology (targeting different displays) is used for the left eye.  \n  
-    //! NOTE: common\inc\nvEscDef.h shadows a couple PASSIVE_STEREO enums.  If this
-    //!       enum list changes and effects the value of NV_MOSAIC_TOPO_BEGIN_PASSIVE_STEREO
-    //!       please update the corresponding value in nvEscDef.h
-    public enum NV_MOSAIC_TOPO : UInt32
-    {
-        TOPO_NONE,
-
-        // 'BASIC' topos start here
-        //
-        // The result of using one of these Mosaic topos is that multiple monitors
-        // will combine to create a single desktop.
-        //
-        TOPO_BEGIN_BASIC,
-        TOPO_1x2_BASIC = TOPO_BEGIN_BASIC,
-        TOPO_2x1_BASIC,
-        TOPO_1x3_BASIC,
-        TOPO_3x1_BASIC,
-        TOPO_1x4_BASIC,
-        TOPO_4x1_BASIC,
-        TOPO_2x2_BASIC,
-        TOPO_2x3_BASIC,
-        TOPO_2x4_BASIC,
-        TOPO_3x2_BASIC,
-        TOPO_4x2_BASIC,
-        TOPO_1x5_BASIC,
-        TOPO_1x6_BASIC,
-        TOPO_7x1_BASIC,
-
-        // Add padding for 10 more entries. 6 will be enough room to specify every
-        // possible topology with 8 or fewer displays, so this gives us a little
-        // extra should we need it.
-        TOPO_END_BASIC = TOPO_7x1_BASIC + 9,
-
-        // 'PASSIVE_STEREO' topos start here
-        //
-        // The result of using one of these Mosaic topos is that multiple monitors
-        // will combine to create a single PASSIVE STEREO desktop.  What this means is
-        // that there will be two topos that combine to create the overall desktop.
-        // One topo will be used for the left eye, and the other topo (of the
-        // same rows x cols), will be used for the right eye.  The difference between
-        // the two topos is that different GPUs and displays will be used.
-        //
-        TOPO_BEGIN_PASSIVE_STEREO,    // value shadowed in nvEscDef.h
-        TOPO_1x2_PASSIVE_STEREO = TOPO_BEGIN_PASSIVE_STEREO,
-        TOPO_2x1_PASSIVE_STEREO,
-        TOPO_1x3_PASSIVE_STEREO,
-        TOPO_3x1_PASSIVE_STEREO,
-        TOPO_1x4_PASSIVE_STEREO,
-        TOPO_4x1_PASSIVE_STEREO,
-        TOPO_2x2_PASSIVE_STEREO,
-        TOPO_END_PASSIVE_STEREO = TOPO_2x2_PASSIVE_STEREO + 4,
-
-
-        //
-        // Total number of topos.  Always leave this at the end of the enumeration.
-        //
-        TOPO_MAX  //! Total number of topologies.
-
-    }
-
-    [Flags]
-    public enum NV_MOSAIC_TOPO_VALIDITY : UInt32
-    {
-        VALID = 0x00000000,  //!< The topology is valid
-        MISSING_GPU = 0x00000001,   //!< Not enough SLI GPUs were found to fill the entire
-                                    //! topology. hPhysicalGPU will be 0 for these.
-        MISSING_DISPLAY = 0x00000002,   //!< Not enough displays were found to fill the entire
-                                        //! topology. displayOutputId will be 0 for these.
-        MIXED_DISPLAY_TYPES = 0x00000004,   //!< The topoogy is only possible with displays of the same
-                                            //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
-                                            //! sure they are all CRTs, or all DFPs.
-    }
-
-    public enum NV_GPU_BUS_TYPE : UInt32
-    {
-        UNDEFINED = 0,
-        PCI = 1,
-        AGP = 2,
-        PCI_EXPRESS = 3,
-        FPCI = 4,
-        AXI = 5,
-    }
-
-
-    public enum NV_PIXEL_SHIFT_TYPE
-    {
-        TYPE_NO_PIXEL_SHIFT = 0,          //!< No pixel shift will be applied to this display.
-        TYPE_2x2_TOP_LEFT_PIXELS = 1,          //!< This display will be used to scanout top left pixels in 2x2 PixelShift configuration
-        TYPE_2x2_BOTTOM_RIGHT_PIXELS = 2,          //!< This display will be used to scanout bottom right pixels in 2x2 PixelShift configuration
-        TYPE_2x2_TOP_RIGHT_PIXELS = 4,          //!< This display will be used to scanout top right pixels in 2x2 PixelShift configuration
-        TYPE_2x2_BOTTOM_LEFT_PIXELS = 8,          //!< This display will be used to scanout bottom left pixels in 2x2 PixelShift configuration
-    }
-
-    public enum NV_HDR_CMD : UInt32
-    {
-        CMD_GET = 0,                             //!< Get current HDR output configuration
-        CMD_SET = 1                              //!< Set HDR output configuration
-    }
-
-
-    public enum NV_HDR_MODE : UInt32
-    {
-        // Official production-ready HDR modes
-        OFF = 0,            //!< Turn off HDR
-        UHDA = 2,            //!< Source: CCCS [a.k.a FP16 scRGB, linear, sRGB primaries, [-65504,0, 65504] range, RGB(1,1,1) = 80nits]  Output : UHDA HDR [a.k.a HDR10, RGB/YCC 10/12bpc ST2084(PQ) EOTF RGB(1,1,1) = 10000 nits, Rec2020 color primaries, ST2086 static HDR metadata]. This is the only supported production HDR mode.
-
-        // Experimental
-        UHDA_PASSTHROUGH = 5,            //!< Experimental mode only, not for production! Source: HDR10 RGB 10bpc Output: HDR10 RGB 10 bpc - signal UHDA HDR mode (PQ + Rec2020) to the sink but send source pixel values unmodified (no PQ or Rec2020 conversions) - assumes source is already in HDR10 format.
-        DOLBY_VISION = 7,            //!< Experimental mode only, not for production! Source: RGB8 Dolby Vision encoded (12 bpc YCbCr422 packed into RGB8) Output: Dolby Vision encoded : Application is to encoded frames in DV format and embed DV dynamic metadata as described in Dolby Vision specification.
-
-        // Unsupported/obsolete HDR modes
-        //NV_HDR_MODE_EDR = 3,            //!< Do not use! Internal test mode only, to be removed. Source: CCCS (a.k.a FP16 scRGB) Output : EDR (Extended Dynamic Range) - HDR content is tonemapped and gamut mapped to output on regular SDR display set to max luminance ( ~300 nits ).
-        //NV_HDR_MODE_SDR = 4,            //!< Do not use! Internal test mode only, to be removed. Source: any Output: SDR (Standard Dynamic Range), we continuously send SDR EOTF InfoFrame signaling, HDMI compliance testing.
-        //NV_HDR_MODE_UHDA_NB = 6,            //!< Do not use! Internal test mode only, to be removed. Source: CCCS (a.k.a FP16 scRGB) Output : notebook HDR
-        //NV_HDR_MODE_UHDBD = 2             //!< Do not use! Obsolete, to be removed. NV_HDR_MODE_UHDBD == NV_HDR_MODE_UHDA, reflects obsolete pre-UHDA naming convention.
-
-    }
-
-    public enum NV_COLOR_FORMAT : byte
-    {
-        RGB = 0,
-        YUV422,
-        YUV444,
-        YUV420,
-
-        DEFAULT = 0xFE,
-        AUTO = 0xFF
-    }
-
-    public enum NV_DYNAMIC_RANGE : byte
-    {
-        VESA = 0x0,
-        CEA = 0x1,
-
-        AUTO = 0xFF
-    }
-
-    public enum NV_BPC : byte
-    {
-        BPC_DEFAULT = 0,
-        BPC_6 = 1,
-        BPC_8 = 2,
-        BPC_10 = 3,
-        BPC_12 = 4,
-        BPC_16 = 5,
-    }
-
-    public enum NV_HDR_COLOR_FORMAT : UInt32
-    {
-        RGB = 0,
-        YUV422,
-        YUV444,
-        YUV420,
-
-        DEFAULT = 0xFE,
-        AUTO = 0xFF
-    }
-
-    public enum NV_HDR_DYNAMIC_RANGE : UInt32
-    {
-        VESA = 0x0,
-        CEA = 0x1,
-
-        AUTO = 0xFF
-    }
-
-
-    public enum NV_COLOR_CMD : byte
-    {
-        NV_COLOR_CMD_GET = 1,
-        NV_COLOR_CMD_SET,
-        NV_COLOR_CMD_IS_SUPPORTED_COLOR,
-        NV_COLOR_CMD_GET_DEFAULT
-    }
-
-    public enum NV_COLOR_COLORIMETRY : UInt32
-    {
-        NV_COLOR_COLORIMETRY_RGB = 0,
-        NV_COLOR_COLORIMETRY_YCC601,
-        NV_COLOR_COLORIMETRY_YCC709,
-        NV_COLOR_COLORIMETRY_XVYCC601,
-        NV_COLOR_COLORIMETRY_XVYCC709,
-        NV_COLOR_COLORIMETRY_SYCC601,
-        NV_COLOR_COLORIMETRY_ADOBEYCC601,
-        NV_COLOR_COLORIMETRY_ADOBERGB,
-        NV_COLOR_COLORIMETRY_BT2020RGB,
-        NV_COLOR_COLORIMETRY_BT2020YCC,
-        NV_COLOR_COLORIMETRY_BT2020cYCC,
-
-        NV_COLOR_COLORIMETRY_DEFAULT = 0xFE,
-        NV_COLOR_COLORIMETRY_AUTO = 0xFF
-    }
-
-    public enum NV_COLOR_SELECTION_POLICY : UInt32
-    {
-        NV_COLOR_SELECTION_POLICY_USER = 0,     //!< app/nvcpl make decision to select the desire color format
-        NV_COLOR_SELECTION_POLICY_BEST_QUALITY = 1, //!< driver/ OS make decision to select the best color format
-        NV_COLOR_SELECTION_POLICY_DEFAULT = NV_COLOR_SELECTION_POLICY_BEST_QUALITY,
-        NV_COLOR_SELECTION_POLICY_UNKNOWN = 0xFF,
-    }
-
-    public enum NV_DESKTOP_COLOR_DEPTH
-    {
-        NV_DESKTOP_COLOR_DEPTH_DEFAULT = 0x0,                                    // set if the current setting should be kept
-        NV_DESKTOP_COLOR_DEPTH_8BPC = 0x1,                                    //8 bit int per color component (8 bit int alpha)
-        NV_DESKTOP_COLOR_DEPTH_10BPC = 0x2,                                    //10 bit int per color component (2 bit int alpha)
-        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT = 0x3,                                    //16 bit float per color component (16 bit float alpha)
-        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_WCG = 0x4,                                    //16 bit float per color component (16 bit float alpha) wide color gamut
-        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR = 0x5,                                    //16 bit float per color component (16 bit float alpha) HDR
-        NV_DESKTOP_COLOR_DEPTH_MAX_VALUE = NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR, // must be set to highest enum value
-    }
-
-
-    public enum NVDRS_SETTING_LOCATION : UInt32
-    {
-        NVDRS_CURRENT_PROFILE_LOCATION = 0x0,
-        NVDRS_GLOBAL_PROFILE_LOCATION = 0x1,
-        NVDRS_BASE_PROFILE_LOCATION = 0x2,
-        NVDRS_DEFAULT_PROFILE_LOCATION = 0x3,
-    }
-
-    //! \ingroup gpu
-    public enum NV_GPU_WORKSTATION_FEATURE_TYPE : UInt32
-    {
-        NV_GPU_WORKSTATION_FEATURE_TYPE_NVIDIA_RTX_VR_READY = 1,  //!< NVIDIA RTX VR Ready
-        NV_GPU_WORKSTATION_FEATURE_TYPE_QUADRO_VR_READY = NV_GPU_WORKSTATION_FEATURE_TYPE_NVIDIA_RTX_VR_READY,  //!< DEPRECATED name - do not use
-        NV_GPU_WORKSTATION_FEATURE_TYPE_PROVIZ = 2,
-    }
-
-
-
-    [Flags]
-    public enum NV_HDR_CAPABILITIES_V2_FLAGS : UInt32
-    {
-        IsST2084EotfSupported = 0x1,                 //!< HDMI2.0a UHDA HDR with ST2084 EOTF (CEA861.3). Boolean: 0 = not supported, 1 = supported;
-        IsTraditionalHdrGammaSupported = 0x2,                 //!< HDMI2.0a traditional HDR gamma (CEA861.3). Boolean: 0 = not supported, 1 = supported;
-        IsEdrSupported = 0x4,                 //!< Extended Dynamic Range on SDR displays. Boolean: 0 = not supported, 1 = supported;
-        DriverExpandDefaultHdrParameters = 0x8,                 //!< If set, driver will expand default (=zero) HDR capabilities parameters contained in display's EDID.
-                                                                //!< Boolean: 0 = report actual HDR parameters, 1 = expand default HDR parameters;
-        IsTraditionalSdrGammaSupported = 0x10,                 //!< HDMI2.0a traditional SDR gamma (CEA861.3). Boolean: 0 = not supported, 1 = supported;
-        IsDolbyVisionSupported = 0x20,                 //!< Dolby Vision Support. Boolean: 0 = not supported, 1 = supported;
-    }
-
-    [Flags]
-    public enum NV_MOSAIC_DISPLAYCAPS_PROBLEM_FLAGS : UInt32
-    {
-        OK = 0x0,
-        DISPLAY_ON_INVALID_GPU = 0x1,
-        DISPLAY_ON_WRONG_CONNECTOR = 0x2,
-        NO_COMMON_TIMINGS = 0x4,
-        NO_EDID_AVAILABLE = 0x8,
-        MISMATCHED_OUTPUT_TYPE = 0x10,
-        NO_DISPLAY_CONNECTED = 0x20,
-        NO_GPU_TOPOLOGY = 0x40,
-        NOT_SUPPORTED = 0x80,
-        NO_SLI_BRIDGE = 0x100,
-        ECC_ENABLED = 0x200,
-        GPU_TOPOLOGY_NOT_SUPPORTED = 0x400,
-    }
-
-    [Flags]
-    public enum NV_MOSAIC_DISPLAYTOPO_WARNING_FLAGS : UInt32
-    {
-        NONE = 0x0,
-
-        //! Indicates that a display's position in the grid is sub-optimal.
-        DISPLAY_POSITION = 0x1,
-
-        //! \ingroup mosaicapi
-        //! Indicates that SetDisplaySettings would need to perform a driver reload.
-        DRIVER_RELOAD_REQUIRED = 0x2,
-    }
-
-    [Flags]
-    public enum NV_MOSAIC_SETDISPLAYTOPO_FLAGS : UInt32
-    {
-        // Empty flag which does nothing
-        NONE = 0,
-
-        //! Do not change the current GPU topology. If the NO_DRIVER_RELOAD bit is not
-        //! specified, then it may still require a driver reload.
-        CURRENT_GPU_TOPOLOGY = 0x1,
-
-        //! Do not allow a driver reload. That is, stick with the same master GPU as well as the
-        //! same SLI configuration.
-        NO_DRIVER_RELOAD = 0x2,
-
-        //! When choosing a GPU topology, choose the topology with the best performance.
-        //! Without this flag, it will choose the topology that uses the smallest number
-        //! of GPU's.
-        MAXIMIZE_PERFORMANCE = 0x4,
-
-        //! Do not return an error if no configuration will work with all of the grids.
-        ALLOW_INVALID = 0x8,
-    }
-
-    [Flags]
-    public enum NVDRS_GPU_SUPPORT : UInt32
-    {
-        NONE = 0x0,
-        GEFORCE = 0x1,
-        QUADRO = 0x2,
-        NVS = 0x4,
-    }
-
-    // ==================================
-    // STRUCTS
-    // ==================================
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NvDRSSessionHandle : IEquatable<NvDRSSessionHandle>, ICloneable
-    {
-        public IntPtr Ptr;
-
-        public override bool Equals(object obj) => obj is NvDRSSessionHandle other && this.Equals(other);
-
-        public bool Equals(NvDRSSessionHandle other)
-        => Ptr == other.Ptr;
-
-        public override Int32 GetHashCode()
+        static NVAPI()
         {
-            return (Ptr).GetHashCode();
-        }
-
-        public static bool operator ==(NvDRSSessionHandle lhs, NvDRSSessionHandle rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NvDRSSessionHandle lhs, NvDRSSessionHandle rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NvDRSSessionHandle other = (NvDRSSessionHandle)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NvDRSProfileHandle : IEquatable<NvDRSProfileHandle>, ICloneable
-    {
-        public IntPtr Ptr;
-
-        public override bool Equals(object obj) => obj is NvDRSProfileHandle other && this.Equals(other);
-
-        public bool Equals(NvDRSProfileHandle other)
-        => Ptr == other.Ptr;
-
-        public override Int32 GetHashCode()
-        {
-            return (Ptr).GetHashCode();
-        }
-
-        public static bool operator ==(NvDRSProfileHandle lhs, NvDRSProfileHandle rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NvDRSProfileHandle lhs, NvDRSProfileHandle rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NvDRSProfileHandle other = (NvDRSProfileHandle)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct DisplayHandle : IEquatable<DisplayHandle>, ICloneable
-    {
-        public IntPtr Ptr;
-
-        public override bool Equals(object obj) => obj is DisplayHandle other && this.Equals(other);
-
-        public bool Equals(DisplayHandle other)
-        => Ptr == other.Ptr;
-
-        public override Int32 GetHashCode()
-        {
-            return (Ptr).GetHashCode();
-        }
-
-        public static bool operator ==(DisplayHandle lhs, DisplayHandle rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(DisplayHandle lhs, DisplayHandle rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            DisplayHandle other = (DisplayHandle)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UnAttachedDisplayHandle : IEquatable<UnAttachedDisplayHandle>, ICloneable
-    {
-        public IntPtr Ptr;
-
-        public override bool Equals(object obj) => obj is UnAttachedDisplayHandle other && this.Equals(other);
-
-        public bool Equals(UnAttachedDisplayHandle other)
-        => Ptr == other.Ptr;
-
-        public override Int32 GetHashCode()
-        {
-            return (Ptr).GetHashCode();
-        }
-
-        public static bool operator ==(UnAttachedDisplayHandle lhs, UnAttachedDisplayHandle rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(UnAttachedDisplayHandle lhs, UnAttachedDisplayHandle rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            UnAttachedDisplayHandle other = (UnAttachedDisplayHandle)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct PhysicalGpuHandle : IEquatable<PhysicalGpuHandle>, ICloneable
-    {
-        public IntPtr Ptr;
-
-        public override bool Equals(object obj) => obj is PhysicalGpuHandle other && this.Equals(other);
-
-        public bool Equals(PhysicalGpuHandle other)
-        => Ptr == other.Ptr;
-
-        public override Int32 GetHashCode()
-        {
-            return (Ptr).GetHashCode();
-        }
-        public static bool operator ==(PhysicalGpuHandle lhs, PhysicalGpuHandle rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(PhysicalGpuHandle lhs, PhysicalGpuHandle rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            PhysicalGpuHandle other = (PhysicalGpuHandle)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct LogicalGpuHandle : IEquatable<LogicalGpuHandle>, ICloneable
-    {
-        public IntPtr Ptr;
-
-        public override bool Equals(object obj) => obj is LogicalGpuHandle other && this.Equals(other);
-
-        public bool Equals(LogicalGpuHandle other)
-        => Ptr == other.Ptr;
-
-        public override Int32 GetHashCode()
-        {
-            return (Ptr).GetHashCode();
-        }
-        public static bool operator ==(LogicalGpuHandle lhs, LogicalGpuHandle rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(LogicalGpuHandle lhs, LogicalGpuHandle rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            LogicalGpuHandle other = (LogicalGpuHandle)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-    public struct NVDRS_PROFILE_V1 : IEquatable<NVDRS_PROFILE_V1>, ICloneable // Note: Version 3 of NV_EDID_V3 structure
-    {
-        public UInt32 Version;        //!< Structure version
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
-        public string ProfileName;    // EDID_Data[NV_EDID_DATA_SIZE];
-        public NVDRS_GPU_SUPPORT GpuSupport;
-        public UInt32 IsPredefined;
-        public UInt32 NumofApps;
-        public UInt32 NumofSettings;
-
-        public override bool Equals(object obj) => obj is NVDRS_PROFILE_V1 other && this.Equals(other);
-
-        public bool Equals(NVDRS_PROFILE_V1 other)
-        => Version == other.Version &&
-           ProfileName == other.ProfileName &&
-           GpuSupport == other.GpuSupport &&
-           IsPredefined == other.IsPredefined &&
-           NumofApps == other.NumofApps &&
-           NumofSettings == other.NumofSettings;
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, ProfileName, GpuSupport, IsPredefined, NumofApps, NumofSettings).GetHashCode();
-        }
-        public static bool operator ==(NVDRS_PROFILE_V1 lhs, NVDRS_PROFILE_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NVDRS_PROFILE_V1 lhs, NVDRS_PROFILE_V1 rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NVDRS_PROFILE_V1 other = (NVDRS_PROFILE_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-    public struct NVDRS_SETTING_V1 : IEquatable<NVDRS_SETTING_V1>, ICloneable // Note: Version 1 of NVDRS_SETTING_V1 structure
-    {
-        public UInt32 InternalVersion;
-        public UnicodeString InternalSettingName;
-        public UInt32 InternalSettingId;
-        public NVDRS_SETTING_TYPE InternalSettingType;
-        public NVDRS_SETTING_LOCATION InternalSettingLocation;
-        public UInt32 InternalIsCurrentPredefined;
-        public UInt32 InternalIsPredefinedValid;
-        public NVDRS_SETTING_VALUE InternalPredefinedValue;
-        public NVDRS_SETTING_VALUE InternalCurrentValue;
-
-        /// <summary>
-        ///     Creates a new instance of <see cref="DRSSettingV1" /> containing the passed value.
-        /// </summary>
-        /// <param name="id">The setting identification number.</param>
-        /// <param name="settingType">The type of the setting's value</param>
-        /// <param name="value">The setting's value</param>
-        public NVDRS_SETTING_V1(uint id, NVDRS_SETTING_TYPE settingType, object value)
-        {
-            InternalVersion = NVImport.NVDRS_SETTING_V1_VER;
-            InternalSettingId = id;
-            InternalIsPredefinedValid = (UInt32)0;
-            InternalSettingName = new UnicodeString("");
-            InternalSettingId = 0;
-            InternalSettingType = settingType;
-            InternalSettingLocation = NVDRS_SETTING_LOCATION.NVDRS_BASE_PROFILE_LOCATION;
-            InternalIsCurrentPredefined = 0;
-            InternalIsPredefinedValid = 0;
-            InternalPredefinedValue = new NVDRS_SETTING_VALUE();
-            InternalCurrentValue = new NVDRS_SETTING_VALUE(0);
-
-            CurrentValue = value;
-        }
-
-        /// <summary>
-        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
-        /// </summary>
-        /// <param name="id">The setting identification number.</param>
-        /// <param name="value">The setting's value</param>
-        public NVDRS_SETTING_V1(uint id, string value) : this(id, NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE, value)
-        {
-        }
-
-        /// <summary>
-        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
-        /// </summary>
-        /// <param name="id">The setting identification number.</param>
-        /// <param name="value">The setting's value</param>
-        public NVDRS_SETTING_V1(uint id, uint value) : this(id, NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE, value)
-        {
-        }
-
-        /// <summary>
-        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
-        /// </summary>
-        /// <param name="id">The setting identification number.</param>
-        /// <param name="value">The setting's value</param>
-        public NVDRS_SETTING_V1(uint id, byte[] value) : this(id, NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE, value)
-        {
-        }
-
-        /// <summary>
-        ///     Gets the name of the setting
-        /// </summary>
-        public string Name
-        {
-            get => InternalSettingName.Value;
-        }
-
-        /// <summary>
-        ///     Gets the identification number of the setting
-        /// </summary>
-        public UInt32 SettingId
-        {
-            get => InternalSettingId;
-            private set => InternalSettingId = value;
-        }
-
-        /// <summary>
-        ///     Gets the setting's value type
-        /// </summary>
-        public NVDRS_SETTING_TYPE SettingType
-        {
-            get => InternalSettingType;
-            private set => InternalSettingType = value;
-        }
-
-        /// <summary>
-        ///     Gets the setting location
-        /// </summary>
-        public NVDRS_SETTING_LOCATION SettingLocation
-        {
-            get => InternalSettingLocation;
-        }
-
-        /// <summary>
-        ///     Gets a boolean value indicating if the current value is the predefined value
-        /// </summary>
-        public bool IsCurrentPredefined
-        {
-            get => InternalIsCurrentPredefined > 0;
-            internal set => InternalIsCurrentPredefined = value ? 1u : 0u;
-        }
-
-        /// <summary>
-        ///     Gets a boolean value indicating if the predefined value is available and valid
-        /// </summary>
-        public bool IsPredefinedValid
-        {
-            get => InternalIsPredefinedValid > 0;
-            internal set => InternalIsPredefinedValid = value ? 1u : 0u;
-        }
-
-        /// <summary>
-        ///     Returns the predefined value as an integer
-        /// </summary>
-        /// <returns>An integer representing the predefined value</returns>
-        public uint GetPredefinedValueAsInteger()
-        {
-            return InternalPredefinedValue.AsInteger();
-        }
-
-        /// <summary>
-        ///     Returns the predefined value as an array of bytes
-        /// </summary>
-        /// <returns>An byte array representing the predefined value</returns>
-        public byte[] GetPredefinedValueAsBinary()
-        {
-            return InternalPredefinedValue.AsBinary();
-        }
-
-        /// <summary>
-        ///     Returns the predefined value as an unicode string
-        /// </summary>
-        /// <returns>An unicode string representing the predefined value</returns>
-        public string GetPredefinedValueAsUnicodeString()
-        {
-            return InternalPredefinedValue.AsUnicodeString();
-        }
-
-        /// <summary>
-        ///     Gets the setting's predefined value
-        /// </summary>
-        public object PredefinedValue
-        {
-            get
+            try
             {
-                if (!IsPredefinedValid)
+                Marshal.PrelinkAll(typeof(GeneralDelegates));
+                available = true;
+            }
+            catch(Exception) { }
+        }
+
+        // TODO: Fix this is available so it actually tests if nvidia dll is available.
+        public static bool IsAvailable() { return available; }
+
+        /// <summary>
+        ///     This function returns information about the system's chipset.
+        /// </summary>
+        /// <returns>Information about the system's chipset</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid argument</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static IChipsetInfo GetChipsetInfo()
+        {
+            var getChipSetInfo = DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_SYS_GetChipSetInfo>();
+
+            foreach (var acceptType in getChipSetInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<IChipsetInfo>();
+
+                using (var chipsetInfoReference = ValueTypeReference.FromValueType(instance, acceptType))
                 {
-                    return 0;
-                }
+                    var status = getChipSetInfo(chipsetInfoReference);
 
-                switch (InternalSettingType)
-                {
-                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
 
-                        return GetPredefinedValueAsInteger();
-                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
 
-                        return GetPredefinedValueAsBinary();
-                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
-                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
-
-                        return GetPredefinedValueAsUnicodeString();
-                    default:
-
-                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                    return chipsetInfoReference.ToValueType<IChipsetInfo>(acceptType);
                 }
             }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+
+        /// <summary>
+        ///     This API returns display driver version and driver-branch string.
+        /// </summary>
+        /// <param name="branchVersion">Contains the driver-branch string after successful return.</param>
+        /// <returns>Returns driver version</returns>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: NVAPI not initialized</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        public static uint GetDriverAndBranchVersion(out string branchVersion)
+        {
+            var status = DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_SYS_GetDriverAndBranchVersion>()(
+                out var driverVersion, out var branchVersionShortString);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            branchVersion = branchVersionShortString.Value;
+
+            return driverVersion;
         }
 
         /// <summary>
-        ///     Returns the current value as an integer
+        ///     This function converts an NvAPI error code into a null terminated string.
         /// </summary>
-        /// <returns>An integer representing the current value</returns>
-        public uint GetCurrentValueAsInteger()
+        /// <param name="statusCode">The error code to convert</param>
+        /// <returns>The string corresponding to the error code</returns>
+        // ReSharper disable once FlagArgument
+        public static string GetErrorMessage(Status statusCode)
         {
-            return InternalCurrentValue.AsInteger();
+            statusCode =
+                DelegateFactory.GetDelegate< GeneralDelegates.NvAPI_GetErrorMessage>()(statusCode, out var message);
+
+            if (statusCode != Status.Ok)
+            {
+                return null;
+            }
+
+            return message.Value;
         }
 
         /// <summary>
-        ///     Returns the current value as an array of bytes
+        ///     This function returns a string describing the version of the NvAPI library. The contents of the string are human
+        ///     readable. Do not assume a fixed format.
         /// </summary>
-        /// <returns>An byte array representing the current value</returns>
-        public byte[] GetCurrentValueAsBinary()
+        /// <returns>User readable string giving NvAPI version information</returns>
+        /// <exception cref="NVIDIAApiException">See NVIDIAApiException.Status for the reason of the exception.</exception>
+        public static string GetInterfaceVersionString()
         {
-            return InternalCurrentValue.AsBinary();
+            var status =
+                DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_GetInterfaceVersionString>()(out var version);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return version.Value;
         }
 
         /// <summary>
-        ///     Returns the current value as an unicode string
+        ///     This function returns the current lid and dock information.
         /// </summary>
-        /// <returns>An unicode string representing the current value</returns>
-        public string GetCurrentValueAsUnicodeString()
+        /// <returns>Current lid and dock information</returns>
+        /// <exception cref="NVIDIAApiException">Status.Error: Generic error</exception>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: Requested feature not supported</exception>
+        /// <exception cref="NVIDIAApiException">Status.HandleInvalidated: Handle is no longer valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: NvAPI_Initialize() has not been called</exception>
+        public static LidDockParameters GetLidAndDockInfo()
         {
-            return InternalCurrentValue.AsUnicodeString();
+            var dockInfo = typeof(LidDockParameters).Instantiate<LidDockParameters>();
+            var status = DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_SYS_GetLidAndDockInfo>()(ref dockInfo);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return dockInfo;
         }
 
         /// <summary>
-        ///     Sets the passed value as the current value
+        ///     This function initializes the NvAPI library (if not already initialized) but always increments the ref-counter.
+        ///     This must be called before calling other NvAPI_ functions.
         /// </summary>
-        /// <param name="value">The new value for the setting</param>
-        public void SetCurrentValueAsInteger(uint value)
+        /// <exception cref="NVIDIAApiException">Status.Error: Generic error</exception>
+        /// <exception cref="NVIDIAApiException">Status.LibraryNotFound: nvapi.dll can not be loaded</exception>
+        public static void Initialize()
         {
-            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE)
+            var status = DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_Initialize>()();
+
+            if (status != Status.Ok)
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
-            }
-
-            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
-            IsCurrentPredefined = IsPredefinedValid && (uint)CurrentValue == (uint)PredefinedValue;
-        }
-
-        /// <summary>
-        ///     Sets the passed value as the current value
-        /// </summary>
-        /// <param name="value">The new value for the setting</param>
-        public void SetCurrentValueAsBinary(byte[] value)
-        {
-            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE)
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
-            }
-
-            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
-            IsCurrentPredefined =
-                IsPredefinedValid &&
-                ((byte[])CurrentValue)?.SequenceEqual((byte[])PredefinedValue ?? new byte[0]) == true;
-        }
-
-        /// <summary>
-        ///     Sets the passed value as the current value
-        /// </summary>
-        /// <param name="value">The new value for the setting</param>
-        public void SetCurrentValueAsUnicodeString(string value)
-        {
-            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE)
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
-            }
-
-            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
-            IsCurrentPredefined =
-                IsPredefinedValid &&
-                string.Equals(
-                    (string)CurrentValue,
-                    (string)PredefinedValue,
-                    StringComparison.InvariantCulture
-                );
-        }
-
-        /// <summary>
-        ///     Gets or sets the setting's current value
-        /// </summary>
-        public object CurrentValue
-        {
-            get
-            {
-                switch (InternalSettingType)
-                {
-                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
-
-                        return GetCurrentValueAsInteger();
-                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
-
-                        return GetCurrentValueAsBinary();
-                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
-                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
-
-                        return GetCurrentValueAsUnicodeString();
-                    default:
-
-                        throw new ArgumentOutOfRangeException(nameof(SettingType));
-                }
-            }
-            internal set
-            {
-                if (value is int intValue)
-                {
-                    SetCurrentValueAsInteger((uint)intValue);
-                }
-                else if (value is uint unsignedIntValue)
-                {
-                    SetCurrentValueAsInteger(unsignedIntValue);
-                }
-                else if (value is short shortValue)
-                {
-                    SetCurrentValueAsInteger((uint)shortValue);
-                }
-                else if (value is ushort unsignedShortValue)
-                {
-                    SetCurrentValueAsInteger(unsignedShortValue);
-                }
-                else if (value is long longValue)
-                {
-                    SetCurrentValueAsInteger((uint)longValue);
-                }
-                else if (value is ulong unsignedLongValue)
-                {
-                    SetCurrentValueAsInteger((uint)unsignedLongValue);
-                }
-                else if (value is byte byteValue)
-                {
-                    SetCurrentValueAsInteger(byteValue);
-                }
-                else if (value is string stringValue)
-                {
-                    SetCurrentValueAsUnicodeString(stringValue);
-                }
-                else if (value is byte[] binaryValue)
-                {
-                    SetCurrentValueAsBinary(binaryValue);
-                }
-                else
-                {
-                    throw new ArgumentException("Unacceptable argument type.", nameof(value));
-                }
-            }
-        }
-
-        public override bool Equals(object obj) => obj is NVDRS_SETTING_V1 other && this.Equals(other);
-
-        public bool Equals(NVDRS_SETTING_V1 other)
-        {
-            if (!(InternalVersion == other.InternalVersion &&
-            InternalSettingName.Equals(other.InternalSettingName) &&
-            InternalSettingId == other.InternalSettingId &&
-            InternalSettingType == other.InternalSettingType &&
-            InternalSettingLocation == other.InternalSettingLocation &&
-            InternalIsCurrentPredefined == other.InternalIsCurrentPredefined &&
-            InternalIsPredefinedValid == other.InternalIsPredefinedValid))
-            {
-                return false;
-            }
-            if (InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE &&
-                InternalCurrentValue.AsInteger() == other.InternalCurrentValue.AsInteger())
-            {
-                return true;
-            }
-            else if (InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE &&
-                InternalCurrentValue.AsBinary() == other.InternalCurrentValue.AsBinary())
-            {
-                return true;
-            }
-            else if ((InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE || InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE) &&
-                InternalCurrentValue.AsUnicodeString() == other.InternalCurrentValue.AsUnicodeString())
-            {
-                return true;
+                throw new NVIDIAApiException(status);
             }
             else
             {
-                return false;
-            }
-        }
-
-
-        public override Int32 GetHashCode()
-        {
-            return (InternalVersion, InternalSettingName, InternalSettingId, InternalSettingType, InternalSettingLocation, InternalIsCurrentPredefined, InternalIsPredefinedValid, InternalCurrentValue).GetHashCode();
-        }
-        public static bool operator ==(NVDRS_SETTING_V1 lhs, NVDRS_SETTING_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NVDRS_SETTING_V1 lhs, NVDRS_SETTING_V1 rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NVDRS_SETTING_V1 other = (NVDRS_SETTING_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-    public struct NVDRS_BINARY_SETTING : IEquatable<NVDRS_BINARY_SETTING>, ICloneable
-    {
-        public UInt32 ValueLength;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
-        public string ValueData;
-
-        public override bool Equals(object obj) => obj is NVDRS_BINARY_SETTING other && this.Equals(other);
-
-        public bool Equals(NVDRS_BINARY_SETTING other)
-        => ValueLength == other.ValueLength &&
-           ValueData.SequenceEqual(other.ValueData);
-
-        public override Int32 GetHashCode()
-        {
-            return (ValueLength, ValueData).GetHashCode();
-        }
-        public static bool operator ==(NVDRS_BINARY_SETTING lhs, NVDRS_BINARY_SETTING rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NVDRS_BINARY_SETTING lhs, NVDRS_BINARY_SETTING rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NVDRS_BINARY_SETTING other = (NVDRS_BINARY_SETTING)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    //NVDRS_SETTING_VALUE_UNION
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NVDRS_SETTING_VALUE : IEquatable<NVDRS_SETTING_VALUE>, ICloneable // Note: Version 1 of NVDRS_SETTINGS_VALUE structure
-    {
-        private const int UnicodeStringLength = UnicodeString.UnicodeStringLength;
-        private const int BinaryDataMax = 4096;
-
-        // Math.Max(BinaryDataMax + sizeof(uint), UnicodeStringLength * sizeof(ushort))
-        private const int FullStructureSize = 4100;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = FullStructureSize, ArraySubType = UnmanagedType.U1)]
-        public byte[] InternalBinaryValue;
-
-        /// <summary>
-        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed unicode string as the value
-        /// </summary>
-        /// <param name="value">The unicode string value</param>
-        public NVDRS_SETTING_VALUE(string value)
-        {
-            if (value?.Length > UnicodeStringLength)
-            {
-                value = value.Substring(0, UnicodeStringLength);
-            }
-
-            InternalBinaryValue = new byte[FullStructureSize];
-
-            var stringBytes = Encoding.Unicode.GetBytes(value ?? string.Empty);
-            Array.Copy(stringBytes, 0, InternalBinaryValue, 0, Math.Min(stringBytes.Length, InternalBinaryValue.Length));
-        }
-
-        /// <summary>
-        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed byte array as the value
-        /// </summary>
-        /// <param name="value">The byte array value</param>
-        public NVDRS_SETTING_VALUE(byte[] value)
-        {
-            InternalBinaryValue = new byte[FullStructureSize];
-
-            if (value?.Length > 0)
-            {
-                var arrayLength = Math.Min(value.Length, BinaryDataMax);
-                var arrayLengthBytes = BitConverter.GetBytes((uint)arrayLength);
-                Array.Copy(arrayLengthBytes, 0, InternalBinaryValue, 0, arrayLengthBytes.Length);
-                Array.Copy(value, 0, InternalBinaryValue, arrayLengthBytes.Length, arrayLength);
+                available = true;
             }
         }
 
         /// <summary>
-        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed integer as the value
+        ///     PRIVATE - Requests to restart the display driver
         /// </summary>
-        /// <param name="value">The integer value</param>
-        public NVDRS_SETTING_VALUE(uint value)
+        public static void RestartDisplayDriver()
         {
-            InternalBinaryValue = new byte[FullStructureSize];
-            var arrayLengthBytes = BitConverter.GetBytes(value);
-            Array.Copy(arrayLengthBytes, 0, InternalBinaryValue, 0, arrayLengthBytes.Length);
-        }
+            var status = DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_RestartDisplayDriver>()();
 
-        /// <summary>
-        ///     Returns the value as an integer
-        /// </summary>
-        /// <returns>An integer representing the value</returns>
-        public uint AsInteger()
-        {
-            return BitConverter.ToUInt32(InternalBinaryValue, 0);
-        }
-
-        /// <summary>
-        ///     Returns the value as an array of bytes
-        /// </summary>
-        /// <returns>An array of bytes representing the value</returns>
-        public byte[] AsBinary()
-        {
-            return InternalBinaryValue.Skip(sizeof(uint)).Take((int)AsInteger()).ToArray();
-        }
-
-        /// <summary>
-        ///     Returns the value as an unicode string
-        /// </summary>
-        /// <returns>An unicode string representing the value</returns>
-        public string AsUnicodeString()
-        {
-            return Encoding.Unicode.GetString(InternalBinaryValue).TrimEnd('\0');
-        }
-
-        public override bool Equals(object obj) => obj is NVDRS_SETTING_VALUE other && this.Equals(other);
-
-        public bool Equals(NVDRS_SETTING_VALUE other)
-        => InternalBinaryValue == other.InternalBinaryValue;
-
-        public override Int32 GetHashCode()
-        {
-            return (InternalBinaryValue).GetHashCode();
-        }
-        public static bool operator ==(NVDRS_SETTING_VALUE lhs, NVDRS_SETTING_VALUE rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NVDRS_SETTING_VALUE lhs, NVDRS_SETTING_VALUE rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NVDRS_SETTING_VALUE other = (NVDRS_SETTING_VALUE)MemberwiseClone();
-            return other;
-        }
-    }
-
-    //NVDRS_SETTING_VALUES
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NVDRS_SETTING_VALUES_V1 : IEquatable<NVDRS_SETTING_VALUES_V1>, ICloneable // Note: Version 1 of NVDRS_SETTING_VALUES_V1 structure
-    {
-        internal const int MaximumNumberOfValues = (int)NVImport.NVAPI_SETTING_MAX_VALUES;
-
-        public UInt32 Version;
-        public UInt32 NumberOfValues;
-        public NVDRS_SETTING_TYPE _SettingType;
-        public NVDRS_SETTING_VALUE InternalDefaultValue;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MaximumNumberOfValues)]
-        public NVDRS_SETTING_VALUE[] InternalValues;
-
-        /// <summary>
-        ///     Gets the setting's value type
-        /// </summary>
-        public NVDRS_SETTING_TYPE SettingType
-        {
-            get => _SettingType;
-        }
-
-        /// <summary>
-        ///     Gets a list of possible values for the setting
-        /// </summary>
-        public object[] Values
-        {
-            get
+            if (status != Status.Ok)
             {
-                switch (_SettingType)
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     Decrements the ref-counter and when it reaches ZERO, unloads NVAPI library.
+        ///     This must be called in pairs with NvAPI_Initialize.
+        ///     Note: By design, it is not mandatory to call NvAPI_Initialize before calling any NvAPI.
+        ///     When any NvAPI is called without first calling NvAPI_Initialize, the internal ref-counter will be implicitly
+        ///     incremented. In such cases, calling NvAPI_Initialize from a different thread will result in incrementing the
+        ///     ref-count again and the user has to call NvAPI_Unload twice to unload the library. However, note that the implicit
+        ///     increment of the ref-counter happens only once.
+        ///     If the client wants unload functionality, it is recommended to always call NvAPI_Initialize and NvAPI_Unload in
+        ///     pairs.
+        ///     Unloading NvAPI library is not supported when the library is in a resource locked state.
+        ///     Some functions in the NvAPI library initiates an operation or allocates certain resources and there are
+        ///     corresponding functions available, to complete the operation or free the allocated resources. All such function
+        ///     pairs are designed to prevent unloading NvAPI library.
+        ///     For example, if NvAPI_Unload is called after NvAPI_XXX which locks a resource, it fails with NVAPI_ERROR.
+        ///     Developers need to call the corresponding NvAPI_YYY to unlock the resources, before calling NvAPI_Unload again.
+        /// </summary>
+        /// <exception cref="NVIDIAApiException">Status.Error: Generic error</exception>
+        /// <exception cref="NVIDIAApiException">
+        ///     Status.ApiInUse: At least an API is still being called hence cannot unload NVAPI
+        ///     library from process
+        /// </exception>
+        public static void Unload()
+        {
+            var status = DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_Unload>()();
+            
+            available = false;
+            
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+
+        /// <summary>
+        ///     This API controls the display color configurations.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="colorData">The structure to be filled with information requested or applied on the display.</param>
+        public static void ColorControl<TColorData>(uint displayId, ref TColorData colorData)
+            where TColorData : struct, IColorData
+        {
+            var c = colorData as IColorData;
+            ColorControl(displayId, ref c);
+            colorData = (TColorData)c;
+        }
+
+        /// <summary>
+        ///     This API controls the display color configurations.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="colorData">The structure to be filled with information requested or applied on the display.</param>
+        public static void ColorControl(uint displayId, ref IColorData colorData)
+        {
+            var colorControl = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_Disp_ColorControl>();
+            var type = colorData.GetType();
+
+            if (!colorControl.Accepts().Contains(type))
+            {
+                throw new ArgumentOutOfRangeException(nameof(type));
+            }
+
+            using (var colorDataReference = ValueTypeReference.FromValueType(colorData, type))
+            {
+                var status = colorControl(displayId, colorDataReference);
+
+                if (status != Status.Ok)
                 {
-                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
-                        return ValuesAsInteger().Cast<object>().ToArray();
+                    throw new NVIDIAApiException(status);
+                }
 
-                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
-                        return ValuesAsBinary().Cast<object>().ToArray();
+                colorData = colorDataReference.ToValueType<IColorData>(type);
+            }
+        }
 
-                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
-                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
-                        return ValuesAsUnicodeString().Cast<object>().ToArray();
+        /// <summary>
+        ///     This API controls the display color configurations.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="colorDatas">The list of structures to be filled with information requested or applied on the display.</param>
+        /// <returns>The structure that succeed in requesting information or used for applying configuration on the display.</returns>
+        // ReSharper disable once IdentifierTypo
+        public static IColorData ColorControl(uint displayId, IColorData[] colorDatas)
+        {
+            foreach (var colorData in colorDatas)
+            {
+                try
+                {
+                    var c = colorData;
+                    ColorControl(displayId, ref c);
 
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                    return c;
+                }
+                catch (NVIDIAApiException e)
+                {
+                    if (e.Status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    throw;
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This function converts the unattached display handle to an active attached display handle.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        /// </summary>
+        /// <param name="display">An unattached display handle to convert.</param>
+        /// <returns>Display handle of newly created display.</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid UnAttachedDisplayHandle handle.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static DisplayHandle CreateDisplayFromUnAttachedDisplay(UnAttachedDisplayHandle display)
+        {
+            var createDisplayFromUnAttachedDisplay =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_CreateDisplayFromUnAttachedDisplay>();
+            var status = createDisplayFromUnAttachedDisplay(display, out var newDisplay);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return newDisplay;
+        }
+
+        /// <summary>
+        ///     This function deletes the custom display configuration, specified from the registry for all the displays whose
+        ///     display IDs are passed.
+        /// </summary>
+        /// <param name="displayIds">Array of display IDs on which custom display configuration should be removed.</param>
+        /// <param name="customDisplay">The custom display to remove.</param>
+        public static void DeleteCustomDisplay(uint[] displayIds, CustomDisplay customDisplay)
+        {
+            if (displayIds.Length == 0)
+            {
+                return;
+            }
+
+            using (var displayIdsReference = ValueTypeArray.FromArray(displayIds))
+            {
+                using (var customDisplayReference = ValueTypeReference.FromValueType(customDisplay))
+                {
+                    var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_DeleteCustomDisplay>()(
+                        displayIdsReference,
+                        (uint)displayIds.Length,
+                        customDisplayReference
+                    );
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
                 }
             }
         }
 
         /// <summary>
-        ///     Gets the default value of the setting
+        ///     This API enumerates the custom timing specified by the enum index.
         /// </summary>
-        public object DefaultValue
+        /// <param name="displayId">The display id of the display.</param>
+        /// <returns>A list of <see cref="CustomDisplay" /></returns>
+        public static IEnumerable<CustomDisplay> EnumCustomDisplays(uint displayId)
         {
-            get
+            var instance = typeof(CustomDisplay).Instantiate<CustomDisplay>();
+
+            using (var customDisplayReference = ValueTypeReference.FromValueType(instance))
             {
-                switch (_SettingType)
+                for (uint i = 0; i < uint.MaxValue; i++)
                 {
-                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
-                        return DefaultValueAsInteger();
+                    var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_EnumCustomDisplay>()(
+                        displayId,
+                        i,
+                        customDisplayReference
+                    );
 
-                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
-                        return DefaultValueAsBinary();
+                    if (status == Status.EndEnumeration)
+                    {
+                        yield break;
+                    }
 
-                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
-                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
-                        return DefaultValueAsUnicodeString();
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
 
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                    yield return customDisplayReference.ToValueType<CustomDisplay>().GetValueOrDefault();
                 }
             }
         }
 
         /// <summary>
-        ///     Returns the default value as an integer
+        ///     This function returns the handle of all NVIDIA displays
+        ///     Note: Display handles can get invalidated on a mode-set, so the calling applications need to re-enum the handles
+        ///     after every mode-set.
         /// </summary>
-        /// <returns>An integer representing the default value</returns>
-        public uint DefaultValueAsInteger()
+        /// <returns>Array of display handles.</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA device found in the system</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static DisplayHandle[] EnumNvidiaDisplayHandle()
         {
-            return InternalDefaultValue.AsInteger();
+            var enumNvidiaDisplayHandle =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_EnumNvidiaDisplayHandle>();
+            var results = new List<DisplayHandle>();
+            uint i = 0;
+
+            while (true)
+            {
+                var status = enumNvidiaDisplayHandle(i, out var displayHandle);
+
+                if (status == Status.EndEnumeration)
+                {
+                    break;
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                results.Add(displayHandle);
+                i++;
+            }
+
+            return results.ToArray();
         }
 
         /// <summary>
-        ///     Returns the default value as a byte array
+        ///     This function returns the handle of all unattached NVIDIA displays
+        ///     Note: Display handles can get invalidated on a mode-set, so the calling applications need to re-enum the handles
+        ///     after every mode-set.
         /// </summary>
-        /// <returns>An array of bytes representing the default value</returns>
-        public byte[] DefaultValueAsBinary()
+        /// <returns>Array of unattached display handles.</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA device found in the system</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static UnAttachedDisplayHandle[] EnumNvidiaUnAttachedDisplayHandle()
         {
-            return InternalDefaultValue.AsBinary();
+            var enumNvidiaUnAttachedDisplayHandle =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_EnumNvidiaUnAttachedDisplayHandle>();
+            var results = new List<UnAttachedDisplayHandle>();
+            uint i = 0;
+
+            while (true)
+            {
+                var status = enumNvidiaUnAttachedDisplayHandle(i, out var displayHandle);
+
+                if (status == Status.EndEnumeration)
+                {
+                    break;
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                results.Add(displayHandle);
+                i++;
+            }
+
+            return results.ToArray();
         }
 
         /// <summary>
-        ///     Returns the default value as an unicode string
+        ///     This function gets the active outputId associated with the display handle.
         /// </summary>
-        /// <returns>A string representing the default value</returns>
-        public string DefaultValueAsUnicodeString()
+        /// <param name="display">
+        ///     NVIDIA Display selection. It can be DisplayHandle.DefaultHandle or a handle enumerated from
+        ///     DisplayApi.EnumNVidiaDisplayHandle().
+        /// </param>
+        /// <returns>
+        ///     The active display output ID associated with the selected display handle hNvDisplay. The output id will have
+        ///     only one bit set. In the case of Clone or Span mode, this will indicate the display outputId of the primary display
+        ///     that the GPU is driving.
+        /// </returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedDisplayHandle: display is not a valid display handle.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static OutputId GetAssociatedDisplayOutputId(DisplayHandle display)
         {
-            return InternalDefaultValue.AsUnicodeString();
+            var getAssociatedDisplayOutputId =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetAssociatedDisplayOutputId>();
+            var status = getAssociatedDisplayOutputId(display, out var outputId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return outputId;
         }
 
         /// <summary>
-        ///     Returns the setting's possible values as an array of integers
+        ///     This function returns the handle of the NVIDIA display that is associated with the given display "name" (such as
+        ///     "\\.\DISPLAY1").
         /// </summary>
-        /// <returns>An array of integers representing the possible values</returns>
-        public uint[] ValuesAsInteger()
+        /// <param name="name">Display name</param>
+        /// <returns>Display handle of associated display</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Display name is null.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA device maps to that display name.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static DisplayHandle GetAssociatedNvidiaDisplayHandle(string name)
         {
-            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsInteger()).ToArray();
+            var getAssociatedNvidiaDisplayHandle =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetAssociatedNvidiaDisplayHandle>();
+            var status = getAssociatedNvidiaDisplayHandle(name, out var display);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return display;
         }
 
         /// <summary>
-        ///     Returns the setting's possible values as an array of byte arrays
+        ///     For a given NVIDIA display handle, this function returns a string (such as "\\.\DISPLAY1") to identify the display.
         /// </summary>
-        /// <returns>An array of byte arrays representing the possible values</returns>
-        public byte[][] ValuesAsBinary()
+        /// <param name="display">Handle of the associated display</param>
+        /// <returns>Name of the display</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Display handle is null.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA device maps to that display name.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static string GetAssociatedNvidiaDisplayName(DisplayHandle display)
         {
-            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsBinary()).ToArray();
+            var getAssociatedNvidiaDisplayName =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetAssociatedNvidiaDisplayName>();
+            var status = getAssociatedNvidiaDisplayName(display, out var displayName);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return displayName.Value;
         }
 
         /// <summary>
-        ///     Returns the setting's possible values as an array of unicode strings
+        ///     This function returns the handle of an unattached NVIDIA display that is associated with the given display "name"
+        ///     (such as "\\DISPLAY1").
         /// </summary>
-        /// <returns>An array of unicode strings representing the possible values</returns>
-        public string[] ValuesAsUnicodeString()
+        /// <param name="name">Display name</param>
+        /// <returns>Display handle of associated unattached display</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Display name is null.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA device maps to that display name.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static UnAttachedDisplayHandle GetAssociatedUnAttachedNvidiaDisplayHandle(string name)
         {
-            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsUnicodeString()).ToArray();
+            var getAssociatedUnAttachedNvidiaDisplayHandle =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetAssociatedUnAttachedNvidiaDisplayHandle>();
+            var status = getAssociatedUnAttachedNvidiaDisplayHandle(name, out var display);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return display;
         }
 
-        public override bool Equals(object obj) => obj is NVDRS_SETTING_VALUES_V1 other && this.Equals(other);
-
-        public bool Equals(NVDRS_SETTING_VALUES_V1 other)
-        => Version == other.Version &&
-            NumberOfValues == other.NumberOfValues &&
-            _SettingType == other._SettingType &&
-            InternalDefaultValue == other.InternalDefaultValue &&
-            InternalValues == other.InternalValues;
-
-
-        public override Int32 GetHashCode()
+        /// <summary>
+        ///     This API lets caller retrieve the current global display configuration.
+        ///     Note: User should dispose all returned PathInfo objects
+        /// </summary>
+        /// <returns>Array of path information</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid input parameter.</exception>
+        /// <exception cref="NVIDIAApiException">Status.DeviceBusy: ModeSet has not yet completed. Please wait and call it again.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static PathInfoV2[] GetDisplayConfig()
         {
-            return (Version, NumberOfValues, _SettingType, InternalDefaultValue, InternalValues).GetHashCode();
-        }
-        public static bool operator ==(NVDRS_SETTING_VALUES_V1 lhs, NVDRS_SETTING_VALUES_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NVDRS_SETTING_VALUES_V1 lhs, NVDRS_SETTING_VALUES_V1 rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NVDRS_SETTING_VALUES_V1 other = (NVDRS_SETTING_VALUES_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct UnicodeString
-    {
-        public const int UnicodeStringLength = 2048;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = UnicodeStringLength)]
-        public readonly string InternalValue;
-
-        public string Value
-        {
-            get => InternalValue;
-        }
-
-        public UnicodeString(string value)
-        {
-            InternalValue = value ?? string.Empty;
-        }
-
-        public override string ToString()
-        {
-            return Value;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_LOGICAL_GPU_DATA_V1 : IEquatable<NV_LOGICAL_GPU_DATA_V1>, ICloneable // Note: Version 1 of NV_BOARD_INFO_V1 structure
-    {
-        public UInt32 Version;                   //!< structure version
-        public IntPtr OSAdapterId;
-        public UInt32 PhysicalGPUCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)NVImport.NVAPI_MAX_PHYSICAL_GPUS)]
-        public PhysicalGpuHandle[] PhysicalGPUHandles;
-        public UInt32 Reserved;
-
-        public override bool Equals(object obj) => obj is NV_LOGICAL_GPU_DATA_V1 other && this.Equals(other);
-
-        public bool Equals(NV_LOGICAL_GPU_DATA_V1 other)
-        => Version == other.Version &&
-           PhysicalGPUCount == other.PhysicalGPUCount &&
-           PhysicalGPUHandles.SequenceEqual(other.PhysicalGPUHandles);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, PhysicalGPUCount, PhysicalGPUHandles).GetHashCode();
-        }
-        public static bool operator ==(NV_LOGICAL_GPU_DATA_V1 lhs, NV_LOGICAL_GPU_DATA_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_LOGICAL_GPU_DATA_V1 lhs, NV_LOGICAL_GPU_DATA_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_LOGICAL_GPU_DATA_V1 other = (NV_LOGICAL_GPU_DATA_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_BOARD_INFO_V1 : IEquatable<NV_BOARD_INFO_V1>, ICloneable // Note: Version 1 of NV_BOARD_INFO_V1 structure
-    {
-        public UInt32 Version;                   //!< structure version
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public byte[] BoardNum;               //!< Board Serial Number [16]
-
-        public override bool Equals(object obj) => obj is NV_BOARD_INFO_V1 other && this.Equals(other);
-
-        public bool Equals(NV_BOARD_INFO_V1 other)
-        => Version == other.Version &&
-           BoardNum.SequenceEqual(other.BoardNum);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, BoardNum).GetHashCode();
-        }
-        public static bool operator ==(NV_BOARD_INFO_V1 lhs, NV_BOARD_INFO_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_BOARD_INFO_V1 lhs, NV_BOARD_INFO_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_BOARD_INFO_V1 other = (NV_BOARD_INFO_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_EDID_V3 : IEquatable<NV_EDID_V3>, ICloneable // Note: Version 3 of NV_EDID_V3 structure
-    {
-        public UInt32 Version;        //!< Structure version
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_EDID_DATA_SIZE)]
-        public Byte[] EDID_Data;    // EDID_Data[NV_EDID_DATA_SIZE];
-        public UInt32 SizeofEDID;
-        public UInt32 EdidId;     //!< ID which always returned in a monotonically increasing counter.
-                                  //!< Across a split-EDID read we need to verify that all calls returned the same edidId.
-                                  //!< This counter is incremented if we get the updated EDID.
-        public UInt32 Offset;    //!< Which 256-byte page of the EDID we want to read. Start at 0.
-                                 //!< If the read succeeds with edidSize > NV_EDID_DATA_SIZE,
-                                 //!< call back again with offset+256 until we have read the entire buffer
-
-        public override bool Equals(object obj) => obj is NV_EDID_V3 other && this.Equals(other);
-
-        public bool Equals(NV_EDID_V3 other)
-        => Version == other.Version &&
-           EDID_Data.SequenceEqual(other.EDID_Data) &&
-           SizeofEDID == other.SizeofEDID &&
-           EdidId == other.EdidId &&
-           Offset.Equals(other.Offset);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, EDID_Data, SizeofEDID, EdidId, Offset).GetHashCode();
-        }
-        public static bool operator ==(NV_EDID_V3 lhs, NV_EDID_V3 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_EDID_V3 lhs, NV_EDID_V3 rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_EDID_V3 other = (NV_EDID_V3)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Ansi)]
-    public struct NV_TIMING_EXTRA : IEquatable<NV_TIMING_EXTRA>, ICloneable
-    {
-        public UInt32 Flags;          //!< Reserved for NVIDIA hardware-based enhancement, such as double-scan.
-        public ushort RefreshRate;            //!< Logical refresh rate to present
-        public UInt32 FrequencyInMillihertz;         //!< Physical vertical refresh rate in 0.001Hz
-        public ushort VerticalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
-        public ushort HorizontalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
-        public ushort HorizontalPixelRepetition;           //!< Bit-wise pixel repetition factor: 0x1:no pixel repetition; 0x2:each pixel repeats twice horizontally,..
-        public UInt32 TimingStandard;        //!< Timing standard
-        //[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
-        public string Name;      //!< Timing name
-
-        public override bool Equals(object obj) => obj is NV_TIMING_EXTRA other && this.Equals(other);
-
-        public bool Equals(NV_TIMING_EXTRA other)
-        => Flags == other.Flags &&
-           RefreshRate == other.RefreshRate &&
-           FrequencyInMillihertz == other.FrequencyInMillihertz &&
-           VerticalAspect == other.VerticalAspect &&
-           HorizontalAspect == other.HorizontalAspect &&
-           HorizontalPixelRepetition == other.HorizontalPixelRepetition &&
-           TimingStandard == other.TimingStandard &&
-           Name == other.Name;
-
-        public override Int32 GetHashCode()
-        {
-            return (Flags, RefreshRate, FrequencyInMillihertz, HorizontalAspect, HorizontalPixelRepetition, TimingStandard, Name).GetHashCode();
-        }
-        public static bool operator ==(NV_TIMING_EXTRA lhs, NV_TIMING_EXTRA rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_TIMING_EXTRA lhs, NV_TIMING_EXTRA rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_TIMING_EXTRA other = (NV_TIMING_EXTRA)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Ansi)]
-    public struct NV_TIMING_EXTRA_INTERNAL
-    {
-        public UInt32 Flags;          //!< Reserved for NVIDIA hardware-based enhancement, such as double-scan.
-        public ushort RefreshRate;            //!< Logical refresh rate to present
-        public UInt32 FrequencyInMillihertz;         //!< Physical vertical refresh rate in 0.001Hz
-        public ushort VerticalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
-        public ushort HorizontalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
-        public ushort HorizontalPixelRepetition;           //!< Bit-wise pixel repetition factor: 0x1:no pixel repetition; 0x2:each pixel repeats twice horizontally,..
-        public UInt32 TimingStandard;        //!< Timing standard
-        //[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
-        public string Name;      //!< Timing name
-
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_TIMING : IEquatable<NV_TIMING>, ICloneable
-    {
-        // VESA scan out timing parameters:
-        public ushort HVisible;         //!< horizontal visible
-        public ushort HBorder;          //!< horizontal border
-        public ushort HFrontPorch;      //!< horizontal front porch
-        public ushort HSyncWidth;       //!< horizontal sync width
-        public ushort HTotal;           //!< horizontal total
-        public TIMING_HORIZONTAL_SYNC_POLARITY HSyncPol;         //!< horizontal sync polarity: 1-negative, 0-positive
-
-        public ushort VVisible;         //!< vertical visible
-        public ushort VBorder;          //!< vertical border
-        public ushort VFrontPorch;      //!< vertical front porch
-        public ushort VSyncWidth;       //!< vertical sync width
-        public ushort VTotal;           //!< vertical total
-        public TIMING_VERTICAL_SYNC_POLARITY VSyncPol;         //!< vertical sync polarity: 1-negative, 0-positive
-
-        public TIMING_SCAN_MODE ScanMode;       //!< 1-Int32erlaced, 0-progressive
-        public UInt32 Pclk;             //!< pixel clock in 10 kHz
-
-        //other timing related extras
-        public NV_TIMING_EXTRA Extra;
-
-        public override bool Equals(object obj) => obj is NV_TIMING other && this.Equals(other);
-
-        public bool Equals(NV_TIMING other)
-        => HVisible == other.HVisible &&
-           HBorder == other.HBorder &&
-           HFrontPorch == other.HFrontPorch &&
-           HSyncWidth == other.HSyncWidth &&
-           HTotal == other.HTotal &&
-           HSyncPol == other.HSyncPol &&
-           VVisible == other.VVisible &&
-           VBorder == other.VBorder &&
-           VFrontPorch == other.VFrontPorch &&
-           VSyncWidth == other.VSyncWidth &&
-           VTotal == other.VTotal &&
-           VSyncPol == other.VSyncPol &&
-           ScanMode == other.ScanMode &&
-           Pclk == other.Pclk &&
-           Extra.Equals(other.Extra);
-
-        public override Int32 GetHashCode()
-        {
-            return (HVisible, HBorder, HFrontPorch, HSyncWidth, HTotal, HSyncPol, VVisible, VBorder, VFrontPorch, VSyncWidth, VTotal, VSyncPol, ScanMode, Pclk, Extra).GetHashCode();
-        }
-        public static bool operator ==(NV_TIMING lhs, NV_TIMING rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_TIMING lhs, NV_TIMING rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_TIMING other = (NV_TIMING)MemberwiseClone();
-            other.Extra = (NV_TIMING_EXTRA)Extra.Clone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_TIMING_INTERNAL
-    {
-        // VESA scan out timing parameters:
-        public ushort HVisible;         //!< horizontal visible
-        public ushort HBorder;          //!< horizontal border
-        public ushort HFrontPorch;      //!< horizontal front porch
-        public ushort HSyncWidth;       //!< horizontal sync width
-        public ushort HTotal;           //!< horizontal total
-        public TIMING_HORIZONTAL_SYNC_POLARITY HSyncPol;         //!< horizontal sync polarity: 1-negative, 0-positive
-
-        public ushort VVisible;         //!< vertical visible
-        public ushort VBorder;          //!< vertical border
-        public ushort VFrontPorch;      //!< vertical front porch
-        public ushort VSyncWidth;       //!< vertical sync width
-        public ushort VTotal;           //!< vertical total
-        public TIMING_VERTICAL_SYNC_POLARITY VSyncPol;         //!< vertical sync polarity: 1-negative, 0-positive
-
-        public TIMING_SCAN_MODE ScanMode;       //!< 1-Int32erlaced, 0-progressive
-        public UInt32 Pclk;             //!< pixel clock in 10 kHz
-
-        //other timing related extras - points to a NV_TIMING_EXTRA_INTERNAL
-        public NV_TIMING_EXTRA_INTERNAL Extra;
-
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_RECT : IEquatable<NV_RECT>, ICloneable
-    {
-        public UInt32 Left;
-        public UInt32 Top;
-        public UInt32 Right;
-        public UInt32 Bottom;
-
-        public override bool Equals(object obj) => obj is NV_RECT other && this.Equals(other);
-
-        public bool Equals(NV_RECT other)
-        => Left == other.Left &&
-           Top == other.Top &&
-           Right == other.Right &&
-           Bottom == other.Bottom;
-
-        public override Int32 GetHashCode()
-        {
-            return (Left, Top, Right, Bottom).GetHashCode();
-        }
-        public static bool operator ==(NV_RECT lhs, NV_RECT rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_RECT lhs, NV_RECT rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_RECT other = (NV_RECT)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_LUID : IEquatable<NV_LUID>, ICloneable
-    {
-        public UInt32 LowPart;
-        public UInt32 HighPart;
-
-        public override bool Equals(object obj) => obj is NV_LUID other && this.Equals(other);
-
-        public bool Equals(NV_LUID other)
-        => LowPart == other.LowPart &&
-           HighPart == other.HighPart;
-
-        public override Int32 GetHashCode()
-        {
-            return (LowPart, HighPart).GetHashCode();
-        }
-        public static bool operator ==(NV_LUID lhs, NV_LUID rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_LUID lhs, NV_LUID rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_LUID other = (NV_LUID)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_POSITION : IEquatable<NV_POSITION>, ICloneable
-    {
-        public Int32 X;
-        public Int32 Y;
-
-        public override bool Equals(object obj) => obj is NV_POSITION other && this.Equals(other);
-
-        public bool Equals(NV_POSITION other)
-        => X == other.X &&
-           Y == other.Y;
-
-        public override Int32 GetHashCode()
-        {
-            return (X, Y).GetHashCode();
-        }
-        public static bool operator ==(NV_POSITION lhs, NV_POSITION rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_POSITION lhs, NV_POSITION rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_POSITION_INTERNAL
-    {
-        public Int32 X;
-        public Int32 Y;
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_RESOLUTION : IEquatable<NV_RESOLUTION>, ICloneable
-    {
-        public UInt32 Width;
-        public UInt32 Height;
-        public UInt32 ColorDepth;
-
-        public override bool Equals(object obj) => obj is NV_RESOLUTION other && this.Equals(other);
-
-        public bool Equals(NV_RESOLUTION other)
-        => Width == other.Width &&
-           Height == other.Height &&
-           ColorDepth == other.ColorDepth;
-
-        public override Int32 GetHashCode()
-        {
-            return (Width, Height, ColorDepth).GetHashCode();
-        }
-        public static bool operator ==(NV_RESOLUTION lhs, NV_RESOLUTION rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_RESOLUTION lhs, NV_RESOLUTION rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_RESOLUTION other = (NV_RESOLUTION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_RESOLUTION_INTERNAL
-    {
-        public UInt32 Width;
-        public UInt32 Height;
-        public UInt32 ColorDepth;
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_VIEWPORTF : IEquatable<NV_VIEWPORTF>, ICloneable
-    {
-        public float X;    //!<  x-coordinate of the viewport top-left point
-        public float Y;    //!<  y-coordinate of the viewport top-left point
-        public float W;    //!<  Width of the viewport
-        public float H;    //!<  Height of the viewport
-
-        public NV_VIEWPORTF(float myX, float myY, float myW, float myH) : this()
-        {
-            X = myX;
-            Y = myY;
-            W = myW;
-            H = myH;
+            var getDisplayConfig = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetDisplayConfig>();
+            uint allAvailable = 0;
+            // First call to GetDisplayConfig returns the number of available paths
+            //var status = getDisplayConfig(ref allAvailable, ValueTypeArray.Null);
+            var status = getDisplayConfig(ref allAvailable, ValueTypeArray.Null);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            if (allAvailable == 0)
+            {
+                return new PathInfoV2[0];
+            }
+
+            foreach (var acceptType in getDisplayConfig.Accepts())
+            {
+                var count = allAvailable;
+                var instances = acceptType.Instantiate<PathInfoV2>().Repeat((int)allAvailable);
+
+                //using (var pathInfos = ValueTypeArray.FromArray(instances, acceptType))
+                using (var pathInfos = ValueTypeArray.FromArray(instances))
+                {
+                    // Second call to GetDisplayConfig returns the available paths in array, but missing the sourcemodeinfo
+                    status = getDisplayConfig(ref count, pathInfos);
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    instances = pathInfos.ToArray<PathInfoV2>((int)count, acceptType);
+                }
+
+                if (instances.Length <= 0)
+                {
+                    return new PathInfoV2[0];
+                }
+
+                // This allocation of memory is needed to contain the sourcemodeinfo for each path
+                // After allocation, we should make sure to dispose objects
+                // In this case however, the responsibility is on the user shoulders
+                instances = instances.AllocateAll().ToArray();
+
+                using (var pathInfos = ValueTypeArray.FromArray(instances))
+                {
+                    // Third call to GetDisplayConfig returns the available paths in array, with sourcemodeinfo included
+                    status = getDisplayConfig(ref count, pathInfos);
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return pathInfos.ToArray<PathInfoV2>((int)count, acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
         }
 
-        public override bool Equals(object obj) => obj is NV_VIEWPORTF other && this.Equals(other);
-
-        // NOTE: Using Math.Round for equality testing between floats.
-        /*public bool Equals(NV_VIEWPORTF other)
-        => Math.Round(X, 5) == Math.Round(other.X, 5) &&
-           Math.Round(Y, 5) == Math.Round(other.Y, 5) &&
-           Math.Round(W, 5) == Math.Round(other.W, 5) &&
-           Math.Round(H, 5) == Math.Round(other.H, 5);*/
-        public bool Equals(NV_VIEWPORTF other)
-        => X == other.X &&
-           Y == other.Y &&
-           W == other.W &&
-           H == other.H;
-
-        public override Int32 GetHashCode()
+        /// <summary>
+        ///     Gets the build title of the Driver Settings Database for a display
+        /// </summary>
+        /// <param name="displayHandle">The display handle to get DRS build title.</param>
+        /// <returns>The DRS build title.</returns>
+        public static string GetDisplayDriverBuildTitle(DisplayHandle displayHandle)
         {
-            return (X, Y, W, H).GetHashCode();
+            var status =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetDisplayDriverBuildTitle>()(displayHandle,
+                    out var name);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return name.Value;
         }
-        public static bool operator ==(NV_VIEWPORTF lhs, NV_VIEWPORTF rhs) => lhs.Equals(rhs);
 
-        public static bool operator !=(NV_VIEWPORTF lhs, NV_VIEWPORTF rhs) => !(lhs == rhs);
-
-        public object Clone()
+        /// <summary>
+        ///     This function retrieves the available driver memory footprint for the GPU associated with a display.
+        /// </summary>
+        /// <param name="displayHandle">Handle of the display for which the memory information of its GPU is to be extracted.</param>
+        /// <returns>The memory footprint available in the driver.</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static IDisplayDriverMemoryInfo GetDisplayDriverMemoryInfo(DisplayHandle displayHandle)
         {
-            NV_VIEWPORTF other = (NV_VIEWPORTF)MemberwiseClone();
-            return other;
+            var getMemoryInfo = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetDisplayDriverMemoryInfo>();
+
+            foreach (var acceptType in getMemoryInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<IDisplayDriverMemoryInfo>();
+
+                using (var displayDriverMemoryInfo = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getMemoryInfo(displayHandle, displayDriverMemoryInfo);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return displayDriverMemoryInfo.ToValueType<IDisplayDriverMemoryInfo>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
         }
-    }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1>, ICloneable // Requires Version 1
-    {
-        public UInt32 Version;
-
-        // Rotation and Scaling
-        public NV_ROTATE Rotation;       //!< (IN) rotation setting.
-        public NV_SCALING Scaling;        //!< (IN) scaling setting.
-
-        // Refresh Rate
-        public UInt32 RefreshRateInMillihertz;  //!< (IN) Non-Int32erlaced Refresh Rate of the mode, multiplied by 1000, 0 = ignored
-                                                //!< This is the value which driver reports to the OS.
-                                                // Flags
-                                                //public UInt32 Int32erlaced:1;   //!< (IN) Interlaced mode flag, ignored if refreshRate == 0
-                                                //public UInt32 primary:1;      //!< (IN) Declares primary display in clone configuration. This is *NOT* GDI Primary.
-                                                //!< Only one target can be primary per source. If no primary is specified, the first
-                                                //!< target will automatically be primary.
-                                                //public UInt32 isPanAndScanTarget:1; //!< Whether on this target Pan and Scan is enabled or has to be enabled. Valid only
-                                                //!< when the target is part of clone topology.
-                                                //public UInt32 disableVirtualModeSupport:1;
-                                                //public UInt32 isPreferredUnscaledTarget:1;
-                                                //public UInt32 reserved:27;
-        public UInt32 Flags;
-        // TV format information
-        public NV_GPU_CONNECTOR_TYPE ConnectorType;      //!< Specify connector type. For TV only, ignored if tvFormat == NV_DISPLAY_TV_FORMAT_NONE
-        public NV_DISPLAY_TV_FORMAT TvFormat;       //!< (IN) to choose the last TV format set this value to NV_DISPLAY_TV_FORMAT_NONE
-                                                    //!< In case of NvAPI_DISP_GetDisplayConfig(), this field will indicate the currently applied TV format;
-                                                    //!< if no TV format is applied, this field will have NV_DISPLAY_TV_FORMAT_NONE value.
-                                                    //!< In case of NvAPI_DISP_SetDisplayConfig(), this field should only be set in case of TVs;
-                                                    //!< for other displays this field will be ignored and resolution & refresh rate specified in input will be used to apply the TV format.
-
-        // Backend (raster) timing standard
-        public NV_TIMING_OVERRIDE TimingOverride;     //!< Ignored if timingOverride == NV_TIMING_OVERRIDE_CURRENT
-        public NV_TIMING Timing;             //!< Scan out timing, valid only if timingOverride == NV_TIMING_OVERRIDE_CUST
-                                             //!< The value NV_TIMING::NV_TIMINGEXT::rrx1k is obtained from the EDID. The driver may
-                                             //!< tweak this value for HDTV, stereo, etc., before reporting it to the OS.
-
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 other && this.Equals(other);
-
-        public bool Equals(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 other)
-        => Version == other.Version &&
-           Rotation == other.Rotation &&
-           Scaling == other.Scaling &&
-           RefreshRateInMillihertz == other.RefreshRateInMillihertz &&
-           Flags == other.Flags &&
-           ConnectorType == other.ConnectorType &&
-           //TvFormat == other.TvFormat &&    // Annoyingly the latest driver has issues when trying to detect the TVFormat just after a screen rotation (e.g. 0deg to 90deg). It sometimes will set this to 557 and other times to 320. 
-           // so I cannot use this in Equality comparisons because of this random change. This is ok though, as the TVFormat isn't used for applying settings as far as I am aware, so either value 
-           // the driver sets seems to work ok.
-           TimingOverride == other.TimingOverride &&
-           Timing.Equals(other.Timing);
-
-        public override Int32 GetHashCode()
+        /// <summary>
+        ///     This API retrieves the Display Id of a given display by display name. The display must be active to retrieve the
+        ///     displayId. In the case of clone mode or Surround gaming, the primary or top-left display will be returned.
+        /// </summary>
+        /// <param name="displayName">Name of display (Eg: "\\DISPLAY1" to retrieve the displayId for.</param>
+        /// <returns>Display ID of the requested display.</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more args passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry-point not available</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static uint GetDisplayIdByDisplayName(string displayName)
         {
-            return (Version, Rotation, Scaling, RefreshRateInMillihertz, Flags, ConnectorType, TvFormat, TimingOverride, Timing).GetHashCode();
+            var getDisplayIdByDisplayName =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetDisplayIdByDisplayName>();
+            var status = getDisplayIdByDisplayName(displayName, out var display);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return display;
         }
-        public static bool operator ==(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 rhs) => lhs.Equals(rhs);
 
-        public static bool operator !=(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 rhs) => !(lhs == rhs);
-
-        public object Clone()
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API returns the current saturation level from the Digital Vibrance Control
+        /// </summary>
+        /// <param name="display">
+        ///     The targeted display's handle.
+        /// </param>
+        /// <returns>An instance of the PrivateDisplayDVCInfo structure containing requested information.</returns>
+        public static PrivateDisplayDVCInfo GetDVCInfo(DisplayHandle display)
         {
-            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 other = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)MemberwiseClone();
-            other.Timing = (NV_TIMING)Timing.Clone();
-            return other;
+            var instance = typeof(PrivateDisplayDVCInfo).Instantiate<PrivateDisplayDVCInfo>();
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetDVCInfo>()(
+                    display,
+                    OutputId.Invalid,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return displayDVCInfoReference.ToValueType<PrivateDisplayDVCInfo>().GetValueOrDefault();
+            }
         }
-    }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL
-    {
-        public UInt32 Version;
-
-        // Rotation and Scaling
-        public NV_ROTATE Rotation;       //!< (IN) rotation setting.
-        public NV_SCALING Scaling;        //!< (IN) scaling setting.
-
-        // Refresh Rate
-        public UInt32 RefreshRateInMillihertz;  //!< (IN) Non-Int32erlaced Refresh Rate of the mode, multiplied by 1000, 0 = ignored
-                                                //!< This is the value which driver reports to the OS.
-                                                // Flags
-                                                //public UInt32 Int32erlaced:1;   //!< (IN) Interlaced mode flag, ignored if refreshRate == 0
-                                                //public UInt32 primary:1;      //!< (IN) Declares primary display in clone configuration. This is *NOT* GDI Primary.
-                                                //!< Only one target can be primary per source. If no primary is specified, the first
-                                                //!< target will automatically be primary.
-                                                //public UInt32 isPanAndScanTarget:1; //!< Whether on this target Pan and Scan is enabled or has to be enabled. Valid only
-                                                //!< when the target is part of clone topology.
-                                                //public UInt32 disableVirtualModeSupport:1;
-                                                //public UInt32 isPreferredUnscaledTarget:1;
-                                                //public UInt32 reserved:27;
-        public UInt32 Flags;
-        // TV format information
-        public NV_GPU_CONNECTOR_TYPE ConnectorType;      //!< Specify connector type. For TV only, ignored if tvFormat == NV_DISPLAY_TV_FORMAT_NONE
-        public NV_DISPLAY_TV_FORMAT TvFormat;       //!< (IN) to choose the last TV format set this value to NV_DISPLAY_TV_FORMAT_NONE
-                                                    //!< In case of NvAPI_DISP_GetDisplayConfig(), this field will indicate the currently applied TV format;
-                                                    //!< if no TV format is applied, this field will have NV_DISPLAY_TV_FORMAT_NONE value.
-                                                    //!< In case of NvAPI_DISP_SetDisplayConfig(), this field should only be set in case of TVs;
-                                                    //!< for other displays this field will be ignored and resolution & refresh rate specified in input will be used to apply the TV format.
-
-        // Backend (raster) timing standard
-        public NV_TIMING_OVERRIDE TimingOverride;     //!< Ignored if timingOverride == NV_TIMING_OVERRIDE_CURRENT
-        public NV_TIMING_INTERNAL Timing;             // Points to a NV_TIMING_INTERNAL object
-                                                      //!< Scan out timing, valid only if timingOverride == NV_TIMING_OVERRIDE_CUST
-                                                      //!< The value NV_TIMING::NV_TIMINGEXT::rrx1k is obtained from the EDID. The driver may
-                                                      //!< tweak this value for HDTV, stereo, etc., before reporting it to the OS.
-
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>, ICloneable
-    {
-        public UInt32 DisplayId;  //!< Display ID
-        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 Details;    //!< NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO - May be NULL if no advanced settings are required
-        public UInt32 WindowsCCDTargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
-
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 other && this.Equals(other);
-
-        public bool Equals(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 other)
-        => DisplayId == other.DisplayId &&
-           Details.Equals(other.Details) &&
-           WindowsCCDTargetId == other.WindowsCCDTargetId;
-
-        public override Int32 GetHashCode()
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API returns the current saturation level from the Digital Vibrance Control
+        /// </summary>
+        /// <param name="displayId">
+        ///     The targeted display output id.
+        /// </param>
+        /// <returns>An instance of the PrivateDisplayDVCInfo structure containing requested information.</returns>
+        public static PrivateDisplayDVCInfo GetDVCInfo(OutputId displayId)
         {
-            return (DisplayId, Details, WindowsCCDTargetId).GetHashCode();
+            var instance = typeof(PrivateDisplayDVCInfo).Instantiate<PrivateDisplayDVCInfo>();
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetDVCInfo>()(
+                    DisplayHandle.DefaultHandle,
+                    displayId,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return displayDVCInfoReference.ToValueType<PrivateDisplayDVCInfo>().GetValueOrDefault();
+            }
         }
-        public static bool operator ==(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 rhs) => lhs.Equals(rhs);
 
-        public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 rhs) => !(lhs == rhs);
-
-        public object Clone()
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API returns the current and the default saturation level from the Digital Vibrance Control.
+        ///     The difference between this API and the 'GetDVCInfo()' includes the possibility to get the default
+        ///     saturation level as well as to query under saturated configurations.
+        /// </summary>
+        /// <param name="display">
+        ///     The targeted display's handle.
+        /// </param>
+        /// <returns>An instance of the PrivateDisplayDVCInfoEx structure containing requested information.</returns>
+        public static PrivateDisplayDVCInfoEx GetDVCInfoEx(DisplayHandle display)
         {
-            NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 otherTargetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)MemberwiseClone();
-            otherTargetInfo.Details = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)Details.Clone();
-            return otherTargetInfo;
+            var instance = typeof(PrivateDisplayDVCInfoEx).Instantiate<PrivateDisplayDVCInfoEx>();
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetDVCInfoEx>()(
+                    display,
+                    OutputId.Invalid,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return displayDVCInfoReference.ToValueType<PrivateDisplayDVCInfoEx>().GetValueOrDefault();
+            }
         }
-    }
 
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1>, ICloneable
-    {
-        public UInt32 DisplayId;  //!< Display ID
-        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 Details;    //!< May be NULL if no advanced settings are required
-
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other && this.Equals(other);
-
-        public bool Equals(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other)
-        => DisplayId == other.DisplayId &&
-           Details.Equals(other.Details);
-
-        public override Int32 GetHashCode()
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API returns the current and the default saturation level from the Digital Vibrance Control.
+        ///     The difference between this API and the 'GetDVCInfo()' includes the possibility to get the default
+        ///     saturation level as well as to query under saturated configurations.
+        /// </summary>
+        /// <param name="displayId">
+        ///     The targeted display output id.
+        /// </param>
+        /// <returns>An instance of the PrivateDisplayDVCInfoEx structure containing requested information.</returns>
+        public static PrivateDisplayDVCInfoEx GetDVCInfoEx(OutputId displayId)
         {
-            return (DisplayId, Details).GetHashCode();
+            var instance = typeof(PrivateDisplayDVCInfoEx).Instantiate<PrivateDisplayDVCInfoEx>();
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetDVCInfoEx>()(
+                    DisplayHandle.DefaultHandle,
+                    displayId,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return displayDVCInfoReference.ToValueType<PrivateDisplayDVCInfoEx>().GetValueOrDefault();
+            }
         }
-        public static bool operator ==(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 rhs) => lhs.Equals(rhs);
 
-        public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 rhs) => !(lhs == rhs);
-
-        public object Clone()
+        /// <summary>
+        ///     This API returns the current info-frame data on the specified device (monitor).
+        /// </summary>
+        /// <param name="displayHandle">The display handle of the device to retrieve HDMI support information for.</param>
+        /// <param name="outputId">The target display's output id, or <see cref="OutputId.Invalid"/> to determine automatically.</param>
+        /// <returns>An instance of a type implementing the <see cref="IHDMISupportInfo" /> interface.</returns>
+        public static IHDMISupportInfo GetHDMISupportInfo(DisplayHandle displayHandle, OutputId outputId = OutputId.Invalid)
         {
-            NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1)MemberwiseClone();
-            other.Details = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)Details.Clone();
-            return other;
+            var getHDMISupportInfo = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetHDMISupportInfo>();
+
+            foreach (var acceptType in getHDMISupportInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<IHDMISupportInfo>();
+
+                using (var supportInfoReference = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getHDMISupportInfo(displayHandle, (uint)outputId, supportInfoReference);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return supportInfoReference.ToValueType<IHDMISupportInfo>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
         }
-    }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V2>, ICloneable // Version is 2
-    {
-        public UInt32 Version;
-        public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
-
-        public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
-        //[MarshalAs(UnmanagedType.ByValArray)]
-        public NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[] TargetInfo;
-        public NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 SourceModeInfo;             //!< May be NULL if mode info is not important
-        //public IntPtr SourceModeInfo;             //!< May be NULL if mode info is not important
-        //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
-        //public UInt32 reserved : 31;              //!< Must be 0
-        public UInt32 Flags;
-        //!< Used by Non-NVIDIA adapter for pointer to OS Adapter of LUID
-        //!< type, type casted to void *.
-        public IntPtr OSAdapterID;
-
-        public bool IsNonNVIDIAAdapter => Flags.GetBit(0); //!< if bit is set then this path uses a non-nvidia adapter
-
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_INFO_V2 other && this.Equals(other);
-
-        public bool Equals(NV_DISPLAYCONFIG_PATH_INFO_V2 other)
+        /// <summary>
+        ///     This API returns the current info-frame data on the specified device (monitor).
+        /// </summary>
+        /// <param name="displayId">The display id of the device to retrieve HDMI support information for.</param>
+        /// <returns>An instance of a type implementing the <see cref="IHDMISupportInfo" /> interface.</returns>
+        public static IHDMISupportInfo GetHDMISupportInfo(uint displayId)
         {
-            if (!(Version == other.Version &&
-            SourceId == other.SourceId &&
-            TargetInfoCount == other.TargetInfoCount &&
-            SourceModeInfo.Equals(other.SourceModeInfo) &&
-            Flags == other.Flags))
+            var getHDMISupportInfo = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetHDMISupportInfo>();
+
+            foreach (var acceptType in getHDMISupportInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<IHDMISupportInfo>();
+
+                using (var supportInfoReference = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getHDMISupportInfo(DisplayHandle.DefaultHandle, displayId, supportInfoReference);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return supportInfoReference.ToValueType<IHDMISupportInfo>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API returns the current default HUE angle
+        /// </summary>
+        /// <param name="display">
+        ///     The targeted display's handle.
+        /// </param>
+        /// <returns>An instance of the PrivateDisplayHUEInfo structure containing requested information.</returns>
+        public static PrivateDisplayHUEInfo GetHUEInfo(DisplayHandle display)
+        {
+            var instance = typeof(PrivateDisplayHUEInfo).Instantiate<PrivateDisplayHUEInfo>();
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetHUEInfo>()(
+                    display,
+                    OutputId.Invalid,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return displayDVCInfoReference.ToValueType<PrivateDisplayHUEInfo>().GetValueOrDefault();
+            }
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API returns the current and default HUE angle
+        /// </summary>
+        /// <param name="displayId">
+        ///     The targeted display output id.
+        /// </param>
+        /// <returns>An instance of the PrivateDisplayHUEInfo structure containing requested information.</returns>
+        public static PrivateDisplayHUEInfo GetHUEInfo(OutputId displayId)
+        {
+            var instance = typeof(PrivateDisplayHUEInfo).Instantiate<PrivateDisplayHUEInfo>();
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetHUEInfo>()(
+                    DisplayHandle.DefaultHandle,
+                    displayId,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return displayDVCInfoReference.ToValueType<PrivateDisplayHUEInfo>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This API returns all the monitor capabilities.
+        /// </summary>
+        /// <param name="displayId">The target display id.</param>
+        /// <param name="capabilitiesType">The type of capabilities requested.</param>
+        /// <returns>An instance of <see cref="MonitorCapabilities" />.</returns>
+        public static MonitorCapabilities? GetMonitorCapabilities(
+            uint displayId,
+            MonitorCapabilitiesType capabilitiesType)
+        {
+            var instance = new MonitorCapabilities(capabilitiesType);
+
+            using (var monitorCapReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetMonitorCapabilities>()(
+                    displayId,
+                    monitorCapReference
+                );
+
+                if (status == Status.Error)
+                {
+                    return null;
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+
+                instance = monitorCapReference.ToValueType<MonitorCapabilities>().GetValueOrDefault();
+
+                if (!instance.IsValid)
+                {
+                    return null;
+                }
+
+                return instance;
+            }
+        }
+
+        /// <summary>
+        ///     This API returns all the color formats and bit depth values supported by a given display port monitor.
+        /// </summary>
+        /// <param name="displayId">The target display id.</param>
+        /// <returns>A list of <see cref="MonitorColorData" /> instances.</returns>
+        public static MonitorColorData[] GetMonitorColorCapabilities(uint displayId)
+        {
+            var getMonitorColorCapabilities =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetMonitorColorCapabilities>();
+            var count = 0u;
+
+            var status = getMonitorColorCapabilities(displayId, ValueTypeArray.Null, ref count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            if (count == 0)
+            {
+                return new MonitorColorData[0];
+            }
+
+            var array = typeof(MonitorColorData).Instantiate<MonitorColorData>().Repeat((int)count);
+
+            using (var monitorCapsReference = ValueTypeArray.FromArray(array))
+            {
+                status = getMonitorColorCapabilities(displayId, monitorCapsReference, ref count);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return monitorCapsReference.ToArray<MonitorColorData>((int)count);
+
+            }
+        }
+
+        /// <summary>
+        ///     This API returns the Display ID of the GDI Primary.
+        /// </summary>
+        /// <returns>Display ID of the GDI Primary.</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: GDI Primary not on an NVIDIA GPU.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry-point not available</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static uint GetGDIPrimaryDisplayId()
+        {
+            var getGDIPrimaryDisplay =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetGDIPrimaryDisplayId>();
+            var status = getGDIPrimaryDisplay(out var displayId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return displayId;
+        }
+
+        /// <summary>
+        ///     This API gets High Dynamic Range (HDR) capabilities of the display.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="driverExpandDefaultHDRParameters">
+        ///     A boolean value indicating if the EDID HDR parameters should be expanded (true) or the actual current HDR
+        ///     parameters should be reported (false).
+        /// </param>
+        /// <returns>HDR capabilities of the display</returns>
+        public static HDRCapabilitiesV1 GetHDRCapabilities(uint displayId, bool driverExpandDefaultHDRParameters)
+        {
+            var hdrCapabilities = new HDRCapabilitiesV1(driverExpandDefaultHDRParameters);
+
+            using (var hdrCapabilitiesReference = ValueTypeReference.FromValueType(hdrCapabilities))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_Disp_GetHdrCapabilities>()(
+                    displayId,
+                    hdrCapabilitiesReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return hdrCapabilitiesReference.ToValueType<HDRCapabilitiesV1>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This API queries current state of one of the various scan-out composition parameters on the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to query the configuration.</param>
+        /// <param name="parameter">Scan-out composition parameter to by queried.</param>
+        /// <param name="container">Additional container containing the returning data associated with the specified parameter.</param>
+        /// <returns>Scan-out composition parameter value.</returns>
+        public static ScanOutCompositionParameterValue GetScanOutCompositionParameter(
+            uint displayId,
+            ScanOutCompositionParameter parameter,
+            out float container)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_GetScanOutCompositionParameter>()(
+                displayId,
+                parameter,
+                out var parameterValue,
+                out container
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return parameterValue;
+        }
+
+        /// <summary>
+        ///     This API queries the desktop and scan-out portion of the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to query the configuration.</param>
+        /// <returns>Desktop area to displayId mapping information.</returns>
+        public static ScanOutInformationV1 GetScanOutConfiguration(uint displayId)
+        {
+            var instance = typeof(ScanOutInformationV1).Instantiate<ScanOutInformationV1>();
+
+            using (var scanOutInformationReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_GetScanOutConfigurationEx>()(
+                    displayId,
+                    scanOutInformationReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return scanOutInformationReference.ToValueType<ScanOutInformationV1>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This API queries the desktop and scan-out portion of the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to query the configuration.</param>
+        /// <param name="desktopRectangle">Desktop area of the display in desktop coordinates.</param>
+        /// <param name="scanOutRectangle">Scan-out area of the display relative to desktopRect.</param>
+        public static void GetScanOutConfiguration(
+            uint displayId,
+            out Rectangle desktopRectangle,
+            out Rectangle scanOutRectangle)
+        {
+            var instance1 = typeof(Rectangle).Instantiate<Rectangle>();
+            var instance2 = typeof(Rectangle).Instantiate<Rectangle>();
+
+            using (var desktopRectangleReference = ValueTypeReference.FromValueType(instance1))
+            {
+                using (var scanOutRectangleReference = ValueTypeReference.FromValueType(instance2))
+                {
+                    var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_GetScanOutConfiguration>()(
+                        displayId,
+                        desktopRectangleReference,
+                        scanOutRectangleReference
+                    );
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    desktopRectangle = desktopRectangleReference.ToValueType<Rectangle>().GetValueOrDefault();
+                    scanOutRectangle = scanOutRectangleReference.ToValueType<Rectangle>().GetValueOrDefault();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This API queries current state of the intensity feature on the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to query the configuration.</param>
+        /// <returns>Intensity state data.</returns>
+        public static ScanOutIntensityStateV1 GetScanOutIntensityState(uint displayId)
+        {
+            var instance = typeof(ScanOutIntensityStateV1).Instantiate<ScanOutIntensityStateV1>();
+
+            using (var scanOutIntensityReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_GetScanOutIntensityState>()(
+                    displayId,
+                    scanOutIntensityReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return scanOutIntensityReference.ToValueType<ScanOutIntensityStateV1>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This API queries current state of the warping feature on the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to query the configuration.</param>
+        /// <returns>The warping state data.</returns>
+        public static ScanOutWarpingStateV1 GetScanOutWarpingState(uint displayId)
+        {
+            var instance = typeof(ScanOutWarpingStateV1).Instantiate<ScanOutWarpingStateV1>();
+
+            using (var scanOutWarpingReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_GetScanOutWarpingState>()(
+                    displayId,
+                    scanOutWarpingReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return scanOutWarpingReference.ToValueType<ScanOutWarpingStateV1>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This API lets caller enumerate all the supported NVIDIA display views - nView and DualView modes.
+        /// </summary>
+        /// <param name="display">
+        ///     NVIDIA Display selection. It can be DisplayHandle.DefaultHandle or a handle enumerated from
+        ///     DisplayApi.EnumNVidiaDisplayHandle().
+        /// </param>
+        /// <returns>Array of supported views.</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid input parameter.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static TargetViewMode[] GetSupportedViews(DisplayHandle display)
+        {
+            var getSupportedViews = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetSupportedViews>();
+            uint allAvailable = 0;
+            var status = getSupportedViews(display, ValueTypeArray.Null, ref allAvailable);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            if (allAvailable == 0)
+            {
+                return new TargetViewMode[0];
+            }
+
+            if (!getSupportedViews.Accepts().Contains(typeof(TargetViewMode)))
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            using (
+                var viewModes =
+                    ValueTypeArray.FromArray(TargetViewMode.Standard.Repeat((int)allAvailable).Cast<object>(),
+                        typeof(TargetViewMode).GetEnumUnderlyingType()))
+            {
+                status = getSupportedViews(display, viewModes, ref allAvailable);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return viewModes.ToArray<TargetViewMode>((int)allAvailable,
+                    typeof(TargetViewMode).GetEnumUnderlyingType());
+            }
+        }
+
+        /// <summary>
+        ///     This function calculates the timing from the visible width/height/refresh-rate and timing type info.
+        /// </summary>
+        /// <param name="displayId">Display ID of the display.</param>
+        /// <param name="timingInput">Inputs used for calculating the timing.</param>
+        /// <returns>An instance of the <see cref="Timing" /> structure.</returns>
+        public static Timing GetTiming(uint displayId, TimingInput timingInput)
+        {
+            var instance = typeof(Timing).Instantiate<Timing>();
+
+            using (var timingInputReference = ValueTypeReference.FromValueType(timingInput))
+            {
+                using (var timingReference = ValueTypeReference.FromValueType(instance))
+                {
+                    var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetTiming>()(
+                        displayId,
+                        timingInputReference,
+                        timingReference
+                    );
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return timingReference.ToValueType<Timing>().GetValueOrDefault();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This function is used to set data for Adaptive Sync Display.
+        /// </summary>
+        /// <param name="displayId">Display ID of the display.</param>
+        /// <param name="adaptiveSyncData">SetAdaptiveSyncData containing the information about the values of parameters that are to be set on given display.</param>
+        /// <returns>An instance of the <see cref="Timing" /> structure.</returns>
+        public static void GetAdaptiveSyncData(uint displayId, out GetAdaptiveSyncData adaptiveSyncData)
+        {
+            var getAdaptiveSyncData = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_GetAdaptiveSyncData>();
+
+            adaptiveSyncData = typeof(GetAdaptiveSyncData).Instantiate<GetAdaptiveSyncData>();
+
+            using (var adaptiveSyncDataReference = ValueTypeReference.FromValueType(adaptiveSyncData))
+            {
+                var status = getAdaptiveSyncData(displayId, adaptiveSyncDataReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                adaptiveSyncData = adaptiveSyncDataReference.ToValueType<GetAdaptiveSyncData>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This function is used to set data for Adaptive Sync Display.
+        /// </summary>
+        /// <param name="displayId">Display ID of the display.</param>
+        /// <param name="adaptiveSyncData">SetAdaptiveSyncData containing the information about the values of parameters that are to be set on given display.</param>
+        /// <returns>An instance of the <see cref="Timing" /> structure.</returns>
+        public static void SetAdaptiveSyncData(uint displayId, GetAdaptiveSyncData adaptiveSyncData)
+        {
+            var setAdaptiveSyncData = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_SetAdaptiveSyncData>();
+
+            using (var adaptiveSyncDataReference = ValueTypeReference.FromValueType(adaptiveSyncData))
+            {
+                var status = setAdaptiveSyncData(displayId, adaptiveSyncDataReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                adaptiveSyncData = adaptiveSyncDataReference.ToValueType<GetAdaptiveSyncData>().GetValueOrDefault();
+            }
+        }
+
+
+
+        /// <summary>
+        ///     This function returns the display name given, for example, "\\DISPLAY1", using the unattached NVIDIA display handle
+        /// </summary>
+        /// <param name="display">Handle of the associated unattached display</param>
+        /// <returns>Name of the display</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Display handle is null.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA device maps to that display name.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static string GetUnAttachedAssociatedDisplayName(UnAttachedDisplayHandle display)
+        {
+            var getUnAttachedAssociatedDisplayName =
+                DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GetUnAttachedAssociatedDisplayName>();
+            var status = getUnAttachedAssociatedDisplayName(display, out var displayName);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return displayName.Value;
+        }
+
+        /// <summary>
+        ///     This API controls the InfoFrame values.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="infoFrameData">The structure to be filled with information requested or applied on the display.</param>
+        public static void InfoFrameControl(uint displayId, ref InfoFrameData infoFrameData)
+        {
+            var infoFrameControl = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_Disp_InfoFrameControl>();
+
+            using (var infoFrameDataReference = ValueTypeReference.FromValueType(infoFrameData))
+            {
+                var status = infoFrameControl(displayId, infoFrameDataReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                infoFrameData = infoFrameDataReference.ToValueType<InfoFrameData>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This API is used to restore the display configuration, that was changed by calling <see cref="TryCustomDisplay" />.
+        ///     This function must be called only after a custom display configuration is tested on the hardware, using
+        ///     <see cref="TryCustomDisplay" />, otherwise no action is taken.
+        ///     On Vista, <see cref="RevertCustomDisplayTrial" /> should be called with an active display that was affected during
+        ///     the <see cref="TryCustomDisplay" /> call, per GPU.
+        /// </summary>
+        /// <param name="displayIds">Array of display ids on which custom display configuration is to be reverted.</param>
+        public static void RevertCustomDisplayTrial(uint[] displayIds)
+        {
+            if (displayIds.Length == 0)
+            {
+                return;
+            }
+
+            using (var displayIdsReference = ValueTypeArray.FromArray(displayIds))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_RevertCustomDisplayTrial>()(
+                    displayIdsReference,
+                    (uint)displayIds.Length
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This API configures High Dynamic Range (HDR) and Extended Dynamic Range (EDR) output.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="hdrColorData">The structure to be filled with information requested or applied on the display.</param>
+        public static void HDRColorControl<THDRColorData>(uint displayId, ref THDRColorData hdrColorData)
+            where THDRColorData : struct, IHDRColorData
+        {
+            var c = hdrColorData as IHDRColorData;
+            HDRColorControl(displayId, ref c);
+            hdrColorData = (THDRColorData)c;
+        }
+
+        /// <summary>
+        ///     This API configures High Dynamic Range (HDR) and Extended Dynamic Range (EDR) output.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="hdrColorData">The structure to be filled with information requested or applied on the display.</param>
+        public static void HDRColorControl(uint displayId, ref IHDRColorData hdrColorData)
+        {
+            var hdrColorControl = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_Disp_HdrColorControl>();
+            var type = hdrColorData.GetType();
+
+            if (!hdrColorControl.Accepts().Contains(type))
+            {
+                throw new ArgumentOutOfRangeException(nameof(type));
+            }
+
+            using (var hdrColorDataReference = ValueTypeReference.FromValueType(hdrColorData, type))
+            {
+                var status = hdrColorControl(displayId, hdrColorDataReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                hdrColorData = hdrColorDataReference.ToValueType<IHDRColorData>(type);
+            }
+        }
+
+        /// <summary>
+        ///     This function saves the current hardware display configuration on the specified Display IDs as a custom display
+        ///     configuration.
+        ///     This function should be called right after <see cref="TryCustomDisplay" /> to save the custom display from the
+        ///     current hardware context.
+        ///     This function will not do anything if the custom display configuration is not tested on the hardware.
+        /// </summary>
+        /// <param name="displayIds">Array of display ids on which custom display configuration is to be saved.</param>
+        /// <param name="isThisOutputIdOnly">
+        ///     If set, the saved custom display will only be applied on the monitor with the same
+        ///     outputId.
+        /// </param>
+        /// <param name="isThisMonitorOnly">
+        ///     If set, the saved custom display will only be applied on the monitor with the same EDID
+        ///     ID or the same TV connector in case of analog TV.
+        /// </param>
+        public static void SaveCustomDisplay(uint[] displayIds, bool isThisOutputIdOnly, bool isThisMonitorOnly)
+        {
+            if (displayIds.Length == 0)
+            {
+                return;
+            }
+
+            using (var displayIdsReference = ValueTypeArray.FromArray(displayIds))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_SaveCustomDisplay>()(
+                    displayIdsReference,
+                    (uint)displayIds.Length,
+                    isThisOutputIdOnly ? 1 : (uint)0,
+                    isThisMonitorOnly ? 1 : (uint)0
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This API configures High Dynamic Range (HDR) and Extended Dynamic Range (EDR) output.
+        /// </summary>
+        /// <param name="displayId">The targeted display id.</param>
+        /// <param name="colorDatas">The list of structures to be filled with information requested or applied on the display.</param>
+        /// <returns>The structure that succeed in requesting information or used for applying configuration on the display.</returns>
+        // ReSharper disable once IdentifierTypo
+        public static IHDRColorData HDRColorControl(uint displayId, IHDRColorData[] colorDatas)
+        {
+            foreach (var colorData in colorDatas)
+            {
+                try
+                {
+                    var c = colorData;
+                    HDRColorControl(displayId, ref c);
+
+                    return c;
+                }
+                catch (NVIDIAApiException e)
+                {
+                    if (e.Status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    throw;
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This API lets caller apply a global display configuration across multiple GPUs.
+        ///     If all sourceIds are zero, then NvAPI will pick up sourceId's based on the following criteria :
+        ///     - If user provides SourceModeInfo then we are trying to assign 0th SourceId always to GDIPrimary.
+        ///     This is needed since active windows always moves along with 0th sourceId.
+        ///     - For rest of the paths, we are incrementally assigning the SourceId per adapter basis.
+        ///     - If user doesn't provide SourceModeInfo then NVAPI just picks up some default SourceId's in incremental order.
+        ///     Note : NVAPI will not intelligently choose the SourceIDs for any configs that does not need a mode-set.
+        /// </summary>
+        /// <param name="pathInfos">Array of path information</param>
+        /// <param name="flags">Flags for applying settings</param>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: NVAPI not initialized</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid input parameter.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static void SetDisplayConfig(PathInfoV2[] pathInfos, DisplayConfigFlags flags)
+        {
+            var setDisplayConfig = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_SetDisplayConfig>();
+
+            if (pathInfos.Length > 0 && !setDisplayConfig.Accepts().Contains(pathInfos[0].GetType()))
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            using (var arrayReference = ValueTypeArray.FromArray(pathInfos))
+            {
+                var status = setDisplayConfig((uint)pathInfos.Length, arrayReference, flags);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API sets the current saturation level for the Digital Vibrance Control
+        /// </summary>
+        /// <param name="display">
+        ///     The targeted display's handle.
+        /// </param>
+        /// <param name="currentLevel">
+        ///     The saturation level to be set.
+        /// </param>
+        public static void SetDVCLevel(DisplayHandle display, int currentLevel)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetDVCLevel>()(
+                display,
+                OutputId.Invalid,
+                currentLevel
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API sets the current saturation level for the Digital Vibrance Control
+        /// </summary>
+        /// <param name="displayId">
+        ///     The targeted display output id.
+        /// </param>
+        /// <param name="currentLevel">
+        ///     The saturation level to be set.
+        /// </param>
+        public static void SetDVCLevel(OutputId displayId, int currentLevel)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetDVCLevel>()(
+                DisplayHandle.DefaultHandle,
+                displayId,
+                currentLevel
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API sets the current saturation level for the Digital Vibrance Control.
+        ///     The difference between this API and the 'SetDVCLevel()' includes the possibility to set under saturated
+        ///     levels.
+        /// </summary>
+        /// <param name="display">
+        ///     The targeted display's handle.
+        /// </param>
+        /// <param name="currentLevel">
+        ///     The saturation level to be set.
+        /// </param>
+        public static void SetDVCLevelEx(DisplayHandle display, int currentLevel)
+        {
+            var instance = new PrivateDisplayDVCInfoEx(currentLevel);
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetDVCLevelEx>()(
+                    display,
+                    OutputId.Invalid,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API sets the current saturation level for the Digital Vibrance Control.
+        ///     The difference between this API and the 'SetDVCLevel()' includes the possibility to set under saturated
+        ///     levels.
+        /// </summary>
+        /// <param name="displayId">
+        ///     The targeted display output id.
+        /// </param>
+        /// <param name="currentLevel">
+        ///     The saturation level to be set.
+        /// </param>
+        public static void SetDVCLevelEx(OutputId displayId, int currentLevel)
+        {
+            var instance = new PrivateDisplayDVCInfoEx(currentLevel);
+
+            using (var displayDVCInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetDVCLevelEx>()(
+                    DisplayHandle.DefaultHandle,
+                    displayId,
+                    displayDVCInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API sets the current HUE angle
+        /// </summary>
+        /// <param name="display">
+        ///     The targeted display's handle.
+        /// </param>
+        /// <param name="currentAngle">
+        ///     The HUE angle to be set.
+        /// </param>
+        public static void SetHUEAngle(DisplayHandle display, int currentAngle)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetHUEAngle>()(
+                display,
+                OutputId.Invalid,
+                currentAngle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// [PRIVATE]
+        /// <summary>
+        ///     This API sets the current HUE angle
+        /// </summary>
+        /// <param name="displayId">
+        ///     The targeted display output id.
+        /// </param>
+        /// <param name="currentAngle">
+        ///     The HUE angle to be set.
+        /// </param>
+        public static void SetHUEAngle(OutputId displayId, int currentAngle)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetHUEAngle>()(
+                DisplayHandle.DefaultHandle,
+                displayId,
+                currentAngle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function overrides the refresh rate on the given display.
+        ///     The new refresh rate can be applied right away in this API call or deferred to be applied with the next OS
+        ///     mode-set.
+        ///     The override is good for only one mode-set (regardless whether it's deferred or immediate).
+        /// </summary>
+        /// <param name="display">The display handle to override refresh rate of.</param>
+        /// <param name="refreshRate">The override refresh rate.</param>
+        /// <param name="isDeferred">
+        ///     A boolean value indicating if the refresh rate override should be deferred to the next OS
+        ///     mode-set.
+        /// </param>
+        public static void SetRefreshRateOverride(DisplayHandle display, float refreshRate, bool isDeferred)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetRefreshRateOverride>()(
+                display,
+                OutputId.Invalid,
+                refreshRate,
+                isDeferred ? 1u : 0
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function overrides the refresh rate on the given output mask.
+        ///     The new refresh rate can be applied right away in this API call or deferred to be applied with the next OS
+        ///     mode-set.
+        ///     The override is good for only one mode-set (regardless whether it's deferred or immediate).
+        /// </summary>
+        /// <param name="outputMask">The output(s) to override refresh rate of.</param>
+        /// <param name="refreshRate">The override refresh rate.</param>
+        /// <param name="isDeferred">
+        ///     A boolean value indicating if the refresh rate override should be deferred to the next OS
+        ///     mode-set.
+        /// </param>
+        public static void SetRefreshRateOverride(OutputId outputMask, float refreshRate, bool isDeferred)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_SetRefreshRateOverride>()(
+                DisplayHandle.DefaultHandle,
+                outputMask,
+                refreshRate,
+                isDeferred ? 1u : 0
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API sets various parameters that configure the scan-out composition feature on the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to apply the intensity control.</param>
+        /// <param name="parameter">The scan-out composition parameter to be set.</param>
+        /// <param name="parameterValue">The value to be set for the specified parameter.</param>
+        /// <param name="container">Additional container for data associated with the specified parameter.</param>
+        // ReSharper disable once TooManyArguments
+        public static void SetScanOutCompositionParameter(
+            uint displayId,
+            ScanOutCompositionParameter parameter,
+            ScanOutCompositionParameterValue parameterValue,
+            ref float container)
+        {
+            var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_SetScanOutCompositionParameter>()(
+                displayId,
+                parameter,
+                parameterValue,
+                ref container
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API enables and sets up per-pixel intensity feature on the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to apply the intensity control.</param>
+        /// <param name="scanOutIntensity">The intensity texture info.</param>
+        /// <param name="isSticky">Indicates whether the settings will be kept over a reboot.</param>
+        public static void SetScanOutIntensity(uint displayId, IScanOutIntensity scanOutIntensity, out bool isSticky)
+        {
+            Status status;
+            int isStickyInt;
+
+            if (scanOutIntensity == null)
+            {
+                status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_SetScanOutIntensity>()(
+                    displayId,
+                    ValueTypeReference.Null,
+                    out isStickyInt
+                );
+            }
+            else
+            {
+                using (var scanOutWarpingReference =
+                    ValueTypeReference.FromValueType(scanOutIntensity, scanOutIntensity.GetType()))
+                {
+                    status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_SetScanOutIntensity>()(
+                        displayId,
+                        scanOutWarpingReference,
+                        out isStickyInt
+                    );
+                }
+            }
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            isSticky = isStickyInt > 0;
+        }
+
+        /// <summary>
+        ///     This API enables and sets up the warping feature on the specified display.
+        /// </summary>
+        /// <param name="displayId">Combined physical display and GPU identifier of the display to apply the intensity control.</param>
+        /// <param name="scanOutWarping">The warping data info.</param>
+        /// <param name="maximumNumberOfVertices">The maximum number of vertices.</param>
+        /// <param name="isSticky">Indicates whether the settings will be kept over a reboot.</param>
+        // ReSharper disable once TooManyArguments
+        public static void SetScanOutWarping(
+            uint displayId,
+            ScanOutWarpingV1? scanOutWarping,
+            ref int maximumNumberOfVertices,
+            out bool isSticky)
+        {
+            Status status;
+            int isStickyInt;
+
+            if (scanOutWarping == null || maximumNumberOfVertices == 0)
+            {
+                maximumNumberOfVertices = 0;
+                status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_SetScanOutWarping>()(
+                    displayId,
+                    ValueTypeReference.Null,
+                    ref maximumNumberOfVertices,
+                    out isStickyInt
+                );
+            }
+            else
+            {
+                using (var scanOutWarpingReference = ValueTypeReference.FromValueType(scanOutWarping.Value))
+                {
+                    status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_GPU_SetScanOutWarping>()(
+                        displayId,
+                        scanOutWarpingReference,
+                        ref maximumNumberOfVertices,
+                        out isStickyInt
+                    );
+                }
+            }
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            isSticky = isStickyInt > 0;
+        }
+
+        /// <summary>
+        ///     This API is used to set up a custom display without saving the configuration on multiple displays.
+        /// </summary>
+        /// <param name="displayIdCustomDisplayPairs">A list of display ids with corresponding custom display instances.</param>
+        public static void TryCustomDisplay(IDictionary<uint, CustomDisplay> displayIdCustomDisplayPairs)
+        {
+            if (displayIdCustomDisplayPairs.Count == 0)
+            {
+                return;
+            }
+
+            using (var displayIdsReference = ValueTypeArray.FromArray(displayIdCustomDisplayPairs.Keys.ToArray()))
+            {
+                using (var customDisplaysReference =
+                    ValueTypeArray.FromArray(displayIdCustomDisplayPairs.Values.ToArray()))
+                {
+                    var status = DelegateFactory.GetDelegate<DisplayDelegates.NvAPI_DISP_TryCustomDisplay>()(
+                        displayIdsReference,
+                        (uint)displayIdCustomDisplayPairs.Count,
+                        customDisplaysReference
+                    );
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+                }
+            }
+        }
+
+
+            /// <summary>
+        ///     This API enables or disables the current Mosaic topology based on the setting of the incoming 'enable' parameter.
+        ///     An "enable" setting enables the current (previously set) Mosaic topology.
+        ///     Note that when the current Mosaic topology is retrieved, it must have an isPossible value of true or an error will
+        ///     occur.
+        ///     A "disable" setting disables the current Mosaic topology.
+        ///     The topology information will persist, even across reboots.
+        ///     To re-enable the Mosaic topology, call this function again with the enable parameter set to true.
+        /// </summary>
+        /// <param name="enable">true to enable the current Mosaic topo, false to disable it.</param>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: Mosaic is not supported with the existing hardware.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.TopologyNotPossible: The current topology is not currently possible.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ModeChangeFailed: There was an error changing the display mode.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        public static void EnableCurrentTopology(bool enable)
+        {
+            var status =
+                DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_EnableCurrentTopo>()((uint)(enable ? 1 : 0));
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     Enumerates the current active grid topologies. This includes Mosaic, IG, and Panoramic topologies, as well as
+        ///     single displays.
+        /// </summary>
+        /// <returns>The list of active grid topologies.</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static GridTopologyV2[] EnumDisplayGrids()
+        {
+            var mosaicEnumDisplayGrids =
+                DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_EnumDisplayGrids>();
+
+            var totalAvailable = 0u;
+            var status = mosaicEnumDisplayGrids(ValueTypeArray.Null, ref totalAvailable);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            if (totalAvailable == 0)
+            {
+                return new GridTopologyV2[0];
+            }
+
+            var instance = typeof(GridTopologyV2).Instantiate<GridTopologyV2>().Repeat((int)totalAvailable);
+
+            using (
+                var gridTopologiesByRef = ValueTypeArray.FromArray(instance.Cast<object>().AsEnumerable(),typeof(GridTopologyV2)))
+            {
+                status = mosaicEnumDisplayGrids(gridTopologiesByRef, ref totalAvailable);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return gridTopologiesByRef.ToArray<GridTopologyV2>((int)totalAvailable);
+                //return gridTopologiesByRef.ToArray<GridTopologyV2>((int)GridTopologyV2.MaxDisplays);
+
+            }
+            
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     Determines the set of available display modes for a given grid topology.
+        /// </summary>
+        /// <param name="gridTopology">The grid topology to use.</param>
+        /// <returns></returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static DisplaySettingsV2[] EnumDisplayModes(GridTopologyV2 gridTopology)
+        {
+            var mosaicEnumDisplayModes = DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_EnumDisplayModes>();
+
+            using (var gridTopologyByRef = ValueTypeReference.FromValueType(gridTopology, gridTopology.GetType()))
+            {
+                var totalAvailable = 0u;
+                var status = mosaicEnumDisplayModes(gridTopologyByRef, ValueTypeArray.Null, ref totalAvailable);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                if (totalAvailable == 0)
+                {
+                    return new DisplaySettingsV2[0];
+                }
+
+                foreach (var acceptType in mosaicEnumDisplayModes.Accepts(2))
+                {
+                    var counts = totalAvailable;
+                    var instance = acceptType.Instantiate<IDisplaySettings>();
+
+                    using (
+                        var displaySettingByRef =
+                            ValueTypeArray.FromArray(instance.Repeat((int)counts).AsEnumerable()))
+                    {
+                        status = mosaicEnumDisplayModes(gridTopologyByRef, displaySettingByRef, ref counts);
+
+                        if (status == Status.IncompatibleStructureVersion)
+                        {
+                            continue;
+                        }
+
+                        if (status != Status.Ok)
+                        {
+                            throw new NVIDIAApiException(status);
+                        }
+
+                        return displaySettingByRef.ToArray<DisplaySettingsV2>((int)counts, acceptType);
+                    }
+                }
+
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+        }
+
+        /// <summary>
+        ///     This API returns information for the current Mosaic topology.
+        ///     This includes topology, display settings, and overlap values.
+        ///     You can call NvAPI_Mosaic_GetTopoGroup() with the topology if you require more information.
+        ///     If there isn't a current topology, then TopologyBrief.Topology will be Topology.None.
+        /// </summary>
+        /// <param name="topoBrief">The current Mosaic topology</param>
+        /// <param name="displaySettings">The current per-display settings</param>
+        /// <param name="overlapX">The pixel overlap between horizontal displays</param>
+        /// <param name="overlapY">The pixel overlap between vertical displays</param>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: Mosaic is not supported with the existing hardware.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        // ReSharper disable once TooManyArguments
+        public static void GetCurrentTopology(
+            out TopologyBrief topoBrief,
+            out IDisplaySettings displaySettings,
+            out int overlapX,
+            out int overlapY)
+        {
+            var mosaicGetCurrentTopo = DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_GetCurrentTopo>();
+            topoBrief = typeof(TopologyBrief).Instantiate<TopologyBrief>();
+
+            foreach (var acceptType in mosaicGetCurrentTopo.Accepts())
+            {
+                displaySettings = acceptType.Instantiate<IDisplaySettings>();
+
+                using (var displaySettingsByRef = ValueTypeReference.FromValueType(displaySettings, acceptType))
+                {
+                    var status = mosaicGetCurrentTopo(ref topoBrief, displaySettingsByRef, out overlapX, out overlapY);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    displaySettings = displaySettingsByRef.ToValueType<IDisplaySettings>(acceptType);
+
+                    return;
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This API returns the X and Y overlap limits required if the given Mosaic topology and display settings are to be
+        ///     used.
+        /// </summary>
+        /// <param name="topoBrief">
+        ///     The topology for getting limits This must be one of the topo briefs returned from
+        ///     GetSupportedTopoInfo().
+        /// </param>
+        /// <param name="displaySettings">
+        ///     The display settings for getting the limits. This must be one of the settings returned
+        ///     from GetSupportedTopoInfo().
+        /// </param>
+        /// <param name="minOverlapX">X overlap minimum</param>
+        /// <param name="maxOverlapX">X overlap maximum</param>
+        /// <param name="minOverlapY">Y overlap minimum</param>
+        /// <param name="maxOverlapY">Y overlap maximum</param>
+        /// <exception cref="ArgumentException">displaySettings is of invalid type.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: Mosaic is not supported with the existing hardware.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        // ReSharper disable once TooManyArguments
+        public static void GetOverlapLimits(
+            TopologyBrief topoBrief,
+            IDisplaySettings displaySettings,
+            out int minOverlapX,
+            out int maxOverlapX,
+            out int minOverlapY,
+            out int maxOverlapY)
+        {
+            var mosaicGetOverlapLimits = DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_GetOverlapLimits>();
+
+            if (!mosaicGetOverlapLimits.Accepts().Contains(displaySettings.GetType()))
+            {
+                throw new ArgumentException("Parameter type is not supported.", nameof(displaySettings));
+            }
+
+            using (
+                var displaySettingsByRef = ValueTypeReference.FromValueType(displaySettings, displaySettings.GetType()))
+            {
+                var status = mosaicGetOverlapLimits(topoBrief, displaySettingsByRef, out minOverlapX, out maxOverlapX,
+                    out minOverlapY, out maxOverlapY);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This API returns information on the topologies and display resolutions supported by Mosaic mode.
+        ///     NOTE: Not all topologies returned can be set immediately. Some of the topologies returned might not be valid for
+        ///     one reason or another.  It could be due to mismatched or missing displays.  It could also be because the required
+        ///     number of GPUs is not found.
+        ///     Once you get the list of supported topologies, you can call GetTopologyGroup() with one of the Mosaic topologies if
+        ///     you need more information about it.
+        ///     It is possible for this function to return NVAPI_OK with no topologies listed in the return structure.  If this is
+        ///     the case, it means that the current hardware DOES support Mosaic, but with the given configuration no valid
+        ///     topologies were found.  This most likely means that SLI was not enabled for the hardware. Once enabled, you should
+        ///     see valid topologies returned from this function.
+        /// </summary>
+        /// <param name="topologyType">The type of topologies the caller is interested in getting.</param>
+        /// <returns>Information about what topologies and display resolutions are supported for Mosaic.</returns>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: Mosaic is not supported with the existing hardware.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: TopologyType is invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry-point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static ISupportedTopologiesInfo GetSupportedTopologiesInfo(TopologyType topologyType)
+        {
+            var mosaicGetSupportedTopoInfo =
+                DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_GetSupportedTopoInfo>();
+
+            foreach (var acceptType in mosaicGetSupportedTopoInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<ISupportedTopologiesInfo>();
+
+                using (var supportedTopologiesInfoByRef = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = mosaicGetSupportedTopoInfo(supportedTopologiesInfoByRef, topologyType);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return supportedTopologiesInfoByRef.ToValueType<ISupportedTopologiesInfo>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This API returns a structure filled with the details of the specified Mosaic topology.
+        ///     If the pTopoBrief passed in matches the current topology, then information in the brief and group structures will
+        ///     reflect what is current. Thus the brief would have the current 'enable' status, and the group would have the
+        ///     current overlap values. If there is no match, then the returned brief has an 'enable' status of FALSE (since it is
+        ///     obviously not enabled), and the overlap values will be 0.
+        /// </summary>
+        /// <param name="topoBrief">
+        ///     The topology for getting the details. This must be one of the topology briefs returned from
+        ///     GetSupportedTopoInfo().
+        /// </param>
+        /// <returns>The topology details matching the brief</returns>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: Mosaic is not supported with the existing hardware.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        public static TopologyGroup GetTopologyGroup(TopologyBrief topoBrief)
+        {
+            var result = typeof(TopologyGroup).Instantiate<TopologyGroup>();
+            var status =
+                DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_GetTopoGroup>()(topoBrief, ref result);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return result;
+        }
+
+
+        /// <summary>
+        ///     This API returns the viewports that would be applied on the requested display.
+        /// </summary>
+        /// <param name="displayId">
+        ///     Display ID of a single display in the active mosaic topology to query.
+        /// </param>
+        /// <param name="srcWidth">
+        ///     Width of full display topology. If both width and height are 0, the current resolution is used.
+        /// </param>
+        /// <param name="srcHeight">
+        ///     Height of full display topology. If both width and height are 0, the current resolution is used.
+        /// </param>
+        /// <param name="viewports">
+        ///     Array of NV_RECT viewports. SUPPORTED OS: Windows 10 and higher. If the requested resolution is a single-wide
+        ///     resolution, only viewports[0] will contain the viewport details, regardless of which display is driving the display.
+        /// </param>
+        /// <param name="bezelCorrected">
+        ///     Returns 1 if the requested resolution is bezel corrected. May be NULL.
+        /// </param>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.MosaicNotACtive: The display does not belong to an active Mosaic Topology.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        public static void GetDisplayViewportsByResolution(UInt32 displayId, UInt32 srcWidth, UInt32 srcHeight, out ViewPortF[] viewports, out byte bezelCorrected)
+        {
+            int count = (int)NvConstants.NV_MOSAIC_MAX_DISPLAYS;
+            //var instances = typeof(ViewPortF).Instantiate<ViewPortF>().Repeat(count);
+
+            ValueTypeArray viewportReference = new ValueTypeArray();
+
+            bezelCorrected = 0;
+
+            var status =
+            DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_GetDisplayViewportsByResolution>()(displayId, srcWidth, srcHeight, out viewportReference, out bezelCorrected);
+
+            if (status != Status.Ok)
+            {               
+                throw new NVIDIAApiException(status);
+            }
+
+            viewports = viewportReference.ToArray<ViewPortF>(count);
+
+        }
+
+
+        /// <summary>
+        ///     This API sets the Mosaic topology and performs a mode switch using the given display settings.
+        /// </summary>
+        /// <param name="topoBrief">
+        ///     The topology to set. This must be one of the topologies returned from GetSupportedTopoInfo(),
+        ///     and it must have an isPossible value of true.
+        /// </param>
+        /// <param name="displaySettings">
+        ///     The per display settings to be used in the Mosaic mode. This must be one of the settings
+        ///     returned from GetSupportedTopoInfo().
+        /// </param>
+        /// <param name="overlapX">
+        ///     The pixel overlap to use between horizontal displays (use positive a number for overlap, or a
+        ///     negative number to create a gap.) If the overlap is out of bounds for what is possible given the topo and display
+        ///     setting, the overlap will be clamped.
+        /// </param>
+        /// <param name="overlapY">
+        ///     The pixel overlap to use between vertical displays (use positive a number for overlap, or a
+        ///     negative number to create a gap.) If the overlap is out of bounds for what is possible given the topo and display
+        ///     setting, the overlap will be clamped.
+        /// </param>
+        /// <param name="enable">
+        ///     If true, the topology being set will also be enabled, meaning that the mode set will occur. If
+        ///     false, you don't want to be in Mosaic mode right now, but want to set the current Mosaic topology so you can enable
+        ///     it later with EnableCurrentTopo()
+        /// </param>
+        /// <exception cref="ArgumentException">displaySettings is of invalid type.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: Mosaic is not supported with the existing hardware.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        // ReSharper disable once TooManyArguments
+        public static void SetCurrentTopology(
+            TopologyBrief topoBrief,
+            IDisplaySettings displaySettings,
+            int overlapX,
+            int overlapY,
+            bool enable)
+        {
+            var mosaicSetCurrentTopo = DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_SetCurrentTopo>();
+
+            if (!mosaicSetCurrentTopo.Accepts().Contains(displaySettings.GetType()))
+            {
+                throw new ArgumentException("Parameter type is not supported.", nameof(displaySettings));
+            }
+
+            using (
+                var displaySettingsByRef = ValueTypeReference.FromValueType(displaySettings, displaySettings.GetType()))
+            {
+                var status = mosaicSetCurrentTopo(topoBrief, displaySettingsByRef, overlapX, overlapY,
+                    (uint)(enable ? 1 : 0));
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Sets a new display topology, replacing any existing topologies that use the same displays.
+        ///     This function will look for an SLI configuration that will allow the display topology to work.
+        ///     To revert to a single display, specify that display as a 1x1 grid.
+        /// </summary>
+        /// <param name="gridTopologies">The topology details to set.</param>
+        /// <param name="flags">One of the SetDisplayTopologyFlag flags</param>
+        /// <exception cref="NVIDIAApiException">Status.TopologyNotPossible: One or more of the display grids are not valid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoActiveSLITopology: No matching GPU topologies could be found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        public static void SetDisplayGrids(
+            GridTopologyV2[] gridTopologies,
+            SetDisplayTopologyFlag flags = SetDisplayTopologyFlag.NoFlag)
+        {
+
+            using (var gridTopologiesByRef = ValueTypeArray.FromArray(gridTopologies))
+            {
+                var status =
+                    DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_SetDisplayGrids>()(gridTopologiesByRef,
+                        (uint)gridTopologies.Length,
+                        flags);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Determines if a list of grid topologies is valid. It will choose an SLI configuration in the same way that
+        ///     SetDisplayGrids() does.
+        ///     On return, each element in the pTopoStatus array will contain any errors or warnings about each grid topology. If
+        ///     any error flags are set, then the topology is not valid. If any warning flags are set, then the topology is valid,
+        ///     but sub-optimal.
+        ///     If the ALLOW_INVALID flag is set, then it will continue to validate the grids even if no SLI configuration will
+        ///     allow all of the grids. In this case, a grid grid with no matching GPU topology will have the error flags
+        ///     NO_GPU_TOPOLOGY or NOT_SUPPORTED set.
+        ///     If the ALLOW_INVALID flag is not set and no matching SLI configuration is found, then it will skip the rest of the
+        ///     validation and throws a NVIDIAApiException with Status.NoActiveSLITopology.
+        /// </summary>
+        /// <param name="gridTopologies">The array of grid topologies to verify.</param>
+        /// <param name="flags">One of the SetDisplayTopologyFlag flags</param>
+        /// <exception cref="NVIDIAApiException">Status.NoActiveSLITopology: No matching GPU topologies could be found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: One or more arguments passed in are invalid.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: The NvAPI API needs to be initialized first.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NoImplementation: This entry point not available.</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred.</exception>
+        public static DisplayTopologyStatus[] ValidateDisplayGrids(
+            GridTopologyV2[] gridTopologies,
+            SetDisplayTopologyFlag flags = SetDisplayTopologyFlag.NoFlag)
+        {
+            using (var gridTopologiesByRef = ValueTypeArray.FromArray(gridTopologies))
+            {
+                var statuses =
+                    typeof(DisplayTopologyStatus).Instantiate<DisplayTopologyStatus>().Repeat(gridTopologies.Length);
+                var status =
+                    DelegateFactory.GetDelegate<MosaicDelegates.NvAPI_Mosaic_ValidateDisplayGrids>()(flags,
+                        gridTopologiesByRef,
+                        ref statuses, (uint)gridTopologies.Length);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return statuses;
+            }
+        }
+
+
+
+
+        /// <summary>
+        ///     This API adds an executable name to a profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="application">Input <see cref="IDRSApplication" /> instance containing the executable name.</param>
+        /// <returns>The newly created instance of <see cref="IDRSApplication" />.</returns>
+        public static IDRSApplication CreateApplication(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            IDRSApplication application)
+        {
+            using (var applicationReference = ValueTypeReference.FromValueType(application, application.GetType()))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_CreateApplication>()(
+                    sessionHandle,
+                    profileHandle,
+                    applicationReference
+                );
+
+                if (status == Status.IncompatibleStructureVersion)
+                {
+                    throw new NVIDIANotSupportedException("This operation is not supported.");
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return applicationReference.ToValueType<IDRSApplication>(application.GetType());
+            }
+        }
+
+        /// <summary>
+        ///     This API creates an empty profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profile">Input to the <see cref="DRSProfileV1" /> instance.</param>
+        /// <returns>The newly created profile handle.</returns>
+        public static DRSProfileHandle CreateProfile(DRSSessionHandle sessionHandle, DRSProfileV1 profile)
+        {
+            using (var profileReference = ValueTypeReference.FromValueType(profile))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_CreateProfile>()(
+                    sessionHandle,
+                    profileReference,
+                    out var profileHandle
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return profileHandle;
+            }
+        }
+
+        /// <summary>
+        ///     This API allocates memory and initializes the session.
+        /// </summary>
+        /// <returns>The newly created session handle.</returns>
+        public static DRSSessionHandle CreateSession()
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_CreateSession>()(out var sessionHandle);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return sessionHandle;
+        }
+
+        /// <summary>
+        ///     This API removes an executable from a profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="application">Input all the information about the application to be removed.</param>
+        public static void DeleteApplication(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            IDRSApplication application)
+        {
+            using (var applicationReference = ValueTypeReference.FromValueType(application, application.GetType()))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_DeleteApplicationEx>()(
+                    sessionHandle,
+                    profileHandle,
+                    applicationReference
+                );
+
+                if (status == Status.IncompatibleStructureVersion)
+                {
+                    throw new NVIDIANotSupportedException("This operation is not supported.");
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This API removes an executable name from a profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="applicationName">Input the executable name to be removed.</param>
+        public static void DeleteApplication(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            string applicationName)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_DeleteApplication>()(
+                sessionHandle,
+                profileHandle,
+                new UnicodeString(applicationName)
+            );
+
+            if (status == Status.IncompatibleStructureVersion)
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API deletes a profile or sets it back to a predefined value.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        public static void DeleteProfile(DRSSessionHandle sessionHandle, DRSProfileHandle profileHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_DeleteProfile>()(
+                sessionHandle,
+                profileHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API deletes a setting or sets it back to predefined value.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="settingId">Input settingId to be deleted.</param>
+        public static void DeleteProfileSetting(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            uint settingId)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_DeleteProfileSetting>()(
+                sessionHandle,
+                profileHandle,
+                settingId
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API frees the allocated resources for the session handle.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        public static void DestroySession(DRSSessionHandle sessionHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_DestroySession>()(sessionHandle);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API enumerates all the applications in a given profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <returns>Instances of <see cref="IDRSApplication" /> with all the attributes filled.</returns>
+        [SuppressMessage("ReSharper", "EventExceptionNotDocumented")]
+        public static IEnumerable<IDRSApplication> EnumApplications(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle)
+        {
+            var maxApplicationsPerRequest = 8;
+            var enumApplications = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_EnumApplications>();
+
+            foreach (var acceptType in enumApplications.Accepts())
+            {
+                var i = 0u;
+
+                while (true)
+                {
+                    var instances = acceptType.Instantiate<IDRSApplication>().Repeat(maxApplicationsPerRequest);
+
+                    using (var applicationsReference = ValueTypeArray.FromArray(instances, acceptType))
+                    {
+                        var count = (uint)instances.Length;
+                        var status = enumApplications(
+                            sessionHandle,
+                            profileHandle,
+                            i,
+                            ref count,
+                            applicationsReference
+                        );
+
+                        if (status == Status.IncompatibleStructureVersion)
+                        {
+                            break;
+                        }
+
+                        if (status == Status.EndEnumeration)
+                        {
+                            yield break;
+                        }
+
+                        if (status != Status.Ok)
+                        {
+                            throw new NVIDIAApiException(status);
+                        }
+
+                        foreach (var application in applicationsReference.ToArray<IDRSApplication>(
+                            (int)count,
+                            acceptType))
+                        {
+                            yield return application;
+                            i++;
+                        }
+
+                        if (count < maxApplicationsPerRequest)
+                        {
+                            yield break;
+                        }
+                    }
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This API enumerates all the Ids of all the settings recognized by NVAPI.
+        /// </summary>
+        /// <returns>An array of <see cref="uint" />s filled with the settings identification numbers of available settings.</returns>
+        public static uint[] EnumAvailableSettingIds()
+        {
+            var settingIdsCount = (uint)ushort.MaxValue;
+            var settingIds = 0u.Repeat((int)settingIdsCount);
+
+            using (var settingIdsArray = ValueTypeArray.FromArray(settingIds))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_EnumAvailableSettingIds>()(
+                    settingIdsArray,
+                    ref settingIdsCount
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return settingIdsArray.ToArray<uint>((int)settingIdsCount);
+            }
+        }
+
+        /// <summary>
+        ///     This API enumerates all available setting values for a given setting.
+        /// </summary>
+        /// <param name="settingId">Input settingId.</param>
+        /// <returns>All available setting values.</returns>
+        public static DRSSettingValues EnumAvailableSettingValues(uint settingId)
+        {
+            var settingValuesCount = (uint)DRSSettingValues.MaximumNumberOfValues;
+            var settingValues = typeof(DRSSettingValues).Instantiate<DRSSettingValues>();
+
+            using (var settingValuesReference = ValueTypeReference.FromValueType(settingValues))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_EnumAvailableSettingValues>()(
+                    settingId,
+                    ref settingValuesCount,
+                    settingValuesReference
+                );
+
+                if (status == Status.IncompatibleStructureVersion)
+                {
+                    throw new NVIDIANotSupportedException("This operation is not supported.");
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return settingValuesReference.ToValueType<DRSSettingValues>(typeof(DRSSettingValues));
+            }
+        }
+
+        /// <summary>
+        ///     This API enumerates through all the profiles in the session.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <returns>Instances of <see cref="DRSProfileHandle" /> each representing a profile.</returns>
+        public static IEnumerable<DRSProfileHandle> EnumProfiles(DRSSessionHandle sessionHandle)
+        {
+            var i = 0u;
+
+            while (true)
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_EnumProfiles>()(
+                    sessionHandle,
+                    i,
+                    out var profileHandle
+                );
+
+                if (status == Status.EndEnumeration)
+                {
+                    yield break;
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                yield return profileHandle;
+                i++;
+            }
+        }
+
+        /// <summary>
+        ///     This API enumerates all the settings of a given profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <returns>Instances of <see cref="DRSSettingV1" />.</returns>
+        [SuppressMessage("ReSharper", "EventExceptionNotDocumented")]
+        public static IEnumerable<DRSSettingV1> EnumSettings(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle)
+        {
+            var maxSettingsPerRequest = 32;
+            var enumSettings = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_EnumSettings>();
+
+            var i = 0u;
+
+            while (true)
+            {
+                var instances = typeof(DRSSettingV1).Instantiate<DRSSettingV1>().Repeat(maxSettingsPerRequest);
+
+                using (var applicationsReference = ValueTypeArray.FromArray(instances))
+                {
+                    var count = (uint)instances.Length;
+                    var status = enumSettings(
+                        sessionHandle,
+                        profileHandle,
+                        i,
+                        ref count,
+                        applicationsReference
+                    );
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        throw new NVIDIANotSupportedException("This operation is not supported.");
+                    }
+
+                    if (status == Status.EndEnumeration)
+                    {
+                        yield break;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    foreach (var application in applicationsReference.ToArray<DRSSettingV1>(
+                        (int)count,
+                        typeof(DRSSettingV1))
+                    )
+                    {
+                        yield return application;
+                        i++;
+                    }
+
+                    if (count < maxSettingsPerRequest)
+                    {
+                        yield break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This API searches the application and the associated profile for the given application name.
+        ///     If a fully qualified path is provided, this function will always return the profile
+        ///     the driver will apply upon running the application (on the path provided).
+        /// </summary>
+        /// <param name="sessionHandle">Input to the hSession handle</param>
+        /// <param name="applicationName">Input appName. For best results, provide a fully qualified path of the type</param>
+        /// <param name="profileHandle">The profile handle of the profile that the found application belongs to.</param>
+        /// <returns>An instance of <see cref="IDRSApplication" />.</returns>
+        [SuppressMessage("ReSharper", "EventExceptionNotDocumented")]
+        public static IDRSApplication FindApplicationByName(
+            DRSSessionHandle sessionHandle,
+            string applicationName,
+            out DRSProfileHandle? profileHandle)
+        {
+            var findApplicationByName = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_FindApplicationByName>();
+
+            foreach (var acceptType in findApplicationByName.Accepts())
+            {
+                var instance = acceptType.Instantiate<IDRSApplication>();
+
+                using (var applicationReference = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = findApplicationByName(
+                        sessionHandle,
+                        new UnicodeString(applicationName),
+                        out var applicationProfileHandle,
+                        applicationReference
+                    );
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status == Status.ExecutableNotFound)
+                    {
+                        profileHandle = null;
+
+                        return null;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    profileHandle = applicationProfileHandle;
+
+                    return applicationReference.ToValueType<IDRSApplication>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This API finds a profile in the current session.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileName">Input profileName.</param>
+        /// <returns>The profile handle.</returns>
+        public static DRSProfileHandle FindProfileByName(DRSSessionHandle sessionHandle, string profileName)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_FindProfileByName>()(
+                sessionHandle,
+                new UnicodeString(profileName),
+                out var profileHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return profileHandle;
+        }
+
+        /// <summary>
+        ///     This API gets information about the given application.  The input application name
+        ///     must match exactly what the Profile has stored for the application.
+        ///     This function is better used to retrieve application information from a previous
+        ///     enumeration.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="applicationName">Input application name.</param>
+        /// <returns>
+        ///     An instance of <see cref="IDRSApplication" /> with all attributes filled if found; otherwise
+        ///     <see langword="null" />.
+        /// </returns>
+        [SuppressMessage("ReSharper", "EventExceptionNotDocumented")]
+        public static IDRSApplication GetApplicationInfo(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            string applicationName)
+        {
+            var getApplicationInfo = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetApplicationInfo>();
+
+            foreach (var acceptType in getApplicationInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<IDRSApplication>();
+
+                using (var applicationReference = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getApplicationInfo(
+                        sessionHandle,
+                        profileHandle,
+                        new UnicodeString(applicationName),
+                        applicationReference
+                    );
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status == Status.ExecutableNotFound)
+                    {
+                        return null;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return applicationReference.ToValueType<IDRSApplication>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     Returns the handle to the current global profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <returns>Base profile handle.</returns>
+        public static DRSProfileHandle GetBaseProfile(DRSSessionHandle sessionHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetBaseProfile>()(
+                sessionHandle,
+                out var profileHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return profileHandle;
+        }
+
+        /// <summary>
+        ///     This API returns the handle to the current global profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <returns>Current global profile handle.</returns>
+        public static DRSProfileHandle GetCurrentGlobalProfile(DRSSessionHandle sessionHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetCurrentGlobalProfile>()(
+                sessionHandle,
+                out var profileHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return profileHandle;
+        }
+
+        /// <summary>
+        ///     This API obtains the number of profiles in the current session object.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <returns>Number of profiles in the current session.</returns>
+        public static int GetNumberOfProfiles(DRSSessionHandle sessionHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetNumProfiles>()(
+                sessionHandle,
+                out var profileCount
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)profileCount;
+        }
+
+        /// <summary>
+        ///     This API gets information about the given profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <returns>An instance of <see cref="DRSProfileV1" /> with all attributes filled.</returns>
+        public static DRSProfileV1 GetProfileInfo(DRSSessionHandle sessionHandle, DRSProfileHandle profileHandle)
+        {
+            var profile = typeof(DRSProfileV1).Instantiate<DRSProfileV1>();
+
+            using (var profileReference = ValueTypeReference.FromValueType(profile))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetProfileInfo>()(
+                    sessionHandle,
+                    profileHandle,
+                    profileReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return profileReference.ToValueType<DRSProfileV1>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This API gets information about the given setting.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="settingId">Input settingId.</param>
+        /// <returns>An instance of <see cref="DRSSettingV1" /> describing the setting if found; otherwise <see langword="null" />.</returns>
+        public static DRSSettingV1? GetSetting(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            uint settingId)
+        {
+            var instance = typeof(DRSSettingV1).Instantiate<DRSSettingV1>();
+
+            using (var settingReference = ValueTypeReference.FromValueType(instance, typeof(DRSSettingV1)))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetSetting>()(
+                    sessionHandle,
+                    profileHandle,
+                    settingId,
+                    settingReference
+                );
+
+                if (status == Status.IncompatibleStructureVersion)
+                {
+                    throw new NVIDIANotSupportedException("This operation is not supported.");
+                }
+
+                if (status == Status.SettingNotFound)
+                {
+                    return null;
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return settingReference.ToValueType<DRSSettingV1>(typeof(DRSSettingV1));
+            }
+        }
+
+        /// <summary>
+        ///     This API gets the binary identification number of a setting given the setting name.
+        /// </summary>
+        /// <param name="settingName">Input Unicode settingName.</param>
+        /// <returns>The corresponding settingId.</returns>
+        public static uint GetSettingIdFromName(string settingName)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetSettingIdFromName>()(
+                new UnicodeString(settingName),
+                out var settingId
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return settingId;
+        }
+
+        /// <summary>
+        ///     This API gets the setting name given the binary identification number.
+        /// </summary>
+        /// <param name="settingId">Input settingId.</param>
+        /// <returns>Corresponding settingName.</returns>
+        public static string GetSettingNameFromId(uint settingId)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_GetSettingNameFromId>()(
+                settingId,
+                out var settingName
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return settingName.Value;
+        }
+
+        /// <summary>
+        ///     This API loads and parses the settings data.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        public static void LoadSettings(DRSSessionHandle sessionHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_LoadSettings>()(sessionHandle);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API loads settings from the given file path.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle</param>
+        /// <param name="fileName">Binary full file path.</param>
+        public static void LoadSettings(DRSSessionHandle sessionHandle, string fileName)
+        {
+            var unicodeFileName = new UnicodeString(fileName);
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_LoadSettingsFromFile>()(
+                sessionHandle,
+                unicodeFileName
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API restores the whole system to predefined(default) values.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        public static void RestoreDefaults(DRSSessionHandle sessionHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_RestoreAllDefaults>()(
+                sessionHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+
+        /// <summary>
+        ///     This API restores the given profile to predefined(default) values.
+        ///     Any and all user specified modifications will be removed.
+        ///     If the whole profile was set by the user, the profile will be removed.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        public static void RestoreDefaults(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_RestoreProfileDefault>()(
+                sessionHandle,
+                profileHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API restores the given profile setting to predefined(default) values.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="settingId">Input settingId.</param>
+        public static void RestoreDefaults(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            uint settingId)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_RestoreProfileDefaultSetting>()(
+                sessionHandle,
+                profileHandle,
+                settingId
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API saves the settings data to the system.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        public static void SaveSettings(DRSSessionHandle sessionHandle)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_SaveSettings>()(sessionHandle);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API saves settings to the given file path.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="fileName">Binary full file path.</param>
+        public static void SaveSettings(DRSSessionHandle sessionHandle, string fileName)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_SaveSettingsToFile>()(
+                sessionHandle,
+                new UnicodeString(fileName)
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API sets the current global profile in the driver.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileName">Input the new current global profile name.</param>
+        public static void SetCurrentGlobalProfile(DRSSessionHandle sessionHandle, string profileName)
+        {
+            var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_SetCurrentGlobalProfile>()(
+                sessionHandle,
+                new UnicodeString(profileName)
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     Specifies flags for a given profile. Currently only the GPUSupport is
+        ///     used to update the profile. Neither the name, number of settings or applications
+        ///     or other profile information can be changed with this function.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="profile">Input the new profile info.</param>
+        public static void SetProfileInfo(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            DRSProfileV1 profile)
+        {
+            using (var profileReference = ValueTypeReference.FromValueType(profile))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_SetProfileInfo>()(
+                    sessionHandle,
+                    profileHandle,
+                    profileReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This API adds/modifies a setting to a profile.
+        /// </summary>
+        /// <param name="sessionHandle">Input to the session handle.</param>
+        /// <param name="profileHandle">Input profile handle.</param>
+        /// <param name="setting">
+        ///     An instance of <see cref="DRSSettingV1" /> containing the setting identification number and new
+        ///     value for the setting.
+        /// </param>
+        public static void SetSetting(
+            DRSSessionHandle sessionHandle,
+            DRSProfileHandle profileHandle,
+            DRSSettingV1 setting)
+        {
+            using (var settingReference = ValueTypeReference.FromValueType(setting, setting.GetType()))
+            {
+                var status = DelegateFactory.GetDelegate<DRSDelegates.NvAPI_DRS_SetSetting>()(
+                    sessionHandle,
+                    profileHandle,
+                    settingReference
+                );
+
+                if (status == Status.IncompatibleStructureVersion)
+                {
+                    throw new NVIDIANotSupportedException("This operation is not supported.");
+                }
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+
+        /// <summary>
+        ///     This function returns an array of logical GPU handles.
+        ///     Each handle represents one or more GPUs acting in concert as a single graphics device.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        ///     All logical GPUs handles get invalidated on a GPU topology change, so the calling application is required to
+        ///     re-enum
+        ///     the logical GPU handles to get latest physical handle mapping after every GPU topology change activated by a call
+        ///     to SetGpuTopologies().
+        ///     To detect if SLI rendering is enabled, use Direct3DApi.GetCurrentSLIState().
+        /// </summary>
+        /// <returns>Array of logical GPU handles.</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        public static LogicalGPUHandle[] EnumLogicalGPUs()
+        {
+            var gpuList =
+                typeof(LogicalGPUHandle).Instantiate<LogicalGPUHandle>().Repeat(LogicalGPUHandle.MaxLogicalGPUs);
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_EnumLogicalGPUs>()(gpuList, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpuList.Take((int)count).ToArray();
+        }
+
+        /// <summary>
+        ///     This function returns an array of physical GPU handles.
+        ///     Each handle represents a physical GPU present in the system.
+        ///     That GPU may be part of an SLI configuration, or may not be visible to the OS directly.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        ///     Note: In drivers older than 105.00, all physical GPU handles get invalidated on a mode-set. So the calling
+        ///     applications need to re-enum the handles after every mode-set. With drivers 105.00 and up, all physical GPU handles
+        ///     are constant. Physical GPU handles are constant as long as the GPUs are not physically moved and the SBIOS VGA
+        ///     order is unchanged.
+        ///     For GPU handles in TCC MODE please use EnumTCCPhysicalGPUs()
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        public static PhysicalGPUHandle[] EnumPhysicalGPUs()
+        {
+            var gpuList =
+                typeof(PhysicalGPUHandle).Instantiate<PhysicalGPUHandle>().Repeat(PhysicalGPUHandle.PhysicalGPUs);
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_EnumPhysicalGPUs>()(gpuList, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpuList.Take((int)count).ToArray();
+        }
+
+        /// <summary>
+        ///     This function returns an array of physical GPU handles that are in TCC Mode.
+        ///     Each handle represents a physical GPU present in the system in TCC Mode.
+        ///     That GPU may not be visible to the OS directly.
+        ///     NOTE: Handles enumerated by this API are only valid for NvAPIs that are tagged as TCC_SUPPORTED If handle is passed
+        ///     to any other API, it will fail with Status.InvalidHandle
+        ///     For WDDM GPU handles please use EnumPhysicalGPUs()
+        /// </summary>
+        /// <returns>An array of physical GPU handles that are in TCC Mode.</returns>
+        /// <exception cref="NVIDIAApiException">See NVIDIAApiException.Status for the reason of the exception.</exception>
+        public static PhysicalGPUHandle[] EnumTCCPhysicalGPUs()
+        {
+            var gpuList =
+                typeof(PhysicalGPUHandle).Instantiate<PhysicalGPUHandle>().Repeat(PhysicalGPUHandle.PhysicalGPUs);
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_EnumTCCPhysicalGPUs>()(gpuList, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpuList.Take((int)count).ToArray();
+        }
+
+        //TODO: This GetLogicalGPUInfo won't work. It has an error with an invalid pointer when run which appears to
+        //      be related to how the data in the physicalGPUHandle array is being marshalled. This is causing the 
+        //      NVIDIA driver to believe there is an invaliud pointer in the logicalGPUData structure being passed to it.
+        //      And it is returning an Invalid Pointer error.
+
+        /*/// <summary>
+        ///      This function is used to query Logical GPU information.
+        /// </summary>
+        /// <param name="gpuHandle">Logical GPU Handle.</param>
+        /// <param name="logicalGPUData">Pointer to LogicalGPUData structure.</param>
+        public static void GetLogicalGPUInfo(
+            LogicalGPUHandle gpuHandle,
+            out LogicalGPUData logicalGPUData)
+        {
+
+            logicalGPUData = typeof(LogicalGPUData).Instantiate<LogicalGPUData>();
+            //logicalGPUData.OSAdapterId = new NvGUID(0, 0, 0, 0);
+            logicalGPUData.PhysicalGPUHandles =
+                typeof(PhysicalGPUHandle).Instantiate<PhysicalGPUHandle>().Repeat(PhysicalGPUHandle.MaxPhysicalGPUs);
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetLogicalGpuInfo>()(gpuHandle, ref logicalGPUData);
+
+
+            if (status != Status.Ok)
+            {
+                // Free the memory we used so we don't get a memory leak
+                *//*Marshal.DestroyStructure(memLocationLUID, typeof(LUID));
+                Marshal.FreeHGlobal(memLocationLUID);*//*
+                throw new NVIDIAApiException(status);
+            }
+
+            // Free the memory we used so we don't get a memory leak
+            *//*Marshal.DestroyStructure(memLocationLUID, typeof(LUID));
+            Marshal.FreeHGlobal(memLocationLUID);*//*
+
+
+        }*/
+
+
+        /// <summary>
+        ///     This function returns the AGP aperture in megabytes.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>AGP aperture in megabytes</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static int GetAGPAperture(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetAGPAperture>()(gpuHandle, out var agpAperture);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)agpAperture;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the architect information for the passed physical GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The GPU handle to retrieve information for.</param>
+        /// <returns>The GPU architect information.</returns>
+        public static PrivateArchitectInfoV2 GetArchitectInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateArchitectInfoV2).Instantiate<PrivateArchitectInfoV2>();
+
+            using (var architectInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetArchInfo>()(
+                    gpuHandle,
+                    architectInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return architectInfoReference.ToValueType<PrivateArchitectInfoV2>(
+                    typeof(PrivateArchitectInfoV2));
+            }
+        }
+
+        /// <summary>
+        ///     This API Retrieves the Board information (a unique GPU Board Serial Number) stored in the InfoROM.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU Handle</param>
+        /// <returns>Board Information</returns>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: Handle passed is not a physical GPU handle</exception>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: NVAPI not initialized</exception>
+        public static BoardInfo GetBoardInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var boardInfo = typeof(BoardInfo).Instantiate<BoardInfo>();
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetBoardInfo>()(gpuHandle, ref boardInfo);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return boardInfo;
+        }
+
+        /// <summary>
+        ///     Returns the identification of the bus associated with this GPU.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Id of the bus</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static int GetBusId(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetBusId>()(gpuHandle, out var busId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)busId;
+        }
+
+        /// <summary>
+        ///     Returns the identification of the bus slot associated with this GPU.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Identification of the bus slot associated with this GPU</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static int GetBusSlotId(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetBusSlotId>()(gpuHandle, out var busId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)busId;
+        }
+
+        /// <summary>
+        ///     This function returns the type of bus associated with this GPU.
+        ///     TCC_SUPPORTED
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Type of bus associated with this GPU</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        public static GPUBusType GetBusType(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetBusType>()(gpuHandle, out var busType);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return busType;
+        }
+
+        /// <summary>
+        ///     This function returns the current AGP Rate (0 = AGP not present, 1 = 1x, 2 = 2x, etc.).
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>Current AGP rate</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static int GetCurrentAGPRate(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCurrentAGPRate>()(gpuHandle, out var agpRate);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)agpRate;
+        }
+
+        /// <summary>
+        ///     This function returns the number of PCIE lanes being used for the PCIE interface downstream from the GPU.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>PCIE lanes being used for the PCIE interface downstream</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static int GetCurrentPCIEDownStreamWidth(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCurrentPCIEDownstreamWidth>()(gpuHandle,
+                out var width);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)width;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the driver model for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The driver model of the GPU.</returns>
+        public static uint GetDriverModel(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetDriverModel>()(gpuHandle, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        ///     This function returns ECC memory configuration information.
+        /// </summary>
+        /// <param name="gpuHandle">
+        ///     handle identifying the physical GPU for which ECC configuration information is to be
+        ///     retrieved.
+        /// </param>
+        /// <returns>An instance of <see cref="ECCConfigurationInfoV1" /></returns>
+        public static ECCConfigurationInfoV1 GetECCConfigurationInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(ECCConfigurationInfoV1).Instantiate<ECCConfigurationInfoV1>();
+
+            using (var configurationInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetECCConfigurationInfo>()(
+                    gpuHandle,
+                    configurationInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return configurationInfoReference.ToValueType<ECCConfigurationInfoV1>(typeof(ECCConfigurationInfoV1));
+            }
+        }
+
+        /// <summary>
+        ///     This function returns ECC memory error information.
+        /// </summary>
+        /// <param name="gpuHandle">A handle identifying the physical GPU for which ECC error information is to be retrieved.</param>
+        /// <returns>An instance of <see cref="ECCErrorInfoV1" /></returns>
+        public static ECCErrorInfoV1 GetECCErrorInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(ECCErrorInfoV1).Instantiate<ECCErrorInfoV1>();
+
+            using (var errorInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetECCErrorInfo>()(
+                    gpuHandle,
+                    errorInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return errorInfoReference.ToValueType<ECCErrorInfoV1>(typeof(ECCErrorInfoV1));
+            }
+        }
+
+        /// <summary>
+        ///     This function returns ECC memory status information.
+        /// </summary>
+        /// <param name="gpuHandle">A handle identifying the physical GPU for which ECC status information is to be retrieved.</param>
+        /// <returns>An instance of <see cref="ECCStatusInfoV1" /></returns>
+        public static ECCStatusInfoV1 GetECCStatusInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(ECCStatusInfoV1).Instantiate<ECCStatusInfoV1>();
+
+            using (var statusInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetECCStatusInfo>()(
+                    gpuHandle,
+                    statusInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return statusInfoReference.ToValueType<ECCStatusInfoV1>(typeof(ECCStatusInfoV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the GPU manufacturing foundry of the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The GPU manufacturing foundry of the GPU.</returns>
+        public static GPUFoundry GetFoundry(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetFoundry>()(gpuHandle, out var foundry);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return foundry;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the current frame buffer width and location for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="width">The frame buffer width.</param>
+        /// <param name="location">The frame buffer location.</param>
+        public static void GetFrameBufferWidthAndLocation(
+            PhysicalGPUHandle gpuHandle,
+            out uint width,
+            out uint location)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetFBWidthAndLocation>()(gpuHandle, out width,
+                    out location);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function retrieves the full GPU name as an ASCII string - for example, "Quadro FX 1400".
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>Full GPU name as an ASCII string</returns>
+        /// <exception cref="NVIDIAApiException">See NVIDIAApiException.Status for the reason of the exception.</exception>
+        public static string GetFullName(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetFullName>()(gpuHandle, out var name);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return name.Value;
+        }
+
+        /// <summary>
+        ///     Retrieves the total number of cores defined for a GPU.
+        ///     Returns 0 on architectures that don't define GPU cores.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>Total number of cores</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: API call is not supported on current architecture</exception>
+        public static uint GetGPUCoreCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetGpuCoreCount>()(gpuHandle, out var cores);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return cores;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the GPUID of the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The GPU handle to get the GPUID for.</param>
+        /// <returns>The GPU's GPUID.</returns>
+        public static uint GetGPUIDFromPhysicalGPU(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetGPUIDFromPhysicalGPU>()(gpuHandle, out var gpuId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpuId;
+        }
+
+        /// <summary>
+        ///     This function returns the GPU type (integrated or discrete).
+        ///     TCC_SUPPORTED
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>GPU type</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static GPUType GetGPUType(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetGPUType>()(gpuHandle, out var type);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return type;
+        }
+
+        /// <summary>
+        ///     This function returns the interrupt number associated with this GPU.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Interrupt number associated with this GPU</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static int GetIRQ(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetIRQ>()(gpuHandle, out var irq);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)irq;
+        }
+
+
+        /// <summary>
+        ///     This API converts a display ID to a Physical GPU handle and output ID.
+        /// </summary>
+        /// <returns>The GPU physical handle and the output ID</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid argument</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static void GetGpuAndOutputIdFromDisplayId(
+            [In] uint displayId,
+            [Out] out PhysicalGPUHandle physicalGPU,
+            [Out] out OutputId outputId)
+        {
+            var status =
+               DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_SYS_GetGpuAndOutputIdFromDisplayId>()(displayId,
+                   out physicalGPU, out outputId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API converts Physical GPU handle and output ID to a display ID.
+        /// </summary>
+        /// <returns>The displayID connected to the physical GPU at the output that has the output ID supplied.</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid argument</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static void GetDisplayIdFromGpuAndOutputId(
+            [In] PhysicalGPUHandle physicalGPU,
+            [In] OutputId outputId,
+            [Out] out uint displayId)
+        {
+            var status =
+               DelegateFactory.GetDelegate<GeneralDelegates.NvAPI_SYS_GetDisplayIdFromGpuAndOutputId>()(physicalGPU,
+                   outputId, out displayId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the current frame buffer width and location for the passed logical GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the logical GPU to perform the operation on.</param>
+        /// <param name="width">The frame buffer width.</param>
+        /// <param name="location">The frame buffer location.</param>
+        public static void GetLogicalFrameBufferWidthAndLocation(
+            LogicalGPUHandle gpuHandle,
+            out uint width,
+            out uint location)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetLogicalFBWidthAndLocation>()(gpuHandle,
+                    out width, out location);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function returns the logical GPU handle associated with specified physical GPU handle.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Logical GPU handle associated with specified physical GPU handle</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        public static LogicalGPUHandle GetLogicalGPUFromPhysicalGPU(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetLogicalGPUFromPhysicalGPU>()(gpuHandle, out var gpu);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpu;
+        }
+
+        /// <summary>
+        ///     This function retrieves the available driver memory footprint for the specified GPU.
+        ///     If the GPU is in TCC Mode, only dedicatedVideoMemory will be returned.
+        /// </summary>
+        /// <param name="physicalGPUHandle">Handle of the physical GPU for which the memory information is to be extracted.</param>
+        /// <returns>The memory footprint available in the driver.</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static IDisplayDriverMemoryInfo GetMemoryInfo(PhysicalGPUHandle physicalGPUHandle)
+        {
+            var getMemoryInfo = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetMemoryInfo>();
+
+            foreach (var acceptType in getMemoryInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<IDisplayDriverMemoryInfo>();
+
+                using (var displayDriverMemoryInfo = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getMemoryInfo(physicalGPUHandle, displayDriverMemoryInfo);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return displayDriverMemoryInfo.ToValueType<IDisplayDriverMemoryInfo>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the number of GPC (Graphic Processing Clusters) of the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The number of GPC units for the GPU.</returns>
+        public static uint GetPartitionCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetPartitionCount>()(gpuHandle, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets additional information about the PCIe interface and configuration for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>PCIe information and configurations.</returns>
+        public static PrivatePCIeInfoV2 GetPCIEInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivatePCIeInfoV2).Instantiate<PrivatePCIeInfoV2>();
+
+            using (var pcieInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status =
+                    DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetPCIEInfo>()(gpuHandle, pcieInfoReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return pcieInfoReference.ToValueType<PrivatePCIeInfoV2>(typeof(PrivatePCIeInfoV2));
+            }
+        }
+
+        /// <summary>
+        ///     This function returns the PCI identifiers associated with this GPU.
+        ///     TCC_SUPPORTED
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <param name="deviceId">The internal PCI device identifier for the GPU.</param>
+        /// <param name="subSystemId">The internal PCI subsystem identifier for the GPU.</param>
+        /// <param name="revisionId">The internal PCI device-specific revision identifier for the GPU.</param>
+        /// <param name="extDeviceId">The external PCI device identifier for the GPU.</param>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle or an argument is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        // ReSharper disable once TooManyArguments
+        public static void GetPCIIdentifiers(
+            PhysicalGPUHandle gpuHandle,
+            out uint deviceId,
+            out uint subSystemId,
+            out uint revisionId,
+            out uint extDeviceId)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetPCIIdentifiers>()(gpuHandle,
+                out deviceId,
+                out subSystemId, out revisionId, out extDeviceId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function returns the physical size of frame buffer in KB.  This does NOT include any system RAM that may be
+        ///     dedicated for use by the GPU.
+        ///     TCC_SUPPORTED
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Physical size of frame buffer in KB</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static int GetPhysicalFrameBufferSize(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetPhysicalFrameBufferSize>()(gpuHandle,
+                    out var size);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)size;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets a physical GPU handle from the passed GPUID
+        /// </summary>
+        /// <param name="gpuId">The GPUID to get the physical handle for.</param>
+        /// <returns>The retrieved physical GPU handle.</returns>
+        public static PhysicalGPUHandle GetPhysicalGPUFromGPUID(uint gpuId)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetPhysicalGPUFromGPUID>()(gpuId, out var gpuHandle);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpuHandle;
+        }
+
+        /// <summary>
+        ///     This function returns the physical GPU handles associated with the specified logical GPU handle.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        /// </summary>
+        /// <param name="gpuHandle">Logical GPU handle to get information about</param>
+        /// <returns>An array of physical GPU handles</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedLogicalGPUHandle: gpuHandle was not a logical GPU handle</exception>
+        public static PhysicalGPUHandle[] GetPhysicalGPUsFromLogicalGPU(LogicalGPUHandle gpuHandle)
+        {
+            var gpuList =
+                typeof(PhysicalGPUHandle).Instantiate<PhysicalGPUHandle>().Repeat(PhysicalGPUHandle.MaxPhysicalGPUs);
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetPhysicalGPUsFromLogicalGPU>()(gpuHandle,
+                gpuList,
+                out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpuList.Take((int)count).ToArray();
+        }
+
+        /// <summary>
+        ///     This function retrieves the Quadro status for the GPU (true if Quadro, false if GeForce)
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>true if Quadro, false if GeForce</returns>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        public static bool GetQuadroStatus(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetQuadroStatus>()(gpuHandle, out var isQuadro);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return isQuadro > 0;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the number of RAM banks for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The number of RAM memory banks.</returns>
+        public static uint GetRAMBankCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetRamBankCount>()(gpuHandle, out var bankCount);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return bankCount;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the RAM bus width for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The RAM memory bus width.</returns>
+        public static uint GetRAMBusWidth(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetRamBusWidth>()(gpuHandle, out var busWidth);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return busWidth;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the RAM maker for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The RAM memory maker.</returns>
+        public static GPUMemoryMaker GetRAMMaker(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetRamMaker>()(gpuHandle, out var ramMaker);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return ramMaker;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the RAM type for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The RAM memory type.</returns>
+        public static GPUMemoryType GetRAMType(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetRamType>()(gpuHandle, out var ramType);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return ramType;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the ROP count for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The number of ROP units.</returns>
+        public static uint GetROPCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetROPCount>()(gpuHandle, out var ropCount);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return ropCount;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the number of shader pipe lines for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The number of shader pipelines.</returns>
+        public static uint GetShaderPipeCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetShaderPipeCount>()(gpuHandle, out var spCount);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return spCount;
+        }
+
+        /// <summary>
+        ///     This function retrieves the number of Shader SubPipes on the GPU
+        ///     On newer architectures, this corresponds to the number of SM units
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Number of Shader SubPipes on the GPU</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static uint GetShaderSubPipeCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetShaderSubPipeCount>()(gpuHandle, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the GPU short name (code name) for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The GPU short name.</returns>
+        public static string GetShortName(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetShortName>()(gpuHandle, out var name);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return name.Value;
+        }
+
+        /// <summary>
+        ///     This function identifies whether the GPU is a notebook GPU or a desktop GPU.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>GPU system type</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static SystemType GetSystemType(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetSystemType>()(gpuHandle, out var systemType);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return systemType;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the SM count for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The number of SM units.</returns>
+        public static uint GetTotalSMCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetTotalSMCount>()(gpuHandle, out var smCount);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return smCount;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the SP count for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The number of SP units.</returns>
+        public static uint GetTotalSPCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetTotalSPCount>()(gpuHandle, out var spCount);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return spCount;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the TPC count for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The number of TPC units.</returns>
+        public static uint GetTotalTPCCount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetTotalTPCCount>()(gpuHandle, out var tpcCount);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return tpcCount;
+        }
+
+        /// <summary>
+        ///     This function returns the OEM revision of the video BIOS associated with this GPU.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>OEM revision of the video BIOS</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static uint GetVBIOSOEMRevision(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetVbiosOEMRevision>()(gpuHandle, out var revision);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return revision;
+        }
+
+        /// <summary>
+        ///     This function returns the revision of the video BIOS associated with this GPU.
+        ///     TCC_SUPPORTED
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>Revision of the video BIOS</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static uint GetVBIOSRevision(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetVbiosRevision>()(gpuHandle, out var revision);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return revision;
+        }
+
+        /// <summary>
+        ///     This function returns the full video BIOS version string in the form of xx.xx.xx.xx.yy where xx numbers come from
+        ///     GetVbiosRevision() and yy comes from GetVbiosOEMRevision().
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>Full video BIOS version string</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static string GetVBIOSVersionString(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetVbiosVersionString>()(gpuHandle,
+                    out var version);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return version.Value;
+        }
+
+        /// <summary>
+        ///     This function returns the virtual size of frame buffer in KB. This includes the physical RAM plus any system RAM
+        ///     that has been dedicated for use by the GPU.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>Virtual size of frame buffer in KB</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static int GetVirtualFrameBufferSize(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetVirtualFrameBufferSize>()(gpuHandle,
+                out var bufferSize);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return (int)bufferSize;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the VPE count for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to retrieve this information from.</param>
+        /// <returns>The number of VPE units.</returns>
+        public static uint GetVPECount(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetVPECount>()(gpuHandle, out var vpeCount);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return vpeCount;
+        }
+
+        /// <summary>
+        ///     Reads data from I2C bus
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU to access I2C bus.</param>
+        /// <param name="i2cInfo">The information required for the operation. Will be filled with data after retrieval.</param>
+        // ReSharper disable once InconsistentNaming
+        public static void I2CRead<TI2CInfo>(PhysicalGPUHandle gpuHandle, ref TI2CInfo i2cInfo)
+            where TI2CInfo : struct, II2CInfo
+        {
+            var c = i2cInfo as II2CInfo;
+            I2CRead(gpuHandle, ref c);
+            i2cInfo = (TI2CInfo)c;
+        }
+
+        /// <summary>
+        ///     Reads data from I2C bus
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU to access I2C bus.</param>
+        /// <param name="i2cInfo">The information required for the operation. Will be filled with data after retrieval.</param>
+        // ReSharper disable once InconsistentNaming
+        public static void I2CRead(PhysicalGPUHandle gpuHandle, ref II2CInfo i2cInfo)
+        {
+            var type = i2cInfo.GetType();
+            // ReSharper disable once InconsistentNaming
+            var i2cRead = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_I2CRead>();
+
+            if (!i2cRead.Accepts().Contains(type))
+            {
+                throw new ArgumentOutOfRangeException(nameof(type));
+            }
+
+            // ReSharper disable once InconsistentNaming
+            using (var i2cInfoReference = ValueTypeReference.FromValueType(i2cInfo, type))
+            {
+                var status = i2cRead(gpuHandle, i2cInfoReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                i2cInfo = i2cInfoReference.ToValueType<II2CInfo>(type);
+            }
+        }
+
+        /// <summary>
+        ///     Writes data to I2C bus
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU to access I2C bus.</param>
+        /// <param name="i2cInfo">The information required for the operation.</param>
+        // ReSharper disable once InconsistentNaming
+        public static void I2CWrite(PhysicalGPUHandle gpuHandle, II2CInfo i2cInfo)
+        {
+            var type = i2cInfo.GetType();
+            // ReSharper disable once InconsistentNaming
+            var i2cWrite = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_I2CWrite>();
+
+            if (!i2cWrite.Accepts().Contains(type))
+            {
+                throw new ArgumentOutOfRangeException(nameof(type));
+            }
+
+            // ReSharper disable once InconsistentNaming
+            using (var i2cInfoReference = ValueTypeReference.FromValueType(i2cInfo, type))
+            {
+                var status = i2cWrite(gpuHandle, i2cInfoReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This function resets ECC memory error counters.
+        /// </summary>
+        /// <param name="gpuHandle">A handle identifying the physical GPU for which ECC error information is to be cleared.</param>
+        /// <param name="resetCurrent">Reset the current ECC error counters.</param>
+        /// <param name="resetAggregated">Reset the aggregate ECC error counters.</param>
+        public static void ResetECCErrorInfo(
+            PhysicalGPUHandle gpuHandle,
+            bool resetCurrent,
+            bool resetAggregated)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ResetECCErrorInfo>()(
+                gpuHandle,
+                (byte)(resetCurrent ? 1 : 0),
+                (byte)(resetAggregated ? 1 : 0)
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function updates the ECC memory configuration setting.
+        /// </summary>
+        /// <param name="gpuHandle">A handle identifying the physical GPU for which to update the ECC configuration setting.</param>
+        /// <param name="isEnable">The new ECC configuration setting.</param>
+        /// <param name="isEnableImmediately">Request that the new setting take effect immediately.</param>
+        public static void SetECCConfiguration(
+            PhysicalGPUHandle gpuHandle,
+            bool isEnable,
+            bool isEnableImmediately)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetECCConfiguration>()(
+                gpuHandle,
+                (byte)(isEnable ? 1 : 0),
+                (byte)(isEnableImmediately ? 1 : 0)
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+
+        /// <summary>
+        ///     This function is the same as GetAllOutputs() but returns only the set of GPU output identifiers that are actively
+        ///     driving display devices.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>Active output identifications as a flag</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static OutputId GetActiveOutputs(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetActiveOutputs>()(gpuHandle, out var outputMask);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return outputMask;
+        }
+
+        /// <summary>
+        ///     This API returns display IDs for all possible outputs on the GPU.
+        ///     For DPMST connector, it will return display IDs for all the video sinks in the topology.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <returns>An array of display identifications and their attributes</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">See NVIDIAApiException.Status for the reason of the exception.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static DisplayIdsV2[] GetAllDisplayIds(PhysicalGPUHandle gpuHandle)
+        {
+            var gpuGetConnectedDisplayIds = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetAllDisplayIds>();
+
+            if (!gpuGetConnectedDisplayIds.Accepts().Contains(typeof(DisplayIdsV2)))
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            uint count = 0;
+            var status = gpuGetConnectedDisplayIds(gpuHandle, ValueTypeArray.Null, ref count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            if (count == 0)
+            {
+                return new DisplayIdsV2[0];
+            }
+
+            using (
+                var displayIds =
+                    ValueTypeArray.FromArray(typeof(DisplayIdsV2).Instantiate<DisplayIdsV2>().Repeat((int)count)))
+            {
+                status = gpuGetConnectedDisplayIds(gpuHandle, displayIds, ref count);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return displayIds.ToArray<DisplayIdsV2>((int)count);
+            }
+        }
+
+        /// <summary>
+        ///     Due to space limitation GetConnectedOutputs() can return maximum 32 devices, but this is no longer true for DPMST.
+        ///     GetConnectedDisplayIds() will return all the connected display devices in the form of displayIds for the associated
+        ///     gpuHandle.
+        ///     This function can accept set of flags to request cached, un-cached, sli and lid to get the connected devices.
+        ///     Default value for flags will be cached.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get information about</param>
+        /// <param name="flags">ConnectedIdsFlag flags</param>
+        /// <returns>An array of display identifications and their attributes</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is invalid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static DisplayIdsV2[] GetConnectedDisplayIds(PhysicalGPUHandle gpuHandle, ConnectedIdsFlag flags)
+        {
+            var gpuGetConnectedDisplayIds =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetConnectedDisplayIds>();
+
+            if (!gpuGetConnectedDisplayIds.Accepts().Contains(typeof(DisplayIdsV2)))
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            uint count = 0;
+            var status = gpuGetConnectedDisplayIds(gpuHandle, ValueTypeArray.Null, ref count, flags);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            if (count == 0)
+            {
+                return new DisplayIdsV2[0];
+            }
+
+            foreach (var acceptType in gpuGetConnectedDisplayIds.Accepts())
+            {
+                var instances = acceptType.Instantiate<DisplayIdsV2>().Repeat((int)count);
+
+                using (var displayIds = ValueTypeArray.FromArray(instances))
+                {
+                    status = gpuGetConnectedDisplayIds(gpuHandle, displayIds, ref count, flags);
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    instances = displayIds.ToArray<DisplayIdsV2>((int)count, acceptType);
+                }
+
+                if (instances.Length <= 0)
+                {
+                    return new DisplayIdsV2[0];
+                }
+
+                // After allocation, we should make sure to dispose objects
+                // In this case however, the responsibility is on the user shoulders
+                //instances = instances.AllocateAll().ToArray();
+
+                // Convert IDisplayIds instances to DisplayIdsV2 instances
+                //var displayIdsV2 = instances.OfType<DisplayIdsV2>().ToArray();
+
+                return instances;
+                //return instances.ToArray<DisplayIdsV2>((int)count);
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+
+        }
+
+        /// <summary>
+        ///     This API converts a Physical GPU handle and output ID to a display ID.
+        /// </summary>
+        /// <param name="gpuHandle">Handle to the physical GPU</param>
+        /// <param name="outputId">Connected display output identification on the target GPU - must only have one bit set</param>
+        /// <returns>Display identification</returns>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: NVAPI not initialized</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: miscellaneous error occurred</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid input parameter.</exception>
+        public static uint GetDisplayIdFromGPUAndOutputId(PhysicalGPUHandle gpuHandle, OutputId outputId)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_SYS_GetDisplayIdFromGpuAndOutputId>()(
+                gpuHandle,
+                outputId, out var display);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return display;
+        }
+
+        /// <summary>
+        ///     This function returns the EDID data for the specified GPU handle and connection bit mask.
+        ///     outputId should have exactly 1 bit set to indicate a single display.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to check outputs</param>
+        /// <param name="outputId">Output identification</param>
+        /// <param name="offset">EDID offset</param>
+        /// <param name="readIdentification">EDID read identification for multi part read, or zero for first run</param>
+        /// <returns>Whole or a part of the EDID data</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">
+        ///     Status.InvalidArgument: gpuHandle or edid is invalid, outputId has 0 or > 1 bits
+        ///     set
+        /// </exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        /// <exception cref="NVIDIAApiException">Status.DataNotFound: The requested display does not contain an EDID.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        // ReSharper disable once TooManyArguments
+        public static EDIDV3 GetEDID(
+            PhysicalGPUHandle gpuHandle,
+            OutputId outputId,
+            int offset,
+            int readIdentification = 0)
+        {
+            var gpuGetEDID = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetEDID>();
+
+            if (!gpuGetEDID.Accepts().Contains(typeof(EDIDV3)))
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            var instance = EDIDV3.CreateWithOffset((uint)readIdentification, (uint)offset);
+
+            using (var edidReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = gpuGetEDID(gpuHandle, outputId, edidReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return edidReference.ToValueType<EDIDV3>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     This function returns the EDID data for the specified GPU handle and connection bit mask.
+        ///     outputId should have exactly 1 bit set to indicate a single display.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to check outputs</param>
+        /// <param name="outputId">Output identification</param>
+        /// <returns>Whole or a part of the EDID data</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">
+        ///     Status.InvalidArgument: gpuHandle or edid is invalid, outputId has 0 or > 1 bits
+        ///     set
+        /// </exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        /// <exception cref="NVIDIAApiException">Status.DataNotFound: The requested display does not contain an EDID.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static IEDID GetEDID(PhysicalGPUHandle gpuHandle, OutputId outputId)
+        {
+            var gpuGetEDID = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetEDID>();
+
+            foreach (var acceptType in gpuGetEDID.Accepts())
+            {
+                using (var edidReference = ValueTypeReference.FromValueType(acceptType.Instantiate<IEDID>(), acceptType)
+                )
+                {
+                    var status = gpuGetEDID(gpuHandle, outputId, edidReference);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return edidReference.ToValueType<IEDID>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This API converts a display ID to a Physical GPU handle and output ID.
+        /// </summary>
+        /// <param name="displayId">Display identification of display to retrieve GPU and outputId for</param>
+        /// <param name="gpuHandle">Handle to the physical GPU</param>
+        /// <returns>Connected display output identification on the target GPU will only have one bit set.</returns>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: NVAPI not initialized</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid input parameter</exception>
+        /// <exception cref="NVIDIAApiException">
+        ///     Status.IdOutOfRange: The DisplayId corresponds to a display which is not within
+        ///     the normal outputId range.
+        /// </exception>
+        public static OutputId GetGPUAndOutputIdFromDisplayId(uint displayId, out PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_SYS_GetGpuAndOutputIdFromDisplayId>()(
+                displayId,
+                out gpuHandle, out var outputId);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return outputId;
+        }
+
+        /// <summary>
+        ///     This function returns the logical GPU handle associated with the specified display.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        ///     display can be DisplayHandle.DefaultHandle or a handle enumerated from EnumNVidiaDisplayHandle().
+        /// </summary>
+        /// <param name="display">Display handle to get information about</param>
+        /// <returns>Logical GPU handle associated with the specified display</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        public static LogicalGPUHandle GetLogicalGPUFromDisplay(DisplayHandle display)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetLogicalGPUFromDisplay>()(display, out var gpu);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpu;
+        }
+
+        /// <summary>
+        ///     This function returns the output type. User can either specify both 'physical GPU handle and outputId (exactly 1
+        ///     bit set)' or a valid displayId in the outputId parameter.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <param name="outputId">Output identification of the output to get information about</param>
+        /// <returns>Type of the output</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static OutputType GetOutputType(PhysicalGPUHandle gpuHandle, OutputId outputId)
+        {
+            return GetOutputType(gpuHandle, (uint)outputId);
+        }
+
+        /// <summary>
+        ///     This function returns the output type. User can either specify both 'physical GPU handle and outputId (exactly 1
+        ///     bit set)' or a valid displayId in the outputId parameter.
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <param name="displayId">Display identification of the divide to get information about</param>
+        /// <returns>Type of the output</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static OutputType GetOutputType(PhysicalGPUHandle gpuHandle, uint displayId)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetOutputType>()(gpuHandle, displayId,
+                    out var type);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return type;
+        }
+
+        /// <summary>
+        ///     This API retrieves the Physical GPU handle of the connected display
+        /// </summary>
+        /// <param name="displayId">Display identification of display to retrieve GPU handle</param>
+        /// <returns>Handle to the physical GPU</returns>
+        /// <exception cref="NVIDIAApiException">Status.ApiNotInitialized: NVAPI not initialized</exception>
+        /// <exception cref="NVIDIAApiException">Status.Error: Miscellaneous error occurred</exception>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: Invalid input parameter</exception>
+        public static PhysicalGPUHandle GetPhysicalGPUFromDisplayId(uint displayId)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_SYS_GetPhysicalGpuFromDisplayId>()(displayId,
+                    out var gpu);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpu;
+        }
+
+        /// <summary>
+        ///     This function returns a physical GPU handle associated with the specified unattached display.
+        ///     The source GPU is a physical render GPU which renders the frame buffer but may or may not drive the scan out.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        /// </summary>
+        /// <param name="display">Display handle to get information about</param>
+        /// <returns>Physical GPU handle associated with the specified unattached display.</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        public static PhysicalGPUHandle GetPhysicalGPUFromUnAttachedDisplay(UnAttachedDisplayHandle display)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetPhysicalGPUFromUnAttachedDisplay>()(display,
+                    out var gpu);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpu;
+        }
+
+        /// <summary>
+        ///     This function returns an array of physical GPU handles associated with the specified display.
+        ///     At least one GPU must be present in the system and running an NVIDIA display driver.
+        ///     If the display corresponds to more than one physical GPU, the first GPU returned is the one with the attached
+        ///     active output.
+        /// </summary>
+        /// <param name="display">Display handle to get information about</param>
+        /// <returns>An array of physical GPU handles</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        public static PhysicalGPUHandle[] GetPhysicalGPUsFromDisplay(DisplayHandle display)
+        {
+            var gpuList =
+                typeof(PhysicalGPUHandle).Instantiate<PhysicalGPUHandle>().Repeat(PhysicalGPUHandle.MaxPhysicalGPUs);
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GetPhysicalGPUsFromDisplay>()(display, gpuList,
+                out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return gpuList.Take((int)count).ToArray();
+        }
+
+        /// <summary>
+        ///     Thus function sets the EDID data for the specified GPU handle and connection bit mask.
+        ///     User can either send (Gpu handle and output id) or only display Id in variable outputId parameter and gpuHandle
+        ///     parameter can be default handle.
+        ///     Note: The EDID will be cached across the boot session and will be enumerated to the OS in this call. To remove the
+        ///     EDID set size of EDID to zero. OS and NVAPI connection status APIs will reflect the newly set or removed EDID
+        ///     dynamically.
+        ///     This feature will NOT be supported on the following boards: GeForce, Quadro VX, Tesla
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to check outputs</param>
+        /// <param name="outputId">Output identification</param>
+        /// <param name="edid">EDID information</param>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">
+        ///     Status.InvalidArgument: gpuHandle or edid is invalid, outputId has 0 or > 1 bits
+        ///     set
+        /// </exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: For the above mentioned GPUs</exception>
+        public static void SetEDID(PhysicalGPUHandle gpuHandle, OutputId outputId, IEDID edid)
+        {
+            SetEDID(gpuHandle, (uint)outputId, edid);
+        }
+
+        /// <summary>
+        ///     Thus function sets the EDID data for the specified GPU handle and connection bit mask.
+        ///     User can either send (Gpu handle and output id) or only display Id in variable outputId parameter and gpuHandle
+        ///     parameter can be default handle.
+        ///     Note: The EDID will be cached across the boot session and will be enumerated to the OS in this call. To remove the
+        ///     EDID set size of EDID to zero. OS and NVAPI connection status APIs will reflect the newly set or removed EDID
+        ///     dynamically.
+        ///     This feature will NOT be supported on the following boards: GeForce, Quadro VX, Tesla
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to check outputs</param>
+        /// <param name="displayId">Output identification</param>
+        /// <param name="edid">EDID information</param>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">
+        ///     Status.InvalidArgument: gpuHandle or edid is invalid, outputId has 0 or > 1 bits
+        ///     set
+        /// </exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NotSupported: For the above mentioned GPUs</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static void SetEDID(PhysicalGPUHandle gpuHandle, uint displayId, IEDID edid)
+        {
+            var gpuSetEDID = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetEDID>();
+
+            if (!gpuSetEDID.Accepts().Contains(edid.GetType()))
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            using (var edidReference = ValueTypeReference.FromValueType(edid, edid.GetType()))
+            {
+                var status = gpuSetEDID(gpuHandle, displayId, edidReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This function determines if a set of GPU outputs can be active simultaneously.  While a GPU may have 'n' outputs,
+        ///     typically they cannot all be active at the same time due to internal resource sharing.
+        ///     Given a physical GPU handle and a mask of candidate outputs, this call will return true if all of the specified
+        ///     outputs can be driven simultaneously. It will return false if they cannot.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to check outputs</param>
+        /// <param name="outputIds">Output identification combination</param>
+        /// <returns>true if all of the specified outputs can be driven simultaneously. It will return false if they cannot.</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: display is not valid</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static bool ValidateOutputCombination(PhysicalGPUHandle gpuHandle, OutputId outputIds)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ValidateOutputCombination>()(gpuHandle, outputIds);
+
+            if (status == Status.InvalidCombination)
             {
                 return false;
             }
 
-            // Now we need to go through the HDR states comparing vaues, as the order changes if there is a cloned display
-            if (!NVImport.EqualButDifferentOrder<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>(TargetInfo, other.TargetInfo))
+            if (status != Status.Ok)
             {
-                return false;
+                throw new NVIDIAApiException(status);
             }
 
             return true;
-
         }
 
-        public override Int32 GetHashCode()
-        {
-            return (Version, SourceId, TargetInfoCount, TargetInfo, SourceModeInfo, Flags).GetHashCode();
-        }
-        public static bool operator ==(NV_DISPLAYCONFIG_PATH_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_INFO_V2 rhs) => lhs.Equals(rhs);
 
-        public static bool operator !=(NV_DISPLAYCONFIG_PATH_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_INFO_V2 rhs) => !(lhs == rhs);
-        public object Clone()
+        /// <summary>
+        ///     Gets the control information about illumination devices on the given GPU.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <returns>An instance of <see cref="IlluminationDeviceControlParametersV1" />.</returns>
+        public static IlluminationDeviceControlParametersV1 ClientIlluminationDevicesGetControl(
+            PhysicalGPUHandle gpuHandle)
         {
-            NV_DISPLAYCONFIG_PATH_INFO_V2 other = (NV_DISPLAYCONFIG_PATH_INFO_V2)MemberwiseClone();
-            other.TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[TargetInfoCount];
-            for (int x = 0; x < (int)TargetInfoCount; x++)
+            var instance = typeof(IlluminationDeviceControlParametersV1)
+                .Instantiate<IlluminationDeviceControlParametersV1>();
+
+            using (var deviceControlParametersReference = ValueTypeReference.FromValueType(instance))
             {
-                other.TargetInfo[x] = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)TargetInfo[x].Clone();
-            }
-            other.SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)SourceModeInfo.Clone(); ;
-            return other;
-        }
-    }
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientIlluminationDevicesGetControl>()(
+                    gpuHandle,
+                    deviceControlParametersReference
+                );
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL // Version is 2 - This is for processing pass 2 only!
-    {
-        public UInt32 Version;
-        public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
-        public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
-        public IntPtr TargetInfo;
-        public IntPtr SourceModeInfo;             //!< May be NULL if mode info is not important
-        //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
-        //public UInt32 reserved : 31;              //!< Must be 0
-        public UInt32 Flags;
-        //!< Used by Non-NVIDIA adapter for pointer to OS Adapter of LUID
-        //!< type, type casted to void *.
-        public IntPtr OSAdapterID;
-
-        public bool IsNonNVIDIAAdapter => Flags.GetBit(0); //!< if bit is set then this path uses a non-nvidia adapter
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL
-    {
-        public UInt32 DisplayId;  //!< Display ID
-        public IntPtr Details;  // Points to an NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL object  
-                                //!< NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO - May be NULL if no advanced settings are required
-        public UInt32 WindowsCCDTargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
-
-    }
-
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct NV_DISPLAYCONFIG_PATH_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V1>, ICloneable // Version is 1
-    {
-        public UInt32 Version;
-        public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
-
-        public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
-        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[] TargetInfo;
-        public NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 SourceModeInfo;             //!< May be NULL if mode info is not important
-                                                                                //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
-                                                                                //public UInt32 reserved : 31;              //!< Must be 0
-                                                                                //public LUID pOSAdapterID;              //!< Used by Non-NVIDIA adapter for poInt32er to OS Adapter of LUID
-                                                                                //!< type, type casted to void *.
-
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_INFO_V1 other && this.Equals(other);
-
-        public bool Equals(NV_DISPLAYCONFIG_PATH_INFO_V1 other)
-        => Version == other.Version &&
-           SourceId == other.SourceId &&
-           TargetInfoCount == other.TargetInfoCount &&
-           TargetInfo.SequenceEqual(other.TargetInfo) &&
-           SourceModeInfo.Equals(other.SourceModeInfo);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, SourceId, TargetInfoCount, TargetInfo, SourceModeInfo).GetHashCode();
-        }
-        public static bool operator ==(NV_DISPLAYCONFIG_PATH_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_INFO_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_DISPLAYCONFIG_PATH_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_INFO_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_DISPLAYCONFIG_PATH_INFO_V2 other = (NV_DISPLAYCONFIG_PATH_INFO_V2)MemberwiseClone();
-            other.TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[TargetInfoCount];
-            for (int x = 0; x < (int)TargetInfoCount; x++)
-            {
-                other.TargetInfo[x] = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)TargetInfo[x].Clone();
-            }
-            other.SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)SourceModeInfo.Clone(); ;
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1>, ICloneable
-    {
-        public NV_RESOLUTION Resolution;
-        public NV_FORMAT ColorFormat;                //!< Ignored at present, must be NV_FORMAT_UNKNOWN (0)
-        public NV_POSITION Position;                   //!< Is all positions are 0 or invalid, displays will be automatically
-                                                       //!< positioned from left to right with GDI Primary at 0,0, and all
-                                                       //!< other displays in the order of the path array.
-        public NV_DISPLAYCONFIG_SPANNING_ORIENTATION SpanningOrientation;        //!< Spanning is only supported on XP
-        public UInt32 Flags;
-
-        public bool IsGDIPrimary => (Flags & 0x1) == 0x1; //!< if bit is set then this source is the primary GDI source
-        public bool IsSLIFocus => (Flags & 0x2) == 0x2; //!< if bit is set then this source has SLI focus
-
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 other && this.Equals(other);
-
-        public bool Equals(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 other)
-        => Resolution.Equals(other.Resolution) &&
-           ColorFormat == other.ColorFormat &&
-           Position.Equals(other.Position) &&
-           Flags == other.Flags;
-
-        public override Int32 GetHashCode()
-        {
-            return (Resolution, ColorFormat, Position, Flags).GetHashCode();
-        }
-        public static bool operator ==(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 lhs, NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 lhs, NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 other = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)MemberwiseClone();
-            other.Resolution = (NV_RESOLUTION)Resolution.Clone();
-            other.Position = (NV_POSITION)Position.Clone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1_INTERNAL
-    {
-        public IntPtr Resolution;       // Points to a NV_RESOLUTION_INTERNAL object
-        public NV_FORMAT ColorFormat;                //!< Ignored at present, must be NV_FORMAT_UNKNOWN (0)
-        public IntPtr Position;                   // Points to a NV_POSITION_INTERNAL object
-                                                  //!< Is all positions are 0 or invalid, displays will be automatically
-                                                  //!< positioned from left to right with GDI Primary at 0,0, and all
-                                                  //!< other displays in the order of the path array.
-        public NV_DISPLAYCONFIG_SPANNING_ORIENTATION SpanningOrientation;        //!< Spanning is only supported on XP
-        public UInt32 Flags;
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_TOPO_BRIEF : IEquatable<NV_MOSAIC_TOPO_BRIEF>, ICloneable // Note: Version 1 of NV_MOSAIC_TOPO_BRIEF structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
-        public NV_MOSAIC_TOPO Topo;     //!< The topology
-        public UInt32 Enabled;            //!< 1 if topo is enabled, else 0
-        public UInt32 IsPossible;         //!< 1 if topo *can* be enabled, else 0
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_TOPO_BRIEF other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_TOPO_BRIEF other)
-        => Version == other.Version;
-        // Note: This is ignored as it changes depending on what the last topology applied was, which of course changes with use. 
-        // This doesn't affect the whether the config can be applied, but really all it does is mess up the Equality comparison!
-        // so I've ignored it.
-        // Topo.Equals(other.Topo); 
-        // Note: Removed Enabled and IsPossible from matches so that comparisons work even if they aren't enabled or possible now
-        // Enabled == other.Enabled &&
-        // IsPossible == other.IsPossible  
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Topo, Enabled, IsPossible).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_TOPO_BRIEF lhs, NV_MOSAIC_TOPO_BRIEF rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_TOPO_BRIEF lhs, NV_MOSAIC_TOPO_BRIEF rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_TOPO_BRIEF other = (NV_MOSAIC_TOPO_BRIEF)MemberwiseClone();
-            return other;
-        }
-    }
-
-    //
-    //! This structure defines a group of topologies that work together to create one
-    //! overall layout.  All of the supported topologies are represented with this
-    //! structure.
-    //!
-    //! For example, a 'Passive Stereo' topology would be represented with this
-    //! structure, and would have separate topology details for the left and right eyes.
-    //! The count would be 2.  A 'Basic' topology is also represented by this structure,
-    //! with a count of 1.
-    //!
-    //! The structure is primarily used Int32ernally, but is exposed to applications in a
-    //! read-only fashion because there are some details in it that might be useful
-    //! (like the number of rows/cols, or connected display information).  A user can
-    //! get the filled-in structure by calling NvAPI_Mosaic_GetTopoGroup().
-    //!
-    //! You can then look at the detailed values within the structure.  There are no
-    //! entrypoInt32s which take this structure as input (effectively making it read-only).
-    [StructLayout(LayoutKind.Sequential)]
-    public struct NV_MOSAIC_TOPO_GROUP : IEquatable<NV_MOSAIC_TOPO_GROUP>, ICloneable // Note: Version 1 of NV_MOSAIC_TOPO_GROUP structure
-    {
-        public UInt32 Version;                        // Version of this structure - MUST BE SET TO 1
-        public NV_MOSAIC_TOPO_BRIEF Brief;          //!< The brief details of this topo
-        public UInt32 Count;                          //!< Number of topos in array below
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public NV_MOSAIC_TOPO_DETAILS[] Topos;      //!< Topo Array with 1 or 2 entries in it
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_TOPO_GROUP other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_TOPO_GROUP other)
-        => Version == other.Version &&
-           Brief.Equals(other.Brief) &&
-           Count == other.Count &&
-           Topos.SequenceEqual(other.Topos);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Brief, Count, Topos).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_TOPO_GROUP lhs, NV_MOSAIC_TOPO_GROUP rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_TOPO_GROUP lhs, NV_MOSAIC_TOPO_GROUP rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_TOPO_GROUP other = (NV_MOSAIC_TOPO_GROUP)MemberwiseClone();
-            other.Brief = (NV_MOSAIC_TOPO_BRIEF)Brief.Clone();
-            other.Topos = new NV_MOSAIC_TOPO_DETAILS[Topos.Length];
-            for (int x = 0; x < (int)Topos.Length; x++)
-            {
-                other.Topos[x] = (NV_MOSAIC_TOPO_DETAILS)Topos[x].Clone();
-            }
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct NV_MOSAIC_TOPO_DETAILS : IEquatable<NV_MOSAIC_TOPO_DETAILS>, ICloneable // Note: Version 1 of NV_MOSAIC_TOPO_DETAILS structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 1 
-        public LogicalGpuHandle LogicalGPUHandle;     //!< Logical GPU for this topology  
-        public NV_MOSAIC_TOPO_VALIDITY ValidityMask;            //!< 0 means topology is valid with the current hardware. 
-                                                                //! If not 0, inspect bits against NV_MOSAIC_TOPO_VALIDITY_*.
-        public UInt32 RowCount;         //!< Number of displays in a row. size is 4
-        public UInt32 ColCount;         //!< Number of displays in a column. size is 4
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)(NVImport.NVAPI_MAX_MOSAIC_DISPLAY_ROWS * NVImport.NVAPI_MAX_MOSAIC_DISPLAY_COLUMNS))]
-        public NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[] GPULayout1D;
-
-        public NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[,] GPULayout
-        {
-            get
-            {
-                var GpuLayout2D = new NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[NVImport.NVAPI_MAX_MOSAIC_DISPLAY_ROWS, NVImport.NVAPI_MAX_MOSAIC_DISPLAY_COLUMNS];
-                var position = 0;
-                for (int first = 0; first < 8; first++)
+                if (status != Status.Ok)
                 {
-                    for (int second = 0; second < 8; second++)
-                    {
-                        GpuLayout2D[first, second] = GPULayout1D[position++];
-                    }
+                    throw new NVIDIAApiException(status);
                 }
-                return GpuLayout2D;
+
+                return deviceControlParametersReference.ToValueType<IlluminationDeviceControlParametersV1>()
+                    .GetValueOrDefault();
             }
-            set
+        }
+
+        /// <summary>
+        ///     Returns static information about illumination devices on the given GPU.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <returns>An instance of <see cref="IlluminationDeviceInfoParametersV1" />.</returns>
+        public static IlluminationDeviceInfoParametersV1 ClientIlluminationDevicesGetInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(IlluminationDeviceInfoParametersV1).Instantiate<IlluminationDeviceInfoParametersV1>();
+
+            using (var deviceInfoParametersReference = ValueTypeReference.FromValueType(instance))
             {
-                GPULayout1D = new NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[NVImport.NVAPI_MAX_MOSAIC_DISPLAY_ROWS * NVImport.NVAPI_MAX_MOSAIC_DISPLAY_COLUMNS];
-                var position = 0;
-                for (int first = 0; first < 8; first++)
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientIlluminationDevicesGetInfo>()(
+                    gpuHandle,
+                    deviceInfoParametersReference
+                );
+
+                if (status != Status.Ok)
                 {
-                    for (int second = 0; second < 8; second++)
-                    {
-                        GPULayout1D[position++] = GPULayout[first, second];
-                    }
+                    throw new NVIDIAApiException(status);
                 }
-                GPULayout = value;
+
+                return deviceInfoParametersReference.ToValueType<IlluminationDeviceInfoParametersV1>()
+                    .GetValueOrDefault();
             }
         }
 
-        public override bool Equals(object obj) => obj is NV_MOSAIC_TOPO_DETAILS other && this.Equals(other);
-        public bool Equals(NV_MOSAIC_TOPO_DETAILS other)
-        => Version == other.Version &&
-           LogicalGPUHandle.Equals(other.LogicalGPUHandle) &&
-           ValidityMask == other.ValidityMask &&
-           RowCount == other.RowCount &&
-           ColCount == other.ColCount &&
-           ValidityMask == other.ValidityMask &&
-           GPULayout1D.SequenceEqual(other.GPULayout1D);
-
-        public bool TopologyValid => ValidityMask == 0; //!< The topology is valid
-        public bool TopologyMissingGPU => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_GPU); //!< Not enough SLI GPUs were found to fill the entire
-                                                                                                     //! topology. hPhysicalGPU will be 0 for these.
-        public bool TopologyMissingDisplay => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_DISPLAY);//!< Not enough displays were found to fill the entire
-                                                                                                            //! topology. displayOutputId will be 0 for these.
-        public bool TopologyMixedDisplayTypes => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MIXED_DISPLAY_TYPES);//!< The topoogy is only possible with displays of the same
-                                                                                                                   //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
-                                                                                                                   //! sure they are all CRTs, or all DFPs.
-
-        public override Int32 GetHashCode()
+        /// <summary>
+        ///     Sets the control information about illumination devices on the given GPU.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <param name="deviceControlParameters">The new control illumination devices control information.</param>
+        public static void ClientIlluminationDevicesSetControl(
+            PhysicalGPUHandle gpuHandle,
+            IlluminationDeviceControlParametersV1 deviceControlParameters)
         {
-            return (Version, LogicalGPUHandle, ValidityMask, RowCount, ColCount, ValidityMask).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_TOPO_DETAILS lhs, NV_MOSAIC_TOPO_DETAILS rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_TOPO_DETAILS lhs, NV_MOSAIC_TOPO_DETAILS rhs) => !(lhs == rhs);
-
-        public object Clone()
-        {
-            NV_MOSAIC_TOPO_DETAILS other = (NV_MOSAIC_TOPO_DETAILS)MemberwiseClone();
-            other.LogicalGPUHandle = (LogicalGpuHandle)LogicalGPUHandle.Clone();
-            other.GPULayout1D = new NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[GPULayout1D.Length];
-            for (int x = 0; x < (int)GPULayout1D.Length; x++)
+            using (var deviceControlParametersReference = ValueTypeReference.FromValueType(deviceControlParameters))
             {
-                other.GPULayout1D[x] = (NV_MOSAIC_TOPO_GPU_LAYOUT_CELL)GPULayout1D[x].Clone();
-            }
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientIlluminationDevicesSetControl>()(
+                    gpuHandle,
+                    deviceControlParametersReference
+                );
 
-            other.GPULayout = new NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[GPULayout.GetLength(0), GPULayout.GetLength(1)];
-            for (int x = 0; x < (int)GPULayout.GetLength(0); x++)
-            {
-                for (int y = 0; y < (int)GPULayout.GetLength(1); y++)
+                if (status != Status.Ok)
                 {
-                    other.GPULayout[x, y] = (NV_MOSAIC_TOPO_GPU_LAYOUT_CELL)GPULayout[x, y].Clone();
+                    throw new NVIDIAApiException(status);
                 }
             }
-            return other;
         }
-    }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_TOPO_GPU_LAYOUT_CELL : IEquatable<NV_MOSAIC_TOPO_GPU_LAYOUT_CELL>, ICloneable
-    {
-        public PhysicalGpuHandle PhysicalGPUHandle;     //!< Physical GPU to be used in the topology (0 if GPU missing) size is 8
-        public UInt32 DisplayOutputId;            //!< Connected display target(0 if no display connected) size is 8
-        public Int32 OverlapX;         //!< Pixels of overlap on left of target: (+overlap, -gap) size is 8
-        public Int32 OverlapY;         //!< Pixels of overlap on top of target: (+overlap, -gap) size is 8
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_TOPO_GPU_LAYOUT_CELL other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_TOPO_GPU_LAYOUT_CELL other)
-        => PhysicalGPUHandle.Equals(other.PhysicalGPUHandle) &&
-           DisplayOutputId == other.DisplayOutputId &&
-            OverlapX == other.OverlapX &&
-            OverlapY == other.OverlapY;
-
-        public override Int32 GetHashCode()
+        /// <summary>
+        ///     Gets the control information about illumination zones on the given GPU.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <param name="valuesType">The type of settings to retrieve.</param>
+        /// <returns>An instance of <see cref="IlluminationZoneControlParametersV1" />.</returns>
+        public static IlluminationZoneControlParametersV1 ClientIlluminationZonesGetControl(
+            PhysicalGPUHandle gpuHandle,
+            IlluminationZoneControlValuesType valuesType)
         {
-            return (PhysicalGPUHandle, DisplayOutputId, OverlapX, OverlapY).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_TOPO_GPU_LAYOUT_CELL lhs, NV_MOSAIC_TOPO_GPU_LAYOUT_CELL rhs) => lhs.Equals(rhs);
+            var instance = new IlluminationZoneControlParametersV1(valuesType);
 
-        public static bool operator !=(NV_MOSAIC_TOPO_GPU_LAYOUT_CELL lhs, NV_MOSAIC_TOPO_GPU_LAYOUT_CELL rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_TOPO_GPU_LAYOUT_CELL other = (NV_MOSAIC_TOPO_GPU_LAYOUT_CELL)MemberwiseClone();
-            other.PhysicalGPUHandle = (PhysicalGpuHandle)PhysicalGPUHandle.Clone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_SETTING_V1 : IEquatable<NV_MOSAIC_DISPLAY_SETTING_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_DISPLAY_SETTING structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
-        public UInt32 Width;              //!< Per-display width
-        public UInt32 Height;             //!< Per-display height
-        public UInt32 Bpp;                //!< Bits per pixel
-        public UInt32 Freq;               //!< Display frequency
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_DISPLAY_SETTING_V1 other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_DISPLAY_SETTING_V1 other)
-        => Version == other.Version &&
-           Width == other.Width &&
-           Height == other.Height &&
-           Bpp == other.Bpp &&
-           Freq == other.Freq;
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Width, Height, Bpp, Freq).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_DISPLAY_SETTING_V1 lhs, NV_MOSAIC_DISPLAY_SETTING_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_DISPLAY_SETTING_V1 lhs, NV_MOSAIC_DISPLAY_SETTING_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_DISPLAY_SETTING_V1 other = (NV_MOSAIC_DISPLAY_SETTING_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_SETTING_V2 : IEquatable<NV_MOSAIC_DISPLAY_SETTING_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_DISPLAY_SETTING structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
-        public UInt32 Width;              //!< Per-display width
-        public UInt32 Height;             //!< Per-display height
-        public UInt32 Bpp;                //!< Bits per pixel
-        public UInt32 Freq;               //!< Display frequency
-        public UInt32 Rrx1k;              //!< Display frequency in x1k
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_DISPLAY_SETTING_V2 other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_DISPLAY_SETTING_V2 other)
-        => Version == other.Version &&
-           Width == other.Width &&
-           Height == other.Height &&
-           Bpp == other.Bpp &&
-           Freq == other.Freq &&
-           Rrx1k == other.Rrx1k;
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Width, Height, Bpp, Freq, Rrx1k).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_DISPLAY_SETTING_V2 lhs, NV_MOSAIC_DISPLAY_SETTING_V2 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_DISPLAY_SETTING_V2 lhs, NV_MOSAIC_DISPLAY_SETTING_V2 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_DISPLAY_SETTING_V2 other = (NV_MOSAIC_DISPLAY_SETTING_V2)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_V1 : IEquatable<NV_MOSAIC_GRID_TOPO_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_GRID_TOPO structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
-        public UInt32 Rows;              //!< Per-display width
-        public UInt32 Columns;             //!< Per-display height
-        public UInt32 DisplayCount;                //!< Bits per pixel
-        public UInt32 Flags;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MOSAIC_MAX_DISPLAYS)]
-        public NV_MOSAIC_GRID_TOPO_DISPLAY_V1[] Displays;
-        public NV_MOSAIC_DISPLAY_SETTING_V1 DisplaySettings;
-
-        public bool ApplyWithBezelCorrect => (Flags & 0x1) == 0x1;
-        public bool ImmersiveGaming => (Flags & 0x2) == 0x2;
-        public bool BaseMosaic => (Flags & 0x4) == 0x4;
-        public bool DriverReloadAllowed => (Flags & 0x8) == 0x8;
-        public bool AcceleratePrimaryDisplay => (Flags & 0x10) == 0x10;
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_GRID_TOPO_DISPLAY_V1 other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_GRID_TOPO_V1 other)
-        => Version == other.Version &&
-           Rows == other.Rows &&
-           Columns == other.Columns &&
-           DisplayCount == other.DisplayCount &&
-           Flags == other.Flags &&
-           Displays.SequenceEqual(other.Displays) &&
-           DisplaySettings.Equals(other.DisplaySettings);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Rows, Columns, DisplayCount, Flags, Displays, DisplaySettings).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_GRID_TOPO_V1 lhs, NV_MOSAIC_GRID_TOPO_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_GRID_TOPO_V1 lhs, NV_MOSAIC_GRID_TOPO_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_GRID_TOPO_V1 other = (NV_MOSAIC_GRID_TOPO_V1)MemberwiseClone();
-            other.DisplaySettings = (NV_MOSAIC_DISPLAY_SETTING_V1)DisplaySettings.Clone();
-            other.Displays = new NV_MOSAIC_GRID_TOPO_DISPLAY_V1[Displays.Length];
-            for (int x = 0; x < (int)Displays.Length; x++)
+            using (var zoneControlParametersReference = ValueTypeReference.FromValueType(instance))
             {
-                other.Displays[x] = (NV_MOSAIC_GRID_TOPO_DISPLAY_V1)Displays[x].Clone();
-            }
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_V2 : IEquatable<NV_MOSAIC_GRID_TOPO_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_GRID_TOPO structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
-        public UInt32 Rows;              //!< Per-display width
-        public UInt32 Columns;             //!< Per-display height
-        public UInt32 DisplayCount;                //!< Bits per pixel
-        public UInt32 Flags;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MOSAIC_MAX_DISPLAYS)]
-        public NV_MOSAIC_GRID_TOPO_DISPLAY_V2[] Displays;
-        public NV_MOSAIC_DISPLAY_SETTING_V1 DisplaySettings;
-
-        public bool ApplyWithBezelCorrect => (Flags & 0x1) == 0x1;
-        public bool ImmersiveGaming => (Flags & 0x2) == 0x2;
-        public bool BaseMosaic => (Flags & 0x4) == 0x4;
-        public bool DriverReloadAllowed => (Flags & 0x8) == 0x8;
-        public bool AcceleratePrimaryDisplay => (Flags & 0x10) == 0x10;
-        public bool PixelShift => (Flags & 0x20) == 0x20;
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_GRID_TOPO_V2 other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_GRID_TOPO_V2 other)
-        => Version == other.Version &&
-           Rows == other.Rows &&
-           Columns == other.Columns &&
-           DisplayCount == other.DisplayCount &&
-           Flags == other.Flags &&
-           Displays.SequenceEqual(other.Displays) &&
-           DisplaySettings.Equals(other.DisplaySettings);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Rows, Columns, DisplayCount, Flags, Displays, DisplaySettings).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_GRID_TOPO_V2 lhs, NV_MOSAIC_GRID_TOPO_V2 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_GRID_TOPO_V2 lhs, NV_MOSAIC_GRID_TOPO_V2 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_GRID_TOPO_V2 other = (NV_MOSAIC_GRID_TOPO_V2)MemberwiseClone();
-            other.DisplaySettings = (NV_MOSAIC_DISPLAY_SETTING_V1)DisplaySettings.Clone();
-            other.Displays = new NV_MOSAIC_GRID_TOPO_DISPLAY_V2[Displays.Length];
-            for (int x = 0; x < (int)Displays.Length; x++)
-            {
-                other.Displays[x] = (NV_MOSAIC_GRID_TOPO_DISPLAY_V2)Displays[x].Clone();
-            }
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_DISPLAY_V1 : IEquatable<NV_MOSAIC_GRID_TOPO_DISPLAY_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_GRID_TOPO_DISPLAY structure
-    {
-        public UInt32 DisplayId;              //!< DisplayID of the display
-        public Int32 OverlapX;             //!< (+overlap, -gap)
-        public Int32 OverlapY;                //!< (+overlap, -gap)
-        public NV_ROTATE Rotation;                //!< Rotation of display
-        public UInt32 CloneGroup;                //!< Reserved, must be 0
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_GRID_TOPO_DISPLAY_V1 other && this.Equals(other);
-        public bool Equals(NV_MOSAIC_GRID_TOPO_DISPLAY_V1 other)
-        => DisplayId == other.DisplayId &&
-           OverlapX == other.OverlapX &&
-           OverlapY == other.OverlapY &&
-           Rotation == other.Rotation &&
-           CloneGroup == other.CloneGroup;
-
-        public override Int32 GetHashCode()
-        {
-            return (DisplayId, OverlapX, OverlapY, Rotation, CloneGroup).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_GRID_TOPO_DISPLAY_V1 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_GRID_TOPO_DISPLAY_V1 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_GRID_TOPO_DISPLAY_V1 other = (NV_MOSAIC_GRID_TOPO_DISPLAY_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_DISPLAY_V2 : IEquatable<NV_MOSAIC_GRID_TOPO_DISPLAY_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_GRID_TOPO_DISPLAY structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
-        public UInt32 DisplayId;              //!< DisplayID of the display
-        public Int32 OverlapX;             //!< (+overlap, -gap)
-        public Int32 OverlapY;                //!< (+overlap, -gap)
-        public NV_ROTATE Rotation;                //!< Rotation of display
-        public UInt32 CloneGroup;                //!< Reserved, must be 0
-        public NV_PIXEL_SHIFT_TYPE PixelShiftType;  //!< Type of the pixel shift enabled display
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_GRID_TOPO_DISPLAY_V2 other && this.Equals(other);
-        public bool Equals(NV_MOSAIC_GRID_TOPO_DISPLAY_V2 other)
-        => Version == other.Version &&
-           DisplayId == other.DisplayId &&
-           OverlapX == other.OverlapX &&
-           OverlapY == other.OverlapY &&
-           Rotation == other.Rotation &&
-           CloneGroup == other.CloneGroup &&
-           PixelShiftType == other.PixelShiftType;
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, DisplayId, OverlapX, OverlapY, Rotation, CloneGroup, PixelShiftType).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_GRID_TOPO_DISPLAY_V2 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V2 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_GRID_TOPO_DISPLAY_V2 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V2 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_GRID_TOPO_DISPLAY_V2 other = (NV_MOSAIC_GRID_TOPO_DISPLAY_V2)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 : IEquatable<NV_MOSAIC_SUPPORTED_TOPO_INFO_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_SUPPORTED_TOPO_INFO structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
-        public UInt32 TopoBriefsCount;              //!< Number of topologies in below array
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MOSAIC_TOPO_MAX)]
-        public NV_MOSAIC_TOPO_BRIEF[] TopoBriefs;             //!< List of supported topologies with only brief details
-        public Int32 DisplaySettingsCount;                //!< Number of display settings in below array
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MOSAIC_DISPLAY_SETTINGS_MAX)]
-        public NV_MOSAIC_DISPLAY_SETTING_V1[] DisplaySettings;                //!< List of per display settings possible
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 other)
-        => Version == other.Version &&
-           TopoBriefsCount == other.TopoBriefsCount &&
-           TopoBriefs.SequenceEqual(other.TopoBriefs) &&
-           DisplaySettingsCount == other.DisplaySettingsCount &&
-           DisplaySettings.SequenceEqual(other.DisplaySettings);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, TopoBriefsCount, TopoBriefs, DisplaySettingsCount, DisplaySettings).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 other = (NV_MOSAIC_SUPPORTED_TOPO_INFO_V1)MemberwiseClone();
-            other.TopoBriefs = new NV_MOSAIC_TOPO_BRIEF[TopoBriefs.Length];
-            for (int x = 0; x < (int)TopoBriefs.Length; x++)
-            {
-                other.TopoBriefs[x] = (NV_MOSAIC_TOPO_BRIEF)TopoBriefs[x].Clone();
-            }
-            other.DisplaySettings = new NV_MOSAIC_DISPLAY_SETTING_V1[DisplaySettings.Length];
-            for (int x = 0; x < (int)DisplaySettings.Length; x++)
-            {
-                other.DisplaySettings[x] = (NV_MOSAIC_DISPLAY_SETTING_V1)DisplaySettings[x].Clone();
-            }
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 : IEquatable<NV_MOSAIC_SUPPORTED_TOPO_INFO_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_SUPPORTED_TOPO_INFO structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
-        public UInt32 TopoBriefsCount;              //!< Number of topologies in below array
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MOSAIC_TOPO_MAX)]
-        public NV_MOSAIC_TOPO_BRIEF[] TopoBriefs;             //!< List of supported topologies with only brief details
-        public Int32 DisplaySettingsCount;                //!< Number of display settings in below array
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MOSAIC_DISPLAY_SETTINGS_MAX)]
-        public NV_MOSAIC_DISPLAY_SETTING_V2[] DisplaySettings;                //!< List of per display settings possible
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 other && this.Equals(other);
-        public bool Equals(NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 other)
-        => Version == other.Version &&
-           TopoBriefsCount == other.TopoBriefsCount &&
-           TopoBriefs.SequenceEqual(other.TopoBriefs) &&
-           DisplaySettingsCount == other.DisplaySettingsCount &&
-           DisplaySettings.SequenceEqual(other.DisplaySettings);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, TopoBriefsCount, TopoBriefs, DisplaySettingsCount, DisplaySettings).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 other = (NV_MOSAIC_SUPPORTED_TOPO_INFO_V2)MemberwiseClone();
-            other.TopoBriefs = new NV_MOSAIC_TOPO_BRIEF[TopoBriefs.Length];
-            for (int x = 0; x < (int)TopoBriefs.Length; x++)
-            {
-                other.TopoBriefs[x] = (NV_MOSAIC_TOPO_BRIEF)TopoBriefs[x].Clone();
-            }
-            other.DisplaySettings = new NV_MOSAIC_DISPLAY_SETTING_V2[DisplaySettings.Length];
-            for (int x = 0; x < (int)DisplaySettings.Length; x++)
-            {
-                other.DisplaySettings[x] = (NV_MOSAIC_DISPLAY_SETTING_V2)DisplaySettings[x].Clone();
-            }
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_GPU_DISPLAYIDS_V2 : IEquatable<NV_GPU_DISPLAYIDS_V2>, ICloneable // Note: Version 2 of NV_GPU_DISPLAYIDS_V2 structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 2 (NOTE R470 contains a bug, and sets this to 3!)
-        public NV_MONITOR_CONN_TYPE ConnectorType;              //!< out: vga, tv, dvi, hdmi and dp.This is reserved for future use and clients should not rely on this information.Instead get the
-                                                                //!< GPU connector type from NvAPI_GPU_GetConnectorInfo/NvAPI_GPU_GetConnectorInfoEx
-        public UInt32 DisplayId;             //!< this is a unique identifier for each device
-        public UInt32 Flags;
-
-        public override bool Equals(object obj) => obj is NV_GPU_DISPLAYIDS_V2 other && this.Equals(other);
-
-        public bool Equals(NV_GPU_DISPLAYIDS_V2 other)
-        => Version == other.Version &&
-           ConnectorType == other.ConnectorType &&
-           DisplayId == other.DisplayId &&
-           Flags == other.Flags;
-
-        public bool IsDynamic => (Flags & 0x1) == 0x1; //!< if bit is set then this display is part of MST topology and it's a dynamic
-        public bool IsMultiStreamRootNode => (Flags & 0x2) == 0x2; //!< if bit is set then this displayID belongs to a multi stream enabled connector(root node). Note that when multi stream is enabled and
-                                                                   //!< a single multi stream capable monitor is connected to it, the monitor will share the display id with the RootNode.
-                                                                   //!< When there is more than one monitor connected in a multi stream topology, then the root node will have a separate displayId.
-        public bool IsActive => (Flags & 0x4) == 0x4; //!< if bit is set then this display is being actively driven
-        public bool IsCluster => (Flags & 0x8) == 0x8; //!< if bit is set then this display is the representative display
-        public bool isOSVisible => (Flags & 0x10) == 0x10; //!< if bit is set, then this display is reported to the OS
-        public bool isWFD => (Flags & 0x20) == 0x20; //!< if bit is set, then this display is wireless
-        public bool isConnected => (Flags & 0x40) == 0x40; //!< if bit is set, then this display is connected
-        public bool isPhysicallyConnected => (Flags & 0x20000) == 0x20000; //!< if bit is set, then this display is a physically connected display; Valid only when isConnected bit is set 
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, ConnectorType, DisplayId, Flags).GetHashCode();
-        }
-        public static bool operator ==(NV_GPU_DISPLAYIDS_V2 lhs, NV_GPU_DISPLAYIDS_V2 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_GPU_DISPLAYIDS_V2 lhs, NV_GPU_DISPLAYIDS_V2 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_GPU_DISPLAYIDS_V2 other = (NV_GPU_DISPLAYIDS_V2)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 : IEquatable<NV_MOSAIC_DISPLAY_TOPO_STATUS_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 structure
-    {
-        public UInt32 Version;
-        public NV_MOSAIC_DISPLAYCAPS_PROBLEM_FLAGS ErrorFlags;            //!< (OUT) Any of the NV_MOSAIC_DISPLAYTOPO_ERROR_* flags.
-        public NV_MOSAIC_DISPLAYTOPO_WARNING_FLAGS WarningFlags;          //!< (OUT) Any of the NV_MOSAIC_DISPLAYTOPO_WARNING_* flags.
-        public UInt32 DisplayCount;          //!< (OUT) The number of valid entries in the displays array.
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MAX_DISPLAYS)]
-        public NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY[] Displays;    // displays[NV_MAX_DISPLAYS] array
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 other)
-        => Version == other.Version &&
-           ErrorFlags == other.ErrorFlags &&
-           WarningFlags == other.WarningFlags &&
-           DisplayCount == other.DisplayCount &&
-           Displays.SequenceEqual(other.Displays);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, ErrorFlags, WarningFlags, DisplayCount, Displays).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 other = (NV_MOSAIC_DISPLAY_TOPO_STATUS_V1)MemberwiseClone();
-            other.Displays = new NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY[Displays.Length];
-            for (int x = 0; x < (int)Displays.Length; x++)
-            {
-                other.Displays[x] = (NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY)Displays[x].Clone();
-            }
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY : IEquatable<NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY>, ICloneable
-    {
-        public UInt32 DisplayId;             //!< (OUT) The DisplayID of this display.
-        public NV_MOSAIC_DISPLAYCAPS_PROBLEM_FLAGS ErrorFlags;            //!< (OUT) Any of the NV_MOSAIC_DISPLAYCAPS_PROBLEM_* flags.
-        public NV_MOSAIC_DISPLAYTOPO_WARNING_FLAGS WarningFlags;          //!< (OUT) Any of the NV_MOSAIC_DISPLAYTOPO_WARNING_* flags.
-        public UInt32 GeneralFlags;
-        public bool SupportsRotation => (GeneralFlags & 0x1) == 0x1; //!< (OUT) This display can be rotated
-
-        public override bool Equals(object obj) => obj is NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY other && this.Equals(other);
-
-        public bool Equals(NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY other)
-        => DisplayId == other.DisplayId &&
-           ErrorFlags == other.ErrorFlags &&
-           WarningFlags == other.WarningFlags &&
-           GeneralFlags == other.GeneralFlags;
-
-        public override Int32 GetHashCode()
-        {
-            return (DisplayId, ErrorFlags, WarningFlags, GeneralFlags).GetHashCode();
-        }
-        public static bool operator ==(NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY other = (NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY)MemberwiseClone();
-            return other;
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_CAPABILITIES_V2 : IEquatable<NV_HDR_CAPABILITIES_V2>, ICloneable // Note: Version 2 of NV_HDR_CAPABILITIES structure
-    {
-        public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
-        public NV_HDR_CAPABILITIES_V2_FLAGS SupportFlags;              //!< Various flags indicating HDR support 
-        public NV_STATIC_METADATA_DESCRIPTOR_ID StaticMetadataDescriptorId; ////!< Static Metadata Descriptor Id (0 for static metadata type 1)
-        public NV_HDR_CAPABILITIES_DISPLAY_DATA DisplayData;
-        public NV_HDR_DV_STATIC_METADATA DvStaticMetadata;
-
-        public bool DriverExpandDefaultHdrParameters => SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.DriverExpandDefaultHdrParameters);
-        public bool IsDolbyVisionSupported => SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsDolbyVisionSupported);
-        public bool IsEdrSupported => SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsEdrSupported);
-        public bool IsST2084EotfSupported => SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsST2084EotfSupported);
-        public bool IsTraditionalHdrGammaSupported => SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsTraditionalHdrGammaSupported);
-        public bool IsTraditionalSdrGammaSupported => SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsTraditionalSdrGammaSupported);
-
-        public override bool Equals(object obj) => obj is NV_HDR_CAPABILITIES_V2 other && this.Equals(other);
-
-        public bool Equals(NV_HDR_CAPABILITIES_V2 other)
-        => Version == other.Version &&
-           SupportFlags == other.SupportFlags &&
-           StaticMetadataDescriptorId == other.StaticMetadataDescriptorId &&
-           DisplayData.Equals(other.DisplayData) &&
-           DvStaticMetadata.Equals(other.DvStaticMetadata);
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, SupportFlags, StaticMetadataDescriptorId, DisplayData, DvStaticMetadata).GetHashCode();
-        }
-        public static bool operator ==(NV_HDR_CAPABILITIES_V2 lhs, NV_HDR_CAPABILITIES_V2 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_HDR_CAPABILITIES_V2 lhs, NV_HDR_CAPABILITIES_V2 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_DV_STATIC_METADATA : IEquatable<NV_HDR_DV_STATIC_METADATA>, ICloneable
-    {
-        public UInt32 Flags;
-        public UInt16 TargetMinLuminance;
-        public UInt16 TargetMaxLuminance;
-        public UInt16 CCRedX;
-        public UInt16 CCRedY;
-        public UInt16 CCGreenX;
-        public UInt16 CCGreenY;
-        public UInt16 CCBlueX;
-        public UInt16 CCBlueY;
-        public UInt16 CCWhiteX;
-        public UInt16 CCWhiteY;
-
-        public override bool Equals(object obj) => obj is NV_HDR_DV_STATIC_METADATA other && this.Equals(other);
-        public bool Equals(NV_HDR_DV_STATIC_METADATA other)
-        => Flags == other.Flags &&
-           TargetMinLuminance == other.TargetMinLuminance &&
-           TargetMaxLuminance == other.TargetMaxLuminance &&
-           CCRedX == other.CCRedX &&
-            CCRedY == other.CCRedY &&
-           CCGreenX == other.CCGreenX &&
-           CCGreenY == other.CCGreenY &&
-            CCBlueX == other.CCBlueX &&
-            CCBlueY == other.CCBlueY &&
-            CCWhiteX == other.CCWhiteX &&
-            CCWhiteY == other.CCWhiteY;
-
-        public override Int32 GetHashCode()
-        {
-            return (Flags, TargetMinLuminance, TargetMaxLuminance, CCRedX, CCRedY, CCGreenX, CCGreenY, CCBlueX,
-                    CCBlueY, CCWhiteX, CCWhiteY).GetHashCode();
-        }
-        public static bool operator ==(NV_HDR_DV_STATIC_METADATA lhs, NV_HDR_DV_STATIC_METADATA rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_HDR_DV_STATIC_METADATA lhs, NV_HDR_DV_STATIC_METADATA rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_CAPABILITIES_DISPLAY_DATA : IEquatable<NV_HDR_CAPABILITIES_DISPLAY_DATA>, ICloneable
-    {
-        public UInt16 DisplayPrimaryX0;
-        public UInt16 DisplayPrimaryY0;
-        public UInt16 DisplayPrimaryX1;
-        public UInt16 DisplayPrimaryY1;
-        public UInt16 DisplayPrimaryX2;
-        public UInt16 DisplayPrimaryY2;
-        public UInt16 DisplayWhitePointX;
-        public UInt16 DisplayWhitePointY;
-        public UInt16 DesiredContentMaxLuminance;
-        public UInt16 DesiredContentMinLuminance;
-        public UInt16 DesiredContentMaxFrameAverageLuminance;
-
-        public override bool Equals(object obj) => obj is NV_HDR_CAPABILITIES_DISPLAY_DATA other && this.Equals(other);
-        public bool Equals(NV_HDR_CAPABILITIES_DISPLAY_DATA other)
-        => DisplayPrimaryX0 == other.DisplayPrimaryX0 &&
-           DisplayPrimaryY0 == other.DisplayPrimaryY0 &&
-           DisplayPrimaryX1 == other.DisplayPrimaryX1 &&
-           DisplayPrimaryY1 == other.DisplayPrimaryY1 &&
-           DisplayPrimaryX2 == other.DisplayPrimaryX2 &&
-           DisplayPrimaryY2 == other.DisplayPrimaryY2 &&
-            DisplayWhitePointX == other.DisplayWhitePointX &&
-            DisplayWhitePointY == other.DisplayWhitePointY &&
-            DesiredContentMaxLuminance == other.DesiredContentMaxLuminance &&
-            DesiredContentMinLuminance == other.DesiredContentMinLuminance &&
-            DesiredContentMaxFrameAverageLuminance == other.DesiredContentMaxFrameAverageLuminance;
-
-        public override Int32 GetHashCode()
-        {
-            return (DisplayPrimaryX0, DisplayPrimaryY0, DisplayPrimaryX1, DisplayPrimaryY1, DisplayPrimaryX2, DisplayPrimaryY2, DisplayWhitePointX, DisplayWhitePointY,
-                    DisplayWhitePointX, DisplayWhitePointY, DesiredContentMaxLuminance, DesiredContentMinLuminance, DesiredContentMaxFrameAverageLuminance).GetHashCode();
-        }
-        public static bool operator ==(NV_HDR_CAPABILITIES_DISPLAY_DATA lhs, NV_HDR_CAPABILITIES_DISPLAY_DATA rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_HDR_CAPABILITIES_DISPLAY_DATA lhs, NV_HDR_CAPABILITIES_DISPLAY_DATA rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_COLOR_DATA_V2 : IEquatable<NV_HDR_COLOR_DATA_V2>, ICloneable
-    {
-        public UInt32 Version;                                 //!< Version of this structure
-        public NV_HDR_CMD Cmd;                                     //!< Command get/set
-        public NV_HDR_MODE HdrMode;                                 //!< HDR mode
-        public NV_STATIC_METADATA_DESCRIPTOR_ID StaticMetadataDescriptorId;           //!< Static Metadata Descriptor Id (0 for static metadata type 1)
-        public NV_HDR_COLOR_DISPLAY_DATA MasteringDisplayData; //!< Static Metadata Descriptor Type 1, CEA-861.3, SMPTE ST2086
-        public NV_HDR_COLOR_FORMAT HdrColorFormat;                                     //!< Optional, One of NV_COLOR_FORMAT enum values, if set it will apply requested color format for HDR session
-        public NV_HDR_DYNAMIC_RANGE HdrDynamicRange;                                    //!< Optional, One of NV_DYNAMIC_RANGE enum values, if set it will apply requested dynamic range for HDR session
-        public NV_BPC HdrBpc;                                             //!< Optional, One of NV_BPC enum values, if set it will apply requested color depth
-                                                                          //!< Dolby Vision mode: DV supports specific combinations of colorformat, dynamic range and bpc. Please refer Dolby Vision specification.
-                                                                          //!<                    If invalid or no combination is passed driver will force default combination of RGB format + full range + 8bpc.
-                                                                          //!< HDR mode: These fields are ignored in hdr mode
-
-        public override bool Equals(object obj) => obj is NV_HDR_COLOR_DATA_V2 other && this.Equals(other);
-        public bool Equals(NV_HDR_COLOR_DATA_V2 other)
-            => Version == other.Version &&
-               Cmd == other.Cmd &&
-               HdrMode == other.HdrMode &&
-               StaticMetadataDescriptorId == other.StaticMetadataDescriptorId &&
-               MasteringDisplayData.Equals(other.MasteringDisplayData) &&
-               HdrColorFormat == other.HdrColorFormat &&
-                HdrDynamicRange == other.HdrDynamicRange &&
-                HdrBpc == other.HdrBpc;
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Cmd, HdrMode, StaticMetadataDescriptorId, MasteringDisplayData, HdrColorFormat, HdrDynamicRange, HdrBpc).GetHashCode();
-        }
-        public static bool operator ==(NV_HDR_COLOR_DATA_V2 lhs, NV_HDR_COLOR_DATA_V2 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_HDR_COLOR_DATA_V2 lhs, NV_HDR_COLOR_DATA_V2 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_COLOR_DISPLAY_DATA : IEquatable<NV_HDR_COLOR_DISPLAY_DATA>, ICloneable
-    {
-        public UInt16 DisplayPrimaryX0;
-        public UInt16 DisplayPrimaryY0;
-        public UInt16 DisplayPrimaryX1;
-        public UInt16 DisplayPrimaryY1;
-        public UInt16 DisplayPrimaryX2;
-        public UInt16 DisplayPrimaryY2;
-        public UInt16 DisplayWhitePointX;
-        public UInt16 DisplayWhitePointY;
-        public UInt16 MaxDisplayMasteringLuminance;
-        public UInt16 MinDisplayMasteringLuminance;
-        public UInt16 MaxContentLightLevel;
-        public UInt16 MaxFrameAverageLightLevel;
-
-        public override bool Equals(object obj) => obj is NV_HDR_COLOR_DISPLAY_DATA other && this.Equals(other);
-        public bool Equals(NV_HDR_COLOR_DISPLAY_DATA other)
-        => DisplayPrimaryX0 == other.DisplayPrimaryX0 &&
-           DisplayPrimaryY0 == other.DisplayPrimaryY0 &&
-           DisplayPrimaryX1 == other.DisplayPrimaryX1 &&
-           DisplayPrimaryY1 == other.DisplayPrimaryY1 &&
-           DisplayPrimaryX2 == other.DisplayPrimaryX2 &&
-           DisplayPrimaryY2 == other.DisplayPrimaryY2 &&
-            DisplayWhitePointX == other.DisplayWhitePointX &&
-            DisplayWhitePointY == other.DisplayWhitePointY &&
-            MaxDisplayMasteringLuminance == other.MaxDisplayMasteringLuminance &&
-            MinDisplayMasteringLuminance == other.MinDisplayMasteringLuminance &&
-            MaxContentLightLevel == other.MaxContentLightLevel &&
-            MaxFrameAverageLightLevel == other.MaxFrameAverageLightLevel;
-
-        public override Int32 GetHashCode()
-        {
-            return (DisplayPrimaryX0, DisplayPrimaryY0, DisplayPrimaryX1, DisplayPrimaryY1, DisplayPrimaryX2, DisplayPrimaryY2, DisplayWhitePointX, DisplayWhitePointY,
-                    DisplayWhitePointX, DisplayWhitePointY, MaxDisplayMasteringLuminance, MinDisplayMasteringLuminance, MaxContentLightLevel, MaxFrameAverageLightLevel).GetHashCode();
-        }
-        public static bool operator ==(NV_HDR_COLOR_DISPLAY_DATA lhs, NV_HDR_COLOR_DISPLAY_DATA rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_HDR_COLOR_DISPLAY_DATA lhs, NV_HDR_COLOR_DISPLAY_DATA rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_COLOR_DATA_V5 : IEquatable<NV_COLOR_DATA_V5>, ICloneable
-    {
-        public UInt32 Version; //!< Version of this structure
-        public UInt16 Size;    //!< Size of this structure
-        public NV_COLOR_CMD Cmd;
-        public NV_COLOR_FORMAT ColorFormat;          //!< One of NV_COLOR_FORMAT enum values.
-        public NV_COLOR_COLORIMETRY Colorimetry;          //!< One of NV_COLOR_COLORIMETRY enum values.
-        public NV_DYNAMIC_RANGE DynamicRange;         //!< One of NV_DYNAMIC_RANGE enum values.
-        public NV_BPC Bpc;                  //!< One of NV_BPC enum values.
-        public NV_COLOR_SELECTION_POLICY ColorSelectionPolicy; //!< One of the color selection policy
-        public NV_DESKTOP_COLOR_DEPTH Depth;                //!< One of NV_DESKTOP_COLOR_DEPTH enum values.    
-
-        public override bool Equals(object obj) => obj is NV_COLOR_DATA_V5 other && this.Equals(other);
-        public bool Equals(NV_COLOR_DATA_V5 other)
-        => Version == other.Version &&
-           Size == other.Size &&
-           Cmd == other.Cmd &&
-           ColorFormat == other.ColorFormat &&
-           Colorimetry == other.Colorimetry &&
-           DynamicRange == other.DynamicRange &&
-            Bpc == other.Bpc &&
-            ColorSelectionPolicy == other.ColorSelectionPolicy &&
-            Depth == other.Depth;
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Size, Cmd, ColorFormat, Colorimetry, DynamicRange, Bpc, ColorSelectionPolicy, Depth).GetHashCode();
-        }
-        public static bool operator ==(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_CUSTOM_DISPLAY_V1 : IEquatable<NV_CUSTOM_DISPLAY_V1>, ICloneable
-    {
-        public UInt32 Version; //!< Version of this structure
-        public UInt32 Width; //!< Source surface(source mode) width
-        public UInt32 Height;            //!< Source surface(source mode) height
-        public UInt32 Depth;             //!< Source surface color depth."0" means all 8/16/32bpp
-        public NV_FORMAT ColorFormat;       //!< Color format (optional)
-        public NV_VIEWPORTF SourcePartition;      //!< For multimon support, should be set to (0,0,1.0,1.0) for now.
-        public float XRatio;            //!< Horizontal scaling ratio
-        public float YRatio;            //!< Vertical scaling ratio
-        public NV_TIMING Timing;            //!< Timing used to program TMDS/DAC/LVDS/HDMI/TVEncoder, etc.
-        public UInt32 Flags; //!< If set to 1, it means a hardware modeset without OS update
-
-        //     Gets a boolean value indicating that a hardware mode-set without OS update should be performed.
-        public bool IsHardwareModeSetOnly => Flags.GetBit(0);
-
-        public override bool Equals(object obj) => obj is NV_CUSTOM_DISPLAY_V1 other && this.Equals(other);
-        public bool Equals(NV_CUSTOM_DISPLAY_V1 other)
-        => Version == other.Version &&
-           Width == other.Width &&
-           Height == other.Height &&
-           Depth == other.Depth &&
-           ColorFormat == other.ColorFormat &&
-           SourcePartition == other.SourcePartition &&
-            XRatio == other.XRatio &&
-            YRatio == other.YRatio &&
-            Timing == other.Timing &&
-            Flags == other.Flags;
-
-        public override Int32 GetHashCode()
-        {
-            return (Version, Width, Height, Depth, ColorFormat, SourcePartition, XRatio, YRatio, Timing, Flags).GetHashCode();
-        }
-        public static bool operator ==(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_POSITION other = (NV_POSITION)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_GET_ADAPTIVE_SYNC_DATA_V1 : IEquatable<NV_GET_ADAPTIVE_SYNC_DATA_V1>, ICloneable
-    {
-        public UInt32 Version; // Must be V1
-        public UInt32 MaxFrameInterval;             //!< maximum frame interval in micro seconds as set previously using NvAPI_DISP_SetAdaptiveSyncData function. If default values from EDID are used, this parameter returns 0.
-        public UInt32 Flags;
-        public UInt32 LastFlipRefreshCount;             //!< Number of times the last flip was shown on the screen
-        public UInt64 LastFlipTimeStamp;             //!< Timestamp for the lastest flip on the screen
-        public UInt32 ReservedEx1;
-        public UInt32 ReservedEx2;
-        public UInt32 ReservedEx3;
-        public UInt32 ReservedEx4;
-
-        public bool DisableAdaptiveSync => (Flags & 0x1) == 0x1; //!< Indicates if adaptive sync is disabled on the display.
-        public bool DisableFrameSplitting => (Flags & 0x1) == 0x1; //!< Indicates if frame splitting is disabled on the display.
-
-        public override bool Equals(object obj) => obj is NV_GET_ADAPTIVE_SYNC_DATA_V1 other && this.Equals(other);
-
-        public bool Equals(NV_GET_ADAPTIVE_SYNC_DATA_V1 other)
-        => MaxFrameInterval == other.MaxFrameInterval &&
-           Flags == other.Flags &&
-           LastFlipRefreshCount == other.LastFlipRefreshCount &&
-           LastFlipTimeStamp == other.LastFlipTimeStamp;
-
-        public override Int32 GetHashCode()
-        {
-            return (MaxFrameInterval, Flags, LastFlipRefreshCount, LastFlipTimeStamp).GetHashCode();
-        }
-        public static bool operator ==(NV_GET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_GET_ADAPTIVE_SYNC_DATA_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_GET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_GET_ADAPTIVE_SYNC_DATA_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_GET_ADAPTIVE_SYNC_DATA_V1 other = (NV_GET_ADAPTIVE_SYNC_DATA_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_SET_ADAPTIVE_SYNC_DATA_V1 : IEquatable<NV_SET_ADAPTIVE_SYNC_DATA_V1>, ICloneable
-    {
-        public UInt32 Version; // Must be V1
-        public UInt32 MaxFrameInterval;             //!< maximum frame interval in micro seconds as set previously using NvAPI_DISP_SetAdaptiveSyncData function. If default values from EDID are used, this parameter returns 0.
-        public UInt32 Flags;
-        public UInt32 ReservedEx1;             //!< Number of times the last flip was shown on the screen
-        public UInt64 ReservedEx2;             //!< Timestamp for the lastest flip on the screen
-        public UInt32 ReservedEx3;
-        public UInt32 ReservedEx4;
-        public UInt32 ReservedEx5;
-        public UInt32 ReservedEx6;
-        public UInt32 ReservedEx7;
-
-        public bool DisableAdaptiveSync => (Flags & 0x1) == 0x1; //!< Indicates if adaptive sync is disabled on the display.
-        public bool DisableFrameSplitting => (Flags & 0x1) == 0x1; //!< Indicates if frame splitting is disabled on the display.
-
-        public override bool Equals(object obj) => obj is NV_SET_ADAPTIVE_SYNC_DATA_V1 other && this.Equals(other);
-
-        public bool Equals(NV_SET_ADAPTIVE_SYNC_DATA_V1 other)
-        => MaxFrameInterval == other.MaxFrameInterval &&
-            Flags == other.Flags;
-
-        public override Int32 GetHashCode()
-        {
-            return (MaxFrameInterval, Flags).GetHashCode();
-        }
-        public static bool operator ==(NV_SET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_SET_ADAPTIVE_SYNC_DATA_V1 rhs) => lhs.Equals(rhs);
-
-        public static bool operator !=(NV_SET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_SET_ADAPTIVE_SYNC_DATA_V1 rhs) => !(lhs == rhs);
-        public object Clone()
-        {
-            NV_SET_ADAPTIVE_SYNC_DATA_V1 other = (NV_SET_ADAPTIVE_SYNC_DATA_V1)MemberwiseClone();
-            return other;
-        }
-    }
-
-    // ==================================
-    // NVImport Class
-    // ==================================
-
-    static class NVImport
-    {
-
-        public const UInt32 NV_MAX_HEADS = 4;
-        public const UInt32 NV_MAX_VID_PROFILES = 4;
-        public const UInt32 NV_MAX_VID_STREAMS = 4;
-        public const UInt32 NV_ADVANCED_DISPLAY_HEADS = 4;
-        public const UInt32 NV_GENERIC_STRING_MAX = 4096;
-        public const UInt32 NV_LONG_STRING_MAX = 256;
-        public const UInt32 NV_MAX_ACPI_IDS = 16;
-        public const UInt32 NV_MAX_AUDIO_DEVICES = 16;
-        public const UInt32 NV_MAX_AVAILABLE_CPU_TOPOLOGIES = 256;
-        public const UInt32 NV_MAX_AVAILABLE_SLI_GROUPS = 256;
-        public const UInt32 NV_MAX_AVAILABLE_DISPLAY_HEADS = 2;
-        public const UInt32 NV_MAX_DISPLAYS = NV_MAX_PHYSICAL_GPUS * NV_ADVANCED_DISPLAY_HEADS;
-        public const UInt32 NV_MAX_GPU_PER_TOPOLOGY = 8;
-        public const UInt32 NV_MAX_GPU_TOPOLOGIES = NV_MAX_PHYSICAL_GPUS;
-        public const UInt32 NV_MAX_HEADS_PER_GPU = 32;
-        public const UInt32 NV_MAX_LOGICAL_GPUS = 64;
-        public const UInt32 NV_MAX_PHYSICAL_BRIDGES = 100;
-        public const UInt32 NV_MAX_PHYSICAL_GPUS = 64;
-        public const UInt32 NV_MAX_VIEW_MODES = 8;
-        public const UInt32 NV_PHYSICAL_GPUS = 32;
-        public const UInt32 NV_SHORT_STRING_MAX = 64;
-        public const UInt32 NV_SYSTEM_HWBC_INVALID_ID = 0xffffffff;
-        public const UInt32 NV_SYSTEM_MAX_DISPLAYS = NV_MAX_PHYSICAL_GPUS * NV_MAX_HEADS;
-        public const UInt32 NV_SYSTEM_MAX_HWBCS = 128;
-        public const UInt32 NV_MOSAIC_MAX_DISPLAYS = 64;
-        public const UInt32 NV_MOSAIC_DISPLAY_SETTINGS_MAX = 40;
-        public const UInt32 NV_MOSAIC_TOPO_IDX_DEFAULT = 0;
-        public const UInt32 NV_MOSAIC_TOPO_IDX_LEFT_EYE = 0;
-        public const UInt32 NV_MOSAIC_TOPO_IDX_RIGHT_EYE = 1;
-        public const UInt32 NV_MOSAIC_TOPO_NUM_EYES = 2;
-        public const UInt32 NV_MOSAIC_TOPO_MAX = (UInt32)NV_MOSAIC_TOPO.TOPO_MAX;
-        public const UInt32 NVAPI_MAX_MOSAIC_DISPLAY_ROWS = 8;
-        public const UInt32 NVAPI_MAX_MOSAIC_DISPLAY_COLUMNS = 8;
-        public const UInt32 NVAPI_MAX_MOSAIC_TOPOS = 16;
-        public const UInt32 NVAPI_GENERIC_STRING_MAX = 4096;
-        public const UInt32 NVAPI_LONG_STRING_MAX = 256;
-        public const UInt32 NVAPI_SHORT_STRING_MAX = 64;
-        public const UInt32 NVAPI_MAX_PHYSICAL_GPUS = 64;
-        public const UInt32 NVAPI_MAX_PHYSICAL_GPUS_QUERIED = 32;
-        public const UInt32 NVAPI_UNICODE_STRING_MAX = 2048;
-        public const UInt32 NVAPI_BINARY_DATA_MAX = 4096;
-        public const UInt32 NVAPI_SETTING_MAX_VALUES = 100;
-        public const UInt32 NV_EDID_DATA_SIZE = 256;
-
-        //
-        //! This defines the maximum number of topos that can be in a topo group.
-        //! At this time, it is set to 2 because our largest topo group (passive
-        //! stereo) only needs 2 topos (left eye and right eye).
-        //!
-        //! If a new topo group with more than 2 topos is added above, then this
-        //! number will also have to be incremented.
-        public const UInt32 NV_MOSAIC_MAX_TOPO_PER_TOPO_GROUP = 2;
-
-        // Version Constants
-        public static UInt32 NV_MOSAIC_TOPO_BRIEF_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_TOPO_BRIEF>(1);
-        public static UInt32 NV_MOSAIC_DISPLAY_SETTING_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_DISPLAY_SETTING_V1>(1);
-        public static UInt32 NV_MOSAIC_DISPLAY_SETTING_V2_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_DISPLAY_SETTING_V2>(2);
-        public static UInt32 NV_MOSAIC_TOPO_GROUP_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_TOPO_GROUP>(1);
-        public static UInt32 NV_MOSAIC_TOPO_DETAILS_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_TOPO_DETAILS>(1);
-        public static UInt32 NV_MOSAIC_GRID_TOPO_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_GRID_TOPO_V1>(1);
-        public static UInt32 NV_MOSAIC_GRID_TOPO_V2_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_GRID_TOPO_V2>(2);
-        public static UInt32 NV_MOSAIC_GRID_TOPO_DISPLAY_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_GRID_TOPO_DISPLAY_V1>(1);
-        public static UInt32 NV_MOSAIC_GRID_TOPO_DISPLAY_V2_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_GRID_TOPO_DISPLAY_V2>(2);
-        public static UInt32 NV_MOSAIC_SUPPORTED_TOPO_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_SUPPORTED_TOPO_INFO_V1>(1);
-        public static UInt32 NV_MOSAIC_SUPPORTED_TOPO_INFO_V2_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_SUPPORTED_TOPO_INFO_V2>(2);
-        public static UInt32 NV_HDR_COLOR_DATA_V2_VER = MAKE_NVAPI_VERSION<NV_HDR_COLOR_DATA_V2>(2);
-        public static UInt32 NV_COLOR_DATA_V5_VER = MAKE_NVAPI_VERSION<NV_COLOR_DATA_V5>(5);
-        public static UInt32 NV_HDR_CAPABILITIES_V2_VER = MAKE_NVAPI_VERSION<NV_HDR_CAPABILITIES_V2>(2);
-        public static UInt32 NV_MOSAIC_DISPLAY_TOPO_STATUS_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_DISPLAY_TOPO_STATUS_V1>(1);
-        public static UInt32 NV_GPU_DISPLAYIDS_V2_VER = MAKE_NVAPI_VERSION<NV_GPU_DISPLAYIDS_V2>(3); // NOTE: There is a bug in R470 that sets the NV_GPU_DISPLAYIDS_V2 version to 3!
-        public static UInt32 NV_BOARD_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_BOARD_INFO_V1>(1);
-        public static UInt32 NV_EDID_V3_VER = MAKE_NVAPI_VERSION<NV_EDID_V3>(3);
-        public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V1>(1);
-        public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V2_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V2>(2);
-        public static UInt32 NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1>(1);
-        public static UInt32 NV_CUSTOM_DISPLAY_V1_VER = MAKE_NVAPI_VERSION<NV_CUSTOM_DISPLAY_V1>(1);
-        public static UInt32 NV_LOGICAL_GPU_DATA_V1_VER = MAKE_NVAPI_VERSION<NV_LOGICAL_GPU_DATA_V1>(1);
-        public static UInt32 NV_GET_ADAPTIVE_SYNC_DATA_V1_VER = MAKE_NVAPI_VERSION<NV_GET_ADAPTIVE_SYNC_DATA_V1>(1);
-        public static UInt32 NV_SET_ADAPTIVE_SYNC_DATA_V1_VER = MAKE_NVAPI_VERSION<NV_SET_ADAPTIVE_SYNC_DATA_V1>(1);
-
-        public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL>(2);
-        public static UInt32 NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL>(1);
-
-        public static UInt32 NVDRS_PROFILE_V1_VER = MAKE_NVAPI_VERSION<NVDRS_PROFILE_V1>(1);
-        public static UInt32 NVDRS_SETTING_V1_VER = MAKE_NVAPI_VERSION<NVDRS_SETTING_V1>(1);
-        //public static UInt32 NVDRS_SETTING_VALUES_V1_VER = MAKE_NVAPI_VERSION<NVDRS_SETTING_VALUES_V1>(1);
-
-
-
-
-        #region Internal Constant
-        [DllImport("nvapi64.dll", EntryPoint = "nvapi_QueryInterface", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr NvApiQueryInterface64(UInt32 apiId);
-
-        [DllImport("nvapi.dll", EntryPoint = "nvapi_QueryInterface", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr NvApiQueryInterface32(UInt32 apiId);
-
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr LoadLibrary(String dllname);
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetProcAddress(IntPtr hModule, String procname);
-        #endregion Internal Constant
-
-        private static UInt32 MAKE_NVAPI_VERSION<T>(Int32 version)
-        {
-            return (UInt32)((Marshal.SizeOf(typeof(T))) | (Int32)(version << 16));
-        }
-        private static UInt32 MAKE_NVAPI_VERSION(Int32 size, Int32 version)
-        {
-            return (UInt32)((Int32)size | (Int32)(version << 16));
-        }
-
-        private static void GetDelegate<T>(UInt32 apiId, out T newDelegate) where T : class
-        {
-            newDelegate = null;
-            try
-            {
-                IntPtr intPtrApiQuery = IntPtr.Zero;
-
-                if (IntPtr.Size > 4)
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientIlluminationZonesGetControl>()(
+                    gpuHandle,
+                    zoneControlParametersReference
+                );
+
+                if (status != Status.Ok)
                 {
-                    intPtrApiQuery = NvApiQueryInterface64(apiId);
+                    throw new NVIDIAApiException(status);
+                }
+
+                return zoneControlParametersReference.ToValueType<IlluminationZoneControlParametersV1>()
+                    .GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     Returns static information about illumination zones on the given GPU.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <returns>An instance of <see cref="IlluminationZoneInfoParametersV1" />.</returns>
+        public static IlluminationZoneInfoParametersV1 ClientIlluminationZonesGetInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(IlluminationZoneInfoParametersV1).Instantiate<IlluminationZoneInfoParametersV1>();
+
+            using (var zoneInfoParametersReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientIlluminationZonesGetInfo>()(
+                    gpuHandle,
+                    zoneInfoParametersReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return zoneInfoParametersReference.ToValueType<IlluminationZoneInfoParametersV1>().GetValueOrDefault();
+            }
+        }
+
+        /// <summary>
+        ///     Sets the control information about illumination zones on the given GPU.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <param name="zoneControlParameters">The new control illumination zones control information.</param>
+        public static void ClientIlluminationZonesSetControl(
+            PhysicalGPUHandle gpuHandle,
+            IlluminationZoneControlParametersV1 zoneControlParameters)
+        {
+            using (var zoneControlParametersReference = ValueTypeReference.FromValueType(zoneControlParameters))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientIlluminationZonesSetControl>()(
+                    gpuHandle,
+                    zoneControlParametersReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Reports value of the specified illumination attribute brightness.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <param name="attribute">The attribute to get the value of.</param>
+        /// <returns>Brightness value in percentage.</returns>
+        public static uint GetIllumination(PhysicalGPUHandle gpuHandle, IlluminationAttribute attribute)
+        {
+            var instance = new GetIlluminationParameterV1(gpuHandle, attribute);
+
+            using (var getParameterReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetIllumination>()(
+                    getParameterReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return getParameterReference.ToValueType<GetIlluminationParameterV1>()
+                    .GetValueOrDefault()
+                    .ValueInPercentage;
+            }
+        }
+
+        /// <summary>
+        ///     Queries a illumination attribute support status.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <param name="attribute">The attribute to get the support status of.</param>
+        /// <returns>true if the attribute is supported on this GPU; otherwise false.</returns>
+        public static bool QueryIlluminationSupport(PhysicalGPUHandle gpuHandle, IlluminationAttribute attribute)
+        {
+            var instance = new QueryIlluminationSupportParameterV1(gpuHandle, attribute);
+
+            using (var querySupportParameterReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetIllumination>()(
+                    querySupportParameterReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return querySupportParameterReference.ToValueType<QueryIlluminationSupportParameterV1>()
+                    .GetValueOrDefault()
+                    .IsSupported;
+            }
+        }
+
+
+        /// <summary>
+        ///     Indicates whether a queried workstation feature is supported by the requested GPU.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <param name="gpuWorkstationFeature">The feature for the GPU in question. One of the values from enum WorkstationFeatureType</param>
+        /// <returns>Status.Ok if the queried workstation feature is supported on the given GPU, or Status.NotSUpported if the feature is not supported.</returns>
+        public static bool QueryWorkstationFeatureSupport(PhysicalGPUHandle gpuHandle, WorkstationFeatureType gpuWorkstationFeature)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_QueryWorkstationFeatureSupport>()(
+                gpuHandle,
+                gpuWorkstationFeature
+            );
+
+            if (status == Status.Ok)
+            {
+                SharedLogger.logger.Trace($"NVAPI/QueryWorkstationFeatureSupport: NVIDIA Video Card is one from the Quadro range");
+                return true;
+            }
+            else if (status == Status.NotSupported)
+            {
+                SharedLogger.logger.Trace($"NVAPI/QueryWorkstationFeatureSupport: NVIDIA Video Card is not from the Quadro range");
+                return false;
+            }
+            else
+            {
+                if (status == Status.NoImplementation)
+                {
+                    SharedLogger.logger.Trace($"NVAPI/QueryWorkstationFeatureSupport: The current NVIDIA driver doesn't support this NvAPI_GPU_QueryWorkstationFeatureSupport interface.");
+                }
+                else if (status == Status.InvalidHandle)
+                {
+                    SharedLogger.logger.Trace($"NVAPI/QueryWorkstationFeatureSupport: The physical video card handle supplied to NvAPI_GPU_QueryWorkstationFeatureSupport was an invalid handle.");
+                }
+                else if (status == Status.NotSupported)
+                {
+                    SharedLogger.logger.Trace($"NVAPI/QueryWorkstationFeatureSupport: The requested gpuWorkstationFeature is not supported in the selected GPU.");
+                }
+                else if (status == Status.SettingNotFound)
+                {
+                    SharedLogger.logger.Trace($"NVAPI/QueryWorkstationFeatureSupport: The requested gpuWorkstationFeature is unknown to the current driver version.");
                 }
                 else
                 {
-                    intPtrApiQuery = NvApiQueryInterface32(apiId);
+                    SharedLogger.logger.Trace($"NVAPI/QueryWorkstationFeatureSupport: Error getting GPU Function status. NvAPI_GPU_QueryWorkstationFeatureSupport() returned error code {status}");
                 }
-
-                if (intPtrApiQuery != IntPtr.Zero)
-                {
-                    newDelegate = Marshal.GetDelegateForFunctionPointer(intPtrApiQuery, typeof(T)) as T;
-                }
+                throw new NVIDIAApiException(status);
             }
-            catch { }
+
         }
 
-        #region DLLImport
-
-        /*[DllImport(Kernel32_FileName)]
-        public static extern HMODULE GetModuleHandle(string moduleName);*/
-
-
-        /*// Delegate
-        // This function initializes the NvAPI library (if not already initialized) but always increments the ref-counter.
-        // This must be called before calling other NvAPI_ functions. Note: It is now mandatory to call NvAPI_Initialize before calling any other NvAPI. NvAPI_Unload should be called to unload the NVAPI Library.
-        [UnmanagedFunctionPoInt32er(CallingConvention.Cdecl)]
-        private delegate NVAPI_STATUS NvAPI_Initialize();
-
-        //DESCRIPTION: Decrements the ref-counter and when it reaches ZERO, unloads NVAPI library.This must be called in pairs with NvAPI_Initialize.
-        // If the client wants unload functionality, it is recommended to always call NvAPI_Initialize and NvAPI_Unload in pairs.
-        // Unloading NvAPI library is not supported when the library is in a resource locked state.
-        // Some functions in the NvAPI library initiates an operation or allocates certain resources and there are corresponding functions available, to complete the operation or free the allocated resources.
-        // All such function pairs are designed to prevent unloading NvAPI library. For example, if NvAPI_Unload is called after NvAPI_XXX which locks a resource, it fails with NVAPI_ERROR.
-        // Developers need to call the corresponding NvAPI_YYY to unlock the resources, before calling NvAPI_Unload again.
-        [DllImport(NVAPI_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern NVAPI_STATUS NvAPI_Unload();
-
-        // This is used to get a string containing the NVAPI version 
-        [DllImport(NVAPI_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern NVAPI_STATUS NvAPI_GetInterfaceVersionStringEx(out string description);
-
-        // NVAPI SESSION HANDLING FUNCTIONS
-        // This is used to get a session handle to use to maInt32ain state across multiple NVAPI calls
-        [DllImport(NVAPI_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern NVAPI_STATUS NvAPI_DRS_CreateSession(out IntPtr session);
-
-        // This is used to destroy a session handle to used to maInt32ain state across multiple NVAPI calls
-        [DllImport(NVAPI_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern NVAPI_STATUS NvAPI_DRS_DestorySession(IntPtr session);
-
-        // This API lets caller retrieve the current global display configuration.
-        // USAGE: The caller might have to call this three times to fetch all the required configuration details as follows:
-        // First Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
-        // Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
-        // Third Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect to number of targetInfoCount(from Second Pass).
-        [DllImport(NVAPI_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref ulong pathInfoCount, out NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 pathInfo);
-*/
-
-        #endregion DLLImport
-
-
-
-        #region Initialization code
-        private static bool available = false;
-
-        public static bool IsAvailable() { return NVImport.available; }
-
-        static NVImport()
+        /// <summary>
+        ///     Sets the value of the specified illumination attribute brightness.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <param name="attribute">The attribute to set the value of.</param>
+        /// <param name="valueInPercentage">Brightness value in percentage.</param>
+        public static void SetIllumination(
+            PhysicalGPUHandle gpuHandle,
+            IlluminationAttribute attribute,
+            uint valueInPercentage)
         {
-            DllImportAttribute attribute = new DllImportAttribute(GetDllName());
-            attribute.CallingConvention = CallingConvention.Cdecl;
-            attribute.PreserveSig = true;
-            attribute.EntryPoint = "nvapi_QueryInterface";
-            PInvokeDelegateFactory.CreateDelegate(attribute, out QueryInterface);
+            var instance = new SetIlluminationParameterV1(gpuHandle, attribute, valueInPercentage);
+
+            using (var setParameterReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetIllumination>()(
+                    setParameterReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Enables the overclocked performance states
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        public static void EnableOverclockedPStates(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_EnableOverclockedPStates>()(
+                gpuHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function retrieves the clock frequencies information from an specific physical GPU and fills the structure
+        /// </summary>
+        /// <param name="physicalGPUHandle">
+        ///     Handle of the physical GPU for which the clock frequency information is to be
+        ///     retrieved.
+        /// </param>
+        /// <param name="clockFrequencyOptions">
+        ///     The structure that holds options for the operations and should be filled with the
+        ///     results, use null to return current clock frequencies
+        /// </param>
+        /// <returns>The device clock frequencies information.</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static IClockFrequencies GetAllClockFrequencies(
+            PhysicalGPUHandle physicalGPUHandle,
+            IClockFrequencies clockFrequencyOptions = null)
+        {
+            var getClocksInfo = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetAllClockFrequencies>();
+
+            if (clockFrequencyOptions == null)
+            {
+                foreach (var acceptType in getClocksInfo.Accepts())
+                {
+                    var instance = acceptType.Instantiate<IClockFrequencies>();
+
+                    using (var clockFrequenciesInfo = ValueTypeReference.FromValueType(instance, acceptType))
+                    {
+                        var status = getClocksInfo(physicalGPUHandle, clockFrequenciesInfo);
+
+                        if (status == Status.IncompatibleStructureVersion)
+                        {
+                            continue;
+                        }
+
+                        if (status != Status.Ok)
+                        {
+                            throw new NVIDIAApiException(status);
+                        }
+
+                        return clockFrequenciesInfo.ToValueType<IClockFrequencies>(acceptType);
+                    }
+                }
+            }
+            else
+            {
+                using (var clockFrequenciesInfo =
+                    ValueTypeReference.FromValueType(clockFrequencyOptions, clockFrequencyOptions.GetType()))
+                {
+                    var status = getClocksInfo(physicalGPUHandle, clockFrequenciesInfo);
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return clockFrequenciesInfo.ToValueType<IClockFrequencies>(clockFrequencyOptions.GetType());
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Gets the clock boost lock for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The GPU clock boost lock.</returns>
+        public static PrivateClockBoostLockV2 GetClockBoostLock(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateClockBoostLockV2).Instantiate<PrivateClockBoostLockV2>();
+
+            using (var clockLockReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetClockBoostLock>()(
+                    gpuHandle,
+                    clockLockReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return clockLockReference.ToValueType<PrivateClockBoostLockV2>(typeof(PrivateClockBoostLockV2));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Gets the clock boost mask for passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The GPI clock boost mask.</returns>
+        public static PrivateClockBoostMasksV1 GetClockBoostMask(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateClockBoostMasksV1).Instantiate<PrivateClockBoostMasksV1>();
+
+            using (var clockBoostReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetClockBoostMask>()(
+                    gpuHandle,
+                    clockBoostReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return clockBoostReference.ToValueType<PrivateClockBoostMasksV1>(typeof(PrivateClockBoostMasksV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Gets the clock boost ranges for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The GPU clock boost ranges.</returns>
+        public static PrivateClockBoostRangesV1 GetClockBoostRanges(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateClockBoostRangesV1).Instantiate<PrivateClockBoostRangesV1>();
+
+            using (var clockRangesReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetClockBoostRanges>()(
+                    gpuHandle,
+                    clockRangesReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return clockRangesReference.ToValueType<PrivateClockBoostRangesV1>(typeof(PrivateClockBoostRangesV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Gets the clock boost table for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The GPU clock boost table.</returns>
+        public static PrivateClockBoostTableV1 GetClockBoostTable(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateClockBoostTableV1).Instantiate<PrivateClockBoostTableV1>();
+
+            using (var clockTableReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetClockBoostTable>()(
+                    gpuHandle,
+                    clockTableReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return clockTableReference.ToValueType<PrivateClockBoostTableV1>(typeof(PrivateClockBoostTableV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Gets the core voltage boost percentage for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The voltage boost percentage.</returns>
+        public static PrivateVoltageBoostPercentV1 GetCoreVoltageBoostPercent(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateVoltageBoostPercentV1).Instantiate<PrivateVoltageBoostPercentV1>();
+
+            using (var voltageBoostReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCoreVoltageBoostPercent>()(
+                    gpuHandle,
+                    voltageBoostReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return voltageBoostReference.ToValueType<PrivateVoltageBoostPercentV1>(
+                    typeof(PrivateVoltageBoostPercentV1));
+            }
+        }
+
+        /// <summary>
+        ///     This function returns the current performance state (P-State).
+        /// </summary>
+        /// <param name="gpuHandle">GPU handle to get information about</param>
+        /// <returns>The current performance state.</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        public static PerformanceStateId GetCurrentPerformanceState(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCurrentPState>()(gpuHandle,
+                    out var performanceState);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return performanceState;
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Gets the current voltage status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The voltage status of the GPU.</returns>
+        public static PrivateVoltageStatusV1 GetCurrentVoltage(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateVoltageStatusV1).Instantiate<PrivateVoltageStatusV1>();
+
+            using (var voltageStatusReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCurrentVoltage>()(
+                    gpuHandle,
+                    voltageStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return voltageStatusReference.ToValueType<PrivateVoltageStatusV1>(typeof(PrivateVoltageStatusV1));
+            }
+        }
+
+        /// <summary>
+        ///     This function retrieves all available performance states (P-States) information.
+        ///     P-States are GPU active/executing performance capability and power consumption states.
+        /// </summary>
+        /// <param name="physicalGPUHandle">GPU handle to get information about.</param>
+        /// <param name="flags">Flag to get specific information about a performance state.</param>
+        /// <returns>Retrieved performance states information</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        [SuppressMessage("ReSharper", "EventExceptionNotDocumented")]
+        public static IPerformanceStatesInfo GetPerformanceStates(
+            PhysicalGPUHandle physicalGPUHandle,
+            GetPerformanceStatesInfoFlags flags)
+        {
+            var getPerformanceStatesInfo = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetPStatesInfoEx>();
+
+            foreach (var acceptType in getPerformanceStatesInfo.Accepts())
+            {
+                var instance = acceptType.Instantiate<IPerformanceStatesInfo>();
+
+                using (var performanceStateInfo = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getPerformanceStatesInfo(physicalGPUHandle, performanceStateInfo, flags);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return performanceStateInfo.ToValueType<IPerformanceStatesInfo>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     This function retrieves all available performance states (P-States) 2.0 information.
+        ///     P-States are GPU active/executing performance capability and power consumption states.
+        /// </summary>
+        /// <param name="physicalGPUHandle">GPU handle to get information about.</param>
+        /// <returns>Retrieved performance states 2.0 information</returns>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        [SuppressMessage("ReSharper", "EventExceptionNotDocumented")]
+        public static IPerformanceStates20Info GetPerformanceStates20(PhysicalGPUHandle physicalGPUHandle)
+        {
+            var getPerformanceStates20 = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetPStates20>();
+
+            foreach (var acceptType in getPerformanceStates20.Accepts())
+            {
+                var instance = acceptType.Instantiate<IPerformanceStates20Info>();
+
+                using (var performanceStateInfo = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getPerformanceStates20(physicalGPUHandle, performanceStateInfo);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return performanceStateInfo.ToValueType<IPerformanceStates20Info>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Gets the GPU boost frequency curve controls for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The retrieved VFP curve.</returns>
+        public static PrivateVFPCurveV1 GetVFPCurve(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateVFPCurveV1).Instantiate<PrivateVFPCurveV1>();
+
+            using (var vfpCurveReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetVFPCurve>()(
+                    gpuHandle,
+                    vfpCurveReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return vfpCurveReference.ToValueType<PrivateVFPCurveV1>(typeof(PrivateVFPCurveV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the performance policies current information for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The performance policies information.</returns>
+        public static PrivatePerformanceInfoV1 PerformancePoliciesGetInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivatePerformanceInfoV1).Instantiate<PrivatePerformanceInfoV1>();
+
+            using (var performanceInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_PerfPoliciesGetInfo>()(
+                    gpuHandle,
+                    performanceInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return performanceInfoReference.ToValueType<PrivatePerformanceInfoV1>(typeof(PrivatePerformanceInfoV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the performance policies status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The performance policies status of the GPU.</returns>
+        public static PrivatePerformanceStatusV1 PerformancePoliciesGetStatus(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivatePerformanceStatusV1).Instantiate<PrivatePerformanceStatusV1>();
+
+            using (var performanceStatusReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_PerfPoliciesGetStatus>()(
+                    gpuHandle,
+                    performanceStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return performanceStatusReference.ToValueType<PrivatePerformanceStatusV1>(
+                    typeof(PrivatePerformanceStatusV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Sets the clock boost lock status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="clockBoostLock">The new clock boost lock status.</param>
+        public static void SetClockBoostLock(PhysicalGPUHandle gpuHandle, PrivateClockBoostLockV2 clockBoostLock)
+        {
+            using (var clockLockReference = ValueTypeReference.FromValueType(clockBoostLock))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetClockBoostLock>()(
+                    gpuHandle,
+                    clockLockReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Sets the clock boost table for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="clockBoostTable">The new clock table.</param>
+        public static void SetClockBoostTable(PhysicalGPUHandle gpuHandle, PrivateClockBoostTableV1 clockBoostTable)
+        {
+            using (var clockTableReference = ValueTypeReference.FromValueType(clockBoostTable))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetClockBoostTable>()(
+                    gpuHandle,
+                    clockTableReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE] - [Pascal Only]
+        ///     Sets the core voltage boost percentage
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="boostPercent">The voltage boost percentages.</param>
+        public static void SetCoreVoltageBoostPercent(
+            PhysicalGPUHandle gpuHandle,
+            PrivateVoltageBoostPercentV1 boostPercent)
+        {
+            using (var boostPercentReference = ValueTypeReference.FromValueType(boostPercent))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetCoreVoltageBoostPercent>()(
+                    gpuHandle,
+                    boostPercentReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     This function sets the performance states (P-States) 2.0 information.
+        ///     P-States are GPU active/executing performance capability and power consumption states.
+        /// </summary>
+        /// <param name="physicalGPUHandle">GPU handle to get information about.</param>
+        /// <param name="performanceStates20Info">Performance status 2.0 information to set</param>
+        /// <exception cref="NVIDIAApiException">Status.InvalidArgument: gpuHandle is NULL</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle</exception>
+        public static void SetPerformanceStates20(
+            PhysicalGPUHandle physicalGPUHandle,
+            IPerformanceStates20Info performanceStates20Info)
+        {
+            using (var performanceStateInfo =
+                ValueTypeReference.FromValueType(performanceStates20Info, performanceStates20Info.GetType()))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetPStates20>()(
+                    physicalGPUHandle,
+                    performanceStateInfo
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the current power policies information for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The current power policies information.</returns>
+        public static PrivatePowerPoliciesInfoV1 ClientPowerPoliciesGetInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivatePowerPoliciesInfoV1).Instantiate<PrivatePowerPoliciesInfoV1>();
+
+            using (var policiesInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status =
+                    DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientPowerPoliciesGetInfo>()(gpuHandle,
+                        policiesInfoReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policiesInfoReference.ToValueType<PrivatePowerPoliciesInfoV1>(
+                    typeof(PrivatePowerPoliciesInfoV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the power policies status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The power policies status.</returns>
+        public static PrivatePowerPoliciesStatusV1 ClientPowerPoliciesGetStatus(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivatePowerPoliciesStatusV1).Instantiate<PrivatePowerPoliciesStatusV1>();
+
+            using (var policiesStatusReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientPowerPoliciesGetStatus>()(
+                    gpuHandle,
+                    policiesStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policiesStatusReference.ToValueType<PrivatePowerPoliciesStatusV1>(
+                    typeof(PrivatePowerPoliciesStatusV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Sets the power policies status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="policiesStatus">The new power limiter policy.</param>
+        public static void ClientPowerPoliciesSetStatus(
+            PhysicalGPUHandle gpuHandle,
+            PrivatePowerPoliciesStatusV1 policiesStatus)
+        {
+            using (var policiesStatusReference = ValueTypeReference.FromValueType(policiesStatus))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientPowerPoliciesSetStatus>()(
+                    gpuHandle,
+                    policiesStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the power topology status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The power topology status.</returns>
+        public static PrivatePowerTopologiesStatusV1 ClientPowerTopologyGetStatus(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivatePowerTopologiesStatusV1).Instantiate<PrivatePowerTopologiesStatusV1>();
+
+            using (var topologiesStatusReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientPowerTopologyGetStatus>()(
+                    gpuHandle,
+                    topologiesStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return topologiesStatusReference.ToValueType<PrivatePowerTopologiesStatusV1>(
+                    typeof(PrivatePowerTopologiesStatusV1));
+            }
+        }
+
+
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the cooler policy table for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="policy">The cooler policy to get the table for.</param>
+        /// <param name="index">The cooler index.</param>
+        /// <param name="count">Number of policy table entries retrieved.</param>
+        /// <returns>The cooler policy table for the GPU.</returns>
+        // ReSharper disable once TooManyArguments
+        public static PrivateCoolerPolicyTableV1 GetCoolerPolicyTable(
+            PhysicalGPUHandle gpuHandle,
+            CoolerPolicy policy,
+            uint index,
+            out uint count)
+        {
+            var instance = typeof(PrivateCoolerPolicyTableV1).Instantiate<PrivateCoolerPolicyTableV1>();
+            instance._Policy = policy;
+
+            using (var policyTableReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCoolerPolicyTable>()(
+                    gpuHandle,
+                    index,
+                    policyTableReference,
+                    out count
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policyTableReference.ToValueType<PrivateCoolerPolicyTableV1>(typeof(PrivateCoolerPolicyTableV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the cooler settings for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="coolerTarget">The cooler targets to get settings.</param>
+        /// <returns>The cooler settings.</returns>
+        public static PrivateCoolerSettingsV1 GetCoolerSettings(
+            PhysicalGPUHandle gpuHandle,
+            CoolerTarget coolerTarget = CoolerTarget.All)
+        {
+            var instance = typeof(PrivateCoolerSettingsV1).Instantiate<PrivateCoolerSettingsV1>();
+
+            using (var coolerSettingsReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCoolerSettings>()(
+                    gpuHandle,
+                    coolerTarget,
+                    coolerSettingsReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return coolerSettingsReference.ToValueType<PrivateCoolerSettingsV1>(typeof(PrivateCoolerSettingsV1));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the current fan speed level for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The current fan speed level.</returns>
+        public static uint GetCurrentFanSpeedLevel(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory
+                    .GetDelegate<GPUDelegates.NvAPI_GPU_GetCurrentFanSpeedLevel>()(gpuHandle, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the current thermal level for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The current thermal level.</returns>
+        public static uint GetCurrentThermalLevel(PhysicalGPUHandle gpuHandle)
+        {
+            var status =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetCurrentThermalLevel>()(gpuHandle, out var count);
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        ///     This function returns the fan speed tachometer reading for the specified physical GPU.
+        /// </summary>
+        /// <param name="gpuHandle">Physical GPU handle to get tachometer reading from</param>
+        /// <returns>The GPU fan speed in revolutions per minute.</returns>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found</exception>
+        /// <exception cref="NVIDIAApiException">Status.ExpectedPhysicalGPUHandle: gpuHandle was not a physical GPU handle.</exception>
+        public static uint GetTachReading(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetTachReading>()(
+                gpuHandle, out var value
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the current thermal policies information for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The current thermal policies information.</returns>
+        public static PrivateThermalPoliciesInfoV2 GetThermalPoliciesInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateThermalPoliciesInfoV2).Instantiate<PrivateThermalPoliciesInfoV2>();
+
+            using (var policiesInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status =
+                    DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetThermalPoliciesInfo>()(gpuHandle,
+                        policiesInfoReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policiesInfoReference.ToValueType<PrivateThermalPoliciesInfoV2>(
+                    typeof(PrivateThermalPoliciesInfoV2));
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the thermal policies status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The thermal policies status.</returns>
+        public static PrivateThermalPoliciesStatusV2 GetThermalPoliciesStatus(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateThermalPoliciesStatusV2).Instantiate<PrivateThermalPoliciesStatusV2>();
+
+            using (var policiesStatusReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetThermalPoliciesStatus>()(
+                    gpuHandle,
+                    policiesStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policiesStatusReference.ToValueType<PrivateThermalPoliciesStatusV2>(
+                    typeof(PrivateThermalPoliciesStatusV2));
+            }
+        }
+
+        /// <summary>
+        ///     This function retrieves the thermal information of all thermal sensors or specific thermal sensor associated with
+        ///     the selected GPU. To retrieve info for all sensors, set sensorTarget to ThermalSettingsTarget.All.
+        /// </summary>
+        /// <param name="physicalGPUHandle">Handle of the physical GPU for which the memory information is to be extracted.</param>
+        /// <param name="sensorTarget">Specifies the requested thermal sensor target.</param>
+        /// <returns>The device thermal sensors information.</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static IThermalSettings GetThermalSettings(
+            PhysicalGPUHandle physicalGPUHandle,
+            ThermalSettingsTarget sensorTarget = ThermalSettingsTarget.All)
+        {
+            var getThermalSettings = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetThermalSettings>();
+
+            foreach (var acceptType in getThermalSettings.Accepts())
+            {
+                var instance = acceptType.Instantiate<IThermalSettings>();
+
+                using (var gpuThermalSettings = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getThermalSettings(physicalGPUHandle, sensorTarget, gpuThermalSettings);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return gpuThermalSettings.ToValueType<IThermalSettings>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Restores the cooler policy table to default for the passed GPU handle and cooler index.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="policy">The cooler policy to restore to default.</param>
+        /// <param name="indexes">The indexes of the coolers to restore their policy tables to default.</param>
+        public static void RestoreCoolerPolicyTable(
+            PhysicalGPUHandle gpuHandle,
+            CoolerPolicy policy,
+            uint[] indexes = null)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_RestoreCoolerPolicyTable>()(
+                gpuHandle,
+                indexes,
+                (uint)(indexes?.Length ?? 0),
+                policy
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Restores the cooler settings to default for the passed GPU handle and cooler index.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="indexes">The indexes of the coolers to restore their settings to default.</param>
+        public static void RestoreCoolerSettings(
+            PhysicalGPUHandle gpuHandle,
+            uint[] indexes = null)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_RestoreCoolerSettings>()(
+                gpuHandle,
+                indexes,
+                (uint)(indexes?.Length ?? 0)
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Sets the cooler levels for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="index">The cooler index.</param>
+        /// <param name="coolerLevels">The cooler level information.</param>
+        /// <param name="levelsCount">The number of entries in the cooler level information.</param>
+        // ReSharper disable once TooManyArguments
+        public static void SetCoolerLevels(
+            PhysicalGPUHandle gpuHandle,
+            uint index,
+            PrivateCoolerLevelsV1 coolerLevels,
+            uint levelsCount
+        )
+        {
+            using (var coolerLevelsReference = ValueTypeReference.FromValueType(coolerLevels))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetCoolerLevels>()(
+                    gpuHandle,
+                    index,
+                    coolerLevelsReference,
+                    levelsCount
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Sets the cooler policy table for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="index">The cooler index.</param>
+        /// <param name="coolerPolicyTable">The cooler policy table.</param>
+        /// <param name="policyLevelsCount">The number of entries in the cooler policy table.</param>
+        // ReSharper disable once TooManyArguments
+        public static void SetCoolerPolicyTable(
+            PhysicalGPUHandle gpuHandle,
+            uint index,
+            PrivateCoolerPolicyTableV1 coolerPolicyTable,
+            uint policyLevelsCount
+        )
+        {
+            var instance = typeof(PrivateCoolerPolicyTableV1).Instantiate<PrivateCoolerPolicyTableV1>();
+
+            using (var policyTableReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetCoolerPolicyTable>()(
+                    gpuHandle,
+                    index,
+                    policyTableReference,
+                    policyLevelsCount
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Sets the thermal policies status for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <param name="thermalPoliciesStatus">The new thermal limiter policy to apply.</param>
+        public static void SetThermalPoliciesStatus(
+            PhysicalGPUHandle gpuHandle,
+            PrivateThermalPoliciesStatusV2 thermalPoliciesStatus)
+        {
+            using (var policiesStatusReference = ValueTypeReference.FromValueType(thermalPoliciesStatus))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_SetThermalPoliciesStatus>()(
+                    gpuHandle,
+                    policiesStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+        public static PrivateFanCoolersInfoV1 GetClientFanCoolersInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateFanCoolersInfoV1).Instantiate<PrivateFanCoolersInfoV1>();
+
+            using (var policiesInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status =
+                    DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientFanCoolersGetInfo>()(gpuHandle,
+                        policiesInfoReference);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policiesInfoReference.ToValueType<PrivateFanCoolersInfoV1>(
+                    typeof(PrivateFanCoolersInfoV1));
+            }
+        }
+
+        public static PrivateFanCoolersStatusV1 GetClientFanCoolersStatus(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateFanCoolersStatusV1).Instantiate<PrivateFanCoolersStatusV1>();
+
+            using (var policiesStatusReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientFanCoolersGetStatus>()(
+                    gpuHandle,
+                    policiesStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policiesStatusReference.ToValueType<PrivateFanCoolersStatusV1>(
+                    typeof(PrivateFanCoolersStatusV1));
+            }
+        }
+
+        public static PrivateFanCoolersControlV1 GetClientFanCoolersControl(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateFanCoolersControlV1).Instantiate<PrivateFanCoolersControlV1>();
+            using (var policiesStatusReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientFanCoolersGetControl>()(
+                    gpuHandle,
+                    policiesStatusReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return policiesStatusReference.ToValueType<PrivateFanCoolersControlV1>(
+                    typeof(PrivateFanCoolersControlV1));
+            }
+        }
+
+        public static void SetClientFanCoolersControl(PhysicalGPUHandle gpuHandle, PrivateFanCoolersControlV1 control)
+        {
+            using (var coolerLevelsReference = ValueTypeReference.FromValueType(control))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_ClientFanCoolersSetControl>()(
+                    gpuHandle,
+                    coolerLevelsReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+            }
+        }
+
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Enables the dynamic performance states
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        public static void EnableDynamicPStates(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_EnableDynamicPStates>()(
+                gpuHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This function retrieves the dynamic performance states information from specific GPU
+        /// </summary>
+        /// <param name="physicalGPUHandle">Handle of the physical GPU for which the memory information is to be extracted.</param>
+        /// <returns>The device utilizations information array.</returns>
+        /// <exception cref="NVIDIANotSupportedException">This operation is not supported.</exception>
+        /// <exception cref="NVIDIAApiException">Status.NvidiaDeviceNotFound: No NVIDIA GPU driving a display was found.</exception>
+        /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+        public static DynamicPerformanceStatesInfoV1 GetDynamicPerformanceStatesInfoEx(
+            PhysicalGPUHandle physicalGPUHandle)
+        {
+            var getDynamicPerformanceStatesInfoEx =
+                DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetDynamicPStatesInfoEx>();
+
+            foreach (var acceptType in getDynamicPerformanceStatesInfoEx.Accepts())
+            {
+                var instance = acceptType.Instantiate<DynamicPerformanceStatesInfoV1>();
+
+                using (var gpuDynamicPStateInfo = ValueTypeReference.FromValueType(instance, acceptType))
+                {
+                    var status = getDynamicPerformanceStatesInfoEx(physicalGPUHandle, gpuDynamicPStateInfo);
+
+                    if (status == Status.IncompatibleStructureVersion)
+                    {
+                        continue;
+                    }
+
+                    if (status != Status.Ok)
+                    {
+                        throw new NVIDIAApiException(status);
+                    }
+
+                    return gpuDynamicPStateInfo.ToValueType<DynamicPerformanceStatesInfoV1>(acceptType);
+                }
+            }
+
+            throw new NVIDIANotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
+        ///     Gets the reason behind the current decrease in performance.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>A value indicating the reason of current performance decrease.</returns>
+        public static PerformanceDecreaseReason GetPerformanceDecreaseInfo(PhysicalGPUHandle gpuHandle)
+        {
+            var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetPerfDecreaseInfo>()(
+                gpuHandle,
+                out var decreaseReason
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return decreaseReason;
+        }
+
+        /// <summary>
+        ///     [PRIVATE]
+        ///     Gets the GPU usage metrics for the passed GPU handle.
+        /// </summary>
+        /// <param name="gpuHandle">The handle of the GPU to perform the operation on.</param>
+        /// <returns>The usage information for the selected GPU.</returns>
+        public static PrivateUsagesInfoV1 GetUsages(PhysicalGPUHandle gpuHandle)
+        {
+            var instance = typeof(PrivateUsagesInfoV1).Instantiate<PrivateUsagesInfoV1>();
+
+            using (var usageInfoReference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_GetUsages>()(
+                    gpuHandle,
+                    usageInfoReference
+                );
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return usageInfoReference.ToValueType<PrivateUsagesInfoV1>(typeof(PrivateUsagesInfoV1));
+            }
+        }
+
+        /// <summary>
+        ///     Queries active applications.
+        /// </summary>
+        /// <param name="gpuHandle">The physical GPU handle.</param>
+        /// <returns>The list of active applications.</returns>
+        public static PrivateActiveApplicationV2[] QueryActiveApps(PhysicalGPUHandle gpuHandle)
+        {
+            var queryActiveApps = DelegateFactory.GetDelegate<GPUDelegates.NvAPI_GPU_QueryActiveApps>();
+
+            // ReSharper disable once EventExceptionNotDocumented
+            if (!queryActiveApps.Accepts().Contains(typeof(PrivateActiveApplicationV2)))
+            {
+                throw new NVIDIANotSupportedException("This operation is not supported.");
+            }
+
+            uint count = PrivateActiveApplicationV2.MaximumNumberOfApplications;
+            var instances = typeof(PrivateActiveApplicationV2).Instantiate<PrivateActiveApplicationV2>()
+                .Repeat((int)count);
+
+            using (var applications = ValueTypeArray.FromArray(instances))
+            {
+                // ReSharper disable once EventExceptionNotDocumented
+                var status = queryActiveApps(gpuHandle, applications, ref count);
+
+                if (status != Status.Ok)
+                {
+                    throw new NVIDIAApiException(status);
+                }
+
+                return applications.ToArray<PrivateActiveApplicationV2>((int)count);
+            }
+        }
+
+
+
+        /// <summary>
+        ///     This API activates stereo for the device interface corresponding to the given stereo handle.
+        ///     Activating stereo is possible only if stereo was enabled previously in the registry.
+        ///     If stereo is not activated, then calls to functions that require that stereo is activated have no effect,
+        ///     and will return the appropriate error code.
+        /// </summary>
+        /// <param name="handle">Stereo handle corresponding to the device interface.</param>
+        public static void ActivateStereo(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_Activate>()(
+                handle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API captures the current stereo image in JPEG stereo format with the given quality.
+        ///     Only the last capture call per flip will be effective.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <param name="quality">Quality of the JPEG image to be captured. Integer value between 0 and 100.</param>
+        public static void CaptureJpegImage(StereoHandle handle, uint quality)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_CaptureJpegImage>()(
+                handle,
+                quality
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API captures the current stereo image in PNG stereo format.
+        ///     Only the last capture call per flip will be effective.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        public static void CapturePngImage(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_CapturePngImage>()(
+                handle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     Creates new configuration registry key for current application.
+        ///     If there is no configuration profile prior to the function call,
+        ///     this API tries to create a new configuration profile registry key
+        ///     for a given application and fill it with the default values.
+        ///     If an application already has a configuration profile registry key, the API does nothing.
+        ///     The name of the key is automatically set to the name of the executable that calls this function.
+        ///     Because of this, the executable should have a distinct and unique name.
+        ///     If the application is using only one version of DirectX, then the default profile type will be appropriate.
+        ///     If the application is using more than one version of DirectX from the same executable,
+        ///     it should use the appropriate profile type for each configuration profile.
+        /// </summary>
+        /// <param name="registryProfileType">Type of profile the application wants to create.</param>
+        public static void CreateConfigurationProfileRegistryKey(
+            StereoRegistryProfileType registryProfileType)
+        {
+            var status = DelegateFactory
+                .GetDelegate<StereoDelegates.NvAPI_Stereo_CreateConfigurationProfileRegistryKey>()(
+                    registryProfileType
+                );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API creates a stereo handle that is used in subsequent calls related to a given device interface.
+        ///     This must be called before any other NvAPI_Stereo_ function for that handle.
+        ///     Multiple devices can be used at one time using multiple calls to this function (one per each device).
+        ///     HOW TO USE: After the Direct3D device is created, create the stereo handle.
+        ///     On call success:
+        ///     -# Use all other functions that have stereo handle as first parameter.
+        ///     -# After the device interface that corresponds to the the stereo handle is destroyed,
+        ///     the application should call NvAPI_DestroyStereoHandle() for that stereo handle.
+        /// </summary>
+        /// <param name="d3dDevice">Pointer to IUnknown interface that is IDirect3DDevice9* in DX9, ID3D10Device*.</param>
+        /// <returns>Newly created stereo handle.</returns>
+        // ReSharper disable once InconsistentNaming
+        public static StereoHandle CreateHandleFromIUnknown(IntPtr d3dDevice)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_CreateHandleFromIUnknown>()(
+                d3dDevice,
+                out var stereoHandle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return stereoHandle;
+        }
+
+        // ReSharper disable once CommentTypo
+        /// <summary>
+        ///     This API allows the user to create a mono or a stereo swap chain.
+        ///     NOTE: NvAPI_D3D1x_CreateSwapChain is a wrapper of the method IDXGIFactory::CreateSwapChain which
+        ///     additionally notifies the D3D driver of the mode in which the swap chain is to be
+        ///     created.
+        /// </summary>
+        /// <param name="handle">
+        ///     Stereo handle that corresponds to the device interface. The device that will write 2D images to
+        ///     the swap chain.
+        /// </param>
+        /// <param name="dxgiSwapChainDescription">
+        ///     A pointer to the swap-chain description (DXGI_SWAP_CHAIN_DESC). This parameter
+        ///     cannot be NULL.
+        /// </param>
+        /// <param name="swapChainMode">The stereo mode fot the swap chain.</param>
+        /// <returns>A pointer to the swap chain created.</returns>
+        public static IntPtr D3D1XCreateSwapChain(
+            StereoHandle handle,
+            IntPtr dxgiSwapChainDescription,
+            StereoSwapChainMode swapChainMode)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_D3D1x_CreateSwapChain>()(
+                handle,
+                dxgiSwapChainDescription,
+                out var dxgiSwapChain,
+                swapChainMode
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return dxgiSwapChain;
+        }
+
+        /// <summary>
+        ///     This API allows the user to create a mono or a stereo swap chain.
+        ///     NOTE: NvAPI_D3D9_CreateSwapChain is a wrapper of the method IDirect3DDevice9::CreateAdditionalSwapChain which
+        ///     additionally notifies the D3D driver if the swap chain creation mode must be stereo or mono.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <param name="d3dPresentParameters">A pointer to the swap-chain description (DXGI). This parameter cannot be NULL.</param>
+        /// <param name="swapChainMode">The stereo mode for the swap chain.</param>
+        /// <returns>A pointer to the swap chain created.</returns>
+        public static IntPtr D3D9CreateSwapChain(
+            StereoHandle handle,
+            // ReSharper disable once InconsistentNaming
+            IntPtr d3dPresentParameters,
+            StereoSwapChainMode swapChainMode)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_D3D9_CreateSwapChain>()(
+                handle,
+                d3dPresentParameters,
+                out var direct3DSwapChain9,
+                swapChainMode
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return direct3DSwapChain9;
+        }
+
+        /// <summary>
+        ///     This API deactivates stereo for the given device interface.
+        ///     If stereo is not activated, then calls to functions that require that stereo is activated have no effect,
+        ///     and will return the appropriate error code.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        public static void DeactivateStereo(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_Deactivate>()(
+                handle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API decreases convergence for the given device interface (just like the Ctrl+F5 hot-key).
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        public static void DecreaseConvergence(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_DecreaseConvergence>()(
+                handle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API decreases separation for the given device interface (just like the Ctrl+F3 hot-key).
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        public static void DecreaseSeparation(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_DecreaseSeparation>()(
+                handle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     Removes configuration registry key for current application.
+        ///     If an application already has a configuration profile prior to this function call,
+        ///     the function attempts to remove the application's configuration profile registry key from the registry.
+        ///     If there is no configuration profile registry key prior to the function call,
+        ///     the function does nothing and does not report an error.
+        /// </summary>
+        /// <param name="registryProfileType">Type of profile that the application wants to delete.</param>
+        public static void DeleteConfigurationProfileRegistryKey(
+            StereoRegistryProfileType registryProfileType)
+        {
+            var status = DelegateFactory
+                .GetDelegate<StereoDelegates.NvAPI_Stereo_DeleteConfigurationProfileRegistryKey>()(
+                    registryProfileType
+                );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API removes the given value from the application's configuration profile registry key.
+        ///     If there is no such value, the function does nothing and does not report an error.
+        /// </summary>
+        /// <param name="registryProfileType">The type of profile the application wants to access.</param>
+        /// <param name="registryId">ID of the value that is being deleted.</param>
+        public static void DeleteConfigurationProfileValue(
+            StereoRegistryProfileType registryProfileType,
+            StereoRegistryIdentification registryId)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_DeleteConfigurationProfileValue>()(
+                registryProfileType,
+                registryId
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API destroys the stereo handle created with one of the NvAPI_Stereo_CreateHandleFrom() functions.
+        ///     This should be called after the device corresponding to the handle has been destroyed.
+        /// </summary>
+        /// <param name="handle">Stereo handle that is to be destroyed.</param>
+        public static void DestroyHandle(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_DestroyHandle>()(
+                handle
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API disables stereo mode in the registry.
+        ///     Calls to this function affect the entire system.
+        ///     If stereo is not enabled, then calls to functions that require that stereo is enabled have no effect,
+        ///     and will return the appropriate error code.
+        /// </summary>
+        public static void DisableStereo()
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_Disable>()();
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This APU enables stereo mode in the registry.
+        ///     Calls to this function affect the entire system.
+        ///     If stereo is not enabled, then calls to functions that require that stereo is enabled have no effect,
+        ///     and will return the appropriate error code.
+        /// </summary>
+        public static void EnableStereo()
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_Enable>()();
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+        }
+
+        /// <summary>
+        ///     This API gets the current convergence value.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <returns>Current convergence value</returns>
+        public static float GetConvergence(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_GetConvergence>()(
+                handle,
+                out var convergence
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return convergence;
+        }
+
+        /// <summary>
+        ///     This API retrieves the current default stereo profile.
+        /// </summary>
+        /// <returns>Default stereo profile name.</returns>
+        public static string GetDefaultProfile()
+        {
+            var stringCapacity = 256;
+            var stringAddress = Marshal.AllocHGlobal(stringCapacity);
 
             try
             {
-                GetDelegate(NvId_Initialize, out InitializeInternal);
-            }
-            catch (DllNotFoundException) { return; }
-            catch (EntryPointNotFoundException) { return; }
-            catch (ArgumentNullException) { return; }
-            catch (NullReferenceException) { return; }
+                var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_GetDefaultProfile>()(
+                    (uint)stringCapacity,
+                    stringAddress,
+                    out var stringSize
+                );
 
-            if (InitializeInternal() == NVAPI_STATUS.NVAPI_OK)
-            {
-                GetDelegate(NvId_Unload, out UnloadInternal);
-                GetDelegate(NvId_GetInterfaceVersionString, out GetInterfaceVersionStringInternal);
-                GetDelegate(NvId_GetErrorMessage, out GetErrorMessageInternal);
-
-                // Display
-                GetDelegate(NvId_EnumNvidiaDisplayHandle, out EnumNvidiaDisplayHandleInternal);
-                GetDelegate(NvId_EnumNvidiaUnAttachedDisplayHandle, out EnumNvidiaUnAttachedDisplayHandleInternal);
-                GetDelegate(NvId_GetAssociatedNvidiaDisplayHandle, out GetAssociatedNvidiaDisplayHandleInternal);
-                GetDelegate(NvId_DISP_GetAssociatedUnAttachedNvidiaDisplayHandle, out GetAssociatedUnAttachedNvidiaDisplayHandleInternal);
-                GetDelegate(NvId_DISP_GetGDIPrimaryDisplayId, out DISP_GetGDIPrimaryDisplayIdInternal);
-                GetDelegate(NvId_Disp_GetHdrCapabilities, out Disp_GetHdrCapabilitiesInternal);
-                GetDelegate(NvId_Disp_HdrColorControl, out Disp_HdrColorControlInternal);
-                GetDelegate(NvId_Disp_ColorControl, out Disp_ColorControlInternal);
-                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
-                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission
-                GetDelegate(NvId_DISP_SetDisplayConfig, out DISP_SetDisplayConfigInternal);
-                GetDelegate(NvId_DISP_GetDisplayIdByDisplayName, out DISP_GetDisplayIdByDisplayNameInternal);
-                GetDelegate(NvId_DISP_EnumCustomDisplay, out Disp_EnumCustomDisplayInternal);
-                GetDelegate(NvId_DISP_GetAdaptiveSyncData, out DISP_GetAdaptiveSyncDataInternal);
-                GetDelegate(NvId_DISP_SetAdaptiveSyncData, out DISP_SetAdaptiveSyncDataInternal);
-
-                // GPUs
-                GetDelegate(NvId_EnumPhysicalGPUs, out EnumPhysicalGPUsInternal);
-                GetDelegate(NvId_GPU_GetQuadroStatus, out GetQuadroStatusInternal);
-                GetDelegate(NvId_GPU_GetConnectedDisplayIds, out GPU_GetConnectedDisplayIdsInternal);
-                GetDelegate(NvId_GPU_GetConnectedDisplayIds, out GPU_GetConnectedDisplayIdsInternalNull); // The null version of the submission
-                GetDelegate(NvId_GPU_GetFullName, out GPU_GetFullNameInternal);
-                GetDelegate(NvId_GPU_GetBoardInfo, out GPU_GetBoardInfoInternal);
-                GetDelegate(NvId_GPU_GetBusType, out GPU_GetBusTypeInternal);
-                GetDelegate(NvId_GPU_GetBusId, out GPU_GetBusIdInternal);
-                GetDelegate(NvId_GPU_GetEDID, out GPU_GetEDIDInternal);
-                GetDelegate(NvId_GPU_GetEDID, out GPU_GetEDIDInternal);
-                GetDelegate(NvId_GetLogicalGPUFromPhysicalGPU, out GetLogicalGPUFromPhysicalGPUInternal);
-                GetDelegate(NvId_GPU_GetLogicalGpuInfo, out GPU_GetLogicalGpuInfoInternal);
-                GetDelegate(NvId_GPU_QueryWorkstationFeatureSupport, out GPU_QueryWorkstationFeatureSupportInternal);
-
-                // Mosaic                
-                GetDelegate(NvId_Mosaic_EnableCurrentTopo, out Mosaic_EnableCurrentTopoInternal);
-                GetDelegate(NvId_Mosaic_SetCurrentTopo, out Mosaic_SetCurrentTopoInternal);
-                GetDelegate(NvId_Mosaic_GetCurrentTopo, out Mosaic_GetCurrentTopoInternal);
-                GetDelegate(NvId_Mosaic_GetTopoGroup, out Mosaic_GetTopoGroupInternal);
-                GetDelegate(NvId_Mosaic_GetSupportedTopoInfo, out Mosaic_GetSupportedTopoInfoInternal);
-                GetDelegate(NvId_Mosaic_EnumDisplayModes, out Mosaic_EnumDisplayModesInternal);
-                GetDelegate(NvId_Mosaic_EnumDisplayModes, out Mosaic_EnumDisplayModesInternalNull); // The null version of the submission
-                GetDelegate(NvId_Mosaic_EnumDisplayGrids, out Mosaic_EnumDisplayGridsInternal);
-                GetDelegate(NvId_Mosaic_EnumDisplayGrids, out Mosaic_EnumDisplayGridsInternalNull); // The null version of the submission
-                GetDelegate(NvId_Mosaic_SetDisplayGrids, out Mosaic_SetDisplayGridsInternal);
-                GetDelegate(NvId_Mosaic_ValidateDisplayGrids, out Mosaic_ValidateDisplayGridsInternal);
-                GetDelegate(NvId_Mosaic_GetDisplayViewportsByResolution, out Mosaic_GetDisplayViewportsByResolutionInternal);
-                GetDelegate(NvId_Mosaic_GetOverlapLimits, out Mosaic_GetOverlapLimitsInternal);
-
-                // System
-                GetDelegate(NvId_SYS_GetGpuAndOutputIdFromDisplayId, out SYS_GetGpuAndOutputIdFromDisplayIdInternal);
-
-                // DRS
-                GetDelegate(NvId_DRS_SetProfileInfo, out DRS_SetProfileInfoInternal);
-                GetDelegate(NvId_DRS_SetSetting, out DRS_SetSettingInternal);
-                GetDelegate(NvId_DRS_GetCurrentGlobalProfile, out DRS_GetCurrentGlobalProfileInternal);
-                GetDelegate(NvId_DRS_EnumSettings, out DRS_EnumSettingsInternal);
-                GetDelegate(NvId_DRS_GetSetting, out DRS_GetSettingInternal);
-                GetDelegate(NvId_DRS_GetProfileInfo, out DRS_GetProfileInfoInternal);
-                GetDelegate(NvId_DRS_GetSettingIdFromName, out DRS_GetSettingIdFromNameInternal);
-                GetDelegate(NvId_DRS_EnumAvailableSettingIds, out DRS_EnumAvailableSettingIdsInternal);
-                GetDelegate(NvId_DRS_CreateSession, out DRS_CreateSessionInternal);
-                GetDelegate(NvId_DRS_GetSettingNameFromId, out DRS_GetSettingNameFromIdInternal);
-                GetDelegate(NvId_DRS_EnumAvailableSettingValues, out DRS_EnumAvailableSettingValuesInternal);
-                GetDelegate(NvId_DRS_EnumProfiles, out DRS_EnumProfilesInternal);
-                GetDelegate(NvId_DRS_SetCurrentGlobalProfile, out DRS_SetCurrentGlobalProfileInternal);
-                GetDelegate(NvId_DRS_DestroySession, out DRS_DestroySessionInternal);
-                GetDelegate(NvId_DRS_LoadSettings, out DRS_LoadSettingsInternal);
-                GetDelegate(NvId_DRS_SaveSettings, out DRS_SaveSettingsInternal);
-                GetDelegate(NvId_DRS_GetBaseProfile, out DRS_GetBaseProfileInternal);
-                GetDelegate(NvId_DRS_GetNumProfiles, out DRS_GetNumProfilesInternal);
-                GetDelegate(NvId_DRS_RestoreProfileDefaultSetting, out DRS_RestoreProfileDefaultSettingInternal);
-
-                // Set the availability
-                available = true;
-            }
-
-            AppDomain.CurrentDomain.ProcessExit += NVImport.OnExit;
-        }
-
-        private static string GetDllName()
-        {
-            if (IntPtr.Size > 4)
-            {
-                return "nvapi64.dll";
-            }
-            else
-            {
-                return "nvapi.dll";
-            }
-        }
-
-        private static void OnExit(object sender, EventArgs e)
-        {
-            available = false;
-
-            if (NVImport.UnloadInternal != null) { NVImport.UnloadInternal(); }
-        }
-
-        public static TResult BitWiseConvert<TResult, T>(T source)
-            where TResult : struct, IConvertible
-            where T : struct, IConvertible
-        {
-            if (typeof(T) == typeof(TResult))
-            {
-                return (TResult)(object)source;
-            }
-
-            var sourceSize = Marshal.SizeOf(typeof(T));
-            var destinationSize = Marshal.SizeOf(typeof(TResult));
-            var minSize = Math.Min(sourceSize, destinationSize);
-            var sourcePoInt32er = Marshal.AllocHGlobal(sourceSize);
-            Marshal.StructureToPtr(source, sourcePoInt32er, false);
-            var bytes = new byte[destinationSize];
-
-            if (BitConverter.IsLittleEndian)
-            {
-                Marshal.Copy(sourcePoInt32er, bytes, 0, minSize);
-            }
-            else
-            {
-                Marshal.Copy(sourcePoInt32er + (sourceSize - minSize), bytes, destinationSize - minSize, minSize);
-            }
-
-            Marshal.FreeHGlobal(sourcePoInt32er);
-            var destinationPoInt32er = Marshal.AllocHGlobal(destinationSize);
-            Marshal.Copy(bytes, 0, destinationPoInt32er, destinationSize);
-            var destination = (TResult)Marshal.PtrToStructure(destinationPoInt32er, typeof(TResult));
-            Marshal.FreeHGlobal(destinationPoInt32er);
-
-            return destination;
-        }
-
-        public static bool GetBit<T>(this T Int32eger, Int32 index) where T : struct, IConvertible
-        {
-            var bigInteger = BitWiseConvert<ulong, T>(Int32eger);
-            var mask = 1ul << index;
-
-            return (bigInteger & mask) > 0;
-        }
-
-        public static ulong GetBits<T>(this T Int32eger, Int32 index, Int32 count) where T : struct, IConvertible
-        {
-            var bigInteger = BitWiseConvert<ulong, T>(Int32eger);
-
-            if (index > 0)
-            {
-                bigInteger >>= index;
-            }
-
-            count = 64 - count;
-            bigInteger <<= count;
-            bigInteger >>= count;
-
-            return bigInteger;
-        }
-
-        public static class Utils
-        {
-            public static Int32 SizeOf<T>(T obj)
-            {
-                return SizeOfCache<T>.SizeOf;
-            }
-
-            private static class SizeOfCache<T>
-            {
-                public static readonly Int32 SizeOf;
-
-                static SizeOfCache()
+                if (status != Status.Ok)
                 {
-                    var dm = new DynamicMethod("func", typeof(Int32),
-                                               Type.EmptyTypes, typeof(Utils));
-
-                    ILGenerator il = dm.GetILGenerator();
-                    il.Emit(OpCodes.Sizeof, typeof(T));
-                    il.Emit(OpCodes.Ret);
-
-                    var func = (Func<Int32>)dm.CreateDelegate(typeof(Func<Int32>));
-                    SizeOf = func();
-                }
-            }
-
-        }
-        #endregion
-
-
-        // NvAPI Functions extracted from R470 Developer nvapi64.lib using dumpbin
-        // e.g. dumpbin.exe /DISASM R470-developer\amd64\nvapi64.lib
-        // Can also use this script: https://raw.githubusercontent.com/terrymacdonald/NVIDIAInfo/main/NVIDIAInfo/NVAPI_Function_Location_Extractor.ps1
-        // Note: This only extracts the public NvAPI Functions! The private NvAPI calls were found by Soroush Falahati.
-
-        #region NvAPI Public Functions 
-
-        private const uint NvId_GetErrorMessage = 0x6C2D048C;
-        private const uint NvId_GetInterfaceVersionString = 0x1053FA5;
-        private const uint NvId_GPU_GetEDID = 0x37D32E69;
-        private const uint NvId_SetView = 0x957D7B6;
-        private const uint NvId_SetViewEx = 0x6B89E68;
-        private const uint NvId_GetDisplayDriverVersion = 0xF951A4D1;
-        private const uint NvId_SYS_GetDriverAndBranchVersion = 0x2926AAAD;
-        private const uint NvId_GPU_GetMemoryInfo = 0x7F9B368;
-        private const uint NvId_OGL_ExpertModeSet = 0x3805EF7A;
-        private const uint NvId_OGL_ExpertModeGet = 0x22ED9516;
-        private const uint NvId_OGL_ExpertModeDefaultsSet = 0xB47A657E;
-        private const uint NvId_OGL_ExpertModeDefaultsGet = 0xAE921F12;
-        private const uint NvId_EnumPhysicalGPUs = 0xE5AC921F;
-        private const uint NvId_EnumTCCPhysicalGPUs = 0xD9930B07;
-        private const uint NvId_EnumLogicalGPUs = 0x48B3EA59;
-        private const uint NvId_GetPhysicalGPUsFromDisplay = 0x34EF9506;
-        private const uint NvId_GetPhysicalGPUFromUnAttachedDisplay = 0x5018ED61;
-        private const uint NvId_GetLogicalGPUFromDisplay = 0xEE1370CF;
-        private const uint NvId_GetLogicalGPUFromPhysicalGPU = 0xADD604D1;
-        private const uint NvId_GetPhysicalGPUsFromLogicalGPU = 0xAEA3FA32;
-        private const uint NvId_GetPhysicalGPUFromGPUID = 0x5380AD1A;
-        private const uint NvId_GetGPUIDfromPhysicalGPU = 0x6533EA3E;
-        private const uint NvId_GPU_GetShaderSubPipeCount = 0xBE17923;
-        private const uint NvId_GPU_GetGpuCoreCount = 0xC7026A87;
-        private const uint NvId_GPU_GetAllOutputs = 0x7D554F8E;
-        private const uint NvId_GPU_GetConnectedOutputs = 0x1730BFC9;
-        private const uint NvId_GPU_GetConnectedSLIOutputs = 0x680DE09;
-        private const uint NvId_GPU_GetConnectedDisplayIds = 0x78DBA2;
-        private const uint NvId_GPU_GetAllDisplayIds = 0x785210A2;
-        private const uint NvId_GPU_GetConnectedOutputsWithLidState = 0xCF8CAF39;
-        private const uint NvId_GPU_GetConnectedSLIOutputsWithLidState = 0x96043CC7;
-        private const uint NvId_GPU_GetSystemType = 0xBAAABFCC;
-        private const uint NvId_GPU_GetActiveOutputs = 0xE3E89B6F;
-        private const uint NvId_GPU_SetEDID = 0xE83D6456;
-        private const uint NvId_GPU_GetOutputType = 0x40A505E4;
-        private const uint NvId_GPU_ValidateOutputCombination = 0x34C9C2D4;
-        private const uint NvId_GPU_GetFullName = 0xCEEE8E9F;
-        private const uint NvId_GPU_GetPCIIdentifiers = 0x2DDFB66E;
-        private const uint NvId_GPU_GetGPUType = 0xC33BAEB1;
-        private const uint NvId_GPU_GetBusType = 0x1BB18724;
-        private const uint NvId_GPU_GetBusId = 0x1BE0B8E5;
-        private const uint NvId_GPU_GetBusSlotId = 0x2A0A350F;
-        private const uint NvId_GPU_GetIRQ = 0xE4715417;
-        private const uint NvId_GPU_GetVbiosRevision = 0xACC3DA0A;
-        private const uint NvId_GPU_GetVbiosOEMRevision = 0x2D43FB31;
-        private const uint NvId_GPU_GetVbiosVersionString = 0xA561FD7D;
-        private const uint NvId_GPU_GetAGPAperture = 0x6E042794;
-        private const uint NvId_GPU_GetCurrentAGPRate = 0xC74925A0;
-        private const uint NvId_GPU_GetCurrentPCIEDownstreamWidth = 0xD048C3B1;
-        private const uint NvId_GPU_GetPhysicalFrameBufferSize = 0x46FBEB03;
-        private const uint NvId_GPU_GetVirtualFrameBufferSize = 0x5A04B644;
-        private const uint NvId_GPU_GetQuadroStatus = 0xE332FA47;
-        private const uint NvId_GPU_GetBoardInfo = 0x22D54523;
-        private const uint NvId_GPU_GetArchInfo = 0xD8265D24;
-        private const uint NvId_I2CRead = 0x2FDE12C5;
-        private const uint NvId_I2CWrite = 0xE812EB07;
-        private const uint NvId_GPU_WorkstationFeatureSetup = 0x6C1F3FE4;
-        private const uint NvId_GPU_WorkstationFeatureQuery = 0x4537DF;
-        private const uint NvId_GPU_GetHDCPSupportStatus = 0xF089EEF5;
-        private const uint NvId_GPU_CudaEnumComputeCapableGpus = 0x5786CC6E;
-        private const uint NvId_GPU_GetTachReading = 0x5F608315;
-        private const uint NvId_GPU_GetECCStatusInfo = 0xCA1DDAF3;
-        private const uint NvId_GPU_GetECCErrorInfo = 0xC71F85A6;
-        private const uint NvId_GPU_ResetECCErrorInfo = 0xC02EEC20;
-        private const uint NvId_GPU_GetECCConfigurationInfo = 0x77A796F3;
-        private const uint NvId_GPU_SetECCConfiguration = 0x1CF639D9;
-        private const uint NvId_GPU_QueryWorkstationFeatureSupport = 0x80B1ABB9;
-        private const uint NvId_GPU_SetScanoutIntensity = 0xA57457A4;
-        private const uint NvId_GPU_GetScanoutIntensityState = 0xE81CE836;
-        private const uint NvId_GPU_SetScanoutWarping = 0xB34BAB4F;
-        private const uint NvId_GPU_GetScanoutWarpingState = 0x6F5435AF;
-        private const uint NvId_GPU_SetScanoutCompositionParameter = 0xF898247D;
-        private const uint NvId_GPU_GetScanoutCompositionParameter = 0x58FE51E6;
-        private const uint NvId_GPU_GetScanoutConfiguration = 0x6A9F5B63;
-        private const uint NvId_GPU_GetScanoutConfigurationEx = 0xE2E1E6F0;
-        private const uint NvId_GPU_GetAdapterIdFromPhysicalGpu = 0xFF07FDE;
-        private const uint NvId_GPU_GetVirtualizationInfo = 0x44E022A9;
-        private const uint NvId_GPU_GetLogicalGpuInfo = 0x842B066E;
-        private const uint NvId_GPU_GetLicensableFeatures = 0x3FC596AA;
-        private const uint NvId_GPU_GetVRReadyData = 0x81D629C5;
-        private const uint NvId_GPU_GetPerfDecreaseInfo = 0x7F7F4600;
-        private const uint NvId_GPU_GetPstatesInfoEx = 0x843C0256;
-        private const uint NvId_GPU_GetPstates20 = 0x6FF81213;
-        private const uint NvId_GPU_GetCurrentPstate = 0x927DA4F6;
-        private const uint NvId_GPU_GetDynamicPstatesInfoEx = 0x60DED2ED;
-        private const uint NvId_GPU_GetThermalSettings = 0xE3640A56;
-        private const uint NvId_GPU_GetAllClockFrequencies = 0xDCB616C3;
-        private const uint NvId_GPU_QueryIlluminationSupport = 0xA629DA31;
-        private const uint NvId_GPU_GetIllumination = 0x9A1B9365;
-        private const uint NvId_GPU_SetIllumination = 0x254A187;
-        private const uint NvId_GPU_ClientIllumDevicesGetInfo = 0xD4100E58;
-        private const uint NvId_GPU_ClientIllumDevicesGetControl = 0x73C01D58;
-        private const uint NvId_GPU_ClientIllumDevicesSetControl = 0x57024C62;
-        private const uint NvId_GPU_ClientIllumZonesGetInfo = 0x4B81241B;
-        private const uint NvId_GPU_ClientIllumZonesGetControl = 0x3DBF5764;
-        private const uint NvId_GPU_ClientIllumZonesSetControl = 0x197D065E;
-        private const uint NvId_Event_RegisterCallback = 0xE6DBEA69;
-        private const uint NvId_Event_UnregisterCallback = 0xDE1F9B45;
-        private const uint NvId_EnumNvidiaDisplayHandle = 0x9ABDD40D;
-        private const uint NvId_EnumNvidiaUnAttachedDisplayHandle = 0x20DE9260;
-        private const uint NvId_CreateDisplayFromUnAttachedDisplay = 0x63F9799E;
-        private const uint NvId_GetAssociatedNvidiaDisplayHandle = 0x35C29134;
-        private const uint NvId_DISP_GetAssociatedUnAttachedNvidiaDisplayHandle = 0xA70503B2;
-        private const uint NvId_GetAssociatedNvidiaDisplayName = 0x22A78B05;
-        private const uint NvId_GetUnAttachedAssociatedDisplayName = 0x4888D790;
-        private const uint NvId_EnableHWCursor = 0x2863148D;
-        private const uint NvId_DisableHWCursor = 0xAB163097;
-        private const uint NvId_GetVBlankCounter = 0x67B5DB55;
-        private const uint NvId_SetRefreshRateOverride = 0x3092AC32;
-        private const uint NvId_GetAssociatedDisplayOutputId = 0xD995937E;
-        private const uint NvId_GetDisplayPortInfo = 0xC64FF367;
-        private const uint NvId_SetDisplayPort = 0xFA13E65A;
-        private const uint NvId_GetHDMISupportInfo = 0x6AE16EC3;
-        private const uint NvId_Disp_InfoFrameControl = 0x6067AF3F;
-        private const uint NvId_Disp_ColorControl = 0x92F9D80D;
-        private const uint NvId_Disp_GetHdrCapabilities = 0x84F2A8DF;
-        private const uint NvId_Disp_HdrColorControl = 0x351DA224;
-        private const uint NvId_DISP_GetTiming = 0x175167E9;
-        private const uint NvId_DISP_GetMonitorCapabilities = 0x3B05C7E1;
-        private const uint NvId_DISP_GetMonitorColorCapabilities = 0x6AE4CFB5;
-        private const uint NvId_DISP_EnumCustomDisplay = 0xA2072D59;
-        private const uint NvId_DISP_TryCustomDisplay = 0x1F7DB630;
-        private const uint NvId_DISP_DeleteCustomDisplay = 0x552E5B9B;
-        private const uint NvId_DISP_SaveCustomDisplay = 0x49882876;
-        private const uint NvId_DISP_RevertCustomDisplayTrial = 0xCBBD40F0;
-        private const uint NvId_GetView = 0xD6B99D89;
-        private const uint NvId_GetViewEx = 0xDBBC0AF4;
-        private const uint NvId_GetSupportedViews = 0x66FB7FC0;
-        private const uint NvId_DISP_GetDisplayIdByDisplayName = 0xAE457190;
-        private const uint NvId_DISP_GetGDIPrimaryDisplayId = 0x1E9D8A31;
-        private const uint NvId_DISP_GetDisplayConfig = 0x11ABCCF8;
-        private const uint NvId_DISP_SetDisplayConfig = 0x5D8CF8DE;
-        private const uint NvId_DISP_GetAdaptiveSyncData = 0xB73D1EE9;
-        private const uint NvId_DISP_SetAdaptiveSyncData = 0x3EEBBA1D;
-        private const uint NvId_DISP_GetVirtualRefreshRateData = 0x8C00429A;
-        private const uint NvId_DISP_SetVirtualRefreshRateData = 0x5ABBE6A3;
-        private const uint NvId_DISP_SetPreferredStereoDisplay = 0xC9D0E25F;
-        private const uint NvId_DISP_GetPreferredStereoDisplay = 0x1F6B4666;
-        private const uint NvId_DISP_GetNvManagedDedicatedDisplays = 0xDBDF0CB2;
-        private const uint NvId_DISP_AcquireDedicatedDisplay = 0x47C917BA;
-        private const uint NvId_DISP_ReleaseDedicatedDisplay = 0x1247825F;
-        private const uint NvId_Mosaic_GetSupportedTopoInfo = 0xFDB63C81;
-        private const uint NvId_Mosaic_GetTopoGroup = 0xCB89381D;
-        private const uint NvId_Mosaic_GetOverlapLimits = 0x989685F0;
-        private const uint NvId_Mosaic_SetCurrentTopo = 0x9B542831;
-        private const uint NvId_Mosaic_GetCurrentTopo = 0xEC32944E;
-        private const uint NvId_Mosaic_EnableCurrentTopo = 0x5F1AA66C;
-        private const uint NvId_Mosaic_GetDisplayViewportsByResolution = 0xDC6DC8D3;
-        private const uint NvId_Mosaic_SetDisplayGrids = 0x4D959A89;
-        private const uint NvId_Mosaic_ValidateDisplayGrids = 0xCF43903D;
-        private const uint NvId_Mosaic_EnumDisplayModes = 0x78DB97D7;
-        private const uint NvId_Mosaic_EnumDisplayGrids = 0xDF2887AF;
-        private const uint NvId_GetSupportedMosaicTopologies = 0x410B5C25;
-        private const uint NvId_GetCurrentMosaicTopology = 0xF60852BD;
-        private const uint NvId_SetCurrentMosaicTopology = 0xD54B8989;
-        private const uint NvId_EnableCurrentMosaicTopology = 0x74073CC9;
-        private const uint NvId_GSync_EnumSyncDevices = 0xD9639601;
-        private const uint NvId_GSync_QueryCapabilities = 0x44A3F1D1;
-        private const uint NvId_GSync_GetTopology = 0x4562BC38;
-        private const uint NvId_GSync_SetSyncStateSettings = 0x60ACDFDD;
-        private const uint NvId_GSync_GetControlParameters = 0x16DE1C6A;
-        private const uint NvId_GSync_SetControlParameters = 0x8BBFF88B;
-        private const uint NvId_GSync_AdjustSyncDelay = 0x2D11FF51;
-        private const uint NvId_GSync_GetSyncStatus = 0xF1F5B434;
-        private const uint NvId_GSync_GetStatusParameters = 0x70D404EC;
-        private const uint NvId_D3D_GetCurrentSLIState = 0x4B708B54;
-        private const uint NvId_D3D9_RegisterResource = 0xA064BDFC;
-        private const uint NvId_D3D9_UnregisterResource = 0xBB2B17AA;
-        private const uint NvId_D3D9_AliasSurfaceAsTexture = 0xE5CEAE41;
-        private const uint NvId_D3D9_StretchRectEx = 0x22DE03AA;
-        private const uint NvId_D3D9_ClearRT = 0x332D3942;
-        private const uint NvId_D3D_GetObjectHandleForResource = 0xFCEAC864;
-        private const uint NvId_D3D_SetResourceHint = 0x6C0ED98C;
-        private const uint NvId_D3D_BeginResourceRendering = 0x91123D6A;
-        private const uint NvId_D3D_EndResourceRendering = 0x37E7191C;
-        private const uint NvId_D3D9_GetSurfaceHandle = 0xF2DD3F2;
-        private const uint NvId_D3D9_VideoSetStereoInfo = 0xB852F4DB;
-        private const uint NvId_D3D10_SetDepthBoundsTest = 0x4EADF5D2;
-        private const uint NvId_D3D11_CreateDevice = 0x6A16D3A0;
-        private const uint NvId_D3D11_CreateDeviceAndSwapChain = 0xBB939EE5;
-        private const uint NvId_D3D11_SetDepthBoundsTest = 0x7AAF7A04;
-        private const uint NvId_D3D11_IsNvShaderExtnOpCodeSupported = 0x5F68DA40;
-        private const uint NvId_D3D11_SetNvShaderExtnSlot = 0x8E90BB9F;
-        private const uint NvId_D3D12_SetNvShaderExtnSlotSpace = 0xAC2DFEB5;
-        private const uint NvId_D3D12_SetNvShaderExtnSlotSpaceLocalThread = 0x43D867C0;
-        private const uint NvId_D3D11_SetNvShaderExtnSlotLocalThread = 0xE6482A0;
-        private const uint NvId_D3D11_BeginUAVOverlapEx = 0xBA08208A;
-        private const uint NvId_D3D11_BeginUAVOverlap = 0x65B93CA8;
-        private const uint NvId_D3D11_EndUAVOverlap = 0x2216A357;
-        private const uint NvId_D3D11_GetResourceHandle = 0x9D52986;
-        private const uint NvId_D3D_SetFPSIndicatorState = 0xA776E8DB;
-        private const uint NvId_D3D9_Present = 0x5650BEB;
-        private const uint NvId_D3D9_QueryFrameCount = 0x9083E53A;
-        private const uint NvId_D3D9_ResetFrameCount = 0xFA6A0675;
-        private const uint NvId_D3D9_QueryMaxSwapGroup = 0x5995410D;
-        private const uint NvId_D3D9_QuerySwapGroup = 0xEBA4D232;
-        private const uint NvId_D3D9_JoinSwapGroup = 0x7D44BB54;
-        private const uint NvId_D3D9_BindSwapBarrier = 0x9C39C246;
-        private const uint NvId_D3D1x_Present = 0x3B845A1;
-        private const uint NvId_D3D1x_QueryFrameCount = 0x9152E055;
-        private const uint NvId_D3D1x_ResetFrameCount = 0xFBBB031A;
-        private const uint NvId_D3D1x_QueryMaxSwapGroup = 0x9BB9D68F;
-        private const uint NvId_D3D1x_QuerySwapGroup = 0x407F67AA;
-        private const uint NvId_D3D1x_JoinSwapGroup = 0x14610CD7;
-        private const uint NvId_D3D1x_BindSwapBarrier = 0x9DE8C729;
-        private const uint NvId_D3D12_QueryPresentBarrierSupport = 0xA15FAEF7;
-        private const uint NvId_D3D12_CreatePresentBarrierClient = 0x4D815DE9;
-        private const uint NvId_D3D12_RegisterPresentBarrierResources = 0xD53C9EF0;
-        private const uint NvId_DestroyPresentBarrierClient = 0x3C5C351B;
-        private const uint NvId_JoinPresentBarrier = 0x17F6BF82;
-        private const uint NvId_LeavePresentBarrier = 0xC3EC5A7F;
-        private const uint NvId_QueryPresentBarrierFrameStatistics = 0x61B844A1;
-        private const uint NvId_D3D12_CreateDDisplayPresentBarrierClient = 0xB5A21987;
-        private const uint NvId_D3D11_CreateRasterizerState = 0xDB8D28AF;
-        private const uint NvId_D3D_ConfigureAnsel = 0x341C6C7F;
-        private const uint NvId_D3D11_CreateTiledTexture2DArray = 0x7886981A;
-        private const uint NvId_D3D11_CheckFeatureSupport = 0x106A487E;
-        private const uint NvId_D3D11_CreateImplicitMSAATexture2D = 0xB8F79632;
-        private const uint NvId_D3D12_CreateCommittedImplicitMSAATexture2D = 0x24C6A07B;
-        private const uint NvId_D3D11_ResolveSubresourceRegion = 0xE6BFEDD6;
-        private const uint NvId_D3D12_ResolveSubresourceRegion = 0xC24A15BF;
-        private const uint NvId_D3D11_TiledTexture2DArrayGetDesc = 0xF1A2B9D5;
-        private const uint NvId_D3D11_UpdateTileMappings = 0x9A06EA07;
-        private const uint NvId_D3D11_CopyTileMappings = 0xC09EE6BC;
-        private const uint NvId_D3D11_TiledResourceBarrier = 0xD6839099;
-        private const uint NvId_D3D11_AliasMSAATexture2DAsNonMSAA = 0xF1C54FC9;
-        private const uint NvId_D3D11_CreateGeometryShaderEx_2 = 0x99ED5C1C;
-        private const uint NvId_D3D11_CreateVertexShaderEx = 0xBEAA0B2;
-        private const uint NvId_D3D11_CreateHullShaderEx = 0xB53CAB00;
-        private const uint NvId_D3D11_CreateDomainShaderEx = 0xA0D7180D;
-        private const uint NvId_D3D11_CreatePixelShaderEx_2 = 0x4162822B;
-        private const uint NvId_D3D11_CreateFastGeometryShaderExplicit = 0x71AB7C9C;
-        private const uint NvId_D3D11_CreateFastGeometryShader = 0x525D43BE;
-        private const uint NvId_D3D11_DecompressView = 0x3A94E822;
-        private const uint NvId_D3D12_CreateGraphicsPipelineState = 0x2FC28856;
-        private const uint NvId_D3D12_CreateComputePipelineState = 0x2762DEAC;
-        private const uint NvId_D3D12_SetDepthBoundsTestValues = 0xB9333FE9;
-        private const uint NvId_D3D12_CreateReservedResource = 0x2C85F101;
-        private const uint NvId_D3D12_CreateHeap = 0x5CB397CF;
-        private const uint NvId_D3D12_CreateHeap2 = 0x924BE9D6;
-        private const uint NvId_D3D12_QueryCpuVisibleVidmem = 0x26322BC3;
-        private const uint NvId_D3D12_ReservedResourceGetDesc = 0x9AA2AABB;
-        private const uint NvId_D3D12_UpdateTileMappings = 0xC6017A7D;
-        private const uint NvId_D3D12_CopyTileMappings = 0x47F78194;
-        private const uint NvId_D3D12_ResourceAliasingBarrier = 0xB942BAB7;
-        private const uint NvId_D3D12_CaptureUAVInfo = 0x6E5EA9DB;
-        private const uint NvId_D3D11_GetResourceGPUVirtualAddressEx = 0xAF6D14DA;
-        private const uint NvId_D3D11_EnumerateMetaCommands = 0xC7453BA8;
-        private const uint NvId_D3D11_CreateMetaCommand = 0xF505FBA0;
-        private const uint NvId_D3D11_InitializeMetaCommand = 0xAEC629E9;
-        private const uint NvId_D3D11_ExecuteMetaCommand = 0x82236C47;
-        private const uint NvId_D3D12_EnumerateMetaCommands = 0xCD9141D8;
-        private const uint NvId_D3D12_CreateMetaCommand = 0xEB29634B;
-        private const uint NvId_D3D12_InitializeMetaCommand = 0xA4125399;
-        private const uint NvId_D3D12_ExecuteMetaCommand = 0xDE24FC3D;
-        private const uint NvId_D3D12_CreateCommittedResource = 0x27E98AE;
-        private const uint NvId_D3D12_GetCopyableFootprints = 0xF6305EB5;
-        private const uint NvId_D3D12_CopyTextureRegion = 0x82B91B25;
-        private const uint NvId_D3D12_IsNvShaderExtnOpCodeSupported = 0x3DFACEC8;
-        private const uint NvId_D3D12_GetOptimalThreadCountForMesh = 0xB43995CB;
-        private const uint NvId_D3D_IsGSyncCapable = 0x9C1EED78;
-        private const uint NvId_D3D_IsGSyncActive = 0xE942B0FF;
-        private const uint NvId_D3D1x_DisableShaderDiskCache = 0xD0CBCA7D;
-        private const uint NvId_D3D11_MultiGPU_GetCaps = 0xD2D25687;
-        private const uint NvId_D3D11_MultiGPU_Init = 0x17BE49E;
-        private const uint NvId_D3D11_CreateMultiGPUDevice = 0xBDB20007;
-        private const uint NvId_D3D_QuerySinglePassStereoSupport = 0x6F5F0A6D;
-        private const uint NvId_D3D_SetSinglePassStereoMode = 0xA39E6E6E;
-        private const uint NvId_D3D12_QuerySinglePassStereoSupport = 0x3B03791B;
-        private const uint NvId_D3D12_SetSinglePassStereoMode = 0x83556D87;
-        private const uint NvId_D3D_QueryMultiViewSupport = 0xB6E0A41C;
-        private const uint NvId_D3D_SetMultiViewMode = 0x8285C8DA;
-        private const uint NvId_D3D_QueryModifiedWSupport = 0xCBF9F4F5;
-        private const uint NvId_D3D_SetModifiedWMode = 0x6EA4BF4;
-        private const uint NvId_D3D12_QueryModifiedWSupport = 0x51235248;
-        private const uint NvId_D3D12_SetModifiedWMode = 0xE1FDABA7;
-        private const uint NvId_D3D_CreateLateLatchObject = 0x2DB27D09;
-        private const uint NvId_D3D_QueryLateLatchSupport = 0x8CECA0EC;
-        private const uint NvId_D3D_RegisterDevice = 0x8C02C4D0;
-        private const uint NvId_D3D11_MultiDrawInstancedIndirect = 0xD4E26BBF;
-        private const uint NvId_D3D11_MultiDrawIndexedInstancedIndirect = 0x59E890F9;
-        private const uint NvId_D3D_ImplicitSLIControl = 0x2AEDE111;
-        private const uint NvId_D3D12_UseDriverHeapPriorities = 0xF0D978A8;
-        private const uint NvId_D3D12_Mosaic_GetCompanionAllocations = 0xA46022C7;
-        private const uint NvId_D3D12_Mosaic_GetViewportAndGpuPartitions = 0xB092B818;
-        private const uint NvId_D3D1x_GetGraphicsCapabilities = 0x52B1499A;
-        private const uint NvId_D3D12_GetGraphicsCapabilities = 0x1E87354;
-        private const uint NvId_D3D11_RSSetExclusiveScissorRects = 0xAE4D73EF;
-        private const uint NvId_D3D11_RSSetViewportsPixelShadingRates = 0x34F7938F;
-        private const uint NvId_D3D11_CreateShadingRateResourceView = 0x99CA2DFF;
-        private const uint NvId_D3D11_RSSetShadingRateResourceView = 0x1B0C2F83;
-        private const uint NvId_D3D11_RSGetPixelShadingRateSampleOrder = 0x92442A1;
-        private const uint NvId_D3D11_RSSetPixelShadingRateSampleOrder = 0xA942373A;
-        private const uint NvId_D3D_InitializeVRSHelper = 0x4780D70B;
-        private const uint NvId_D3D_InitializeNvGazeHandler = 0x5B3B7479;
-        private const uint NvId_D3D_InitializeSMPAssist = 0x42763D0C;
-        private const uint NvId_D3D_QuerySMPAssistSupport = 0xC57921DE;
-        private const uint NvId_D3D_GetSleepStatus = 0xAEF96CA1;
-        private const uint NvId_D3D_SetSleepMode = 0xAC1CA9E0;
-        private const uint NvId_D3D_Sleep = 0x852CD1D2;
-        private const uint NvId_D3D_GetLatency = 0x1A587F9C;
-        private const uint NvId_D3D_SetLatencyMarker = 0xD9984C05;
-        private const uint NvId_D3D12_CreateCubinComputeShader = 0x2A2C79E8;
-        private const uint NvId_D3D12_CreateCubinComputeShaderEx = 0x3151211B;
-        private const uint NvId_D3D12_CreateCubinComputeShaderWithName = 0x1DC7261F;
-        private const uint NvId_D3D12_LaunchCubinShader = 0x5C52BB86;
-        private const uint NvId_D3D12_DestroyCubinComputeShader = 0x7FB785BA;
-        private const uint NvId_D3D12_GetCudaTextureObject = 0x80403FC9;
-        private const uint NvId_D3D12_GetCudaSurfaceObject = 0x48F5B2EE;
-        private const uint NvId_D3D12_IsFatbinPTXSupported = 0x70C07832;
-        private const uint NvId_D3D11_CreateCubinComputeShader = 0xED98181;
-        private const uint NvId_D3D11_CreateCubinComputeShaderEx = 0x32C2A0F6;
-        private const uint NvId_D3D11_CreateCubinComputeShaderWithName = 0xB672BE19;
-        private const uint NvId_D3D11_LaunchCubinShader = 0x427E236D;
-        private const uint NvId_D3D11_DestroyCubinComputeShader = 0x1682C86;
-        private const uint NvId_D3D11_IsFatbinPTXSupported = 0x6086BD93;
-        private const uint NvId_D3D11_CreateUnorderedAccessView = 0x74A497A1;
-        private const uint NvId_D3D11_CreateShaderResourceView = 0x65CB431E;
-        private const uint NvId_D3D11_CreateSamplerState = 0x89ECA416;
-        private const uint NvId_D3D11_GetCudaTextureObject = 0x9006FA68;
-        private const uint NvId_D3D11_GetResourceGPUVirtualAddress = 0x1819B423;
-        private const uint NvId_VIO_GetCapabilities = 0x1DC91303;
-        private const uint NvId_VIO_Open = 0x44EE4841;
-        private const uint NvId_VIO_Close = 0xD01BD237;
-        private const uint NvId_VIO_Status = 0xE6CE4F1;
-        private const uint NvId_VIO_SyncFormatDetect = 0x118D48A3;
-        private const uint NvId_VIO_GetConfig = 0xD34A789B;
-        private const uint NvId_VIO_SetConfig = 0xE4EEC07;
-        private const uint NvId_VIO_SetCSC = 0xA1EC8D74;
-        private const uint NvId_VIO_GetCSC = 0x7B0D72A3;
-        private const uint NvId_VIO_SetGamma = 0x964BF452;
-        private const uint NvId_VIO_GetGamma = 0x51D53D06;
-        private const uint NvId_VIO_SetSyncDelay = 0x2697A8D1;
-        private const uint NvId_VIO_GetSyncDelay = 0x462214A9;
-        private const uint NvId_VIO_GetPCIInfo = 0xB981D935;
-        private const uint NvId_VIO_IsRunning = 0x96BD040E;
-        private const uint NvId_VIO_Start = 0xCDE8E1A3;
-        private const uint NvId_VIO_Stop = 0x6BA2A5D6;
-        private const uint NvId_VIO_IsFrameLockModeCompatible = 0x7BF0A94D;
-        private const uint NvId_VIO_EnumDevices = 0xFD7C5557;
-        private const uint NvId_VIO_QueryTopology = 0x869534E2;
-        private const uint NvId_VIO_EnumSignalFormats = 0xEAD72FE4;
-        private const uint NvId_VIO_EnumDataFormats = 0x221FA8E8;
-        private const uint NvId_Stereo_CreateConfigurationProfileRegistryKey = 0xBE7692EC;
-        private const uint NvId_Stereo_DeleteConfigurationProfileRegistryKey = 0xF117B834;
-        private const uint NvId_Stereo_SetConfigurationProfileValue = 0x24409F48;
-        private const uint NvId_Stereo_DeleteConfigurationProfileValue = 0x49BCEECF;
-        private const uint NvId_Stereo_Enable = 0x239C4545;
-        private const uint NvId_Stereo_Disable = 0x2EC50C2B;
-        private const uint NvId_Stereo_IsEnabled = 0x348FF8E1;
-        private const uint NvId_Stereo_GetStereoSupport = 0x296C434D;
-        private const uint NvId_Stereo_CreateHandleFromIUnknown = 0xAC7E37F4;
-        private const uint NvId_Stereo_DestroyHandle = 0x3A153134;
-        private const uint NvId_Stereo_Activate = 0xF6A1AD68;
-        private const uint NvId_Stereo_Deactivate = 0x2D68DE96;
-        private const uint NvId_Stereo_IsActivated = 0x1FB0BC30;
-        private const uint NvId_Stereo_GetSeparation = 0x451F2134;
-        private const uint NvId_Stereo_SetSeparation = 0x5C069FA3;
-        private const uint NvId_Stereo_DecreaseSeparation = 0xDA044458;
-        private const uint NvId_Stereo_IncreaseSeparation = 0xC9A8ECEC;
-        private const uint NvId_Stereo_GetConvergence = 0x4AB00934;
-        private const uint NvId_Stereo_SetConvergence = 0x3DD6B54B;
-        private const uint NvId_Stereo_DecreaseConvergence = 0x4C87E317;
-        private const uint NvId_Stereo_IncreaseConvergence = 0xA17DAABE;
-        private const uint NvId_Stereo_GetFrustumAdjustMode = 0xE6839B43;
-        private const uint NvId_Stereo_SetFrustumAdjustMode = 0x7BE27FA2;
-        private const uint NvId_Stereo_CaptureJpegImage = 0x932CB140;
-        private const uint NvId_Stereo_InitActivation = 0xC7177702;
-        private const uint NvId_Stereo_Trigger_Activation = 0xD6C6CD2;
-        private const uint NvId_Stereo_CapturePngImage = 0x8B7E99B5;
-        private const uint NvId_Stereo_ReverseStereoBlitControl = 0x3CD58F89;
-        private const uint NvId_Stereo_SetNotificationMessage = 0x6B9B409E;
-        private const uint NvId_Stereo_SetActiveEye = 0x96EEA9F8;
-        private const uint NvId_Stereo_SetDriverMode = 0x5E8F0BEC;
-        private const uint NvId_Stereo_GetEyeSeparation = 0xCE653127;
-        private const uint NvId_Stereo_IsWindowedModeSupported = 0x40C8ED5E;
-        private const uint NvId_Stereo_SetSurfaceCreationMode = 0xF5DCFCBA;
-        private const uint NvId_Stereo_GetSurfaceCreationMode = 0x36F1C736;
-        private const uint NvId_Stereo_Debug_WasLastDrawStereoized = 0xED4416C5;
-        private const uint NvId_Stereo_SetDefaultProfile = 0x44F0ECD1;
-        private const uint NvId_Stereo_GetDefaultProfile = 0x624E21C2;
-        private const uint NvId_D3D1x_CreateSwapChain = 0x1BC21B66;
-        private const uint NvId_D3D9_CreateSwapChain = 0x1A131E09;
-        private const uint NvId_DRS_CreateSession = 0x694D52E;
-        private const uint NvId_DRS_DestroySession = 0xDAD9CFF8;
-        private const uint NvId_DRS_LoadSettings = 0x375DBD6B;
-        private const uint NvId_DRS_SaveSettings = 0xFCBC7E14;
-        private const uint NvId_DRS_LoadSettingsFromFile = 0xD3EDE889;
-        private const uint NvId_DRS_SaveSettingsToFile = 0x2BE25DF8;
-        private const uint NvId_DRS_CreateProfile = 0xCC176068;
-        private const uint NvId_DRS_DeleteProfile = 0x17093206;
-        private const uint NvId_DRS_SetCurrentGlobalProfile = 0x1C89C5DF;
-        private const uint NvId_DRS_GetCurrentGlobalProfile = 0x617BFF9F;
-        private const uint NvId_DRS_GetProfileInfo = 0x61CD6FD6;
-        private const uint NvId_DRS_SetProfileInfo = 0x16ABD3A9;
-        private const uint NvId_DRS_FindProfileByName = 0x7E4A9A0B;
-        private const uint NvId_DRS_EnumProfiles = 0xBC371EE0;
-        private const uint NvId_DRS_GetNumProfiles = 0x1DAE4FBC;
-        private const uint NvId_DRS_CreateApplication = 0x4347A9DE;
-        private const uint NvId_DRS_DeleteApplicationEx = 0xC5EA85A1;
-        private const uint NvId_DRS_DeleteApplication = 0x2C694BC6;
-        private const uint NvId_DRS_GetApplicationInfo = 0xED1F8C69;
-        private const uint NvId_DRS_EnumApplications = 0x7FA2173A;
-        private const uint NvId_DRS_FindApplicationByName = 0xEEE566B2;
-        private const uint NvId_DRS_SetSetting = 0x577DD202;
-        private const uint NvId_DRS_GetSetting = 0x73BF8338;
-        private const uint NvId_DRS_EnumSettings = 0xAE3039DA;
-        private const uint NvId_DRS_EnumAvailableSettingIds = 0xF020614A;
-        private const uint NvId_DRS_EnumAvailableSettingValues = 0x2EC39F90;
-        private const uint NvId_DRS_GetSettingIdFromName = 0xCB7309CD;
-        private const uint NvId_DRS_GetSettingNameFromId = 0xD61CBE6E;
-        private const uint NvId_DRS_DeleteProfileSetting = 0xE4A26362;
-        private const uint NvId_DRS_RestoreAllDefaults = 0x5927B094;
-        private const uint NvId_DRS_RestoreProfileDefault = 0xFA5F6134;
-        private const uint NvId_DRS_RestoreProfileDefaultSetting = 0x53F0381E;
-        private const uint NvId_DRS_GetBaseProfile = 0xDA8466A0;
-        private const uint NvId_SYS_GetChipSetInfo = 0x53DABBCA;
-        private const uint NvId_SYS_GetLidAndDockInfo = 0xCDA14D8A;
-        private const uint NvId_SYS_GetDisplayIdFromGpuAndOutputId = 0x8F2BAB4;
-        private const uint NvId_SYS_GetGpuAndOutputIdFromDisplayId = 0x112BA1A5;
-        private const uint NvId_SYS_GetPhysicalGpuFromDisplayId = 0x9EA74659;
-        private const uint NvId_SYS_GetDisplayDriverInfo = 0x721FACEB;
-        private const uint NvId_GPU_ClientRegisterForUtilizationSampleUpdates = 0xADEEAF67;
-        private const uint NvId_Unload = 0xD7C61344;
-
-        #endregion
-
-        #region Private Internal NvAPI Functions
-
-        private const UInt32 NvId_3D_GetProperty = 0x8061A4B1;
-        private const UInt32 NvId_3D_GetPropertyRange = 0x0B85DE27C;
-        private const UInt32 NvId_3D_SetProperty = 0x0C9175E8D;
-        private const UInt32 NvId_AccessDisplayDriverRegistry = 0xF5579360;
-        private const UInt32 NvId_Coproc_GetApplicationCoprocInfo = 0x79232685;
-        private const UInt32 NvId_Coproc_GetCoprocInfoFlagsEx = 0x69A9874D;
-        private const UInt32 NvId_Coproc_GetCoprocStatus = 0x1EFC3957;
-        private const UInt32 NvId_Coproc_NotifyCoprocPowerState = 0x0CADCB956;
-        private const UInt32 NvId_Coproc_SetCoprocInfoFlagsEx = 0x0F4C863AC;
-        private const UInt32 NvId_CreateUnAttachedDisplayFromDisplay = 0xA0C72EE4;
-        private const UInt32 NvId_D3D_CreateQuery = 0x5D19BCA4;
-        private const UInt32 NvId_D3D_DestroyQuery = 0x0C8FF7258;
-        private const UInt32 NvId_D3D_Query_Begin = 0x0E5A9AAE0;
-        private const UInt32 NvId_D3D_Query_End = 0x2AC084FA;
-        private const UInt32 NvId_D3D_Query_GetData = 0x0F8B53C69;
-        private const UInt32 NvId_D3D_Query_GetDataSize = 0x0F2A54796;
-        private const UInt32 NvId_D3D_Query_GetType = 0x4ACEEAF7;
-        private const UInt32 NvId_D3D_RegisterApp = 0x0D44D3C4E;
-        private const UInt32 NvId_D3D10_AliasPrimaryAsTexture = 0x8AAC133D;
-        private const UInt32 NvId_D3D10_BeginShareResource = 0x35233210;
-        private const UInt32 NvId_D3D10_BeginShareResourceEx = 0x0EF303A9D;
-        private const UInt32 NvId_D3D10_CreateDevice = 0x2DE11D61;
-        private const UInt32 NvId_D3D10_CreateDeviceAndSwapChain = 0x5B803DAF;
-        private const UInt32 NvId_D3D10_EndShareResource = 0x0E9C5853;
-        private const UInt32 NvId_D3D10_GetRenderedCursorAsBitmap = 0x0CAC3CE5D;
-        private const UInt32 NvId_D3D10_ProcessCallbacks = 0x0AE9C2019;
-        private const UInt32 NvId_D3D10_SetPrimaryFlipChainCallbacks = 0x73EB9329;
-        private const UInt32 NvId_D3D11_BeginShareResource = 0x121BDC6;
-        private const UInt32 NvId_D3D11_EndShareResource = 0x8FFB8E26;
-        private const UInt32 NvId_D3D1x_IFR_SetUpTargetBufferToSys = 0x473F7828;
-        private const UInt32 NvId_D3D1x_IFR_TransferRenderTarget = 0x9FBAE4EB;
-        private const UInt32 NvId_D3D9_AliasPrimaryAsTexture = 0x13C7112E;
-        private const UInt32 NvId_D3D9_AliasPrimaryFromDevice = 0x7C20C5BE;
-        private const UInt32 NvId_D3D9_CreatePathContextNV = 0x0A342F682;
-        private const UInt32 NvId_D3D9_CreatePathNV = 0x71329DF3;
-        private const UInt32 NvId_D3D9_CreateRenderTarget = 0x0B3827C8;
-        private const UInt32 NvId_D3D9_CreateTexture = 0x0D5E13573;
-        private const UInt32 NvId_D3D9_CreateVideo = 0x89FFD9A3;
-        private const UInt32 NvId_D3D9_CreateVideoBegin = 0x84C9D553;
-        private const UInt32 NvId_D3D9_CreateVideoEnd = 0x0B476BF61;
-        private const UInt32 NvId_D3D9_DeletePathNV = 0x73E0019A;
-        private const UInt32 NvId_D3D9_DestroyPathContextNV = 0x667C2929;
-        private const UInt32 NvId_D3D9_DMA = 0x962B8AF6;
-        private const UInt32 NvId_D3D9_DrawPathNV = 0x13199B3D;
-        private const UInt32 NvId_D3D9_EnableStereo = 0x492A6954;
-        private const UInt32 NvId_D3D9_EnumVideoFeatures = 0x1DB7C52C;
-        private const UInt32 NvId_D3D9_FreeVideo = 0x3111BED1;
-        private const UInt32 NvId_D3D9_GetCurrentRenderTargetHandle = 0x22CAD61;
-        private const UInt32 NvId_D3D9_GetCurrentZBufferHandle = 0x0B380F218;
-        private const UInt32 NvId_D3D9_GetIndexBufferHandle = 0x0FC5A155B;
-        private const UInt32 NvId_D3D9_GetOverlaySurfaceHandles = 0x6800F5FC;
-        private const UInt32 NvId_D3D9_GetSLIInfo = 0x694BFF4D;
-        private const UInt32 NvId_D3D9_GetTextureHandle = 0x0C7985ED5;
-        private const UInt32 NvId_D3D9_GetVertexBufferHandle = 0x72B19155;
-        private const UInt32 NvId_D3D9_GetVideoCapabilities = 0x3D596B93;
-        private const UInt32 NvId_D3D9_GetVideoState = 0x0A4527BF8;
-        private const UInt32 NvId_D3D9_GPUBasedCPUSleep = 0x0D504DDA7;
-        private const UInt32 NvId_D3D9_GpuSyncAcquire = 0x0D00B8317;
-        private const UInt32 NvId_D3D9_GpuSyncEnd = 0x754033F0;
-        private const UInt32 NvId_D3D9_GpuSyncGetHandleSize = 0x80C9FD3B;
-        private const UInt32 NvId_D3D9_GpuSyncInit = 0x6D6FDAD4;
-        private const UInt32 NvId_D3D9_GpuSyncMapIndexBuffer = 0x12EE68F2;
-        private const UInt32 NvId_D3D9_GpuSyncMapSurfaceBuffer = 0x2AB714AB;
-        private const UInt32 NvId_D3D9_GpuSyncMapTexBuffer = 0x0CDE4A28A;
-        private const UInt32 NvId_D3D9_GpuSyncMapVertexBuffer = 0x0DBC803EC;
-        private const UInt32 NvId_D3D9_GpuSyncRelease = 0x3D7A86BB;
-        private const UInt32 NvId_D3D9_IFR_SetUpTargetBufferToNV12BLVideoSurface = 0x0CFC92C15;
-        private const UInt32 NvId_D3D9_IFR_SetUpTargetBufferToSys = 0x55255D05;
-        private const UInt32 NvId_D3D9_IFR_TransferRenderTarget = 0x0AB7C2DC;
-        private const UInt32 NvId_D3D9_IFR_TransferRenderTargetToNV12BLVideoSurface = 0x5FE72F64;
-        private const UInt32 NvId_D3D9_Lock = 0x6317345C;
-        private const UInt32 NvId_D3D9_NVFBC_GetStatus = 0x0bd3eb475;
-        private const UInt32 NvId_D3D9_PathClearDepthNV = 0x157E45C4;
-        private const UInt32 NvId_D3D9_PathDepthNV = 0x0FCB16330;
-        private const UInt32 NvId_D3D9_PathEnableColorWriteNV = 0x3E2804A2;
-        private const UInt32 NvId_D3D9_PathEnableDepthTestNV = 0x0E99BA7F3;
-        private const UInt32 NvId_D3D9_PathMatrixNV = 0x0D2F6C499;
-        private const UInt32 NvId_D3D9_PathParameterfNV = 0x0F7FF00C1;
-        private const UInt32 NvId_D3D9_PathParameteriNV = 0x0FC31236C;
-        private const UInt32 NvId_D3D9_PathVerticesNV = 0x0C23DF926;
-        private const UInt32 NvId_D3D9_PresentSurfaceToDesktop = 0x0F7029C5;
-        private const UInt32 NvId_D3D9_PresentVideo = 0x5CF7F862;
-        private const UInt32 NvId_D3D9_QueryAAOverrideMode = 0x0DDF5643C;
-        private const UInt32 NvId_D3D9_QueryVideoInfo = 0x1E6634B3;
-        private const UInt32 NvId_D3D9_SetGamutData = 0x2BBDA32E;
-        private const UInt32 NvId_D3D9_SetPitchSurfaceCreation = 0x18CDF365;
-        private const UInt32 NvId_D3D9_SetResourceHInt32 = 0x905F5C27;
-        private const UInt32 NvId_D3D9_SetSLIMode = 0x0BFDC062C;
-        private const UInt32 NvId_D3D9_SetSurfaceCreationLayout = 0x5609B86A;
-        private const UInt32 NvId_D3D9_SetVideoState = 0x0BD4BC56F;
-        private const UInt32 NvId_D3D9_StretchRect = 0x0AEAECD41;
-        private const UInt32 NvId_D3D9_Unlock = 0x0C182027E;
-        private const UInt32 NvId_D3D9_VideoSurfaceEncryptionControl = 0x9D2509EF;
-        private const UInt32 NvId_DeleteCustomDisplay = 0x0E7CB998D;
-        private const UInt32 NvId_DeleteUnderscanConfig = 0x0F98854C8;
-        private const UInt32 NvId_Disp_DpAuxChannelControl = 0x8EB56969;
-        private const UInt32 NvId_DISP_EnumHDMIStereoModes = 0x0D2CCF5D6;
-        private const UInt32 NvId_DISP_GetDisplayBlankingState = 0x63E5D8DB;
-        private const UInt32 NvId_DISP_GetHCloneTopology = 0x47BAD137;
-        private const UInt32 NvId_DISP_GetVirtualModeData = 0x3230D69A;
-        private const UInt32 NvId_DISP_OverrideDisplayModeList = 0x291BFF2;
-        private const UInt32 NvId_DISP_SetDisplayBlankingState = 0x1E17E29B;
-        private const UInt32 NvId_DISP_SetHCloneTopology = 0x61041C24;
-        private const UInt32 NvId_DISP_ValidateHCloneTopology = 0x5F4C2664;
-        private const UInt32 NvId_EnumCustomDisplay = 0x42892957;
-        private const UInt32 NvId_EnumUnderscanConfig = 0x4144111A;
-        private const UInt32 NvId_GetDisplayDriverBuildTitle = 0x7562E947;
-        private const UInt32 NvId_GetDisplayDriverCompileType = 0x988AEA78;
-        private const UInt32 NvId_GetDisplayDriverMemoryInfo = 0x774AA982;
-        private const UInt32 NvId_GetDisplayDriverRegistryPath = 0x0E24CEEE;
-        private const UInt32 NvId_GetDisplayDriverSecurityLevel = 0x9D772BBA;
-        private const UInt32 NvId_GetDisplayFeatureConfig = 0x8E985CCD;
-        private const UInt32 NvId_GetDisplayFeatureConfigDefaults = 0x0F5F4D01;
-        private const UInt32 NvId_GetDisplayPosition = 0x6BB1EE5D;
-        private const UInt32 NvId_GetDisplaySettings = 0x0DC27D5D4;
-        private const UInt32 NvId_GetDriverMemoryInfo = 0x2DC95125;
-        private const UInt32 NvId_GetDriverModel = 0x25EEB2C4;
-        private const UInt32 NvId_GetDVCInfo = 0x4085DE45;
-        private const UInt32 NvId_GetDVCInfoEx = 0x0E45002D;
-        private const UInt32 NvId_GetHDCPLinkParameters = 0x0B3BB0772;
-        private const UInt32 NvId_GetHUEInfo = 0x95B64341;
-        private const UInt32 NvId_GetHybridMode = 0x0E23B68C1;
-        private const UInt32 NvId_GetImageSharpeningInfo = 0x9FB063DF;
-        private const UInt32 NvId_GetInfoFrame = 0x9734F1D;
-        private const UInt32 NvId_GetInfoFrameState = 0x41511594;
-        private const UInt32 NvId_GetInfoFrameStatePvt = 0x7FC17574;
-        private const UInt32 NvId_GetInvalidGpuTopologies = 0x15658BE6;
-        private const UInt32 NvId_GetLoadedMicrocodePrograms = 0x919B3136;
-        private const UInt32 NvId_GetPhysicalGPUFromDisplay = 0x1890E8DA;
-        private const UInt32 NvId_GetPVExtName = 0x2F5B08E0;
-        private const UInt32 NvId_GetPVExtProfile = 0x1B1B9A16;
-        private const UInt32 NvId_GetScalingCaps = 0x8E875CF9;
-        private const UInt32 NvId_GetTiming = 0x0AFC4833E;
-        private const UInt32 NvId_GetTopologyDisplayGPU = 0x813D89A8;
-        private const UInt32 NvId_GetTVEncoderControls = 0x5757474A;
-        private const UInt32 NvId_GetTVOutputBorderColor = 0x6DFD1C8C;
-        private const UInt32 NvId_GetTVOutputInfo = 0x30C805D5;
-        private const UInt32 NvId_GetUnAttachedDisplayDriverRegistryPath = 0x633252D8;
-        private const UInt32 NvId_GetValidGpuTopologies = 0x5DFAB48A;
-        private const UInt32 NvId_GetVideoState = 0x1C5659CD;
-        private const UInt32 NvId_GPS_GetPerfSensors = 0x271C1109;
-        private const UInt32 NvId_GPS_GetPowerSteeringStatus = 0x540EE82E;
-        private const UInt32 NvId_GPS_GetThermalLimit = 0x583113ED;
-        private const UInt32 NvId_GPS_GetVPStateCap = 0x71913023;
-        private const UInt32 NvId_GPS_SetPowerSteeringStatus = 0x9723D3A2;
-        private const UInt32 NvId_GPS_SetThermalLimit = 0x0C07E210F;
-        private const UInt32 NvId_GPS_SetVPStateCap = 0x68888EB4;
-        private const UInt32 NvId_GPU_ClearPCIELinkAERInfo = 0x521566BB;
-        private const UInt32 NvId_GPU_ClearPCIELinkErrorInfo = 0x8456FF3D;
-        private const UInt32 NvId_GPU_ClientPowerPoliciesGetInfo = 0x34206D86;
-        private const UInt32 NvId_GPU_ClientPowerPoliciesGetStatus = 0x70916171;
-        private const UInt32 NvId_GPU_ClientPowerPoliciesSetStatus = 0x0AD95F5ED;
-        private const UInt32 NvId_GPU_ClientPowerTopologyGetInfo = 0x0A4DFD3F2;
-        private const UInt32 NvId_GPU_ClientPowerTopologyGetStatus = 0x0EDCF624E;
-        private const UInt32 NvId_GPU_EnableDynamicPstates = 0x0FA579A0F;
-        private const UInt32 NvId_GPU_EnableOverclockedPstates = 0x0B23B70EE;
-        private const UInt32 NvId_GPU_Get_DisplayPort_DongleInfo = 0x76A70E8D;
-        private const UInt32 NvId_GPU_GetAllClocks = 0x1BD69F49;
-        private const UInt32 NvId_GPU_GetAllGpusOnSameBoard = 0x4DB019E6;
-        private const UInt32 NvId_GPU_GetBarInfo = 0xE4B701E3;
-        private const UInt32 NvId_GPU_GetClockBoostLock = 0xe440b867; // unknown name; NVAPI_ID_CURVE_GET
-        private const UInt32 NvId_GPU_GetClockBoostMask = 0x507b4b59;
-        private const UInt32 NvId_GPU_GetClockBoostRanges = 0x64b43a6a;
-        private const UInt32 NvId_GPU_GetClockBoostTable = 0x23f1b133;
-        private const UInt32 NvId_GPU_GetColorSpaceConversion = 0x8159E87A;
-        private const UInt32 NvId_GPU_GetConnectorInfo = 0x4ECA2C10;
-        private const UInt32 NvId_GPU_GetCoolerPolicyTable = 0x518A32C;
-        private const UInt32 NvId_GPU_GetCoolerSettings = 0x0DA141340;
-        private const UInt32 NvId_GPU_GetCoreVoltageBoostPercent = 0x9df23ca1;
-        private const UInt32 NvId_GPU_GetCurrentFanSpeedLevel = 0x0BD71F0C9;
-        private const UInt32 NvId_GPU_GetCurrentThermalLevel = 0x0D2488B79;
-        private const UInt32 NvId_GPU_GetCurrentVoltage = 0x465f9bcf;
-        private const UInt32 NvId_GPU_GetDeepIdleState = 0x1AAD16B4;
-        private const UInt32 NvId_GPU_GetDeviceDisplayMode = 0x0D2277E3A;
-        private const UInt32 NvId_GPU_GetDisplayUnderflowStatus = 0xED9E8057;
-        private const UInt32 NvId_GPU_GetDitherControl = 0x932AC8FB;
-        private const UInt32 NvId_GPU_GetExtendedMinorRevision = 0x25F17421;
-        private const UInt32 NvId_GPU_GetFBWidthAndLocation = 0x11104158;
-        private const UInt32 NvId_GPU_GetFlatPanelInfo = 0x36CFF969;
-        private const UInt32 NvId_GPU_GetFoundry = 0x5D857A00;
-        private const UInt32 NvId_GPU_GetFrameBufferCalibrationLockFailures = 0x524B9773;
-        private const UInt32 NvId_GPU_GetHardwareQualType = 0xF91E777B;
-        private const UInt32 NvId_GPU_GetHybridControllerInfo = 0xD26B8A58;
-        private const UInt32 NvId_GPU_GetLogicalFBWidthAndLocation = 0x8efc0978;
-        private const UInt32 NvId_GPU_GetManufacturingInfo = 0xA4218928;
-        private const UInt32 NvId_GPU_GetMemPartitionMask = 0x329D77CD;
-        private const UInt32 NvId_GPU_GetMXMBlock = 0xB7AB19B9;
-        private const UInt32 NvId_GPU_GetPartitionCount = 0x86F05D7A;
-        private const UInt32 NvId_GPU_GetPCIEInfo = 0xE3795199;
-        private const UInt32 NvId_GPU_GetPerfClocks = 0x1EA54A3B;
-        private const UInt32 NvId_GPU_GetPerfHybridMode = 0x5D7CCAEB;
-        private const UInt32 NvId_GPU_GetPerGpuTopologyStatus = 0x0A81F8992;
-        private const UInt32 NvId_GPU_GetPixelClockRange = 0x66AF10B7;
-        private const UInt32 NvId_GPU_GetPowerMizerInfo = 0x76BFA16B;
-        private const UInt32 NvId_GPU_GetPSFloorSweepStatus = 0xDEE047AB;
-        private const UInt32 NvId_GPU_GetPstateClientLimits = 0x88C82104;
-        private const UInt32 NvId_GPU_GetPstatesInfo = 0x0BA94C56E;
-        private const UInt32 NvId_GPU_GetRamBankCount = 0x17073A3C;
-        private const UInt32 NvId_GPU_GetRamBusWidth = 0x7975C581;
-        private const UInt32 NvId_GPU_GetRamConfigStrap = 0x51CCDB2A;
-        private const UInt32 NvId_GPU_GetRamMaker = 0x42aea16a;
-        private const UInt32 NvId_GPU_GetRamType = 0x57F7CAAC;
-        private const UInt32 NvId_GPU_GetRawFuseData = 0xE0B1DCE9;
-        private const UInt32 NvId_GPU_GetROPCount = 0xfdc129fa;
-        private const UInt32 NvId_GPU_GetSampleType = 0x32E1D697;
-        private const UInt32 NvId_GPU_GetSerialNumber = 0x14B83A5F;
-        private const UInt32 NvId_GPU_GetShaderPipeCount = 0x63E2F56F;
-        private const UInt32 NvId_GPU_GetShortName = 0xD988F0F3;
-        private const UInt32 NvId_GPU_GetSMMask = 0x0EB7AF173;
-        private const UInt32 NvId_GPU_GetTargetID = 0x35B5FD2F;
-        private const UInt32 NvId_GPU_GetThermalPoliciesInfo = 0x00D258BB5; // private const UInt32 NvId_GPU_ClientThermalPoliciesGetInfo
-        private const UInt32 NvId_GPU_GetThermalPoliciesStatus = 0x0E9C425A1;
-        private const UInt32 NvId_GPU_GetThermalTable = 0xC729203C;
-        private const UInt32 NvId_GPU_GetTotalSMCount = 0x0AE5FBCFE;
-        private const UInt32 NvId_GPU_GetTotalSPCount = 0x0B6D62591;
-        private const UInt32 NvId_GPU_GetTotalTPCCount = 0x4E2F76A8;
-        private const UInt32 NvId_GPU_GetTPCMask = 0x4A35DF54;
-        private const UInt32 NvId_GPU_GetUsages = 0x189a1fdf;
-        private const UInt32 NvId_GPU_GetVbiosImage = 0xFC13EE11;
-        private const UInt32 NvId_GPU_GetVbiosMxmVersion = 0xE1D5DABA;
-        private const UInt32 NvId_GPU_GetVFPCurve = 0x21537ad4;
-        private const UInt32 NvId_GPU_GetVoltageDomainsStatus = 0x0C16C7E2C;
-        private const UInt32 NvId_GPU_GetVoltages = 0x7D656244;
-        private const UInt32 NvId_GPU_GetVoltageStep = 0x28766157; // unsure of the name
-        private const UInt32 NvId_GPU_GetVPECount = 0xD8CBF37B;
-        private const UInt32 NvId_GPU_GetVSFloorSweepStatus = 0xD4F3944C;
-        private const UInt32 NvId_GPU_GPIOQueryLegalPins = 0x0FAB69565;
-        private const UInt32 NvId_GPU_GPIOReadFromPin = 0x0F5E10439;
-        private const UInt32 NvId_GPU_GPIOWriteToPin = 0x0F3B11E68;
-        private const UInt32 NvId_GPU_PerfPoliciesGetInfo = 0x409d9841;
-        private const UInt32 NvId_GPU_PerfPoliciesGetStatus = 0x3d358a0c;
-        private const UInt32 NvId_GPU_PhysxQueryRecommendedState = 0x7A4174F4;
-        private const UInt32 NvId_GPU_PhysxSetState = 0x4071B85E;
-        private const UInt32 NvId_GPU_QueryActiveApps = 0x65B1C5F5;
-        private const UInt32 NvId_GPU_RestoreCoolerPolicyTable = 0x0D8C4FE63;
-        private const UInt32 NvId_GPU_RestoreCoolerSettings = 0x8F6ED0FB;
-        private const UInt32 NvId_GPU_SetClockBoostLock = 0x39442cfb; // unknown name; NVAPI_ID_CURVE_SET
-        private const UInt32 NvId_GPU_SetClockBoostTable = 0x0733e009;
-        private const UInt32 NvId_GPU_SetClocks = 0x6F151055;
-        private const UInt32 NvId_GPU_SetColorSpaceConversion = 0x0FCABD23A;
-        private const UInt32 NvId_GPU_SetCoolerLevels = 0x891FA0AE;
-        private const UInt32 NvId_GPU_SetCoolerPolicyTable = 0x987947CD;
-        private const UInt32 NvId_GPU_SetCoreVoltageBoostPercent = 0xb9306d9b;
-        private const UInt32 NvId_GPU_SetCurrentPCIESpeed = 0x3BD32008;
-        private const UInt32 NvId_GPU_SetCurrentPCIEWidth = 0x3F28E1B9;
-        private const UInt32 NvId_GPU_SetDeepIdleState = 0x568A2292;
-        private const UInt32 NvId_GPU_SetDisplayUnderflowMode = 0x387B2E41;
-        private const UInt32 NvId_GPU_SetDitherControl = 0x0DF0DFCDD;
-        private const UInt32 NvId_GPU_SetPerfClocks = 0x7BCF4AC;
-        private const UInt32 NvId_GPU_SetPerfHybridMode = 0x7BC207F8;
-        private const UInt32 NvId_GPU_SetPixelClockRange = 0x5AC7F8E5;
-        private const UInt32 NvId_GPU_SetPowerMizerInfo = 0x50016C78;
-        private const UInt32 NvId_GPU_SetPstateClientLimits = 0x0FDFC7D49;
-        private const UInt32 NvId_GPU_SetPstates20 = 0x0F4DAE6B;
-        private const UInt32 NvId_GPU_SetPstatesInfo = 0x0CDF27911;
-        private const UInt32 NvId_GPU_SetThermalPoliciesStatus = 0x034C0B13D;
-        private const UInt32 NvId_Hybrid_IsAppMigrationStateChangeable = 0x584CB0B6;
-        private const UInt32 NvId_Hybrid_QueryBlockedMigratableApps = 0x0F4C2F8CC;
-        private const UInt32 NvId_Hybrid_QueryUnblockedNonMigratableApps = 0x5F35BCB5;
-        private const UInt32 NvId_Hybrid_SetAppMigrationState = 0x0FA0B9A59;
-        private const UInt32 NvId_I2CReadEx = 0x4D7B0709;
-        private const UInt32 NvId_I2CWriteEx = 0x283AC65A;
-        private const UInt32 NvId_LoadMicrocode = 0x3119F36E;
-        private const UInt32 NvId_Mosaic_ChooseGpuTopologies = 0x0B033B140;
-        private const UInt32 NvId_Mosaic_EnumGridTopologies = 0x0A3C55220;
-        private const UInt32 NvId_Mosaic_GetDisplayCapabilities = 0x0D58026B9;
-        private const UInt32 NvId_Mosaic_GetMosaicCapabilities = 0x0DA97071E;
-        private const UInt32 NvId_Mosaic_GetMosaicViewports = 0x7EBA036;
-        private const UInt32 NvId_Mosaic_SetGridTopology = 0x3F113C77;
-        private const UInt32 NvId_Mosaic_ValidateDisplayGridsWithSLI = 0x1ECFD263;
-        private const UInt32 NvId_QueryNonMigratableApps = 0x0BB9EF1C3;
-        private const UInt32 NvId_QueryUnderscanCap = 0x61D7B624;
-        private const UInt32 NvId_RestartDisplayDriver = 0xB4B26B65;
-        private const UInt32 NvId_RevertCustomDisplayTrial = 0x854BA405;
-        private const UInt32 NvId_SaveCustomDisplay = 0x0A9062C78;
-        private const UInt32 NvId_SetDisplayFeatureConfig = 0x0F36A668D;
-        private const UInt32 NvId_SetDisplayPosition = 0x57D9060F;
-        private const UInt32 NvId_SetDisplaySettings = 0x0E04F3D86;
-        private const UInt32 NvId_SetDVCLevel = 0x172409B4;
-        private const UInt32 NvId_SetDVCLevelEx = 0x4A82C2B1;
-        private const UInt32 NvId_SetFrameRateNotify = 0x18919887;
-        private const UInt32 NvId_SetGpuTopologies = 0x25201F3D;
-        private const UInt32 NvId_SetHUEAngle = 0x0F5A0F22C;
-        private const UInt32 NvId_SetHybridMode = 0x0FB22D656;
-        private const UInt32 NvId_SetImageSharpeningLevel = 0x3FC9A59C;
-        private const UInt32 NvId_SetInfoFrame = 0x69C6F365;
-        private const UInt32 NvId_SetInfoFrameState = 0x67EFD887;
-        private const UInt32 NvId_SetPVExtName = 0x4FEEB498;
-        private const UInt32 NvId_SetPVExtProfile = 0x8354A8F4;
-        private const UInt32 NvId_SetTopologyDisplayGPU = 0xF409D5E5;
-        private const UInt32 NvId_SetTopologyFocusDisplayAndView = 0x0A8064F9;
-        private const UInt32 NvId_SetTVEncoderControls = 0x0CA36A3AB;
-        private const UInt32 NvId_SetTVOutputBorderColor = 0x0AED02700;
-        private const UInt32 NvId_SetUnderscanConfig = 0x3EFADA1D;
-        private const UInt32 NvId_SetVideoState = 0x54FE75A;
-        private const UInt32 NvId_Stereo_AppHandShake = 0x8C610BDA;
-        private const UInt32 NvId_Stereo_ForceToScreenDepth = 0x2D495758;
-        private const UInt32 NvId_Stereo_GetCursorSeparation = 0x72162B35;
-        private const UInt32 NvId_Stereo_GetPixelShaderConstantB = 0x0C79333AE;
-        private const UInt32 NvId_Stereo_GetPixelShaderConstantF = 0x0D4974572;
-        private const UInt32 NvId_Stereo_GetPixelShaderConstantI = 0x0ECD8F8CF;
-        private const UInt32 NvId_Stereo_GetStereoCaps = 0x0DFC063B7;
-        private const UInt32 NvId_Stereo_GetVertexShaderConstantB = 0x712BAA5B;
-        private const UInt32 NvId_Stereo_GetVertexShaderConstantF = 0x622FDC87;
-        private const UInt32 NvId_Stereo_GetVertexShaderConstantI = 0x5A60613A;
-        private const UInt32 NvId_Stereo_HandShake_Message_Control = 0x315E0EF0;
-        private const UInt32 NvId_Stereo_HandShake_Trigger_Activation = 0x0B30CD1A7;
-        private const UInt32 NvId_Stereo_Is3DCursorSupported = 0x0D7C9EC09;
-        private const UInt32 NvId_Stereo_SetCursorSeparation = 0x0FBC08FC1;
-        private const UInt32 NvId_Stereo_SetPixelShaderConstantB = 0x0BA6109EE;
-        private const UInt32 NvId_Stereo_SetPixelShaderConstantF = 0x0A9657F32;
-        private const UInt32 NvId_Stereo_SetPixelShaderConstantI = 0x912AC28F;
-        private const UInt32 NvId_Stereo_SetVertexShaderConstantB = 0x5268716F;
-        private const UInt32 NvId_Stereo_SetVertexShaderConstantF = 0x416C07B3;
-        private const UInt32 NvId_Stereo_SetVertexShaderConstantI = 0x7923BA0E;
-        private const UInt32 NvId_SYS_GetChipSetTopologyStatus = 0x8A50F126;
-        private const UInt32 NvId_SYS_GetSliApprovalCookie = 0xB539A26E;
-        private const UInt32 NvId_SYS_SetPostOutput = 0xD3A092B1;
-        private const UInt32 NvId_SYS_VenturaGetCoolingBudget = 0x0C9D86E33;
-        private const UInt32 NvId_SYS_VenturaGetPowerReading = 0x63685979;
-        private const UInt32 NvId_SYS_VenturaGetState = 0x0CB7C208D;
-        private const UInt32 NvId_SYS_VenturaSetCoolingBudget = 0x85FF5A15;
-        private const UInt32 NvId_SYS_VenturaSetState = 0x0CE2E9D9;
-        private const UInt32 NvId_TryCustomDisplay = 0x0BF6C1762;
-        private const UInt32 NvId_VideoGetStereoInfo = 0x8E1F8CFE;
-        private const UInt32 NvId_VideoSetStereoInfo = 0x97063269;
-        private const UInt32 NvId_GPU_ClientFanCoolersGetInfo = 0xfb85b01e;
-        private const UInt32 NvId_GPU_ClientFanCoolersGetStatus = 0x35aed5e8;
-        private const UInt32 NvId_GPU_ClientFanCoolersGetControl = 0x814b209f;
-        private const UInt32 NvId_GPU_ClientFanCoolersSetControl = 0xa58971a5;
-
-        #endregion
-        private const UInt32 NvId_Initialize = 0x150E828;
-
-        #region General NVAPI Functions
-        // QueryInterface
-
-        private delegate IntPtr QueryInterfaceDelegate(UInt32 id);
-        private static readonly QueryInterfaceDelegate QueryInterface;
-
-        // Initialize
-        private delegate NVAPI_STATUS InitializeDelegate();
-        private static readonly InitializeDelegate InitializeInternal;
-
-        // Unload
-        private delegate NVAPI_STATUS UnloadDelegate();
-        private static readonly UnloadDelegate UnloadInternal;
-
-        // GetErrorMessage
-        private delegate NVAPI_STATUS GetErrorMessageDelegate(NVAPI_STATUS nr, StringBuilder szDesc);
-        private static readonly GetErrorMessageDelegate GetErrorMessageInternal;
-
-        /// <summary>
-        /// This function converts an NvAPI error code Int32o a null terminated string.
-        /// </summary>
-        /// <param name="nr">The error code to convert</param>
-        /// <param name="szDesc">The string corresponding to the error code</param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GetErrorMessage(NVAPI_STATUS nr, out string szDesc)
-        {
-            StringBuilder builder = new StringBuilder((Int32)NV_SHORT_STRING_MAX);
-
-            NVAPI_STATUS status;
-            if (GetErrorMessageInternal != null) { status = GetErrorMessageInternal(nr, builder); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            szDesc = builder.ToString();
-
-            return status;
-        }
-
-        // GetInterfaceVersionString
-        private delegate NVAPI_STATUS GetInterfaceVersionStringDelegate(StringBuilder szDesc);
-        private static readonly GetInterfaceVersionStringDelegate GetInterfaceVersionStringInternal;
-
-        /// <summary>
-        /// This function returns a string describing the version of the NvAPI library. The contents of the string are human readable. Do not assume a fixed format.
-        /// </summary>
-        /// <param name="szDesc">User readable string giving NvAPI version information</param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GetInterfaceVersionString(out string szDesc)
-        {
-            StringBuilder builder = new StringBuilder((Int32)NV_SHORT_STRING_MAX);
-
-            NVAPI_STATUS status;
-            if (GetErrorMessageInternal != null) { status = GetInterfaceVersionStringInternal(builder); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            szDesc = builder.ToString();
-
-            return status;
-        }
-        #endregion
-
-
-        #region Display NVAPI Functions
-        // EnumNvidiaDisplayHandle
-        private delegate NVAPI_STATUS EnumNvidiaDisplayHandleDelegate(Int32 thisEnum, ref DisplayHandle displayHandle);
-        private static readonly EnumNvidiaDisplayHandleDelegate EnumNvidiaDisplayHandleInternal;
-
-        /// <summary>
-        /// This function returns the handle of the NVIDIA display specified by the enum index (thisEnum). The client should keep enumerating until it returns NVAPI_END_ENUMERATION.
-        /// Note: Display handles can get invalidated on a modeset, so the calling applications need to renum the handles after every modeset.
-        /// </summary>
-        /// <param name="thisEnum">The index of the NVIDIA display.</param>
-        /// <param name="displayHandle">PoInt32er to the NVIDIA display handle.</param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_EnumNvidiaDisplayHandle(Int32 thisEnum, ref DisplayHandle displayHandle)
-        {
-            NVAPI_STATUS status;
-            if (EnumNvidiaDisplayHandleInternal != null) { status = EnumNvidiaDisplayHandleInternal(thisEnum, ref displayHandle); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            return status;
-        }
-
-        // EnumNvidiaUnAttachedDisplayHandle
-        private delegate NVAPI_STATUS EnumNvidiaUnAttachedDisplayHandleDelegate(Int32 thisEnum, ref UnAttachedDisplayHandle pNvDispHandle);
-        private static readonly EnumNvidiaUnAttachedDisplayHandleDelegate EnumNvidiaUnAttachedDisplayHandleInternal;
-
-        /// <summary>
-        /// This function returns the handle of the NVIDIA unattached display specified by the enum index (thisEnum). The client should keep enumerating until it returns error. Note: Display handles can get invalidated on a modeset, so the calling applications need to renum the handles after every modeset.
-        /// </summary>
-        /// <param name="thisEnum">The index of the NVIDIA display.</param>
-        /// <param name="pNvDispHandle">PoInt32er to the NVIDIA display handle of the unattached display.</param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_EnumNvidiaUnAttachedDisplayHandle(Int32 thisEnum, ref UnAttachedDisplayHandle pNvDispHandle)
-        {
-            NVAPI_STATUS status;
-            if (EnumNvidiaUnAttachedDisplayHandleInternal != null) { status = EnumNvidiaUnAttachedDisplayHandleInternal(thisEnum, ref pNvDispHandle); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            return status;
-        }
-
-        // GetAssociatedUnAttachedNvidiaDisplayHandle
-        private delegate NVAPI_STATUS GetAssociatedNvidiaDisplayHandleDelegate(StringBuilder szDisplayName, ref DisplayHandle pNvDispHandle);
-        private static readonly GetAssociatedNvidiaDisplayHandleDelegate GetAssociatedNvidiaDisplayHandleInternal;
-
-        /// <summary>
-        /// This function returns the handle of the NVIDIA display that is associated with the given display "name" (such as "\\.\DISPLAY1").
-        /// </summary>
-        /// <param name="szDisplayName"></param>
-        /// <param name="pNvDispHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GetAssociatedNvidiaDisplayHandle(string szDisplayName, ref DisplayHandle pNvDispHandle)
-        {
-            StringBuilder builder = new StringBuilder((Int32)NV_SHORT_STRING_MAX);
-            builder.Append(szDisplayName);
-
-            NVAPI_STATUS status;
-            if (GetAssociatedNvidiaDisplayHandleInternal != null) { status = GetAssociatedNvidiaDisplayHandleInternal(builder, ref pNvDispHandle); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            szDisplayName = builder.ToString();
-
-            return status;
-        }
-
-        // GetAssociatedUnAttachedNvidiaDisplayHandle
-        private delegate NVAPI_STATUS GetAssociatedUnAttachedNvidiaDisplayHandleDelegate(StringBuilder szDisplayName, ref UnAttachedDisplayHandle pNvUnAttachedDispHandle);
-        private static readonly GetAssociatedUnAttachedNvidiaDisplayHandleDelegate GetAssociatedUnAttachedNvidiaDisplayHandleInternal;
-
-        /// <summary>
-        /// This function returns the handle of an unattached NVIDIA display that is associated with the given display name (such as "\\DISPLAY1").
-        /// </summary>
-        /// <param name="szDisplayName"></param>
-        /// <param name="pNvUnAttachedDispHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GetAssociatedUnAttachedNvidiaDisplayHandle(string szDisplayName, ref UnAttachedDisplayHandle pNvUnAttachedDispHandle)
-        {
-            StringBuilder builder = new StringBuilder((Int32)NV_SHORT_STRING_MAX);
-            builder.Append(szDisplayName);
-
-            NVAPI_STATUS status;
-            if (GetAssociatedUnAttachedNvidiaDisplayHandleInternal != null) { status = GetAssociatedUnAttachedNvidiaDisplayHandleInternal(builder, ref pNvUnAttachedDispHandle); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            szDisplayName = builder.ToString();
-
-            return status;
-        }
-        #endregion
-
-
-        // ******** IMPORTANT! This code has an error when attempting to perform the third pass as required by NVAPI documentation *********
-        // ******** FOr this reason I have disabled the code as I don't actually need to get it going. ******** 
-        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
-        private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegate(
-            [In][Out] ref UInt32 pathInfoCount,
-            [In][Out] IntPtr pathInfoBuffer);
-        private static readonly DISP_GetDisplayConfigDelegate DISP_GetDisplayConfigInternal;
-
-        /// <summary>
-        /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
-        ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
-        ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
-        ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
-        ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
-        ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
-        //                               to number of targetInfoCount(from Second Pass).
-        /// SUPPORTED OS:  Windows 7 and higher
-        /// </summary>
-        /// <param name="PathInfoCount"></param>
-        /// <param name="PathInfo"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount, ref NV_DISPLAYCONFIG_PATH_INFO_V2[] PathInfos, bool thirdPass = false)
-        {
-            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_OK;
-            if (thirdPass)
-            {
-                NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] pass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
-                int totalTargetInfoCount = 0;
-                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                {
-                    totalTargetInfoCount += (int)PathInfos[x].TargetInfoCount;
+                    throw new NVIDIAApiException(status);
                 }
 
-                // Get the size of the each object
-                int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
-                int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
-                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
-                int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING_INTERNAL));
-                int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA_INTERNAL));
-
-                // Figure out the size of the memory we need to allocate
-                int allPathInfoMemSize = onePathInfoMemSize * (int)PathInfoCount;
-                int allSourceModeMemSize = oneSourceModeMemSize * (int)PathInfoCount;
-                int allPathTargetMemSize = onePathTargetMemSize * totalTargetInfoCount;
-                int allAdvTargetMemSize = (oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize) * totalTargetInfoCount;
-                //int allTimingMemSize = oneTimingMemSize * totalTargetInfoCount;
-                //int allTimingExtraMemSize = oneTimingExtraMemSize * totalTargetInfoCount;
-                //int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize + allTimingExtraMemSize;
-                int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize;
-
-                IntPtr memPointer = IntPtr.Zero;
-
-                try
+                if (stringSize == 0)
                 {
-                    // Allocate the memory we need
-                    memPointer = Marshal.AllocHGlobal(allObjectsMemSize * 2);
-
-                    // Figure out the address of the arrays we will use
-                    IntPtr pathInfoPointer = memPointer;
-                    IntPtr sourceModeInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize);
-                    IntPtr targetInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize);
-                    IntPtr advTargetPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize);
-                    //IntPtr timingPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize);
-                    //IntPtr timingExtraPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize);
-
-                    // Figure out each memory pointer so that we can do the memory copying item by item
-                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                    IntPtr currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
-                    IntPtr currentSourceModeInfoPointer = new IntPtr(sourceModeInfoPointer.ToInt64());
-                    IntPtr currentTargetInfoPointer = new IntPtr(targetInfoPointer.ToInt64());
-                    IntPtr currentAdvTargetPointer = new IntPtr(advTargetPointer.ToInt64());
-                    //IntPtr currentTimingPointer = new IntPtr(timingPointer.ToInt64());
-                    //IntPtr currentTimingExtraPointer = new IntPtr(timingExtraPointer.ToInt64());
-
-                    // Go through the array and copy things from managed code to unmanaged code
-                    for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                    {
-                        // Set up the fields in the path info
-                        pass2PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER;
-                        pass2PathInfos[x].TargetInfoCount = PathInfos[x].TargetInfoCount;
-                        pass2PathInfos[x].Flags = PathInfos[x].Flags;
-                        pass2PathInfos[x].OSAdapterID = PathInfos[x].OSAdapterID;
-                        pass2PathInfos[x].SourceId = PathInfos[x].SourceId;
-                        // Create a target info array and copy it over
-                        NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[] targetInforArray = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[PathInfos[x].TargetInfoCount];
-                        pass2PathInfos[x].TargetInfo = currentTargetInfoPointer;
-                        //for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
-                        for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
-                        {
-                            // Create the timingExtra object ready to use shortly
-                            //NV_TIMING_EXTRA_INTERNAL timingExtra = new NV_TIMING_EXTRA_INTERNAL();
-                            //Marshal.StructureToPtr(timingExtra, currentTimingExtraPointer, true);
-
-                            // Create the timing object, and connect it to the timingExtra object we created earlier
-                            //NV_TIMING_INTERNAL timing = new NV_TIMING_INTERNAL();
-                            //timing.Extra = new IntPtr(currentTimingExtraPointer.ToInt64());
-                            //Marshal.StructureToPtr(timing, currentTimingPointer, true);
-
-                            // Create the Advanced Details object, and connect it to the timing object we ust created
-                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL();
-                            advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER;
-                            //advInfo.Timing = new IntPtr(currentTimingPointer.ToInt64());
-                            Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
-
-                            // Now connect the Advanced details we created to the details in the TargetInfo array item
-                            targetInforArray[y].Details = new IntPtr(currentAdvTargetPointer.ToInt64());
-                            Marshal.StructureToPtr(targetInforArray[y], currentTargetInfoPointer, true);
-                            currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
-                            currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize);
-                            //currentTimingPointer = new IntPtr(currentTimingPointer.ToInt64() + oneTimingMemSize);
-                            //currentTimingExtraPointer = new IntPtr(currentTimingExtraPointer.ToInt64() + oneTimingExtraMemSize);
-                        }
-
-                        // Create a source mode info object and copy it over
-                        NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)PathInfos[x].SourceModeInfo.Clone();
-                        Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
-                        pass2PathInfos[x].SourceModeInfo = new IntPtr(currentSourceModeInfoPointer.ToInt64());
-
-                        // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                        Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
-
-                        // advance the buffer forwards to the next object for each object
-                        currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize);
-                        currentSourceModeInfoPointer = new IntPtr(currentSourceModeInfoPointer.ToInt64() + oneSourceModeMemSize);
-                    }
-
-                    if (DISP_GetDisplayConfigInternal != null)
-                    {
-                        // Use the unmanaged buffer in the unmanaged C call
-                        status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoPointer);
-
-                        if (status == NVAPI_STATUS.NVAPI_OK)
-                        {
-                            // If everything worked, then copy the data back from the unmanaged array into the managed array
-                            // So that we can use it in C# land
-                            // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                            currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
-
-                            // Create a managed array to store the received information within
-                            PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
-                            NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] returnedPass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
-                            // Go through the memory buffer item by item and copy the items into the managed array
-                            for (int i = 0; i < PathInfoCount; i++)
-                            {
-                                // fill the returned pass2 array slot structure with the data from the buffer
-                                // This lets us get the information and then copy it across to the one we want to return!
-                                returnedPass2PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentPathInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
-
-                                // Next copy the information across to the PathInfo we actually want to return
-                                PathInfos[i].SourceId = returnedPass2PathInfos[i].SourceId;
-                                PathInfos[i].Flags = returnedPass2PathInfos[i].Flags;
-                                PathInfos[i].OSAdapterID = returnedPass2PathInfos[i].OSAdapterID;
-                                PathInfos[i].TargetInfoCount = returnedPass2PathInfos[i].TargetInfoCount;
-                                PathInfos[i].TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[PathInfos[i].TargetInfoCount];
-                                PathInfos[i].Version = returnedPass2PathInfos[i].Version;
-
-                                // And turn the memory pointer to NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 into an actual object and populate the object.
-                                PathInfos[i].SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)Marshal.PtrToStructure(returnedPass2PathInfos[i].SourceModeInfo, typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-
-                                currentTargetInfoPointer = returnedPass2PathInfos[i].TargetInfo;
-                                for (Int32 y = 0; y < (Int32)PathInfos[i].TargetInfoCount; y++)
-                                {
-
-                                    // And turn the memory pointer to NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL into an actual object and populate the our wanted object
-                                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL returnedTargetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentTargetInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
-                                    // Next we need to get access to the details object.
-                                    NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL returnedAdvTarget = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL)Marshal.PtrToStructure(returnedTargetInfo.Details, typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
-                                    // Next we need to get access to the timing object.
-                                    //NV_TIMING_INTERNAL returnedTiming = (NV_TIMING_INTERNAL)Marshal.PtrToStructure(returnedAdvTarget.Timing, typeof(NV_TIMING_INTERNAL));
-                                    // Next we need to get access to the timing extra object.
-                                    //NV_TIMING_EXTRA_INTERNAL returnedTimingExtra = (NV_TIMING_EXTRA_INTERNAL)Marshal.PtrToStructure(returnedTiming.Extra, typeof(NV_TIMING_EXTRA_INTERNAL));
-
-                                    // Now we start copying the info into the object we want to return
-                                    // We'll start with filling in the Timing Extra info we want to return
-                                    /*PathInfos[i].TargetInfo[y].Details.Timing.Extra.Flags = returnedTimingExtra.Flags;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz = returnedTimingExtra.FrequencyInMillihertz;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalAspect = returnedTimingExtra.HorizontalAspect;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition = returnedTimingExtra.HorizontalPixelRepetition;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Name = returnedTimingExtra.Name;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.RefreshRate = returnedTimingExtra.RefreshRate;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.TimingStandard = returnedTimingExtra.TimingStandard;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.VerticalAspect = returnedTimingExtra.VerticalAspect;*/
-
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Flags = returnedAdvTarget.Timing.Extra.Flags;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz = returnedAdvTarget.Timing.Extra.FrequencyInMillihertz;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalAspect = returnedAdvTarget.Timing.Extra.HorizontalAspect;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition = returnedAdvTarget.Timing.Extra.HorizontalPixelRepetition;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Name = returnedAdvTarget.Timing.Extra.Name;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.RefreshRate = returnedAdvTarget.Timing.Extra.RefreshRate;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.TimingStandard = returnedAdvTarget.Timing.Extra.TimingStandard;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.VerticalAspect = returnedAdvTarget.Timing.Extra.VerticalAspect;
-
-
-                                    // Next, we'll fill in the Timing info we want to return
-                                    /*PathInfos[i].TargetInfo[y].Details.Timing.HBorder = returnedTiming.HBorder;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HFrontPorch = returnedTiming.HFrontPorch;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncPol = returnedTiming.HSyncPol;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncWidth = returnedTiming.HSyncWidth;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HTotal = returnedTiming.HTotal;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HVisible = returnedTiming.HVisible;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Pclk = returnedTiming.Pclk;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.ScanMode = returnedTiming.ScanMode;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VBorder = returnedTiming.VBorder;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VFrontPorch = returnedTiming.VFrontPorch;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncPol = returnedTiming.VSyncPol;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncWidth = returnedTiming.VSyncWidth;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VTotal = returnedTiming.VTotal;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VVisible = returnedTiming.VVisible;*/
-
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HBorder = returnedAdvTarget.Timing.HBorder;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HFrontPorch = returnedAdvTarget.Timing.HFrontPorch;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncPol = returnedAdvTarget.Timing.HSyncPol;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncWidth = returnedAdvTarget.Timing.HSyncWidth;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HTotal = returnedAdvTarget.Timing.HTotal;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.HVisible = returnedAdvTarget.Timing.HVisible;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.Pclk = returnedAdvTarget.Timing.Pclk;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.ScanMode = returnedAdvTarget.Timing.ScanMode;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VBorder = returnedAdvTarget.Timing.VBorder;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VFrontPorch = returnedAdvTarget.Timing.VFrontPorch;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncPol = returnedAdvTarget.Timing.VSyncPol;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncWidth = returnedAdvTarget.Timing.VSyncWidth;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VTotal = returnedAdvTarget.Timing.VTotal;
-                                    PathInfos[i].TargetInfo[y].Details.Timing.VVisible = returnedAdvTarget.Timing.VVisible;
-
-                                    // Next, we'll deal with the advanced details
-                                    PathInfos[i].TargetInfo[y].Details.ConnectorType = returnedAdvTarget.ConnectorType;
-                                    PathInfos[i].TargetInfo[y].Details.Flags = returnedAdvTarget.Flags;
-                                    PathInfos[i].TargetInfo[y].Details.RefreshRateInMillihertz = returnedAdvTarget.RefreshRateInMillihertz;
-                                    PathInfos[i].TargetInfo[y].Details.Rotation = returnedAdvTarget.Rotation;
-                                    PathInfos[i].TargetInfo[y].Details.Scaling = returnedAdvTarget.Scaling;
-                                    PathInfos[i].TargetInfo[y].Details.TimingOverride = returnedAdvTarget.TimingOverride;
-                                    PathInfos[i].TargetInfo[y].Details.TvFormat = returnedAdvTarget.TvFormat;
-                                    PathInfos[i].TargetInfo[y].Details.Version = returnedAdvTarget.Version;
-
-                                    // We'll finish with the TargetInfo
-                                    PathInfos[i].TargetInfo[y].DisplayId = returnedTargetInfo.DisplayId;
-                                    PathInfos[i].TargetInfo[y].WindowsCCDTargetId = returnedTargetInfo.WindowsCCDTargetId;
-
-
-                                    currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
-                                }
-
-                                // advance the buffer forwards to the next object
-                                currentPathInfoPointer = (IntPtr)((long)currentPathInfoPointer + Marshal.SizeOf(returnedPass2PathInfos[i]));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                    }
-                    // Try and remove the memory used
-                    pass2PathInfos = null;
-                }
-                finally
-                {
-                    if (memPointer != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(memPointer);
-                    }
-
+                    return null;
                 }
 
-            }
-            else
-            {
-                // This is the second pass
-                // Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
-                //                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
-                // Build a new blank object for the second pass (when we have the pathInfoCount, but want the targetInfoCount  for each pathInfo)
-                // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
-                NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] pass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
-
-                int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
-                int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-
-                IntPtr pathInfoPointer = IntPtr.Zero;
-                IntPtr sourceModeInfoPointer = IntPtr.Zero;
-
-                try
-                {
-                    pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
-                    sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
-                    // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                    IntPtr currentPathInfoPointer = pathInfoPointer;
-                    IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
-
-                    // Go through the array and copy things from managed code to unmanaged code
-                    for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                    {
-                        // Set up the fields in the path info
-                        pass2PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER;
-                        pass2PathInfos[x].TargetInfoCount = 0;
-                        pass2PathInfos[x].TargetInfo = IntPtr.Zero;
-
-                        // Create a source mode info object and copy it over
-                        NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
-                        Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
-                        pass2PathInfos[x].SourceModeInfo = currentSourceModeInfoPointer;
-
-                        // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                        Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
-
-                        // advance the buffer forwards to the next object for each object
-                        //currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize + oneSourceModeMemSize);
-                        currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize);
-                        currentSourceModeInfoPointer = new IntPtr(currentSourceModeInfoPointer.ToInt64() + oneSourceModeMemSize);
-                    }
-
-                    if (DISP_GetDisplayConfigInternal != null)
-                    {
-                        // Use the unmanaged buffer in the unmanaged C call
-                        status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoPointer);
-
-                        if (status == NVAPI_STATUS.NVAPI_OK)
-                        {
-                            // If everything worked, then copy the data back from the unmanaged array into the managed array
-                            // So that we can use it in C# land
-                            // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                            currentPathInfoPointer = pathInfoPointer;
-                            // Create a managed array to store the received information within
-                            PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
-                            NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] returnedPass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
-                            // Go through the memory buffer item by item and copy the items into the managed array
-                            for (int i = 0; i < PathInfoCount; i++)
-                            {
-                                // fill the returned pass2 array slot structure with the data from the buffer
-                                // This lets us get the information and then copy it across to the one we want to return!
-                                returnedPass2PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentPathInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
-
-                                // Next copy the information across to the PathInfo we actually want to return
-                                PathInfos[i].SourceId = returnedPass2PathInfos[i].SourceId;
-                                PathInfos[i].Flags = returnedPass2PathInfos[i].Flags;
-                                PathInfos[i].OSAdapterID = returnedPass2PathInfos[i].OSAdapterID;
-                                PathInfos[i].TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[0];
-                                PathInfos[i].TargetInfoCount = returnedPass2PathInfos[i].TargetInfoCount;
-                                PathInfos[i].Version = returnedPass2PathInfos[i].Version;
-
-                                // And turn the memory pointer to NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 into an actual object and populate the object.
-                                PathInfos[i].SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)Marshal.PtrToStructure(returnedPass2PathInfos[i].SourceModeInfo, typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-
-                                // destroy the bit of memory we no longer need
-                                //Marshal.DestroyStructure(currentPathInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
-                                // advance the buffer forwards to the next object
-                                currentPathInfoPointer = (IntPtr)((long)currentPathInfoPointer + Marshal.SizeOf(returnedPass2PathInfos[i]));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                    }
-                    // Try and remove the memory used
-                    pass2PathInfos = null;
-                }
-                finally
-                {
-                    if (pathInfoPointer != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(pathInfoPointer);
-                    }
-
-                    if (sourceModeInfoPointer != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(sourceModeInfoPointer);
-                    }
-
-
-                }
-
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
-        // NvAPIMosaic_EnumDisplayGrids
-        private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegateNull(
-            [In][Out] ref UInt32 pathInfoCount,
-            [In][Out] IntPtr pathInfoBuffer);
-        private static readonly DISP_GetDisplayConfigDelegateNull DISP_GetDisplayConfigInternalNull;
-
-        /// <summary>
-        /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
-        ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
-        ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
-        ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
-        ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
-        ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
-        //                               to number of targetInfoCount(from Second Pass).
-        /// SUPPORTED OS:  Windows 7 and higher
-        /// </summary>
-        /// <param name="PathInfoCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount)
-        {
-            NVAPI_STATUS status;
-            IntPtr pathInfos = IntPtr.Zero;
-
-            if (DISP_GetDisplayConfigInternalNull != null) { status = DISP_GetDisplayConfigInternalNull(ref PathInfoCount, pathInfos); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-        // ******** IMPORTANT! This code has an error when attempting to perform the third pass as required by NVAPI documentation *********
-        // ******** FOr this reason I have disabled the code as I don't actually need to get it going. ******** 
-        // NVAPI_INTERFACE NvAPI_DISP_SetDisplayConfig	(	__in NvU32 	pathInfoCount, __in_ecount(pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO* pathInfo,__in NvU32 flags )	
-        private delegate NVAPI_STATUS DISP_SetDisplayConfigDelegate(
-            [In] UInt32 pathInfoCount,
-            [In] IntPtr pathInfoBuffer,
-            [In] NV_DISPLAYCONFIG_FLAGS flags);
-        private static readonly DISP_SetDisplayConfigDelegate DISP_SetDisplayConfigInternal;
-
-        /// <summary>
-        /// DESCRIPTION: This API lets caller apply a global display configuration across multiple GPUs.
-        ///     If all sourceIds are zero, then NvAPI will pick up sourceId's based on the following criteria :
-        ///     If user provides sourceModeInfo then we are trying to assign 0th sourceId always to GDIPrimary.This is needed since active windows always moves along with 0th sourceId.
-        ///     For rest of the paths, we are incrementally assigning the sourceId per adapter basis.
-        ///     If user doesn't provide sourceModeInfo then NVAPI just picks up some default sourceId's in incremental order. Note : NVAPI will not intelligently choose the sourceIDs for any configs that does not need a modeset.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// </summary>
-        /// <param name="pathInfoCount"></param>
-        /// <param name="pathInfos"></param>
-        /// <param name="flags"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_SetDisplayConfig(UInt32 pathInfoCount, NV_DISPLAYCONFIG_PATH_INFO_V2[] pathInfos, NV_DISPLAYCONFIG_FLAGS flags)
-        {
-            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_OK;
-            NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] pass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[pathInfoCount];
-
-            int totalTargetInfoCount = 0;
-            for (Int32 x = 0; x < (Int32)pathInfoCount; x++)
-            {
-                totalTargetInfoCount += (int)pathInfos[x].TargetInfoCount;
-            }
-
-            // Get the size of the each object
-            int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
-            int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-            int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
-            int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
-            int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING_INTERNAL));
-            int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA_INTERNAL));
-
-            // Figure out the size of the memory we need to allocate
-            int allPathInfoMemSize = onePathInfoMemSize * (int)pathInfoCount;
-            int allSourceModeMemSize = oneSourceModeMemSize * (int)pathInfoCount;
-            int allPathTargetMemSize = onePathTargetMemSize * totalTargetInfoCount;
-            int allAdvTargetMemSize = (oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize) * totalTargetInfoCount;
-            //int allTimingMemSize = oneTimingMemSize * totalTargetInfoCount;
-            //int allTimingExtraMemSize = oneTimingExtraMemSize * totalTargetInfoCount;
-            //int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize + allTimingExtraMemSize;
-            int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize;
-
-            IntPtr memPointer = IntPtr.Zero;
-
-            try
-            {
-
-                // Allocate the memory we need
-                memPointer = Marshal.AllocHGlobal(allObjectsMemSize * 2);
-
-                // Figure out the address of the arrays we will use
-                IntPtr pathInfoPointer = memPointer;
-                IntPtr sourceModeInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize);
-                IntPtr targetInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize);
-                IntPtr advTargetPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize);
-                //IntPtr timingPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize);
-                //IntPtr timingExtraPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize);
-
-                // Figure out each memory pointer so that we can do the memory copying item by item
-                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                IntPtr currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
-                IntPtr currentSourceModeInfoPointer = new IntPtr(sourceModeInfoPointer.ToInt64());
-                IntPtr currentTargetInfoPointer = new IntPtr(targetInfoPointer.ToInt64());
-                IntPtr currentAdvTargetPointer = new IntPtr(advTargetPointer.ToInt64());
-                //IntPtr currentTimingPointer = new IntPtr(timingPointer.ToInt64());
-                //IntPtr currentTimingExtraPointer = new IntPtr(timingExtraPointer.ToInt64());
-
-                // Go through the array and copy things from managed code to unmanaged code
-                for (Int32 x = 0; x < (Int32)pathInfoCount; x++)
-                {
-                    // Create a target info array and copy it over
-                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[] targetInfoArray = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[pathInfos[x].TargetInfoCount];
-                    pass2PathInfos[x].TargetInfo = currentTargetInfoPointer;
-                    for (Int32 y = 0; y < (Int32)pathInfos[x].TargetInfoCount; y++)
-                    {
-
-                        NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
-
-                        advInfo.Timing.Extra.Flags = pathInfos[x].TargetInfo[y].Details.Timing.Extra.Flags;
-                        advInfo.Timing.Extra.FrequencyInMillihertz = pathInfos[x].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz;
-                        advInfo.Timing.Extra.HorizontalAspect = pathInfos[x].TargetInfo[y].Details.Timing.Extra.HorizontalAspect;
-                        advInfo.Timing.Extra.HorizontalPixelRepetition = pathInfos[x].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition;
-                        advInfo.Timing.Extra.Name = pathInfos[x].TargetInfo[y].Details.Timing.Extra.Name;
-                        advInfo.Timing.Extra.RefreshRate = pathInfos[x].TargetInfo[y].Details.Timing.Extra.RefreshRate;
-                        advInfo.Timing.Extra.TimingStandard = pathInfos[x].TargetInfo[y].Details.Timing.Extra.TimingStandard;
-                        advInfo.Timing.Extra.VerticalAspect = pathInfos[x].TargetInfo[y].Details.Timing.Extra.VerticalAspect;
-
-                        advInfo.Timing.HBorder = pathInfos[x].TargetInfo[y].Details.Timing.HBorder;
-                        advInfo.Timing.HFrontPorch = pathInfos[x].TargetInfo[y].Details.Timing.HFrontPorch;
-                        advInfo.Timing.HSyncPol = pathInfos[x].TargetInfo[y].Details.Timing.HSyncPol;
-                        advInfo.Timing.HSyncWidth = pathInfos[x].TargetInfo[y].Details.Timing.HSyncWidth;
-                        advInfo.Timing.HTotal = pathInfos[x].TargetInfo[y].Details.Timing.HTotal;
-                        advInfo.Timing.HVisible = pathInfos[x].TargetInfo[y].Details.Timing.HVisible;
-                        advInfo.Timing.Pclk = pathInfos[x].TargetInfo[y].Details.Timing.Pclk;
-                        advInfo.Timing.ScanMode = pathInfos[x].TargetInfo[y].Details.Timing.ScanMode;
-                        advInfo.Timing.VBorder = pathInfos[x].TargetInfo[y].Details.Timing.VBorder;
-                        advInfo.Timing.VFrontPorch = pathInfos[x].TargetInfo[y].Details.Timing.VFrontPorch;
-                        advInfo.Timing.VSyncPol = pathInfos[x].TargetInfo[y].Details.Timing.VSyncPol;
-                        advInfo.Timing.VSyncWidth = pathInfos[x].TargetInfo[y].Details.Timing.VSyncWidth;
-                        advInfo.Timing.VTotal = pathInfos[x].TargetInfo[y].Details.Timing.VTotal;
-                        advInfo.Timing.VVisible = pathInfos[x].TargetInfo[y].Details.Timing.VVisible;
-
-                        advInfo.ConnectorType = pathInfos[x].TargetInfo[y].Details.ConnectorType;
-                        advInfo.Flags = pathInfos[x].TargetInfo[y].Details.Flags;
-                        advInfo.RefreshRateInMillihertz = pathInfos[x].TargetInfo[y].Details.RefreshRateInMillihertz;
-                        advInfo.Rotation = pathInfos[x].TargetInfo[y].Details.Rotation;
-                        advInfo.Scaling = pathInfos[x].TargetInfo[y].Details.Scaling;
-                        advInfo.TimingOverride = pathInfos[x].TargetInfo[y].Details.TimingOverride;
-                        advInfo.TvFormat = pathInfos[x].TargetInfo[y].Details.TvFormat;
-                        //advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER;
-                        advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER;
-                        Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
-
-                        // Fill in this target info array item
-                        targetInfoArray[y].Details = currentAdvTargetPointer;
-                        targetInfoArray[y].DisplayId = pathInfos[x].TargetInfo[y].DisplayId;
-                        targetInfoArray[y].WindowsCCDTargetId = pathInfos[x].TargetInfo[y].WindowsCCDTargetId;
-                        Marshal.StructureToPtr(targetInfoArray[y], currentTargetInfoPointer, true);
-
-                        // Prepare the pointers for the next objects
-                        currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
-                        currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize);
-                        currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize);
-                    }
-
-
-                    // Create a source mode info object and copy it over
-                    NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
-                    sourceModeInfo.ColorFormat = pathInfos[x].SourceModeInfo.ColorFormat;
-                    sourceModeInfo.Flags = pathInfos[x].SourceModeInfo.Flags;
-                    sourceModeInfo.Position = (NV_POSITION)pathInfos[x].SourceModeInfo.Position.Clone();
-                    sourceModeInfo.Resolution = (NV_RESOLUTION)pathInfos[x].SourceModeInfo.Resolution.Clone();
-                    sourceModeInfo.SpanningOrientation = pathInfos[x].SourceModeInfo.SpanningOrientation;
-                    Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
-
-                    // Set up the fields in the path info
-                    pass2PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER;
-                    pass2PathInfos[x].TargetInfoCount = pathInfos[x].TargetInfoCount;
-                    pass2PathInfos[x].Flags = pathInfos[x].Flags;
-                    pass2PathInfos[x].OSAdapterID = pathInfos[x].OSAdapterID;
-                    pass2PathInfos[x].SourceId = pathInfos[x].SourceId;
-                    pass2PathInfos[x].SourceModeInfo = currentSourceModeInfoPointer;
-
-                    // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                    Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
-
-                    // advance the buffer forwards to the next object for each object
-                    currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize);
-                    currentSourceModeInfoPointer = new IntPtr(currentSourceModeInfoPointer.ToInt64() + oneSourceModeMemSize);
-                }
-
-                if (DISP_SetDisplayConfigInternal != null)
-                {
-                    // Use the unmanaged buffer in the unmanaged C call
-                    status = DISP_SetDisplayConfigInternal(pathInfoCount, pathInfoPointer, 0);
-                }
-                else
-                {
-                    status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                }
+                return Marshal.PtrToStringAnsi(stringAddress, (int)stringSize);
             }
             finally
             {
-                if (memPointer != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(memPointer);
-                }
-
+                Marshal.FreeHGlobal(stringAddress);
             }
-
-            return status;
         }
-
-
-        ///////////////////////////////////////////////////////////////////////////////
-        // FUNCTION NAME:   NvAPI_GPU_QueryWorkstationFeatureSupport
-        //
-        //! \fn NvAPI_GPU_QueryWorkstationFeatureSupport(NvPhysicalGpuHandle physicalGpu, NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature)
-        //! \code
-        //! DESCRIPTION:     Indicates whether a queried workstation feature is supported by the requested GPU.
-        //!
-        //! SUPPORTED OS:  Windows 10 and higher
-        //!
-        //! \since Release: 440
-        //!
-        //! DESCRIPTION:     This API, when called with a valid physical gpu handle as Input, lets caller know whether the given workstation feature is supported by this GPU.
-        //!
-        //! PARAMETERS:      physicalGpu(IN)            : The handle of the GPU for the which caller wants to get the support information.
-        //!                  gpuWorkstationFeature(IN ) : The feature for the GPU in question. One of the values from enum NV_GPU_WORKSTATION_FEATURE_TYPE.
-        //!
-        //! \return  This API can return any of the error codes enumerated in #NvAPI_Status listed below
-        //!
-        //! \retval ::NVAPI_OK the queried workstation feature is supported on the given GPU.
-        //! \retval ::NVAPI_NO_IMPLEMENTATION the current driver doesn't support this interface.
-        //! \retval ::NVAPI_INVALID_HANDLE the incoming physicalGpu handle is invalid.
-        //! \retval ::NVAPI_NOT_SUPPORTED the requested gpuWorkstationFeature is not supported in the selected GPU.
-        //! \retval ::NVAPI_SETTING_NOT_FOUND the requested gpuWorkstationFeature is unknown to the current driver version.
-        //!
-        //! \endcode
-        //! \ingroup gpu
-        ///////////////////////////////////////////////////////////////////////////////
-        //NVAPI_INTERFACE NvAPI_GPU_QueryWorkstationFeatureSupport(NvPhysicalGpuHandle physicalGpu, NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature);
-        private delegate NVAPI_STATUS GPU_QueryWorkstationFeatureSupportDelegate(
-            [In] PhysicalGpuHandle physicalGpu, 
-            [In] NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature);
-        private static readonly GPU_QueryWorkstationFeatureSupportDelegate GPU_QueryWorkstationFeatureSupportInternal;
-
-        public static NVAPI_STATUS NvAPI_GPU_QueryWorkstationFeatureSupport(PhysicalGpuHandle physicalGpu, NV_GPU_WORKSTATION_FEATURE_TYPE gpuWorkstationFeature)
-        {
-            NVAPI_STATUS status;
-
-            if (GPU_QueryWorkstationFeatureSupportInternal != null) { status = GPU_QueryWorkstationFeatureSupportInternal(physicalGpu, gpuWorkstationFeature); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-
-        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayIdByDisplayName(const char *displayName, NvU32* displayId);
-        private delegate NVAPI_STATUS DISP_GetDisplayIdByDisplayNameDelegate(
-            [In] string displayName,
-            [Out] out UInt32 displayId);
-        private static readonly DISP_GetDisplayIdByDisplayNameDelegate DISP_GetDisplayIdByDisplayNameInternal;
 
         /// <summary>
-        ///
-        /// DESCRIPTION:     This API retrieves the Display Id of a given display by
-        ///                  display name. The display must be active to retrieve the
-        ///                  displayId. In the case of clone mode or Surround gaming,
-        ///                  the primary or top-left display will be returned.
-        ///
-        /// \param [in]     displayName  Name of display (Eg: "\\DISPLAY1" to
-        ///                              retrieve the displayId for.
-        /// \param [out]    displayId    Display ID of the requested display.
+        ///     This API returns eye separation as a ratio of [between eye distance]/[physical screen width].
         /// </summary>
-        /// <param name="displayName"></param>
-        /// <param name="displayId"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_GetDisplayIdByDisplayName(string displayName, out UInt32 displayId)
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <returns>Eye separation</returns>
+        public static float GetEyeSeparation(StereoHandle handle)
         {
-            NVAPI_STATUS status;
-            displayId = 0;
-
-            if (DISP_GetDisplayIdByDisplayNameInternal != null) { status = DISP_GetDisplayIdByDisplayNameInternal(displayName, out displayId); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-
-        // EnumPhysicalGPUs
-        private delegate NVAPI_STATUS EnumPhysicalGPUsDelegate(
-            [In][Out][MarshalAs(UnmanagedType.LPArray, SizeConst = (int)NV_MAX_PHYSICAL_GPUS)] PhysicalGpuHandle[] gpuHandles,
-            [Out] out UInt32 gpuCount);
-        private static readonly EnumPhysicalGPUsDelegate EnumPhysicalGPUsInternal;
-
-        /// <summary>
-        /// This function returns an array of physical GPU handles. Each handle represents a physical GPU present in the system. That GPU may be part of an SLI configuration, or may not be visible to the OS directly.
-        /// At least one GPU must be present in the system and running an NVIDIA display driver. The array nvGPUHandle will be filled with physical GPU handle values. The returned gpuCount determines how many entries in the array are valid..
-        /// </summary>
-        /// <param name="NvGPUHandle"></param>
-        /// <param name="pGPUCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_EnumPhysicalGPUs(ref PhysicalGpuHandle[] NvGPUHandle, out UInt32 pGPUCount)
-        {
-            NVAPI_STATUS status;
-            UInt32 retGPUCount = 0;
-            if (EnumPhysicalGPUsInternal != null) { status = EnumPhysicalGPUsInternal(NvGPUHandle, out retGPUCount); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            pGPUCount = retGPUCount;
-            return status;
-        }
-
-        // GetQuadroStatus
-        private delegate NVAPI_STATUS GetQuadroStatusDelegate(
-            [In] PhysicalGpuHandle gpuHandle,
-            [Out] out UInt32 status);
-        private static readonly GetQuadroStatusDelegate GetQuadroStatusInternal;
-
-        /// <summary>
-        /// This function retrieves the Quadro status for the GPU (1 if Quadro, 0 if GeForce)
-        /// </summary>
-        /// <param name="NvGPUHandle"></param>
-        /// <param name="pStatus"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetQuadroStatus(PhysicalGpuHandle NvGPUHandle, out UInt32 pStatus)
-        {
-            NVAPI_STATUS status;
-            UInt32 retStatus = 0;
-            if (GetQuadroStatusInternal != null) { status = GetQuadroStatusInternal(NvGPUHandle, out retStatus); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-            pStatus = retStatus;
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_EnumDisplayModes	(	__in NV_MOSAIC_GRID_TOPO * 	pGridTopology, __inout_ecount_part_opt*,*pDisplayCount NV_MOSAIC_DISPLAY_SETTING * 	pDisplaySettings,
-        //                                                        __inout NvU32 * 	pDisplayCount )	
-        // NvAPIMosaic_EnumDisplayModes
-        private delegate NVAPI_STATUS Mosaic_EnumDisplayModesDelegate(
-            [In] NV_MOSAIC_GRID_TOPO_V2 gridTopology,
-            [In][Out] IntPtr displaySettingsBuffer,
-            [In][Out] ref UInt32 displayCount);
-        private static readonly Mosaic_EnumDisplayModesDelegate Mosaic_EnumDisplayModesInternal;
-
-        /// <summary>
-        /// Determines the set of available display modes for a given grid topology.
-        /// If displaySettings is NULL, then displayCount will receive the total number of modes that are available.
-        /// If displaySettings is not NULL, then displayCount should point to the number of elements in the pDisplaySettings array. On return, it will contain the number of modes that were actually returned
-        /// </summary>
-        /// <param name="gridTopology"></param>
-        /// <param name="displaySettingsBuffer"></param>
-        /// <param name="displayCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_EnumDisplayModes(NV_MOSAIC_GRID_TOPO_V2 gridTopology, ref NV_MOSAIC_DISPLAY_SETTING_V2[] displaySettings, ref UInt32 displayCount)
-        {
-            NVAPI_STATUS status;
-
-            // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
-            displaySettings = new NV_MOSAIC_DISPLAY_SETTING_V2[displayCount];
-            // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr displaySettingsBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_DISPLAY_SETTING_V2)) * (int)displayCount);
-            // Also set another memory pointer to the same place so that we can do the memory copying item by item
-            // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-            IntPtr currentDisplaySettingsBuffer = displaySettingsBuffer;
-            // Go through the array and copy things from managed code to unmanaged code
-            for (Int32 x = 0; x < (Int32)displayCount; x++)
-            {
-                // Set up the basic structure
-                displaySettings[x].Version = NVImport.NV_MOSAIC_DISPLAY_SETTING_V2_VER;
-
-                // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                Marshal.StructureToPtr(displaySettings[x], currentDisplaySettingsBuffer, false);
-                // advance the buffer forwards to the next object
-                currentDisplaySettingsBuffer = (IntPtr)((long)currentDisplaySettingsBuffer + Marshal.SizeOf(displaySettings[x]));
-            }
-
-
-            if (Mosaic_EnumDisplayModesInternal != null)
-            {
-                // Use the unmanaged buffer in the unmanaged C call
-                status = Mosaic_EnumDisplayModesInternal(gridTopology, displaySettingsBuffer, ref displayCount);
-
-                if (status == NVAPI_STATUS.NVAPI_OK)
-                {
-                    // If everything worked, then copy the data back from the unmanaged array into the managed array
-                    // So that we can use it in C# land
-                    // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                    currentDisplaySettingsBuffer = displaySettingsBuffer;
-                    // Create a managed array to store the received information within
-                    displaySettings = new NV_MOSAIC_DISPLAY_SETTING_V2[displayCount];
-                    // Go through the memory buffer item by item and copy the items into the managed array
-                    for (int i = 0; i < displayCount; i++)
-                    {
-                        // build a structure in the array slot
-                        displaySettings[i] = new NV_MOSAIC_DISPLAY_SETTING_V2();
-                        // fill the array slot structure NV_MOSAIC_DISPLAY_SETTING_V2 the data from the buffer
-                        displaySettings[i] = (NV_MOSAIC_DISPLAY_SETTING_V2)Marshal.PtrToStructure(currentDisplaySettingsBuffer, typeof(NV_MOSAIC_DISPLAY_SETTING_V2));
-                        // destroy the bit of memory we no longer need
-                        Marshal.DestroyStructure(currentDisplaySettingsBuffer, typeof(NV_MOSAIC_DISPLAY_SETTING_V2));
-                        // advance the buffer forwards to the next object
-                        currentDisplaySettingsBuffer = (IntPtr)((long)currentDisplaySettingsBuffer + Marshal.SizeOf(displaySettings[i]));
-                    }
-                }
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            Marshal.FreeHGlobal(displaySettingsBuffer);
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_EnumDisplayModes(__inout_ecount_part_opt*,* pGridCount NV_MOSAIC_GRID_TOPO* pGridTopologies,__inout NvU32 * 	pGridCount)
-        // NvAPIMosaic_EnumDisplayModes
-        private delegate NVAPI_STATUS Mosaic_EnumDisplayModesDelegateNull(
-            [In] NV_MOSAIC_GRID_TOPO_V2 gridTopology,
-            [In][Out] IntPtr displaySettingsBuffer,
-            [In][Out] ref UInt32 displayCount);
-        private static readonly Mosaic_EnumDisplayModesDelegateNull Mosaic_EnumDisplayModesInternalNull;
-
-        /// <summary>
-        /// Determines the set of available display modes for a given grid topology.
-        /// If displaySettings is NULL, then displayCount will receive the total number of modes that are available.
-        /// If displaySettings is not NULL, then displayCount should point to the number of elements in the pDisplaySettings array. On return, it will contain the number of modes that were actually returned
-        /// </summary>
-        /// <param name="gridTopologiesBuffer"></param>
-        /// <param name="displaySettingsBuffer"></param>
-        /// <param name="displayCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_EnumDisplayModes(NV_MOSAIC_GRID_TOPO_V2 gridTopology, ref UInt32 displayCount)
-        {
-            NVAPI_STATUS status;
-            IntPtr displaySettings = IntPtr.Zero;
-
-            if (Mosaic_EnumDisplayModesInternalNull != null) { status = Mosaic_EnumDisplayModesInternalNull(gridTopology, displaySettings, ref displayCount); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_EnumDisplayGrids(__inout_ecount_part_opt*,* pGridCount NV_MOSAIC_GRID_TOPO* pGridTopologies,__inout NvU32 * 	pGridCount)
-        // NvAPIMosaic_EnumDisplayGrids
-        private delegate NVAPI_STATUS Mosaic_EnumDisplayGridsDelegate(
-            [In][Out] IntPtr GridTopologiesBuffer,
-            [In][Out] ref UInt32 pGridCount);
-        private static readonly Mosaic_EnumDisplayGridsDelegate Mosaic_EnumDisplayGridsInternal;
-
-        /// <summary>
-        /// Enumerates the current active grid topologies. This includes Mosaic, IG, and Panoramic topologies, as well as single displays.
-        /// If pGridTopologies is NULL, then pGridCount will be set to the number of active grid topologies.
-        /// If pGridTopologies is not NULL, then pGridCount contains the maximum number of grid topologies to return. On return, pGridCount will be set to the number of grid topologies that were returned.
-        /// </summary>
-        /// <param name="GridTopologies"></param>
-        /// <param name="GridCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_EnumDisplayGrids(ref NV_MOSAIC_GRID_TOPO_V2[] GridTopologies, ref UInt32 GridCount)
-        {
-            NVAPI_STATUS status;
-
-            // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
-            GridTopologies = new NV_MOSAIC_GRID_TOPO_V2[GridCount];
-            // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr gridTopologiesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)GridCount);
-            // Also set another memory pointer to the same place so that we can do the memory copying item by item
-            // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-            IntPtr currentGridTopologiesBuffer = gridTopologiesBuffer;
-            // Go through the array and copy things from managed code to unmanaged code
-            for (Int32 x = 0; x < (Int32)GridCount; x++)
-            {
-                // Set up the basic structure
-                GridTopologies[x].Displays = new NV_MOSAIC_GRID_TOPO_DISPLAY_V2[(Int32)NVImport.NV_MOSAIC_MAX_DISPLAYS];
-                GridTopologies[x].DisplayCount = GridCount;
-                GridTopologies[x].Version = NVImport.NV_MOSAIC_GRID_TOPO_V2_VER;
-
-                // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                Marshal.StructureToPtr(GridTopologies[x], currentGridTopologiesBuffer, false);
-                // advance the buffer forwards to the next object
-                currentGridTopologiesBuffer = (IntPtr)((long)currentGridTopologiesBuffer + Marshal.SizeOf(GridTopologies[x]));
-            }
-
-            if (Mosaic_EnumDisplayGridsInternal != null)
-            {
-                // Use the unmanaged buffer in the unmanaged C call
-                status = Mosaic_EnumDisplayGridsInternal(gridTopologiesBuffer, ref GridCount);
-
-                if (status == NVAPI_STATUS.NVAPI_OK)
-                {
-                    // If everything worked, then copy the data back from the unmanaged array into the managed array
-                    // So that we can use it in C# land
-                    // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                    currentGridTopologiesBuffer = gridTopologiesBuffer;
-                    // Create a managed array to store the received information within
-                    GridTopologies = new NV_MOSAIC_GRID_TOPO_V2[GridCount];
-                    // Go through the memory buffer item by item and copy the items into the managed array
-                    for (int i = 0; i < GridCount; i++)
-                    {
-                        // build a structure in the array slot
-                        GridTopologies[i] = new NV_MOSAIC_GRID_TOPO_V2();
-                        // fill the array slot structure with the data from the buffer
-                        GridTopologies[i] = (NV_MOSAIC_GRID_TOPO_V2)Marshal.PtrToStructure(currentGridTopologiesBuffer, typeof(NV_MOSAIC_GRID_TOPO_V2));
-                        // destroy the bit of memory we no longer need
-                        Marshal.DestroyStructure(currentGridTopologiesBuffer, typeof(NV_MOSAIC_GRID_TOPO_V2));
-                        // advance the buffer forwards to the next object
-                        currentGridTopologiesBuffer = (IntPtr)((long)currentGridTopologiesBuffer + Marshal.SizeOf(GridTopologies[i]));
-                    }
-                }
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            Marshal.FreeHGlobal(gridTopologiesBuffer);
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_EnumDisplayGrids(__inout_ecount_part_opt*,* pGridCount NV_MOSAIC_GRID_TOPO* pGridTopologies,__inout NvU32 * 	pGridCount)
-        // NvAPIMosaic_EnumDisplayGrids
-        private delegate NVAPI_STATUS Mosaic_EnumDisplayGridsDelegateNull(
-            [In][Out] IntPtr GridTopologiesBuffer,
-            [In][Out] ref UInt32 GridCount);
-        private static readonly Mosaic_EnumDisplayGridsDelegateNull Mosaic_EnumDisplayGridsInternalNull;
-
-        /// <summary>
-        ///  Enumerates the current active grid topologies. This includes Mosaic, IG, and Panoramic topologies, as well as single displays.
-        ///  If pGridTopologies is NULL, then pGridCount will be set to the number of active grid topologies.
-        ///  If pGridTopologies is not NULL, then pGridCount contains the maximum number of grid topologies to return. On return, pGridCount will be set to the number of grid topologies that were returned.
-        /// </summary>
-        /// <param name="pGridCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_EnumDisplayGrids(ref UInt32 pGridCount)
-        {
-            NVAPI_STATUS status;
-            IntPtr pGridTopologies = IntPtr.Zero;
-
-            if (Mosaic_EnumDisplayGridsInternalNull != null) { status = Mosaic_EnumDisplayGridsInternalNull(pGridTopologies, ref pGridCount); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_ValidateDisplayGrids(__in NvU32  setTopoFlags, __in_ecount(gridCount) NV_MOSAIC_GRID_TOPO * 	pGridTopologies, __inout_ecount_full(gridCount) NV_MOSAIC_DISPLAY_TOPO_STATUS * 	pTopoStatus, __in NvU32  gridCount )
-        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate NVAPI_STATUS Mosaic_ValidateDisplayGridsDelegate(
-            [In] NV_MOSAIC_SETDISPLAYTOPO_FLAGS setTopoFlags,
-            [In] IntPtr GridTopologiesBuffer,
-            [In][Out] IntPtr TopoStatusesBuffer,
-            [In] UInt32 GridCount
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_GetEyeSeparation>()(
+                handle,
+                out var eyeSeparation
             );
-        private static readonly Mosaic_ValidateDisplayGridsDelegate Mosaic_ValidateDisplayGridsInternal;
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return eyeSeparation;
+        }
 
         /// <summary>
-        /// Determines if a list of grid topologies is valid. It will choose an SLI configuration in the same way that NvAPI_Mosaic_SetDisplayGrids() does.
-        /// On return, each element in the pTopoStatus array will contain any errors or warnings about each grid topology.If any error flags are set, then the topology is not valid.If any warning flags are set, then the topology is valid, but sub-optimal.
-        /// If the ALLOW_INVALID flag is set, then it will continue to validate the grids even if no SLI configuration will allow all of the grids.In this case, a grid grid with no matching GPU topology will have the error flags NO_GPU_TOPOLOGY or NOT_SUPPORTED set.
-        /// If the ALLOW_INVALID flag is not set and no matching SLI configuration is found, then it will skip the rest of the validation and return NVAPI_NO_ACTIVE_SLI_TOPOLOGY.
+        ///     This API gets the current frustum adjust mode value.
         /// </summary>
-        /// <param name="setTopoFlags"></param>
-        /// <param name="gridTopologies"></param>
-        /// <param name="topoStatuses"></param>
-        /// <param name="gridCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_ValidateDisplayGrids(NV_MOSAIC_SETDISPLAYTOPO_FLAGS setTopoFlags, NV_MOSAIC_GRID_TOPO_V2[] gridTopologies, ref NV_MOSAIC_DISPLAY_TOPO_STATUS_V1[] topoStatuses, UInt32 gridCount)
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <returns>Current frustum value</returns>
+        public static StereoFrustumAdjustMode GetFrustumAdjustMode(StereoHandle handle)
         {
-            // Warning! - This function still has some errors with it. It errors with an NVAPI_INCOMPATIBLE_STRUCT_VERSION error. Still needs troubleshooting.
-            NVAPI_STATUS status;
-            // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr gridTopologiesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)gridCount);
-            // Also set another memory pointer to the same place so that we can do the memory copying item by item
-            // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-            IntPtr currentGridTopologiesBuffer = gridTopologiesBuffer;
-            // Go through the array and copy things from managed code to unmanaged code
-            for (Int32 x = 0; x < (Int32)gridCount; x++)
-            {
-                // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                Marshal.StructureToPtr(gridTopologies[x], currentGridTopologiesBuffer, false);
-                // advance the buffer forwards to the next object
-                currentGridTopologiesBuffer = (IntPtr)((long)currentGridTopologiesBuffer + Marshal.SizeOf(gridTopologies[x]));
-            }
-            // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
-            topoStatuses = new NV_MOSAIC_DISPLAY_TOPO_STATUS_V1[gridCount];
-            // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr topoStatusesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1)) * (int)gridCount);
-            // Also set another memory pointer to the same place so that we can do the memory copying item by item
-            // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-            IntPtr currentTopoStatusesBuffer = topoStatusesBuffer;
-            // Go through the array and copy things from managed code to unmanaged code
-            for (Int32 x = 0; x < (Int32)gridCount; x++)
-            {
-                // Set up the basic structure
-                topoStatuses[x].Displays = new NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY[(Int32)NVImport.NV_MAX_DISPLAYS];
-                //topoStatuses[x].DisplayCount = gridCount;
-                topoStatuses[x].Version = NVImport.NV_MOSAIC_DISPLAY_TOPO_STATUS_V1_VER;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_GetFrustumAdjustMode>()(
+                handle,
+                out var frustumAdjustMode
+            );
 
-                // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                Marshal.StructureToPtr(topoStatuses[x], currentTopoStatusesBuffer, false);
-                // advance the buffer forwards to the next object
-                currentTopoStatusesBuffer = (IntPtr)((long)currentTopoStatusesBuffer + Marshal.SizeOf(topoStatuses[x]));
-            }
-            if (Mosaic_ValidateDisplayGridsInternal != null)
+            if (status != Status.Ok)
             {
-                // Use the unmanaged buffer in the unmanaged C call
-                status = Mosaic_ValidateDisplayGridsInternal(setTopoFlags, gridTopologiesBuffer, topoStatusesBuffer, gridCount);
-                if (status == NVAPI_STATUS.NVAPI_OK)
+                throw new NVIDIAApiException(status);
+            }
+
+            return frustumAdjustMode;
+        }
+
+        /// <summary>
+        ///     This API gets current separation value (in percents).
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <returns>Current separation percentage</returns>
+        public static float GetSeparation(StereoHandle handle)
+        {
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_GetSeparation>()(
+                handle,
+                out var separationPercentage
+            );
+
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return separationPercentage;
+        }
+
+        /// <summary>
+        ///     This API checks what kind of stereo support is currently supported on a particular display.
+        ///     If the the display is prohibited from showing stereo (e.g. secondary in a multi-mon setup), we will
+        ///     return 0 for all stereo modes (full screen exclusive, automatic windowed, persistent windowed).
+        ///     Otherwise, we will check which stereo mode is supported. On 120Hz display, this will be what
+        ///     the user chooses in control panel. On HDMI 1.4 display, persistent windowed mode is always assumed to be
+        ///     supported. Note that this function does not check if the CURRENT RESOLUTION/REFRESH RATE can support
+        ///     stereo. For HDMI 1.4, it is the application's responsibility to change the resolution/refresh rate to one that is
+        ///     3D compatible. For 120Hz, the driver will ALWAYS force 120Hz anyway.
+        /// </summary>
+        /// <param name="monitorHandle">Monitor that app is going to run on</param>
+        /// <returns>An instance of <see cref="StereoCapabilitiesV1" /> structure.</returns>
+        public static StereoCapabilitiesV1 GetStereoSupport(IntPtr monitorHandle)
+        {
+            var instance = typeof(StereoCapabilitiesV1).Instantiate<StereoCapabilitiesV1>();
+
+            using (var reference = ValueTypeReference.FromValueType(instance))
+            {
+                var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_GetStereoSupport>()(
+                    monitorHandle,
+                    reference
+                );
+
+                if (status != Status.Ok)
                 {
-                    // If everything worked, then copy the data back from the unmanaged array into the managed array
-                    // So that we can use it in C# land
-                    // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                    currentTopoStatusesBuffer = topoStatusesBuffer;
-                    // Create a managed array to store the received information within
-                    topoStatuses = new NV_MOSAIC_DISPLAY_TOPO_STATUS_V1[gridCount];
-                    // Go through the memory buffer item by item and copy the items into the managed array
-                    for (int i = 0; i < gridCount; i++)
-                    {
-                        // build a structure in the array slot
-                        topoStatuses[i] = new NV_MOSAIC_DISPLAY_TOPO_STATUS_V1();
-                        // fill the array slot structure with the data from the buffer
-                        topoStatuses[i] = (NV_MOSAIC_DISPLAY_TOPO_STATUS_V1)Marshal.PtrToStructure(currentTopoStatusesBuffer, typeof(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1));
-                        // destroy the bit of memory we no longer need
-                        Marshal.DestroyStructure(currentTopoStatusesBuffer, typeof(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1));
-                        // advance the buffer forwards to the next object
-                        currentTopoStatusesBuffer = (IntPtr)((long)currentTopoStatusesBuffer + Marshal.SizeOf(topoStatuses[i]));
-                    }
+                    throw new NVIDIAApiException(status);
                 }
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
 
-            Marshal.FreeHGlobal(gridTopologiesBuffer);
-            Marshal.FreeHGlobal(topoStatusesBuffer);
-
-            return status;
+                return reference.ToValueType<StereoCapabilitiesV1>(typeof(StereoCapabilitiesV1));
+            }
         }
 
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_SetDisplayGrids	(	__in_ecount(gridCount) NV_MOSAIC_GRID_TOPO * 	pGridTopologies, __in NvU32  gridCount, __in NvU32  setTopoFlags )	
-        private delegate NVAPI_STATUS Mosaic_SetDisplayGridsDelegate(
-            [In] IntPtr GridTopologies,
-            [In] UInt32 GridCount,
-            [In] NV_MOSAIC_SETDISPLAYTOPO_FLAGS setTopoFlags);
-        private static readonly Mosaic_SetDisplayGridsDelegate Mosaic_SetDisplayGridsInternal;
-
         /// <summary>
-        ///  Sets a new display topology, replacing any existing topologies that use the same displays.
-        ///  This function will look for an SLI configuration that will allow the display topology to work.
-        ///  To revert to a single display, specify that display as a 1x1 grid.
+        ///     This API gets surface creation mode for this device interface.
         /// </summary>
-        /// <param name="pGridTopologies"></param>
-        /// <param name="pGridCount"></param>
-        /// <param name="setTopoFlags"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_SetDisplayGrids(NV_MOSAIC_GRID_TOPO_V2[] GridTopologies, UInt32 GridCount, NV_MOSAIC_SETDISPLAYTOPO_FLAGS setTopoFlags)
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <returns>The current creation mode for this device interface.</returns>
+        public static StereoSurfaceCreateMode GetSurfaceCreationMode(StereoHandle handle)
         {
-            NVAPI_STATUS status;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_GetSurfaceCreationMode>()(
+                handle,
+                out var surfaceCreateMode
+            );
 
-            // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr gridTopologiesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)GridCount);
-            // Also set another memory pointer to the same place so that we can do the memory copying item by item
-            // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-            IntPtr currentGridTopologiesBuffer = gridTopologiesBuffer;
-            // Go through the array and copy things from managed code to unmanaged code
-            for (Int32 x = 0; x < (Int32)GridCount; x++)
+            if (status != Status.Ok)
             {
-                GridTopologies[x].Version = NVImport.NV_MOSAIC_GRID_TOPO_V2_VER;
-
-                // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                Marshal.StructureToPtr(GridTopologies[x], currentGridTopologiesBuffer, false);
-                // advance the buffer forwards to the next object
-                currentGridTopologiesBuffer = (IntPtr)((long)currentGridTopologiesBuffer + Marshal.SizeOf(GridTopologies[x]));
+                throw new NVIDIAApiException(status);
             }
 
-            if (Mosaic_SetDisplayGridsInternal != null)
-            {
-
-                // Use the unmanaged buffer in the unmanaged C call
-                status = Mosaic_SetDisplayGridsInternal(gridTopologiesBuffer, GridCount, setTopoFlags);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            Marshal.FreeHGlobal(gridTopologiesBuffer);
-
-            return status;
+            return surfaceCreateMode;
         }
 
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_GetDisplayViewportsByResolution(NvU32 displayId, NvU32 srcWidth, NvU32 srcHeight, NV_RECT viewports[NV_MOSAIC_MAX_DISPLAYS], NvU8* bezelCorrected )
-        private delegate NVAPI_STATUS Mosaic_GetDisplayViewportsByResolutionDelegate(
-            [In] UInt32 displayId,
-            [In] UInt32 srcWidth,
-            [In] UInt32 srcHeight,
-            [In][Out][MarshalAs(UnmanagedType.LPArray, SizeConst = (int)NV_MOSAIC_MAX_DISPLAYS)] NV_RECT[] viewports,
-            [In][Out] ref byte bezelCorrected);
-        private static readonly Mosaic_GetDisplayViewportsByResolutionDelegate Mosaic_GetDisplayViewportsByResolutionInternal;
-
         /// <summary>
-        ///  This API returns information for the current Mosaic topology. This includes topology, display settings, and overlap values.
-        ///  You can call NvAPI_Mosaic_GetTopoGroup() with the topology if you require more information. If there isn't a current topology, then pTopoBrief->topo will be NV_MOSAIC_TOPO_NONE.
+        ///     This API increases convergence for given the device interface (just like the Ctrl+F6 hot-key).
         /// </summary>
-        /// <param name="pTopoBrief"></param>
-        /// <param name="pDisplaySetting"></param>
-        /// <param name="pOverlapX"></param>
-        /// <param name="pOverlapY"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_GetDisplayViewportsByResolution(UInt32 displayId, UInt32 srcWidth, UInt32 srcHeight, ref NV_RECT[] viewports, ref byte bezelCorrected)
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        public static void IncreaseConvergence(StereoHandle handle)
         {
-            NVAPI_STATUS status;
-            viewports = new NV_RECT[NV_MOSAIC_MAX_DISPLAYS];
-            bezelCorrected = 0;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_IncreaseConvergence>()(
+                handle
+            );
 
-            if (Mosaic_GetDisplayViewportsByResolutionInternal != null) { status = Mosaic_GetDisplayViewportsByResolutionInternal(displayId, srcWidth, srcHeight, viewports, ref bezelCorrected); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        // NVAPI_INTERFACE NvAPI_Mosaic_GetSupportedTopoInfo(NV_MOSAIC_SUPPORTED_TOPO_INFO* pSupportedTopoInfo, NV_MOSAIC_TOPO_TYPE type )
-        // NvAPI_Mosaic_GetSupportedTopoInfo
-        private delegate NVAPI_STATUS Mosaic_GetSupportedTopoInfoDelegate(
-            [In][Out] ref NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 pSupportedTopoInfo,
-            [In] NV_MOSAIC_TOPO_TYPE TopoType);
-        private static readonly Mosaic_GetSupportedTopoInfoDelegate Mosaic_GetSupportedTopoInfoInternal;
-
         /// <summary>
-        ///  This API returns information on the topologies and display resolutions supported by Mosaic mode.
-        ///  NOTE: Not all topologies returned can be set immediately.See 'OUT' Notes below.
-        ///  Once you get the list of supported topologies, you can call NvAPI_Mosaic_GetTopoGroup() with one of the Mosaic topologies if you need more information about it.
-        ///  'IN' Notes: pSupportedTopoInfo->version must be set before calling this function.If the specified version is not supported by this implementation, an error will be returned (NVAPI_INCOMPATIBLE_STRUCT_VERSION).
-        ///  'OUT' Notes: Some of the topologies returned might not be valid for one reason or another. It could be due to mismatched or missing displays.
-        ///  It could also be because the required number of GPUs is not found. At a high level, you can see if the topology is valid and can be enabled by looking at the pSupportedTopoInfo->topoBriefs[xxx].isPossible flag. 
-        ///  If this is true, the topology can be enabled.If it is false, you can find out why it cannot be enabled by getting the details of the topology via NvAPI_Mosaic_GetTopoGroup(). 
-        ///  From there, look at the validityMask of the individual topologies. The bits can be tested against the NV_MOSAIC_TOPO_VALIDITY_* bits.
-        ///  It is possible for this function to return NVAPI_OK with no topologies listed in the return structure.If this is the case, it means that the current hardware DOES support Mosaic, 
-        ///  but with the given configuration no valid topologies were found. This most likely means that SLI was not enabled for the hardware. Once enabled, you should see valid topologies returned from this function.
+        ///     This API increases separation for the given device interface (just like the Ctrl+F4 hot-key).
         /// </summary>
-        /// <param name="pSupportedTopoInfo"></param>
-        /// <param name="TopoType"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_GetSupportedTopoInfo(ref NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 pSupportedTopoInfo, NV_MOSAIC_TOPO_TYPE TopoType)
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        public static void IncreaseSeparation(StereoHandle handle)
         {
-            NVAPI_STATUS status;
-            //pSupportedTopoInfo = new NV_MOSAIC_SUPPORTED_TOPO_INFO_V2();
-            pSupportedTopoInfo.Version = NVImport.NV_MOSAIC_SUPPORTED_TOPO_INFO_V2_VER;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_IncreaseSeparation>()(
+                handle
+            );
 
-            if (Mosaic_GetSupportedTopoInfoInternal != null) { status = Mosaic_GetSupportedTopoInfoInternal(ref pSupportedTopoInfo, TopoType); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-
-
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        // NVAPI_INTERFACE NvAPI_Mosaic_GetOverlapLimits(NV_MOSAIC_TOPO_BRIEF *pTopoBrief, NV_MOSAIC_DISPLAY_SETTING *pDisplaySetting, NvS32 *pMinOverlapX, NvS32 *pMaxOverlapX, NvS32 *pMinOverlapY, NvS32 *pMaxOverlapY);
-        private delegate NVAPI_STATUS Mosaic_GetOverlapLimitsDelegate(
-            [In] ref NV_MOSAIC_TOPO_BRIEF topoBrief,
-            [In] ref NV_MOSAIC_DISPLAY_SETTING_V2 displaySetting,
-            [Out] out Int32 minOverlapX,
-            [Out] out Int32 maxOverlapX,
-            [Out] out Int32 minOverlapY,
-            [Out] out Int32 maxOverlapY);
-        private static readonly Mosaic_GetOverlapLimitsDelegate Mosaic_GetOverlapLimitsInternal;
         /// <summary>
-        ///   This API returns the X and Y overlap limits required if the given Mosaic topology and display settings are to be used.
+        ///     This API allows an application to enable stereo viewing, without the need of a GUID/Key pair
+        ///     This API cannot be used to enable stereo viewing on 3DTV.
+        ///     HOW TO USE:    Call this function immediately after device creation, then follow with a reset. \n
+        ///     Very generically:
+        ///     Create Device->Create Stereo Handle->InitActivation->Reset Device
         /// </summary>
-        /// <param name="topoBrief"></param>
-        /// <param name="displaySetting"></param>
-        /// <param name="minOverlapX"></param>
-        /// <param name="maxOverlapX"></param>
-        /// <param name="minOverlapY"></param>
-        /// <param name="maxOverlapY"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_GetOverlapLimits(NV_MOSAIC_TOPO_BRIEF topoBrief, NV_MOSAIC_DISPLAY_SETTING_V2 displaySetting, out Int32 minOverlapX, out Int32 maxOverlapX, out Int32 minOverlapY, out Int32 maxOverlapY)
+        /// <param name="handle">Stereo handle corresponding to the device interface.</param>
+        /// <param name="activationFlag">Flags to enable or disable delayed activation.</param>
+        public static void InitActivation(StereoHandle handle, StereoActivationFlag activationFlag)
         {
-            NVAPI_STATUS status;
-            minOverlapX = 0;
-            maxOverlapX = 0;
-            minOverlapY = 0;
-            maxOverlapY = 0;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_InitActivation>()(
+                handle,
+                activationFlag
+            );
 
-            if (Mosaic_GetOverlapLimitsInternal != null) { status = Mosaic_GetOverlapLimitsInternal(ref topoBrief, ref displaySetting, out minOverlapX, out maxOverlapX, out minOverlapY, out maxOverlapY); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        // NVAPI_INTERFACE NvAPI_Mosaic_EnableCurrentTopo(NvU32 enable)	
-        private delegate NVAPI_STATUS Mosaic_EnableCurrentTopoDelegate(
-            [In] UInt32 enable);
-        private static readonly Mosaic_EnableCurrentTopoDelegate Mosaic_EnableCurrentTopoInternal;
-
         /// <summary>
-        ///  This API enables or disables the current Mosaic topology based on the setting of the incoming 'enable' parameter.
-        ///  An "enable" setting enables the current(previously set) Mosaic topology.Note that when the current Mosaic topology is retrieved, it must have an isPossible value of 1 or an error will occur.
-        ///  A "disable" setting disables the current Mosaic topology. The topology information will persist, even across reboots.To re-enable the Mosaic topology, call this function again with the enable parameter set to 1.
+        ///     This API checks if stereo is activated for the given device interface.
         /// </summary>
-        /// <param name="enable"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_EnableCurrentTopo(UInt32 enable)
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <returns>Address where result of the inquiry will be placed.</returns>
+        public static bool IsStereoActivated(StereoHandle handle)
         {
-            NVAPI_STATUS status;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_IsActivated>()(
+                handle,
+                out var isStereoActive
+            );
 
-            if (Mosaic_EnableCurrentTopoInternal != null) { status = Mosaic_EnableCurrentTopoInternal(enable); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
 
-            return status;
+            return isStereoActive > 0;
         }
 
-        // NVAPI_INTERFACE NvAPI_Mosaic_SetCurrentTopo ( NV_MOSAIC_TOPO_BRIEF * pTopoBrief, NV_MOSAIC_DISPLAY_SETTING* pDisplaySetting, NvS32 overlapX, NvS32 overlapY, NvU32 enable)	
-        // NvAPI_Mosaic_SetCurrentTopo
-        private delegate NVAPI_STATUS Mosaic_SetCurrentTopoDelegate(
-            [In] NV_MOSAIC_TOPO_BRIEF topoBrief,
-            [In] NV_MOSAIC_DISPLAY_SETTING_V2 displaySetting,
-            [In] Int32 overlapX,
-            [In] Int32 overlapY,
-            [In] UInt32 enable);
-        private static readonly Mosaic_SetCurrentTopoDelegate Mosaic_SetCurrentTopoInternal;
-
         /// <summary>
-        ///  This API sets the Mosaic topology and performs a mode switch using the given display settings.
-        ///  If NVAPI_OK is returned, the current Mosaic topology was set correctly. Any other status returned means the topology was not set, and remains what it was before this function was called.
+        ///     This API checks if stereo mode is enabled in the registry.
         /// </summary>
-        /// <param name="topoBrief"></param>
-        /// <param name="displaySetting"></param>
-        /// <param name="overlapX"></param>
-        /// <param name="overlapY"></param>
-        /// <param name="enable"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_SetCurrentTopo(NV_MOSAIC_TOPO_BRIEF topoBrief, NV_MOSAIC_DISPLAY_SETTING_V2 displaySetting, Int32 overlapX, Int32 overlapY, UInt32 enable)
+        /// <returns>true if the stereo is enable; otherwise false</returns>
+        public static bool IsStereoEnabled()
         {
-            NVAPI_STATUS status;
-            //topoBrief.Version = NVImport.NV_MOSAIC_TOPO_BRIEF_VER;
-            //displaySetting.Version = NVImport.NV_MOSAIC_DISPLAY_SETTING_V2_VER;
-            // Set enable to false within the version as we want to enable it now
-            // This is needed as the saved display topology object was made when the topology was enabled :)
-            //topoBrief.Enabled = 0;
-            if (Mosaic_SetCurrentTopoInternal != null) { status = Mosaic_SetCurrentTopoInternal(topoBrief, displaySetting, overlapX, overlapY, enable); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_IsEnabled>()(
+                out var isEnable
+            );
 
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
+
+            return isEnable > 0;
         }
 
-
-        // NVAPI_INTERFACE NvAPI_Mosaic_GetCurrentTopo(NV_MOSAIC_TOPO_BRIEF* pTopoBrief, NV_MOSAIC_DISPLAY_SETTING* pDisplaySetting, NvS32* pOverlapX, NvS32* pOverlapY);
-        private delegate NVAPI_STATUS Mosaic_GetCurrentTopoDelegate(
-            [In][Out] ref NV_MOSAIC_TOPO_BRIEF pTopoBrief,
-            [In][Out] ref NV_MOSAIC_DISPLAY_SETTING_V2 pDisplaySetting,
-            [Out] out Int32 pOverlapX,
-            [Out] out Int32 pOverlapY);
-        private static readonly Mosaic_GetCurrentTopoDelegate Mosaic_GetCurrentTopoInternal;
         /// <summary>
-        ///  This API returns information for the current Mosaic topology. This includes topology, display settings, and overlap values.
-        ///  You can call NvAPI_Mosaic_GetTopoGroup() with the topology if you require more information. If there isn't a current topology, then pTopoBrief->topo will be NV_MOSAIC_TOPO_NONE.
+        ///     This API returns availability of windowed mode stereo
         /// </summary>
-        /// <param name="pTopoBrief"></param>
-        /// <param name="pDisplaySetting"></param>
-        /// <param name="pOverlapX"></param>
-        /// <param name="pOverlapY"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_GetCurrentTopo(ref NV_MOSAIC_TOPO_BRIEF pTopoBrief, ref NV_MOSAIC_DISPLAY_SETTING_V2 pDisplaySetting, out Int32 pOverlapX, out Int32 pOverlapY)
+        /// <returns>true if windowed mode is supported; otherwise false</returns>
+        public static bool IsWindowedModeSupported()
         {
-            NVAPI_STATUS status;
-            pOverlapX = 0;
-            pOverlapY = 0;
-            pTopoBrief = new NV_MOSAIC_TOPO_BRIEF();
-            pTopoBrief.Version = NVImport.NV_MOSAIC_TOPO_BRIEF_VER;
-            pDisplaySetting = new NV_MOSAIC_DISPLAY_SETTING_V2();
-            pDisplaySetting.Version = NVImport.NV_MOSAIC_DISPLAY_SETTING_V2_VER;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_IsWindowedModeSupported>()(
+                out var supported
+            );
 
-            if (Mosaic_GetCurrentTopoInternal != null) { status = Mosaic_GetCurrentTopoInternal(ref pTopoBrief, ref pDisplaySetting, out pOverlapX, out pOverlapY); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
 
-            return status;
+            return supported > 0;
         }
 
-        // NVAPI_INTERFACE NvAPI_Mosaic_GetTopoGroup(NV_MOSAIC_TOPO_BRIEF* pTopoBrief, NV_MOSAIC_TOPO_GROUP* pTopoGroup)
-        private delegate NVAPI_STATUS Mosaic_GetTopoGroupDelegate(
-            [In] ref NV_MOSAIC_TOPO_BRIEF pTopoBrief,
-            [In][Out] ref NV_MOSAIC_TOPO_GROUP pTopoGroup);
-        private static readonly Mosaic_GetTopoGroupDelegate Mosaic_GetTopoGroupInternal;
-
         /// <summary>
-        ///  This API returns information for the current Mosaic topology. This includes topology, display settings, and overlap values.
-        ///  You can call NvAPI_Mosaic_GetTopoGroup() with the topology if you require more information. If there isn't a current topology, then pTopoBrief->topo will be NV_MOSAIC_TOPO_NONE.
+        ///     This API turns on/off reverse stereo blit.
+        ///     After reversed stereo blit control is turned on, blits from the stereo surface will
+        ///     produce the right-eye image in the left side of the destination surface and the left-eye
+        ///     image in the right side of the destination surface.
+        ///     In DirectX 9, the destination surface must be created as the render target, and StretchRect must be used.
+        ///     Conditions:
+        ///     - DstWidth == 2*SrcWidth
+        ///     - DstHeight == SrcHeight
+        ///     - Src surface is the stereo surface.
+        ///     - SrcRect must be {0,0,SrcWidth,SrcHeight}
+        ///     - DstRect must be {0,0,DstWidth,DstHeight}
+        ///     In DirectX 10, ResourceCopyRegion must be used.
+        ///     Conditions:
+        ///     - DstWidth == 2*SrcWidth
+        ///     - DstHeight == SrcHeight
+        ///     - dstX == 0,
+        ///     - dstY == 0,
+        ///     - dstZ == 0,
+        ///     - SrcBox: left=top=front==0; right==SrcWidth; bottom==SrcHeight; back==1;
         /// </summary>
-        /// <param name="pTopoBrief"></param>
-        /// <param name="pTopoGroup"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Mosaic_GetTopoGroup(ref NV_MOSAIC_TOPO_BRIEF pTopoBrief, ref NV_MOSAIC_TOPO_GROUP pTopoGroup)
+        /// <param name="handle">Stereo handle corresponding to the device interface.</param>
+        /// <param name="turnOn">A boolean value to enable or disable blit control</param>
+        public static void ReverseStereoBlitControl(StereoHandle handle, bool turnOn)
         {
-            NVAPI_STATUS status;
-            pTopoGroup = new NV_MOSAIC_TOPO_GROUP();
-            pTopoGroup.Brief = pTopoBrief;
-            pTopoGroup.Topos = new NV_MOSAIC_TOPO_DETAILS[NV_MOSAIC_MAX_TOPO_PER_TOPO_GROUP];
-            for (Int32 i = 0; i < NV_MOSAIC_MAX_TOPO_PER_TOPO_GROUP; i++)
-            {
-                pTopoGroup.Topos[i].GPULayout1D = new NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[NVAPI_MAX_MOSAIC_DISPLAY_ROWS * NVAPI_MAX_MOSAIC_DISPLAY_COLUMNS];
-                pTopoGroup.Topos[i].Version = NVImport.NV_MOSAIC_TOPO_DETAILS_VER;
-            }
-            pTopoGroup.Version = NVImport.NV_MOSAIC_TOPO_GROUP_VER;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_ReverseStereoBlitControl>()(
+                handle,
+                (byte)(turnOn ? 1 : 0)
+            );
 
-
-            if (Mosaic_GetTopoGroupInternal != null)
+            if (status != Status.Ok)
             {
-                status = Mosaic_GetTopoGroupInternal(ref pTopoBrief, ref pTopoGroup);
+                throw new NVIDIAApiException(status);
             }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
         }
 
-        //NVAPI_INTERFACE 	NvAPI_DISP_GetAdaptiveSyncData (__in NvU32 displayId, __inout NV_GET_ADAPTIVE_SYNC_DATA *pAdaptiveSyncData)
-        private delegate NVAPI_STATUS DISP_GetAdaptiveSyncDataDelegate(
-            [In] UInt32 displayId,
-            [In, Out] ref NV_GET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData);
-        private static readonly DISP_GetAdaptiveSyncDataDelegate DISP_GetAdaptiveSyncDataInternal;
         /// <summary>
-        ///  This function is used to get data for the Adaptive Sync Display.
+        ///     This API sets the back buffer to left or right in Direct stereo mode.
         /// </summary>
-        /// <param name="displayId"></param>
-        /// <param name="adaptiveSyncData"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_GetAdaptiveSyncData(UInt32 displayId, ref NV_GET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData)
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <param name="activeEye">Defines active eye in Direct stereo mode</param>
+        public static void SetActiveEye(StereoHandle handle, StereoActiveEye activeEye)
         {
-            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_ERROR;
-            if (DISP_GetAdaptiveSyncDataInternal != null) { status = DISP_GetAdaptiveSyncDataInternal(displayId, ref adaptiveSyncData); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetActiveEye>()(
+                handle,
+                activeEye
+            );
 
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        //NVAPI_INTERFACE 	NvAPI_DISP_SetAdaptiveSyncData (__in NvU32 displayId, __in NV_SET_ADAPTIVE_SYNC_DATA *pAdaptiveSyncData)
-        private delegate NVAPI_STATUS DISP_SetAdaptiveSyncDataDelegate(
-            [In] UInt32 displayId,
-            [In] ref NV_SET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData);
-        private static readonly DISP_SetAdaptiveSyncDataDelegate DISP_SetAdaptiveSyncDataInternal;
         /// <summary>
-        ///  This function is used to set data for Adaptive Sync Display.
+        ///     This API sets the given parameter value under the application's registry key.
+        ///     If the value does not exist under the application's registry key, the value will be created under the key.
         /// </summary>
-        /// <param name="displayId"></param>
-        /// <param name="adaptiveSyncData"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_SetAdaptiveSyncData(UInt32 displayId, ref NV_SET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData)
+        /// <param name="registryProfileType">The type of profile the application wants to access.</param>
+        /// <param name="registryId">ID of the value that is being set.</param>
+        /// <param name="value">Value that is being set.</param>
+        public static void SetConfigurationProfileValue(
+            StereoRegistryProfileType registryProfileType,
+            StereoRegistryIdentification registryId,
+            float value)
         {
-            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_ERROR;
-            if (DISP_SetAdaptiveSyncDataInternal != null) { status = DISP_SetAdaptiveSyncDataInternal(displayId, ref adaptiveSyncData); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetConfigurationProfileValueFloat>()(
+                registryProfileType,
+                registryId,
+                ref value
+            );
 
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-
-        //NVAPI_INTERFACE NvAPI_DISP_GetGDIPrimaryDisplayId(NvU32* displayId);
-        private delegate NVAPI_STATUS DISP_GetGDIPrimaryDisplayIdDelegate(
-            [Out] out UInt32 displayId);
-        private static readonly DISP_GetGDIPrimaryDisplayIdDelegate DISP_GetGDIPrimaryDisplayIdInternal;
         /// <summary>
-        ///  This API returns the Display ID of the GDI Primary display.
+        ///     This API sets the given parameter value under the application's registry key.
+        ///     If the value does not exist under the application's registry key, the value will be created under the key.
         /// </summary>
-        /// <param name="displayId"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_GetGDIPrimaryDisplayId(out UInt32 displayId)
+        /// <param name="registryProfileType">The type of profile the application wants to access.</param>
+        /// <param name="registryId">ID of the value that is being set.</param>
+        /// <param name="value">Value that is being set.</param>
+        public static void SetConfigurationProfileValue(
+            StereoRegistryProfileType registryProfileType,
+            StereoRegistryIdentification registryId,
+            int value)
         {
-            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_ERROR;
-            displayId = 0;
-            if (DISP_GetGDIPrimaryDisplayIdInternal != null) { status = DISP_GetGDIPrimaryDisplayIdInternal(out displayId); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status =
+                DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetConfigurationProfileValueInteger>()(
+                    registryProfileType,
+                    registryId,
+                    ref value
+                );
 
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        //NVAPI_INTERFACE NvAPI_GPU_GetConnectedDisplayIds(__in NvPhysicalGpuHandle hPhysicalGpu, __inout_ecount_part_opt(* pDisplayIdCount, * pDisplayIdCount) NV_GPU_DISPLAYIDS* pDisplayIds, __inout NvU32* pDisplayIdCount, __in NvU32 flags);
-        private delegate NVAPI_STATUS GPU_GetConnectedDisplayIdsDelegate(
-            [In] PhysicalGpuHandle hPhysicalGpu,
-            [In][Out] IntPtr pDisplayIds,
-            [In][Out] ref UInt32 pDisplayCount,
-            [In] NV_GPU_CONNECTED_IDS_FLAG flags);
-        private static readonly GPU_GetConnectedDisplayIdsDelegate GPU_GetConnectedDisplayIdsInternal;
         /// <summary>
-        //!   DESCRIPTION: Due to space limitation NvAPI_GPU_GetConnectedOutputs can return maximum 32 devices, but
-        //!                this is no longer true for DPMST. NvAPI_GPU_GetConnectedDisplayIds will return all
-        //!                the connected display devices in the form of displayIds for the associated hPhysicalGpu.
-        //!                This function can accept set of flags to request cached, uncached, sli and lid to get the connected devices.
-        //!                Default value for flags will be cached .
-        //! HOW TO USE: 1) for each PhysicalGpu, make a call to get the number of connected displayId's
-        //!                using NvAPI_GPU_GetConnectedDisplayIds by passing the pDisplayIds as NULL
-        //!                On call success:
-        //!             2) If pDisplayIdCount is greater than 0, allocate memory based on pDisplayIdCount. Then make a call NvAPI_GPU_GetConnectedDisplayIds to populate DisplayIds.
-        //!                However, if pDisplayIdCount is 0, do not make this call.
-        /// <param name="hPhysicalGpu">GPU selection</param>
-        /// <param name="pDisplaySetting"></param>
-        /// <param name="pOverlapX"></param>
-        /// <param name="pOverlapY"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetConnectedDisplayIds(PhysicalGpuHandle physicalGpu, ref NV_GPU_DISPLAYIDS_V2[] displayIds, ref UInt32 displayCount, NV_GPU_CONNECTED_IDS_FLAG flags)
+        ///     This API sets convergence to the given value.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <param name="convergence">New value for convergence.</param>
+        public static void SetConvergence(StereoHandle handle, float convergence)
         {
-            NVAPI_STATUS status;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetConvergence>()(
+                handle,
+                convergence
+            );
 
-            // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
-            displayIds = new NV_GPU_DISPLAYIDS_V2[displayCount];
-            // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr displayIdBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_GPU_DISPLAYIDS_V2)) * (int)displayCount);
-            // Also set another memory pointer to the same place so that we can do the memory copying item by item
-            // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-            IntPtr currentDisplayIdBuffer = displayIdBuffer;
-            // Go through the array and copy things from managed code to unmanaged code
-            for (Int32 x = 0; x < (Int32)displayCount; x++)
+            if (status != Status.Ok)
             {
-                // Set up the basic structure
-                displayIds[x].Version = NVImport.NV_GPU_DISPLAYIDS_V2_VER;
-
-                // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                Marshal.StructureToPtr(displayIds[x], currentDisplayIdBuffer, false);
-                // advance the buffer forwards to the next object
-                currentDisplayIdBuffer = (IntPtr)((long)currentDisplayIdBuffer + Marshal.SizeOf(displayIds[x]));
+                throw new NVIDIAApiException(status);
             }
-
-            if (GPU_GetConnectedDisplayIdsInternal != null)
-            {
-                status = GPU_GetConnectedDisplayIdsInternal(physicalGpu, displayIdBuffer, ref displayCount, flags);
-                if (status == NVAPI_STATUS.NVAPI_OK)
-                {
-                    // If everything worked, then copy the data back from the unmanaged array into the managed array
-                    // So that we can use it in C# land
-                    // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                    currentDisplayIdBuffer = displayIdBuffer;
-                    // Create a managed array to store the received information within
-                    displayIds = new NV_GPU_DISPLAYIDS_V2[displayCount];
-                    // Go through the memory buffer item by item and copy the items into the managed array
-                    for (int i = 0; i < displayCount; i++)
-                    {
-                        // build a structure in the array slot
-                        displayIds[i] = new NV_GPU_DISPLAYIDS_V2();
-                        // fill the array slot structure with the data from the buffer
-                        displayIds[i] = (NV_GPU_DISPLAYIDS_V2)Marshal.PtrToStructure(currentDisplayIdBuffer, typeof(NV_GPU_DISPLAYIDS_V2));
-                        // destroy the bit of memory we no longer need
-                        Marshal.DestroyStructure(currentDisplayIdBuffer, typeof(NV_GPU_DISPLAYIDS_V2));
-                        // advance the buffer forwards to the next object
-                        currentDisplayIdBuffer = (IntPtr)((long)currentDisplayIdBuffer + Marshal.SizeOf(displayIds[i]));
-                    }
-                }
-                // Destroy the unmanaged array so we don't have a memory leak
-                Marshal.FreeHGlobal(displayIdBuffer);
-
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
         }
 
-        //NVAPI_INTERFACE NvAPI_GPU_GetConnectedDisplayIds(__in NvPhysicalGpuHandle hPhysicalGpu, __inout_ecount_part_opt(* pDisplayIdCount, * pDisplayIdCount) NV_GPU_DISPLAYIDS* pDisplayIds, __inout NvU32* pDisplayIdCount, __in NvU32 flags);
-        private delegate NVAPI_STATUS GPU_GetConnectedDisplayIdsDelegateNull(
-            [In] PhysicalGpuHandle hPhysicalGpu,
-            [In] IntPtr pDisplayIds,
-            [In][Out] ref UInt32 pDisplayCount,
-            [In] NV_GPU_CONNECTED_IDS_FLAG flags);
-        private static readonly GPU_GetConnectedDisplayIdsDelegateNull GPU_GetConnectedDisplayIdsInternalNull;
         /// <summary>
-        //!   DESCRIPTION: Due to space limitation NvAPI_GPU_GetConnectedOutputs can return maximum 32 devices, but
-        //!                this is no longer true for DPMST. NvAPI_GPU_GetConnectedDisplayIds will return all
-        //!                the connected display devices in the form of displayIds for the associated hPhysicalGpu.
-        //!                This function can accept set of flags to request cached, uncached, sli and lid to get the connected devices.
-        //!                Default value for flags will be cached .
-        //! HOW TO USE: 1) for each PhysicalGpu, make a call to get the number of connected displayId's
-        //!                using NvAPI_GPU_GetConnectedDisplayIds by passing the pDisplayIds as NULL
-        //!                On call success:
-        //!             2) If pDisplayIdCount is greater than 0, allocate memory based on pDisplayIdCount. Then make a call NvAPI_GPU_GetConnectedDisplayIds to populate DisplayIds.
-        //!                However, if pDisplayIdCount is 0, do not make this call.
-        /// <param name="hPhysicalGpu">GPU selection</param>
-        /// <param name="pDisplaySetting"></param>
-        /// <param name="pOverlapX"></param>
-        /// <param name="pOverlapY"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetConnectedDisplayIds(PhysicalGpuHandle hPhysicalGpu, ref UInt32 pDisplayCount, NV_GPU_CONNECTED_IDS_FLAG flags)
+        ///     This API defines the stereo profile used by the driver in case the application has no associated profile.
+        ///     To take effect, this API must be called before D3D device is created. Calling once a device has been created will
+        ///     not affect the current device.
+        /// </summary>
+        /// <param name="profileName">Default profile name. </param>
+        public static void SetDefaultProfile(string profileName)
         {
-            NVAPI_STATUS status;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetDefaultProfile>()(
+                profileName
+            );
 
-            if (GPU_GetConnectedDisplayIdsInternalNull != null) { status = GPU_GetConnectedDisplayIdsInternalNull(hPhysicalGpu, IntPtr.Zero, ref pDisplayCount, flags); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        //NVAPI_INTERFACE NvAPI_Disp_GetHdrCapabilities(__in NvU32 displayId, __inout NV_HDR_CAPABILITIES *pHdrCapabilities);
-        private delegate NVAPI_STATUS Disp_GetHdrCapabilitiesDelegate(
-            [In] UInt32 displayId,
-            [In][Out] ref NV_HDR_CAPABILITIES_V2 pHdrCapabilities);
-        private static readonly Disp_GetHdrCapabilitiesDelegate Disp_GetHdrCapabilitiesInternal;
         /// <summary>
-        //!  This API gets High Dynamic Range (HDR) capabilities of the display.
-        /// <param name="displayId"></param>
-        /// <param name="pHdrCapabilities"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Disp_GetHdrCapabilities(UInt32 displayId, ref NV_HDR_CAPABILITIES_V2 pHdrCapabilities)
+        ///     This API sets the 3D stereo driver mode: Direct or Automatic
+        /// </summary>
+        /// <param name="driverMode">Defines the 3D stereo driver mode: Direct or Automatic</param>
+        public static void SetDriverMode(StereoDriverMode driverMode)
         {
-            NVAPI_STATUS status;
-            pHdrCapabilities.Version = NVImport.NV_HDR_CAPABILITIES_V2_VER;
-            if (Disp_GetHdrCapabilitiesInternal != null) { status = Disp_GetHdrCapabilitiesInternal(displayId, ref pHdrCapabilities); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetDriverMode>()(
+                driverMode
+            );
 
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-
-        //NVAPI_INTERFACE NvAPI_Disp_HdrColorControl(__in NvU32 displayId, __inout NV_HDR_COLOR_DATA *pHdrColorData);
-        private delegate NVAPI_STATUS Disp_HdrColorControlDelegate(
-            [In] UInt32 displayId,
-            [In][Out] ref NV_HDR_COLOR_DATA_V2 pHdrColorData);
-        private static readonly Disp_HdrColorControlDelegate Disp_HdrColorControlInternal;
         /// <summary>
-        //!  This API gets High Dynamic Range (HDR) capabilities of the display.
-        /// <param name="displayId"></param>
-        /// <param name="pHdrCapabilities"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Disp_HdrColorControl(UInt32 displayId, ref NV_HDR_COLOR_DATA_V2 pHdrColorData)
+        ///     This API sets the current frustum adjust mode value.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <param name="frustumAdjustMode">New value for frustum adjust mode.</param>
+        public static void SetFrustumAdjustMode(
+            StereoHandle handle,
+            StereoFrustumAdjustMode frustumAdjustMode)
         {
-            NVAPI_STATUS status;
-            pHdrColorData.Version = NVImport.NV_HDR_COLOR_DATA_V2_VER;
-            if (Disp_HdrColorControlInternal != null) { status = Disp_HdrColorControlInternal(displayId, ref pHdrColorData); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetFrustumAdjustMode>()(
+                handle,
+                frustumAdjustMode
+            );
 
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        //NVAPI_INTERFACE NvAPI_Disp_ColorControl(__in NvU32 displayId, __inout NV_HDR_COLOR_DATA *pHdrColorData);
-        private delegate NVAPI_STATUS Disp_ColorControlDelegate(
-            [In] UInt32 displayId,
-            [In][Out] ref NV_COLOR_DATA_V5 colorData);
-        private static readonly Disp_ColorControlDelegate Disp_ColorControlInternal;
         /// <summary>
-        //!  This API gets and sets the color capabilities of the display.
-        /// <param name="displayId"></param>
-        /// <param name="colorData"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_Disp_ColorControl(UInt32 displayId, ref NV_COLOR_DATA_V5 colorData)
+        ///     This API checks if the last draw call was stereoized. It is a very expensive to call and should be used for
+        ///     debugging purpose *only*.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <returns>true if the last draw was a stereo draw; otherwise false</returns>
+        public static bool WasLastDrawStereoizedDebug(StereoHandle handle)
         {
-            NVAPI_STATUS status;
-            colorData.Version = NVImport.NV_COLOR_DATA_V5_VER;
-            if (Disp_ColorControlInternal != null) { status = Disp_ColorControlInternal(displayId, ref colorData); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_Debug_WasLastDrawStereoized>()(
+                handle,
+                out var supported
+            );
 
-            return status;
-        }
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
 
-        //NVAPI_INTERFACE NvAPI_DISP_EnumCustomDisplay(__in NvU32 displayId, __inout NV_HDR_CAPABILITIES *pHdrCapabilities);
-        private delegate NVAPI_STATUS Disp_EnumCustomDisplayDelegate(
-            [In] UInt32 displayId,
-            [In] UInt32 index,
-            [In][Out] ref NV_CUSTOM_DISPLAY_V1 pCustDisp);
-        private static readonly Disp_EnumCustomDisplayDelegate Disp_EnumCustomDisplayInternal;
+            return supported > 0;
+        } // ReSharper disable CommentTypo
         /// <summary>
-        //!  This API gets High Dynamic Range (HDR) capabilities of the display.
-        /// <param name="displayId"></param>
-        /// <param name="pHdrCapabilities"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DISP_EnumCustomDisplay(UInt32 displayId, UInt32 index, ref NV_CUSTOM_DISPLAY_V1 pCustDisp)
+        ///     This API is a Setup notification message that the stereo driver uses to notify the application
+        ///     when the user changes the stereo driver state.
+        ///     When the user changes the stereo state (Activated or Deactivated, separation or conversion)
+        ///     the stereo driver posts a defined message with the following parameters:
+        ///     lParam  is the current conversion. (Actual conversion is *(float*)&amp;lParam )
+        ///     wParam == MAKEWPARAM(l, h) where
+        ///     - l == 0 if stereo is deactivated
+        ///     - l == 1 if stereo is deactivated
+        ///     - h is the current separation. (Actual separation is float(h*100.f/0xFFFF)
+        ///     Call this API with NULL hWnd to prohibit notification.
+        /// </summary>
+        /// <param name="handle">Stereo handle corresponding to the device interface.</param>
+        /// <param name="windowsHandle">
+        ///     Window handle that will be notified when the user changes the stereo driver state. Actual
+        ///     handle must be cast to an <see cref="ulong" />.
+        /// </param>
+        /// <param name="messageId">MessageID of the message that will be posted to window</param>
+        public static void SetNotificationMessage(
+            StereoHandle handle,
+            ulong windowsHandle,
+            ulong messageId)
         {
-            NVAPI_STATUS status;
-            pCustDisp.Version = NVImport.NV_CUSTOM_DISPLAY_V1_VER;
-            pCustDisp.SourcePartition = new NV_VIEWPORTF(0, 0, 1, 1);
-            if (Disp_EnumCustomDisplayInternal != null) { status = Disp_EnumCustomDisplayInternal(displayId, index, ref pCustDisp); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetNotificationMessage>()(
+                handle,
+                windowsHandle,
+                messageId
+            );
 
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        //NVAPI_INTERFACE NvAPI_GPU_GetFullName(NvPhysicalGpuHandle hPhysicalGpu, NvAPI_ShortString szName);
-        private delegate NVAPI_STATUS GPU_GetFullNameDelegate(
-            [In] PhysicalGpuHandle gpuHandle,
-            [In][Out] StringBuilder gpuNameBuffer);
-        private static readonly GPU_GetFullNameDelegate GPU_GetFullNameInternal;
         /// <summary>
-        //!  This API gets High Dynamic Range (HDR) capabilities of the display.
-        /// <param name="displayId"></param>
-        /// <param name="pHdrCapabilities"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetFullName(PhysicalGpuHandle gpuHandle, ref String gpuName)
+        ///     This API sets separation to given percentage.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <param name="separationPercentage">New value for separation percentage.</param>
+        public static void SetSeparation(StereoHandle handle, float separationPercentage)
         {
-            NVAPI_STATUS status;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetSeparation>()(
+                handle,
+                separationPercentage
+            );
 
-            StringBuilder gpuNameBuffer = new StringBuilder((int)NVImport.NV_SHORT_STRING_MAX);
-            //IntPtr gpuNameBuffer = (IntPtr)Marshal.StringToHGlobalAnsi(gpuName);
-
-            if (GPU_GetFullNameInternal != null) { status = GPU_GetFullNameInternal(gpuHandle, gpuNameBuffer); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            // Convert the char array to a string
-            //gpuName = Marshal.PtrToStringAnsi(gpuNameBuffer);
-
-            //Marshal.ZeroFreeGlobalAllocAnsi(gpuNameBuffer);
-            //Marshal.FreeHGlobal(gpuNameBuffer);
-
-            //string gpuName2 = Marshal.PtrToStringAnsi(gpuNameBuffer);
-            gpuName = gpuNameBuffer.ToString();
-
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-        //NVAPI_INTERFACE NvAPI_GPU_GetBoardInfo(NvPhysicalGpuHandle hPhysicalGpu, NV_BOARD_INFO *pBoardInfo);
-        private delegate NVAPI_STATUS GPU_GetBoardInfoDelegate(
-            [In] PhysicalGpuHandle gpuHandle,
-            [In][Out] ref NV_BOARD_INFO_V1 boardInfo);
-        private static readonly GPU_GetBoardInfoDelegate GPU_GetBoardInfoInternal;
         /// <summary>
-        //!  This API Retrieves the Board information (a unique GPU Board Serial Number) stored in the InfoROM.
-        /// <param name="gpuHandle"></param>
-        /// <param name="boardInfo"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetBoardInfo(PhysicalGpuHandle gpuHandle, ref NV_BOARD_INFO_V1 boardInfo)
+        ///     This API sets surface creation mode for this device interface.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        /// <param name="surfaceCreateMode">New surface creation mode for this device interface.</param>
+        public static void SetSurfaceCreationMode(
+            StereoHandle handle,
+            StereoSurfaceCreateMode surfaceCreateMode)
         {
-            NVAPI_STATUS status;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_SetSurfaceCreationMode>()(
+                handle,
+                surfaceCreateMode
+            );
 
-            boardInfo = new NV_BOARD_INFO_V1();
-            boardInfo.BoardNum = new byte[16];
-            boardInfo.Version = NV_BOARD_INFO_V1_VER;
-
-            if (GPU_GetBoardInfoInternal != null) { status = GPU_GetBoardInfoInternal(gpuHandle, ref boardInfo); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
+            if (status != Status.Ok)
+            {
+                throw new NVIDIAApiException(status);
+            }
         }
 
-
-        //NVAPI_INTERFACE NvAPI_GPU_GetBusId(NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pBusId);
-        private delegate NVAPI_STATUS GPU_GetBusIdDelegate(
-            [In] PhysicalGpuHandle gpuHandle,
-            [In][Out] ref UInt32 busId);
-        private static readonly GPU_GetBusIdDelegate GPU_GetBusIdInternal;
         /// <summary>
-        //!  Returns the ID of the bus associated with this GPU.
-        /// <param name="gpuHandle"></param>
-        /// <param name="busId"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetBusId(PhysicalGpuHandle gpuHandle, ref UInt32 busId)
+        ///     This API allows an application to trigger creation of a stereo desktop,
+        ///     in case the creation was stopped on application launch.
+        /// </summary>
+        /// <param name="handle">Stereo handle that corresponds to the device interface.</param>
+        public static void TriggerActivation(StereoHandle handle)
         {
-            NVAPI_STATUS status;
+            var status = DelegateFactory.GetDelegate<StereoDelegates.NvAPI_Stereo_Trigger_Activation>()(
+                handle
+            );
 
-            if (GPU_GetBusIdInternal != null) { status = GPU_GetBusIdInternal(gpuHandle, ref busId); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_GPU_GetBusType(NvPhysicalGpuHandle hPhysicalGpu, NV_GPU_BUS_TYPE* pBusType);
-        private delegate NVAPI_STATUS GPU_GetBusTypeDelegate(
-            [In] PhysicalGpuHandle gpuHandle,
-            [In][Out] ref NV_GPU_BUS_TYPE busType);
-        private static readonly GPU_GetBusTypeDelegate GPU_GetBusTypeInternal;
-        /// <summary>
-        //!  This function returns the type of bus associated with this GPU.
-        /// <param name="gpuHandle"></param>
-        /// <param name="busId"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetBusType(PhysicalGpuHandle gpuHandle, ref NV_GPU_BUS_TYPE busType)
-        {
-            NVAPI_STATUS status;
-
-            if (GPU_GetBusTypeInternal != null) { status = GPU_GetBusTypeInternal(gpuHandle, ref busType); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_SYS_GetGpuAndOutputIdFromDisplayId(NvU32 displayId, NvPhysicalGpuHandle *hPhysicalGpu, NvU32 *outputId);
-        private delegate NVAPI_STATUS SYS_GetGpuAndOutputIdFromDisplayIdDelegate(
-            [In] UInt32 displayId,
-            [Out] out PhysicalGpuHandle gpuHandle,
-            [Out] out UInt32 gpuOutputId);
-        private static readonly SYS_GetGpuAndOutputIdFromDisplayIdDelegate SYS_GetGpuAndOutputIdFromDisplayIdInternal;
-        /// <summary>
-        //!  This API converts a display ID to a Physical GPU handle and output ID.
-        /// <param name="gpuHandle"></param>
-        /// <param name="busId"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_SYS_GetGpuAndOutputIdFromDisplayId(UInt32 displayId, out PhysicalGpuHandle gpuHandle, out UInt32 gpuOutputId)
-        {
-            NVAPI_STATUS status;
-
-            PhysicalGpuHandle myGpuHandle = new PhysicalGpuHandle();
-            UInt32 myGpuOutputId = 0;
-
-            if (SYS_GetGpuAndOutputIdFromDisplayIdInternal != null) { status = SYS_GetGpuAndOutputIdFromDisplayIdInternal(displayId, out myGpuHandle, out myGpuOutputId); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            gpuHandle = myGpuHandle;
-            gpuOutputId = myGpuOutputId;
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_SYS_GetGpuAndOutputIdFromDisplayId(NvU32 displayId, NvPhysicalGpuHandle *hPhysicalGpu, NvU32 *outputId);
-        private delegate NVAPI_STATUS GPU_GetEDIDDelegate(
-            [In] PhysicalGpuHandle gpuHandle,
-            [In] UInt32 gpuOutputId,
-            [In][Out] ref NV_EDID_V3 edidInfo);
-        private static readonly GPU_GetEDIDDelegate GPU_GetEDIDInternal;
-        /// <summary>
-        //!  This function returns the EDID data for the specified GPU handle and connection bit mask.
-        //!  displayOutputId should have exactly 1 bit set to indicate a single display. See \ref handles.
-        /// <param name="gpuHandle"></param>
-        /// <param name="gpuOutputId"></param>
-        /// <param name="edidInfo"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetEDID(PhysicalGpuHandle gpuHandle, UInt32 gpuOutputId, ref NV_EDID_V3 edidInfo)
-        {
-            NVAPI_STATUS status;
-
-            edidInfo = new NV_EDID_V3();
-            edidInfo.Version = NVImport.NV_EDID_V3_VER;
-            edidInfo.EDID_Data = new Byte[(int)NVImport.NV_EDID_DATA_SIZE];
-
-            if (GPU_GetEDIDInternal != null) { status = GPU_GetEDIDInternal(gpuHandle, gpuOutputId, ref edidInfo); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_GPU_GetLogicalGpuInfo(__in NvLogicalGpuHandle hLogicalGpu, __inout NV_LOGICAL_GPU_DATA * pLogicalGpuData)
-        private delegate NVAPI_STATUS GPU_GetLogicalGpuInfoDelegate(
-            [In] LogicalGpuHandle gpuHandle,
-            [In][Out] ref NV_LOGICAL_GPU_DATA_V1 logicalGPUData);
-        private static readonly GPU_GetLogicalGpuInfoDelegate GPU_GetLogicalGpuInfoInternal;
-        /// <summary>
-        /// This function is used to query Logical GPU information.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="gpuHandle"></param>
-        /// <param name="logicalGPUData"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GPU_GetLogicalGpuInfo(LogicalGpuHandle gpuHandle, ref NV_LOGICAL_GPU_DATA_V1 logicalGPUData)
-        {
-            NVAPI_STATUS status;
-
-            logicalGPUData = new NV_LOGICAL_GPU_DATA_V1();
-            logicalGPUData.Version = NVImport.NV_LOGICAL_GPU_DATA_V1_VER;
-            logicalGPUData.OSAdapterId = IntPtr.Zero;
-            logicalGPUData.PhysicalGPUHandles = new PhysicalGpuHandle[(int)NVImport.NVAPI_MAX_PHYSICAL_GPUS];
-
-            if (GPU_GetEDIDInternal != null) { status = GPU_GetLogicalGpuInfoInternal(gpuHandle, ref logicalGPUData); }
-            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_GetLogicalGPUFromPhysicalGPU(NvPhysicalGpuHandle hPhysicalGPU, NvLogicalGpuHandle* pLogicalGPU)
-        private delegate NVAPI_STATUS GetLogicalGPUFromPhysicalGPUDelegate(
-            [In] PhysicalGpuHandle physicalGPUHandle,
-            [Out] out LogicalGpuHandle logicalGPUHandle);
-        private static readonly GetLogicalGPUFromPhysicalGPUDelegate GetLogicalGPUFromPhysicalGPUInternal;
-        /// <summary>
-        /// This function is used to query Logical GPU information.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="physicalGPUHandle"></param>
-        /// <param name="logicalGPUHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_GetLogicalGPUFromPhysicalGPU(PhysicalGpuHandle physicalGPUHandle, out LogicalGpuHandle logicalGPUHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (GetLogicalGPUFromPhysicalGPUInternal != null)
+            if (status != Status.Ok)
             {
-                status = GetLogicalGPUFromPhysicalGPUInternal(physicalGPUHandle, out LogicalGpuHandle lgpu);
-                logicalGPUHandle = lgpu;
+                throw new NVIDIAApiException(status);
             }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                logicalGPUHandle = new LogicalGpuHandle();
-            }
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_DRS_CreateSession (NvDRSSessionHandle* phSession)	
-        private delegate NVAPI_STATUS DRS_CreateSessionDelegate(
-            [Out] out NvDRSSessionHandle drsSessionHandle);
-        private static readonly DRS_CreateSessionDelegate DRS_CreateSessionInternal;
-        /// <summary>
-        /// This API allocates memory and initializes the session.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_CreateSession(out NvDRSSessionHandle drsSessionHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_CreateSessionInternal != null)
-            {
-                status = DRS_CreateSessionInternal(out NvDRSSessionHandle drsSession);
-                drsSessionHandle = drsSession;
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSessionHandle = new NvDRSSessionHandle();
-            }
-
-            return status;
-        }
-
-
-        //NVAPI_INTERFACE NvAPI_DRS_DestroySession (NvDRSSessionHandle* phSession)	
-        private delegate NVAPI_STATUS DRS_DestroySessionDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle);
-        private static readonly DRS_DestroySessionDelegate DRS_DestroySessionInternal;
-        /// <summary>
-        /// This API frees the allocation: cleanup of NvDrsSession.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_DestroySession(NvDRSSessionHandle drsSessionHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_DestroySessionInternal != null)
-            {
-                status = DRS_DestroySessionInternal(drsSessionHandle);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_DRS_LoadSettings(NvDRSSessionHandle hSession);
-        private delegate NVAPI_STATUS DRS_LoadSettingsDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle);
-        private static readonly DRS_LoadSettingsDelegate DRS_LoadSettingsInternal;
-        /// <summary>
-        /// This API loads and parses the settings data.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_LoadSettings(NvDRSSessionHandle drsSessionHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_LoadSettingsInternal != null)
-            {
-                status = DRS_LoadSettingsInternal(drsSessionHandle);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
-        }
-
-        //NVAPI_INTERFACE NvAPI_DRS_SaveSettings(NvDRSSessionHandle hSession);
-        private delegate NVAPI_STATUS DRS_SaveSettingsDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle);
-        private static readonly DRS_SaveSettingsDelegate DRS_SaveSettingsInternal;
-        /// <summary>
-        /// This API saves the settings data to the system.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_SaveSettings(NvDRSSessionHandle drsSessionHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_SaveSettingsInternal != null)
-            {
-                status = DRS_SaveSettingsInternal(drsSessionHandle);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
-        }
-
-
-        // NVAPI_INTERFACE NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle* phProfile )
-        private delegate NVAPI_STATUS DRS_GetBaseProfileDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [Out] out NvDRSProfileHandle drsProfileHandle);
-        private static readonly DRS_GetBaseProfileDelegate DRS_GetBaseProfileInternal;
-        /// <summary>
-        /// This API returns the handle to the current global profile.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_GetBaseProfile(NvDRSSessionHandle drsSessionHandle, out NvDRSProfileHandle drsProfileHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_GetBaseProfileInternal != null)
-            {
-                status = DRS_GetBaseProfileInternal(drsSessionHandle, out drsProfileHandle);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsProfileHandle = new NvDRSProfileHandle();
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle* phProfile )
-        private delegate NVAPI_STATUS DRS_GetCurrentGlobalProfileDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [Out] out NvDRSProfileHandle drsProfileHandle);
-        private static readonly DRS_GetCurrentGlobalProfileDelegate DRS_GetCurrentGlobalProfileInternal;
-        /// <summary>
-        /// This API returns the handle to the current global profile.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle drsSessionHandle, out NvDRSProfileHandle drsProfileHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_GetCurrentGlobalProfileInternal != null)
-            {
-                status = DRS_GetCurrentGlobalProfileInternal(drsSessionHandle, out drsProfileHandle);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsProfileHandle = new NvDRSProfileHandle();
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_SetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvAPI_UnicodeString wszGlobalProfileName)		
-        private delegate NVAPI_STATUS DRS_SetCurrentGlobalProfileDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] string drsProfileName);
-        private static readonly DRS_SetCurrentGlobalProfileDelegate DRS_SetCurrentGlobalProfileInternal;
-        /// <summary>
-        /// This API returns the handle to the current global profile.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileName"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_SetCurrentGlobalProfile(NvDRSSessionHandle drsSessionHandle, string drsProfileName)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_SetCurrentGlobalProfileInternal != null)
-            {
-                status = DRS_SetCurrentGlobalProfileInternal(drsSessionHandle, drsProfileName);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_GetProfileInfo(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_PROFILE* pProfileInfo )
-        private delegate NVAPI_STATUS DRS_GetProfileInfoDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] NvDRSProfileHandle drsProfileHandle,
-            [In][Out] ref NVDRS_PROFILE_V1 drsProfileInfo);
-        private static readonly DRS_GetProfileInfoDelegate DRS_GetProfileInfoInternal;
-        /// <summary>
-        /// This API gets information about the given profile. User needs to specify the name of the Profile.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <param name="drsProfileInfo"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_GetProfileInfo(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, ref NVDRS_PROFILE_V1 drsProfileInfo)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_GetProfileInfoInternal != null)
-            {
-                drsProfileInfo.Version = NVImport.NVDRS_PROFILE_V1_VER;
-                status = DRS_GetProfileInfoInternal(drsSessionHandle, drsProfileHandle, ref drsProfileInfo);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsProfileInfo = new NVDRS_PROFILE_V1();
-            }
-
-            return status;
-        }
-
-
-        // NVAPI_INTERFACE NvAPI_DRS_SetProfileInfo(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_PROFILE* pProfileInfo )
-        private delegate NVAPI_STATUS DRS_SetProfileInfoDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] NvDRSProfileHandle drsProfileHandle,
-            [In] NVDRS_PROFILE_V1 drsProfileInfo);
-        private static readonly DRS_SetProfileInfoDelegate DRS_SetProfileInfoInternal;
-        /// <summary>
-        /// This API gets information about the given profile. User needs to specify the name of the Profile.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <param name="drsProfileInfo"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_SetProfileInfo(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, NVDRS_PROFILE_V1 drsProfileInfo)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_SetProfileInfoInternal != null)
-            {
-                status = DRS_SetProfileInfoInternal(drsSessionHandle, drsProfileHandle, drsProfileInfo);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_EnumProfiles(NvDRSSessionHandle hSession, NvU32 index, NvDRSProfileHandle* phProfile)
-        private delegate NVAPI_STATUS DRS_EnumProfilesDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] UInt32 drsIndex,
-            [Out] out NvDRSProfileHandle drsProfileHandle);
-        private static readonly DRS_EnumProfilesDelegate DRS_EnumProfilesInternal;
-        /// <summary>
-        /// This API enumerates through all the profiles in the session.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsIndex"></param>
-        /// <param name="drsProfileInfo"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_EnumProfiles(NvDRSSessionHandle drsSessionHandle, UInt32 drsIndex, out NvDRSProfileHandle drsProfileHandle)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_EnumProfilesInternal != null)
-            {
-                status = DRS_EnumProfilesInternal(drsSessionHandle, drsIndex, out drsProfileHandle);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsProfileHandle = new NvDRSProfileHandle();
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_GetNumProfiles(NvDRSSessionHandle hSession, NvU32 *numProfiles);
-        private delegate NVAPI_STATUS DRS_GetNumProfilesDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [Out] out UInt32 drsNumProfiles);
-        private static readonly DRS_GetNumProfilesDelegate DRS_GetNumProfilesInternal;
-        /// <summary>
-        /// This API obtains the number of profiles in the current session object.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsNumProfiles"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_GetNumProfiles(NvDRSSessionHandle drsSessionHandle, out UInt32 drsNumProfiles)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_GetNumProfilesInternal != null)
-            {
-                status = DRS_GetNumProfilesInternal(drsSessionHandle, out drsNumProfiles);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsNumProfiles = 0;
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_SetSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_SETTING* pSetting)
-        private delegate NVAPI_STATUS DRS_SetSettingDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] NvDRSProfileHandle drsProfileHandle,
-            [In] NVDRS_SETTING_V1 drsSetting);
-        private static readonly DRS_SetSettingDelegate DRS_SetSettingInternal;
-        /// <summary>
-        /// This API adds/modifies a setting to a profile.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <param name="drsSetting"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_SetSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, NVDRS_SETTING_V1 drsSetting)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_SetSettingInternal != null)
-            {
-                status = DRS_SetSettingInternal(drsSessionHandle, drsProfileHandle, drsSetting);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSetting = new NVDRS_SETTING_V1();
-            }
-
-            return status;
-        }
-
-
-        // NVAPI_INTERFACE NvAPI_DRS_GetSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 settingId, NVDRS_SETTING* pSetting)
-        private delegate NVAPI_STATUS DRS_GetSettingDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] NvDRSProfileHandle drsProfileHandle,
-            [In] UInt32 drsSettingId,
-            [Out] out NVDRS_SETTING_V1 drsSetting);
-        private static readonly DRS_GetSettingDelegate DRS_GetSettingInternal;
-        /// <summary>
-        /// This API gets information about the given setting.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <param name="drsSetting"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_GetSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsSettingId, out NVDRS_SETTING_V1 drsSetting)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_GetSettingInternal != null)
-            {
-                status = DRS_GetSettingInternal(drsSessionHandle, drsProfileHandle, drsSettingId, out drsSetting);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSetting = new NVDRS_SETTING_V1();
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_EnumSettings(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 startIndex, NvU32* settingsCount, NVDRS_SETTING* pSetting)
-        private delegate NVAPI_STATUS DRS_EnumSettingsDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] NvDRSProfileHandle drsProfileHandle,
-            [In] UInt32 drsStartIndex,
-            [In][Out] ref UInt32 drsSettingCount,
-            [In][Out] NVDRS_SETTING_V1[] drsSettings);
-        private static readonly DRS_EnumSettingsDelegate DRS_EnumSettingsInternal;
-        /// <summary>
-        /// This API enumerates all the settings of a given profile from startIndex to the maximum length.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <param name="drsStartIndex"></param>
-        /// <param name="drsSettingCount"></param>
-        /// <param name="drsSettings"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_EnumSettings(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsStartIndex, ref UInt32 drsSettingCount, ref NVDRS_SETTING_V1[] drsSettings)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_EnumSettingsInternal != null)
-            {
-                if (drsSettingCount == 0)
-                {
-                    drsSettingCount = NVImport.NVAPI_SETTING_MAX_VALUES;
-                }
-                NVDRS_SETTING_V1[] drsSettingsInternal = new NVDRS_SETTING_V1[drsSettingCount];
-                for (int i = 0; i < drsSettingCount; i++)
-                {
-                    drsSettingsInternal[i].InternalVersion = NVImport.NVDRS_SETTING_V1_VER;
-
-                }
-                status = DRS_EnumSettingsInternal(drsSessionHandle, drsProfileHandle, drsStartIndex, ref drsSettingCount, drsSettingsInternal);
-                drsSettings = new NVDRS_SETTING_V1[drsSettingCount];
-                Array.Copy(drsSettingsInternal, drsSettings, drsSettingCount);
-                /*for (int i = 0; i < drsSettingCount; i++)
-                {
-                    drsSettings[i] = drsSettingsInternal[i].Clone();
-                }*/
-
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSettings = new NVDRS_SETTING_V1[0];
-                drsSettingCount = 0;
-            }
-
-            return status;
-        }
-
-
-        // NVAPI_INTERFACE NvAPI_DRS_EnumAvailableSettingIds(NvU32* pSettingIds, NvU32* pMaxCount)
-        private delegate NVAPI_STATUS DRS_EnumAvailableSettingIdsDelegate(
-            [In][Out][MarshalAs(UnmanagedType.SysUInt, SizeConst = (int)Int32.MaxValue)] UInt32[] drsSettingsIds,
-            [In][Out] ref UInt32 drsSettingCount);
-        private static readonly DRS_EnumAvailableSettingIdsDelegate DRS_EnumAvailableSettingIdsInternal;
-        /// <summary>
-        /// This API enumerates all the Ids of all the settings recognized by NVAPI.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSettingsIds"></param>
-        /// <param name="drsSettingCount"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_EnumAvailableSettingIds(ref UInt32[] drsSettingsIds, ref UInt32 drsSettingCount)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_EnumAvailableSettingIdsInternal != null)
-            {
-                UInt32 drsSettingCountInternal = Int32.MaxValue;
-                UInt32[] drsSettingIdsInternal = new UInt32[drsSettingCountInternal];
-                status = DRS_EnumAvailableSettingIdsInternal(drsSettingIdsInternal, ref drsSettingCountInternal);
-                drsSettingCount = drsSettingCountInternal;
-                drsSettingsIds = new UInt32[drsSettingCount];
-                Array.Copy(drsSettingIdsInternal, drsSettingsIds, drsSettingCount);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSettingsIds = new UInt32[0];
-                drsSettingCount = 0;
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_EnumAvailableSettingValues(NvU32 settingId, NvU32* pMaxNumValues, NVDRS_SETTING_VALUES* pSettingValues)
-        private delegate NVAPI_STATUS DRS_EnumAvailableSettingValuesDelegate(
-            [In] UInt32 drsSettingId,
-            [In, Out] ref UInt32 drsMaxNumValues,
-            [In][Out] NVDRS_SETTING_VALUES_V1[] drsSettingsValues);
-        private static readonly DRS_EnumAvailableSettingValuesDelegate DRS_EnumAvailableSettingValuesInternal;
-        /// <summary>
-        /// This API enumerates all available setting values for a given setting.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSettingId"></param>
-        /// <param name="drsMaxNumValues"></param>
-        /// <param name="drsSettingsValues"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_EnumAvailableSettingValues(UInt32 drsSettingId, ref UInt32 drsMaxNumValues, ref NVDRS_SETTING_VALUES_V1[] drsSettingsValues)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_EnumAvailableSettingValuesInternal != null)
-            {
-                status = DRS_EnumAvailableSettingValuesInternal(drsSettingId, ref drsMaxNumValues, drsSettingsValues);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSettingsValues = new NVDRS_SETTING_VALUES_V1[0];
-                drsMaxNumValues = 0;
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_GetSettingIdFromName(NvAPI_UnicodeString settingName, NvU32* pSettingId)
-        private delegate NVAPI_STATUS DRS_GetSettingIdFromNameDelegate(
-            [In] string drsSettingName,
-            [Out] out UInt32 drsSettingId);
-        private static readonly DRS_GetSettingIdFromNameDelegate DRS_GetSettingIdFromNameInternal;
-        /// <summary>
-        /// This API gets the binary ID of a setting given the setting name.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSettingName"></param>
-        /// <param name="drsSettingId"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_GetSettingIdFromName(string drsSettingName, out UInt32 drsSettingId)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_GetSettingIdFromNameInternal != null)
-            {
-                status = DRS_GetSettingIdFromNameInternal(drsSettingName, out drsSettingId);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSettingId = 0;
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_GetSettingNameFromId(NvU32 settingId, NvAPI_UnicodeString* pSettingName)
-        private delegate NVAPI_STATUS DRS_GetSettingNameFromIdDelegate(
-            [In] UInt32 drsSettingId,
-            [Out] out string drsSettingName);
-        private static readonly DRS_GetSettingNameFromIdDelegate DRS_GetSettingNameFromIdInternal;
-        /// <summary>
-        /// This API gets the setting name given the binary ID.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSettingId"></param>
-        /// <param name="drsSettingName"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_GetSettingNameFromId(UInt32 drsSettingId, out string drsSettingName)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_GetSettingNameFromIdInternal != null)
-            {
-                status = DRS_GetSettingNameFromIdInternal(drsSettingId, out drsSettingName);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                drsSettingName = "";
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_RestoreProfileDefaultSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 settingId);
-        private delegate NVAPI_STATUS DRS_RestoreProfileDefaultSettingDelegate(
-            [In] NvDRSSessionHandle drsSessionHandle,
-            [In] NvDRSProfileHandle drsProfileHandle,
-            [In] UInt32 drsSettingId);
-        private static readonly DRS_RestoreProfileDefaultSettingDelegate DRS_RestoreProfileDefaultSettingInternal;
-        /// <summary>
-        /// This API gets information about the given setting.
-        /// SUPPORTED OS: Windows 7 and higher
-        /// <param name="drsSessionHandle"></param>
-        /// <param name="drsProfileHandle"></param>
-        /// <returns></returns>
-        public static NVAPI_STATUS NvAPI_DRS_RestoreProfileDefaultSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsSettingId)
-        {
-            NVAPI_STATUS status;
-
-            if (DRS_RestoreProfileDefaultSettingInternal != null)
-            {
-                status = DRS_RestoreProfileDefaultSettingInternal(drsSessionHandle, drsProfileHandle, drsSettingId);
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
-
-            return status;
-        }
-
-        // NVAPI_INTERFACE NvAPI_DRS_CreateProfile(NvDRSSessionHandle hSession, NVDRS_PROFILE* pProfileInfo, NvDRSProfileHandle* phProfile)
-
-        // NVAPI_INTERFACE NvAPI_DRS_DeleteProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile)
-
-        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
-        {
-
-            if (list1.Count != list2.Count)
-            {
-                return false;
-            }
-
-            // Now we need to go through the list1, checking that all it's items are in list2
-            foreach (T item1 in list1)
-            {
-                bool foundIt = false;
-                foreach (T item2 in list2)
-                {
-                    if (item1.Equals(item2))
-                    {
-                        foundIt = true;
-                        break;
-                    }
-                }
-                if (!foundIt)
-                {
-                    return false;
-                }
-            }
-
-            // Now we need to go through the list2, checking that all it's items are in list1
-            foreach (T item2 in list2)
-            {
-                bool foundIt = false;
-                foreach (T item1 in list1)
-                {
-                    if (item1.Equals(item2))
-                    {
-                        foundIt = true;
-                        break;
-                    }
-                }
-                if (!foundIt)
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
     }

@@ -16,4 +16,6 @@
     <!-- Use PowerShell to rename the bundle output file after the build -->
     <Exec Command="powershell -ExecutionPolicy Bypass -File .\renamedisplaymagician.ps1 -outputDir $(ProjectDir)$(OutputPath)" />
   </Target>
+  <!-- Added as workaround for FireGiaant Heatwave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
+  <Target Name="CollectSuggestedVisualStudioComponentIds" />
 </Project>

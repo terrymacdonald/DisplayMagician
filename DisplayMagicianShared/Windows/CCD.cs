@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog.Targets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -21,7 +22,7 @@ namespace DisplayMagicianShared.Windows
 
     public enum DPI_AWARENESS_CONTEXT : Int32
     {
-        DPI_AWARENESS_CONTEXT_UNDEFINED = 0, 
+        DPI_AWARENESS_CONTEXT_UNDEFINED = 0,
         DPI_AWARENESS_CONTEXT_UNAWARE = -1, //' DPI unaware. This window does not scale for DPI changes and is always assumed to have a scale factor of 100% (96 DPI). It will be automatically scaled by the system on any other DPI setting.
         DPI_AWARENESS_CONTEXT_SYSTEM_AWARE = -2, //' System DPI aware. This window does not scale for DPI changes. It will query for the DPI once and use that value for the lifetime of the process. If the DPI changes, the process will not adjust to the new DPI value. It will be automatically scaled up or down by the system when the DPI changes from the system value.
         DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE = -3, // ' Per monitor DPI aware. This window checks for the DPI when it is created and adjusts the scale factor whenever the DPI changes. These processes are not automatically scaled by the system.
@@ -33,8 +34,16 @@ namespace DisplayMagicianShared.Windows
     {
         // MS Private API (which seems to use negative numbers)
         // See https://github.com/lihas/windows-DPI-scaling-sample/blob/master/DPIHelper/DpiHelper.h from Sahil Singh
+        DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_INTERNAL_INFO = DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_BRIGHTNESS_INFO, //alias for DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_BRIGHTNESS_INFO since it returns values other than brightness
+        DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_UNIQUE_NAME = DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_BRIGHTNESS_INFO, //Another Alias since we are using the parameter mainly for getting the display unique name
+        DISPLAYCONFIG_DEVICE_INFO_TERRY_TEST_MINUS_EIGHT = -8, //???
+        DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_BRIGHTNESS_INFO = -7, //Get monitor brightness info
+        DISPLAYCONFIG_DEVICE_INFO_TERRY_TEST_MINUS_SIX = -6, //???
+        DISPLAYCONFIG_DEVICE_INFO_TERRY_TEST_MINUS_FIVE = -5, //???
         DISPLAYCONFIG_DEVICE_INFO_SET_DPI_SCALE = -4, // Set current dpi scaling value for a display
         DISPLAYCONFIG_DEVICE_INFO_GET_DPI_SCALE = -3, // Returns min, max, suggested, and currently applied DPI scaling values.
+        DISPLAYCONFIG_DEVICE_INFO_TERRY_TEST_MINUS_TWO = -2, //???
+        DISPLAYCONFIG_DEVICE_INFO_TERRY_TEST_MINUS_ONE = -1, //???
 
         // MS Public API
         Zero = 0,
@@ -286,14 +295,14 @@ namespace DisplayMagicianShared.Windows
     }
 
 
-    /*
+/*
 * OS reports DPI scaling values in relative terms, and not absolute terms.
 * eg. if current DPI value is 250%, and recommended value is 200%, then
 * OS will give us integer 2 for DPI scaling value (starting from recommended
 * DPI scaling move 2 steps to the right in this list).
 * values observed (and extrapolated) from system settings app (immersive control panel).
 */
-    /*public enum DPI_VALUES: UInt32
+    public enum DPI_VALUES: UInt32
     { 
         DPI_100 = 100,
         DPI_125 = 125,
@@ -307,7 +316,43 @@ namespace DisplayMagicianShared.Windows
         DPI_400 = 400,
         DPI_450 = 450,
         DPI_500 = 500 
-    };*/
+    };
+
+    /*
+   * struct DPIScalingInfo
+   * @brief DPI info about a source
+   * mininum :     minumum DPI scaling in terms of percentage supported by source. Will always be 100%.
+   * maximum :     maximum DPI scaling in terms of percentage supported by source. eg. 100%, 150%, etc.
+   * current :     currently applied DPI scaling value
+   * recommended : DPI scaling value reommended by OS. OS takes resolution, physical size, and expected viewing distance
+   *               into account while calculating this, however exact formula is not known, hence must be retrieved from OS
+   *               For a system in which user has not explicitly changed DPI, current should eqaul recommended.
+   * bInitDone :   If true, it means that the members of the struct contain values, as fetched from OS, and not the default
+   *               ones given while object creation.
+   */
+    public struct DPIScalingInfo
+    {
+        public UInt32 Minimum;
+        public UInt32 Maximum;
+        public UInt32 Current;
+        public UInt32 Recommended;
+
+        public override bool Equals(object obj) => obj is DPIScalingInfo other && this.Equals(other);
+        public bool Equals(DPIScalingInfo other)
+        =>  Minimum.Equals(other.Minimum) &&
+            Maximum.Equals(other.Maximum) &&
+            Current.Equals(other.Current) &&
+            Recommended.Equals(other.Recommended);
+        //=> true;
+        public override int GetHashCode()
+        {
+            return (Minimum, Maximum, Current, Recommended).GetHashCode();
+        }
+
+        public static bool operator ==(DPIScalingInfo lhs, DPIScalingInfo rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(DPIScalingInfo lhs, DPIScalingInfo rhs) => !(lhs == rhs);
+    };
 
     /*
     * struct DISPLAYCONFIG_SOURCE_DPI_SCALE_GET
@@ -323,18 +368,18 @@ namespace DisplayMagicianShared.Windows
         * @brief min value of DPI scaling is always 100, minScaleRel gives no. of steps down from recommended scaling
         * eg. if minScaleRel is -3 => 100 is 3 steps down from recommended scaling => recommended scaling is 175%
         */
-        public UInt32 MinScaleRel;
+        public Int32 MinScaleRel;
 
         /*
         * @brief currently applied DPI scaling value wrt the recommended value. eg. if recommended value is 175%,
         * => if curScaleRel == 0 the current scaling is 175%, if curScaleRel == -1, then current scale is 150%
         */
-        public UInt32 CurrrentScaleRel;
+        public Int32 CurrrentScaleRel;
 
         /*
         * @brief maximum supported DPI scaling wrt recommended value
         */
-        public UInt32 MaxScaleRel;
+        public Int32 MaxScaleRel;
     };
 
     /*
@@ -349,7 +394,7 @@ namespace DisplayMagicianShared.Windows
         * @brief The value we want to set. The value should be relative to the recommended DPI scaling value of source.
         * eg. if scaleRel == 1, and recommended value is 175% => we are trying to set 200% scaling for the source
         */
-        public UInt32 ScaleRel;
+        public Int32 ScaleRel;
     };
 
     [StructLayout(LayoutKind.Sequential)]
@@ -1105,7 +1150,7 @@ namespace DisplayMagicianShared.Windows
         // Set some useful constants
         public const SDC SDC_CCD_TEST_IF_VALID = (SDC.SDC_VALIDATE | SDC.SDC_USE_SUPPLIED_DISPLAY_CONFIG);
         public const uint DISPLAYCONFIG_PATH_MODE_IDX_INVALID = 0xffffffff;
-        //public static readonly UInt32[] DPI_VALUES = { 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500 };
+        public static readonly UInt32[] DPI_VALUE_LIST = { 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500 };
 
 
         // GetDisplayConfigBufferSizes

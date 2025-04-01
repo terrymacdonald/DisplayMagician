@@ -13,14 +13,15 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DisplayMagicianShared.NVIDIA
 {
     internal static class PInvokeDelegateFactory
     {
+
         private static readonly ModuleBuilder moduleBuilder =
-          AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("PInvokeDelegateFactoryInternalAssembly"),
+          AssemblyBuilder.DefineDynamicAssembly(
+            new AssemblyName("PInvokeDelegateFactoryInternalAssembly"),
             AssemblyBuilderAccess.Run).DefineDynamicModule(
             "PInvokeDelegateFactoryInternalModule");
 

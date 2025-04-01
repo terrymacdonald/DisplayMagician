@@ -819,5 +819,22 @@ namespace DisplayMagicianShared.Windows
             }
             SHAppBarMessage(ABM_MESSAGE.ABM_GETSTATE, ref abd);
         }
+
+        [DllImport("user32.dll")]
+        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        public const uint WM_SYSCOMMAND = 0x0112;
+        public const uint SC_MONITORPOWER = 0xF170;
+
+        public static void ResetGraphicsStack()
+        {
+            // Simulate Win+Ctrl+Shift+B by disabling monitor, then re-enabling
+            PostMessage(
+                new IntPtr(0xFFFF), // HWND_BROADCAST
+                WM_SYSCOMMAND,
+                new IntPtr(SC_MONITORPOWER),
+                new IntPtr(-1) // Monitor on
+            );
+        }
     }
 }

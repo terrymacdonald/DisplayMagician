@@ -997,7 +997,7 @@ namespace DisplayMagicianShared
                         screen.Library = "NVIDIA";
                         if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount > 1)
                         {
-                            // It's a spanned screen!
+                            // It's a spanned screen across multiple subscreens!
                             // Set some basics about the screen                        
                             screen.SpannedScreens = new List<SpannedScreenPosition>() { };
                             screen.Name = "NVIDIA Surround/Mosaic";
@@ -1009,84 +1009,38 @@ namespace DisplayMagicianShared
 
                             // This is a combined surround/mosaic screen
                             // We need to build the size of the screen to match it later so we check the MosaicViewports
-                            uint minX = 0;
-                            uint minY = 0;
-                            uint maxX = 0;
-                            uint maxY = 0;
-                            uint overallX = 0;
-                            uint overallY = 0;
+                            int minX = 0;
+                            int minY = 0;
+                            int maxX = 0;
+                            int maxY = 0;
                             int overallWidth = 0;
                             int overallHeight = 0;
-                            for (int j = 0; j < _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount; j++)
-                            {
-                                SpannedScreenPosition spannedScreen = new SpannedScreenPosition();
-                                spannedScreen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[j].DisplayId.ToString();
-                                spannedScreen.Colour = spannedScreenColor;
 
-                                // Calculate screen size
-                                NV_RECT viewRect = _nvidiaDisplayConfig.MosaicConfig.MosaicViewports[i][j];
-                                if (viewRect.Left < minX)
-                                {
-                                    minX = viewRect.Left;
-                                }
-                                if (viewRect.Top < minY)
-                                {
-                                    minY = viewRect.Top;
-                                }
-                                if (viewRect.Right > maxX)
-                                {
-                                    maxX = viewRect.Right;
-                                }
-                                if (viewRect.Bottom > maxY)
-                                {
-                                    maxY = viewRect.Bottom;
-                                }
-                                uint width = viewRect.Right - viewRect.Left + 1;
-                                uint height = viewRect.Bottom - viewRect.Top + 1;
-                                spannedScreen.ScreenX = (int)viewRect.Left;
-                                spannedScreen.ScreenY = (int)viewRect.Top;
-                                spannedScreen.ScreenWidth = (int)width;
-                                spannedScreen.ScreenHeight = (int)height;
-
-                                // Figure out the overall figures for the screen
-                                if (viewRect.Left < overallX)
-                                {
-                                    overallX = viewRect.Left;
-                                }
-                                if (viewRect.Top < overallY)
-                                {
-                                    overallY = viewRect.Top;
-                                }
-
-                                overallWidth = (int)maxX - (int)minX + 1;
-                                overallHeight = (int)maxY - (int)minY + 1;
-
-                                spannedScreen.Row = i + 1;
-                                spannedScreen.Column = j + 1;
-
-                                // Add the spanned screen to the screen
-                                screen.SpannedScreens.Add(spannedScreen);
-
-                            }
+                            // The same display size is used across the entire grid, so we can calculate here and reuse
+                            DisplaySettingsV2 dispSettings = _nvidiaDisplayConfig.MosaicConfig.MosaicDisplaySettings;
+                            int eachDisplayWidth = dispSettings.Width;
+                            int eachDisplayHeight = dispSettings.Height;
+                            int numRows = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
+                            int numColumns = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
 
                             // Need to look for the Windows layout details now we know the size of this display
                             // Set some basics about the screen
                             try
                             {
                                 UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                                List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                                List<PathInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                                 bool breakOuterLoop = false;
                                 foreach (var displaySource in displaySources)
                                 {
-                                    foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
+                                    foreach (PathTargetInfoV2 targetInfo in displaySource.TargetsInfo)
                                     {
                                         if (targetInfo.DisplayId == displayId)
                                         {
                                             screen.Name = displayId.ToString();
                                             screen.ScreenX = displaySource.SourceModeInfo.Position.X;
                                             screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                            screen.ScreenWidth = displaySource.SourceModeInfo.Resolution.Width;
+                                            screen.ScreenHeight = displaySource.SourceModeInfo.Resolution.Height;
                                             breakOuterLoop = true;
                                             break;
                                         }
@@ -1111,13 +1065,11 @@ namespace DisplayMagicianShared
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Trace(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception ocurred whilst looking for the Windows layout details now we know the size of this display.");
-                                // Some other exception has occurred and we need to report it.
-                                //screen.Name = targetId.ToString();
-                                //screen.DisplayConnector = displayMode.DisplayConnector;
-                                screen.ScreenX = (int)overallX;
-                                screen.ScreenY = (int)overallY;
-                                screen.ScreenWidth = (int)overallWidth;
-                                screen.ScreenHeight = (int)overallHeight;
+                                // If something else happens we need to put in some sensible defaults to avoid a crash to desktop
+                                screen.ScreenX = 0;
+                                screen.ScreenY = 0;
+                                screen.ScreenWidth = eachDisplayWidth * numColumns;
+                                screen.ScreenHeight = eachDisplayHeight * numRows;
                                 screen.Rotation = ScreenRotation.ROTATE_0;
                             }
 
@@ -1135,11 +1087,11 @@ namespace DisplayMagicianShared
                             try
                             {
                                 UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                                List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                                List<PathTargetInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                                 bool breakOuterLoop = false;
                                 foreach (var displaySource in displaySources)
                                 {
-                                    foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
+                                    foreach (PathTargetInfoV2 targetInfo in displaySource.TargetInfo)
                                     {
                                         if (targetInfo.DisplayId == displayId)
                                         {
@@ -1234,13 +1186,13 @@ namespace DisplayMagicianShared
                     try
                     {
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Mosaic isn't enabled so using the DisplayConfig based screen details.");
-                        List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                        List<PathTargetInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                         foreach (var displaySource in displaySources)
                         {
                             int targetInfoIndex = 0;
                             SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing screen source index #{targetInfoIndex}.");
 
-                            foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
+                            foreach (PathTargetInfoV2 targetInfo in displaySource.TargetInfo)
                             {
                                 SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing target screen ID:{targetInfo.DisplayId}.");
 
