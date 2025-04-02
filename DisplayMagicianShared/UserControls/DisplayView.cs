@@ -69,59 +69,6 @@ namespace DisplayMagicianShared.UserControls
             return new Size((int) stringSize.Width, (int) stringSize.Height);
         }
 
-        public virtual void DrawSpannedTopology(Graphics g, ScreenPosition screen, Rectangle rect)
-        {
-            g.DrawRectangle(Pens.Black, rect);
-
-            var targetSize = new Size(rect.Width / screen.SpannedColumns,
-                rect.Height / screen.SpannedRows);
-
-            for (var i = 0; i < screen.SpannedScreens.Count; i++)
-            {
-                var display = screen.SpannedScreens[i];
-                var row = i / screen.SpannedColumns;
-                var col = i % screen.SpannedColumns;
-                var targetPosition = new Point(targetSize.Width * col + rect.X, targetSize.Height * row + rect.Y);
-                var targetRect = new Rectangle(targetPosition, targetSize);
-
-                g.DrawRectangle(Pens.Black, targetRect);
-
-                /*switch (display.Rotation)
-                {
-                    case Rotation.Rotate90:
-                        DrawString(g, "90°", targetRect.Size,
-                            new PointF(targetRect.X - PaddingX / 2, targetRect.Y + PaddingY / 2), StringAlignment.Near,
-                            StringAlignment.Far);
-
-                        break;
-                    case Rotation.Rotate180:
-                        DrawString(g, "180°", targetRect.Size,
-                            new PointF(targetRect.X - PaddingX / 2, targetRect.Y + PaddingY / 2), StringAlignment.Near,
-                            StringAlignment.Far);
-
-                        break;
-                    case Rotation.Rotate270:
-                        DrawString(g, "270°", targetRect.Size,
-                            new PointF(targetRect.X - PaddingX / 2, targetRect.Y + PaddingY / 2), StringAlignment.Near,
-                            StringAlignment.Far);
-
-                        break;
-                }*/
-
-                /*if (!display.Overlap.IsEmpty)
-                {
-                    DrawString(g, $"[{-display.Overlap.X}, {-display.Overlap.Y}]", targetRect.Size,
-                        new PointF(targetRect.X + PaddingY / 2, targetRect.Y + PaddingY / 2), StringAlignment.Near,
-                        StringAlignment.Near);
-                }*/
-
-                // Invert to real monitor resolution
-                //var res = ProfileIcon.NormalizeResolution(target.SurroundTopology.Resolution, display.Rotation);
-                /*var str = $"{display.DisplayName}{Environment.NewLine}{res.Width}×{res.Height}";
-                DrawString(g, str, targetRect.Size, targetRect.Location);*/
-            }
-        }
-
         private void DrawView(Graphics g)
         {
 
@@ -167,42 +114,16 @@ namespace DisplayMagicianShared.UserControls
                 Rectangle outlineRect;
 
                 // draw the screen 
-                if (screen.IsSpanned)
-                {
-                    // We do these things only if the screen IS spanned!                    
-                    // Draw the outline of the spanned monitor
-                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-                    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
-                    g.DrawRectangle(Pens.Black, outlineRect);
+                // We do these things only if the screen isn't spanned!
+                // Draw the outline of the monitor
+                outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
+                g.DrawRectangle(Pens.Black, outlineRect);
 
-                    // Draw the screen of the monitor
-                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));                   
-                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
-                    g.DrawRectangle(Pens.Black, screenRect);
-
-                    // Temporarily disabling this dotted line as it really isn't great visually.
-                    /*foreach (SpannedScreenPosition subScreen in screen.SpannedScreens)
-                    {
-                        Rectangle spannedScreenRect = new Rectangle(subScreen.ScreenX, subScreen.ScreenY, subScreen.ScreenWidth, subScreen.ScreenHeight);
-                        Pen dashedLine = new Pen(Color.Black);
-                        dashedLine.DashStyle = System.Drawing.Drawing2D.DashStyle.DashDotDot;
-                        g.DrawRectangle(dashedLine, spannedScreenRect);
-                    }*/
-
-                }
-                else
-                {                   
-                    // We do these things only if the screen isn't spanned!
-                    // Draw the outline of the monitor
-                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-                    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
-                    g.DrawRectangle(Pens.Black, outlineRect);
-
-                    // Draw the screen of the monitor
-                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
-                    g.DrawRectangle(Pens.Black, screenRect);
-                }
+                // Draw the screen of the monitor
+                screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
+                g.DrawRectangle(Pens.Black, screenRect);
 
                 // Draw the location of the taskbar for this screen
                 Rectangle taskBarRect;
@@ -210,21 +131,21 @@ namespace DisplayMagicianShared.UserControls
                 int taskBarWidth = (int)(0.05 * screenRect.Height);
                 int startButtonSpacer = (int)(0.25 * taskBarWidth);
                 int startButtonSize = 2 * startButtonSpacer;
-                switch (screen.TaskBarEdge)
+                switch (screen.TaskbarPosition)
                 {
-                    case TaskBarLayout.TaskBarEdge.Left:
+                    case TaskbarHelper.TaskbarPosition.Left:
                         taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
                         break;
-                    case TaskBarLayout.TaskBarEdge.Top:
+                    case TaskbarHelper.TaskbarPosition.Top:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
                         startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
                         break;
-                    case TaskBarLayout.TaskBarEdge.Right:
+                    case TaskbarHelper.TaskbarPosition.Right:
                         taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
                         break;
-                    case TaskBarLayout.TaskBarEdge.Bottom:
+                    case TaskbarHelper.TaskbarPosition.Bottom:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
                         startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
                         break;

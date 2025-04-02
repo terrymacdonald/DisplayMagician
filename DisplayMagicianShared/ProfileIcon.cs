@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared
 {
@@ -333,35 +334,18 @@ namespace DisplayMagicianShared
                 Rectangle outlineRect;
                 Rectangle screenRect;
                 // draw the screen 
-                if (screen.IsSpanned)
-                {
-                    // We do these things only if the screen IS spanned!
-                    // Draw the outline of the spanned monitor
-                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-                    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
-                    g.DrawRectangle(Pens.Black, outlineRect);
 
-                    // Draw the screen of the monitor
-                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                // Draw the outline of the monitor
+                outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
+                g.DrawRectangle(Pens.Black, outlineRect);
 
-                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
-                    g.DrawRectangle(Pens.Black, screenRect);
-                }
-                else
-                {
-
-                    // Draw the outline of the monitor
-                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-                    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
-                    g.DrawRectangle(Pens.Black, outlineRect);
-
-                    // Draw the screen of the monitor
-                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                // Draw the screen of the monitor
+                screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
                     
-                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
-                    g.DrawRectangle(Pens.Black, screenRect);
+                g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
+                g.DrawRectangle(Pens.Black, screenRect);
 
-                }
 
                 // Draw the location of the taskbar for this screen
                 Rectangle taskBarRect;
@@ -369,18 +353,18 @@ namespace DisplayMagicianShared
                 int taskBarWidth = (int)(0.15 * screenRect.Height);
                 //int startButtonSpacer = (int)(0.25 * taskBarWidth);
                 //int startButtonSize = 2 * startButtonSpacer;
-                switch (screen.TaskBarEdge)
+                switch (screen.TaskbarPosition)
                 {
-                    case Windows.TaskBarLayout.TaskBarEdge.Left:
+                    case TaskbarHelper.TaskbarPosition.Left:
                         taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case Windows.TaskBarLayout.TaskBarEdge.Top:
+                    case TaskbarHelper.TaskbarPosition.Top:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
                         break;
-                    case Windows.TaskBarLayout.TaskBarEdge.Right:
+                    case TaskbarHelper.TaskbarPosition.Right:
                         taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case Windows.TaskBarLayout.TaskBarEdge.Bottom:
+                    case TaskbarHelper.TaskbarPosition.Bottom:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
                         break;
                     default:

@@ -1717,10 +1717,10 @@ namespace DisplayMagicianShared
                     // find which taskbar is in this window
                     foreach ((TaskbarHelper.Rect taskbarRectangle, TaskbarHelper.TaskbarPosition taskbarPosition) in _windowsDisplayConfig.TaskbarPositions)
                     {
-                        if (taskbarRectangle.Left == screenToLocate.ScreenX &&
-                            taskbarRectangle.Top == screenToLocate.ScreenY &&
-                            taskbarRectangle.Right == screenToLocate.ScreenX + screenToLocate.ScreenWidth &&
-                            taskbarRectangle.Bottom == screenToLocate.ScreenY + screenToLocate.ScreenHeight)
+                        if (taskbarRectangle.X == screenToLocate.ScreenX &&
+                            taskbarRectangle.Y == screenToLocate.ScreenY &&
+                            taskbarRectangle.Width == screenToLocate.ScreenWidth &&
+                            taskbarRectangle.Height== screenToLocate.ScreenHeight)
                         {
                             // This taskbar is on the screen we're looking at
                             screenToLocate.TaskbarPosition = taskbarPosition;

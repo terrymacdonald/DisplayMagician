@@ -1394,7 +1394,7 @@ namespace DisplayMagicianShared
 
                 if (nvidiaLibrary.IsInstalled)
                 {
-                    allConnectedDisplayIdentifiers.AddRange(nvidiaLibrary.GetAllConnectedDisplayIdentifiers());
+                    allConnectedDisplayIdentifiers.AddRange(nvidiaLibrary.GetAllConnectedDisplayIdentifiers(out bool failure));
                 }
 
                 if (amdLibrary.IsInstalled)
