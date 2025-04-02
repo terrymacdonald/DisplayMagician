@@ -34,6 +34,7 @@ namespace DisplayMagicianShared
         public int ScreenY;
         public int ScreenWidth;
         public int ScreenHeight;
+        public RECTL ScreenRectangle;
         public string Name;
         public string AdapterName;
         public string Library;
@@ -45,13 +46,7 @@ namespace DisplayMagicianShared
         internal bool HDRSupported;
         internal bool HDREnabled;
         public List<string> Features;
-        // If the screen is AMD Eyefinity or NVIDIA Surround or similar, it has screens that are part of it
-        // These fields indicate this. The spanned screens are added to the SpannedScreens field as required
-        public bool IsSpanned;
-        public List<SpannedScreenPosition> SpannedScreens;
-        public int SpannedColumns;
-        public int SpannedRows;
-        public TaskBarLayout.TaskBarEdge TaskBarEdge;
+        public TaskbarHelper.TaskbarPosition TaskbarPosition;
         public ScreenRotation Rotation;
 
         public override bool Equals(object obj) => obj is ScreenPosition other && this.Equals(other);
@@ -70,20 +65,7 @@ namespace DisplayMagicianShared
         public static bool operator ==(ScreenPosition lhs, ScreenPosition rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(ScreenPosition lhs, ScreenPosition rhs) => !(lhs == rhs);
-    }
-
-    public struct SpannedScreenPosition
-    {
-        public int ScreenX;
-        public int ScreenY;
-        public int ScreenWidth;
-        public int ScreenHeight;
-        public string Name;
-        public Color Colour;
-        public List<string> Features;
-        public int Column;
-        public int Row;
-    }
+    }    
 
     public class ProfileItem : IComparable<ProfileItem>, IEquatable<ProfileItem>
     {
@@ -956,7 +938,25 @@ namespace DisplayMagicianShared
                     }
                 }
 
-                GetTaskbarLocationsForNonWindowsScreens(ref allScreens);
+                // Record the taskbar locations for each display
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Recording the taskbar locations for each display");
+                for (int i = 0; i < allScreens.Count; i++)
+                {
+                    ScreenPosition screen = allScreens[i];
+                    
+                    foreach (var taskbarPosition in _windowsDisplayConfig.TaskbarPositions)
+                    {
+                        if (screen.ScreenX == taskbarPosition.Key.Left &&
+                            screen.ScreenY == taskbarPosition.Key.Top &&
+                            screen.ScreenWidth + screen.ScreenX == taskbarPosition.Key.Right &&
+                            screen.ScreenHeight + screen.ScreenY == taskbarPosition.Key.Bottom)
+                        {
+                            screen.TaskbarPosition = taskbarPosition.Value;
+                            continue;
+                        }
+
+                    }
+                }
 
             }
             catch (Exception ex)
@@ -969,12 +969,19 @@ namespace DisplayMagicianShared
 
         private List<ScreenPosition> GetNVIDIAScreenPositions()
         {
+            // If NVIDIA is not installed or not in use, then we can't get the screen positions so return an empty list
+            if (!NVIDIALibrary.GetLibrary().IsInstalled || !_nvidiaDisplayConfig.IsInUse)
+            {
+                return new List<ScreenPosition>() { };
+            }
+
+
             // Set up some colours
             Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
             Color spannedScreenColor = Color.FromArgb(118, 185, 0); // represents NVIDIA Green
             Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
 
-            // Now we create the screens structure from the AMD profile information
+            // Now we create the screens structure from the NVIDIA profile information
             _screens = new List<ScreenPosition>() { };
 
             try
@@ -999,13 +1006,12 @@ namespace DisplayMagicianShared
                         {
                             // It's a spanned screen across multiple subscreens!
                             // Set some basics about the screen                        
-                            screen.SpannedScreens = new List<SpannedScreenPosition>() { };
                             screen.Name = "NVIDIA Surround/Mosaic";
-                            screen.IsSpanned = true;
-                            screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
-                            screen.SpannedColumns = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
                             screen.Colour = spannedScreenColor;
                             screen.Rotation = ScreenRotation.ROTATE_0;
+                            // Set the initial taskbar location for this screen at the bottom
+                            screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+
 
                             // This is a combined surround/mosaic screen
                             // We need to build the size of the screen to match it later so we check the MosaicViewports
@@ -1077,52 +1083,56 @@ namespace DisplayMagicianShared
                         else
                         {
                             // It's a standalone screen
-                            screen.SpannedScreens = new List<SpannedScreenPosition>() { };
                             screen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
-                            screen.IsSpanned = false;
-                            screen.SpannedRows = 1;
-                            screen.SpannedColumns = 1;
                             screen.Colour = normalScreenColor;
 
                             try
                             {
                                 UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                                List<PathTargetInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                                List<PathInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                                 bool breakOuterLoop = false;
                                 foreach (var displaySource in displaySources)
                                 {
-                                    foreach (PathTargetInfoV2 targetInfo in displaySource.TargetInfo)
+                                    foreach (PathTargetInfoV2 targetInfo in displaySource.TargetsInfo)
                                     {
                                         if (targetInfo.DisplayId == displayId)
                                         {
                                             screen.Name = displayId.ToString();
                                             screen.ScreenX = displaySource.SourceModeInfo.Position.X;
                                             screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                            //screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                            //screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                            if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_0)
-                                            {
-                                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                screen.Rotation = ScreenRotation.ROTATE_0;
-                                            }
-                                            else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_90)
-                                            {
-                                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                screen.Rotation = ScreenRotation.ROTATE_90;
-                                            }
-                                            else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_180)
-                                            {
-                                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                screen.Rotation = ScreenRotation.ROTATE_180;
-                                            }
-                                            else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_270)
-                                            {
-                                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                screen.Rotation = ScreenRotation.ROTATE_270;
+
+                                            if (targetInfo.Details.HasValue){
+
+                                                if (targetInfo.Details.Value.Rotation == Rotate.Degree0)
+                                                {
+                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                                    screen.Rotation = ScreenRotation.ROTATE_0;
+                                                }
+                                                else if (targetInfo.Details.Value.Rotation == Rotate.Degree90)
+                                                {
+                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                                    screen.Rotation = ScreenRotation.ROTATE_90;
+                                                }
+                                                else if (targetInfo.Details.Value.Rotation == Rotate.Degree180)
+                                                {
+                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                                    screen.Rotation = ScreenRotation.ROTATE_180;
+                                                }
+                                                else if (targetInfo.Details.Value.Rotation == Rotate.Degree270)
+                                                {
+                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                                    screen.Rotation = ScreenRotation.ROTATE_270;
+                                                }
+                                                else
+                                                {
+                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                                    screen.Rotation = ScreenRotation.ROTATE_0;
+                                                }                                                
                                             }
                                             else
                                             {
@@ -1130,6 +1140,16 @@ namespace DisplayMagicianShared
                                                 screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
                                                 screen.Rotation = ScreenRotation.ROTATE_0;
                                             }
+
+                                            if (screen.ScreenWidth == 0)
+                                            {
+                                                SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The mosaic screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                                            }
+                                            if (screen.ScreenHeight == 0)
+                                            {
+                                                SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The mosaic screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                                            }
+
                                             breakOuterLoop = true;
                                             break;
                                         }
@@ -1172,7 +1192,7 @@ namespace DisplayMagicianShared
                         }
 
                         // Force the taskbar edge to the bottom as it is an NVIDIA surround screen
-                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                        screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
 
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
@@ -1186,18 +1206,27 @@ namespace DisplayMagicianShared
                     try
                     {
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Mosaic isn't enabled so using the DisplayConfig based screen details.");
-                        List<PathTargetInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                        List<PathInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                         foreach (var displaySource in displaySources)
                         {
                             int targetInfoIndex = 0;
                             SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing screen source index #{targetInfoIndex}.");
 
-                            foreach (PathTargetInfoV2 targetInfo in displaySource.TargetInfo)
+                            foreach (PathTargetInfoV2 targetInfo in displaySource.TargetsInfo)
                             {
                                 SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing target screen ID:{targetInfo.DisplayId}.");
 
                                 ScreenPosition screen = new ScreenPosition();
                                 screen.Library = "NVIDIA";
+                                screen.Name = "DISPLAY";
+                                screen.Name = targetInfo.DisplayId.ToString();
+                                screen.Colour = normalScreenColor;
+                                screen.Rotation = ScreenRotation.ROTATE_0;
+                                // Set the initial taskbar location for this screen at the bottom
+                                screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                                screen.ScreenX = displaySource.SourceModeInfo.Position.X;
+                                screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
+
 
                                 // Find out if we're a cloned screen
                                 if (_nvidiaDisplayConfig.IsCloned && displaySource.TargetInfoCount > 1)
@@ -1222,17 +1251,47 @@ namespace DisplayMagicianShared
                                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is NOT part of a cloned group.");
                                 }
 
-                                // It's a normal screen
-                                screen.SpannedScreens = new List<SpannedScreenPosition>() { };
-                                screen.Name = targetInfo.DisplayId.ToString();
-                                screen.IsSpanned = false;
-                                screen.SpannedRows = 1;
-                                screen.SpannedColumns = 1;
-                                screen.Colour = normalScreenColor;
-                                screen.ScreenX = displaySource.SourceModeInfo.Position.X;
-                                screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                //screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                //screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                if (targetInfo.Details.HasValue)
+                                {
+
+                                    if (targetInfo.Details.Value.Rotation == Rotate.Degree0)
+                                    {
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        screen.Rotation = ScreenRotation.ROTATE_0;
+                                    }
+                                    else if (targetInfo.Details.Value.Rotation == Rotate.Degree90)
+                                    {
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        screen.Rotation = ScreenRotation.ROTATE_90;
+                                    }
+                                    else if (targetInfo.Details.Value.Rotation == Rotate.Degree180)
+                                    {
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        screen.Rotation = ScreenRotation.ROTATE_180;
+                                    }
+                                    else if (targetInfo.Details.Value.Rotation == Rotate.Degree270)
+                                    {
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        screen.Rotation = ScreenRotation.ROTATE_270;
+                                    }
+                                    else
+                                    {
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        screen.Rotation = ScreenRotation.ROTATE_0;
+                                    }
+                                }
+                                else
+                                {
+                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                    screen.Rotation = ScreenRotation.ROTATE_0;
+                                }
+
                                 if (screen.ScreenWidth == 0)
                                 {
                                     SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
@@ -1240,37 +1299,6 @@ namespace DisplayMagicianShared
                                 if (screen.ScreenHeight == 0)
                                 {
                                     SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
-                                }
-
-                                if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_0)
-                                {
-                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                    screen.Rotation = ScreenRotation.ROTATE_0;
-                                }
-                                else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_90)
-                                {
-                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                    screen.Rotation = ScreenRotation.ROTATE_90;
-                                }
-                                else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_180)
-                                {
-                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                    screen.Rotation = ScreenRotation.ROTATE_180;
-                                }
-                                else if (targetInfo.Details.Rotation == NV_ROTATE.ROTATE_270)
-                                {
-                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                    screen.Rotation = ScreenRotation.ROTATE_270;
-                                }
-                                else
-                                {
-                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                    screen.Rotation = ScreenRotation.ROTATE_0;
                                 }
 
                                 // If we're at the 0,0 coordinate then we're the primary monitor
@@ -1284,43 +1312,6 @@ namespace DisplayMagicianShared
                                     {
                                         screen.Colour = primaryScreenColor;
                                     }
-                                }
-
-                                try
-                                {
-                                    if (_nvidiaDisplayConfig.DisplayNames.ContainsKey(targetInfo.DisplayId.ToString()))
-                                    {
-                                        string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
-                                        UInt32 windowsUID = _windowsDisplayConfig.DisplaySources[windowsDisplayName].First().TargetId;
-                                        // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
-                                        // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
-                                        // the taskbar locations in memory (it takes up to 15 seconds!). NOthing I can do, except put this protection in place :( .
-
-                                        if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
-                                        {
-                                            foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
-                                            {
-                                                var taskBarValue = taskBar.Value;
-                                                if (taskBarValue is TaskBarLayout && taskBarValue.RegKeyValue != null && taskBarValue.RegKeyValue.Contains($"UID{windowsUID}"))
-                                                {
-                                                    screen.TaskBarEdge = taskBarValue.Edge;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetInfo.DisplayId} is on the {screen.TaskBarEdge} of the screen.");
-                                    }
-                                    else
-                                    {
-                                        SharedLogger.logger.Warn($"ProfileItem/GetNVIDIAScreenPositions: Couldn't get the position of the taskbar on display {targetInfo.DisplayId} so assuming its at the bottom.");
-                                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Guess that it is at the bottom (90% correct)
-                                    SharedLogger.logger.Warn(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetInfo.DisplayId}");
-                                    screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                                 }
 
                                 SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non-surround NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
@@ -1349,6 +1340,12 @@ namespace DisplayMagicianShared
 
         private List<ScreenPosition> GetAMDScreenPositions()
         {
+            // If AMD is not installed or not in use, then we can't get the screen positions so return an empty list
+            if (!AMDLibrary.GetLibrary().IsInstalled || !_amdDisplayConfig.IsInUse)
+            {
+                return new List<ScreenPosition>() { };
+            }
+
             // Set up some colours
             Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
             Color spannedScreenColor = Color.FromArgb(221, 0, 49); // represents AMD Red
@@ -1375,12 +1372,7 @@ namespace DisplayMagicianShared
                         ScreenPosition screen = new ScreenPosition();
                         screen.Library = "AMD";
                         screen.Colour = normalScreenColor;
-                        // This is multiple screens
-                        screen.SpannedScreens = new List<SpannedScreenPosition>();
                         screen.Name = "AMD Eyefinity";
-                        //screen.IsSpanned = true;
-                        screen.SpannedRows = _amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSMap.Grid.SLSGridRow;
-                        screen.SpannedColumns = _amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSMap.Grid.SLSGridColumn;
                         screen.Colour = spannedScreenColor;
 
                         //screen.Name = targetId.ToString();
@@ -1401,8 +1393,8 @@ namespace DisplayMagicianShared
                             }
                         }
 
-                        // Set the taskbar location for this screen at the bottom
-                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                        // Set the initial taskbar location for this screen at the bottom
+                        screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
 
                         SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
@@ -1423,37 +1415,12 @@ namespace DisplayMagicianShared
                         // Set some basics about the screen
                         ScreenPosition screen = new ScreenPosition();
                         screen.Library = "AMD";
-                        //screen.AdapterName = adapterId.ToString();
-                        screen.IsSpanned = false;
+                        screen.Name = "DISPLAY";
                         screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                         screen.IsClone = false;
                         screen.ClonedCopies = 0;
-                        try
-                        {
-                            // Set the default taskbar position as the bottom of the screen                        
-                            screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                            // If we have a valid taskbar location stored then use that instead
-                            // TODO - fix this taskbar detection logic
-                            /*if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
-                            {
-                                foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
-                                {
-                                    var taskBarValue = taskBar.Value;
-                                    if (taskBarValue is TaskBarLayout && taskBarValue.RegKeyValue != null && taskBarValue.RegKeyValue.Contains($"UID{targetId}"))
-                                    {
-                                        screen.TaskBarEdge = taskBarValue.Edge;
-                                        break;
-                                    }
-                                }                            
-                            }*/
-                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
-                        }
-                        catch (Exception ex)
-                        {
-                            // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Warn(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
-                            screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                        }
+                        // Set the default taskbar position as the bottom of the screen                        
+                        screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
 
                         // Find out if this source is cloned
                         foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
@@ -1479,11 +1446,8 @@ namespace DisplayMagicianShared
                             if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
                             {
                                 screen.Name = targetId.ToString();
-                                //screen.DisplayConnector = displayMode.DisplayConnector;
                                 screen.ScreenX = displayMode.SourceMode.Position.X;
                                 screen.ScreenY = displayMode.SourceMode.Position.Y;
-                                //screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                                //screen.ScreenHeight = (int)displayMode.SourceMode.Height;
 
                                 if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY)
                                 {
@@ -1614,36 +1578,12 @@ namespace DisplayMagicianShared
                     // Set some basics about the screen
                     ScreenPosition screen = new ScreenPosition();
                     screen.Library = "WINDOWS";
-                    //screen.AdapterName = adapterId.ToString();
-                    screen.IsSpanned = false;
+                    screen.Name = "SCREEN";
                     screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
-                    try
-                    {
-                        // Set the default taskbar position as the bottom of the screen                        
-                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                        // If we have a valid taskbar location stored then use that instead
-                        if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
-                        {
-                            foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
-                            {
-                                var taskBarValue = taskBar.Value;
-                                if (taskBarValue is TaskBarLayout && taskBarValue.RegKeyValue != null && taskBarValue.RegKeyValue.Contains($"UID{targetId}"))
-                                {
-                                    screen.TaskBarEdge = taskBarValue.Edge;
-                                    break;
-                                }
-                            }
-                        }
-                        SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Guess that it is at the bottom (90% correct)
-                        SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
-                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                    }
+                    // Set the default taskbar position as the bottom of the screen                        
+                    screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
 
                     // Find out if this source is cloned
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
@@ -1669,7 +1609,6 @@ namespace DisplayMagicianShared
                         if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
                         {
                             screen.Name = targetId.ToString();
-                            //screen.DisplayConnector = displayMode.DisplayConnector;
                             screen.ScreenX = displayMode.SourceMode.Position.X;
                             screen.ScreenY = displayMode.SourceMode.Position.Y;
                             if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY)
@@ -1746,106 +1685,7 @@ namespace DisplayMagicianShared
                             break;
                         }
                     }
-
-                    // Now we try to set the taskbar positions
-                    if (screen.IsPrimary)
-                    {
-                        // If the screen is the primary screen, then we check if we need to use the StuckRect 'Settings' reg keys
-                        // rather than the MMStuckRect reg keys
-                        try
-                        {
-                            if (_windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains("Settings")) > 0)
-                            {
-                                // Set the default taskbar position as the bottom of the screen                        
-                                screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                                // If we have a valid taskbar location stored then use that instead
-                                if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
-                                {
-                                    foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
-                                    {
-                                        var taskBarValue = taskBar.Value;
-                                        if (taskBarValue is TaskBarLayout && taskBarValue.RegKeyValue != null && taskBarValue.RegKeyValue.Contains($"Settings"))
-                                        {
-                                            screen.TaskBarEdge = taskBarValue.Edge;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge} of the screen.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Warn($"ProfileItem/GetWindowsScreenPositions: Problem trying to get the position of the taskbar on primary display {targetId}. Assuming it's on the bottom edge.");
-                                screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
-                            screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                        }
-
-                    }
-                    else
-                    {
-                        try
-                        {
-                            int numMatches = _windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue != null && tbr.Value.RegKeyValue.Contains($"UID{targetId}"));
-                            if (numMatches > 1)
-                            {
-                                var matchingTbls = (from tbl in _windowsDisplayConfig.TaskBarLayout where tbl.Value.RegKeyValue.Contains($"UID{targetId}") select tbl.Value).ToList();
-                                bool foundIt = false;
-                                foreach (var matchingTbl in matchingTbls)
-                                {
-                                    // find display source that matches.
-                                    foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
-                                    {
-                                        foreach (var displayDevice in displaySource.Value)
-                                        {
-                                            // We want to find the displaydevice that has the same adapter id
-                                            if (displayDevice.AdapterId.Value == adapterId && displayDevice.DevicePath.Contains(matchingTbl.RegKeyValue))
-                                            {
-                                                // This is the actual display we want!
-                                                foundIt = true;
-                                                screen.TaskBarEdge = matchingTbl.Edge;
-                                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
-                                                break;
-                                            }
-                                        }
-                                        // If we've found it already then stop looking
-                                        if (foundIt)
-                                        {
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (!foundIt)
-                                {
-                                    screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                                    SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Couldn't find the taskbar location for display {targetId} when it had multiple matching UIDs. Assuming the screen edge is at the bottom of the screen.");
-                                }
-                            }
-                            else if (numMatches == 1)
-                            {
-                                screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge} of the screen.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Warn($"ProfileItem/GetWindowsScreenPositions: Problem trying to get the position of the taskbar on display {targetId} as UID doesn't exist. Assuming it's on the bottom edge.");
-                                screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
-                            screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                        }
-                    }
-
+                  
                     SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                     windowsScreens.Add(screen);
@@ -1860,74 +1700,32 @@ namespace DisplayMagicianShared
             return windowsScreens;
         }
 
-        private bool GetTaskbarLocationsForNonWindowsScreens(ref List<ScreenPosition> screensToLocate)
+        private bool GetTaskbarLocations(ref List<ScreenPosition> screensToLocate)
         {
             // We first get all of the taskbar locations in a list, so we know what we're looking for
             // We're going to use the taskbar rectangle to figure out which screen its on, so we can do this with any screen position
-            Dictionary<Rectangle, TaskBarLayout.TaskBarEdge> taskbarPositions = new Dictionary<Rectangle, TaskBarLayout.TaskBarEdge>() { };
+            Dictionary<TaskbarHelper.Rect, TaskbarHelper.TaskbarPosition> allTaskbars = TaskbarHelper.GetTaskbarPositions();
 
             try
             {
-                // If the screen is the primary screen, then we check if we need to use the StuckRect 'Settings' reg keys
-                // rather than the MMStuckRect reg keys
-                try
-                {
-                    if (_windowsDisplayConfig.TaskBarLayout.Count > 0)
-                    {
-                        foreach (var taskBar in _windowsDisplayConfig.TaskBarLayout)
-                        {
-                            var taskBarValue = taskBar.Value;
-                            // Check that this screen hasn't already been added
-                            if (!taskbarPositions.ContainsKey(taskBarValue.MonitorLocation))
-                            {
-                                taskbarPositions.Add(taskBarValue.MonitorLocation, taskBarValue.Edge);
-                                SharedLogger.logger.Trace($"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Tracking position of the taskbar on the primary display at ({taskBarValue.MonitorLocation.X},{taskBarValue.MonitorLocation.Y}) with an edge location of {taskBarValue.Edge}.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Trace($"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Skipping recording the taskbar poition on the primary display at ({taskBarValue.MonitorLocation.X},{taskBarValue.MonitorLocation.Y}) with an edge location of {taskBarValue.Edge} as it was already recorded.");
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Guess that it is at the bottom (90% correct)
-                    SharedLogger.logger.Warn(ex, $"ProfileItem/GetTaskbarLocationsForNonWindowsScreens: Exception trying to get the position of the taskbar on primary display for storing it for later");
-                }
-
-
+                
                 for (int i = 0; i < screensToLocate.Count; i++)
                 {
                     var screenToLocate = screensToLocate[i];
 
                     // Set a default
-                    screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-
-                    // Create a temp rectangle for the window
-                    Rectangle displayWindow = new Rectangle(screenToLocate.ScreenX, screenToLocate.ScreenX, screenToLocate.ScreenWidth, screenToLocate.ScreenHeight);
-
+                    screenToLocate.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                    
                     // find which taskbar is in this window
-                    foreach (Rectangle taskBarRect in taskbarPositions.Keys)
+                    foreach ((TaskbarHelper.Rect taskbarRectangle, TaskbarHelper.TaskbarPosition taskbarPosition) in allTaskbars)
                     {
-                        if (displayWindow.Contains(taskBarRect))
+                        if (taskbarRectangle.Left == screenToLocate.ScreenX &&
+                            taskbarRectangle.Top == screenToLocate.ScreenY &&
+                            taskbarRectangle.Right == screenToLocate.ScreenX + screenToLocate.ScreenWidth &&
+                            taskbarRectangle.Bottom == screenToLocate.ScreenY + screenToLocate.ScreenHeight)
                         {
-                            if (taskBarRect.Bottom == displayWindow.Bottom)
-                            {
-                                screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-                            }
-                            else if (taskBarRect.Left == displayWindow.Left)
-                            {
-                                screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Left;
-                            }
-                            else if (taskBarRect.Top == displayWindow.Top)
-                            {
-                                screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Top;
-                            }
-                            else if (taskBarRect.Right == displayWindow.Right)
-                            {
-                                screenToLocate.TaskBarEdge = TaskBarLayout.TaskBarEdge.Right;
-                            }
+                            // This taskbar is on the screen we're looking at
+                            screenToLocate.TaskbarPosition = taskbarPosition;
                             break;
                         }
                     }

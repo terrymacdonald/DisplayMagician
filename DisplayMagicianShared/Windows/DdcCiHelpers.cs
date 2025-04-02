@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace DisplayMagicianShared.Helpers
+namespace DisplayMagicianShared.Windows
 {
     public static class DdcCiHelper
     {

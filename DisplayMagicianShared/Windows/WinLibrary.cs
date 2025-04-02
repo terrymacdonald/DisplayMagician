@@ -4,18 +4,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using System.Text.RegularExpressions;
-using DisplayMagicianShared;
-using System.IO;
-using System.ComponentModel;
-using Microsoft.Win32;
-using System.Threading.Tasks;
-using static DisplayMagicianShared.Windows.TaskBarLayout;
-using System.Diagnostics;
-using Windows.ApplicationModel;
-using EDIDParser;
-using static DisplayMagicianShared.NVIDIA.DisplayTopologyStatus;
-using System.Runtime.Intrinsics.Arm;
-using DisplayMagicianShared.Helpers;
 using NLog.Targets;
 using System.Threading;
 
@@ -88,6 +76,7 @@ namespace DisplayMagicianShared.Windows
         public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
+        public Dictionary<TaskbarHelper.Rect, TaskbarHelper.TaskbarPosition> TaskbarPositions;
         public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
@@ -1011,53 +1000,14 @@ namespace DisplayMagicianShared.Windows
                 windowsDisplayConfig.DisplaySources[key] = dsList.ToList();
             }
 
-
-            /*Dictionary<string, TaskBarLayout> taskBarStuckRectangles = new Dictionary<string, TaskBarLayout>();
-
-            // Now attempt to get the windows taskbar location for each display
-            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar Layouts.");
-            bool retryNeeded = false;
-            taskBarStuckRectangles = TaskBarLayout.GetAllCurrentTaskBarLayouts(windowsDisplayConfig.DisplaySources, out retryNeeded);
-            // Check whether Windows has actually added the registry keys that outline the taskbar position
-            if (retryNeeded)
-            {
-                if (fastScan)
-                {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Skipping retrying Windows Taskbar Layouts and just accepting the first locations");
-                }
-                else
-                {
-                    // We wait until the reg key is populated                
-                    for (int count = 1; count <= 4; count++)
-                    {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We were unable to get all the Windows Taskbar Layouts! So we need to try again. Attempt {count} of 4.");
-
-                        // Wait 5 seconds
-                        System.Threading.Thread.Sleep(5000);
-                        // then try again
-                        retryNeeded = false;
-                        taskBarStuckRectangles = TaskBarLayout.GetAllCurrentTaskBarLayouts(windowsDisplayConfig.DisplaySources, out retryNeeded);
-
-                        if (!retryNeeded)
-                        {
-                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We successfully got the Windows Taskbar Layouts on attempt {count}! So we can stop trying to get them");
-                            break;
-                        }
-
-                    }
-                }
-            }
-
-            // Now we try to get the taskbar settings too
-            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar Settings.");
-            TaskBarSettings taskBarSettings = TaskBarSettings.GetCurrent();*/
+            // Record the taskbar locations for each display
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Recording the taskbar locations for each display");
+            windowsDisplayConfig.TaskbarPositions = TaskbarHelper.GetTaskbarPositions();
 
             // Store the active paths and modes in our display config object
             windowsDisplayConfig.DisplayConfigPaths = paths;
             windowsDisplayConfig.DisplayConfigModes = modes;
             windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
-            //windowsDisplayConfig.TaskBarLayout = taskBarStuckRectangles;
-            //windowsDisplayConfig.TaskBarSettings = taskBarSettings;
 
             return windowsDisplayConfig;
         }
@@ -1744,281 +1694,189 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out if HDR is supported for display #{myHDRstate.Id}");
                 }
 
-            }
+            }            
 
-/*
-            // Get the existing displays config
-            Dictionary<string, GDI_DISPLAY_SETTING> currentGdiDisplaySettings = GetGdiDisplaySettings();
-
-            // Apply the previously saved display settings to the new displays (match them up)
-            // NOTE: This may be the only mode needed once it's completed.
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API using ChangeDisplaySettingsEx");
-            bool appliedGdiDisplaySettings = false;
-            foreach (var gdiDisplay in displayConfig.GdiDisplaySettings)
-            {
-
-                string displayDeviceKey = gdiDisplay.Key;
-                GDI_DISPLAY_SETTING displayDeviceSettings = displayConfig.GdiDisplaySettings[displayDeviceKey];
-
-                if (currentGdiDisplaySettings.ContainsKey(displayDeviceKey))
-                {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
-                    GDI_DISPLAY_SETTING currentDeviceSetting = currentGdiDisplaySettings[displayDeviceKey];
-
-                    // Use the current device as a base, but set some of the various settings we stored as part of the profile 
-                    currentDeviceSetting.DeviceMode.BitsPerPixel = displayDeviceSettings.DeviceMode.BitsPerPixel;
-                    currentDeviceSetting.DeviceMode.DisplayOrientation = displayDeviceSettings.DeviceMode.DisplayOrientation;
-                    currentDeviceSetting.DeviceMode.DisplayFrequency = displayDeviceSettings.DeviceMode.DisplayFrequency;
-                    // Sets the greyscale and interlaced settings
-                    currentDeviceSetting.DeviceMode.DisplayFlags = displayDeviceSettings.DeviceMode.DisplayFlags;
-
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the GDI Device Mode will work for display {displayDeviceKey}.");
-                    // First of all check that setting the GDI mode will work
-                    CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_TEST, IntPtr.Zero);
-                    if (result == CHANGE_DISPLAY_RESULTS.Successful)
-                    {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Success. The GDI Device Mode will work for display {displayDeviceKey}.");
-                        // Set the 
-                        if (currentDeviceSetting.IsPrimary)
-                        {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (primary display).");
-                            result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_SET_PRIMARY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (secondary display).");
-                            result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
-
-                        }
-                        if (result == CHANGE_DISPLAY_RESULTS.Successful)
-                        {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully changed display {displayDeviceKey} to use the new mode!");
-                            appliedGdiDisplaySettings = true;
-                        }
-                        else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
-                        {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The settings change was unsuccessful because the system is DualView capable. Display {displayDeviceKey} not updated to new mode.");
-                            //return false;
-                        }
-                        else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
-                        {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
-                            //return false;
-                        }
-                        else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
-                        {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
-                            //return false;
-                        }
-                        else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
-                        {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
-                            //return false;
-                        }
-                        else if (result == CHANGE_DISPLAY_RESULTS.Failed)
-                        {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
-                            //return false;
-                        }
-                        else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
-                        {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
-                            //return false;
-                        }
-                        else if (result == CHANGE_DISPLAY_RESULTS.Restart)
-                        {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
-                            //return false;
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Unknown error while trying to change Display {displayDeviceKey} to use the new mode.");
-                            return false;
-                        }
-                    }
-                    else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the system is DualView capable. Skipping setting Display {displayDeviceKey}.");
-                    }
-                    else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
-                    }
-                    else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
-                    }
-                    else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
-                    }
-                    else if (result == CHANGE_DISPLAY_RESULTS.Failed)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
-                    }
-                    else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because we're unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
-                    }
-                    else if (result == CHANGE_DISPLAY_RESULTS.Restart)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because there was an unknown error testing if Display {displayDeviceKey} could use the new mode.");
-                    }
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Display {displayDeviceKey} is not currently in use, so cannot set it!");
-                }
-
-            }
-
-            // If we have applied GDI settings for multiple displays, then we need to run ChangeDisplaySettingsEx one more time
-            // see https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-changedisplaysettingsexa
-            if (appliedGdiDisplaySettings)
-            {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Other display settings were changed, so applying all the changes now.");
-                CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(null, IntPtr.Zero, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NONE, IntPtr.Zero);
-                if (result == CHANGE_DISPLAY_RESULTS.Successful)
-                {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully applied the new GDI modes!");
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the system is DualView capable.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid set of flags was passed in.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the graphics mode is not supported.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid parameter was passed in. This can include an invalid flag or combination of flags.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.Failed)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the display driver failed to apply the specified graphics mode.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because unable to write new settings to the registry.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.Restart)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the computer must be restarted for the graphics mode to work.");
-                    return false;
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unknown error while trying to apply the new GDI modes.");
-                    return false;
-                }
-            }*/
-
-
-            // NOTE: I have disabled the TaskBar setting logic for now due to errors I cannot fix in this code.
-            // WinLibrary will still track the location of the taskbars, but won't actually set them as the setting of the taskbars doesnt work at the moment.           
-            // I hope to eventually fix this code, but I don't want to hold up a new DisplayMagician release while troubleshooting this.
             /*
-            // Now set the taskbar position for each screen
-            if (displayConfig.TaskBarLayout.Count > 0 && allWindowsDisplayConfig.TaskBarLayout.Count > 0)
-            {
-                foreach (var tbrDictEntry in displayConfig.TaskBarLayout)
-                {
-                    // Look up the monitor location of the current monitor and find the matching taskbar location in the taskbar settings
-                    if (allWindowsDisplayConfig.TaskBarLayout.ContainsKey(tbrDictEntry.Key))
-                    {
-                        // check the current monitor taskbar location
-                        // if the current monitor location is the same as the monitor we want to set then
-                        TaskBarLayout currentLayout = displayConfig.TaskBarLayout[tbrDictEntry.Key];
-                        TaskBarLayout wantedLayout = allWindowsDisplayConfig.TaskBarLayout[tbrDictEntry.Key];
-                        if (currentLayout.Equals(wantedLayout))
+                        // Get the existing displays config
+                        Dictionary<string, GDI_DISPLAY_SETTING> currentGdiDisplaySettings = GetGdiDisplaySettings();
+
+                        // Apply the previously saved display settings to the new displays (match them up)
+                        // NOTE: This may be the only mode needed once it's completed.
+                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API using ChangeDisplaySettingsEx");
+                        bool appliedGdiDisplaySettings = false;
+                        foreach (var gdiDisplay in displayConfig.GdiDisplaySettings)
                         {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Display {tbrDictEntry.Key} ({tbrDictEntry.Value.RegKeyValue}) has the taskbar with the correct position, size and settings, so no need to move it");
+
+                            string displayDeviceKey = gdiDisplay.Key;
+                            GDI_DISPLAY_SETTING displayDeviceSettings = displayConfig.GdiDisplaySettings[displayDeviceKey];
+
+                            if (currentGdiDisplaySettings.ContainsKey(displayDeviceKey))
+                            {
+                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
+                                GDI_DISPLAY_SETTING currentDeviceSetting = currentGdiDisplaySettings[displayDeviceKey];
+
+                                // Use the current device as a base, but set some of the various settings we stored as part of the profile 
+                                currentDeviceSetting.DeviceMode.BitsPerPixel = displayDeviceSettings.DeviceMode.BitsPerPixel;
+                                currentDeviceSetting.DeviceMode.DisplayOrientation = displayDeviceSettings.DeviceMode.DisplayOrientation;
+                                currentDeviceSetting.DeviceMode.DisplayFrequency = displayDeviceSettings.DeviceMode.DisplayFrequency;
+                                // Sets the greyscale and interlaced settings
+                                currentDeviceSetting.DeviceMode.DisplayFlags = displayDeviceSettings.DeviceMode.DisplayFlags;
+
+                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the GDI Device Mode will work for display {displayDeviceKey}.");
+                                // First of all check that setting the GDI mode will work
+                                CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_TEST, IntPtr.Zero);
+                                if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                                {
+                                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Success. The GDI Device Mode will work for display {displayDeviceKey}.");
+                                    // Set the 
+                                    if (currentDeviceSetting.IsPrimary)
+                                    {
+                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (primary display).");
+                                        result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_SET_PRIMARY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (secondary display).");
+                                        result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
+
+                                    }
+                                    if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                                    {
+                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully changed display {displayDeviceKey} to use the new mode!");
+                                        appliedGdiDisplaySettings = true;
+                                    }
+                                    else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
+                                    {
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The settings change was unsuccessful because the system is DualView capable. Display {displayDeviceKey} not updated to new mode.");
+                                        //return false;
+                                    }
+                                    else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
+                                    {
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
+                                        //return false;
+                                    }
+                                    else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
+                                    {
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
+                                        //return false;
+                                    }
+                                    else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
+                                    {
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
+                                        //return false;
+                                    }
+                                    else if (result == CHANGE_DISPLAY_RESULTS.Failed)
+                                    {
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
+                                        //return false;
+                                    }
+                                    else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
+                                    {
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
+                                        //return false;
+                                    }
+                                    else if (result == CHANGE_DISPLAY_RESULTS.Restart)
+                                    {
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
+                                        //return false;
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Unknown error while trying to change Display {displayDeviceKey} to use the new mode.");
+                                        return false;
+                                    }
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the system is DualView capable. Skipping setting Display {displayDeviceKey}.");
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.Failed)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because we're unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.Restart)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because there was an unknown error testing if Display {displayDeviceKey} could use the new mode.");
+                                }
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Display {displayDeviceKey} is not currently in use, so cannot set it!");
+                            }
+
                         }
-                        else
+
+                        // If we have applied GDI settings for multiple displays, then we need to run ChangeDisplaySettingsEx one more time
+                        // see https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-changedisplaysettingsexa
+                        if (appliedGdiDisplaySettings)
                         {
-                            // if the current monitor taskbar location is not where we want it then
-                            // move the taskbar manually
-                            TaskBarLayout tbr = tbrDictEntry.Value;
-                            tbr.MoveTaskBar();
-                        }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Display {tbrDictEntry.Key} ({tbrDictEntry.Value.RegKeyValue}) is not currently in use, so cannot set any taskbars on it!");
-                    }
-                }
-
-                // This will actually move the taskbars by forcing Explorer to read from registry key
-                /*RestartManagerSession.RestartExplorer();
-                Process[] explorers = Process.GetProcessesByName("Explorer");
-                for (int i = 0; i < explorers.Length; i++)
-                {
-                    kill
-                }
-                // Enum all the monitors
-                //List<MONITORINFOEX> currentMonitors = Utils.EnumMonitors();
-                // Go through each monitor
-                //foreach (MONITORINFOEX mi in currentMonitors)
-                //{
-                // Look up the monitor location of the current monitor and find the matching taskbar location in the taskbar settings
-                //if (current)
-                // check the current monitor taskbar location
-                // if the current monitor location is the same as the monitor we want to set then
-                // if the current monitor taskbar location where we want it then
-                // move the taskbar manually
-                // Find the registry key for the monitor we are modifying
-                // save the taskbar position for the monitor in registry
-                // else
-                // log the fact that the monitor is in the right place so skipping moving it
-                // if we didn't find a taskbar location for this monitor
-                // log the fact that the taskbar location wasnt foound for this monitor
-                //}
-
-            }
-            else
-            {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: No taskbar layout in display profile so skipping setting it!");
-            }
-
-            // Now set the taskbar settings
-            TaskBarSettings currentTaskBarSettings = TaskBarSettings.GetCurrent();
-            if (!displayConfig.TaskBarSettings.Equals(currentTaskBarSettings))
-            {
-                // The settings are different, so we should apply them
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar settings .");
-                if (displayConfig.TaskBarSettings.Apply())
-                {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the taskbar settings successfully!");
-                    //needToRestartExplorer = true;
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to set the taskbar settings.");
-                }
-            }
-            else
-            {
-                // The settings are the same, so we should skip applying them
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: The current taskbar settings are the same as the one's we want, so skipping setting them!");
-            }*/
-
-            // Force a reapply of all taskbars (inn case NVIDIA Surround mucks it up)
-            TaskbarHelper.ForceTaskbarRedraw();
+                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Other display settings were changed, so applying all the changes now.");
+                            CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(null, IntPtr.Zero, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NONE, IntPtr.Zero);
+                            if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                            {
+                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully applied the new GDI modes!");
+                            }
+                            else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the system is DualView capable.");
+                                return false;
+                            }
+                            else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid set of flags was passed in.");
+                                return false;
+                            }
+                            else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the graphics mode is not supported.");
+                                return false;
+                            }
+                            else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid parameter was passed in. This can include an invalid flag or combination of flags.");
+                                return false;
+                            }
+                            else if (result == CHANGE_DISPLAY_RESULTS.Failed)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the display driver failed to apply the specified graphics mode.");
+                                return false;
+                            }
+                            else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because unable to write new settings to the registry.");
+                                return false;
+                            }
+                            else if (result == CHANGE_DISPLAY_RESULTS.Restart)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the computer must be restarted for the graphics mode to work.");
+                                return false;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unknown error while trying to apply the new GDI modes.");
+                                return false;
+                            }
+                        }*/
 
             return true;
         }
@@ -2637,72 +2495,6 @@ namespace DisplayMagicianShared.Windows
             }
         }
 
-        public static bool RepositionMainTaskBar(TaskBarEdge edge)
-        {
-            // Tell Windows to refresh the Main Screen Windows Taskbar
-            // Find the "Shell_TrayWnd" window 
-            IntPtr systemTrayContainerHandle = Utils.FindWindow("Shell_TrayWnd", null);
-            IntPtr startButtonHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "Start", null);
-            IntPtr systemTrayHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "TrayNotifyWnd", null);
-            IntPtr rebarWindowHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "ReBarWindow32", null);
-            IntPtr taskBarPositionBuffer = new IntPtr((Int32)edge);
-            IntPtr trayDesktopShowButtonHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "TrayShowDesktopButtonWClass", null);
-            IntPtr trayInputIndicatorHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "TrayInputIndicatorWClass", null);
-
-            // Send messages
-            // Send the "TrayNotifyWnd" window a WM_USER+13 (0x040D) message with a wParameter of 0x0 and a lParameter of the position (e.g. 0x0000 for left, 0x0001 for top, 0x0002 for right and 0x0003 for bottom)
-            Utils.SendMessage(systemTrayHandle, Utils.WM_USER_13, IntPtr.Zero, taskBarPositionBuffer);
-            Utils.SendMessage(systemTrayHandle, Utils.WM_USER_100, (IntPtr)0x3e, (IntPtr)0x21c);
-            Utils.SendMessage(systemTrayHandle, Utils.WM_THEMECHANGED, unchecked((IntPtr)0xffffffffffffffff), (IntPtr)0x000000008000001);
-            // Next, send the "TrayShowDesktopButtonWClass" window a WM_USER+13 (0x040D) message with a wParameter of 0x0 and a lParameter of the position (e.g. 0x0000 for left, 0x0001 for top, 0x0002 for right and 0x0003 for bottom)
-            Utils.SendMessage(trayDesktopShowButtonHandle, Utils.WM_USER_13, IntPtr.Zero, taskBarPositionBuffer);
-            Utils.SendMessage(startButtonHandle, Utils.WM_USER_440, (IntPtr)0x0, (IntPtr)0x0);
-            Utils.SendMessage(systemTrayHandle, Utils.WM_USER_1, (IntPtr)0x0, (IntPtr)0x0);
-            Utils.SendMessage(systemTrayContainerHandle, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
-            Utils.PostMessage(systemTrayHandle, Utils.WM_SETTINGCHANGE, Utils.SPI_SETWORKAREA, Utils.NULL);
-            Utils.SendMessage(systemTrayContainerHandle, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
-            Utils.SendMessage(rebarWindowHandle, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
-            //Utils.SendMessage(trayInputIndicatorHandle, Utils.WM_USER_100, (IntPtr)0x3e, (IntPtr)0x21c);
-            //Utils.SendMessage(systemTrayHandle, Utils.WM_USER_1, (IntPtr)0x0, (IntPtr)0x0);
-            // Move all the taskbars to this location
-            //Utils.SendMessage(systemTrayContainerHandle, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
-            //Utils.SendMessage(systemTrayContainerHandle, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
-            return true;
-        }
-
-        public static bool RepositionAllTaskBars(TaskBarEdge edge)
-        {
-            // Tell Windows to refresh the Main Screen Windows Taskbar
-            // Find the "Shell_TrayWnd" window 
-            IntPtr mainToolBarHWnd = Utils.FindWindow("Shell_TrayWnd", null);
-            // Send the "Shell_TrayWnd" window a WM_USER_REFRESHTASKBAR with a wParameter of 0006 and a lParameter of the position (e.g. 0000 for left, 0001 for top, 0002 for right and 0003 for bottom)
-            IntPtr taskBarPositionBuffer = new IntPtr((Int32)edge);
-            Utils.SendMessage(mainToolBarHWnd, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
-            return true;
-        }
-
-        public static bool RepositionSecondaryTaskBars()
-        {
-            // Tell Windows to refresh the Other Windows Taskbars if needed
-            IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
-            for (int i = 0; i < 100; i++)
-            {
-                // Find the next "Shell_SecondaryTrayWnd" window 
-                IntPtr nextTaskBarWindowHwnd = Utils.FindWindowEx((IntPtr)Utils.NULL, lastTaskBarWindowHwnd, "Shell_SecondaryTrayWnd", null);
-                if (nextTaskBarWindowHwnd == (IntPtr)Utils.NULL)
-                {
-                    // No more windows taskbars to notify
-                    break;
-                }
-                // Send the "Shell_TrayWnd" window a WM_SETTINGCHANGE with a wParameter of SPI_SETWORKAREA
-                Utils.SendMessage(lastTaskBarWindowHwnd, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
-                lastTaskBarWindowHwnd = nextTaskBarWindowHwnd;
-            }
-            return true;
-        }
-
-
-
         public static void RefreshTrayArea()
         {
             // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "Notification Area" containing the visible notification area icons (windows 7 version)
@@ -2734,7 +2526,6 @@ namespace DisplayMagicianShared.Windows
             notificationAreaHandle = IntPtr.Zero;
 
         }
-
 
         private static void RefreshTrayArea(IntPtr windowHandle)
         {

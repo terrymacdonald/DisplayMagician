@@ -18,7 +18,6 @@ namespace DisplayMagicianShared.NVIDIA
     [StructLayout(LayoutKind.Sequential)]
     public struct NVIDIA_MOSAIC_CONFIG : IEquatable<NVIDIA_MOSAIC_CONFIG>
     {
-        //public bool IsMosaicPossible; 
         public bool IsMosaicEnabled;
         public TopologyBrief  MosaicTopologyBrief;
         public DisplaySettingsV2 MosaicDisplaySettings;
@@ -26,28 +25,21 @@ namespace DisplayMagicianShared.NVIDIA
         public Int32 OverlapY;
         public GridTopologyV2[] MosaicGridTopos;
         public UInt32 MosaicGridCount;
-        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NvConstants.NV_MOSAIC_MAX_DISPLAYS)]
-        //public List<ViewPortF[]> MosaicViewports;
-        //public UInt32 PrimaryDisplayId;
 
         public override bool Equals(object obj) => obj is NVIDIA_MOSAIC_CONFIG other && this.Equals(other);
 
         public bool Equals(NVIDIA_MOSAIC_CONFIG other)
-        => //IsMosaicPossible == other.IsMosaicPossible &&
-           IsMosaicEnabled == other.IsMosaicEnabled &&
+        => IsMosaicEnabled == other.IsMosaicEnabled &&
            MosaicTopologyBrief.Equals(other.MosaicTopologyBrief) &&
            MosaicDisplaySettings.Equals(other.MosaicDisplaySettings) &&
            OverlapX == other.OverlapX &&
            OverlapY == other.OverlapY &&
            MosaicGridTopos.SequenceEqual(other.MosaicGridTopos) &&
-           MosaicGridCount == other.MosaicGridCount;// &&
-           //NVIDIALibrary.ListOfArraysEqual(MosaicViewports, other.MosaicViewports);
-           //PrimaryDisplayId == other.PrimaryDisplayId;
+           MosaicGridCount == other.MosaicGridCount;
 
         public override int GetHashCode()
         {
             return (IsMosaicEnabled, MosaicTopologyBrief, MosaicDisplaySettings, OverlapX, OverlapY, MosaicGridTopos, MosaicGridCount).GetHashCode();
-            //return (IsMosaicEnabled, MosaicGridTopos, MosaicGridCount).GetHashCode();
         }
         public static bool operator ==(NVIDIA_MOSAIC_CONFIG lhs, NVIDIA_MOSAIC_CONFIG rhs) => lhs.Equals(rhs);
 
