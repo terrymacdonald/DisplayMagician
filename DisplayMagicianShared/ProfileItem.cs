@@ -1704,8 +1704,6 @@ namespace DisplayMagicianShared
         {
             // We first get all of the taskbar locations in a list, so we know what we're looking for
             // We're going to use the taskbar rectangle to figure out which screen its on, so we can do this with any screen position
-            Dictionary<TaskbarHelper.Rect, TaskbarHelper.TaskbarPosition> allTaskbars = TaskbarHelper.GetTaskbarPositions();
-
             try
             {
                 
@@ -1717,7 +1715,7 @@ namespace DisplayMagicianShared
                     screenToLocate.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
                     
                     // find which taskbar is in this window
-                    foreach ((TaskbarHelper.Rect taskbarRectangle, TaskbarHelper.TaskbarPosition taskbarPosition) in allTaskbars)
+                    foreach ((TaskbarHelper.Rect taskbarRectangle, TaskbarHelper.TaskbarPosition taskbarPosition) in _windowsDisplayConfig.TaskbarPositions)
                     {
                         if (taskbarRectangle.Left == screenToLocate.ScreenX &&
                             taskbarRectangle.Top == screenToLocate.ScreenY &&
