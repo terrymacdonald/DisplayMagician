@@ -730,145 +730,251 @@ namespace DisplayMagicianShared
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
-                bool nvidiaMainConfigTried = false;
-                bool nvidiaMainConfigApplied = false;
-                bool amdMainConfigTried = false;
-                bool amdMainConfigApplied = false;
-                bool winMainConfigApplied = false;
-                bool nvidiaOverrideConfigApplied = false;
-                bool amdOverrideConfigApplied = false;
+                bool applyNVIDIASettings = false;
+                bool applyAMDSettings = false;
+                bool itWorkedforNVIDIA = false;
+                bool itWorkedforAMD = false;
+                bool itWorkedforWindows = false;
+                bool itWorkedforNVIDIAOverride = false;
+                bool itWorkedforAMDOverride = false;
+                bool errorApplyingSomething = false;
 
+                // Wake up all attached displays in case they have gone to sleep
+                winLibrary.WakeUpAllDisplays();
 
                 if (nvidiaLibrary.IsInstalled)
                 {
-                    // Check if the NVIDIA settings are already in use, if so skip applying them
-                    if (nvidiaLibrary.IsActiveConfig(_nvidiaDisplayConfig))
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA NvAPI DLL is available to use on this computer.");
+                    if (myDisplayConfig.NVIDIAConfig.IsInUse)
                     {
-                        SharedLogger.logger.Info($"ProfileItem/SetActive: The NVIDIA display settings in profile {Name} are already installed. No need to install them again. Skipping.");
-                    }
-                    else
-                    {
-                        if (nvidiaLibrary.IsPossibleConfig(_nvidiaDisplayConfig))
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings are used in this display profile.");
+                        if (myDisplayConfig.NVIDIAConfig.DisplayIdentifiers.Count > 0)
                         {
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: There are {myDisplayConfig.NVIDIAConfig.DisplayIdentifiers.Count} displays connected to the NVIDIA video card.");
 
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
-                            nvidiaMainConfigTried = true;
-                            nvidiaMainConfigApplied = nvidiaLibrary.SetActiveConfig(_nvidiaDisplayConfig);
-
-                            /*if (!nvidiaMainConfigApplied)
+                            if (nvidiaLibrary.IsPossibleConfig(myDisplayConfig.NVIDIAConfig))
                             {
-                                SharedLogger.logger.Error($"ProfileItem/SetActive: Error applying NVIDIA display configuration in profile {Name}. Please see specific error earlier in log file.");
-                                return false;
-                            }*/
-
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the NVIDIA display change take place before continuing.");
-                            System.Threading.Thread.Sleep(500);
-
-                            // Lets update the screens so Windows knows whats happening
-                            // NVIDIA makes such large changes to the available screens in windows, we need to do this.
-                            winLibrary.UpdateActiveConfig();
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {filename} are possible to use right now, so we'll use attempt to use them shortly.");
+                                applyNVIDIASettings = true;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {filename} were NOT possible to be applied.");
+                            }
                         }
                         else
                         {
-                            SharedLogger.logger.Warn($"ProfileItem/SetActive: Cannot apply the NVIDIA display config in profile {Name} as it is not currently possible to use it. Exiting");
-                            return false;
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display settings as no screens are connected to the NVIDIA video card.");
                         }
                     }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display settings as the NVIDIA settings are not in use in this display profile.");
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display settings as the NVIDIA library isn't installed.");
                 }
 
                 if (amdLibrary.IsInstalled)
                 {
-                    // Check if the AMD settings are already in use, if so skip applying them
-                    if (amdLibrary.IsActiveConfig(_amdDisplayConfig))
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD ADL DLL is available to use on this computer.");
+                    if (myDisplayConfig.AMDConfig.IsInUse)
                     {
-                        SharedLogger.logger.Info($"ProfileItem/SetActive: The AMD display settings in profile {Name} are already installed. No need to install them again. Skipping.");
-                    }
-                    else
-                    {
-                        if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings are used in this display profile.");
+
+                        if (myDisplayConfig.AMDConfig.DisplayIdentifiers.Count > 0)
                         {
-
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
-                            amdMainConfigTried = true;
-                            amdMainConfigApplied = amdLibrary.SetActiveConfig(_amdDisplayConfig);
-
-                            /*if (!amdMainConfigApplied)
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: There are {myDisplayConfig.AMDConfig.DisplayIdentifiers.Count} displays connected to the AMD video card.");
+                            if (amdLibrary.IsPossibleConfig(myDisplayConfig.AMDConfig))
                             {
-                                SharedLogger.logger.Error($"ProfileItem/SetActive: Error applying AMD display configuration in profile {Name}. Please see specific error earlier in log file.");
-                                return false;
-                            }*/
-
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the AMD display change take place before continuing.");
-                            System.Threading.Thread.Sleep(500);
-
-                            // Lets update the screens so Windows knows whats happening
-                            // AMD makes such large changes to the available screens in windows, we need to do this.
-                            winLibrary.UpdateActiveConfig();
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {filename} are possible to use right now, so we'll use attempt to use them.");
+                                applyAMDSettings = true;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {filename} were NOT possible to be applied.");
+                            }
                         }
                         else
                         {
-                            SharedLogger.logger.Warn($"ProfileItem/SetActive: Cannot apply the AMD display config in profile {Name} as it is not currently possible to use it.");
-                            return false;
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display settings as the AMD library isn't installed.");
                         }
                     }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display settings as the NVIDIA settings are not in use in this display profile.");
+                    }
+
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display settings as the AMD library isn't installed.");
+                }
+
+                if (applyNVIDIASettings)
+                {
+                    Console.Write($"Attempting to apply NVIDIA display config from {filename}...");
+                    itWorkedforNVIDIA = nvidiaLibrary.SetActiveConfig(myDisplayConfig.NVIDIAConfig);
+                    if (itWorkedforNVIDIA)
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {filename} were sucessfully applied.");
+                        Console.WriteLine($"Done.");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {filename} were NOT applied successfully.");
+                        Console.WriteLine($"\nERROR - NVIDIA display settings were not applied correctly.");
+                        errorApplyingSomething = true;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Skipping NVIDIA Settings as they are not used in {filename}.");
+                }
+
+                if (applyAMDSettings)
+                {
+                    Console.Write($"Attempting to apply AMD display config from {filename}...");
+                    itWorkedforAMD = amdLibrary.SetActiveConfig(myDisplayConfig.AMDConfig);
+                    if (itWorkedforAMD)
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {filename} were sucessfully applied.");
+                        Console.WriteLine($"Done.");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {filename} were NOT applied successfully.");
+                        Console.WriteLine($"\nERROR - AMD display settings were not applied correctly.");
+                        errorApplyingSomething = true;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Skipping AMD Settings as they are not used in {filename}.");
+                }
+
+
+                // If either AMD or NVIDIA settings were applied, then we need to update our windows layout to make sure it
+                // matches current reality.
+                if ((amdLibrary.IsInstalled && itWorkedforAMD) || (nvidiaLibrary.IsInstalled && itWorkedforNVIDIA))
+                {
+                    // if other changes were made, then ets update the screens so Windows knows whats happening
+                    // NVIDIA and AMD make such large changes to the available screens in windows, we need to do this.
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: NVIDIA and/or AMD display settings within {filename} were applied successfully, so updating Windows Active Config so it knows of the changes made.");
+                    winLibrary.UpdateActiveConfig();
                 }
 
                 // Then let's try to also apply the windows changes
                 // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a Mosaic config,
-                // or if the display config we want to change to is a Mosaic config. So we just have to assume that it will work
-                winMainConfigApplied = winLibrary.SetActiveConfig(_windowsDisplayConfig);
-                if (winMainConfigApplied)
-                {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within the profile {Name} were successfully applied.");
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"ProfileItem/SetActive: The Windows CCD display settings within the profile {Name} were NOT applied correctly.");
-                }
+                // or if the display config we want to change to is a Mosaic config. So we just have to assume that it will work!
+                Console.Write($"Attempting to apply Windows display config from {filename}...");
+                itWorkedforWindows = winLibrary.SetActiveConfig(myDisplayConfig.WindowsConfig);
 
-                // Now apply the NVIDIA config override if the NVIDIA config was tried and successfully changed.
-                if (nvidiaMainConfigTried && nvidiaMainConfigApplied && winMainConfigApplied)
+                if (itWorkedforWindows)
                 {
-                    nvidiaOverrideConfigApplied = nvidiaLibrary.SetActiveConfigOverride(_nvidiaDisplayConfig);
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Windows CCD display settings within {filename} were applied correctly, so now attempting to apply any overrides.");
+                    Console.WriteLine($"Done.");
 
-                    if (nvidiaOverrideConfigApplied)
+                    if (applyNVIDIASettings)
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
+                        if (itWorkedforNVIDIA)
+                        {
+                            Console.Write($"Attempting to apply 2nd part of the NVIDIA display config from {filename}...");
+                            itWorkedforNVIDIAOverride = nvidiaLibrary.SetActiveConfigOverride(myDisplayConfig.NVIDIAConfig);
+
+                            if (itWorkedforNVIDIAOverride)
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings that override windows within {filename} were applied correctly.");
+                                Console.WriteLine($"Done.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings that override windows within {filename} were NOT applied correctly.");
+                                Console.WriteLine($"ERROR - 2nd part of NVIDIA settings were not applied correctly.");
+                                errorApplyingSomething = true;
+                            }
+                        }
+                        else
+                        {
+                            if (nvidiaLibrary.IsInstalled)
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display overrides as the NVIDIA display settings didn't apply correctly!");
+                                Console.Write($"Skipping 2nd part of the NVIDIA display config from {filename} as the 1st part didn't work...");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display overrides as the NVIDIA library isn't installed.");
+                            }
+                        }
                     }
                     else
                     {
-                        SharedLogger.logger.Warn($"ProfileItem/SetActive: The NVIDIA display settings that override windows within the profile {Name} were NOT applied correctly.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display overrides as the NVIDIA video card doesn't have any displays in this profile.");
+                        Console.WriteLine($"Skipping 2nd part of NVIDIA Settings as they are not used in {filename}.");
                     }
-                }
-                else
-                {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying the NVIDIA override config within profile {Name} as either NVIDIA or Windows CCD had an earlier error.");
-                }
 
 
-                // Now apply the AMD config override if the AMD config was tried and successfully changed.
-                if (amdMainConfigTried && amdMainConfigApplied && winMainConfigApplied)
-                {
-                    amdOverrideConfigApplied = amdLibrary.SetActiveConfigOverride(_amdDisplayConfig);
-
-                    if (amdOverrideConfigApplied)
+                    if (applyAMDSettings)
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings that override windows within the profile {Name} were successfully applied.");
+                        if (itWorkedforAMD)
+                        {
+                            Console.Write($"Attempting to apply 2nd part of the AMD display config from {filename}...");
+                            itWorkedforAMDOverride = amdLibrary.SetActiveConfigOverride(myDisplayConfig.AMDConfig);
+
+                            if (itWorkedforAMDOverride)
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings that override windows within {filename} were applied correctly.");
+                                Console.WriteLine($"Done.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings that override windows within {filename} were NOT applied correctly.");
+                                Console.WriteLine($"ERROR - 2nd part of AMD settings were not applied correctly.");
+                                errorApplyingSomething = true;
+                            }
+                        }
+                        else
+                        {
+                            if (amdLibrary.IsInstalled)
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display overrides as the AMD display settings didn't apply correctly!");
+                                Console.Write($"Skipping 2nd part of the AMD display config from {filename} as the 1st part didn't work...");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display overrides as the AMD library isn't installed.");
+                            }
+                        }
                     }
                     else
                     {
-                        SharedLogger.logger.Warn($"ProfileItem/SetActive: The AMD display settings that override windows within the profile {Name} were NOT applied correctly.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display overrides as the AMD video card doesn't have any displays in this profile.");
+                        Console.WriteLine($"Skipping 2nd part of AMD Settings as they are not used in {filename}.");
                     }
+
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying the AMD override config within profile {Name} as either NVIDIA or Windows CCD had an earlier error.");
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Windows CCD display settings within {filename} were NOT applied correctly, so skipping setting the overrides.");
+                    Console.WriteLine($"ERROR - VideoInfo Windows CCD settings were not applied correctly so skipping setting the overrides.");
                 }
 
-                // Lets update the screen config again for the final time.
-                nvidiaLibrary.UpdateActiveConfig();
-                amdLibrary.UpdateActiveConfig();
-                winLibrary.UpdateActiveConfig();
+                // Write a blank line to the console
+                Console.WriteLine();
+
+                // Give the final error if there are any
+                if (errorApplyingSomething)
+                {
+                    SharedLogger.logger.Info($"VideoInfo/loadFromFile: VideoInfo was unable to successfully apply your display profile within {filename}.");
+                    Console.WriteLine($"ERROR - VideoInfo was unable to successfully apply your display profile within {filename}.");
+                }
+                else
+                {
+                    SharedLogger.logger.Info($"VideoInfo/loadFromFile: VideoInfo successfully applied your display profile contained within {filename}.");
+                    Console.WriteLine($"VideoInfo successfully applied your display profile contained within {filename}.");
+                }
 
                 return true;
             }
