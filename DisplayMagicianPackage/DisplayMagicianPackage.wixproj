@@ -48,4 +48,5 @@
     </MSBuild>
     <Message Importance="high" Text="DisplayMagicianConsole has been built and published using the $(Configuration) profile." />
   </Target>
+  <Target Name="CollectSuggestedVisualStudioComponentIds" />
 </Project>

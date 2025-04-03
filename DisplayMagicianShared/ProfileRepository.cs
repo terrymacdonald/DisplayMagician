@@ -937,8 +937,8 @@ namespace DisplayMagicianShared
                         }
                         catch (Exception nex)
                         {
-                            SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception.");
-                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception. The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. Please check the file for correctness with a JSON validator.");
+                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
 
