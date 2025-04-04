@@ -47,6 +47,8 @@ namespace DisplayMagician.UIForms
             nud_apply_profile_count = new System.Windows.Forms.NumericUpDown();
             label1 = new System.Windows.Forms.Label();
             lbl_seconds = new System.Windows.Forms.Label();
+            cb_force_restart_explorer = new System.Windows.Forms.CheckBox();
+            label2 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pb_wallpaper).BeginInit();
             gb_multiple_applies.SuspendLayout();
@@ -62,7 +64,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(555, 598);
+            btn_back.Location = new System.Drawing.Point(555, 640);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -229,6 +231,8 @@ namespace DisplayMagician.UIForms
             // 
             // gb_multiple_applies
             // 
+            gb_multiple_applies.Controls.Add(label2);
+            gb_multiple_applies.Controls.Add(cb_force_restart_explorer);
             gb_multiple_applies.Controls.Add(nud_apply_profile_delay);
             gb_multiple_applies.Controls.Add(lbl_apply_profile_delay);
             gb_multiple_applies.Controls.Add(nud_apply_profile_count);
@@ -238,10 +242,10 @@ namespace DisplayMagician.UIForms
             gb_multiple_applies.ForeColor = System.Drawing.Color.White;
             gb_multiple_applies.Location = new System.Drawing.Point(31, 494);
             gb_multiple_applies.Name = "gb_multiple_applies";
-            gb_multiple_applies.Size = new System.Drawing.Size(612, 77);
+            gb_multiple_applies.Size = new System.Drawing.Size(612, 124);
             gb_multiple_applies.TabIndex = 12;
             gb_multiple_applies.TabStop = false;
-            gb_multiple_applies.Text = "Apply Profile multiple times";
+            gb_multiple_applies.Text = "Profile Settings";
             // 
             // nud_apply_profile_delay
             // 
@@ -291,12 +295,33 @@ namespace DisplayMagician.UIForms
             lbl_seconds.TabIndex = 4;
             lbl_seconds.Text = "(seconds)";
             // 
+            // cb_force_restart_explorer
+            // 
+            cb_force_restart_explorer.AutoSize = true;
+            cb_force_restart_explorer.Location = new System.Drawing.Point(36, 72);
+            cb_force_restart_explorer.Name = "cb_force_restart_explorer";
+            cb_force_restart_explorer.Size = new System.Drawing.Size(442, 20);
+            cb_force_restart_explorer.TabIndex = 5;
+            cb_force_restart_explorer.Text = "Force Windows Explorer to restart to redraw missing windows taskbars";
+            cb_force_restart_explorer.UseVisualStyleBackColor = true;
+            cb_force_restart_explorer.CheckedChanged += cb_force_restart_explorer_CheckedChanged;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label2.Location = new System.Drawing.Point(52, 94);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(462, 13);
+            label2.TabIndex = 6;
+            label2.Text = "(Note: This will close any Windows Explorer windows you have open when this profile is applied.)";
+            // 
             // ProfileSettingsForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(677, 651);
+            ClientSize = new System.Drawing.Size(677, 693);
             Controls.Add(gb_multiple_applies);
             Controls.Add(gb_general);
             Controls.Add(btn_back);
@@ -341,5 +366,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.NumericUpDown nud_apply_profile_delay;
         private System.Windows.Forms.Label lbl_seconds;
+        private System.Windows.Forms.CheckBox cb_force_restart_explorer;
+        private System.Windows.Forms.Label label2;
     }
 }

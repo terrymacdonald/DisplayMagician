@@ -87,10 +87,12 @@ namespace DisplayMagicianShared
         private bool _isNVIDIAPossible = false;
         private bool _isAMDPossible = false;
         private bool _isWindowsPossible = false;
+        private bool _forceExplorerRestart = false;
         private Keys _hotkey = Keys.None;
         private string _wallpaperBitmapFilename = "";
         private int _applyProfileCount = 1;
         private int _applyProfileDelay = 0;
+
 
         #region JsonConverterBitmap
         internal class CustomBitmapConverter : JsonConverter
@@ -466,6 +468,20 @@ namespace DisplayMagicianShared
             }
         }
 
+        // The setting that controls whether or not we force a restart of the explorer process to restore missing windows taskbars
+        [DefaultValue(0)]
+        public bool ForceExplorerRestart
+        {
+            get
+            {
+                return _forceExplorerRestart;
+            }
+            set
+            {
+                _forceExplorerRestart = value;
+            }
+        }
+
         #endregion
 
         public static bool IsValidName(string testName)
@@ -563,6 +579,9 @@ namespace DisplayMagicianShared
             profile.WallpaperMode = WallpaperMode;
             profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
             profile.WallpaperStyle = WallpaperStyle;
+            profile.ApplyProfileCount = ApplyProfileCount;
+            profile.ApplyProfileDelay = ApplyProfileDelay;
+            profile.ForceExplorerRestart = ForceExplorerRestart;
             return true;
         }
 
@@ -943,6 +962,15 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display overrides as the AMD video card doesn't have any displays in this profile.");
                     }
 
+                    if (_forceExplorerRestart)
+                    {
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to force restart the explorer process to restore missing taskbars. The user will lose any open windows explorer windows.");
+                        winLibrary.ForceRestartExplorer();
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping restarting the explorer process as it is not required.");
+                    }
                 }
                 else
                 {
@@ -1931,15 +1959,6 @@ namespace DisplayMagicianShared
 
         public static bool operator ==(ProfileItem lhs, ProfileItem rhs)
         {
-            /*if (object.ReferenceEquals(lhs, rhs))
-                return true;
-
-            if (!object.ReferenceEquals(lhs, null) &&
-                !object.ReferenceEquals(rhs, null) &&
-                lhs.Equals(rhs))
-                return true;
-
-            return false;*/
             return Equals(lhs, rhs);
         }
 

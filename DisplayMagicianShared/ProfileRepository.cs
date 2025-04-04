@@ -730,10 +730,6 @@ namespace DisplayMagicianShared
             // If the display layout is changing then wait until it's completed before continuing...
             int totalDelay = 0;
 
-            // Force explorer to update the TaskBar settings just in case they were moved
-            //ShellHelper.TellShellToWriteSettings();
-            //WinLibrary.RefreshTaskBars();
-
             // Get the display settings
             try
             {
@@ -937,8 +933,8 @@ namespace DisplayMagicianShared
                         }
                         catch (Exception nex)
                         {
-                            SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception. The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. Please check the file for correctness with a JSON validator.");
-                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception. The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. To correct this error, please remove the JSON file, restart DisplayMagician and create new Display Profiles.");
+                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. To correct this error, please remove the JSON file, restart DisplayMagician and create new Display Profiles.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
 

@@ -121,6 +121,15 @@ namespace DisplayMagician.UIForms
                 nud_apply_profile_delay.Visible = false;
                 lbl_seconds.Visible = false;
             }
+
+            if (Profile.ForceExplorerRestart)
+            {
+                cb_force_restart_explorer.Checked = true;
+            }
+            else
+            {
+                cb_force_restart_explorer.Checked = false;
+            }
         }
 
         private void ProfileSettingsForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -143,6 +152,8 @@ namespace DisplayMagician.UIForms
             Profile.ApplyProfileCount = (int)nud_apply_profile_count.Value;
 
             Profile.ApplyProfileDelay = (int)nud_apply_profile_delay.Value;
+
+            Profile.ForceExplorerRestart = (bool)cb_force_restart_explorer.Checked;
 
         }
 
@@ -375,5 +386,9 @@ namespace DisplayMagician.UIForms
             _profileSettingChanged = true;
         }
 
+        private void cb_force_restart_explorer_CheckedChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
+        }
     }
 }
