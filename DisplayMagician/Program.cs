@@ -506,7 +506,7 @@ namespace DisplayMagician {
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
-                logger.Trace($"Program/Main: Processing the {runShortcutCmd} command...");
+                logger.Trace($"Program/Main: Setting up the {runShortcutCmd.ToString()} command...");
 
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
@@ -563,7 +563,7 @@ namespace DisplayMagician {
             // This is the ChangeProfile command
             app.Command(DisplayMagicianStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
             {
-                logger.Trace($"Program/Main: Processing the {runProfileCmd} command...");
+                logger.Trace($"Program/Main: Setting up the {runProfileCmd.ToString()} command...");
 
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
@@ -620,7 +620,7 @@ namespace DisplayMagician {
             // This is the CreateProfile command
             app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
             {
-                logger.Trace($"Program/Main: Processing the {createProfileCmd} command...");
+                logger.Trace($"Program/Main: Setting up the {createProfileCmd.ToString()} command...");
 
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
