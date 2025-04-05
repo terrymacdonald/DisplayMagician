@@ -119,6 +119,7 @@ namespace DisplayMagician
             {
                 _syncContext = SynchronizationContext.Current;
                 // Setup Named Pipe listener
+                logger.Trace($"SingleInstance/LaunchOrReturn: Creating the NamedPipeServer ready to wait for other DisplayMaigicans to send us commands they want us to run.");
                 NamedPipeServerCreateServer();
                 return true;
             }
@@ -129,6 +130,7 @@ namespace DisplayMagician
                 {
                     CommandLineArguments = Environment.GetCommandLineArgs().ToList()
                 };
+                logger.Trace($"SingleInstance/LaunchOrReturn: Sending the primary DisplayMagician the following commandline: {Environment.GetCommandLineArgs().ToList()}.");
 
                 // Send the message
                 NamedPipeClientSendOptions(namedPipeXmlPayload);
@@ -154,6 +156,17 @@ namespace DisplayMagician
                 }
             }
 
+            if (_firstApplicationInstance)
+            {
+                // We are the first instance
+                logger.Trace($"SingleInstance/IsApplicationFirstInstance: This is the first instance of DisplayMagician.");
+            }
+            else
+            {
+                // We are not the first instance
+                logger.Trace($"SingleInstance/IsApplicationFirstInstance: This is NOT the first instance of DisplayMagician.");
+            }
+
             return _firstApplicationInstance;
         }
 
@@ -165,6 +178,8 @@ namespace DisplayMagician
         {
             try
             {
+                logger.Trace($"SingleInstance/NamedPipeClientSendOptions: Sending the primary DisplayMagician the message through the NamedPipe.");
+
                 using (var namedPipeClientStream = new NamedPipeClientStream(".", GetPipeName(), PipeDirection.Out))
                 {
                     namedPipeClientStream.Connect(3000); // Maximum wait 3 seconds
@@ -184,6 +199,8 @@ namespace DisplayMagician
         /// </summary>
         private static void NamedPipeServerCreateServer()
         {
+            logger.Trace($"SingleInstance/NamedPipeServerCreateServer: Sending the primary DisplayMagician the message through the NamedPipe.");
+
             // Create a new pipe accessible by local authenticated users, disallow network
             var sidNetworkService = new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
             var sidWorld = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
@@ -241,8 +258,12 @@ namespace DisplayMagician
         {
             try
             {
+                logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: Yay! Another DisplayMagician finally send us something! Stopping the current named pipe server so we can process things.");
+
                 // End waiting for the connection
                 _namedPipeServerStream.EndWaitForConnection(iAsyncResult);
+
+                logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: Reading what the other DisplayMagician sent us.");
 
                 // Read data and prevent access to _namedPipeXmlPayload during threaded operations
                 lock (_namedPiperServerThreadLock)
@@ -250,6 +271,8 @@ namespace DisplayMagician
 
                     var ser = new DataContractJsonSerializer(typeof(Payload));
                     var payload = (Payload)ser.ReadObject(_namedPipeServerStream);
+
+                    logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: The other DisplayMagician sent us the following commandline: {payload.CommandLineArguments.ToString()}");
 
                     // payload contains the data sent from the other instance
                     if (_syncContext != null)
@@ -262,24 +285,29 @@ namespace DisplayMagician
                     }
                 }
             }
-            catch (ObjectDisposedException)
+            catch (ObjectDisposedException ex)
             {
                 // EndWaitForConnection will exception when someone calls closes the pipe before connection made
                 // In that case we dont create any more pipes and just return
                 // This will happen when app is closing and our pipe is closed/disposed
+                logger.Trace(ex, $"SingleInstance/NamedPipeServerConnectionCallback: ObjectDisposedException: The other DisplayMagician closed the pipe before a connection was made.");
+
                 return;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignored
+                logger.Warn(ex, $"SingleInstance/NamedPipeServerConnectionCallback: Exception: The other DisplayMagician closed the pipe before a connection was made.");
             }
             finally
             {
                 // Close the original pipe (we will create a new one each time)
+                logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: Disposing of the previous named pipe server memory.");
                 _namedPipeServerStream.Dispose();
             }
 
             // Create a new pipe for next connection
+            logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: Creating a new named pipe server in preparation for any DisplayMagicians to send us something in the future.");
             NamedPipeServerCreateServer();
         }
 

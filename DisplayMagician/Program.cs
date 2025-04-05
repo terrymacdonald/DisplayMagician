@@ -112,62 +112,8 @@ namespace DisplayMagician {
         /// </summary>
         [STAThread]
         private static int Main(string[] args)
-        {          
-
-            // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
-            // then skip the single instance mode tests. This is important for commands used in powershell
-            if (args.Length > 0 && _commandsThatBypassSingleInstanceMode.Contains(args[0]))
-            {
-                _bypassSingleInstanceMode = true;
-            }
-
-
-            // If we're not bypassing single instance mode, then we need to check if we're the single instance, and if we're the second instance then
-            // we need to pass the command to the single instance and shutdown.
-            if (!_bypassSingleInstanceMode)
-            {
-                // Create the remote server if we're first instance, or
-                // If we're a subsequent instance, pass the command line parameters to the first instance and then 
-                bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
-                if (isFirstInstance)
-                {
-                    Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
-                }
-                else
-                {
-
-                    // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
-                    Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
-                    if (System.Windows.Forms.Application.MessageLoop)
-                    {
-                        // WinForms have loaded
-                        Application.Exit();
-                    }
-                    else
-                    {
-                        // Console app
-                        Environment.Exit(1);
-                    }
-
-                }
-            }
-            
-
-            // If we get here, then we're the first instance!
-            // Explicitly register DisplayMagician with Windows so that it can be found by other programs
-            RegisterDisplayMagicianWithWindows();
-
-            // Set up some defaults for the shared HttpClient
-            AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
-
-            // Prepare NLog for internal logging - Comment out when not required
-            //NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
-            //NLog.Common.InternalLogger.LogToConsole = true;
-            //NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
-
-            var config = new NLog.Config.LoggingConfiguration();
-            
-            // Create the Logging Dir if it doesn't exist so that it's avilable for all 
+        {
+            // Create the Logging Dir if it doesn't exist so that it's avilable for all
             // parts of the program to use
             if (!Directory.Exists(AppLogPath))
             {
@@ -181,6 +127,126 @@ namespace DisplayMagician {
                 }
             }
 
+            // Prepare NLog for internal logging - Comment out when not required
+            //NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
+            //NLog.Common.InternalLogger.LogToConsole = true;
+            //NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
+
+            var config = new NLog.Config.LoggingConfiguration();
+
+            // Rules for mapping loggers to targets          
+            /* NLog.LogLevel logLevel = null;
+            switch (AppProgramSettings.LogLevel)
+            {
+                case "Trace":
+                    logLevel = NLog.LogLevel.Trace;
+                    break;
+                case "Info":
+                    logLevel = NLog.LogLevel.Info;
+                    break;
+                case "Warn":
+                    logLevel = NLog.LogLevel.Warn;
+                    break;
+                case "Error":
+                    logLevel = NLog.LogLevel.Error;
+                    break;
+                case "Debug":
+                    logLevel = NLog.LogLevel.Debug;
+                    break;
+                default:
+                    logLevel = NLog.LogLevel.Info;
+                    break;
+            }*/
+            // TODO - remove this temporary action to force Trace level logging
+            // I've set this as it was too onerous continuously teaching people how to turn on TRACE logging
+            // While there are a large number of big changes taking place with DisplayMagician, this will minimise
+            // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
+            NLog.LogLevel logLevel = NLog.LogLevel.Trace;
+            AppProgramSettings.LogLevel = "Trace";
+
+
+            // Targets where to log to: File and Console
+            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.Now.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture)}.log");
+
+            // Create the log file target
+            var logfile = new NLog.Targets.FileTarget("logfile")
+            {
+                FileName = appLogFilename,
+                MaxArchiveFiles = 4,
+                ArchiveAboveSize = 41943040, // 40MB max file size
+                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
+            };
+
+            // Create a logging rule to use the log file target
+            var loggingRule = new LoggingRule("LogToFile");
+            loggingRule.EnableLoggingForLevels(logLevel, NLog.LogLevel.Fatal);
+            loggingRule.Targets.Add(logfile);
+            loggingRule.LoggerNamePattern = "*";
+            config.LoggingRules.Add(loggingRule);
+
+            // Apply config           
+            NLog.LogManager.Configuration = config;
+
+            // Make DisplayMagicianShared use the same log file by sending it the 
+            // details of the existing NLog logger
+            sharedLogger = new SharedLogger(logger);
+
+            // Start the Log file
+            logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
+
+
+            // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
+            // then skip the single instance mode tests. This is important for commands used in powershell
+            logger.Trace($"Program/Main: Checking if the user has provided a command that bypasses single instance mode.");
+            if (args.Length > 0 && _commandsThatBypassSingleInstanceMode.Contains(args[0]))
+            {
+                logger.Trace($"Program/Main: The user has provided a command that bypasses single instance mode. We have enabled bypass single instance mode.");
+                _bypassSingleInstanceMode = true;
+            }
+
+
+            // If we're not bypassing single instance mode, then we need to check if we're the single instance, and if we're the second instance then
+            // we need to pass the command to the single instance and shutdown.
+            if (!_bypassSingleInstanceMode)
+            {
+                logger.Trace($"Program/Main: We're not bypassing single instance mode so we need to check if we're the only instance, otherwise we have to shuitdown aand send that first instance our command.");
+
+                // Create the remote server if we're first instance, or
+                // If we're a subsequent instance, pass the command line parameters to the first instance and then 
+                logger.Trace($"Program/Main: Running the SingleInstance.LaunchOrReturn function to act as either the first or subsequent instances.");
+                bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
+                if (isFirstInstance)
+                {
+                    logger.Trace($"Program/Main: We are the first DisplayMagician to start, so will be the one to actually perform the actions.");
+                }
+                else
+                {
+
+                    // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
+                    logger.Trace($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
+                    if (System.Windows.Forms.Application.MessageLoop)
+                    {
+                        // WinForms have loaded
+                        Application.Exit();
+                    }
+                    else
+                    {
+                        // Console app
+                        Environment.Exit(1);
+                    }
+
+                }
+            }
+
+
+            // If we get here, then we're the first instance!
+            // Explicitly register DisplayMagician with Windows so that it can be found by other programs
+            logger.Trace($"Program/Main: Registering DisplayMagicain with Windows.");
+            RegisterDisplayMagicianWithWindows();
+
+            // Set up some defaults for the shared HttpClient
+            AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
+
             // Process the version tracking logic
             AppInstalled = false; 
             AppNewInstall = false;
@@ -189,6 +255,7 @@ namespace DisplayMagician {
 
             try
             {
+                logger.Trace($"Program/Main: Checking if this is the first run of DisplayMagician");
                 // Figure out if this is First Run of this version since installed
                 RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
                 if (DMKey != null)
@@ -283,67 +350,7 @@ namespace DisplayMagician {
                 AppProgramSettings.SaveSettings();
             }
 
-
-            // Rules for mapping loggers to targets          
-            /* NLog.LogLevel logLevel = null;
-            switch (AppProgramSettings.LogLevel)
-            {
-                case "Trace":
-                    logLevel = NLog.LogLevel.Trace;
-                    break;
-                case "Info":
-                    logLevel = NLog.LogLevel.Info;
-                    break;
-                case "Warn":
-                    logLevel = NLog.LogLevel.Warn;
-                    break;
-                case "Error":
-                    logLevel = NLog.LogLevel.Error;
-                    break;
-                case "Debug":
-                    logLevel = NLog.LogLevel.Debug;
-                    break;
-                default:
-                    logLevel = NLog.LogLevel.Info;
-                    break;
-            }*/
-            // TODO - remove this temporary action to force Trace level logging
-            // I've set this as it was too onerous continuously teaching people how to turn on TRACE logging
-            // While there are a large number of big changes taking place with DisplayMagician, this will minimise
-            // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
-            NLog.LogLevel logLevel = NLog.LogLevel.Trace;
-            AppProgramSettings.LogLevel = "Trace";
-
-
-            // Targets where to log to: File and Console
-            string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.UtcNow.ToString("yyyy-MM-dd-HHmm",CultureInfo.InvariantCulture)}.log");
-
-            // Create the log file target
-            var logfile = new NLog.Targets.FileTarget("logfile")
-            {
-                FileName = appLogFilename,
-                MaxArchiveFiles = 4,
-                ArchiveAboveSize = 41943040, // 40MB max file size
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
-            };
-
-            // Create a logging rule to use the log file target
-            var loggingRule = new LoggingRule("LogToFile");
-            loggingRule.EnableLoggingForLevels(logLevel, NLog.LogLevel.Fatal);
-            loggingRule.Targets.Add(logfile);
-            loggingRule.LoggerNamePattern = "*";
-            config.LoggingRules.Add(loggingRule);
-
-            // Apply config           
-            NLog.LogManager.Configuration = config;
             
-            // Make DisplayMagicianShared use the same log file by sending it the 
-            // details of the existing NLog logger
-            sharedLogger = new SharedLogger(logger);
-
-            // Start the Log file
-            logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
-
             // Create the other DM Dir if it doesn't exist so that it's avilable for all 
             // parts of the program to use
             if (!Directory.Exists(AppIconPath))
