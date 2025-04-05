@@ -497,8 +497,9 @@ namespace DisplayMagician {
                 return string.Format("Version {0}", Assembly.GetExecutingAssembly().GetName().Version);
             });
 
-            CommandOption debug = app.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
-            CommandOption trace = app.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
+            CommandOption appDebug = app.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
+            CommandOption appTrace = app.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
+
             //CommandOption forcedVideoLibrary = app.Option("--force-video-library", "Bypass the normal video detection logic to force a particular video library (AMD, NVIDIA, Windows)", CommandOptionType.SingleValue);
 
             logger.Trace($"Program/Main: Preparing the RunShortcut command...");
@@ -506,26 +507,10 @@ namespace DisplayMagician {
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
-                logger.Trace($"Program/Main: Setting up the {runShortcutCmd.ToString()} command...");
+                logger.Trace($"Program/Main: Setting up the {DisplayMagicianStartupAction.RunShortcut.ToString()} command...");
 
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
-
-                // Set the --trace or --debug options if supplied
-                if (trace.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
-                else if (debug.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
 
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
@@ -533,9 +518,28 @@ namespace DisplayMagician {
                 //description and help text of the command.
                 runShortcutCmd.Description = "Use this command to run favourite game or application with a display profile of your choosing.";
 
+                CommandOption debug = runShortcutCmd.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
+                CommandOption trace = runShortcutCmd.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
+
                 runShortcutCmd.OnExecute(() =>
                 {
                     logger.Debug($"Program/Main: RunShortcut commandline command was invoked!");
+
+                    // Set the --trace or --debug options if supplied
+                    if (trace.HasValue())
+                    {
+                        Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                        logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
+                        loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                        NLog.LogManager.ReconfigExistingLoggers();
+                    }
+                    else if (debug.HasValue())
+                    {
+                        Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                        logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                        loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                        NLog.LogManager.ReconfigExistingLoggers();
+                    }
 
                     // Set up the AppMainForm variable that we need to use later
                     AppMainForm = new MainForm();
@@ -563,24 +567,7 @@ namespace DisplayMagician {
             // This is the ChangeProfile command
             app.Command(DisplayMagicianStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
             {
-                logger.Trace($"Program/Main: Setting up the {runProfileCmd.ToString()} command...");
-
-                // Set the --trace or --debug options if supplied
-                if (trace.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
-                else if (debug.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
-
+                logger.Trace($"Program/Main: Setting up the {DisplayMagicianStartupAction.ChangeProfile.ToString()} command...");
 
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
                 argumentProfile.Validators.Add(new ProfileMustExistValidator());
@@ -588,9 +575,28 @@ namespace DisplayMagician {
                 //description and help text of the command.
                 runProfileCmd.Description = "Use this command to change to a display profile of your choosing.";
 
+                CommandOption debug = runProfileCmd.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
+                CommandOption trace = runProfileCmd.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
+
                 runProfileCmd.OnExecute(() =>
                 {
                     logger.Debug($"Program/Main: ChangeProfile commandline command was invoked!");
+
+                    // Set the --trace or --debug options if supplied
+                    if (trace.HasValue())
+                    {
+                        Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                        logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
+                        loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                        NLog.LogManager.ReconfigExistingLoggers();
+                    }
+                    else if (debug.HasValue())
+                    {
+                        Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                        logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                        loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                        NLog.LogManager.ReconfigExistingLoggers();
+                    }
 
                     // Set up the AppMainForm variable that we need to use later
                     AppMainForm = new MainForm();
@@ -620,30 +626,35 @@ namespace DisplayMagician {
             // This is the CreateProfile command
             app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
             {
-                logger.Trace($"Program/Main: Setting up the {createProfileCmd.ToString()} command...");
-
-                // Set the --trace or --debug options if supplied
-                if (trace.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
-                else if (debug.HasValue())
-                {
-                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
-                    NLog.LogManager.ReconfigExistingLoggers();
-                }
+                logger.Trace($"Program/Main: Setting up the {DisplayMagicianStartupAction.CreateProfile.ToString()} command...");               
 
                 //description and help text of the command.
                 createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
 
+
+                CommandOption debug = createProfileCmd.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
+                CommandOption trace = createProfileCmd.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
+
                 createProfileCmd.OnExecute(() =>
                 {
                     logger.Debug($"Program/Main: CreateProfile commandline command was invoked!");
+
+                    // Set the --trace or --debug options if supplied
+                    if (trace.HasValue())
+                    {
+                        Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                        logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
+                        loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                        NLog.LogManager.ReconfigExistingLoggers();
+                    }
+                    else if (debug.HasValue())
+                    {
+                        Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                        logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                        loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                        NLog.LogManager.ReconfigExistingLoggers();
+                    }
+
                     Console.WriteLine("Starting up and creating a new Display Profile...");
                     ERRORLEVEL errLevel = CreateProfile();
                     DeRegisterDisplayMagicianWithWindows();
@@ -659,14 +670,14 @@ namespace DisplayMagician {
                 logger.Trace($"Program/Main: Starting the app normally as there was no command supplied...");
 
                 // Set the --trace or --debug options if supplied
-                if (trace.HasValue())
+                if (appTrace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
                     logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
-                else if (debug.HasValue())
+                else if (appDebug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
@@ -729,7 +740,7 @@ namespace DisplayMagician {
 
             try
             {
-                logger.Debug($"Invoking commandline processing");
+                logger.Debug($"Executing the app.execute commandline processing to start parsing the command line options");
                 // This begins the actual execution of the application
                 app.Execute(args);
             }
