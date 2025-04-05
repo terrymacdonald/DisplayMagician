@@ -2124,9 +2124,10 @@ namespace DisplayMagicianShared.Windows
                 if (path.TargetInfo.TargetAvailable == false)
                 {
                     // We want to skip this one cause it's not valid
-                    SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Skipping path due to TargetAvailable not existing in display #{path.TargetInfo.Id}");
                     continue;
                 }
+
+                SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: This Path has the TargetAvailable for display #{path.TargetInfo.Id}");
 
                 // get display source name
                 var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
@@ -2541,9 +2542,10 @@ namespace DisplayMagicianShared.Windows
                 if (path.TargetInfo.TargetAvailable == false)
                 {
                     // We want to skip this one cause it's not valid
-                    SharedLogger.logger.Trace($"WinLibrary/GetAllAdapterIDs: Skipping path due to TargetAvailable not existing in display #{path.TargetInfo.Id}");
                     continue;
                 }
+
+                SharedLogger.logger.Trace($"WinLibrary/GetAllAdapterIDs: This Path has the TargetAvailable for display #{path.TargetInfo.Id}");
 
                 // get display adapter name
                 var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
