@@ -130,7 +130,7 @@ namespace DisplayMagician
                 {
                     CommandLineArguments = Environment.GetCommandLineArgs().ToList()
                 };
-                logger.Trace($"SingleInstance/LaunchOrReturn: Sending the primary DisplayMagician the following commandline: {Environment.GetCommandLineArgs().ToList()}.");
+                logger.Trace($"SingleInstance/LaunchOrReturn: Sending the primary DisplayMagician the following commandline: {Environment.GetCommandLineArgs().ToString()}.");
 
                 // Send the message
                 NamedPipeClientSendOptions(namedPipeXmlPayload);

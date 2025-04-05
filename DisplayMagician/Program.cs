@@ -162,8 +162,6 @@ namespace DisplayMagician {
             // While there are a large number of big changes taking place with DisplayMagician, this will minimise
             // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
             NLog.LogLevel logLevel = NLog.LogLevel.Trace;
-            AppProgramSettings.LogLevel = "Trace";
-
 
             // Targets where to log to: File and Console
             string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.Now.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture)}.log");
@@ -334,6 +332,9 @@ namespace DisplayMagician {
             AppProgramSettings.NumberOfStartsSinceLastDonationForm++;
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
+            // Force the logging level to be trace for now!
+            // TODO: Remove.
+            AppProgramSettings.LogLevel = "Trace";
             // If app settings is new, then set the initial settings we need
             if (AppNewInstall)
             {
@@ -348,9 +349,9 @@ namespace DisplayMagician {
 
                 // Store the updated settings
                 AppProgramSettings.SaveSettings();
-            }
+            }            
 
-            
+
             // Create the other DM Dir if it doesn't exist so that it's avilable for all 
             // parts of the program to use
             if (!Directory.Exists(AppIconPath))
