@@ -6,6 +6,8 @@ using Microsoft.Win32.SafeHandles;
 using System.Text.RegularExpressions;
 using NLog.Targets;
 using System.Threading;
+using System.Threading.Tasks;
+using DisplayMagicianShared;
 using System.Diagnostics;
 
 namespace DisplayMagicianShared.Windows
@@ -77,7 +79,7 @@ namespace DisplayMagicianShared.Windows
         public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
-        public Dictionary<TaskbarHelper.Rect, TaskbarHelper.TaskbarPosition> TaskbarPositions;
+        public Dictionary<Rect, TaskbarPosition> TaskbarPositions;
         public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
@@ -101,7 +103,8 @@ namespace DisplayMagicianShared.Windows
             }
 
             // Now we need to go through the HDR states comparing vaues, as the order changes if there is a cloned display
-            if (!WinLibrary.EqualButDifferentOrder<ADVANCED_HDR_INFO_PER_PATH>(DisplayHDRStates, other.DisplayHDRStates))
+            //if (!CollectionComparer.AreEquivalent(DisplayHDRStates, other.DisplayHDRStates))
+            if (!CollectionComparer.EqualButDifferentOrder<ADVANCED_HDR_INFO_PER_PATH>(DisplayHDRStates, other.DisplayHDRStates))                
             {
                 return false;
             }
@@ -1510,12 +1513,15 @@ namespace DisplayMagicianShared.Windows
 
         public bool SetActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig)
         {
-            //bool needToRestartExplorer = false;
+
+            bool displayConfigPassedValidation = false;
+            bool displayConfigAppliedSuccessfully = false;
 
             // Get the all possible windows display configs
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Generating a list of all the current display configs");
             WINDOWS_DISPLAY_CONFIG allWindowsDisplayConfig = GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS);
 
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Checking whether the display configuration contains a cloned display.");
             if (displayConfig.IsCloned)
             {
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: We have a cloned display in this display profile");
@@ -1532,371 +1538,439 @@ namespace DisplayMagicianShared.Windows
             uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
             uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
 
+            // First we need to validate the display config            
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to validate the supplied display configuration with {myPathsCount} display config paths and {myModesCount} modes.");
             // Now set the specified display configuration for this computer                    
-            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET | SDC.SDC_FORCE_MODE_ENUMERATION);
+            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_VALIDATE);
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully set the display configuration to the settings supplied!");
+                displayConfigPassedValidation = true;
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully validated that the display configuration would work if applied!");
             }
             else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
             {
-                SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without SDC_FORCE_MODE_ENUMERATION as that works on some computers.");
-                // Try it again, because in some systems it doesn't work at the first try
-                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
-                {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Retry. Successfully set the display configuration to the settings supplied!");
-                }
-                else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry. The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without any specific data other than the topology as that works on some computers.");
-                    // Try it again, because in some systems it doesn't work at the 2nd try! This is a fallback mode just to get something on the screen!
-                    err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES | SDC.SDC_ALLOW_PATH_ORDER_CHANGES);
-                    if (err == WIN32STATUS.ERROR_SUCCESS)
-                    {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Retry 2. Successfully set the display configuration to the settings supplied!");
-                    }
-                    else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The combination of parameters and flags specified is invalid. Display configuration not applied.");
-                        return false;
-                    }
-                    else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
-                        return false;
-                    }
-                    else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
-                        return false;
-                    }
-                    else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. An unspecified error occurred. Display configuration not applied.");
-                        return false;
-                    }
-                    else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
-                        return false;
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
-                        return false;
-                    }
-                }
-                else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
-                    return false;
-                }
-                else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
-                    return false;
-                }
-                else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. An unspecified error occurred. Display configuration not applied.");
-                    return false;
-                }
-                else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
-                    return false;
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
-                    return false;
-                }
+                SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: The combination of parameters and flags specified is invalid. Display configuration not valid.");
             }
             else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
             {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
+                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not validated.");
                 return false;
             }
             else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
             {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
+                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not validated.");
                 return false;
             }
             else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
             {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An unspecified error occurred. Display configuration not applied.");
+                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An unspecified error occurred. Display configuration not validated.");
                 return false;
             }
             else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
             {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
+                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not validated.");
                 return false;
             }
             else
             {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
+                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not validated.");
                 return false;
             }
 
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
-
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting 0.1 second to let the display change take place before adjusting the Windows CCD Source DPI scaling settings");
-            System.Threading.Thread.Sleep(100);
-
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set Windows DPI Scaling setting for display sources.");
-            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-            foreach (var displaySourceEntry in displayConfig.DisplaySources)
+            // If the display config passed validation, then we can try and apply it
+            if (displayConfigPassedValidation)
             {
-                // We only need to set the source on the first display source
-                // Set the Windows Scaling DPI per source
-                if (SetDPISettings(displaySourceEntry.Value[0].AdapterId, displaySourceEntry.Value[0].SourceId, displaySourceEntry.Value[0].TargetId, displaySourceEntry.Value[0].SourceDPIScalingInfo))
+                // Try and apply the validated display config
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration with {myPathsCount} display config paths and {myModesCount} modes.");
+                // Now set the specified display configuration for this computer                    
+                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the DPI scaling settings for display source {displaySourceEntry.Value[0].SourceId}");
+                    displayConfigAppliedSuccessfully = true;
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully set the display configuration to the settings supplied on attempt #1!");
+                }
+                else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without SDC_FORCE_MODE_ENUMERATION as that works on some computers.");
+                }
+                else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
+                }
+                else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
+                }
+                else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An unspecified error occurred. Display configuration not applied.");
+                }
+                else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
                 }
                 else
                 {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - Unable to set the DPI scaling settings for display source {displaySourceEntry.Value[0].SourceId}");
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
+                }
+            }
+
+            // If the display config didn't pass validation, then we can try and apply it again in exactly the same way as sometimes it isn't applied correctly the first time
+            if (displayConfigPassedValidation && !displayConfigAppliedSuccessfully)
+            {
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempt #1 failed, so waiting 0.5 seconds to try again!");
+                Thread.Sleep(500);
+
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration A SECOND TIME with {myPathsCount} display config paths and {myModesCount} modes. Sometimes it doesn't work the first time!");
+                // Try it again, because in some systems it doesn't work at the first try
+                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    displayConfigAppliedSuccessfully = true;
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Retry. Successfully set the display configuration to the settings supplied on attempt #2!");
+                }
+                else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry. The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without any specific data other than the topology as that works on some computers.");
+                }
+                else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
+                }
+                else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
+                }
+                else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. An unspecified error occurred. Display configuration not applied.");
+                }
+                else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
+                }
+                else
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
+                }
+
+            }
+
+            // If the display config didn't pass validation, then we can try and apply it again but this time only suplpy the topology and allow changes.
+            // This can avoid some issues if the supplied modes are no longer valid.
+            if (displayConfigPassedValidation && !displayConfigAppliedSuccessfully)
+            {
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempt #2 failed, so waiting 1 second to try again!");
+                Thread.Sleep(1000);
+
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration A THIRD TIME, this time just supplying {myPathsCount} display config paths and letting Windows figure out the best modes to use. This may work but is hit and miss.");
+                // Try it again, because in some systems it doesn't work at the first try
+                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    displayConfigAppliedSuccessfully = true;
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Retry 2. Successfully set the display configuration to the settings supplied on attempt #3!");
+                }
+                else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry 2. The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without any specific data other than the topology as that works on some computers.");
+                }
+                else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
+                    return false;
+                }
+                else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
+                    return false;
+                }
+                else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. An unspecified error occurred. Display configuration not applied.");
+                    return false;
+                }
+                else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
+                    return false;
+                }
+                else
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
                     return false;
                 }
 
             }
-            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);
 
-
-            // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting
-            // This code will only turn on the HDR setting.
-            foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.DisplayHDRStates)
+            // If the display config was applied successfully, we can move on to applying the other windows settings
+            if (displayConfigAppliedSuccessfully)
             {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to get information whether HDR color is in use now on Display {myHDRstate.Id}.");
-                // Get advanced HDR info
-                var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
-                colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
-                colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
-                colorInfo.Header.AdapterId = myHDRstate.AdapterId;
-                colorInfo.Header.Id = myHDRstate.Id;
-                err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
+                SharedLogger.logger.Info($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
+
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting 0.1 second to let the display change take place before adjusting other specific Windows Display Settings");
+                System.Threading.Thread.Sleep(100);
+
+                /*SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set Windows DPI Scaling setting for display sources.");
+                CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+                foreach (var displaySourceEntry in displayConfig.DisplaySources)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Advanced Color Info gathered from Display {myHDRstate.Id}");
-
-                    if (myHDRstate.AdvancedColorInfo.AdvancedColorEnabled != colorInfo.AdvancedColorEnabled)
+                    // We only need to set the source on the first display source
+                    // Set the Windows Scaling DPI per source
+                    if (SetDPISettings(displaySourceEntry.Value[0].AdapterId, displaySourceEntry.Value[0].SourceId, displaySourceEntry.Value[0].TargetId, displaySourceEntry.Value[0].SourceDPIScalingInfo))
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: HDR is available for use on Display {myHDRstate.Id}, and we want it set to {myHDRstate.AdvancedColorInfo.BitsPerColorChannel} but is currently {colorInfo.AdvancedColorEnabled}.");
+                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the DPI scaling settings for display source {displaySourceEntry.Value[0].SourceId}");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - Unable to set the DPI scaling settings for display source {displaySourceEntry.Value[0].SourceId}");
+                        return false;
+                    }
+
+                }
+                CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);*/
 
 
-                        var setColorState = new DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE();
-                        setColorState.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE;
-                        setColorState.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE>();
-                        setColorState.Header.AdapterId = myHDRstate.AdapterId;
-                        setColorState.Header.Id = myHDRstate.Id;
-                        setColorState.EnableAdvancedColor = myHDRstate.AdvancedColorInfo.AdvancedColorEnabled;
-                        err = CCDImport.DisplayConfigSetDeviceInfo(ref setColorState);
-                        if (err == WIN32STATUS.ERROR_SUCCESS)
+                // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting
+                // This code will only turn on the HDR setting.
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Turning on Windows HDR.");
+                foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.DisplayHDRStates)
+                {
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to get information whether HDR color is in use now on Display {myHDRstate.Id}.");
+                    // Get advanced HDR info
+                    var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
+                    colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+                    colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
+                    colorInfo.Header.AdapterId = myHDRstate.AdapterId;
+                    colorInfo.Header.Id = myHDRstate.Id;
+                    err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
+                    if (err == WIN32STATUS.ERROR_SUCCESS)
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Advanced Color Info gathered from Display {myHDRstate.Id}");
+
+                        if (myHDRstate.AdvancedColorInfo.AdvancedColorEnabled != colorInfo.AdvancedColorEnabled)
                         {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! Set HDR successfully to {myHDRstate.AdvancedColorInfo.AdvancedColorEnabled} on Display {myHDRstate.Id}");
+                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: HDR is available for use on Display {myHDRstate.Id}, and we want it set to {myHDRstate.AdvancedColorInfo.BitsPerColorChannel} but is currently {colorInfo.AdvancedColorEnabled}.");
+
+
+                            var setColorState = new DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE();
+                            setColorState.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE;
+                            setColorState.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE>();
+                            setColorState.Header.AdapterId = myHDRstate.AdapterId;
+                            setColorState.Header.Id = myHDRstate.Id;
+                            setColorState.EnableAdvancedColor = myHDRstate.AdvancedColorInfo.AdvancedColorEnabled;
+                            err = CCDImport.DisplayConfigSetDeviceInfo(ref setColorState);
+                            if (err == WIN32STATUS.ERROR_SUCCESS)
+                            {
+                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! Set HDR successfully to {myHDRstate.AdvancedColorInfo.AdvancedColorEnabled} on Display {myHDRstate.Id}");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to set the HDR settings for display #{myHDRstate.Id}");
+                                return false;
+                            }
                         }
                         else
                         {
-                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to set the HDR settings for display #{myHDRstate.Id}");
-                            return false;
+                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Skipping setting HDR on Display {myHDRstate.Id} as it is already in the correct HDR mode: {colorInfo.AdvancedColorEnabled}");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Skipping setting HDR on Display {myHDRstate.Id} as it is already in the correct HDR mode: {colorInfo.AdvancedColorEnabled}");
+                        SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out if HDR is supported for display #{myHDRstate.Id}");
                     }
+
                 }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out if HDR is supported for display #{myHDRstate.Id}");
-                }
+                return true;
+            }
+            else
+            {
+                SharedLogger.logger.Info($"WinLibrary/SetActiveConfig: UH OH! The display configuration has NOT applied correctly. There was an error.");
+                return false;
+            }
 
-            }            
+                /*
+                            // Get the existing displays config
+                            Dictionary<string, GDI_DISPLAY_SETTING> currentGdiDisplaySettings = GetGdiDisplaySettings();
 
-            /*
-                        // Get the existing displays config
-                        Dictionary<string, GDI_DISPLAY_SETTING> currentGdiDisplaySettings = GetGdiDisplaySettings();
-
-                        // Apply the previously saved display settings to the new displays (match them up)
-                        // NOTE: This may be the only mode needed once it's completed.
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API using ChangeDisplaySettingsEx");
-                        bool appliedGdiDisplaySettings = false;
-                        foreach (var gdiDisplay in displayConfig.GdiDisplaySettings)
-                        {
-
-                            string displayDeviceKey = gdiDisplay.Key;
-                            GDI_DISPLAY_SETTING displayDeviceSettings = displayConfig.GdiDisplaySettings[displayDeviceKey];
-
-                            if (currentGdiDisplaySettings.ContainsKey(displayDeviceKey))
+                            // Apply the previously saved display settings to the new displays (match them up)
+                            // NOTE: This may be the only mode needed once it's completed.
+                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API using ChangeDisplaySettingsEx");
+                            bool appliedGdiDisplaySettings = false;
+                            foreach (var gdiDisplay in displayConfig.GdiDisplaySettings)
                             {
-                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
-                                GDI_DISPLAY_SETTING currentDeviceSetting = currentGdiDisplaySettings[displayDeviceKey];
 
-                                // Use the current device as a base, but set some of the various settings we stored as part of the profile 
-                                currentDeviceSetting.DeviceMode.BitsPerPixel = displayDeviceSettings.DeviceMode.BitsPerPixel;
-                                currentDeviceSetting.DeviceMode.DisplayOrientation = displayDeviceSettings.DeviceMode.DisplayOrientation;
-                                currentDeviceSetting.DeviceMode.DisplayFrequency = displayDeviceSettings.DeviceMode.DisplayFrequency;
-                                // Sets the greyscale and interlaced settings
-                                currentDeviceSetting.DeviceMode.DisplayFlags = displayDeviceSettings.DeviceMode.DisplayFlags;
+                                string displayDeviceKey = gdiDisplay.Key;
+                                GDI_DISPLAY_SETTING displayDeviceSettings = displayConfig.GdiDisplaySettings[displayDeviceKey];
 
-                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the GDI Device Mode will work for display {displayDeviceKey}.");
-                                // First of all check that setting the GDI mode will work
-                                CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_TEST, IntPtr.Zero);
-                                if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                                if (currentGdiDisplaySettings.ContainsKey(displayDeviceKey))
                                 {
-                                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Success. The GDI Device Mode will work for display {displayDeviceKey}.");
-                                    // Set the 
-                                    if (currentDeviceSetting.IsPrimary)
-                                    {
-                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (primary display).");
-                                        result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_SET_PRIMARY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
-                                    }
-                                    else
-                                    {
-                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (secondary display).");
-                                        result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
+                                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
+                                    GDI_DISPLAY_SETTING currentDeviceSetting = currentGdiDisplaySettings[displayDeviceKey];
 
-                                    }
+                                    // Use the current device as a base, but set some of the various settings we stored as part of the profile 
+                                    currentDeviceSetting.DeviceMode.BitsPerPixel = displayDeviceSettings.DeviceMode.BitsPerPixel;
+                                    currentDeviceSetting.DeviceMode.DisplayOrientation = displayDeviceSettings.DeviceMode.DisplayOrientation;
+                                    currentDeviceSetting.DeviceMode.DisplayFrequency = displayDeviceSettings.DeviceMode.DisplayFrequency;
+                                    // Sets the greyscale and interlaced settings
+                                    currentDeviceSetting.DeviceMode.DisplayFlags = displayDeviceSettings.DeviceMode.DisplayFlags;
+
+                                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the GDI Device Mode will work for display {displayDeviceKey}.");
+                                    // First of all check that setting the GDI mode will work
+                                    CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_TEST, IntPtr.Zero);
                                     if (result == CHANGE_DISPLAY_RESULTS.Successful)
                                     {
-                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully changed display {displayDeviceKey} to use the new mode!");
-                                        appliedGdiDisplaySettings = true;
+                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Success. The GDI Device Mode will work for display {displayDeviceKey}.");
+                                        // Set the 
+                                        if (currentDeviceSetting.IsPrimary)
+                                        {
+                                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (primary display).");
+                                            result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_SET_PRIMARY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
+                                        }
+                                        else
+                                        {
+                                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Actually going to try to set the GDI Device Mode for display {displayDeviceKey} now (secondary display).");
+                                            result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, (CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY | CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NORESET), IntPtr.Zero);
+
+                                        }
+                                        if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                                        {
+                                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully changed display {displayDeviceKey} to use the new mode!");
+                                            appliedGdiDisplaySettings = true;
+                                        }
+                                        else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
+                                        {
+                                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The settings change was unsuccessful because the system is DualView capable. Display {displayDeviceKey} not updated to new mode.");
+                                            //return false;
+                                        }
+                                        else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
+                                        {
+                                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
+                                            //return false;
+                                        }
+                                        else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
+                                        {
+                                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
+                                            //return false;
+                                        }
+                                        else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
+                                        {
+                                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
+                                            //return false;
+                                        }
+                                        else if (result == CHANGE_DISPLAY_RESULTS.Failed)
+                                        {
+                                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
+                                            //return false;
+                                        }
+                                        else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
+                                        {
+                                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
+                                            //return false;
+                                        }
+                                        else if (result == CHANGE_DISPLAY_RESULTS.Restart)
+                                        {
+                                            SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
+                                            //return false;
+                                        }
+                                        else
+                                        {
+                                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Unknown error while trying to change Display {displayDeviceKey} to use the new mode.");
+                                            return false;
+                                        }
                                     }
                                     else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
                                     {
-                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The settings change was unsuccessful because the system is DualView capable. Display {displayDeviceKey} not updated to new mode.");
-                                        //return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the system is DualView capable. Skipping setting Display {displayDeviceKey}.");
                                     }
                                     else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
                                     {
-                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
-                                        //return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
                                     }
                                     else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
                                     {
-                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
-                                        //return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
                                     }
                                     else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
                                     {
-                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
-                                        //return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
                                     }
                                     else if (result == CHANGE_DISPLAY_RESULTS.Failed)
                                     {
-                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
-                                        //return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
                                     }
                                     else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
                                     {
-                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
-                                        //return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because we're unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
                                     }
                                     else if (result == CHANGE_DISPLAY_RESULTS.Restart)
                                     {
-                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
-                                        //return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
                                     }
                                     else
                                     {
-                                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Unknown error while trying to change Display {displayDeviceKey} to use the new mode.");
-                                        return false;
+                                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because there was an unknown error testing if Display {displayDeviceKey} could use the new mode.");
                                     }
-                                }
-                                else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the system is DualView capable. Skipping setting Display {displayDeviceKey}.");
-                                }
-                                else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
-                                }
-                                else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
-                                }
-                                else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because an invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
-                                }
-                                else if (result == CHANGE_DISPLAY_RESULTS.Failed)
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
-                                }
-                                else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because we're unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
-                                }
-                                else if (result == CHANGE_DISPLAY_RESULTS.Restart)
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because the computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The GDI mode change would be unsuccessful because there was an unknown error testing if Display {displayDeviceKey} could use the new mode.");
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Display {displayDeviceKey} is not currently in use, so cannot set it!");
                                 }
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Display {displayDeviceKey} is not currently in use, so cannot set it!");
+
                             }
 
-                        }
+                            // If we have applied GDI settings for multiple displays, then we need to run ChangeDisplaySettingsEx one more time
+                            // see https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-changedisplaysettingsexa
+                            if (appliedGdiDisplaySettings)
+                            {
+                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Other display settings were changed, so applying all the changes now.");
+                                CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(null, IntPtr.Zero, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NONE, IntPtr.Zero);
+                                if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                                {
+                                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully applied the new GDI modes!");
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the system is DualView capable.");
+                                    return false;
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid set of flags was passed in.");
+                                    return false;
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the graphics mode is not supported.");
+                                    return false;
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid parameter was passed in. This can include an invalid flag or combination of flags.");
+                                    return false;
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.Failed)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the display driver failed to apply the specified graphics mode.");
+                                    return false;
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because unable to write new settings to the registry.");
+                                    return false;
+                                }
+                                else if (result == CHANGE_DISPLAY_RESULTS.Restart)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the computer must be restarted for the graphics mode to work.");
+                                    return false;
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unknown error while trying to apply the new GDI modes.");
+                                    return false;
+                                }
+                            }*/
 
-                        // If we have applied GDI settings for multiple displays, then we need to run ChangeDisplaySettingsEx one more time
-                        // see https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-changedisplaysettingsexa
-                        if (appliedGdiDisplaySettings)
-                        {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Other display settings were changed, so applying all the changes now.");
-                            CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(null, IntPtr.Zero, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_NONE, IntPtr.Zero);
-                            if (result == CHANGE_DISPLAY_RESULTS.Successful)
-                            {
-                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully applied the new GDI modes!");
-                            }
-                            else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the system is DualView capable.");
-                                return false;
-                            }
-                            else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid set of flags was passed in.");
-                                return false;
-                            }
-                            else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the graphics mode is not supported.");
-                                return false;
-                            }
-                            else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because an invalid parameter was passed in. This can include an invalid flag or combination of flags.");
-                                return false;
-                            }
-                            else if (result == CHANGE_DISPLAY_RESULTS.Failed)
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the display driver failed to apply the specified graphics mode.");
-                                return false;
-                            }
-                            else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because unable to write new settings to the registry.");
-                                return false;
-                            }
-                            else if (result == CHANGE_DISPLAY_RESULTS.Restart)
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Couldn't apply the new GDI modes because the computer must be restarted for the graphics mode to work.");
-                                return false;
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unknown error while trying to apply the new GDI modes.");
-                                return false;
-                            }
-                        }*/
-
-            return true;
         }
 
         public bool IsActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig)

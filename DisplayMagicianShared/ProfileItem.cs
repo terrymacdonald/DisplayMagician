@@ -46,7 +46,7 @@ namespace DisplayMagicianShared
         internal bool HDRSupported;
         internal bool HDREnabled;
         public List<string> Features;
-        public TaskbarHelper.TaskbarPosition TaskbarPosition;
+        public TaskbarPosition TaskbarPosition;
         public ScreenRotation Rotation;
 
         public override bool Equals(object obj) => obj is ScreenPosition other && this.Equals(other);
@@ -1130,7 +1130,7 @@ namespace DisplayMagicianShared
                             screen.Colour = spannedScreenColor;
                             screen.Rotation = ScreenRotation.ROTATE_0;
                             // Set the initial taskbar location for this screen at the bottom
-                            screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                            screen.TaskbarPosition = TaskbarPosition.Bottom;
 
 
                             // This is a combined surround/mosaic screen
@@ -1312,7 +1312,7 @@ namespace DisplayMagicianShared
                         }
 
                         // Force the taskbar edge to the bottom as it is an NVIDIA surround screen
-                        screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                        screen.TaskbarPosition = TaskbarPosition.Bottom;
 
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
@@ -1343,7 +1343,7 @@ namespace DisplayMagicianShared
                                 screen.Colour = normalScreenColor;
                                 screen.Rotation = ScreenRotation.ROTATE_0;
                                 // Set the initial taskbar location for this screen at the bottom
-                                screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                                screen.TaskbarPosition = TaskbarPosition.Bottom;
                                 screen.ScreenX = displaySource.SourceModeInfo.Position.X;
                                 screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
 
@@ -1514,7 +1514,7 @@ namespace DisplayMagicianShared
                         }
 
                         // Set the initial taskbar location for this screen at the bottom
-                        screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                        screen.TaskbarPosition = TaskbarPosition.Bottom;
 
                         SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
@@ -1540,7 +1540,7 @@ namespace DisplayMagicianShared
                         screen.IsClone = false;
                         screen.ClonedCopies = 0;
                         // Set the default taskbar position as the bottom of the screen                        
-                        screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                        screen.TaskbarPosition = TaskbarPosition.Bottom;
 
                         // Find out if this source is cloned
                         foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
@@ -1703,7 +1703,7 @@ namespace DisplayMagicianShared
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
                     // Set the default taskbar position as the bottom of the screen                        
-                    screen.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                    screen.TaskbarPosition = TaskbarPosition.Bottom;
 
                     // Find out if this source is cloned
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
@@ -1832,10 +1832,10 @@ namespace DisplayMagicianShared
                     var screenToLocate = screensToLocate[i];
 
                     // Set a default
-                    screenToLocate.TaskbarPosition = TaskbarHelper.TaskbarPosition.Bottom;
+                    screenToLocate.TaskbarPosition = TaskbarPosition.Bottom;
                     
                     // find which taskbar is in this window
-                    foreach ((TaskbarHelper.Rect taskbarRectangle, TaskbarHelper.TaskbarPosition taskbarPosition) in _windowsDisplayConfig.TaskbarPositions)
+                    foreach ((Rect taskbarRectangle, TaskbarPosition taskbarPosition) in _windowsDisplayConfig.TaskbarPositions)
                     {
                         if (taskbarRectangle.X == screenToLocate.ScreenX &&
                             taskbarRectangle.Y == screenToLocate.ScreenY &&

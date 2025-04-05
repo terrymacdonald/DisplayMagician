@@ -4,10 +4,14 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using DisplayMagicianShared.Windows;
+using EDIDParser;
 using Newtonsoft.Json;
+using Windows.Graphics;
 
 namespace DisplayMagicianShared.NVIDIA
 {
@@ -6029,35 +6033,15 @@ namespace DisplayMagicianShared.NVIDIA
                    _RawReserved == other._RawReserved;
         }
 
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
+        public override bool Equals(object obj) => obj is PathAdvancedTargetInfo other && this.Equals(other);
 
-            return obj is PathAdvancedTargetInfo info && Equals(info);
-        }
-
-        /// <inheritdoc />
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hashCode = (int)_Rotation;
-                hashCode = (hashCode * 397) ^ (int)_Scaling;
-                hashCode = (hashCode * 397) ^ (int)_RefreshRateInMillihertz;
-                // ReSharper disable once NonReadonlyMemberInGetHashCode
-                hashCode = (hashCode * 397) ^ (int)_RawReserved;
-                hashCode = (hashCode * 397) ^ (int)_ConnectorType;
-                hashCode = (hashCode * 397) ^ (int)_TVFormat;
-                hashCode = (hashCode * 397) ^ (int)_TimingOverride;
-                hashCode = (hashCode * 397) ^ _Timing.GetHashCode();
-
-                return hashCode;
-            }
+            return (_Rotation, _Scaling, _RefreshRateInMillihertz, _ConnectorType, _TVFormat, _TimingOverride, _Timing, _RawReserved).GetHashCode();
         }
+        public static bool operator ==(PathAdvancedTargetInfo lhs, PathAdvancedTargetInfo rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(PathAdvancedTargetInfo lhs, PathAdvancedTargetInfo rhs) => !(lhs == rhs);
 
         public object Clone()
         {
@@ -6406,7 +6390,7 @@ namespace DisplayMagicianShared.NVIDIA
             set => _TargetInfoCount = value;
         }
 
-        /// <inheritdoc />
+        /*/// <inheritdoc />
         public bool Equals(PathInfoV2 other)
         {
             return _TargetInfoCount == other._TargetInfoCount &&
@@ -6424,23 +6408,25 @@ namespace DisplayMagicianShared.NVIDIA
             }
 
             return obj is PathInfoV2 v2 && Equals(v2);
-        }
+        }*/
 
-        /// <inheritdoc />
+        public override bool Equals(object obj) => obj is PathInfoV2 other && this.Equals(other);
+        public bool Equals(PathInfoV2 other)
+        => _Version == other._Version &&
+            _SourceId == other._SourceId &&
+            _TargetInfoCount == other._TargetInfoCount &&
+            TargetsInfo.SequenceEqual(other.TargetsInfo) &&
+            SourceModeInfo.Equals(other.SourceModeInfo) &&
+            _RawReserved == other._RawReserved &&
+            OSAdapterLUID.ToString().Equals(other.OSAdapterLUID.ToString());
+
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hashCode = (int)_TargetInfoCount;
-                // ReSharper disable once NonReadonlyMemberInGetHashCode
-                hashCode = (hashCode * 397) ^ _TargetsInfo.GetHashCode();
-                // ReSharper disable once NonReadonlyMemberInGetHashCode
-                hashCode = (hashCode * 397) ^ _SourceModeInfo.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int)_RawReserved;
-
-                return hashCode;
-            }
+            return (_Version, _SourceId , _TargetInfoCount, TargetsInfo, SourceModeInfo, _RawReserved, OSAdapterLUID).GetHashCode();
         }
+        public static bool operator ==(PathInfoV2 lhs, PathInfoV2 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(PathInfoV2 lhs, PathInfoV2 rhs) => !(lhs == rhs);
 
         public object Clone()
         {
@@ -6707,7 +6693,6 @@ namespace DisplayMagicianShared.NVIDIA
         IDisposable,
         IAllocatable,
         IEquatable<PathTargetInfoV2>,
-        IEquatable<PathTargetInfoV1>,
         ICloneable
     {
         internal uint _DisplayId;
@@ -6752,42 +6737,19 @@ namespace DisplayMagicianShared.NVIDIA
             _DisplayId = displayId;
         }
 
-        /// <inheritdoc />
+        public override bool Equals(object obj) => obj is PathTargetInfoV2 other && this.Equals(other);
         public bool Equals(PathTargetInfoV2 other)
-        {
-            return _DisplayId == other._DisplayId && _Details.Equals(other._Details);
-        }
+        => _DisplayId == other._DisplayId &&
+            Details == other.Details &&
+            _WindowsCCDTargetId == other._WindowsCCDTargetId;
 
-        /// <inheritdoc />
-        public bool Equals(PathTargetInfoV1 other)
-        {
-            return _DisplayId == other._DisplayId && _Details.Equals(other._Details);
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-
-            return obj is PathTargetInfoV2 v2 && Equals(v2);
-        }
-
-        /// <inheritdoc />
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hashCode = (int)_DisplayId;
-                // ReSharper disable once NonReadonlyMemberInGetHashCode
-                hashCode = (hashCode * 397) ^ _Details.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int)_WindowsCCDTargetId;
-
-                return hashCode;
-            }
+            return (_DisplayId, Details, _WindowsCCDTargetId).GetHashCode();
         }
+        public static bool operator ==(PathTargetInfoV2 lhs, PathTargetInfoV2 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(PathTargetInfoV2 lhs, PathTargetInfoV2 rhs) => !(lhs == rhs);
 
         public object Clone()
         {
@@ -7865,63 +7827,17 @@ namespace DisplayMagicianShared.NVIDIA
                    _Extra.Equals(other._Extra);
         }
 
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
+        public override bool Equals(object obj) => obj is Timing other && this.Equals(other);
 
-            return obj is Timing timing && Equals(timing);
-        }
-
-        /// <inheritdoc />
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hashCode = _HorizontalVisible.GetHashCode();
-                hashCode = (hashCode * 397) ^ _HorizontalBorder.GetHashCode();
-                hashCode = (hashCode * 397) ^ _HorizontalFrontPorch.GetHashCode();
-                hashCode = (hashCode * 397) ^ _HorizontalSyncWidth.GetHashCode();
-                hashCode = (hashCode * 397) ^ _HorizontalTotal.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int)_HorizontalSyncPolarity;
-                hashCode = (hashCode * 397) ^ _VerticalVisible.GetHashCode();
-                hashCode = (hashCode * 397) ^ _VerticalBorder.GetHashCode();
-                hashCode = (hashCode * 397) ^ _VerticalFrontPorch.GetHashCode();
-                hashCode = (hashCode * 397) ^ _VerticalSyncWidth.GetHashCode();
-                hashCode = (hashCode * 397) ^ _VerticalTotal.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int)_VerticalSyncPolarity;
-                hashCode = (hashCode * 397) ^ (int)_ScanMode;
-                hashCode = (hashCode * 397) ^ (int)_PixelClockIn10KHertz;
-                hashCode = (hashCode * 397) ^ _Extra.GetHashCode();
-
-                return hashCode;
-            }
+            return (_HorizontalVisible, _HorizontalBorder, _HorizontalFrontPorch, _HorizontalSyncWidth, _HorizontalTotal, _HorizontalSyncPolarity,
+                _VerticalVisible, _VerticalBorder, _VerticalFrontPorch, _VerticalSyncWidth, _VerticalTotal, _VerticalSyncPolarity, _ScanMode,
+                _PixelClockIn10KHertz, _Extra).GetHashCode();
         }
+        public static bool operator ==(Timing lhs, Timing rhs) => lhs.Equals(rhs);
 
-        /// <summary>
-        ///     Checks two instance of <see cref="Timing" /> for equality.
-        /// </summary>
-        /// <param name="left">The first instance.</param>
-        /// <param name="right">The second instance.</param>
-        /// <returns>Returns a boolean value indicating if the two instances are equal; otherwise false</returns>
-        public static bool operator ==(Timing left, Timing right)
-        {
-            return left.Equals(right);
-        }
-
-        /// <summary>
-        ///     Checks two instance of <see cref="Timing" /> for in equality.
-        /// </summary>
-        /// <param name="left">The first instance.</param>
-        /// <param name="right">The second instance.</param>
-        /// <returns>Returns a boolean value indicating if the two instances are not equal; otherwise false</returns>
-        public static bool operator !=(Timing left, Timing right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(Timing lhs, Timing rhs) => !(lhs == rhs);
 
         public object Clone()
         {
@@ -8200,33 +8116,15 @@ namespace DisplayMagicianShared.NVIDIA
                    _Standard == other._Standard;
         }
 
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
+        public override bool Equals(object obj) => obj is TimingExtra other && this.Equals(other);
 
-            return obj is TimingExtra extra && Equals(extra);
-        }
-
-        /// <inheritdoc />
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hashCode = (int)_HardwareFlags;
-                hashCode = (hashCode * 397) ^ _RefreshRate.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int)_FrequencyInMillihertz;
-                hashCode = (hashCode * 397) ^ _VerticalAspect.GetHashCode();
-                hashCode = (hashCode * 397) ^ _HorizontalAspect.GetHashCode();
-                hashCode = (hashCode * 397) ^ _HorizontalPixelRepetition.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int)_Standard;
-
-                return hashCode;
-            }
+            return (_HardwareFlags, _RefreshRate, _FrequencyInMillihertz, _VerticalAspect, _HorizontalAspect, _HorizontalPixelRepetition, _Standard).GetHashCode();
         }
+        public static bool operator ==(TimingExtra lhs, TimingExtra rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(TimingExtra lhs, TimingExtra rhs) => !(lhs == rhs);
 
         /// <summary>
         ///     Gets the NVIDIA hardware-based enhancement, such as double-scan.
@@ -8304,28 +8202,6 @@ namespace DisplayMagicianShared.NVIDIA
         public override string ToString()
         {
             return Name;
-        }
-
-        /// <summary>
-        ///     Checks two instance of <see cref="TimingExtra" /> for equality.
-        /// </summary>
-        /// <param name="left">The first instance.</param>
-        /// <param name="right">The second instance.</param>
-        /// <returns>Returns a boolean value indicating if the two instances are equal; otherwise false</returns>
-        public static bool operator ==(TimingExtra left, TimingExtra right)
-        {
-            return left.Equals(right);
-        }
-
-        /// <summary>
-        ///     Checks two instance of <see cref="TimingExtra" /> for equality.
-        /// </summary>
-        /// <param name="left">The first instance.</param>
-        /// <param name="right">The second instance.</param>
-        /// <returns>Returns a boolean value indicating if the two instances are equal; otherwise false</returns>
-        public static bool operator !=(TimingExtra left, TimingExtra right)
-        {
-            return !(left == right);
         }
 
         public object Clone()

@@ -355,16 +355,16 @@ namespace DisplayMagicianShared
                 //int startButtonSize = 2 * startButtonSpacer;
                 switch (screen.TaskbarPosition)
                 {
-                    case TaskbarHelper.TaskbarPosition.Left:
+                    case TaskbarPosition.Left:
                         taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case TaskbarHelper.TaskbarPosition.Top:
+                    case TaskbarPosition.Top:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
                         break;
-                    case TaskbarHelper.TaskbarPosition.Right:
+                    case TaskbarPosition.Right:
                         taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case TaskbarHelper.TaskbarPosition.Bottom:
+                    case TaskbarPosition.Bottom:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
                         break;
                     default:

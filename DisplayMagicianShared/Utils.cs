@@ -1,10 +1,11 @@
 ﻿using Microsoft.Win32;
-using NLog;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -749,6 +750,7 @@ namespace DisplayMagicianShared
         public const int CCHDEVICENAME = 32;
         public const uint MONITORINFOF_PRIMARY = 1;
 
+
         public static bool OldFileVersionsExist(string path, string searchPattern = "", string skipFilename = "")
         {
             try
@@ -940,8 +942,183 @@ namespace DisplayMagicianShared
             }
         }
 
-
     }
 
+    public static class CollectionComparer
+    {
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        {
+
+            if (list1.Count != list2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the list1, checking that all it's items are in list2
+            foreach (T item1 in list1)
+            {
+                bool foundIt = false;
+                foreach (T item2 in list2)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the list2, checking that all it's items are in list1
+            foreach (T item2 in list2)
+            {
+                bool foundIt = false;
+                foreach (T item1 in list1)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        public static bool EqualButDifferentOrder<TKey, TValue>(IDictionary<TKey, TValue> dict1, IDictionary<TKey, TValue> dict2)
+        {
+
+            if (dict1.Count != dict2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the dict1, checking that all it's items are in dict2
+            foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the dict2, checking that all it's items are in dict1
+            foreach (KeyValuePair<TKey, TValue> item2 in dict2)
+            {
+                bool foundIt = false;
+                foreach (KeyValuePair<TKey, TValue> item1 in dict1)
+                {
+                    if (item1.Key.Equals(item2.Key) && item1.Value.Equals(item2.Value))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool AreEquivalent(object obj1, object obj2)
+        {
+            if (ReferenceEquals(obj1, obj2)) return true;
+            if (obj1 == null || obj2 == null) return false;
+
+            var type1 = obj1.GetType();
+            var type2 = obj2.GetType();
+
+            if (type1 != type2) return false;
+
+            // Handle primitive types and strings
+            if (type1.IsPrimitive || obj1 is string)
+            {
+                return obj1.Equals(obj2);
+            }
+
+            // Handle dictionaries
+            if (typeof(IDictionary).IsAssignableFrom(type1))
+            {
+                var dict1 = (IDictionary)obj1;
+                var dict2 = (IDictionary)obj2;
+
+                if (dict1.Count != dict2.Count) return false;
+
+                foreach (var key in dict1.Keys)
+                {
+                    if (!dict2.Contains(key) || !AreEquivalent(dict1[key], dict2[key]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            // Handle enumerables (lists, arrays)
+            if (typeof(IEnumerable).IsAssignableFrom(type1))
+            {
+                var enum1 = ((IEnumerable)obj1).Cast<object>().ToList();
+                var enum2 = ((IEnumerable)obj2).Cast<object>().ToList();
+
+                if (enum1.Count != enum2.Count) return false;
+
+                // Use HashSet for unordered comparison
+                var set1 = new HashSet<object>(enum1, new ObjectComparer());
+                var set2 = new HashSet<object>(enum2, new ObjectComparer());
+
+                return set1.SetEquals(set2);
+            }
+
+            // Handle complex objects
+            var properties = type1.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var property in properties)
+            {
+                var value1 = property.GetValue(obj1);
+                var value2 = property.GetValue(obj2);
+
+                if (!AreEquivalent(value1, value2))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    public class ObjectComparer : IEqualityComparer<object>
+    {
+        public new bool Equals(object x, object y)
+        {
+            return CollectionComparer.AreEquivalent(x, y);
+        }
+
+        public int GetHashCode(object obj)
+        {
+            if (obj == null) return 0;
+            return obj.GetHashCode();
+        }
+    }
 
 }

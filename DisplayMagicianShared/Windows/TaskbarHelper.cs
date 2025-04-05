@@ -1,14 +1,84 @@
 ﻿using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using static DisplayMagicianShared.Windows.TaskbarHelper;
 
 namespace DisplayMagicianShared.Windows
 {
+
+    public enum TaskbarPosition
+    {
+        Left,
+        Top,
+        Right,
+        Bottom,
+        Unknown
+    }
+
+    //[JsonConverter(typeof(CustomRectConverter))]
+    [TypeConverter(typeof(RectTypeConverter))]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect
+    {
+        [JsonProperty]
+        public int Left;
+        [JsonProperty] 
+        public int Top;
+        [JsonProperty] 
+        public int Right;
+        [JsonProperty] 
+        public int Bottom;
+
+        public int X => Left;
+        public int Y => Top;
+        public int Width => Right - Left;
+        public int Height => Bottom - Top;
+
+        public Rect(int left, int top, int right, int bottom)
+        {
+            this.Left = left;
+            this.Top = top;
+            this.Right = right;
+            this.Bottom = bottom;
+        }
+
+        public override string ToString()
+        {
+            return $"{Left}#{Top}#{Right}#{Bottom}";
+        }
+
+        public static Rect FromXYWH(int x, int y, int width, int height)
+        {
+            return new Rect(x, y, x + width, y + height);
+        }
+
+        public override bool Equals(object obj) => obj is Rect other && this.Equals(other);
+        public bool Equals(Rect other)
+            => Left == other.Left &&
+               Top == other.Top &&
+               Right == other.Right &&
+               Bottom == other.Bottom;
+
+        public override int GetHashCode()
+        {
+            return (Left, Top, Right, Bottom).GetHashCode();
+        }
+
+        public static bool operator ==(Rect lhs, Rect rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(Rect lhs, Rect rhs) => !(lhs == rhs);
+    }
+
+
     public static class TaskbarHelper
     {
         // Constants for SHChangeNotify
@@ -90,50 +160,7 @@ namespace DisplayMagicianShared.Windows
         private static extern IntPtr MonitorFromPoint(Point pt, uint dwFlags);
 
         [DllImport("user32.dll")]
-        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct Rect
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-
-            public int X => Left;
-            public int Y => Top;
-            public int Width => Right - Left;
-            public int Height => Bottom - Top;
-
-            public Rect(int left, int top, int right, int bottom)
-            {
-                this.Left = left;
-                this.Top = top;
-                this.Right = right;
-                this.Bottom = bottom;
-            }
-
-            public static Rect FromXYWH(int x, int y, int width, int height)
-            {
-                return new Rect(x, y, x + width, y + height);
-            }
-
-            public override bool Equals(object obj) => obj is Rect other && this.Equals(other);
-            public bool Equals(Rect other)
-                => Left == other.Left &&
-                   Top == other.Top &&
-                   Right == other.Right &&
-                   Bottom == other.Bottom;
-
-            public override int GetHashCode()
-            {
-                return (Left, Top, Right, Bottom).GetHashCode();
-            }
-
-            public static bool operator ==(Rect lhs, Rect rhs) => lhs.Equals(rhs);
-
-            public static bool operator !=(Rect lhs, Rect rhs) => !(lhs == rhs);
-        }
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);        
 
         [StructLayout(LayoutKind.Sequential)]
         private struct MONITORINFO
@@ -315,15 +342,6 @@ namespace DisplayMagicianShared.Windows
 
         }
 
-        public enum TaskbarPosition
-        {
-            Left,
-            Top,
-            Right,
-            Bottom,
-            Unknown
-        }
-
         /// <summary>
         /// Returns the edge of each monitor's screen where the taskbar is docked.
         /// </summary>
@@ -364,7 +382,87 @@ namespace DisplayMagicianShared.Windows
 
             return TaskbarPosition.Unknown;
         }
-
     }
+
+
+
+    public class RectTypeConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+        }
+
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            if (value is string rectString)
+            {
+                var parts = rectString.Split('#');
+                if (parts.Length == 4 &&
+                    int.TryParse(parts[0], out int left) &&
+                    int.TryParse(parts[1], out int top) &&
+                    int.TryParse(parts[2], out int right) &&
+                    int.TryParse(parts[3], out int bottom))
+                {
+                    return new Rect(left, top, right, bottom);
+                }
+            }
+            return base.ConvertFrom(context, culture, value);
+        }
+
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        {
+            return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+        }
+
+        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        {
+            if (destinationType == typeof(string) && value is Rect rect)
+            {
+                return $"{rect.Left}#{rect.Top}#{rect.Right}#{rect.Bottom}";
+            }
+            return base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
+
+
+    /* #region JsonConverterRect
+     public class CustomRectConverter : JsonConverter
+     {
+         public override bool CanConvert(Type objectType)
+         {
+             return objectType == typeof(Rect);
+         }
+
+         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+         {
+             string rectString = (string)reader.Value;
+
+             if (string.IsNullOrEmpty(rectString) || !rectString.Contains("#"))
+             {
+                 return default(Rect);
+             }
+
+             string[] rectStringArray = rectString.Split('#');
+
+             return new Rect(
+                 int.Parse(rectStringArray[0]),
+                 int.Parse(rectStringArray[1]),
+                 int.Parse(rectStringArray[2]),
+                 int.Parse(rectStringArray[3]));
+         }
+
+         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+         {
+             Rect rectToStore = (Rect)value;
+
+             string stringToStore = $"{rectToStore.Left}#{rectToStore.Top}#{rectToStore.Right}#{rectToStore.Bottom}";
+
+             writer.WriteValue(stringToStore);
+         }
+     }
+
+     #endregion*/
+
 
 }
