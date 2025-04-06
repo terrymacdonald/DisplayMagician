@@ -32,6 +32,7 @@ using System.Net.Http;
 using NLog.Targets;
 using System.Security.Policy;
 using System.Web;
+using static DisplayMagician.Program;
 
 namespace DisplayMagician {
 
@@ -541,24 +542,41 @@ namespace DisplayMagician {
                         NLog.LogManager.ReconfigExistingLoggers();
                     }
 
+                    logger.Trace($"Program/Main: Loading the MainForm");
                     // Set up the AppMainForm variable that we need to use later
                     AppMainForm = new MainForm();
                     AppMainForm.Load += MainForm_LoadCompleted;
 
+                    logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
                     // Load the games in background on execute
                     GameLibrary.LoadGamesInBackground();
                     // Load the apps in background on execute
                     //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
                     //      Need to investigate why this particular part was crashing everything. 
+                    logger.Trace($"Program/Main: Starting the Loading the Apps in the background tasks.");
                     AppLibrary.LoadAppsInBackground();
 
+                    logger.Trace($"Program/Main: Closing the splashscreen if it is open.");
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));                    
 
-                    ERRORLEVEL errLevel = RunShortcut(argumentShortcut.Value);
-                    DeRegisterDisplayMagicianWithWindows();
-                    return (int)errLevel;
+                    try
+                    {
+                        logger.Trace($"Program/Main: Starting the RunShortcut process with Shortcut UUID {argumentShortcut.Value.ToString()}.");
+                        ERRORLEVEL errLevel = RunShortcut(argumentShortcut.Value);
+                        logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
+                        DeRegisterDisplayMagicianWithWindows();
+                        logger.Trace($"Program/Main: Returning errorlevel {errLevel} to the calling function.");
+                        return (int)errLevel;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"Program/Main exception attempting to run RunShortcut(shortcutToUse)");
+                        DeRegisterDisplayMagicianWithWindows();
+                        logger.Trace($"Program/Main: Returning errorlevel ERROR_EXCEPTION to the calling function.");
+                        return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                    }
                 });
             });
 
@@ -585,22 +603,23 @@ namespace DisplayMagician {
                     // Set the --trace or --debug options if supplied
                     if (trace.HasValue())
                     {
-                        Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
                         logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                         loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                         NLog.LogManager.ReconfigExistingLoggers();
                     }
                     else if (debug.HasValue())
                     {
-                        Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
                         logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                         loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                         NLog.LogManager.ReconfigExistingLoggers();
                     }
 
+                    logger.Trace($"Program/Main: Loading the MainForm");
                     // Set up the AppMainForm variable that we need to use later
                     AppMainForm = new MainForm();
                     AppMainForm.Load += MainForm_LoadCompleted;
+
+                    logger.Trace($"Program/Main: Closing the Splashscreen if it is open.");
 
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
@@ -608,14 +627,19 @@ namespace DisplayMagician {
 
                     try
                     {
+                        logger.Trace($"Program/Main: Starting the RunProfile process with Profile UUID {argumentProfile.Value.ToString()}.");
                         ERRORLEVEL errLevel = RunProfile(argumentProfile.Value);
+                        logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
                         DeRegisterDisplayMagicianWithWindows();
+                        logger.Trace($"Program/Main: Returning errorlevel {errLevel} to the calling function.");
                         return (int)errLevel;
                     }
                     catch (Exception ex)
                     {
-                        logger.Error(ex, $"Program/Main exception running ApplyProfile(profileToUse)");
+                        logger.Error(ex, $"Program/Main exception running RunProfile(profileToUse):");
+                        logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
                         DeRegisterDisplayMagicianWithWindows();
+                        logger.Trace($"Program/Main: Returning errorlevel ERROR_EXCEPTION to the calling function.");
                         return (int)ERRORLEVEL.ERROR_EXCEPTION;
                     }
                 });
@@ -655,10 +679,23 @@ namespace DisplayMagician {
                         NLog.LogManager.ReconfigExistingLoggers();
                     }
 
-                    Console.WriteLine("Starting up and creating a new Display Profile...");
-                    ERRORLEVEL errLevel = CreateProfile();
-                    DeRegisterDisplayMagicianWithWindows();
-                    return (int)errLevel;
+                    try
+                    {
+                        logger.Trace($"Program/Main: Starting the CreateProfile process to create a new display profile.");
+                        ERRORLEVEL errLevel = CreateProfile();
+                        logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
+                        DeRegisterDisplayMagicianWithWindows();
+                        logger.Trace($"Program/Main: Returning errorlevel {errLevel} to the calling function.");
+                        return (int)errLevel;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"Program/Main exception running CreateProfile:");
+                        logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
+                        DeRegisterDisplayMagicianWithWindows();
+                        logger.Trace($"Program/Main: Returning errorlevel ERROR_EXCEPTION to the calling function.");
+                        return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                    }
                 });
             });
            
@@ -691,6 +728,7 @@ namespace DisplayMagician {
                 // was started from a Notification Toast when closed (Windows 10)
                 // Due to the way that CommandLineUtils library works we need to handle this as
                 // 'Remaining Arguments'
+                logger.Trace($"Program/Main: Looking for any other commandline arguments provided.");
                 if (app.RemainingArguments != null && app.RemainingArguments.Count > 0)
                 {
                     foreach (string myArg in app.RemainingArguments)
@@ -701,29 +739,51 @@ namespace DisplayMagician {
                             Program.AppToastActivated = true;
                             break;
                         }
+                        else
+                        {
+                            logger.Warn($"Program/Main: WARNING - Found other Remaining Argument that is not supported: {myArg}");
+                        }
 
                     }
                 }
                 logger.Info("Program/Main: Starting Normally...");
-               
+
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
-                logger.Debug($"Program/Main: Try to load all the Games in the background to avoid locking the UI");
+                logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
                 // Load the games in background on execute
                 GameLibrary.LoadGamesInBackground();
+
+                logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
                 // Load the apps in background on execute
                 AppLibrary.LoadAppsInBackground();
 
-               /* // Update the Active Profile before we load the Main Form
-                ProfileRepository.UpdateActiveProfile();*/
+                /* // Update the Active Profile before we load the Main Form
+                 ProfileRepository.UpdateActiveProfile();*/
 
+                logger.Trace($"Program/Main: Loading the MainForm");
                 // Set up the AppMainForm variable that we need to use later
                 AppMainForm = new MainForm();
                 AppMainForm.Load += MainForm_LoadCompletedAndOpenApp;
 
-                ERRORLEVEL errLevel = StartUpApplication();
-                DeRegisterDisplayMagicianWithWindows();
-                return (int)errLevel;
+                try
+                {
+                    logger.Trace($"Program/Main: Starting the application normally as no commands were provided.");
+                    ERRORLEVEL errLevel = StartUpApplication();
+                    logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
+                    DeRegisterDisplayMagicianWithWindows();
+                    logger.Trace($"Program/Main: Returning errorlevel {errLevel} to the calling function.");
+                    return (int)errLevel;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/Main exception running StartUpApplication():");
+                    logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
+                    DeRegisterDisplayMagicianWithWindows();
+                    logger.Trace($"Program/Main: Returning errorlevel ERROR_EXCEPTION to the calling function.");
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
             });
 
             logger.Trace($"Program/Main: Showing the splashscreen if requested");
@@ -736,31 +796,30 @@ namespace DisplayMagician {
                     () => Application.Run(AppSplashScreen)));
                 splashThread.SetApartmentState(ApartmentState.STA);
                 splashThread.Start();
-            }         
+            }
+
+            int errorLevelToReturnToOS = (int)ERRORLEVEL.OK;
 
             try
             {
                 logger.Debug($"Executing the app.execute commandline processing to start parsing the command line options");
                 // This begins the actual execution of the application
-                app.Execute(args);
+                errorLevelToReturnToOS = app.Execute(args);
             }
             catch (CommandParsingException ex)
             {
                 logger.Error(ex, $"Program/Main exception parsing the Commands passed to the program: ");
-                Console.WriteLine($"Didn't recognise the supplied commandline options: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return (int)ERRORLEVEL.ERROR_UNKNOWN_COMMAND;
             }
             catch (Exception ex)
             {
-                //Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
                 // "Unrecognized command or argument '<invalid-command>'"
                 logger.Error(ex, $"Program/Main general exception during app.Execute(args): ");
-                Console.WriteLine($"Program/Main exception: Unable to execute application - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
-            logger.Debug($"Beginning to shutdown as the app command has finished executing.");
+            logger.Debug($"SHUTDOWN HAS BEGUN! The app command has finished executing and we're starting to get ready for shutdown.");
 
             // Close the splash screen if it's still open (happens with some errors)
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
@@ -769,7 +828,6 @@ namespace DisplayMagician {
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
             }
                 
-
             logger.Trace($"Program/Main: Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
@@ -778,11 +836,13 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Stopping logging processes");
             NLog.LogManager.Shutdown();
 
+            logger.Trace($"Program/Main: Disposing the CancellationToken");
             // Dispose of the CancellationTokenSource
             Program.AppCancellationTokenSource.Dispose();
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
-            return (int)ERRORLEVEL.OK;
+            logger.Trace($"Program/Main: Returning the following errorlevel to the OS: {errorLevelToReturnToOS} ({((ERRORLEVEL)errorLevelToReturnToOS).ToString()})");
+            return errorLevelToReturnToOS;
         }       
 
         public static ERRORLEVEL CreateProfile()
