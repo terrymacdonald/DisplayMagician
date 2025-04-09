@@ -35,11 +35,12 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.AllowDrop = false;
             ilv_saved_shortcuts.SetRenderer(new ShortcutILVRenderer());
             // Center the form on the primary screen
-            Utils.CenterOnPrimaryScreen(this);
+            //Utils.CenterOnPrimaryScreen(this);
         }
 
         private void btn_back_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_back_Click: User clicked on the Back button.");
             this.Close();
         }
 
@@ -130,6 +131,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_save_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_save_Click: User clicked on the Save button.");
             // Only do something if there is a shortcut selected
             if (_selectedShortcut == null)
             {
@@ -231,6 +233,8 @@ namespace DisplayMagician.UIForms
 
         private void ilv_saved_shortcuts_ItemClick(object sender, ItemClickEventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/ilv_saved_shortcuts_ItemClick: User clicked on an item in the image list of Shortcuts.");
+
             // This is the single click to select
             //_selectedShortcut = GetShortcutFromName(e.Item.Text);
             _selectedShortcut = ShortcutRepository.GetShortcut(e.Item.Text);
@@ -256,6 +260,7 @@ namespace DisplayMagician.UIForms
 
         private void ilv_saved_shortcuts_ItemDoubleClick(object sender, ItemClickEventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/ilv_saved_shortcuts_ItemDoubleClick: User double-clicked on an item in the image list of Shortcuts.");
             // This is the double click to run
             _selectedShortcut = ShortcutRepository.GetShortcut(e.Item.Text);
             
@@ -278,20 +283,23 @@ namespace DisplayMagician.UIForms
 
         private void btn_new_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_new_Click: User clicked the New button in the Shortcut Library Form.");
+
             this.Cursor = Cursors.WaitCursor;
             ShortcutItem si = new ShortcutItem();
-            ShowShortcutLoadingWindow();
-            logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
-            // Load the games in background on execute
-            GameLibrary.LoadGamesInBackground();
-            // Load the apps in background on execute
-            //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-            //      Need to investigate why this particular part was crashing everything. 
-            logger.Trace($"Program/Main: Starting the Loading the Apps in the background tasks.");
-            AppLibrary.LoadAppsInBackground();
+
             if (_shortcutForm == null)
             {
                 _shortcutForm = new ShortcutForm();
+                ShowShortcutLoadingWindow();
+                logger.Trace($"ShortcutLibraryForm/btn_new_Click: Starting the Loading the Games in the background tasks.");
+                // Load the games in background on execute
+                GameLibrary.LoadGamesInBackground();
+                // Load the apps in background on execute
+                //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
+                //      Need to investigate why this particular part was crashing everything. 
+                logger.Trace($"ShortcutLibraryForm/btn_new_Click: Starting the Loading the Apps in the background tasks.");
+                AppLibrary.LoadAppsInBackground();
             } 
             _shortcutForm.Owner = this;
 
@@ -343,6 +351,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_edit_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_edit_Click: User clicked the New button in the Shortcut Library Form.");
             if (_selectedShortcut == null)
             {
                 if (ShortcutRepository.ShortcutCount > 0)
@@ -371,18 +380,17 @@ namespace DisplayMagician.UIForms
                 this.Cursor = Cursors.WaitCursor;
                 ShowShortcutLoadingWindow();
 
-                logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
-                // Load the games in background on execute
-                GameLibrary.LoadGamesInBackground();
-                // Load the apps in background on execute
-                //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                //      Need to investigate why this particular part was crashing everything. 
-                logger.Trace($"Program/Main: Starting the Loading the Apps in the background tasks.");
-                AppLibrary.LoadAppsInBackground();
-
                 if (_shortcutForm == null)
                 {
                     _shortcutForm = new ShortcutForm();
+                    logger.Trace($"ShortcutLibraryForm / btn_edit_Click: Starting the Loading the Games in the background tasks.");
+                    // Load the games in background on execute
+                    GameLibrary.LoadGamesInBackground();
+                    // Load the apps in background on execute
+                    //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
+                    //      Need to investigate why this particular part was crashing everything. 
+                    logger.Trace($"ShortcutLibraryForm/btn_edit_Click: Starting the Loading the Apps in the background tasks.");
+                    AppLibrary.LoadAppsInBackground();
                 }
                 _shortcutForm.Owner = this; 
 
@@ -415,6 +423,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_delete_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_delete_Click: User clicked on the Delete button.");
             if (_selectedShortcut == null)
             {
                 if (ShortcutRepository.ShortcutCount > 0)
@@ -470,6 +479,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_run_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_run_Click: User clicked on the Run button.");
             if (_selectedShortcut == null)
             {
                 if (ShortcutRepository.ShortcutCount > 0)
@@ -591,26 +601,31 @@ namespace DisplayMagician.UIForms
 
         private void tsmi_save_to_desktop_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/tsmi_save_to_desktop_Click: User clicked on the Save to Desktop menu item.");
             btn_save.PerformClick();
         }
 
         private void tsmi_run_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/tsmi_run_Click: User clicked on the Run menu item.");
             btn_run.PerformClick();
         }
 
         private void tsmi_edit_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/tsmi_edit_Click: User clicked on the Edit menu item.");
             btn_edit.PerformClick();
         }
 
         private void tsmi_delete_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/tsmi_delete_Click: User clicked on the Delete menu item.");
             btn_delete.PerformClick();
         }
 
         private void tsmi_copy_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/tsmi_copy_Click: User clicked on the Copy menu item.");
             btn_copy.PerformClick();
         }
 
@@ -628,12 +643,14 @@ namespace DisplayMagician.UIForms
 
         private void btn_help_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_help_Click: User clicked on the Help button.");
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Troubleshooting-DisplayMagician";
             ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
         }
 
         private void btn_donate_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_donate_Click: User clicked on the Donate button.");
             string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
             ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
             // Update the settings to say that user has donated.
@@ -643,6 +660,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_copy_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_copy_Click: User clicked on the Copy button.");
             if (_selectedShortcut == null)
             {
                 if (ShortcutRepository.ShortcutCount > 0)
@@ -676,6 +694,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_cancel_Click(object sender, EventArgs e)
         {
+            logger.Trace($"ShortcutLibraryForm/btn_cancel_Click: User clicked on the Cancel button after running a Shortcut.");
             // Inform the ShortcutRepository that it needs to cancel the running shortcut.
             Program.AppCancellationTokenSource.Cancel();
         }

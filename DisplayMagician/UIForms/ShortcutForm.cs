@@ -124,7 +124,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Center the form on the primary screen
-            Utils.CenterOnPrimaryScreen(this);
+            //Utils.CenterOnPrimaryScreen(this);
 
         }
 

@@ -54,5 +54,6 @@ namespace DisplayMagician.UIForms
         {
 
         }
+
     }
 }

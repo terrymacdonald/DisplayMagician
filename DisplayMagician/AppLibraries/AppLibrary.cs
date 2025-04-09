@@ -154,7 +154,7 @@ namespace DisplayMagician.AppLibraries
             Action loadLocalAppsAction = new Action(() =>
             {
                 // Check wht local apps are installed
-                //LocalLibrary localLibrary = LocalLibrary.GetLibrary();
+                LocalLibrary localLibrary = LocalLibrary.GetLibrary();
                 logger.Trace($"AppLibrary/LoadAppsInBackground: Checking if IsAppLibraryInstalled");
                 if (localLibrary.IsAppLibraryInstalled)
                 {

@@ -14,7 +14,7 @@ namespace DisplayMagician.UIForms
     {
         private string _title = "DisplayMagician is loading...";
         private string _description = "If you have installed a lot of games over time or have a lot of games installed now, this may take a while!";
-        private Point _wantedLocation = new Point(0,0);
+        private Point _wantedLocation = new Point(0, 0);
 
         public ShortcutLoadingForm()
         {
@@ -72,5 +72,6 @@ namespace DisplayMagician.UIForms
         {
             DesktopLocation = _wantedLocation;
         }
+
     }
 }

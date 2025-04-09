@@ -142,6 +142,7 @@ namespace DisplayMagician.GameLibraries
             // Now lets prepare loading all the Steam games we have installed
             Action loadSteamGamesAction = new Action(() =>
             {
+                SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
                 // Check if Steam is installed
                 if (steamLibrary.IsGameLibraryInstalled)
                 {
@@ -163,6 +164,7 @@ namespace DisplayMagician.GameLibraries
             // Now lets prepare loading all the Uplay games we have installed
             Action loadUplayGamesAction = new Action(() =>
             {
+                UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
                 // Check if Uplay is installed
                 if (uplayLibrary.IsGameLibraryInstalled)
                 {
@@ -185,6 +187,7 @@ namespace DisplayMagician.GameLibraries
             // Now lets prepare loading all the Origin games we have installed
             Action loadOriginGamesAction = new Action(() =>
             {
+                OriginLibrary originLibrary = OriginLibrary.GetLibrary();
                 // Check if Origin is installed
                 if (originLibrary.IsGameLibraryInstalled)
                 {
@@ -207,6 +210,7 @@ namespace DisplayMagician.GameLibraries
             // Now lets prepare loading all the Epic games we have installed
             Action loadEpicGamesAction = new Action(() =>
             {
+                EpicLibrary epicLibrary = EpicLibrary.GetLibrary();
                 // Check if Epic is installed
                 if (epicLibrary.IsGameLibraryInstalled)
                 {
@@ -229,6 +233,7 @@ namespace DisplayMagician.GameLibraries
             // Now lets prepare loading all the GOG games we have installed
             Action loadGogGamesAction = new Action(() =>
             {
+                GogLibrary gogLibrary = GogLibrary.GetLibrary();
                 // Check if GOG is installed
                 if (gogLibrary.IsGameLibraryInstalled)
                 {
