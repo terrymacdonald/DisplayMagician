@@ -1,4 +1,5 @@
-﻿using DisplayMagician.GameLibraries;
+﻿using DisplayMagician.AppLibraries;
+using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
@@ -280,6 +281,14 @@ namespace DisplayMagician.UIForms
             this.Cursor = Cursors.WaitCursor;
             ShortcutItem si = new ShortcutItem();
             ShowShortcutLoadingWindow();
+            logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
+            // Load the games in background on execute
+            GameLibrary.LoadGamesInBackground();
+            // Load the apps in background on execute
+            //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
+            //      Need to investigate why this particular part was crashing everything. 
+            logger.Trace($"Program/Main: Starting the Loading the Apps in the background tasks.");
+            AppLibrary.LoadAppsInBackground();
             if (_shortcutForm == null)
             {
                 _shortcutForm = new ShortcutForm();
@@ -361,6 +370,16 @@ namespace DisplayMagician.UIForms
 
                 this.Cursor = Cursors.WaitCursor;
                 ShowShortcutLoadingWindow();
+
+                logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
+                // Load the games in background on execute
+                GameLibrary.LoadGamesInBackground();
+                // Load the apps in background on execute
+                //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
+                //      Need to investigate why this particular part was crashing everything. 
+                logger.Trace($"Program/Main: Starting the Loading the Apps in the background tasks.");
+                AppLibrary.LoadAppsInBackground();
+
                 if (_shortcutForm == null)
                 {
                     _shortcutForm = new ShortcutForm();

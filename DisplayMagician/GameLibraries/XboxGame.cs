@@ -187,6 +187,14 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        public override bool IsInstalled
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_xboxGameExePath) && File.Exists(_xboxGameExePath);
+            }
+        }
+
         public bool CopyInto(XboxGame xboxGame)
         {
             if (!(xboxGame is XboxGame))

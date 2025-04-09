@@ -156,6 +156,14 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        public override bool IsInstalled
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_originGameExePath) && File.Exists(_originGameExePath);
+            }
+        }
+
         public bool CopyTo(OriginGame OriginGame)
         {
             if (!(OriginGame is OriginGame))

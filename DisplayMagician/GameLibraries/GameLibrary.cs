@@ -283,6 +283,8 @@ namespace DisplayMagician.GameLibraries
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(epicLibrary.AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(gogLibrary.AllInstalledGames);
 
+            Program.AppGameList = GameLibrary.AllInstalledGamesInAllLibraries;
+
             // Stop creating Game Bitmaps from the Games so the rest of the program is faster later
             //RefreshGameBitmaps();
 

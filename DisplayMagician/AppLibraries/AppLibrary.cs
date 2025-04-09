@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Threading.Tasks;
 using DisplayMagician;
+using DisplayMagician.GameLibraries;
 using Newtonsoft.Json;
 
 namespace DisplayMagician.AppLibraries
@@ -202,6 +203,9 @@ namespace DisplayMagician.AppLibraries
             logger.Trace($"AppLibrary/LoadAppsInBackground: Adding the installed apps we just got to the list of installed apps");
             AppLibrary.AllInstalledAppsInAllLibraries.AddRange(localLibrary.AllInstalledApps);
             logger.Trace($"AppLibrary/LoadAppsInBackground: Setting apps loaded to be true");
+
+            Program.AppAppList = AppLibrary.AllInstalledAppsInAllLibraries;
+
             AppsLoaded = true;
 
             return true;

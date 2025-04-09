@@ -66,6 +66,8 @@ namespace DisplayMagician {
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
 
+        public static List<Game> AppGameList = new List<Game>();
+        public static List<App> AppAppList = new List<App>();
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
@@ -545,16 +547,7 @@ namespace DisplayMagician {
                     logger.Trace($"Program/Main: Loading the MainForm");
                     // Set up the AppMainForm variable that we need to use later
                     AppMainForm = new MainForm();
-                    AppMainForm.Load += MainForm_LoadCompleted;
-
-                    logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
-                    // Load the games in background on execute
-                    GameLibrary.LoadGamesInBackground();
-                    // Load the apps in background on execute
-                    //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                    //      Need to investigate why this particular part was crashing everything. 
-                    logger.Trace($"Program/Main: Starting the Loading the Apps in the background tasks.");
-                    AppLibrary.LoadAppsInBackground();
+                    AppMainForm.Load += MainForm_LoadCompleted;                   
 
                     logger.Trace($"Program/Main: Closing the splashscreen if it is open.");
                     // Close the splash screen
@@ -748,7 +741,7 @@ namespace DisplayMagician {
                 }
                 logger.Info("Program/Main: Starting Normally...");
 
-                // Try to load all the games in parallel to this process
+                /*// Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
                 logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
                 // Load the games in background on execute
@@ -756,7 +749,7 @@ namespace DisplayMagician {
 
                 logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
                 // Load the apps in background on execute
-                AppLibrary.LoadAppsInBackground();
+                AppLibrary.LoadAppsInBackground();*/
 
                 /* // Update the Active Profile before we load the Main Form
                  ProfileRepository.UpdateActiveProfile();*/

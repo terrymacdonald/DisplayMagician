@@ -155,6 +155,14 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        public override bool IsInstalled
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_uplayGameExePath) && File.Exists(_uplayGameExePath);
+            }
+        }
+
         public bool CopyTo(UplayGame uplayGame)
         {
             if (!(uplayGame is UplayGame))

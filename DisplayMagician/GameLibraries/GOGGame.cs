@@ -157,6 +157,14 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        public override bool IsInstalled
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_gogGameExePath) && File.Exists(_gogGameExePath);
+            }
+        }
+
         public bool CopyTo(GogGame GogGame)
         {
             if (!(GogGame is GogGame))

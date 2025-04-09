@@ -122,6 +122,14 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        public override bool IsInstalled
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_epicGameExePath) && File.Exists(_epicGameExePath);
+            }
+        }
+
         public bool CopyTo(EpicGame EpicGame)
         {
             if (!(EpicGame is EpicGame))

@@ -26,6 +26,8 @@ namespace DisplayMagician.AppLibraries
 
         public virtual bool IsUpdating { get; set; }
 
+        public virtual bool IsInstalled { get; set; }
+
         public virtual string Name { get; set; }
 
         public virtual string ExePath { get; set; }

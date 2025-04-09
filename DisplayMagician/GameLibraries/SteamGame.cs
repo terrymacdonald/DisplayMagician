@@ -186,6 +186,14 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        public override bool IsInstalled
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_steamGameExePath) && File.Exists(_steamGameExePath);
+            }
+        }
+
         public bool CopyInto(SteamGame steamGame)
         {
             if (!(steamGame is SteamGame))

@@ -226,7 +226,7 @@ namespace DisplayMagician.AppLibraries
                 }
                 else
                 {
-                    logger.Error($"LocalApp/IsRunning: This LocalApp is not a recognised InstalledPpType.");
+                    logger.Error($"LocalApp/IsRunning: This LocalApp is not a recognised InstalledAppType.");
                     return false;
                 }
                     
@@ -242,6 +242,34 @@ namespace DisplayMagician.AppLibraries
             get
             {
                 return false;
+            }
+        }
+
+        public override bool IsInstalled
+        {
+            get
+            {
+                // Check if it is an installed program app
+                if (LocalAppType == InstalledAppType.InstalledProgram)
+                {
+                    return !string.IsNullOrWhiteSpace(_LocalAppExePath) && File.Exists(_LocalAppExePath);
+                }
+                else if (LocalAppType == InstalledAppType.UWP)
+                {
+                    if (UWPIsInstalled(_LocalAppId).Result)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    logger.Error($"LocalApp/IsRunning: This LocalApp is not a recognised InstalledAppType.");
+                    return false;
+                }
             }
         }
 
@@ -292,6 +320,27 @@ namespace DisplayMagician.AppLibraries
                 return false;
             }
             catch(Exception ex)
+            {
+                logger.Debug(ex, $"LocalApp/UWPIsRunning: AppDiagnosticInfo.RequestInfoForAppAsync({aumid}) cause an exception due to insufficent rights.");
+                return false;
+            }
+        }
+
+        private async Task<bool> UWPIsInstalled(string aumid)
+        {
+            try
+            {
+                IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid);
+                foreach (var thing in infos)
+                {
+                    // We only monitor the first item in the resource group, as it seems to be the main part of the UWP app in most apps
+                    // NOTE - this may not always monitor the right part of the app, but I'm not sure how to make this logic better.
+                    string installPath = thing.AppInfo.Package.InstalledPath;
+                    return !string.IsNullOrWhiteSpace(installPath) && File.Exists(installPath);
+                }
+                return false;
+            }
+            catch (Exception ex)
             {
                 logger.Debug(ex, $"LocalApp/UWPIsRunning: AppDiagnosticInfo.RequestInfoForAppAsync({aumid}) cause an exception due to insufficent rights.");
                 return false;

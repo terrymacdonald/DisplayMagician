@@ -1513,130 +1513,17 @@ namespace DisplayMagician
                 {
                     logger.Trace($"ShortcutItem/RefreshValidity: The Application {ExecutableNameAndPath} exists");
                 }
-
             }
             else if (Category.Equals(ShortcutCategory.Game))
             {
-                GameLibrary gameLibraryToUse = null;
-                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is a Game");
-                // If the game is a Steam Game we check for that
-                if (GameLibrary.Equals(SupportedGameLibraryType.Steam))
+                // We need to check if the Game still exists
+                if (!System.IO.File.Exists(ExecutableNameAndPath))                   
                 {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Steam");
-                    // We now need to get the SteamGame info
-                    try 
-                    {
-                        gameLibraryToUse = SteamLibrary.GetLibrary();
-                    }
-                    catch(Exception ex)
-                    {
-                        logger.Error(ex,$"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Steam library");
-                    }
-                }
-                // If the game is a Uplay Uplay Game we check for that
-                else if (GameLibrary.Equals(SupportedGameLibraryType.Uplay))
-                {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Uplay");
-                    // We now need to get the Uplay Game  info
-                    try
-                    {
-                        gameLibraryToUse = UplayLibrary.GetLibrary();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Uplay library");
-                    }
-                }
-                // If the game is an Origin Game we check for that
-                else if (GameLibrary.Equals(SupportedGameLibraryType.Origin))
-                {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Origin");
-                    // We now need to get the Uplay Game  info
-                    try
-                    {
-                        gameLibraryToUse = OriginLibrary.GetLibrary();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Origin library");
-                    }
-                }
-                // If the game is an Epic Game we check for that
-                else if (GameLibrary.Equals(SupportedGameLibraryType.Epic))
-                {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Epic");
-                    // We now need to get the Epic Game  info
-                    try
-                    {
-                        gameLibraryToUse = EpicLibrary.GetLibrary();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Epic library");
-                    }
-                }
-                // If the game is an GOG Game we check for that
-                else if (GameLibrary.Equals(SupportedGameLibraryType.GOG))
-                {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is GOG");
-                    // We now need to get the GOG Game  info                    
-                    try
-                    {
-                        gameLibraryToUse = GogLibrary.GetLibrary();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the GOG library");
-                    }
-                }
-                else
-                {
-                    gameLibraryToUse = null;
-                    logger.Warn($"ShortcutItem/RefreshValidity: The game shortcut uses an unsupported game library! (You've probably downgraded DisplayMagician to an earlier version)");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The game {GameName} is not installed!");
                     ShortcutError error = new ShortcutError();
-                    error.Name = $"UnknownGameLibrary";
+                    error.Name = $"{GameName}NotInstalled";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The game shortcut uses an unsupported game library.";
-                    _shortcutErrors.Add(error);
-                    if (worstError != ShortcutValidity.Error)
-                        worstError = ShortcutValidity.Error;
-                }
-
-                if (gameLibraryToUse != null)
-                {
-                    // Check if Gamelibrary is installed and error if it isn't
-                    if (!gameLibraryToUse.IsGameLibraryInstalled)
-                    {
-                        logger.Warn($"ShortcutItem/RefreshValidity: The game library is not installed!");
-                        ShortcutError error = new ShortcutError();
-                        error.Name = $"{gameLibraryToUse.GameLibraryName}NotInstalled";
-                        error.Validity = ShortcutValidity.Error;
-                        error.Message = $"{gameLibraryToUse.GameLibraryName} is not installed on this computer.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Error;
-                    }
-
-                    // We need to look up details about the game
-                    if (!gameLibraryToUse.ContainsGameById(GameAppId))
-                    {
-                        logger.Warn($"ShortcutItem/RefreshValidity: The game library does not have Game ID {GameAppId} installed!");
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "{gameLibraryToUse.GameLibraryName}GameNotInstalled";
-                        error.Validity = ShortcutValidity.Error;
-                        error.Message = $"The {gameLibraryToUse.GameLibraryName} Game with AppID '{GameAppId}' is not installed on this computer.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Error;
-                    }
-                }
-                else
-                {
-                    logger.Trace($"ShortcutItem/RefreshValidity: The GameLibrary was not created properly during the validity check!");
-                    ShortcutError error = new ShortcutError();
-                    error.Name = "GameLibraryToUseNotCreated";
-                    error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The GameLibrary was not created properly during the validity check.";
+                    error.Message = $"{GameName} is not installed on this computer.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
