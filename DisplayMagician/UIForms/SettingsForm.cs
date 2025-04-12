@@ -8,7 +8,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Windows.Forms;
-using WK.Libraries.BootMeUpNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -210,20 +209,13 @@ namespace DisplayMagician.UIForms
         }
 
         public static bool SetBootMeUp(bool enabled)
-        {
-            var bootMeUp = new BootMeUp
-            {
-                UseAlternativeOnFail = true,
-                BootArea = BootMeUp.BootAreas.Registry,
-                TargetUser = BootMeUp.TargetUsers.CurrentUser
-            };
+        {             
 
             // save start on Boot up
             if (enabled)
             {
                 Program.AppProgramSettings.StartOnBootUp = true;
-                bootMeUp.Enabled = true;
-                if (!bootMeUp.Successful)
+                if (!StartupManager.EnableStartup())
                 {
                     logger.Error($"SettingsForm/SettingsForm_FormClosing: Failed to set up DisplayMagician to start when Windows starts");
                     MessageBox.Show("There was an issue setting DisplayMagician to run when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");
@@ -239,8 +231,7 @@ namespace DisplayMagician.UIForms
             else
             {
                 Program.AppProgramSettings.StartOnBootUp = false;
-                bootMeUp.Enabled = false;
-                if (!bootMeUp.Successful)
+                if (!StartupManager.DisableStartup())
                 {
                     logger.Error($"SettingsForm/SettingsForm_FormClosing: Failed to stop DisplayMagician from starting when Windows starts");
                     MessageBox.Show("There was an issue stopping DisplayMagician from running when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");

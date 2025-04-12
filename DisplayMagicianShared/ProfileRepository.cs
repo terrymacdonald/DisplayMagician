@@ -1346,7 +1346,7 @@ namespace DisplayMagicianShared
             try
             {
                 ProfileIcon = profile.ProfileIcon.ToIcon();
-                ProfileIcon.Save(profile.SavedProfileIconCacheFilename, MultiIconFormat.ICO);
+                ProfileIcon.Save(profile.SavedProfileIconCacheFilename);
             }
             catch (Exception ex)
             {
