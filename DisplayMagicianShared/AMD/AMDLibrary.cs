@@ -169,7 +169,7 @@ namespace DisplayMagicianShared.AMD
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _adlContextHandle = IntPtr.Zero;
-        private AMD_DISPLAY_CONFIG _activeDisplayConfig;
+        private AMD_DISPLAY_CONFIG? _activeDisplayConfig;
         public List<ADL_DISPLAY_CONNECTION_TYPE> SkippedColorConnectionTypes;
         public List<string> _allConnectedDisplayIdentifiers;
 
@@ -312,7 +312,11 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
-                return _activeDisplayConfig;
+                if (_activeDisplayConfig == null)
+                {
+                    _activeDisplayConfig = CreateDefaultConfig();
+                }
+                return _activeDisplayConfig.Value;
             }
             set
             {
@@ -324,7 +328,11 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
-                return _activeDisplayConfig.DisplayIdentifiers;
+                if (_activeDisplayConfig == null)
+                {
+                    _activeDisplayConfig = CreateDefaultConfig();
+                }
+                return _activeDisplayConfig.Value.DisplayIdentifiers;
             }
         }
 
