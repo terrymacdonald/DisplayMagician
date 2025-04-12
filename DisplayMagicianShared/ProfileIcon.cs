@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Drawing.IconLib;
+using IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
 using DisplayMagicianShared.Windows;

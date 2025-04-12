@@ -71,4 +71,9 @@
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="IconLib">
+      <HintPath>..\DisplayMagician\DLL\IconLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

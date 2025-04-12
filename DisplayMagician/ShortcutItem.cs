@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Drawing.IconLib;
+using IconLib;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
@@ -1413,7 +1413,7 @@ namespace DisplayMagician
                 si.Add(_shortcutBitmap);
                 shortcutIcon.SelectedIndex = 0;
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving shortcut icon to cache with {_savedShortcutIconCacheFilename} as the name.");
-                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+                shortcutIcon.Save(_savedShortcutIconCacheFilename);
 
             }
             catch (Exception ex)
@@ -1426,7 +1426,7 @@ namespace DisplayMagician
                 si.Add(Properties.Resources.DisplayMagician);
                 shortcutIcon.SelectedIndex = 0; 
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
-                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+                shortcutIcon.Save(_savedShortcutIconCacheFilename);
             }
 
         }
