@@ -126,7 +126,7 @@ namespace DisplayMagician
         // It's relatively safe to reuse.
         TRAYMOUSEMESSAGE = 0x800, //WM_USER + 1024
         APP = 0x8000,
-    }
+    }   
 
     [SuppressUnmanagedCodeSecurity]
     internal static class NativeMethods
@@ -202,6 +202,13 @@ namespace DisplayMagician
             }
         }
 
+        // 1) P/Invoke for LoadLibrary/GetProcAddress
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern IntPtr LoadLibrary(string lpFileName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hFile, uint dwFlags);
 
@@ -229,6 +236,18 @@ namespace DisplayMagician
         [DllImport("shlwapi.dll", BestFitMapping = false, CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = false, ThrowOnUnmappableChar = true)]
         public static extern int SHLoadIndirectString(string pszSource, StringBuilder pszOutBuf, int cchOutBuf, IntPtr ppvReserved);
 
+        public static IntPtr GetDataFormatPtr(string name)
+        {
+            var h = LoadLibrary("dinput8.dll");
+            if (h == IntPtr.Zero)
+                throw new DllNotFoundException("dinput8.dll not found");
+            var p = GetProcAddress(h, name);
+            if (p == IntPtr.Zero)
+                throw new EntryPointNotFoundException($"Export {name} not found in dinput8.dll");
+            return p;
+        }
+
+
         [Flags]
         public enum MatchPatternFlags : uint
         {
@@ -239,5 +258,57 @@ namespace DisplayMagician
 
         [DllImport("shlwapi.dll", SetLastError = false)]
         public static extern int PathMatchSpecExW([MarshalAs(UnmanagedType.LPWStr)] string file, [MarshalAs(UnmanagedType.LPWStr)] string spec, MatchPatternFlags flags);
+
+        // IID for IDirectInput8
+        public static readonly Guid IID_IDirectInput8 = new Guid(
+            0xBF798031, 0x483A, 0x4DA2, 0xAA, 0x99, 0x5D, 0x64, 0xED, 0x36, 0x97, 0x00
+        );
+
+        [DllImport("dinput8.dll", CallingConvention = CallingConvention.StdCall)]
+        public static extern int DirectInput8Create(
+            IntPtr hInstance,
+            uint dwVersion,
+            in Guid riidltf,
+            out IntPtr ppvOut,
+            IntPtr pUnkOuter
+        );
+
     }
+
+    [ComImport, Guid("BF798031-483A-4DA2-AA99-5D64ED369700"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IDirectInput8
+    {
+        int CreateDevice(ref Guid rguid, out IntPtr device, IntPtr pUnkOuter);
+        int EnumDevices(uint devType, IntPtr callback, IntPtr context, uint flags);
+        // other methods omitted...
+    }
+
+    [ComImport, Guid("54D41080-DC15-4833-A41B-748F73A38179"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IDirectInputDevice8
+    {
+        int GetDeviceState(int dataSize, IntPtr data);
+        int SetDataFormat(IntPtr pdf);
+        int SetCooperativeLevel(IntPtr hwnd, uint flags);
+        int Acquire();
+        int Unacquire();
+        // other methods omitted...
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct DIDEVICEINSTANCE
+    {
+        public uint dwSize;
+        public Guid guidInstance;
+        public Guid guidProduct;
+        public uint dwDevType;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string tszInstanceName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string tszProductName;
+        public Guid guidFFDriver;
+        public ushort wUsagePage;
+        public ushort wUsage;
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    delegate int DIEnumDevicesCallback(ref DIDEVICEINSTANCE lpddi, IntPtr pvRef);
 }
+
