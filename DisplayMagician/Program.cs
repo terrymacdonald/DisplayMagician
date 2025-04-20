@@ -488,7 +488,10 @@ namespace DisplayMagician {
             // 3) Register keyboard hotkeys (e.g. F9 => next profile)
             Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
             _directInputManager.RegisterKey(Key.Minus, openDisplayProfileWindow);
-            //_directInputManager.RegisterKey(Key.F10, () => ProfileManager.PreviousProfile());
+            Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
+            _directInputManager.RegisterKey(Key.Equals, openShortcutLibraryWindow);
+
+            //_directInputManager.RegisterKey(Key.F10, () => AppMainForm.openDisplayProfileWindow(););
 
             // 4) Register joystick/gamepad buttons
             //    Suppose you already know the GUID of your target device:

@@ -579,12 +579,8 @@ namespace DisplayMagician.UIForms
 
             // Center this form on the primary screen
             Utils.ActivateCenteredOnPrimaryScreen(this);
-
-            // Now open the ShortcutLibraryWindow
-            this.Invoke(new Action(() =>
-            {
-                btn_setup_game_shortcuts.PerformClick();
-            }));
+           
+            btn_setup_game_shortcuts.PerformClick();
         }
 
         public void openDisplayProfileWindow()
@@ -596,10 +592,8 @@ namespace DisplayMagician.UIForms
             Utils.ActivateCenteredOnPrimaryScreen(this);
 
             // Now open the ShortcutLibraryWindow
-            this.Invoke(new Action(() =>
-            {
-                btn_setup_display_profiles.PerformClick();
-            }));
+            btn_setup_display_profiles.PerformClick();
+
         }
 
 
