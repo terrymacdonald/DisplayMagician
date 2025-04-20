@@ -26,6 +26,7 @@ using System.Text;
 using System.Globalization;
 using System.Web;
 using NHotkey;
+using Vortice.DirectInput;
 
 
 namespace DisplayMagician {
@@ -70,8 +71,8 @@ namespace DisplayMagician {
         public static UpgradeExtraDetails? AppUpgradeExtraDetails = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
-        private static DirectInputManager _inputMgr;
-
+        private static DIInputDevice _directInputDevice;
+        
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
@@ -474,17 +475,15 @@ namespace DisplayMagician {
 
             // Next we set up the hotkeys if we have any
             logger.Trace($"Program/Main: Setting up the windows hotkey processing");
-            _inputMgr = new DirectInputManager(IntPtr.Zero);
-            _inputMgr.KeyboardStateChanged += OnKeyboardPressed;
-            _inputMgr.JoystickStateChanged += OnButtonBoxPressed;
-            if (AppProgramSettings.HotkeyBindings.Count > 0)
+            logger.Trace($"Program/Main: Setting up DirectInput Device Manager");
+            _directInputDevice = new DIInputDevice();
+            logger.Trace($"Program/Main: Initialising DirectInput Devices");
+            _directInputDevice.Initialize(IntPtr.Zero);
+
+            while (true)
             {
-                logger.Trace($"Program/Main: Hotkeys were found in the program settings, so leaving the hotkeys polling running");                
-            }
-            else
-            {
-                logger.Trace($"Program/Main: No Hotkeys were found in the program settings, so stopping polling for hotkeys");
-                _inputMgr.StopPolling();
+                _directInputDevice.GetKeyboardUpdates();
+                _directInputDevice.GetKJoystickUpdates();
             }
 
 
@@ -1878,7 +1877,7 @@ namespace DisplayMagician {
             }
         }*/
 
-        private static void OnKeyboardPressed(byte[] state)
+        /*private static void OnKeyboardPressed(byte[] state)
         {
             logger.Trace($"Program/OnKeyboardPressed: A keyboard button was pressed with state byte {state}!");
             // Find any keyboard bindings whose scan-code bit is now “down”
@@ -1941,7 +1940,7 @@ namespace DisplayMagician {
                     break;
 
             }
-        }
+        }*/
 
 
     }

@@ -70,7 +70,7 @@ namespace DisplayMagician
         private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
         private int _numberOfStartsSinceLastDonationForm = 0;
         private int _numberOfTimesRun = 0;
-        private List<HotkeyBinding> _hotkeyBindings = new List<HotkeyBinding>();
+        //private List<HotkeyBinding> _hotkeyBindings = new List<HotkeyBinding>();
         private ScreenLayout _fovCalcScreenLayout = ScreenLayout.TripleScreen;
         private double _fovCalcScreenSize = 27;
         private ScreenMeasurementUnit _fovCalcScreenSizeUnit = ScreenMeasurementUnit.Inch;
@@ -390,7 +390,7 @@ namespace DisplayMagician
             }
         }
 
-        public List<HotkeyBinding> HotkeyBindings
+        /*public List<HotkeyBinding> HotkeyBindings
         {
             get
             {
@@ -400,7 +400,7 @@ namespace DisplayMagician
             {
                 _hotkeyBindings = value;
             }
-        }
+        }*/
 
         [DefaultValue(ScreenLayout.TripleScreen)]
         public ScreenLayout FovCalcScreenLayout
