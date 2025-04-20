@@ -28,6 +28,7 @@ using System.Web;
 using NHotkey;
 using Vortice.DirectInput;
 using DisplayMagician.Input;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 
 namespace DisplayMagician {
@@ -473,16 +474,29 @@ namespace DisplayMagician {
             // Next we create the MainForm object but keep it hidden for now
             logger.Trace($"Program/Main: Creating the MainForm object");
             AppMainForm = new MainForm();
+            // Set up the AppMainForm variable that we need to use later
+            //AppMainForm.Load += MainForm_LoadCompleted;
 
             // Next we set up the hotkeys if we have any
             logger.Trace($"Program/Main: Creating DirectInput Device Manager");
             _directInputManager = new DirectInputManager();
-            logger.Trace($"Program/Main: Initilising DirectInput Device Manager");
+            logger.Trace($"Program/Main: Initilising DirectInput Device Manager with the MainForm window handle");
             _directInputManager.Initialize(AppMainForm.Handle);
             logger.Trace($"Program/Main: Making sure that DirectInput Device Manager is disposed correctly when application exits");
             Application.ApplicationExit += (_, _) => _directInputManager.Dispose();
             logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
-            //_directInputManager.RegisterKey(Key.F9, () => ProfileManager.SwitchNext());            
+
+            // 3) Register keyboard hotkeys (e.g. F9 => next profile)
+            _directInputManager.RegisterKey(Key.Back, () => Program.RunProfile("8d6c437c-1fab-4935-878a-96c9f899bc30"));
+            //_directInputManager.RegisterKey(Key.F10, () => ProfileManager.PreviousProfile());
+
+            // 4) Register joystick/gamepad buttons
+            //    Suppose you already know the GUID of your target device:
+            //_directInputManager.RegisterJoystickButton(myGamepadGuid, 0, () => ProfileManager.NextProfile());
+            //_directInputManager.RegisterJoystickButton(myGamepadGuid, 1, () => ShortcutRunner.RunDefault());
+            //
+            // Start the background polling thread
+            _directInputManager.Start(pollIntervalMs: 50);
 
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
@@ -547,16 +561,12 @@ namespace DisplayMagician {
                         loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                         NLog.LogManager.ReconfigExistingLoggers();
                     }
+                                       
 
-                    logger.Trace($"Program/Main: Loading the MainForm");
-                    // Set up the AppMainForm variable that we need to use later
-                    AppMainForm = new MainForm();
-                    AppMainForm.Load += MainForm_LoadCompleted;                   
-
-                    logger.Trace($"Program/Main: Closing the splashscreen if it is open.");
+                    /*logger.Trace($"Program/Main: Closing the splashscreen if it is open.");
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));                    
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));*/                    
 
                     try
                     {
@@ -611,16 +621,16 @@ namespace DisplayMagician {
                         NLog.LogManager.ReconfigExistingLoggers();
                     }
 
-                    logger.Trace($"Program/Main: Loading the MainForm");
+                   /* logger.Trace($"Program/Main: Loading the MainForm");
                     // Set up the AppMainForm variable that we need to use later
                     AppMainForm = new MainForm();
-                    AppMainForm.Load += MainForm_LoadCompleted;
+                    AppMainForm.Load += MainForm_LoadCompleted;*/
 
-                    logger.Trace($"Program/Main: Closing the Splashscreen if it is open.");
+                    /*logger.Trace($"Program/Main: Closing the Splashscreen if it is open.");*/
 
-                    // Close the splash screen
+                    /*// Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));*/
 
                     try
                     {
@@ -758,10 +768,7 @@ namespace DisplayMagician {
                 /* // Update the Active Profile before we load the Main Form
                  ProfileRepository.UpdateActiveProfile();*/
 
-                logger.Trace($"Program/Main: Loading the MainForm");
-                // Set up the AppMainForm variable that we need to use later
-                AppMainForm = new MainForm();
-                AppMainForm.Load += MainForm_LoadCompletedAndOpenApp;
+                //AppMainForm.Load += MainForm_LoadCompletedAndOpenApp;
 
                 try
                 {
@@ -785,7 +792,7 @@ namespace DisplayMagician {
 
             logger.Trace($"Program/Main: Showing the splashscreen if requested");
 
-            if (AppProgramSettings.ShowSplashScreen)
+            /*if (AppProgramSettings.ShowSplashScreen)
             {
                 //Show Splash Form
                 AppSplashScreen = new LoadingForm();
@@ -793,7 +800,7 @@ namespace DisplayMagician {
                     () => Application.Run(AppSplashScreen)));
                 splashThread.SetApartmentState(ApartmentState.STA);
                 splashThread.Start();
-            }
+            }*/
 
             int errorLevelToReturnToOS = (int)ERRORLEVEL.OK;
 
@@ -819,11 +826,11 @@ namespace DisplayMagician {
             logger.Debug($"SHUTDOWN HAS BEGUN! The app command has finished executing and we're starting to get ready for shutdown.");
 
             // Close the splash screen if it's still open (happens with some errors)
-            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            /*if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
             {
                 logger.Trace($"Closing the SplashScreen as it may still be open");
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
-            }
+            }*/
                 
             logger.Trace($"Program/Main: Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
@@ -849,9 +856,12 @@ namespace DisplayMagician {
             ERRORLEVEL errLevel = ERRORLEVEL.OK;
             try
             {
-                // Close the splash screen
+                /*// Close the splash screen
                 if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));*/
+
+                // Enable the MainForm to be shown
+                AppMainForm.AllowVisible = true;
 
                 // Run the program with directly showing CreateProfile form
                 Application.Run(new DisplayProfileForm());
@@ -915,6 +925,9 @@ namespace DisplayMagician {
 
                  // Show any messages we need to show
                 ShowMessages();
+
+                // Enable the MainForm to be shown
+                AppMainForm.AllowVisible = true;
 
                 // Run the program with normal startup
                 Application.Run(AppMainForm);                
@@ -1671,9 +1684,9 @@ namespace DisplayMagician {
             }
             else
             {
-                // Shut down the splash screen
+                /*// Shut down the splash screen
                 if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
-                    Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
+                    Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));*/
 
                 if (args.Error is WebException)
                 {

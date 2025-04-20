@@ -1,5 +1,7 @@
-﻿using System;
+﻿using SharpGen.Runtime;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Vortice.DirectInput;
@@ -39,8 +41,12 @@ namespace DisplayMagician.Input
             foreach (var di in _directInput.GetDevices(DeviceType.Keyboard, DeviceEnumerationFlags.AttachedOnly))
             {
                 var dev = _directInput.CreateDevice(di.InstanceGuid);
-                ConfigureDevice(dev, windowHandle, true);
-                _keyboardDevices[di.InstanceGuid] = dev;
+
+                if (_directInput.IsDeviceAttached(di.InstanceGuid))
+                {
+                    ConfigureDevice(dev, windowHandle, true);
+                    _keyboardDevices[di.InstanceGuid] = dev;
+                }
             }
 
             // Gamepads & Joysticks
@@ -50,8 +56,11 @@ namespace DisplayMagician.Input
                 .DistinctBy(d => d.InstanceGuid))
             {
                 var dev = _directInput.CreateDevice(di.InstanceGuid);
-                ConfigureDevice(dev, windowHandle, false);
-                _joystickDevices[di.InstanceGuid] = dev;
+                if (_directInput.IsDeviceAttached(di.InstanceGuid))
+                {
+                    ConfigureDevice(dev, windowHandle, true);
+                    _joystickDevices[di.InstanceGuid] = dev;
+                }                
             }
         }
 
@@ -89,7 +98,7 @@ namespace DisplayMagician.Input
             _pollThread = new Thread(() => PollLoop(_cts.Token, pollIntervalMs))
             {
                 IsBackground = true,
-                Name = "DInput Poller"
+                Name = "DisplayMagician Input Poller"
             };
             _pollThread.Start();
         }
@@ -139,27 +148,69 @@ namespace DisplayMagician.Input
                 // Keyboards
                 foreach (var kv in _keyboardDevices)
                 {
-                    var dev = kv.Value;
-                    dev.Poll();  // Update state
-                    var events = dev.GetBufferedKeyboardData();  // KeyEvent[]
-                    foreach (var e in events)
+                    var keyboard = kv.Value;
+                    Result result = keyboard.Poll();  // Update state
+
+                    if (result.Failure)
                     {
-                        if (e.IsPressed && _keyBindings.TryGetValue(e.Key, out var act))
-                            act();
+                        result = keyboard.Acquire();
+
+                        if (result.Failure)
+                            return;
                     }
+
+                    try
+                    {
+                        KeyboardUpdate[] bufferedData = keyboard.GetBufferedKeyboardData();
+
+                        if (bufferedData.Length > 0)
+                        {
+                            foreach (var e in bufferedData)
+                            {
+                                if (e.IsPressed && _keyBindings.TryGetValue(e.Key, out var act))
+                                    act();
+                            }
+                            Console.WriteLine(bufferedData[0].ToString());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Write(ex.Message);
+                    }
+
                 }
 
                 // Joysticks
-                foreach (var kv in _joystickDevices)
+                foreach (var joystick in _joystickDevices)
                 {
-                    var guid = kv.Key;
-                    var dev = kv.Value;
-                    dev.Poll();
-                    var events = dev.GetBufferedJoystickData();  // JoystickUpdate[]
-                    foreach (var upd in events)
+                    Result result_ = joystick.Value.Poll();
+
+                    if (result_.Failure)
                     {
-                        if (upd.Value > 0 && _buttonBindings.TryGetValue((guid, (int)upd.Offset), out var act))
-                            act();
+                        result_ = joystick.Value.Acquire();
+
+                        if (result_.Failure)
+                            return;
+                    }
+
+                    try
+                    {
+                        JoystickUpdate[] bufferedData = joystick.Value.GetBufferedJoystickData();
+
+                        if (bufferedData.Length > 0)
+                        {
+
+                            foreach (var upd in bufferedData)
+                            {
+                                if (upd.Value > 0 && _buttonBindings.TryGetValue((joystick.Key, (int)upd.Offset), out var act))
+                                    act();
+                            }
+                            Trace.WriteLine(bufferedData[0].ToString());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.Write(ex.Message);
                     }
                 }
 
@@ -172,6 +223,13 @@ namespace DisplayMagician.Input
         /// </summary>
         public void Dispose()
         {
+            // Stop the poll thread if it's still running
+            if (!(_pollThread?.IsAlive ?? true))
+            {
+                Stop();
+            }
+
+            // dispose all devices and the interface
             foreach (var dev in _keyboardDevices.Values) { dev.Unacquire(); dev.Dispose(); }
             foreach (var dev in _joystickDevices.Values) { dev.Unacquire(); dev.Dispose(); }
             _directInput.Dispose();
