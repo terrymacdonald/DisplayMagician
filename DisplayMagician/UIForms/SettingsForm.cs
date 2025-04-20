@@ -1,7 +1,7 @@
 ﻿using AutoUpdaterDotNET;
 using DisplayMagicianShared;
-using NHotkey;
-using NHotkey.WindowsForms;
+//using NHotkey;
+//using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -157,13 +157,13 @@ namespace DisplayMagician.UIForms
                     break;
             }
 
-            // Set the Hotkey values in the form
+            /*// Set the Hotkey values in the form
             UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyMainWindow, lbl_hotkey_main_window);
             logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyMainWindow}");
             UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyDisplayProfileWindow, lbl_hotkey_display_profile);
             logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyDisplayProfileWindow}");
             UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyShortcutLibraryWindow, lbl_hotkey_shortcut_library);
-            logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyShortcutLibraryWindow}");
+            logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyShortcutLibraryWindow}");*/
 
             // Setup the ListView
             lv_dynamic_hotkeys.View = View.Details;
@@ -369,7 +369,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_main_window_Click(object sender, EventArgs e)
         {
-            Keys testHotkey;
+            /*Keys testHotkey;
             if (Program.AppProgramSettings.HotkeyMainWindow != Keys.None)
                 testHotkey = Program.AppProgramSettings.HotkeyMainWindow;
             else
@@ -395,7 +395,7 @@ namespace DisplayMagician.UIForms
                 else
                     // And then apply the Hotkey now
                     HotkeyManager.Current.AddOrReplace("HotkeyMainWindow", Program.AppProgramSettings.HotkeyMainWindow, mainForm.OnWindowHotkeyPressed);
-            }
+            }*/
         }
 
         private void lbl_hotkey_main_window_Click(object sender, EventArgs e)
@@ -421,7 +421,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_display_profile_Click(object sender, EventArgs e)
         {
-            Keys testHotkey;
+            /*Keys testHotkey;
             if (Program.AppProgramSettings.HotkeyDisplayProfileWindow != Keys.None)
                 testHotkey = Program.AppProgramSettings.HotkeyDisplayProfileWindow;
             else
@@ -447,7 +447,7 @@ namespace DisplayMagician.UIForms
                 else
                     // And then apply the Hotkey now
                     HotkeyManager.Current.AddOrReplace("HotkeyDisplayProfileWindow", Program.AppProgramSettings.HotkeyDisplayProfileWindow, mainForm.OnWindowHotkeyPressed);
-            }
+            }*/
         }
 
         private void lbl_hotkey_display_profile_Click(object sender, EventArgs e)
@@ -457,7 +457,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_shortcuts_Click(object sender, EventArgs e)
         {
-            Keys testHotkey;
+            /*Keys testHotkey;
             if (Program.AppProgramSettings.HotkeyShortcutLibraryWindow != Keys.None)
                 testHotkey = Program.AppProgramSettings.HotkeyShortcutLibraryWindow;
             else
@@ -483,7 +483,7 @@ namespace DisplayMagician.UIForms
                 else
                     // And then apply the Hotkey now
                     HotkeyManager.Current.AddOrReplace("HotkeyShortcutLibraryWindow", Program.AppProgramSettings.HotkeyShortcutLibraryWindow, mainForm.OnWindowHotkeyPressed);
-            }
+            }*/
         }
 
         private void lbl_hotkey_shortcut_library_Click(object sender, EventArgs e)
@@ -493,7 +493,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_clear_all_hotkeys_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show("Do you want to clear all the Hotkeys, including the one that open the Main Window, Display Profile Window and Shortcut Library?", "Clear All Hotkeys?", MessageBoxButtons.YesNo);
+            /*DialogResult result = MessageBox.Show("Do you want to clear all the Hotkeys, including the one that open the Main Window, Display Profile Window and Shortcut Library?", "Clear All Hotkeys?", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes)
             {
                 // Remove the Main Window
@@ -529,7 +529,7 @@ namespace DisplayMagician.UIForms
                 }
                 // Then clear the ListView here too!
                 lv_dynamic_hotkeys.Items.Clear();
-            }
+            }*/
         }
 
         private string ConvertHotkeyToText(Keys hotkey)

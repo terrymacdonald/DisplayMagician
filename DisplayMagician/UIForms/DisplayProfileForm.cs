@@ -7,8 +7,8 @@ using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
 using Manina.Windows.Forms;
 using System.Drawing;
-using NHotkey.WindowsForms;
-using NHotkey;
+//using NHotkey.WindowsForms;
+//using NHotkey;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DisplayMagician.Processes;
@@ -140,11 +140,11 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.Items.RemoveAt(currentIlvIndex);
 
             // Remove the hotkey if it is enabled for this profile
-            if (_selectedProfile.Hotkey != Keys.None)
+            /*if (_selectedProfile.Hotkey != Keys.None)
             {
                 // Remove the Hotkey if it needs to be removed
                 HotkeyManager.Current.Remove(_selectedProfile.UUID);
-            }
+            }*/
 
 
             // Remove the Profile
@@ -773,7 +773,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_Click(object sender, EventArgs e)
         {
-            Keys testHotkey;
+            /*Keys testHotkey;
             if (_selectedProfile.Hotkey != Keys.None)
                 testHotkey = _selectedProfile.Hotkey;
             else
@@ -801,7 +801,7 @@ namespace DisplayMagician.UIForms
                 else
                     // And then apply the Hotkey now
                     HotkeyManager.Current.AddOrReplace(_selectedProfile.UUID, _selectedProfile.Hotkey, OnWindowHotkeyPressed);
-            }
+            }*/
         }
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
         {
@@ -826,7 +826,7 @@ namespace DisplayMagician.UIForms
             
         }
 
-        public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
+        /*public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
         {
             if (ProfileRepository.ContainsProfile(e.Name))
             {
@@ -837,7 +837,7 @@ namespace DisplayMagician.UIForms
                     Program.ApplyProfileTask(chosenProfile);
             }
             
-        }
+        }*/
 
         private void btn_profile_settings_Click(object sender, EventArgs e)
         {

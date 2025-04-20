@@ -12,27 +12,21 @@ using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
-using System.Net.NetworkInformation;
 using System.Drawing;
-using System.Runtime.Serialization;
-using System.Runtime.InteropServices;
 using NLog.Config;
 using System.Collections.Generic;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Win32;
-using DisplayMagician.Processes;
 using NETWORKLIST;
 using DisplayMagician.AppLibraries;
 using System.ComponentModel;
 using System.Text;
 using System.Globalization;
-using System.Net.Http;
-using NLog.Targets;
-using System.Security.Policy;
 using System.Web;
-using static DisplayMagician.Program;
+using NHotkey;
+
 
 namespace DisplayMagician {
 
@@ -76,6 +70,8 @@ namespace DisplayMagician {
         public static UpgradeExtraDetails? AppUpgradeExtraDetails = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
+        private static DirectInputManager _inputMgr;
+
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
@@ -104,6 +100,8 @@ namespace DisplayMagician {
             public bool UpdatesGameShortcuts;
             public bool UpdatesSettings;
         }
+
+
 
         private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
         {
@@ -422,17 +420,7 @@ namespace DisplayMagician {
                 logger.Trace($"Program/Main: Application Wallpaper Folder {AppWallpaperPath} already exists so skipping creating it");
             }
 
-            // Write the Application Name
-            Console.WriteLine($"{Application.ProductName} v{Application.ProductVersion}");
-            for (int i = 0; i <= Application.ProductName.Length + Application.ProductVersion.Length; i++)
-            {
-                Console.Write("=");
-            }
-            Console.WriteLine("=");
-            Console.WriteLine($"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
-            Console.WriteLine(@"Derived from Helios Display Management - Copyright © Soroush Falahati 2017-2020");
             logger.Trace($"Program/Main: Setting visual styles and rendering mode");
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false); 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -476,10 +464,30 @@ namespace DisplayMagician {
             // This is redone each time we start so that the context menu is always updated and correct.
             if (AppProgramSettings.InstallDesktopContextMenu)
             {
+                logger.Trace($"Program/Main: Installing the context menu on startup");
                 ContextMenu.InstallContextMenu();
             }
 
-           
+            // Next we create the MainForm object but keep it hidden for now
+            logger.Trace($"Program/Main: Creating the MainForm object");
+            AppMainForm = new MainForm();
+
+            // Next we set up the hotkeys if we have any
+            logger.Trace($"Program/Main: Setting up the windows hotkey processing");
+            _inputMgr = new DirectInputManager(IntPtr.Zero);
+            _inputMgr.KeyboardStateChanged += OnKeyboardPressed;
+            _inputMgr.JoystickStateChanged += OnButtonBoxPressed;
+            if (AppProgramSettings.HotkeyBindings.Count > 0)
+            {
+                logger.Trace($"Program/Main: Hotkeys were found in the program settings, so leaving the hotkeys polling running");                
+            }
+            else
+            {
+                logger.Trace($"Program/Main: No Hotkeys were found in the program settings, so stopping polling for hotkeys");
+                _inputMgr.StopPolling();
+            }
+
+
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {
@@ -1824,6 +1832,117 @@ namespace DisplayMagician {
                 return false;
             }
         }
+
+/*
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
+        public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
+        {
+            if (e.Name == "HotkeyMainWindow")
+                openApplicationWindow();
+            else if (e.Name == "HotkeyDisplayProfileWindow")
+                btn_setup_display_profiles.PerformClick();
+            else if (e.Name == "HotkeyShortcutLibraryWindow")
+                btn_setup_game_shortcuts.PerformClick();
+            else if (hotkeyDisplayProfiles.Contains(e.Name))
+            {
+                // Stop the user from applying this profile if one is already being applied
+                if (ProfileRepository.UserChangingProfiles)
+                {
+                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.");
+                    MessageBox.Show("The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string displayProfileUUID = e.Name;
+                ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
+                if (chosenProfile is ProfileItem)
+                    //ProfileRepository.ApplyProfile(chosenProfile);
+                    Program.ApplyProfileTask(chosenProfile);
+            }
+            else if (hotkeyShortcuts.Contains(e.Name))
+            {
+                // Stop the user from running a game shortcut if a display profile is already being applied
+                if (ProfileRepository.UserChangingProfiles)
+                {
+                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.");
+                    MessageBox.Show("The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string shortcutUUID = e.Name;
+                ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
+                if (chosenShortcut is ShortcutItem)
+                    //ShortcutRepository.RunShortcut(chosenShortcut);
+                    Program.RunShortcutTask(chosenShortcut);
+            }
+        }*/
+
+        private static void OnKeyboardPressed(byte[] state)
+        {
+            logger.Trace($"Program/OnKeyboardPressed: A keyboard button was pressed with state byte {state}!");
+            // Find any keyboard bindings whose scan-code bit is now “down”
+            foreach (var bind in AppProgramSettings.HotkeyBindings
+                                         .Where(b => b.DeviceClass == DeviceClass.Keyboard))
+            {
+                if (state[bind.Code] != 0)
+                {
+                    logger.Trace($"Program/OnKeyboardPressed: Found that bind code {bind.Code} was pressed!");
+                    Execute(bind);
+                }                
+            }
+        }
+
+        private static void OnButtonBoxPressed(byte[] state)
+        {
+            logger.Trace($"Program/OnKeyboardPressed: A keyboard button was pressed!");
+            // ButtonBox codes are 0–31 in state array
+            foreach (var bind in AppProgramSettings.HotkeyBindings
+                                         .Where(b => (b.DeviceClass == DeviceClass.Joystick || b.DeviceClass == DeviceClass.Gamepad)))
+            {
+                if (bind.Code < state.Length && state[bind.Code] != 0)
+                    Execute(bind);
+            }
+        }
+
+        private static void Execute(HotkeyBinding bind)
+        {
+            switch (bind.Action)
+            {
+                case HotkeyTask.ChangeDisplayProfile:
+                    Program.RunProfile(bind.TargetId.ToString());
+                    break;
+                case HotkeyTask.RunGameShortcut:
+                    Program.RunShortcut(bind.TargetId.ToString());
+                    break;
+                case HotkeyTask.OpenShortcutLibraryWindow:
+                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        Program.AppMainForm.openShortcutLibraryWindow();
+                    });
+                    break;
+                case HotkeyTask.OpenDisplayProfileWindow:
+                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        Program.AppMainForm.openDisplayProfileWindow();
+                    });
+                    break;
+                case HotkeyTask.OpenMainWindow:
+                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        Program.AppMainForm.openApplicationWindow();
+                    });
+                    break;
+                case HotkeyTask.ExitApplication:
+                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        Program.AppMainForm.exitApplication();
+                    });
+                    break;
+
+            }
+        }
+
 
     }
 

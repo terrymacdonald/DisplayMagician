@@ -236,7 +236,7 @@ namespace DisplayMagician
         [DllImport("shlwapi.dll", BestFitMapping = false, CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = false, ThrowOnUnmappableChar = true)]
         public static extern int SHLoadIndirectString(string pszSource, StringBuilder pszOutBuf, int cchOutBuf, IntPtr ppvReserved);
 
-        public static IntPtr GetDataFormatPtr(string name)
+/*        public static IntPtr GetDataFormatPtr(string name)
         {
             var h = LoadLibrary("dinput8.dll");
             if (h == IntPtr.Zero)
@@ -245,7 +245,7 @@ namespace DisplayMagician
             if (p == IntPtr.Zero)
                 throw new EntryPointNotFoundException($"Export {name} not found in dinput8.dll");
             return p;
-        }
+        }*/
 
 
         [Flags]
@@ -275,34 +275,116 @@ namespace DisplayMagician
 
     }
 
-    [ComImport, Guid("BF798031-483A-4DA2-AA99-5D64ED369700"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [ComImport, Guid("BF798031-483A-4DA2-AA99-5D64ED369700"),
+     InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     interface IDirectInput8
     {
         int CreateDevice(ref Guid rguid, out IntPtr device, IntPtr pUnkOuter);
         int EnumDevices(uint devType, IntPtr callback, IntPtr context, uint flags);
-        // other methods omitted...
     }
 
-    [ComImport, Guid("54D41080-DC15-4833-A41B-748F73A38179"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [ComImport, Guid("54D41080-DC15-4833-A41B-748F73A38179"),
+     InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     interface IDirectInputDevice8
     {
+        [PreserveSig]
+        int EnumObjects(
+            IntPtr lpCallback,    // DIEnumDeviceObjectsCallback*
+            IntPtr pvRef,
+            uint dwFlags        // e.g. DIDFT_ALL = 0
+        );
+
+        [PreserveSig]
         int GetDeviceState(int dataSize, IntPtr data);
+
+        [PreserveSig]
         int SetDataFormat(IntPtr pdf);
+
+        [PreserveSig]
         int SetCooperativeLevel(IntPtr hwnd, uint flags);
+
+        [PreserveSig]
         int Acquire();
+
+        [PreserveSig]
         int Unacquire();
-        // other methods omitted...
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    struct DIDEVICEOBJECTINSTANCE
+    {
+        public uint dwSize;
+        public Guid guidType;
+        public uint dwOfs;
+        public uint dwType;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string tszName;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DIOBJECTDATAFORMAT
+    {
+        public IntPtr pguid;    // GUID* for this object (e.g. &GUID_XAxis or &GUID_Button)
+        public uint dwOfs;    // Offset in the data packet (bytes)
+        public uint dwType;   // DIDFT_* flags + instance number
+        public uint dwFlags;  // Additional flags (e.g. DIDFT_ASPECTPOSITION)
+    }
+
+    /// <summary>
+    /// Mirrors the C++ DIDATAFORMAT from dinput.h
+    /// https://docs.microsoft.com/windows/win32/api/dinput/ns-dinput-didataformat 
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DIDATAFORMAT
+    {
+        public uint dwSize;       // sizeof(DIDATAFORMAT)
+        public uint dwObjSize;    // sizeof(DIOBJECTDATAFORMAT)
+        public uint dwFlags;      // DIDF_* flags
+        public uint dwDataSize;   // total size of one data packet
+        public uint dwNumObjs;    // number of DIOBJECTDATAFORMAT entries
+        public IntPtr rgodf;        // pointer to first DIOBJECTDATAFORMAT in unmanaged block
+    }
+
+    /// <summary>
+    /// Mirrors the C++ DIJOYSTATE2 from dinput.h
+    /// https://docs.microsoft.com/windows/win32/api/dinput/ns-dinput-dijoystate2 
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DIJOYSTATE2
+    {
+        public int lX, lY, lZ;
+        public int lRx, lRy, lRz;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public int[] rglSlider;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public uint[] rgdwPOV;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)] public byte[] rgbButtons;
+        // (velocity, acceleration, force fields omitted for brevity)
+    }
+
+    /// <summary>
+    /// 256‑byte keyboard state (one byte per scan‑code)
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DIKeyboardState
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+        public byte[] Keys;
+    }
+
+    /// <summary>
+    /// DIDEVICEINSTANCE for EnumDevices and GetDeviceInfo
+    /// https://docs.microsoft.com/windows/win32/api/dinput/ns-dinput-dideviceinstance_a 
+    /// </summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    struct DIDEVICEINSTANCE
+    public struct DIDEVICEINSTANCE
     {
         public uint dwSize;
         public Guid guidInstance;
         public Guid guidProduct;
         public uint dwDevType;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string tszInstanceName;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string tszProductName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string tszInstanceName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string tszProductName;
         public Guid guidFFDriver;
         public ushort wUsagePage;
         public ushort wUsage;
@@ -310,5 +392,8 @@ namespace DisplayMagician
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     delegate int DIEnumDevicesCallback(ref DIDEVICEINSTANCE lpddi, IntPtr pvRef);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    delegate int DIEnumDeviceObjectsCallback(ref DIDEVICEOBJECTINSTANCE lpdoi, IntPtr pvRef);
 }
 

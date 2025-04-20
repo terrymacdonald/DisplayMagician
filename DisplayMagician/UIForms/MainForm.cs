@@ -12,8 +12,6 @@ using Windows.Data.Xml.Dom;
 using Microsoft.Toolkit.Uwp.Notifications;
 //using WK.Libraries.HotkeyListenerNS;
 using System.Collections.Generic;
-using NHotkey.WindowsForms;
-using NHotkey;
 using System.Linq;
 using System.Diagnostics;
 using DisplayMagician.Processes;
@@ -23,12 +21,41 @@ namespace DisplayMagician.UIForms
     public partial class MainForm : Form
     {
 
-        private bool allowVisible;     // ContextMenu's Show command used
-        private bool allowClose;       // ContextMenu's Exit command used
+        private bool _allowVisible = false;     // Default to not showing form
+        private bool _allowClose;       // ContextMenu's Exit command used
         private List<string> hotkeyDisplayProfiles = new List<string>() { };
         private List<string> hotkeyShortcuts = new List<string>() { };
 
+        private DisplayProfileForm DisplayProfileWindow = new DisplayProfileForm();
+        private ShortcutLibraryForm ShortcutLibraryWindow = new ShortcutLibraryForm();
+
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// When true, allows the form to become visible.
+        /// </summary>
+        public bool AllowVisible
+        {
+            get => _allowVisible;
+            set
+            {
+                _allowVisible = value;
+                if (value)
+                    this.Visible = true;  // triggers SetVisibleCore(true)
+                else
+                    this.Visible = false;
+            }
+        }
+
+        /// <summary>
+        /// When true, allows the form to become visible.
+        /// </summary>
+        public bool AllowClose
+        {
+            get => _allowClose;
+            set =>  _allowClose = value;            
+        }
+
 
         public MainForm(Form formToOpen = null)
         {
@@ -47,7 +74,7 @@ namespace DisplayMagician.UIForms
             RefreshNotifyIconMenus();
 
 
-            try
+            /*try
             {
                 if (Program.AppProgramSettings.HotkeyMainWindow != Keys.None)
                     HotkeyManager.Current.AddOrReplace("HotkeyMainWindow", Program.AppProgramSettings.HotkeyMainWindow, OnWindowHotkeyPressed);
@@ -131,7 +158,7 @@ namespace DisplayMagician.UIForms
                                         MessageBoxIcon.Error);
                     }
                 }
-            }
+            }*/
 
             // Shut down the splash screen
             if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
@@ -140,9 +167,9 @@ namespace DisplayMagician.UIForms
             if (Program.AppProgramSettings.MinimiseOnStart)
             {
                 // Make the form minimised on start 
-                allowVisible = false;
+                //_allowVisible = false;
                 // Hide the application to notification area when the form is closed
-                allowClose = false;
+                _allowClose = false;
                 cb_minimise_notification_area.Checked = true;
                 // Change the exit_button text to say 'Close'
                 btn_exit.Text = "&Close";
@@ -183,9 +210,9 @@ namespace DisplayMagician.UIForms
             else
             {
                 // Make the form show to the user on startup
-                allowVisible = true;
+                //_allowVisible = true;
                 // Really close the application when the form is closed
-                allowClose = true;
+                _allowClose = true;
             }
 
             if (Program.AppProgramSettings.MinimiseOnStart && Program.AppProgramSettings.StartOnBootUp)
@@ -261,7 +288,7 @@ namespace DisplayMagician.UIForms
 
         protected override void SetVisibleCore(bool value)
         {
-            if (!allowVisible)
+            if (!_allowVisible)
             {
                 value = false;
                 if (!this.IsHandleCreated) CreateHandle();
@@ -271,7 +298,7 @@ namespace DisplayMagician.UIForms
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (!allowClose)
+            if (!_allowClose)
             {
                 this.Hide();
                 e.Cancel = true;
@@ -323,19 +350,16 @@ namespace DisplayMagician.UIForms
         private void btn_setup_display_profiles_Click(object sender, EventArgs e)
         {
             logger.Trace($"MainForm/btn_setup_display_profiles_Click: User pressed the Display Profiles button (or selected the menu item)");
-            DisplayProfileForm displayProfileForm = null;
-            if (Application.OpenForms.OfType<DisplayProfileForm>().Any())
+            if (DisplayProfileWindow == null || DisplayProfileWindow.IsDisposed)
             {
-                displayProfileForm = Application.OpenForms.OfType<DisplayProfileForm>().Single();
-                displayProfileForm.Activate();
-                displayProfileForm.Show();
-                displayProfileForm.BringToFront();
-
+                DisplayProfileWindow = new DisplayProfileForm();
+                DisplayProfileWindow.ShowDialog(this);
             }
             else
             {
-                displayProfileForm = new DisplayProfileForm();
-                displayProfileForm.ShowDialog(this);
+                DisplayProfileWindow.Activate();
+                DisplayProfileWindow.Show(this);
+                DisplayProfileWindow.BringToFront();
             }
         }
 
@@ -347,18 +371,16 @@ namespace DisplayMagician.UIForms
         private void btn_setup_game_shortcuts_Click(object sender, EventArgs e)
         {
             logger.Trace($"MainForm/btn_setup_game_shortcuts_Click: User pressed the Game Shortcuts button (or selected the menu item)");
-            ShortcutLibraryForm shortcutLibraryForm = null;
-            if (Application.OpenForms.OfType<ShortcutLibraryForm>().Any())
+            if (ShortcutLibraryWindow == null || ShortcutLibraryWindow.IsDisposed)
             {
-                shortcutLibraryForm = Application.OpenForms.OfType<ShortcutLibraryForm>().Single();
-                shortcutLibraryForm.Activate();
-                shortcutLibraryForm.Show();
-                shortcutLibraryForm.BringToFront();
+                ShortcutLibraryWindow = new ShortcutLibraryForm();
+                ShortcutLibraryWindow.ShowDialog(this);
             }
             else
             {
-                shortcutLibraryForm = new ShortcutLibraryForm();
-                shortcutLibraryForm.ShowDialog(this);
+                ShortcutLibraryWindow.Activate();
+                ShortcutLibraryWindow.Show(this);
+                ShortcutLibraryWindow.BringToFront();
             }
         }
 
@@ -545,23 +567,45 @@ namespace DisplayMagician.UIForms
 
         public void openApplicationWindow()
         {
-            /*
-            this.Restore();
-            this.Show();
-            this.Focus();
-            this.BringToFront();
-            this.TopMost = true;
-            this.Activate();
-            this.TopMost = false;*/
-
-            allowVisible = true;
+            _allowVisible = true;
             // Center the form on the primary screen
             Utils.ActivateCenteredOnPrimaryScreen(this);
         }
 
+        public void openShortcutLibraryWindow()
+        {
+
+            _allowVisible = true;           
+
+            // Center this form on the primary screen
+            Utils.ActivateCenteredOnPrimaryScreen(this);
+
+            // Now open the ShortcutLibraryWindow
+            this.Invoke(new Action(() =>
+            {
+                btn_setup_game_shortcuts.PerformClick();
+            }));
+        }
+
+        public void openDisplayProfileWindow()
+        {
+
+            _allowVisible = true;
+
+            // Center this form on the primary screen
+            Utils.ActivateCenteredOnPrimaryScreen(this);
+
+            // Now open the ShortcutLibraryWindow
+            this.Invoke(new Action(() =>
+            {
+                btn_setup_display_profiles.PerformClick();
+            }));
+        }
+
+
         public void exitApplication()
         {
-            allowClose = true;
+            _allowClose = true;
             Application.Exit();
         }
 
@@ -580,9 +624,9 @@ namespace DisplayMagician.UIForms
             if (cb_minimise_notification_area.Checked)
             {
                 // Make the form minimised on start 
-                allowVisible = false;
+                _allowVisible = false;
                 // Hide the application to notification area when the form is closed
-                allowClose = false;
+                _allowClose = false;
                 // Enable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = true;
                 SettingsForm.SetBootMeUp(true);
@@ -592,9 +636,9 @@ namespace DisplayMagician.UIForms
             else
             {
                 // Make the form show to the user on startup
-                allowVisible = true;
+                _allowVisible = true;
                 // Really close the application when the form is closed
-                allowClose = true;
+                _allowClose = true;
                 // Disable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = false;
                 SettingsForm.SetBootMeUp(false);
@@ -661,50 +705,6 @@ namespace DisplayMagician.UIForms
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             openApplicationWindow();
-        }
-
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-        public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-        {
-            if (e.Name == "HotkeyMainWindow")
-                openApplicationWindow();
-            else if (e.Name == "HotkeyDisplayProfileWindow")
-                btn_setup_display_profiles.PerformClick();
-            else if (e.Name == "HotkeyShortcutLibraryWindow")
-                btn_setup_game_shortcuts.PerformClick();
-            else if (hotkeyDisplayProfiles.Contains(e.Name))
-            {
-                // Stop the user from applying this profile if one is already being applied
-                if (ProfileRepository.UserChangingProfiles)
-                {
-                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.");
-                    MessageBox.Show("The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                string displayProfileUUID = e.Name;
-                ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
-                if (chosenProfile is ProfileItem)
-                    //ProfileRepository.ApplyProfile(chosenProfile);
-                    Program.ApplyProfileTask(chosenProfile);
-            }
-            else if (hotkeyShortcuts.Contains(e.Name))
-            {
-                // Stop the user from running a game shortcut if a display profile is already being applied
-                if (ProfileRepository.UserChangingProfiles)
-                {
-                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.");
-                    MessageBox.Show("The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                string shortcutUUID = e.Name;
-                ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
-                if (chosenShortcut is ShortcutItem)
-                    //ShortcutRepository.RunShortcut(chosenShortcut);
-                    Program.RunShortcutTask(chosenShortcut);
-            }
         }
 
         private void btn_help_Click(object sender, EventArgs e)

@@ -70,9 +70,7 @@ namespace DisplayMagician
         private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
         private int _numberOfStartsSinceLastDonationForm = 0;
         private int _numberOfTimesRun = 0;
-        private Keys _hotkeyMainWindow = Keys.None;
-        private Keys _hotkeyDisplayProfileWindow = Keys.None;
-        private Keys _hotkeyShortcutLibraryWindow = Keys.None;
+        private List<HotkeyBinding> _hotkeyBindings = new List<HotkeyBinding>();
         private ScreenLayout _fovCalcScreenLayout = ScreenLayout.TripleScreen;
         private double _fovCalcScreenSize = 27;
         private ScreenMeasurementUnit _fovCalcScreenSizeUnit = ScreenMeasurementUnit.Inch;
@@ -392,42 +390,15 @@ namespace DisplayMagician
             }
         }
 
-        [DefaultValue(Keys.None)]
-        public Keys HotkeyMainWindow
+        public List<HotkeyBinding> HotkeyBindings
         {
             get
             {
-                return _hotkeyMainWindow;
+                return _hotkeyBindings;
             }
             set
             {
-                _hotkeyMainWindow = value;
-            }
-        }
-
-        [DefaultValue(Keys.None)]
-        public Keys HotkeyDisplayProfileWindow
-        {
-            get
-            {
-                return _hotkeyDisplayProfileWindow;
-            }
-            set
-            {
-                _hotkeyDisplayProfileWindow = value;
-            }
-        }
-
-        [DefaultValue(Keys.None)]
-        public Keys HotkeyShortcutLibraryWindow
-        {
-            get
-            {
-                return _hotkeyShortcutLibraryWindow;
-            }
-            set
-            {
-                _hotkeyShortcutLibraryWindow = value;
+                _hotkeyBindings = value;
             }
         }
 

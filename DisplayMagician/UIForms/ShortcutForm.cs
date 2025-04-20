@@ -11,8 +11,8 @@ using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
-using NHotkey.WindowsForms;
-using NHotkey;
+//using NHotkey.WindowsForms;
+//using NHotkey;
 using System.Threading;
 using DisplayMagician.AppLibraries;
 using static DisplayMagician.GameLibraries.ProductInformation;
@@ -749,12 +749,12 @@ namespace DisplayMagician.UIForms
                 logger.Error($"ShortcutForm/btn_save_Click: We're unable to save as the Shortut Category isn't a category we support! {_shortcutCategory.ToString("G")}");
             }
 
-            if (_hotkey == Keys.None)
+            /*if (_hotkey == Keys.None)
                 // Remove the Hotkey if it needs to be removed
                 HotkeyManager.Current.Remove(_shortcutToEdit.UUID);
             else
                 // Set the hokey if there is one
-                HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _shortcutToEdit.Hotkey, OnWindowHotkeyPressed);
+                HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _shortcutToEdit.Hotkey, OnWindowHotkeyPressed);*/
 
             // Refresh validity after these changes
             _shortcutToEdit.RefreshValidity();
@@ -3399,6 +3399,7 @@ namespace DisplayMagician.UIForms
 
         }
 
+        /*
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
         public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
@@ -3410,7 +3411,7 @@ namespace DisplayMagician.UIForms
                 if (chosenShortcut is ShortcutItem)
                     Program.RunShortcutTask(chosenShortcut);
             }
-        }
+        }*/
 
         private void StartProgramControl_MouseDown(object sender, MouseEventArgs e)
         {
