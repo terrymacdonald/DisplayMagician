@@ -25,9 +25,9 @@ using System.ComponentModel;
 using System.Text;
 using System.Globalization;
 using System.Web;
-using NHotkey;
 using Vortice.DirectInput;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
+//using static System.Net.Mime.MediaTypeNames;
 
 
 namespace DisplayMagician {
@@ -486,7 +486,8 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
 
             // 3) Register keyboard hotkeys (e.g. F9 => next profile)
-            _directInputManager.RegisterKey(Key.Minus, () => AppMainForm.openDisplayProfileWindow());
+            Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
+            _directInputManager.RegisterKey(Key.Minus, openDisplayProfileWindow);
             //_directInputManager.RegisterKey(Key.F10, () => ProfileManager.PreviousProfile());
 
             // 4) Register joystick/gamepad buttons

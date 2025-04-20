@@ -1,10 +1,13 @@
-﻿using SharpGen.Runtime;
+﻿using DisplayMagician.UIForms;
+using SharpGen.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Windows.Controls;
 using Vortice.DirectInput;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DisplayMagician
 {
@@ -168,7 +171,18 @@ namespace DisplayMagician
                             foreach (var e in bufferedData)
                             {
                                 if (e.IsPressed && _keyBindings.TryGetValue(e.Key, out Action act))
-                                    act.Invoke();
+                                {
+                                    if (Program.AppMainForm.InvokeRequired)
+                                    {
+                                        Program.AppMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker) delegate {
+                                            act();
+                                        });
+                                    }
+                                    else
+                                    {
+                                        act();
+                                    }
+                                }
                             }
                             Console.WriteLine(bufferedData[0].ToString());
                         }
@@ -203,7 +217,20 @@ namespace DisplayMagician
                             foreach (var upd in bufferedData)
                             {
                                 if (upd.Value > 0 && _buttonBindings.TryGetValue((joystick.Key, (int)upd.Offset), out var act))
-                                    act();
+                                {
+                                    if (Program.AppMainForm.InvokeRequired)
+                                    {
+                                        Program.AppMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker) delegate
+                                        {
+                                            act();
+                                        });
+                                    }
+                                    else
+                                    {
+                                        act();
+                                    }
+                                }
+                                    
                             }
                             Trace.WriteLine(bufferedData[0].ToString());
                         }

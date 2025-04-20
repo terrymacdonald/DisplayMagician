@@ -261,7 +261,7 @@ namespace DisplayMagician.UIForms
                         Utils.CenterOnPrimaryScreen(Program.AppMainForm);
                     }
                     // Bring the window back to the front            
-                    Utils.ActivateCenteredOnPrimaryScreen(this);
+                    Utils.ActivateCenteredOnPrimaryScreen(Program.AppMainForm);
 
                 }
             }
@@ -277,7 +277,7 @@ namespace DisplayMagician.UIForms
             {
                 DonationForm donationForm = new DonationForm();
                 donationForm.NumberofStarts = Program.AppProgramSettings.NumberOfTimesRun;
-                donationForm.ShowDialog(this);
+                donationForm.ShowDialog(Program.AppMainForm);
                 // Update the settings to record the donation has been shown
                 Program.AppProgramSettings.LastDonationFormDate = DateTime.UtcNow;
                 Program.AppProgramSettings.SaveSettings();
