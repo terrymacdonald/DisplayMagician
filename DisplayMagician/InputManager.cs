@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using Vortice.DirectInput;
 
-namespace DisplayMagician.Input
+namespace DisplayMagician
 {
     /// <summary>
     /// Wraps Vortice.DirectInput for keyboard and joystick hotkeys—no P/Invoke.
@@ -156,7 +156,7 @@ namespace DisplayMagician.Input
                         result = keyboard.Acquire();
 
                         if (result.Failure)
-                            return;
+                            break;
                     }
 
                     try
@@ -167,8 +167,8 @@ namespace DisplayMagician.Input
                         {
                             foreach (var e in bufferedData)
                             {
-                                if (e.IsPressed && _keyBindings.TryGetValue(e.Key, out var act))
-                                    act();
+                                if (e.IsPressed && _keyBindings.TryGetValue(e.Key, out Action act))
+                                    act.Invoke();
                             }
                             Console.WriteLine(bufferedData[0].ToString());
                         }
@@ -190,7 +190,7 @@ namespace DisplayMagician.Input
                         result_ = joystick.Value.Acquire();
 
                         if (result_.Failure)
-                            return;
+                            break;
                     }
 
                     try
