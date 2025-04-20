@@ -27,6 +27,7 @@ using System.Globalization;
 using System.Web;
 using NHotkey;
 using Vortice.DirectInput;
+using DisplayMagician.Input;
 
 
 namespace DisplayMagician {
@@ -71,7 +72,7 @@ namespace DisplayMagician {
         public static UpgradeExtraDetails? AppUpgradeExtraDetails = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
-        private static DIInputDevice _directInputDevice;
+        private static DirectInputManager _directInputManager;
         
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
@@ -474,18 +475,14 @@ namespace DisplayMagician {
             AppMainForm = new MainForm();
 
             // Next we set up the hotkeys if we have any
-            logger.Trace($"Program/Main: Setting up the windows hotkey processing");
-            logger.Trace($"Program/Main: Setting up DirectInput Device Manager");
-            _directInputDevice = new DIInputDevice();
-            logger.Trace($"Program/Main: Initialising DirectInput Devices");
-            _directInputDevice.Initialize(IntPtr.Zero);
-
-            while (true)
-            {
-                _directInputDevice.GetKeyboardUpdates();
-                _directInputDevice.GetKJoystickUpdates();
-            }
-
+            logger.Trace($"Program/Main: Creating DirectInput Device Manager");
+            _directInputManager = new DirectInputManager();
+            logger.Trace($"Program/Main: Initilising DirectInput Device Manager");
+            _directInputManager.Initialize(AppMainForm.Handle);
+            logger.Trace($"Program/Main: Making sure that DirectInput Device Manager is disposed correctly when application exits");
+            Application.ApplicationExit += (_, _) => _directInputManager.Dispose();
+            logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
+            //_directInputManager.RegisterKey(Key.F9, () => ProfileManager.SwitchNext());            
 
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
