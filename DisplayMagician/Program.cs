@@ -49,6 +49,7 @@ namespace DisplayMagician {
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
         public static string AppDownloadsPath = Utils.GetDownloadsPath();
         public static string AppVersion = ThisAssembly.AssemblyFileVersion;
+        public static DirectInputManager AppDirectInputManager;
 
         public static string AppPermStartMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "DisplayMagician","DisplayMagician.lnk");
         public static string AppTempStartMenuPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.Programs),"DisplayMagician.lnk");
@@ -72,8 +73,7 @@ namespace DisplayMagician {
         public static ShortcutLoadingForm AppShortcutLoadingSplashScreen;
         public static UpgradeExtraDetails? AppUpgradeExtraDetails = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static SharedLogger sharedLogger;
-        private static DirectInputManager _directInputManager;
+        private static SharedLogger sharedLogger;        
         
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
@@ -479,11 +479,11 @@ namespace DisplayMagician {
 
             // Next we set up the hotkeys if we have any
             logger.Trace($"Program/Main: Creating DirectInput Device Manager");
-            _directInputManager = new DirectInputManager();
+            AppDirectInputManager = new DirectInputManager();
             logger.Trace($"Program/Main: Initilising DirectInput Device Manager with the MainForm window handle");
-            _directInputManager.Initialize(AppMainForm.Handle);
+            AppDirectInputManager.Initialize(AppMainForm.Handle);
             logger.Trace($"Program/Main: Making sure that DirectInput Device Manager is disposed correctly when application exits");
-            Application.ApplicationExit += (_, _) => _directInputManager.Dispose();
+            Application.ApplicationExit += (_, _) => AppDirectInputManager.Dispose();
             logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
 
             // 3) Register keyboard hotkeys (e.g. F9 => next profile)
@@ -491,134 +491,7 @@ namespace DisplayMagician {
             _directInputManager.RegisterKey(Key.Minus, openDisplayProfileWindow);
             Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
             _directInputManager.RegisterKey(Key.Equals, openShortcutLibraryWindow);*/
-
-            try
-            {
-                if (Program.AppProgramSettings.KeyboardHotkeys != null && Program.AppProgramSettings.KeyboardHotkeys is List<HotkeyKeyboard> && Program.AppProgramSettings.KeyboardHotkeys.Count > 0)
-                {
-                    logger.Trace($"Program/Main: We have {Program.AppProgramSettings.KeyboardHotkeys.Count} keyboard hotkeys to set up.");
-                    foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
-                    {
-                        if (hotkey.Task == HotkeyTask.OpenMainWindow)
-                        {
-                            logger.Trace($"Program/Main: Registering key '{hotkey.KeyCode}' to open the main window.");
-                            Action openMainWindow = delegate { AppMainForm.openApplicationWindow(); };
-                            _directInputManager.RegisterKey(Key.Minus, openMainWindow);
-                        }
-                        else if (hotkey.Task == HotkeyTask.OpenDisplayProfileWindow)
-                        {
-                            logger.Trace($"Program/Main: Registering key '{hotkey.KeyCode}' to open the display profile window.");
-                            Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
-                            _directInputManager.RegisterKey(Key.Minus, openDisplayProfileWindow);
-                        }
-                        else if (hotkey.Task == HotkeyTask.OpenShortcutLibraryWindow)
-                        {
-                            logger.Trace($"Program/Main: Registering key '{hotkey.KeyCode}' to open the shortcut library window.");
-                            Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
-                            _directInputManager.RegisterKey(Key.Minus, openShortcutLibraryWindow);
-                        }
-                        else if (hotkey.Task == HotkeyTask.RunGameShortcut)
-                        {
-                            logger.Trace($"Program/Main: Registering key '{hotkey.KeyCode}' to open the main window.");
-                            Action runGameShortcut = delegate { Program.RunShortcut(hotkey.UUID.ToString()); ; };
-                            _directInputManager.RegisterKey(Key.Minus, runGameShortcut);
-                        }
-                        else if (hotkey.Task == HotkeyTask.ChangeDisplayProfile)
-                        {
-                            logger.Trace($"Program/Main: Registering key '{hotkey.KeyCode}' to run the game shortcut { hotkey.UUID.ToString()}.");
-                            Action changeDisplayProfile= delegate { Program.RunProfile(hotkey.UUID.ToString()); };
-                            _directInputManager.RegisterKey(Key.Minus, changeDisplayProfile);
-                        }
-                        else if (hotkey.Task == HotkeyTask.ExitApplication)
-                        {
-                            logger.Trace($"Program/Main: Registering key '{hotkey.KeyCode}' to change to display profile {hotkey.UUID.ToString()}.");
-                            Action exitApplication = delegate { AppMainForm.exitApplication(); };
-                            _directInputManager.RegisterKey(Key.Minus, exitApplication);
-                        }
-                        else
-                        {
-                            logger.Warn($"Program/Main: WARNING - The hotkey '{hotkey.KeyCode}' is not a valid hotkey. Please check the hotkey and try again.");
-                        }
-
-                    }
-                }
-                else
-                {
-                    logger.Trace($"Program/Main: We have no  keyboard hotkeys to set up so skipping them.");
-                } 
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"MainForm/MainForm: WARNING - Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.");
-                MessageBox.Show(
-                                $"Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.", @"DisplayMagician Hotkey Registration Error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-            }
-
-            try
-            {
-                if (Program.AppProgramSettings.JoystickHotkeys != null && Program.AppProgramSettings.JoystickHotkeys is List<HotkeyJoystick> && Program.AppProgramSettings.JoystickHotkeys.Count > 0)
-                {
-                    logger.Trace($"Program/Main: We have {Program.AppProgramSettings.JoystickHotkeys.Count} joystick and gamepad hotkeys to set up.");
-                    foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
-                    {
-                        if (hotkey.Task == HotkeyTask.OpenMainWindow)
-                        {
-                            logger.Trace($"Program/Main: Registering button '{hotkey.ButtonIndex}' on device '{_directInputManager.GetNameOfJoystickHotkey(hotkey)}' to open the main window.");
-                            Action openMainWindow = delegate { AppMainForm.openApplicationWindow(); };
-                            _directInputManager.RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, openMainWindow);
-                        }
-                        else if (hotkey.Task == HotkeyTask.OpenDisplayProfileWindow)
-                        {
-                            logger.Trace($"Program/Main: Registering button '{hotkey.ButtonIndex}' on device '{_directInputManager.GetNameOfJoystickHotkey(hotkey)}' to open the display profile window.");
-                            Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
-                            _directInputManager.RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, openDisplayProfileWindow);
-                        }
-                        else if (hotkey.Task == HotkeyTask.OpenShortcutLibraryWindow)
-                        {
-                            logger.Trace($"Program/Main: Registering button '{hotkey.ButtonIndex}' on device '{_directInputManager.GetNameOfJoystickHotkey(hotkey)}' to open the shortcut library  window.");
-                            Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
-                            _directInputManager.RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, openShortcutLibraryWindow);
-                        }
-                        else if (hotkey.Task == HotkeyTask.RunGameShortcut)
-                        {
-                            logger.Trace($"Program/Main: Registering button '{hotkey.ButtonIndex}' on device '{_directInputManager.GetNameOfJoystickHotkey(hotkey)}' to run the game shortcut {hotkey.UUID.ToString()}.");
-                            Action runGameShortcut = delegate { Program.RunShortcut(hotkey.UUID.ToString()); ; };
-                            _directInputManager.RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, runGameShortcut);
-                        }
-                        else if (hotkey.Task == HotkeyTask.ChangeDisplayProfile)
-                        {
-                            logger.Trace($"Program/Main: Registering button '{hotkey.ButtonIndex}' on device '{_directInputManager.GetNameOfJoystickHotkey(hotkey)}' to change to display profile {hotkey.UUID.ToString()}.");
-                            Action changeDisplayProfile = delegate { Program.RunProfile(hotkey.UUID.ToString()); };
-                            _directInputManager.RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, changeDisplayProfile);
-                        }
-                        else if (hotkey.Task == HotkeyTask.ExitApplication)
-                        {
-                            logger.Trace($"Program/Main: Registering button '{hotkey.ButtonIndex}' on device '{_directInputManager.GetNameOfJoystickHotkey(hotkey)}' to exit the application.");
-                            Action exitApplication = delegate { AppMainForm.exitApplication(); };
-                            _directInputManager.RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, exitApplication);
-                        }
-                        else
-                        {
-                            logger.Warn($"Program/Main: WARNING - The joystick button '{hotkey.ButtonIndex}' on device '{_directInputManager.GetNameOfJoystickHotkey(hotkey)}' is not a valid hotkey. Please check the hotkey and try again.");
-                        }
-
-                    }
-                }
-                else
-                {
-                    logger.Trace($"Program/Main: We have no  keyboard hotkeys to set up so skipping them.");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"MainForm/MainForm: WARNING - Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.");
-                MessageBox.Show(
-                                $"Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.", @"DisplayMagician Hotkey Registration Error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-            }
+            AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);
 
             //_directInputManager.RegisterKey(Key.F10, () => AppMainForm.openDisplayProfileWindow(););
 
@@ -628,7 +501,7 @@ namespace DisplayMagician {
             //_directInputManager.RegisterJoystickButton(myGamepadGuid, 1, () => ShortcutRunner.RunDefault());
             //
             // Start the background polling thread
-            _directInputManager.Start(pollIntervalMs: 50);
+            AppDirectInputManager.Start(pollIntervalMs: 50);
 
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
@@ -1339,28 +1212,7 @@ namespace DisplayMagician {
             return result;
         }
 
-        public static string HotkeyToString(Keys hotkey)
-        {
-            string parsedHotkey = String.Empty;
-            KeysConverter kc = new KeysConverter();
 
-            // Lets parse the hotkey to create the text we need
-            parsedHotkey = kc.ConvertToString(hotkey);
-
-            // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
-            if (parsedHotkey.Contains("+ControlKey"))
-                parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
-
-            // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
-            if (parsedHotkey.Contains("+ShiftKey"))
-                parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
-
-            // Alt also shows as Alt+Menu, so we trim the +Menu
-            if (parsedHotkey.Contains("+Menu"))
-                parsedHotkey = parsedHotkey.Replace("+Menu", "");
-
-            return parsedHotkey;
-        }
 
         public static void ShowMessages()
         {

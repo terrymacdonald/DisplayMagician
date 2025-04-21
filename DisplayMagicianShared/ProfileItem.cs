@@ -88,7 +88,6 @@ namespace DisplayMagicianShared
         private bool _isAMDPossible = false;
         private bool _isWindowsPossible = false;
         private bool _forceExplorerRestart = false;
-        private Keys _hotkey = Keys.None;
         private string _wallpaperBitmapFilename = "";
         private int _applyProfileCount = 1;
         private int _applyProfileDelay = 0;
@@ -253,21 +252,6 @@ namespace DisplayMagicianShared
             }
         }
 
-        /*[DefaultValue(VIDEO_MODE.WINDOWS)]
-
-        public virtual VIDEO_MODE VideoMode { get; set; } = VIDEO_MODE.WINDOWS;*/
-
-        [DefaultValue(Keys.None)]
-        public Keys Hotkey {
-            get 
-            {
-                return _hotkey;
-            }
-            set 
-            {
-                _hotkey = value;
-            }
-        }
 
         [DefaultValue("")]
         public virtual string Name { get; set; }

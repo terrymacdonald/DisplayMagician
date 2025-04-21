@@ -32,6 +32,7 @@ namespace DisplayMagician.UIForms
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             btn_back = new System.Windows.Forms.Button();
             gb_general = new System.Windows.Forms.GroupBox();
+            btn_context_menu_reinstall = new System.Windows.Forms.Button();
             cb_show_status_action = new System.Windows.Forms.CheckBox();
             cb_show_minimise_action = new System.Windows.Forms.CheckBox();
             label4 = new System.Windows.Forms.Label();
@@ -42,10 +43,10 @@ namespace DisplayMagician.UIForms
             cmb_loglevel = new System.Windows.Forms.ComboBox();
             cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             gb_hotkeys = new System.Windows.Forms.GroupBox();
-            lbl_hotkey_shortcut_library = new System.Windows.Forms.Label();
-            lbl_hotkey_display_profile = new System.Windows.Forms.Label();
-            lbl_hotkey_main_window = new System.Windows.Forms.Label();
-            lv_dynamic_hotkeys = new System.Windows.Forms.ListView();
+            label6 = new System.Windows.Forms.Label();
+            label5 = new System.Windows.Forms.Label();
+            lv_keyboard_hotkeys = new System.Windows.Forms.ListView();
+            lv_joystick_hotkeys = new System.Windows.Forms.ListView();
             btn_clear_all_hotkeys = new System.Windows.Forms.Button();
             lbl_hotkey_shortcut_library_description = new System.Windows.Forms.Label();
             lbl_hotkey_display_profile_description = new System.Windows.Forms.Label();
@@ -60,7 +61,8 @@ namespace DisplayMagician.UIForms
             gb_support = new System.Windows.Forms.GroupBox();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
-            btn_context_menu_reinstall = new System.Windows.Forms.Button();
+            button1 = new System.Windows.Forms.Button();
+            label7 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             gb_hotkeys.SuspendLayout();
             gb_upgrades.SuspendLayout();
@@ -75,7 +77,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1206, 681);
+            btn_back.Location = new System.Drawing.Point(1470, 708);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -102,10 +104,27 @@ namespace DisplayMagician.UIForms
             gb_general.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_general.Name = "gb_general";
             gb_general.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_general.Size = new System.Drawing.Size(612, 451);
+            gb_general.Size = new System.Drawing.Size(612, 478);
             gb_general.TabIndex = 11;
             gb_general.TabStop = false;
             gb_general.Text = "General Settings";
+            // 
+            // btn_context_menu_reinstall
+            // 
+            btn_context_menu_reinstall.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_context_menu_reinstall.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_context_menu_reinstall.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_context_menu_reinstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_context_menu_reinstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_context_menu_reinstall.ForeColor = System.Drawing.Color.White;
+            btn_context_menu_reinstall.Location = new System.Drawing.Point(30, 412);
+            btn_context_menu_reinstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_context_menu_reinstall.Name = "btn_context_menu_reinstall";
+            btn_context_menu_reinstall.Size = new System.Drawing.Size(243, 38);
+            btn_context_menu_reinstall.TabIndex = 47;
+            btn_context_menu_reinstall.Text = "Add Desktop Context Menu";
+            btn_context_menu_reinstall.UseVisualStyleBackColor = true;
+            btn_context_menu_reinstall.Click += btn_context_menu_add_Click;
             // 
             // cb_show_status_action
             // 
@@ -140,7 +159,7 @@ namespace DisplayMagician.UIForms
             // label4
             // 
             label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label4.Location = new System.Drawing.Point(122, 335);
+            label4.Location = new System.Drawing.Point(130, 362);
             label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label4.Name = "label4";
             label4.Size = new System.Drawing.Size(361, 47);
@@ -156,7 +175,7 @@ namespace DisplayMagician.UIForms
             btn_context_menu_uninstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_context_menu_uninstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_context_menu_uninstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_uninstall.Location = new System.Drawing.Point(342, 385);
+            btn_context_menu_uninstall.Location = new System.Drawing.Point(342, 412);
             btn_context_menu_uninstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_context_menu_uninstall.Name = "btn_context_menu_uninstall";
             btn_context_menu_uninstall.Size = new System.Drawing.Size(243, 38);
@@ -234,10 +253,12 @@ namespace DisplayMagician.UIForms
             // 
             // gb_hotkeys
             // 
-            gb_hotkeys.Controls.Add(lbl_hotkey_shortcut_library);
-            gb_hotkeys.Controls.Add(lbl_hotkey_display_profile);
-            gb_hotkeys.Controls.Add(lbl_hotkey_main_window);
-            gb_hotkeys.Controls.Add(lv_dynamic_hotkeys);
+            gb_hotkeys.Controls.Add(label7);
+            gb_hotkeys.Controls.Add(button1);
+            gb_hotkeys.Controls.Add(label6);
+            gb_hotkeys.Controls.Add(label5);
+            gb_hotkeys.Controls.Add(lv_keyboard_hotkeys);
+            gb_hotkeys.Controls.Add(lv_joystick_hotkeys);
             gb_hotkeys.Controls.Add(btn_clear_all_hotkeys);
             gb_hotkeys.Controls.Add(lbl_hotkey_shortcut_library_description);
             gb_hotkeys.Controls.Add(lbl_hotkey_display_profile_description);
@@ -251,52 +272,48 @@ namespace DisplayMagician.UIForms
             gb_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_hotkeys.Name = "gb_hotkeys";
             gb_hotkeys.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_hotkeys.Size = new System.Drawing.Size(612, 451);
+            gb_hotkeys.Size = new System.Drawing.Size(877, 478);
             gb_hotkeys.TabIndex = 12;
             gb_hotkeys.TabStop = false;
             gb_hotkeys.Text = "Hotkeys";
             // 
-            // lbl_hotkey_shortcut_library
+            // label6
             // 
-            lbl_hotkey_shortcut_library.Location = new System.Drawing.Point(275, 153);
-            lbl_hotkey_shortcut_library.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_hotkey_shortcut_library.Name = "lbl_hotkey_shortcut_library";
-            lbl_hotkey_shortcut_library.Size = new System.Drawing.Size(197, 18);
-            lbl_hotkey_shortcut_library.TabIndex = 47;
-            lbl_hotkey_shortcut_library.Text = "None Set";
-            lbl_hotkey_shortcut_library.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            lbl_hotkey_shortcut_library.Click += lbl_hotkey_shortcut_library_Click;
+            label6.AutoSize = true;
+            label6.Location = new System.Drawing.Point(157, 152);
+            label6.Name = "label6";
+            label6.Size = new System.Drawing.Size(119, 16);
+            label6.TabIndex = 50;
+            label6.Text = "Keyboard Hotkeys";
+            label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // lbl_hotkey_display_profile
+            // label5
             // 
-            lbl_hotkey_display_profile.Location = new System.Drawing.Point(275, 96);
-            lbl_hotkey_display_profile.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_hotkey_display_profile.Name = "lbl_hotkey_display_profile";
-            lbl_hotkey_display_profile.Size = new System.Drawing.Size(197, 18);
-            lbl_hotkey_display_profile.TabIndex = 46;
-            lbl_hotkey_display_profile.Text = "None Set";
-            lbl_hotkey_display_profile.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            lbl_hotkey_display_profile.Click += lbl_hotkey_display_profile_Click;
+            label5.AutoSize = true;
+            label5.Location = new System.Drawing.Point(563, 152);
+            label5.Name = "label5";
+            label5.Size = new System.Drawing.Size(199, 16);
+            label5.TabIndex = 49;
+            label5.Text = "Joystick and Gamepad Hotkeys";
+            label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // lbl_hotkey_main_window
+            // lv_keyboard_hotkeys
             // 
-            lbl_hotkey_main_window.Location = new System.Drawing.Point(276, 40);
-            lbl_hotkey_main_window.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_hotkey_main_window.Name = "lbl_hotkey_main_window";
-            lbl_hotkey_main_window.Size = new System.Drawing.Size(197, 18);
-            lbl_hotkey_main_window.TabIndex = 45;
-            lbl_hotkey_main_window.Text = "None Set";
-            lbl_hotkey_main_window.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            lbl_hotkey_main_window.Click += lbl_hotkey_main_window_Click;
+            lv_keyboard_hotkeys.Location = new System.Drawing.Point(28, 171);
+            lv_keyboard_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            lv_keyboard_hotkeys.Name = "lv_keyboard_hotkeys";
+            lv_keyboard_hotkeys.Size = new System.Drawing.Size(389, 215);
+            lv_keyboard_hotkeys.TabIndex = 48;
+            lv_keyboard_hotkeys.UseCompatibleStateImageBehavior = false;
             // 
-            // lv_dynamic_hotkeys
+            // lv_joystick_hotkeys
             // 
-            lv_dynamic_hotkeys.Location = new System.Drawing.Point(31, 204);
-            lv_dynamic_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            lv_dynamic_hotkeys.Name = "lv_dynamic_hotkeys";
-            lv_dynamic_hotkeys.Size = new System.Drawing.Size(551, 164);
-            lv_dynamic_hotkeys.TabIndex = 44;
-            lv_dynamic_hotkeys.UseCompatibleStateImageBehavior = false;
+            lv_joystick_hotkeys.Location = new System.Drawing.Point(451, 171);
+            lv_joystick_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            lv_joystick_hotkeys.Name = "lv_joystick_hotkeys";
+            lv_joystick_hotkeys.Size = new System.Drawing.Size(404, 215);
+            lv_joystick_hotkeys.TabIndex = 44;
+            lv_joystick_hotkeys.UseCompatibleStateImageBehavior = false;
             // 
             // btn_clear_all_hotkeys
             // 
@@ -306,7 +323,7 @@ namespace DisplayMagician.UIForms
             btn_clear_all_hotkeys.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_clear_all_hotkeys.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_clear_all_hotkeys.ForeColor = System.Drawing.Color.White;
-            btn_clear_all_hotkeys.Location = new System.Drawing.Point(230, 385);
+            btn_clear_all_hotkeys.Location = new System.Drawing.Point(362, 412);
             btn_clear_all_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_clear_all_hotkeys.Name = "btn_clear_all_hotkeys";
             btn_clear_all_hotkeys.Size = new System.Drawing.Size(148, 38);
@@ -318,7 +335,7 @@ namespace DisplayMagician.UIForms
             // lbl_hotkey_shortcut_library_description
             // 
             lbl_hotkey_shortcut_library_description.AutoSize = true;
-            lbl_hotkey_shortcut_library_description.Location = new System.Drawing.Point(29, 153);
+            lbl_hotkey_shortcut_library_description.Location = new System.Drawing.Point(531, 91);
             lbl_hotkey_shortcut_library_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_shortcut_library_description.Name = "lbl_hotkey_shortcut_library_description";
             lbl_hotkey_shortcut_library_description.Size = new System.Drawing.Size(196, 16);
@@ -328,7 +345,7 @@ namespace DisplayMagician.UIForms
             // lbl_hotkey_display_profile_description
             // 
             lbl_hotkey_display_profile_description.AutoSize = true;
-            lbl_hotkey_display_profile_description.Location = new System.Drawing.Point(29, 96);
+            lbl_hotkey_display_profile_description.Location = new System.Drawing.Point(47, 91);
             lbl_hotkey_display_profile_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_display_profile_description.Name = "lbl_hotkey_display_profile_description";
             lbl_hotkey_display_profile_description.Size = new System.Drawing.Size(242, 16);
@@ -338,7 +355,7 @@ namespace DisplayMagician.UIForms
             // lbl_hotkey_main_window_description
             // 
             lbl_hotkey_main_window_description.AutoSize = true;
-            lbl_hotkey_main_window_description.Location = new System.Drawing.Point(30, 40);
+            lbl_hotkey_main_window_description.Location = new System.Drawing.Point(105, 40);
             lbl_hotkey_main_window_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_main_window_description.Name = "lbl_hotkey_main_window_description";
             lbl_hotkey_main_window_description.Size = new System.Drawing.Size(184, 16);
@@ -353,7 +370,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey_shortcuts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey_shortcuts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_hotkey_shortcuts.ForeColor = System.Drawing.Color.White;
-            btn_hotkey_shortcuts.Location = new System.Drawing.Point(479, 144);
+            btn_hotkey_shortcuts.Location = new System.Drawing.Point(752, 80);
             btn_hotkey_shortcuts.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_hotkey_shortcuts.Name = "btn_hotkey_shortcuts";
             btn_hotkey_shortcuts.Size = new System.Drawing.Size(103, 38);
@@ -370,7 +387,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey_display_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey_display_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_hotkey_display_profile.ForeColor = System.Drawing.Color.White;
-            btn_hotkey_display_profile.Location = new System.Drawing.Point(479, 87);
+            btn_hotkey_display_profile.Location = new System.Drawing.Point(314, 80);
             btn_hotkey_display_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_hotkey_display_profile.Name = "btn_hotkey_display_profile";
             btn_hotkey_display_profile.Size = new System.Drawing.Size(104, 38);
@@ -387,7 +404,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey_main_window.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey_main_window.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_hotkey_main_window.ForeColor = System.Drawing.Color.White;
-            btn_hotkey_main_window.Location = new System.Drawing.Point(481, 31);
+            btn_hotkey_main_window.Location = new System.Drawing.Point(314, 29);
             btn_hotkey_main_window.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_hotkey_main_window.Name = "btn_hotkey_main_window";
             btn_hotkey_main_window.Size = new System.Drawing.Size(103, 38);
@@ -403,7 +420,7 @@ namespace DisplayMagician.UIForms
             gb_upgrades.Controls.Add(cb_upgrade_prerelease);
             gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_upgrades.ForeColor = System.Drawing.Color.White;
-            gb_upgrades.Location = new System.Drawing.Point(31, 509);
+            gb_upgrades.Location = new System.Drawing.Point(31, 534);
             gb_upgrades.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_upgrades.Name = "gb_upgrades";
             gb_upgrades.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -461,11 +478,11 @@ namespace DisplayMagician.UIForms
             gb_support.Controls.Add(label3);
             gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_support.ForeColor = System.Drawing.Color.White;
-            gb_support.Location = new System.Drawing.Point(681, 509);
+            gb_support.Location = new System.Drawing.Point(681, 534);
             gb_support.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_support.Name = "gb_support";
             gb_support.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_support.Size = new System.Drawing.Size(612, 137);
+            gb_support.Size = new System.Drawing.Size(877, 137);
             gb_support.TabIndex = 16;
             gb_support.TabStop = false;
             gb_support.Text = "Support Settings";
@@ -478,7 +495,7 @@ namespace DisplayMagician.UIForms
             btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_create_support_package.ForeColor = System.Drawing.Color.White;
-            btn_create_support_package.Location = new System.Drawing.Point(197, 31);
+            btn_create_support_package.Location = new System.Drawing.Point(329, 31);
             btn_create_support_package.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_create_support_package.Name = "btn_create_support_package";
             btn_create_support_package.Size = new System.Drawing.Size(214, 38);
@@ -490,7 +507,7 @@ namespace DisplayMagician.UIForms
             // label3
             // 
             label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label3.Location = new System.Drawing.Point(86, 76);
+            label3.Location = new System.Drawing.Point(224, 76);
             label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(441, 37);
@@ -498,29 +515,38 @@ namespace DisplayMagician.UIForms
             label3.Text = "Use this button to save a support zip file to your computer. You can then upload this file to GitHub when you have a problem you need me to fix";
             label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // btn_context_menu_reinstall
+            // button1
             // 
-            btn_context_menu_reinstall.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btn_context_menu_reinstall.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_context_menu_reinstall.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_context_menu_reinstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_context_menu_reinstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btn_context_menu_reinstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_reinstall.Location = new System.Drawing.Point(30, 385);
-            btn_context_menu_reinstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_context_menu_reinstall.Name = "btn_context_menu_reinstall";
-            btn_context_menu_reinstall.Size = new System.Drawing.Size(243, 38);
-            btn_context_menu_reinstall.TabIndex = 47;
-            btn_context_menu_reinstall.Text = "Add Desktop Context Menu";
-            btn_context_menu_reinstall.UseVisualStyleBackColor = true;
-            btn_context_menu_reinstall.Click += btn_context_menu_add_Click;
+            button1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            button1.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            button1.ForeColor = System.Drawing.Color.White;
+            button1.Location = new System.Drawing.Point(752, 29);
+            button1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            button1.Name = "button1";
+            button1.Size = new System.Drawing.Size(103, 38);
+            button1.TabIndex = 51;
+            button1.Text = "Set Hotkey";
+            button1.UseVisualStyleBackColor = true;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new System.Drawing.Point(533, 40);
+            label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label7.Name = "label7";
+            label7.Size = new System.Drawing.Size(194, 16);
+            label7.TabIndex = 52;
+            label7.Text = "Hotkey to exit DisplayMagician:";
             // 
             // SettingsForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1332, 735);
+            ClientSize = new System.Drawing.Size(1595, 763);
             Controls.Add(gb_support);
             Controls.Add(gb_upgrades);
             Controls.Add(gb_hotkeys);
@@ -564,10 +590,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_hotkey_display_profile_description;
         private System.Windows.Forms.Label lbl_hotkey_main_window_description;
         private System.Windows.Forms.Button btn_clear_all_hotkeys;
-        private System.Windows.Forms.ListView lv_dynamic_hotkeys;
-        private System.Windows.Forms.Label lbl_hotkey_shortcut_library;
-        private System.Windows.Forms.Label lbl_hotkey_display_profile;
-        private System.Windows.Forms.Label lbl_hotkey_main_window;
+        private System.Windows.Forms.ListView lv_joystick_hotkeys;
         private System.Windows.Forms.GroupBox gb_upgrades;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.CheckBox cb_upgrade_prerelease;
@@ -581,5 +604,10 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_show_minimise_action;
         private System.Windows.Forms.CheckBox cb_upgrade_enabled;
         private System.Windows.Forms.Button btn_context_menu_reinstall;
+        private System.Windows.Forms.ListView lv_keyboard_hotkeys;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button button1;
     }
 }

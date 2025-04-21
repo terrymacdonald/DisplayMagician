@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Windows.Forms;
+using Vortice.DirectInput;
 
 namespace DisplayMagician.UIForms
 {
@@ -157,59 +158,60 @@ namespace DisplayMagician.UIForms
                     break;
             }
 
-            /*// Set the Hotkey values in the form
-            UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyMainWindow, lbl_hotkey_main_window);
-            logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyMainWindow}");
-            UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyDisplayProfileWindow, lbl_hotkey_display_profile);
-            logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyDisplayProfileWindow}");
-            UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyShortcutLibraryWindow, lbl_hotkey_shortcut_library);
-            logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyShortcutLibraryWindow}");*/
-
-            // Setup the ListView
-            lv_dynamic_hotkeys.View = View.Details;
-            lv_dynamic_hotkeys.GridLines = true;
-            lv_dynamic_hotkeys.FullRowSelect = true;
+            // Setup the Keyboard ListView
+            lv_keyboard_hotkeys.View = View.Details;
+            lv_keyboard_hotkeys.GridLines = true;
+            lv_keyboard_hotkeys.FullRowSelect = true;
 
             //Add column header
-            lv_dynamic_hotkeys.Columns.Add("Name", 300);
-            lv_dynamic_hotkeys.Columns.Add("Hotkey", 150);
+            lv_keyboard_hotkeys.Columns.Add("Name", 300);
+            lv_keyboard_hotkeys.Columns.Add("Keys", 150);
 
-            // Add the ListView Group
+            // Setup the ListView
+            lv_joystick_hotkeys.View = View.Details;
+            lv_joystick_hotkeys.GridLines = true;
+            lv_joystick_hotkeys.FullRowSelect = true;
+
+            //Add column header
+            lv_joystick_hotkeys.Columns.Add("Name", 300);
+            lv_joystick_hotkeys.Columns.Add("Device", 150);
+            lv_joystick_hotkeys.Columns.Add("Button", 150);
+
+            /*// Add the ListView Group
             ListViewGroup displayProfile = new ListViewGroup("Display Profile");
             ListViewGroup gameShortcut = new ListViewGroup("Game Shortcut");
 
-            lv_dynamic_hotkeys.Groups.Add(displayProfile);
-            lv_dynamic_hotkeys.Groups.Add(gameShortcut);
+            lv_joystick_hotkeys.Groups.Add(displayProfile);
+            lv_joystick_hotkeys.Groups.Add(gameShortcut);
+            */
 
-            // Populate the dynamic hotkey list
-            foreach (ProfileItem myProfile in ProfileRepository.AllProfiles)
+            // Add the hotkeys from the joystick and keyboard hotkeys to the ListViews
+            foreach (var keyboardHotkey in Program.AppProgramSettings.KeyboardHotkeys)
             {
-                if (myProfile.Hotkey != Keys.None)
+                if (keyboardHotkey.KeyCode != Key.Unknown)
                 {
-                    string[] itemText = { myProfile.Name, ConvertHotkeyToText(myProfile.Hotkey) };
+                    string[] itemText = { keyboardHotkey.Task.ToString("G"), ConvertHotkeyToText(keyboardHotkey.Hotkey) };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);
-                    dynamicHotkey.Group = displayProfile;
-                    lv_dynamic_hotkeys.Items.Add(dynamicHotkey);
-
+                    //dynamicHotkey.Group = displayProfile;
+                    lv_keyboard_hotkeys.Items.Add(dynamicHotkey);
                 }
             }
 
-            foreach (ShortcutItem myShortcut in ShortcutRepository.AllShortcuts)
+            foreach (var joystickHotkey in Program.AppProgramSettings.JoystickHotkeys)
             {
-                if (myShortcut.Hotkey != Keys.None)
+                if (joystickHotkey.KeyCode != Key.Unknown)
                 {
-                    string[] itemText = { myShortcut.Name, ConvertHotkeyToText(myShortcut.Hotkey) };
+                    string[] itemText = { joystickHotkey.Task.ToString("G"), ConvertHotkeyToText(joystickHotkey.Hotkey) };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);
-                    dynamicHotkey.Group = gameShortcut;
-                    lv_dynamic_hotkeys.Items.Add(dynamicHotkey);
+                    //dynamicHotkey.Group = displayProfile;
+                    lv_keyboard_hotkeys.Items.Add(dynamicHotkey);
                 }
-
             }
 
         }
 
         public static bool SetBootMeUp(bool enabled)
-        {             
+        {
 
             // save start on Boot up
             if (enabled)
@@ -742,5 +744,6 @@ namespace DisplayMagician.UIForms
             }
 
         }
+
     }
 }

@@ -448,15 +448,8 @@ namespace DisplayMagician.UIForms
             // remove the profile from the imagelistview
             int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
             ilv_saved_shortcuts.Items.RemoveAt(currentIlvIndex);
-
-            // Remove the hotkey if it is enabled for this shortcut
-            if (_selectedShortcut.Hotkey != Keys.None)
-            {
-                // Remove the Hotkey if it needs to be removed
-                HotkeyManager.Current.Remove(_selectedShortcut.UUID);
-            }
-
-            // Remove the shortcut
+           
+            // Remove the shortcut. This will also remove the shortcut hotkey if there is one
             ShortcutRepository.RemoveShortcut(_selectedShortcut);
             _selectedShortcut = null;
 

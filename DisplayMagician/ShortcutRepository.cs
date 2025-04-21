@@ -254,6 +254,10 @@ namespace DisplayMagician
                 {
                     logger.Error(ex, $"ShortcutRepository/RemoveShortcut2: Exception removing shortcut {shortcutToRemove.Name}");
                 }
+
+                // Remove any hotkeys related to this shortcut if they exist
+                Program.AppDirectInputManager.RemoveHotkeysByUUID(shortcutToRemove.UUID.ToString());
+
             }
 
             if (numRemoved == 1)

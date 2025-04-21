@@ -182,7 +182,6 @@ namespace DisplayMagician
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
-        private Keys _hotkey = Keys.None;
         private bool _autoName = true;
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
@@ -555,21 +554,6 @@ namespace DisplayMagician
             set
             {
                 _gameLibrary = value;
-            }
-        }
-
-#pragma warning disable CS3003 // Type is not CLS-compliant
-        [DefaultValue(Keys.None)]
-        public Keys Hotkey
-#pragma warning restore CS3003 // Type is not CLS-compliant
-        {
-            get
-            {
-                return _hotkey;
-            }
-            set
-            {
-                _hotkey = value;
             }
         }
 
@@ -967,7 +951,6 @@ namespace DisplayMagician
             List<StartProgram> startPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
-            Keys hotkey = Keys.None,
             string uuid = ""
             )
         {
@@ -992,7 +975,6 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -1048,8 +1030,7 @@ namespace DisplayMagician
             List<StartProgram> startPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
+            string uuid = ""
             )
         {
             // Create a new UUID for the shortcut if one wasn't created already
@@ -1086,8 +1067,7 @@ namespace DisplayMagician
             _originalIconPath = originalIconPath;
             _selectedImage = selectedImage; 
             _availableImages = availableImages;
-            _hotkey = hotkey;
-
+            
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
@@ -1136,7 +1116,6 @@ namespace DisplayMagician
             List<StartProgram> startPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
-            Keys hotkey = Keys.None,
             string uuid = ""
             )
         {
@@ -1172,8 +1151,7 @@ namespace DisplayMagician
             _originalIconPath = originalIconPath;
             _selectedImage = selectedImage;
             _availableImages = availableImages;
-            _hotkey = hotkey;
-
+            
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
@@ -1221,7 +1199,6 @@ namespace DisplayMagician
             List<StartProgram> startPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
-            Keys hotkey = Keys.None,
             string uuid = ""
             )
         {
@@ -1258,7 +1235,6 @@ namespace DisplayMagician
             _stopPrograms = stopPrograms;
             _selectedImage = selectedImage;
             _availableImages = availableImages;
-            _hotkey = hotkey;
 
             _originalIconPath = app.AppToUse.IconPath;
 
@@ -1326,7 +1302,6 @@ namespace DisplayMagician
             shortcut.UseAsCommsCaptureDevice     = UseAsCommsCaptureDevice;
             shortcut.SetCaptureVolume = SetCaptureVolume;
             shortcut.CaptureVolume = CaptureVolume;
-            // shortcut.Hotkey = Hotkey; // We cannot duplicate the Hotkey as it breaks things
 
             // Duplicate the Images
 

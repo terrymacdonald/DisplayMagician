@@ -146,9 +146,12 @@ namespace DisplayMagician.UIForms
                 HotkeyManager.Current.Remove(_selectedProfile.UUID);
             }*/
 
+            // Remove the hotkey if there is one
+            Program.AppDirectInputManager.RemoveHotkeysByUUID(_selectedProfile.UUID);
 
             // Remove the Profile
             ProfileRepository.RemoveProfile(_selectedProfile);
+
             _selectedProfile = null;
 
             // If the imageview isn't empty
@@ -431,7 +434,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Update the Hotkey Label text
-            UpdateHotkeyLabel(_selectedProfile.Hotkey);
+            //UpdateHotkeyLabel(_selectedProfile.Hotkey);
 
             // Refresh the image list view
             //RefreshImageListView(profile);
