@@ -480,8 +480,7 @@ namespace DisplayMagician.UIForms
                         _startPrograms,
                         _stopPrograms,
                         _autoName,
-                        _uuid,
-                        _hotkey
+                        _uuid
                     );
                 }
                 catch (Exception ex)
@@ -566,8 +565,7 @@ namespace DisplayMagician.UIForms
                         _captureVolume,
                         _startPrograms,
                         _stopPrograms,
-                        _autoName,
-                        _hotkey
+                        _autoName
                     );
                 }
                 catch (Exception ex)
@@ -594,8 +592,7 @@ namespace DisplayMagician.UIForms
                         _captureVolume,
                         _startPrograms,
                         _stopPrograms,
-                        _autoName,
-                        _hotkey
+                        _autoName
                     );
                 }
             }
@@ -658,8 +655,7 @@ namespace DisplayMagician.UIForms
                         _captureVolume,
                         _startPrograms,
                         _stopPrograms,
-                        _autoName,
-                        _hotkey
+                        _autoName
                     );
                 }
                 catch (Exception ex)
@@ -685,8 +681,7 @@ namespace DisplayMagician.UIForms
                         _captureVolume,
                         _startPrograms,
                         _stopPrograms,
-                        _autoName,
-                        _hotkey
+                        _autoName
                     );
                 }
             }
@@ -714,8 +709,7 @@ namespace DisplayMagician.UIForms
                         _captureVolume,
                         _startPrograms,
                         _stopPrograms,
-                        _autoName,
-                        _hotkey
+                        _autoName
                     );
                 }
                 catch (Exception ex)
@@ -739,8 +733,7 @@ namespace DisplayMagician.UIForms
                         _captureVolume,
                         _startPrograms,
                         _stopPrograms,
-                        _autoName,
-                        _hotkey
+                        _autoName
                     );
                 }
             }
@@ -1347,7 +1340,7 @@ namespace DisplayMagician.UIForms
                 cb_autosuggest.Checked = _shortcutToEdit.AutoName;
 
                 // Set the Hotkey text
-                UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
+                //UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
 
                 // *** 1. Choose Display Profile Tab ***
                 // Find the profile
@@ -2582,7 +2575,7 @@ namespace DisplayMagician.UIForms
                 ilv_saved_profiles.ResumeLayout();
             }
 
-            UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
+            //UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -3351,11 +3344,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_Click(object sender, EventArgs e)
         {
-            Keys testHotkey;
-            if (_shortcutToEdit.Hotkey != Keys.None)
+            Keys testHotkey = Keys.None;
+            /*if (_shortcutToEdit.Hotkey != Keys.None)
                 testHotkey = _shortcutToEdit.Hotkey;
             else
-                testHotkey = Keys.None;
+                testHotkey = Keys.None;*/
             string hotkeyHeading = $"Choose a '{_shortcutToEdit.Name}' Shortcut Hotkey";
             string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can run this" + Environment.NewLine +
                 "game shortcut using your keyboard. This must be a Hotkey that" + Environment.NewLine +

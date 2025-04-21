@@ -190,7 +190,7 @@ namespace DisplayMagician.UIForms
             {
                 if (keyboardHotkey.KeyCode != Key.Unknown)
                 {
-                    string[] itemText = { keyboardHotkey.Task.ToString("G"), ConvertHotkeyToText(keyboardHotkey.Hotkey) };
+                    string[] itemText = { keyboardHotkey.Task.ToString("G"), $"{Program.AppDirectInputManager.GetNameOfKeyboardHotkey(keyboardHotkey)}" };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);
                     //dynamicHotkey.Group = displayProfile;
                     lv_keyboard_hotkeys.Items.Add(dynamicHotkey);
@@ -199,9 +199,9 @@ namespace DisplayMagician.UIForms
 
             foreach (var joystickHotkey in Program.AppProgramSettings.JoystickHotkeys)
             {
-                if (joystickHotkey.KeyCode != Key.Unknown)
+                if (joystickHotkey.TargetId != Guid.Empty)
                 {
-                    string[] itemText = { joystickHotkey.Task.ToString("G"), ConvertHotkeyToText(joystickHotkey.Hotkey) };
+                    string[] itemText = { joystickHotkey.Task.ToString("G"), $"{Program.AppDirectInputManager.GetNameOfJoystickHotkey(joystickHotkey)}" };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);
                     //dynamicHotkey.Group = displayProfile;
                     lv_keyboard_hotkeys.Items.Add(dynamicHotkey);

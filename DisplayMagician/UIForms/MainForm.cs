@@ -353,12 +353,18 @@ namespace DisplayMagician.UIForms
             if (DisplayProfileWindow == null || DisplayProfileWindow.IsDisposed)
             {
                 DisplayProfileWindow = new DisplayProfileForm();
+                DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
                 DisplayProfileWindow.ShowDialog(this);
             }
             else
             {
+                DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
+
                 DisplayProfileWindow.Activate();
-                DisplayProfileWindow.Show(this);
+                if (!DisplayProfileWindow.Visible)
+                {
+                    DisplayProfileWindow.ShowDialog(this);
+                }
                 DisplayProfileWindow.BringToFront();
             }
         }
@@ -374,12 +380,17 @@ namespace DisplayMagician.UIForms
             if (ShortcutLibraryWindow == null || ShortcutLibraryWindow.IsDisposed)
             {
                 ShortcutLibraryWindow = new ShortcutLibraryForm();
+                DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
                 ShortcutLibraryWindow.ShowDialog(this);
             }
             else
             {
+                ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
                 ShortcutLibraryWindow.Activate();
-                ShortcutLibraryWindow.Show(this);
+                if (!ShortcutLibraryWindow.Visible)
+                {
+                    ShortcutLibraryWindow.ShowDialog(this);
+                }
                 ShortcutLibraryWindow.BringToFront();
             }
         }
@@ -575,6 +586,25 @@ namespace DisplayMagician.UIForms
         public void openShortcutLibraryWindow()
         {
 
+            foreach(var form in this.MdiChildren)
+            {
+                if (form is ShortcutLibraryForm && form.Modal)
+                {
+                    logger.Trace($"MainForm/openShortcutLibraryWindow: ShortcutLibraryForm is open already so ignoring this");
+                    return;
+                }
+                if (form is DisplayProfileForm && form.Modal)
+                {
+                    logger.Trace($"MainForm/openShortcutLibraryWindow: DisplayProfileForm is open already so ignoring this");
+                    return;
+                }
+                if (form is SettingsForm && form.Modal)
+                {
+                    logger.Trace($"MainForm/openShortcutLibraryWindow: SettingsForm is open already so ignoring this");
+                    return;
+                }
+            }
+
             _allowVisible = true;           
 
             // Center this form on the primary screen
@@ -585,6 +615,24 @@ namespace DisplayMagician.UIForms
 
         public void openDisplayProfileWindow()
         {
+            foreach (var form in this.MdiChildren)
+            {
+                if (form is ShortcutLibraryForm && form.Modal)
+                {
+                    logger.Trace($"MainForm/openDisplayProfileWindow: ShortcutLibraryForm is open already so ignoring this");
+                    return;
+                }
+                if (form is DisplayProfileForm && form.Modal)
+                {
+                    logger.Trace($"MainForm/openDisplayProfileWindow: DisplayProfileForm is open already so ignoring this");
+                    return;
+                }
+                if (form is SettingsForm && form.Modal)
+                {
+                    logger.Trace($"MainForm/openDisplayProfileWindow: SettingsForm is open already so ignoring this");
+                    return;
+                }
+            }
 
             _allowVisible = true;
 

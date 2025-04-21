@@ -137,7 +137,7 @@ namespace DisplayMagician
         private void ConfigureDevice(IDirectInputDevice8 device, IntPtr hwnd, bool isKeyboard)
         {
             device.SetCooperativeLevel(hwnd,
-                CooperativeLevel.Foreground | CooperativeLevel.NonExclusive);      
+                CooperativeLevel.Background | CooperativeLevel.NonExclusive);      
             device.Properties.BufferSize = 16;                                      
             // Choose format
             if (isKeyboard)
@@ -315,7 +315,7 @@ namespace DisplayMagician
         public void Dispose()
         {
             // Stop the poll thread if it's still running
-            if (!(_pollThread?.IsAlive ?? true))
+            if (_pollThread?.IsAlive ?? false)
             {
                 Stop();
             }

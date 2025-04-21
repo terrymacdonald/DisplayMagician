@@ -487,10 +487,14 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
 
             // 3) Register keyboard hotkeys (e.g. F9 => next profile)
-            /*Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
-            _directInputManager.RegisterKey(Key.Minus, openDisplayProfileWindow);
+            Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
+            AppDirectInputManager.RegisterKey(Key.Minus, openDisplayProfileWindow);
+            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.Minus, HotkeyTask.OpenDisplayProfileWindow, Guid.Empty));
             Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
-            _directInputManager.RegisterKey(Key.Equals, openShortcutLibraryWindow);*/
+            AppDirectInputManager.RegisterKey(Key.Equals, openShortcutLibraryWindow);
+            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.Equals, HotkeyTask.OpenShortcutLibraryWindow, Guid.Empty));
+
+            // Load the stored hotkeys from the settings file
             AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);
 
             //_directInputManager.RegisterKey(Key.F10, () => AppMainForm.openDisplayProfileWindow(););
