@@ -1,4 +1,5 @@
 ﻿using DisplayMagician.UIForms;
+using NLog.Targets;
 using SharpGen.Runtime;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,66 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DisplayMagician
 {
+    public enum HotkeyTask
+    {
+        None,
+        ChangeDisplayProfile,
+        RunGameShortcut,
+        OpenShortcutLibraryWindow,
+        OpenMainWindow,
+        OpenDisplayProfileWindow,
+        ExitApplication,
+        // MinimizeApplication,
+    }
+
+    public struct HotkeyKeyboard
+    {
+        public Key KeyCode; // DI scan code or button index
+        public HotkeyTask Task;
+        public Guid UUID; // profile or shortcut UUID
+
+        public HotkeyKeyboard()
+        {
+            KeyCode = Key.Unknown;
+            Task = HotkeyTask.None;
+            UUID = Guid.Empty; // profile or shortcut UUID
+        }
+
+        public HotkeyKeyboard(Key keyCode, HotkeyTask task, Guid uuid)
+        {
+            KeyCode = keyCode;
+            Task = task;
+            UUID = uuid; // profile or shortcut UUID
+        }
+    }
+
+    public struct HotkeyJoystick
+    {
+        public DeviceType DeviceType;
+        public Guid TargetId; // profile or shortcut UUID
+        public int ButtonIndex; // DI scan code or button index
+        public HotkeyTask Task;
+        public Guid UUID; // profile or shortcut UUID
+
+        public HotkeyJoystick()
+        {
+            DeviceType = DeviceType.Joystick;
+            TargetId = Guid.Empty; // profile or shortcut UUID
+            ButtonIndex = 0;
+            Task = HotkeyTask.None;
+            UUID = Guid.Empty;
+        }
+
+        public HotkeyJoystick(DeviceType deviceClass, Guid targetId, int code, HotkeyTask action, Guid uuid)
+        {
+            DeviceType = deviceClass;
+            TargetId = targetId;
+            ButtonIndex = code;
+            Task = action;
+            UUID = uuid;
+        }
+    }
+
     /// <summary>
     /// Wraps Vortice.DirectInput for keyboard and joystick hotkeys—no P/Invoke.
     /// </summary>
@@ -260,6 +321,30 @@ namespace DisplayMagician
             foreach (var dev in _keyboardDevices.Values) { dev.Unacquire(); dev.Dispose(); }
             foreach (var dev in _joystickDevices.Values) { dev.Unacquire(); dev.Dispose(); }
             _directInput.Dispose();
+        }
+
+
+        /// <summary>
+        /// Gets the product name of the joystick device associated with the hotkey.
+        /// </summary>
+        public string GetNameOfJoystickHotkey(HotkeyJoystick joystickHotkey)
+        {
+            foreach (var device in _joystickDevices)
+            {
+                if (device.Key == joystickHotkey.TargetId)
+                {
+                    return device.Value.DeviceInfo.ProductName;
+                }
+            }
+            return "";
+        }
+
+        // <summary>
+        /// Gets the name of the key pressed on the keyboard associated with the hotkey.
+        /// </summary>
+        public string GetNameOfKeyboardHotkey(HotkeyKeyboard keyboardkHotkey)
+        {
+            return keyboardkHotkey.KeyCode.ToString();
         }
     }
 }

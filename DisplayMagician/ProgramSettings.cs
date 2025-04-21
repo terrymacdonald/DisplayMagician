@@ -42,7 +42,7 @@ namespace DisplayMagician
         // Common items to the class
         private static bool _programSettingsLoaded = false;
         // Other constants that are useful
-        private static string _programSettingsFileVersion = "3";
+        private static string _programSettingsFileVersion = "4";
         private static readonly string _programSettingsStorageJsonFileName = "Settings.json";
         public static string _programSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, _programSettingsStorageJsonFileName);
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -70,7 +70,8 @@ namespace DisplayMagician
         private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
         private int _numberOfStartsSinceLastDonationForm = 0;
         private int _numberOfTimesRun = 0;
-        //private List<HotkeyBinding> _hotkeyBindings = new List<HotkeyBinding>();
+        private List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
+        private List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
         private ScreenLayout _fovCalcScreenLayout = ScreenLayout.TripleScreen;
         private double _fovCalcScreenSize = 27;
         private ScreenMeasurementUnit _fovCalcScreenSizeUnit = ScreenMeasurementUnit.Inch;
@@ -390,17 +391,29 @@ namespace DisplayMagician
             }
         }
 
-        /*public List<HotkeyBinding> HotkeyBindings
+        public List<HotkeyKeyboard> KeyboardHotkeys
         {
             get
             {
-                return _hotkeyBindings;
+                return _keyboardHotkeys;
             }
             set
             {
-                _hotkeyBindings = value;
+                _keyboardHotkeys = value;
             }
-        }*/
+        }
+
+        public List<HotkeyJoystick> JoystickHotkeys
+        {
+            get
+            {
+                return _joystickHotkeys;
+            }
+            set
+            {
+                _joystickHotkeys = value;
+            }
+        }
 
         [DefaultValue(ScreenLayout.TripleScreen)]
         public ScreenLayout FovCalcScreenLayout
