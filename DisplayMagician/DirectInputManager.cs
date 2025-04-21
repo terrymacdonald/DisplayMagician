@@ -363,37 +363,37 @@ namespace DisplayMagician
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the main window.");
                             Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
-                            RegisterKey(Key.Minus, openMainWindow);
+                            RegisterKey(hotkey.KeyCode, openMainWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.OpenDisplayProfileWindow)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the display profile window.");
                             Action openDisplayProfileWindow = delegate { Program.AppMainForm.openDisplayProfileWindow(); };
-                            RegisterKey(Key.Minus, openDisplayProfileWindow);
+                            RegisterKey(hotkey.KeyCode, openDisplayProfileWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.OpenShortcutLibraryWindow)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the shortcut library window.");
                             Action openShortcutLibraryWindow = delegate { Program.AppMainForm.openShortcutLibraryWindow(); };
-                            RegisterKey(Key.Minus, openShortcutLibraryWindow);
+                            RegisterKey(hotkey.KeyCode, openShortcutLibraryWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.RunGameShortcut)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the main window.");
                             Action runGameShortcut = delegate { Program.RunShortcut(hotkey.UUID.ToString()); ; };
-                            RegisterKey(Key.Minus, runGameShortcut);
+                            RegisterKey(hotkey.KeyCode, runGameShortcut);
                         }
                         else if (hotkey.Task == HotkeyTask.ChangeDisplayProfile)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to run the game shortcut {hotkey.UUID.ToString()}.");
                             Action changeDisplayProfile = delegate { Program.RunProfile(hotkey.UUID.ToString()); };
-                            RegisterKey(Key.Minus, changeDisplayProfile);
+                            RegisterKey(hotkey.KeyCode, changeDisplayProfile);
                         }
                         else if (hotkey.Task == HotkeyTask.ExitApplication)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to change to display profile {hotkey.UUID.ToString()}.");
                             Action exitApplication = delegate { Program.AppMainForm.exitApplication(); };
-                            RegisterKey(Key.Minus, exitApplication);
+                            RegisterKey(hotkey.KeyCode, exitApplication);
                         }
                         else
                         {

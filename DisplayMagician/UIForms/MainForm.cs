@@ -595,12 +595,14 @@ namespace DisplayMagician.UIForms
                 }
                 if (form is DisplayProfileForm && form.Modal)
                 {
-                    logger.Trace($"MainForm/openShortcutLibraryWindow: DisplayProfileForm is open already so ignoring this");
+                    logger.Trace($"MainForm/openShortcutLibraryWindow: DisplayProfileForm is open already so we need to close it.");
+                    form.Close();
                     return;
                 }
                 if (form is SettingsForm && form.Modal)
                 {
-                    logger.Trace($"MainForm/openShortcutLibraryWindow: SettingsForm is open already so ignoring this");
+                    logger.Trace($"MainForm/openShortcutLibraryWindow: SettingsForm is open already so we need to close it");
+                    form.Close();
                     return;
                 }
             }
@@ -619,7 +621,8 @@ namespace DisplayMagician.UIForms
             {
                 if (form is ShortcutLibraryForm && form.Modal)
                 {
-                    logger.Trace($"MainForm/openDisplayProfileWindow: ShortcutLibraryForm is open already so ignoring this");
+                    logger.Trace($"MainForm/openDisplayProfileWindow: ShortcutLibraryForm is open already so we need to close it");
+                    form.Close();
                     return;
                 }
                 if (form is DisplayProfileForm && form.Modal)
@@ -629,7 +632,8 @@ namespace DisplayMagician.UIForms
                 }
                 if (form is SettingsForm && form.Modal)
                 {
-                    logger.Trace($"MainForm/openDisplayProfileWindow: SettingsForm is open already so ignoring this");
+                    logger.Trace($"MainForm/openDisplayProfileWindow: SettingsForm is open already so we need to close it");
+                    form.Close();
                     return;
                 }
             }
