@@ -119,6 +119,18 @@ namespace DisplayMagician {
         {
             // Create the Logging Dir if it doesn't exist so that it's avilable for all
             // parts of the program to use
+            if (!Directory.Exists(AppDataPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppDataPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Program/Main Exception: Cannot create the Application Data  Folder {AppDataPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                }
+            }
+
             if (!Directory.Exists(AppLogPath))
             {
                 try
@@ -493,6 +505,12 @@ namespace DisplayMagician {
             Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
             AppDirectInputManager.RegisterKey(Key.Equals, openShortcutLibraryWindow);
             AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.Equals, HotkeyTask.OpenShortcutLibraryWindow, Guid.Empty));
+            Action changeDisplayProfile = delegate { Program.RunProfile("8d6c437c-1fab-4935-878a-96c9f899bc30"); };
+            AppDirectInputManager.RegisterKey(Key.LeftBracket, changeDisplayProfile);
+            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.LeftBracket, HotkeyTask.ChangeDisplayProfile, new Guid("8d6c437c-1fab-4935-878a-96c9f899bc30")));
+            Action runGameShortcut = delegate { Program.RunShortcut("a08f9f68-13d0-4695-a8e1-57f5ea2408d0"); };
+            AppDirectInputManager.RegisterKey(Key.RightBracket, runGameShortcut);
+            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.RightBracket, HotkeyTask.RunGameShortcut, new Guid("a08f9f68-13d0-4695-a8e1-57f5ea2408d0")));
 
             // Load the stored hotkeys from the settings file
             AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);

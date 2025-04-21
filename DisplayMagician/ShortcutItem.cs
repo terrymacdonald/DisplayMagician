@@ -155,6 +155,8 @@ namespace DisplayMagician
         private string _differentExecutableToMonitor;
         private string _applicationId = "";
         private string _applicationName = "";
+        private SupportedAppLibraryType _applicationLibrary = SupportedAppLibraryType.Unknown;
+        private App _application = null;
         private string _executableNameAndPath = "";
         private string _executableArguments = "";
         private bool _executableArgumentsRequired = false;
@@ -164,6 +166,7 @@ namespace DisplayMagician
         private string _gameAppId = "";
         private string _gameName = "";
         private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
+        private Game _game = null;
         private int _startTimeout = 60;
         private string _gameArguments = "";
         private bool _gameArgumentsRequired = false;
@@ -439,6 +442,35 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(SupportedAppLibraryType.Unknown)]
+        public SupportedAppLibraryType ApplicationLibrary
+        {
+            get
+            {
+                return _applicationLibrary;
+            }
+
+            set
+            {
+                _applicationLibrary = value;
+
+            }
+        }
+        
+        public App Application
+        {
+            get
+            {
+                return _application;
+            }
+
+            set
+            {
+                _application = value;
+
+            }
+        }
+
         [DefaultValue("")]
         public string ExecutableNameAndPath
         {
@@ -554,6 +586,19 @@ namespace DisplayMagician
             set
             {
                 _gameLibrary = value;
+            }
+        }
+
+        public Game Game
+        {
+            get
+            {
+                return _game;
+            }
+
+            set
+            {
+                _game = value;
             }
         }
 
@@ -991,11 +1036,14 @@ namespace DisplayMagician
 
             _applicationId = "";
             _applicationName = "";
+            _applicationLibrary = SupportedAppLibraryType.Unknown;
+            _application = new App();
 
             _gameAppId = "";
             _gameArgumentsRequired = false;
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
+            _game = new Game();
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
             _processPriority = ProcessPriority.Normal;
@@ -1042,6 +1090,7 @@ namespace DisplayMagician
             _gameAppId = game.GameToPlay.Id;
             _gameName = game.GameToPlay.Name;
             _gameLibrary = game.GameToPlay.GameLibraryType;
+            _game = game.GameToPlay;
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
@@ -1086,6 +1135,8 @@ namespace DisplayMagician
 
             _applicationId = "";
             _applicationName = "";
+            _applicationLibrary = SupportedAppLibraryType.Unknown;
+            _application = new App();
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -1165,11 +1216,14 @@ namespace DisplayMagician
             _gameArgumentsRequired = false;
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
+            _game = new Game();
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
 
             _applicationId = "";
             _applicationName = "";
+            _applicationLibrary = SupportedAppLibraryType.Unknown;
+            _application = new App();
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -1186,6 +1240,7 @@ namespace DisplayMagician
             ShortcutPermanence capturePermanence,
             ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages,
+            SupportedAppLibraryType supportedAppLibraryType,
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool useAsCommsAudioDevice = true,
@@ -1199,7 +1254,7 @@ namespace DisplayMagician
             List<StartProgram> startPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
-            string uuid = ""
+            string uuid = ""            
             )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1209,6 +1264,8 @@ namespace DisplayMagician
             _category = ShortcutCategory.Application;
             _applicationId = app.AppToUse.Id;
             _applicationName = app.AppToUse.Name;
+            _applicationLibrary = app.AppToUse.AppLibraryType;
+            _application = app.AppToUse;
             _differentExecutableToMonitor = app.DifferentExecutableToMonitor;
             _executableNameAndPath = app.AppToUse.ExePath;
             _runExeAsAdministrator = app.RunAsAdministrator;
@@ -1252,6 +1309,7 @@ namespace DisplayMagician
             _gameArgumentsRequired = false;
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
+            _game = new Game();
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
 
@@ -1282,10 +1340,13 @@ namespace DisplayMagician
             shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
             shortcut.ApplicationId = ApplicationId;
             shortcut.ApplicationName = ApplicationName;
+            shortcut.ApplicationLibrary = ApplicationLibrary;
+            shortcut.Application = Application;
             shortcut.ProcessPriority = ProcessPriority;
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
             shortcut.GameLibrary = GameLibrary;
+            shortcut.Game = Game;
             shortcut.StartTimeout = StartTimeout;
             shortcut.GameArguments = GameArguments;
             shortcut.GameArgumentsRequired = GameArgumentsRequired;
@@ -1737,10 +1798,10 @@ namespace DisplayMagician
                     WshShell shell = new WshShell();
                     IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
 
-                    shortcut.TargetPath = Application.ExecutablePath;
+                    shortcut.TargetPath = Application.ExePath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
                     shortcut.Description = shortcutDescription;
-                    shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
+                    shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExePath) ??
                                                 string.Empty;
 
                     shortcut.IconLocation = shortcutIconFileName;
@@ -1765,7 +1826,7 @@ namespace DisplayMagician
 
         public string CreateCommand()
         {
-            return $"{Application.ExecutablePath} {DisplayMagicianStartupAction.RunShortcut} \"{UUID}\"";
+            return $"{Application.ExePath} {DisplayMagicianStartupAction.RunShortcut} \"{UUID}\"";
         }
 
 

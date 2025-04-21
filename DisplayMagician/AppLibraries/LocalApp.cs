@@ -13,6 +13,7 @@ using Windows.System;
 using Windows.ApplicationModel.Core;
 using Windows.System.Diagnostics;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -74,10 +75,21 @@ namespace DisplayMagician.AppLibraries
             set => _LocalAppName = value;
         }
 
-        [DefaultValue(SupportedAppLibraryType.Local)]
+        [DefaultValue(SupportedAppLibraryType.Unknown)]
         public override SupportedAppLibraryType AppLibraryType
         {
-            get => SupportedAppLibraryType.Local;
+            get
+            {
+                if (_LocalAppType == InstalledAppType.InstalledProgram)
+                {
+                    return SupportedAppLibraryType.LocalInstalledApp;
+                }
+                else if (_LocalAppType == InstalledAppType.UWP)
+                {
+                    return SupportedAppLibraryType.LocalUWPApp;
+                }
+                return SupportedAppLibraryType.Unknown;
+            }
         }
 
         [DefaultValue("")]
@@ -328,21 +340,34 @@ namespace DisplayMagician.AppLibraries
 
         private async Task<bool> UWPIsInstalled(string aumid)
         {
+            // Request access to app diagnostics
+            var accessStatus = await AppDiagnosticInfo.RequestAccessAsync();
+            if (accessStatus != DiagnosticAccessStatus.Allowed)
+            {
+                logger.Debug($"LocalApp/UWPIsInstalled: Access to app diagnostics denied or limited: {accessStatus}");
+                return false;
+            }
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             try
             {
-                IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid);
-                foreach (var thing in infos)
+                // Attempt to retrieve diagnostic info with a timeout
+                var infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid).AsTask(cts.Token);
+                foreach (var info in infos)
                 {
-                    // We only monitor the first item in the resource group, as it seems to be the main part of the UWP app in most apps
-                    // NOTE - this may not always monitor the right part of the app, but I'm not sure how to make this logic better.
-                    string installPath = thing.AppInfo.Package.InstalledPath;
+                    var installPath = info.AppInfo.Package.InstalledPath;
                     return !string.IsNullOrWhiteSpace(installPath) && File.Exists(installPath);
                 }
                 return false;
             }
+            catch (OperationCanceledException)
+            {
+                logger.Debug($"\"LocalApp/UWPIsInstalled: Timeout while retrieving diagnostic info for AUMID: {aumid}");
+                return false;
+            }
             catch (Exception ex)
             {
-                logger.Debug(ex, $"LocalApp/UWPIsRunning: AppDiagnosticInfo.RequestInfoForAppAsync({aumid}) cause an exception due to insufficent rights.");
+                logger.Debug(ex, $"\"LocalApp/UWPIsInstalled: Exception occurred while retrieving diagnostic info for AUMID: {aumid}");
                 return false;
             }
         }

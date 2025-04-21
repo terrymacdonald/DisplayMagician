@@ -82,7 +82,7 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
-                return SupportedAppLibraryType.Local;
+                return SupportedAppLibraryType.LocalInstalledApp;                
             }
         }
 

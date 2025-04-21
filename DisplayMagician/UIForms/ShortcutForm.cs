@@ -643,6 +643,7 @@ namespace DisplayMagician.UIForms
                         _capturePermanence,
                         _selectedImage,
                         _availableImages,
+                        _appToUse.AppToUse.AppLibraryType,
                         _changeAudioDevice,
                         _audioDevice,
                         _useAsCommsAudioDevice,

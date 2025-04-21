@@ -20,6 +20,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
 
@@ -64,7 +65,7 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutFileVersion = "3";
+        private static string _shortcutFileVersion = "4";
         private static string _shortcutStorageJsonFileName = "Shortcuts.json";
         private static string _shortcutStorageJsonFullFileName = Path.Combine(AppShortcutStoragePath, _shortcutStorageJsonFileName);
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
@@ -1328,25 +1329,22 @@ namespace DisplayMagician
                     ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
                 }
 
-
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
                 // Start the main executable
 
-
                 List<Process> processesCreated = new List<Process>();
-                App appToUse = AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId);
+                App appToUse = shortcutToUse.Application;
                 try
-                {                    
-
-                    if (appToUse is App)
+                {
+                     if (shortcutToUse.Application is App)
                     {
                         if (appToUse.Start(out processesCreated, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} was launched as the main application to monitor.");                            
+                            logger.Debug($"ShortcutRepository/RunShortcut: {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} was launched as the main application to monitor.");                            
                         }
                         else
                         {
-                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch {appToUse.AppLibrary.AppLibraryName} {appToUse.Name} as the main application to monitor.");
+                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} as the main application to monitor.");
                         }
                     }                                                            
 

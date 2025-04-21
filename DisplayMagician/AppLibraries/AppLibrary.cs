@@ -2,17 +2,23 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using DisplayMagician;
 using DisplayMagician.GameLibraries;
+using DisplayMagician.Processes;
 using Newtonsoft.Json;
+using Windows.ApplicationModel.Core;
+using Windows.System;
 
 namespace DisplayMagician.AppLibraries
 {
     public enum SupportedAppLibraryType
     {
         Unknown = 0,
-        Local = 1,
+        LocalInstalledApp = 1,
+        LocalUWPApp = 2
     }
 
     public class AppLibrary
@@ -129,13 +135,18 @@ namespace DisplayMagician.AppLibraries
             if (appToUse is App)
             {
                 logger.Info($"AppLibrary/GetAppById: Found App {appToUse.Name} from ID {appId}");
-                return appToUse;
+                if (File.Exists(appToUse.ExePath))
+                {
+                    logger.Trace($"AppLibrary/GetAppById: App {appToUse.Name} executable {appToUse.ExePath} exists so we know it is still installed. Returning appToUse");
+                    return appToUse;
+                }                
             }
             else
             {
                 logger.Info($"AppLibrary/GetAppById: Didn't find App {appToUse.Name} from ID {appId}");
-                return appToUse;
+                
             }
+            return appToUse;
         }
 
         public static bool LoadAppsInBackground()
@@ -259,7 +270,7 @@ namespace DisplayMagician.AppLibraries
                 if (App.AvailableAppBitmaps.Count == 0)
                 {
                     ShortcutBitmap bm = new ShortcutBitmap();
-                    if (App.AppLibraryType.Equals(SupportedAppLibraryType.Local))
+                    if (App.AppLibraryType.Equals(SupportedAppLibraryType.LocalInstalledApp) || App.AppLibraryType.Equals(SupportedAppLibraryType.LocalUWPApp))
                     {
                         bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Exe Icon", App.ExePath, 0);
                     }
