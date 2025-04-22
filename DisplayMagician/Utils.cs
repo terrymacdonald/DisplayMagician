@@ -80,6 +80,7 @@ namespace DisplayMagician
             //frm.BringToFront();
         }
 
+
         public static void ShowCenteredOnPrimaryScreen(this Form frm)
         {
             if (!(frm is Form))

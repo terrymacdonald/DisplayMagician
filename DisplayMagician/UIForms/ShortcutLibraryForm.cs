@@ -306,7 +306,12 @@ namespace DisplayMagician.UIForms
             //ShortcutRepository.IsValidRefresh()
             // Set the Shortcut to as a new shortcut
             _shortcutForm.Shortcut = si;
-            _shortcutForm.EditingExistingShortcut = false;            
+            _shortcutForm.EditingExistingShortcut = false;
+            _shortcutForm.StartPosition = FormStartPosition.CenterParent;
+
+            // Center this form on the primary screen
+            //Utils.ActivateCenteredOnPrimaryScreen(this);
+
             _shortcutForm.ShowDialog(this);
             if (_shortcutForm.DialogResult == DialogResult.OK)
             {
@@ -559,9 +564,7 @@ namespace DisplayMagician.UIForms
             btn_cancel.Enabled = false;
 
             if (Program.AppMainForm is Form)
-            {
-                // Center the MainAppForm
-                Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+            {                
                 // Also refresh the right-click menu (if we have a main form loaded)
                 Program.AppMainForm.RefreshNotifyIconMenus();
 

@@ -45,7 +45,17 @@ namespace DisplayMagician.AppLibraries
                 (send, certificate, chain, sslPolicyErrors) => true;
         }
 
-        public LocalApp() { }
+        public LocalApp() 
+        {
+            // put in some sensible defaults for the properties
+            _LocalAppId = "";
+            _LocalAppName = "";
+            _LocalAppExePath = "";
+            _LocalAppDir = "";
+            _LocalAppExe = "";
+            _LocalAppProcessName = "";
+            _LocalAppIconPath = "";
+        }
 
         public LocalApp(string LocalAppId, string LocalAppName, string LocalAppExePath, string LocalAppIconPath)
         {
@@ -139,7 +149,8 @@ namespace DisplayMagician.AppLibraries
             get => _LocalAppType;
             set => _LocalAppType = value;
         }
-        
+
+        [DefaultValue("")]
         public string FamilyName
         {
             get => _LocalAppFamilyName;
@@ -257,6 +268,7 @@ namespace DisplayMagician.AppLibraries
             }
         }
 
+        [JsonIgnore]
         public override bool IsInstalled
         {
             get

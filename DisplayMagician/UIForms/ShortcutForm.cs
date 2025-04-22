@@ -697,7 +697,6 @@ namespace DisplayMagician.UIForms
                         _displayPermanence,
                         _audioPermanence,
                         _capturePermanence,
-                        _executableToUse.ExecutableNameAndPath,
                         _changeAudioDevice,
                         _audioDevice,
                         _useAsCommsAudioDevice,
@@ -721,7 +720,6 @@ namespace DisplayMagician.UIForms
                         _displayPermanence,
                         _audioPermanence,
                         _capturePermanence,
-                        _executableToUse.ExecutableNameAndPath,
                         _changeAudioDevice,
                         _audioDevice,
                         _useAsCommsAudioDevice,
@@ -2278,7 +2276,7 @@ namespace DisplayMagician.UIForms
 
             CloseTheSplashScreen();
 
-            Utils.CenterOnPrimaryScreen(this);
+            //Utils.CenterOnPrimaryScreen(this);
             //this.Focus();
             this.BringToFront();
         }

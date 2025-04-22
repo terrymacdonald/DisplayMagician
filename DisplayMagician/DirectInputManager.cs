@@ -236,7 +236,7 @@ namespace DisplayMagician
                             {
                                 if (e.IsPressed && _keyBindings.TryGetValue(e.Key, out Action act))
                                 {
-                                    if (Program.AppMainForm.InvokeRequired)
+                                   if (Program.AppMainForm.InvokeRequired)
                                     {
                                         Program.AppMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker) delegate {
                                             act();

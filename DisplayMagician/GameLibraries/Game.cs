@@ -13,6 +13,20 @@ namespace DisplayMagician.GameLibraries
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
+        public Game()
+        {
+            // put in some sensible defaults for a blank App
+            Id = "";
+            Name = "";
+            ExePath = "";
+            IconPath = "";
+            Directory = "";
+            Executable = "";
+            ProcessName = "";
+            GameBitmap = new ShortcutBitmap() { };
+            AvailableGameBitmaps = new List<ShortcutBitmap>() { };
+        }
+
         #region Properties
         public virtual string Id { get; set; }
 
@@ -21,10 +35,13 @@ namespace DisplayMagician.GameLibraries
         [JsonIgnore]
         public virtual GameLibrary GameLibrary { get; }
 
+        [JsonIgnore]
         public virtual bool IsRunning { get; set; }
 
+        [JsonIgnore]
         public virtual bool IsUpdating { get; set; }
 
+        [JsonIgnore]
         public virtual bool IsInstalled { get; set; }
 
         public virtual string Name { get; set; }
@@ -39,6 +56,7 @@ namespace DisplayMagician.GameLibraries
 
         public virtual string ProcessName { get; set; }
 
+        [JsonIgnore]
         public virtual List<Process> Processes { get; set; }
 
         public ShortcutBitmap GameBitmap { get; set; }

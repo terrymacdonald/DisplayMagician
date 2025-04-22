@@ -129,6 +129,16 @@ namespace DisplayMagician
         public Bitmap Image;
         public Size Size;        
 
+        public ShortcutBitmap()
+        {
+            UUID = "";
+            Name = "";
+            Order = 0;
+            Source = "";
+            Size = new Size(1, 1);
+            Image = new Bitmap(1, 1);
+        }
+
         public override bool Equals(object obj) => obj is ShortcutBitmap other && this.Equals(other);
 
         public bool Equals(ShortcutBitmap other)
@@ -637,6 +647,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool GameArgumentsRequired
         {
             get
@@ -671,6 +682,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool MonitorDifferentGameExe
         {
             get
@@ -982,7 +994,6 @@ namespace DisplayMagician
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             ShortcutPermanence capturePermanence,
-            string originalIconPath,
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool useAsCommsAudioDevice = true,
@@ -1019,7 +1030,7 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
+            _originalIconPath = "";
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
