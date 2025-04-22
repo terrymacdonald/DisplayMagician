@@ -570,7 +570,8 @@ namespace DisplayMagician.UIForms
 
             }
             // Bring the window back to the front            
-            Utils.ActivateCenteredOnPrimaryScreen(this);
+            //Utils.ActivateCenteredOnPrimaryScreen(this);
+            this.Activate();
 
 
         }

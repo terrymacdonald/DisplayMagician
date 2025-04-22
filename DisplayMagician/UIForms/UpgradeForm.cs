@@ -50,7 +50,8 @@ namespace DisplayMagician.UIForms
         private void UpgradeForm_Load(object sender, EventArgs e)
         {
             rtb_message.Rtf = Message;
-            Utils.CenterOnPrimaryScreen(this);
+            CenterToParent();
+            //Utils.CenterOnPrimaryScreen(this);
         }
 
         private void lnk_changelog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

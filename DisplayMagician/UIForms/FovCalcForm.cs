@@ -74,7 +74,7 @@ namespace DisplayMagician.UIForms
             txt_aspect_ratio_y.Visible = false;            
 
             // Center the form on the primary screen
-            Utils.CenterOnPrimaryScreen(this);
+            //Utils.CenterOnPrimaryScreen(this);
         }
 
         private void btn_back_Click(object sender, EventArgs e)

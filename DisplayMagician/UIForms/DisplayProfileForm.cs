@@ -41,7 +41,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.AllowDrop = false;
             ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
             // Center the form on the primary screen
-            Utils.CenterOnPrimaryScreen(this);
+            //Utils.CenterOnPrimaryScreen(this);
         }
 
         public DisplayProfileForm(ProfileItem profileToLoad) : this()
@@ -94,11 +94,11 @@ namespace DisplayMagician.UIForms
             }
 
             // Recenter the Window
-            RecenterWindow();
+            //RecenterWindow();
 
         }
 
-        private void RecenterWindow()
+       /* private void RecenterWindow()
         {
             if (Program.AppMainForm is Form)
             {
@@ -117,7 +117,7 @@ namespace DisplayMagician.UIForms
             // Bring the window back to the front
             Utils.ActivateCenteredOnPrimaryScreen(this);
 
-        }
+        }*/
 
 
         private void Exit_Click(object sender, EventArgs e)
@@ -638,7 +638,7 @@ namespace DisplayMagician.UIForms
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
             // Recenter the Window
-            RecenterWindow();
+            //RecenterWindow();
         }
 
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
@@ -947,7 +947,7 @@ namespace DisplayMagician.UIForms
                     // Refresh the Profile UI
                     RefreshDisplayProfileUI();
                     // Recenter the Window
-                    RecenterWindow();
+                    //RecenterWindow();
                     
                     logger.Trace($"DisplayProfileForm/btn_update_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
                     ChangeSelectedProfile(_selectedProfile);
