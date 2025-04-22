@@ -164,8 +164,8 @@ namespace DisplayMagician.UIForms
             lv_keyboard_hotkeys.FullRowSelect = true;
 
             //Add column header
-            lv_keyboard_hotkeys.Columns.Add("Name", 300);
-            lv_keyboard_hotkeys.Columns.Add("Keys", 150);
+            lv_keyboard_hotkeys.Columns.Add("Key Combination", 300);
+            lv_keyboard_hotkeys.Columns.Add("Action", 300);
 
             // Setup the ListView
             lv_joystick_hotkeys.View = View.Details;
@@ -174,8 +174,8 @@ namespace DisplayMagician.UIForms
 
             //Add column header
             lv_joystick_hotkeys.Columns.Add("Name", 300);
-            lv_joystick_hotkeys.Columns.Add("Device", 150);
-            lv_joystick_hotkeys.Columns.Add("Button", 150);
+            lv_joystick_hotkeys.Columns.Add("Device", 300);
+            lv_joystick_hotkeys.Columns.Add("Button", 300);
 
             /*// Add the ListView Group
             ListViewGroup displayProfile = new ListViewGroup("Display Profile");

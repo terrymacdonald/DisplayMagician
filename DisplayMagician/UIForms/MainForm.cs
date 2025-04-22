@@ -352,19 +352,16 @@ namespace DisplayMagician.UIForms
             {
                 DisplayProfileWindow = new DisplayProfileForm();
                 DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
-                DisplayProfileWindow.ShowDialog(this);
+            }
+
+            if (DisplayProfileWindow.Visible)
+            {
+                DisplayProfileWindow.Activate();
             }
             else
             {
-                DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
-
-                DisplayProfileWindow.Activate();
-                if (!DisplayProfileWindow.Visible)
-                {
-                    DisplayProfileWindow.ShowDialog(this);
-                }
-                DisplayProfileWindow.BringToFront();
-            }
+                DisplayProfileWindow.ShowDialog(this);
+            }                
         }
 
         private void pb_game_shortcut_Click(object sender, EventArgs e)
@@ -378,18 +375,15 @@ namespace DisplayMagician.UIForms
             if (ShortcutLibraryWindow == null || ShortcutLibraryWindow.IsDisposed)
             {
                 ShortcutLibraryWindow = new ShortcutLibraryForm();
-                DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
-                ShortcutLibraryWindow.ShowDialog(this);
+                ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
+            }
+            if (ShortcutLibraryWindow.Visible)
+            {
+                ShortcutLibraryWindow.Activate();
             }
             else
             {
-                ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
-                ShortcutLibraryWindow.Activate();
-                if (!ShortcutLibraryWindow.Visible)
-                {
-                    ShortcutLibraryWindow.ShowDialog(this);
-                }
-                ShortcutLibraryWindow.BringToFront();
+                ShortcutLibraryWindow.ShowDialog(this);
             }
         }
 
@@ -578,7 +572,7 @@ namespace DisplayMagician.UIForms
         {
             _allowVisible = true;
             // Center the form on the primary screen
-            Utils.ActivateCenteredOnPrimaryScreen(this);
+            //Utils.ActivateCenteredOnPrimaryScreen(this);
         }
 
         public void openShortcutLibraryWindow()
@@ -608,7 +602,7 @@ namespace DisplayMagician.UIForms
             _allowVisible = true;           
 
             // Center this form on the primary screen
-            Utils.ActivateCenteredOnPrimaryScreen(this);
+            //Utils.ActivateCenteredOnPrimaryScreen(this);
            
             btn_setup_game_shortcuts.PerformClick();
         }
@@ -639,7 +633,7 @@ namespace DisplayMagician.UIForms
             _allowVisible = true;
 
             // Center this form on the primary screen
-            Utils.ActivateCenteredOnPrimaryScreen(this);
+            //Utils.ActivateCenteredOnPrimaryScreen(this);
 
             // Now open the ShortcutLibraryWindow
             btn_setup_display_profiles.PerformClick();

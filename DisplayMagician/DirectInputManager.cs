@@ -344,9 +344,12 @@ namespace DisplayMagician
         // <summary>
         /// Gets the name of the key pressed on the keyboard associated with the hotkey.
         /// </summary>
-        public string GetNameOfKeyboardHotkey(HotkeyKeyboard keyboardkHotkey)
+        public string GetNameOfKeyboardHotkey(HotkeyKeyboard keyboardHotkey)
         {
-            return keyboardkHotkey.KeyCodes.ToString();
+            if (keyboardHotkey.KeyCodes == null || !keyboardHotkey.KeyCodes.Any())
+                return string.Empty;
+
+            return string.Join(" + ", keyboardHotkey.KeyCodes.Select(k => k.ToString()));
         }
 
         public bool RegisterStoredHotkeys(ProgramSettings programSettings)

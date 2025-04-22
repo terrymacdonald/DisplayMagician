@@ -500,9 +500,10 @@ namespace DisplayMagician {
 
             // 3) Register keyboard hotkeys (e.g. F9 => next profile)
             /*Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
-            AppDirectInputManager.RegisterKey(Key.Minus, openDisplayProfileWindow);
-            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.Minus, HotkeyTask.OpenDisplayProfileWindow, Guid.Empty));
-            Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
+            List<Key> openProfileKeyCombination = new List<Key>() { Key.LeftControl, Key.LeftShift, Key.Minus };
+            AppDirectInputManager.RegisterKeyCombination(openProfileKeyCombination, openDisplayProfileWindow);
+            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(openProfileKeyCombination, HotkeyTask.OpenDisplayProfileWindow, Guid.Empty));*/
+            /*Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
             AppDirectInputManager.RegisterKey(Key.Equals, openShortcutLibraryWindow);
             AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.Equals, HotkeyTask.OpenShortcutLibraryWindow, Guid.Empty));
             Action changeDisplayProfile = delegate { Program.RunProfile("8d6c437c-1fab-4935-878a-96c9f899bc30"); };
