@@ -28,20 +28,20 @@ namespace DisplayMagician
 
     public struct HotkeyKeyboard
     {
-        public Key KeyCode; // DI scan code or button index
+        public List<Key> KeyCodes; // List of keys in the combination
         public HotkeyTask Task;
         public Guid UUID; // profile or shortcut UUID
 
         public HotkeyKeyboard()
         {
-            KeyCode = Key.Unknown;
+            KeyCodes = new List<Key>();
             Task = HotkeyTask.None;
             UUID = Guid.Empty; // profile or shortcut UUID
         }
 
-        public HotkeyKeyboard(Key keyCode, HotkeyTask task, Guid uuid)
+        public HotkeyKeyboard(List<Key> keyCodes, HotkeyTask task, Guid uuid)
         {
-            KeyCode = keyCode;
+            KeyCodes = keyCodes;
             Task = task;
             UUID = uuid; // profile or shortcut UUID
         }
@@ -82,7 +82,7 @@ namespace DisplayMagician
         private readonly IDirectInput8 _directInput;
         private readonly Dictionary<Guid, IDirectInputDevice8> _keyboardDevices;
         private readonly Dictionary<Guid, IDirectInputDevice8> _joystickDevices;
-        private readonly Dictionary<Key, Action> _keyBindings = new();
+        private readonly Dictionary<List<Key>, Action> _keyBindings = new Dictionary<List<Key>, Action>(new KeyCombinationComparer());
         private readonly Dictionary<(Guid, int), Action> _buttonBindings = new();
         private Thread _pollThread;
         private CancellationTokenSource _cts;
@@ -184,16 +184,18 @@ namespace DisplayMagician
         }
 
         /// <summary>
-        /// Register a keyboard scan‑code for an action.
+        /// Register key combinations for an action.
         /// </summary>
-        public void RegisterKey(Key key, Action action)
-            => _keyBindings[key] = action;
+        public void RegisterKeyCombination(List<Key> keyCombination, Action action)
+        {
+            _keyBindings[keyCombination] = action;
+        }
 
         /// <summary>
-        /// Remove a previously registered key.
+        /// Remove a previously registered key combination.
         /// </summary>
-        public bool RemoveKey(Key key)
-            => _keyBindings.Remove(key);
+        public bool RemoveKeyCombination(List<Key> keyCombination)
+            => _keyBindings.Remove(keyCombination);
 
         /// <summary>
         /// Register a joystick button on a device GUID for an action.
@@ -228,27 +230,24 @@ namespace DisplayMagician
 
                     try
                     {
-                        KeyboardUpdate[] bufferedData = keyboard.GetBufferedKeyboardData();
+                        var state = keyboard.GetCurrentKeyboardState();
 
-                        if (bufferedData.Length > 0)
+                        foreach (var binding in _keyBindings)
                         {
-                            foreach (var e in bufferedData)
+                            if (binding.Key.All(k => state.IsPressed(k)))
                             {
-                                if (e.IsPressed && _keyBindings.TryGetValue(e.Key, out Action act))
+                                // Invoke the associated action
+                                if (Program.AppMainForm.InvokeRequired)
                                 {
-                                   if (Program.AppMainForm.InvokeRequired)
-                                    {
-                                        Program.AppMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker) delegate {
-                                            act();
-                                        });
-                                    }
-                                    else
-                                    {
-                                        act();
-                                    }
+                                    Program.AppMainForm.BeginInvoke((MethodInvoker)delegate {
+                                        binding.Value();
+                                    });
+                                }
+                                else
+                                {
+                                    binding.Value();
                                 }
                             }
-                            Console.WriteLine(bufferedData[0].ToString());
                         }
                     }
                     catch (Exception ex)
@@ -347,7 +346,7 @@ namespace DisplayMagician
         /// </summary>
         public string GetNameOfKeyboardHotkey(HotkeyKeyboard keyboardkHotkey)
         {
-            return keyboardkHotkey.KeyCode.ToString();
+            return keyboardkHotkey.KeyCodes.ToString();
         }
 
         public bool RegisterStoredHotkeys(ProgramSettings programSettings)
@@ -361,43 +360,43 @@ namespace DisplayMagician
                     {
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the main window.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key combination '{hotkey.KeyCodes}' to open the main window.");
                             Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
-                            RegisterKey(hotkey.KeyCode, openMainWindow);
+                            RegisterKeyCombination(hotkey.KeyCodes, openMainWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.OpenDisplayProfileWindow)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the display profile window.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key combination '{hotkey.KeyCodes}' to open the display profile window.");
                             Action openDisplayProfileWindow = delegate { Program.AppMainForm.openDisplayProfileWindow(); };
-                            RegisterKey(hotkey.KeyCode, openDisplayProfileWindow);
+                            RegisterKeyCombination(hotkey.KeyCodes, openDisplayProfileWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.OpenShortcutLibraryWindow)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the shortcut library window.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key combination '{hotkey.KeyCodes}' to open the shortcut library window.");
                             Action openShortcutLibraryWindow = delegate { Program.AppMainForm.openShortcutLibraryWindow(); };
-                            RegisterKey(hotkey.KeyCode, openShortcutLibraryWindow);
+                            RegisterKeyCombination(hotkey.KeyCodes, openShortcutLibraryWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.RunGameShortcut)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to open the main window.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key combination '{hotkey.KeyCodes}' to open the main window.");
                             Action runGameShortcut = delegate { Program.RunShortcut(hotkey.UUID.ToString()); ; };
-                            RegisterKey(hotkey.KeyCode, runGameShortcut);
+                            RegisterKeyCombination(hotkey.KeyCodes, runGameShortcut);
                         }
                         else if (hotkey.Task == HotkeyTask.ChangeDisplayProfile)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to run the game shortcut {hotkey.UUID.ToString()}.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key combination '{hotkey.KeyCodes}' to run the game shortcut {hotkey.UUID.ToString()}.");
                             Action changeDisplayProfile = delegate { Program.RunProfile(hotkey.UUID.ToString()); };
-                            RegisterKey(hotkey.KeyCode, changeDisplayProfile);
+                            RegisterKeyCombination(hotkey.KeyCodes, changeDisplayProfile);
                         }
                         else if (hotkey.Task == HotkeyTask.ExitApplication)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key '{hotkey.KeyCode}' to change to display profile {hotkey.UUID.ToString()}.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key combination '{hotkey.KeyCodes}' to change to display profile {hotkey.UUID.ToString()}.");
                             Action exitApplication = delegate { Program.AppMainForm.exitApplication(); };
-                            RegisterKey(hotkey.KeyCode, exitApplication);
+                            RegisterKeyCombination(hotkey.KeyCodes, exitApplication);
                         }
                         else
                         {
-                            logger.Warn($"DirectInputManager/RegisterStoredHotkeys: WARNING - The hotkey '{hotkey.KeyCode}' is not a valid hotkey. Please check the hotkey and try again.");
+                            logger.Warn($"DirectInputManager/RegisterStoredHotkeys: WARNING - The hotkey combination '{hotkey.KeyCodes}' is not a valid hotkey. Please check the hotkey and try again.");
                         }
 
                     }
@@ -519,7 +518,7 @@ namespace DisplayMagician
                             Program.AppProgramSettings.KeyboardHotkeys.Remove(hotkey);
 
                             // If it is currently registered, then deregister it
-                            RemoveKey(hotkey.KeyCode);
+                            RemoveKeyCombination(hotkey.KeyCodes);
                         }
                     }
                 }
@@ -614,5 +613,27 @@ namespace DisplayMagician
             return hotkeysToReturn;
         }
 
+    }
+
+    public class KeyCombinationComparer : IEqualityComparer<List<Key>>
+    {
+        public bool Equals(List<Key> x, List<Key> y)
+        {
+            if (x == null || y == null) return false;
+            return x.Count == y.Count && !x.Except(y).Any();
+        }
+
+        public int GetHashCode(List<Key> obj)
+        {
+            unchecked
+            {
+                int hash = 17;
+                foreach (var key in obj.OrderBy(k => k))
+                {
+                    hash = hash * 31 + key.GetHashCode();
+                }
+                return hash;
+            }
+        }
     }
 }

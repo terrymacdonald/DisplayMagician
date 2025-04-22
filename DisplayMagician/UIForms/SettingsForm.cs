@@ -188,7 +188,7 @@ namespace DisplayMagician.UIForms
             // Add the hotkeys from the joystick and keyboard hotkeys to the ListViews
             foreach (var keyboardHotkey in Program.AppProgramSettings.KeyboardHotkeys)
             {
-                if (keyboardHotkey.KeyCode != Key.Unknown)
+                if (keyboardHotkey.KeyCodes.Count > 0)
                 {
                     string[] itemText = { keyboardHotkey.Task.ToString("G"), $"{Program.AppDirectInputManager.GetNameOfKeyboardHotkey(keyboardHotkey)}" };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);
