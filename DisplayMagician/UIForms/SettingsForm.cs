@@ -189,7 +189,7 @@ namespace DisplayMagician.UIForms
 
             foreach (var joystickHotkey in Program.AppProgramSettings.JoystickHotkeys)
             {
-                if (joystickHotkey.TargetId != Guid.Empty)
+                if (joystickHotkey.Device.DeviceTargetId != Guid.Empty)
                 {
                     string[] itemText = { joystickHotkey.Task.ToString("G"), $"{Program.AppDirectInputManager.GetNameOfJoystickHotkey(joystickHotkey)}" };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);

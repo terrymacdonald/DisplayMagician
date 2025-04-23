@@ -7,9 +7,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using Vortice.DirectInput;
+//using WinCopies.Util;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DisplayMagician
@@ -30,16 +32,16 @@ namespace DisplayMagician
     {
         public List<Key> KeyCodes; // List of keys in the combination
         public HotkeyTask Task;
-        public Guid UUID; // profile or shortcut UUID
+        public string UUID; // profile or shortcut UUID
 
         public HotkeyKeyboard()
         {
             KeyCodes = new List<Key>();
             Task = HotkeyTask.None;
-            UUID = Guid.Empty; // profile or shortcut UUID
+            UUID = string.Empty; // profile or shortcut UUID
         }
 
-        public HotkeyKeyboard(List<Key> keyCodes, HotkeyTask task, Guid uuid)
+        public HotkeyKeyboard(List<Key> keyCodes, HotkeyTask task, string uuid)
         {
             KeyCodes = keyCodes;
             Task = task;
@@ -47,28 +49,53 @@ namespace DisplayMagician
         }
     }
 
-    public struct HotkeyJoystick
+    public struct JoystickDevice
     {
         public DeviceType DeviceType;
-        public Guid TargetId; // profile or shortcut UUID
-        public int ButtonIndex; // DI scan code or button index
+        public Guid DeviceTargetId; // device identifier
+        public string DeviceName;
+        public int DeviceButtonIndex; // DI scan code or button index
+
+        public JoystickDevice()
+        {
+            DeviceType = DeviceType.Joystick;
+            DeviceTargetId = Guid.Empty;
+            DeviceName = "";
+            DeviceButtonIndex = 0;
+        }
+
+        public JoystickDevice(DeviceType deviceClass, string name, Guid targetId, int code)
+        {
+            DeviceType = deviceClass;
+            DeviceTargetId = targetId;
+            DeviceName = name;
+            DeviceButtonIndex = code;
+        }
+    }
+
+    public struct HotkeyJoystick
+    {
+        public JoystickDevice Device;
         public HotkeyTask Task;
-        public Guid UUID; // profile or shortcut UUID
+        public string UUID; // profile or shortcut UUID
 
         public HotkeyJoystick()
         {
-            DeviceType = DeviceType.Joystick;
-            TargetId = Guid.Empty; // profile or shortcut UUID
-            ButtonIndex = 0;
+            Device = new JoystickDevice();
             Task = HotkeyTask.None;
-            UUID = Guid.Empty;
+            UUID = string.Empty;
         }
 
-        public HotkeyJoystick(DeviceType deviceClass, Guid targetId, int code, HotkeyTask action, Guid uuid)
+        public HotkeyJoystick(JoystickDevice device, HotkeyTask action, string uuid)
         {
-            DeviceType = deviceClass;
-            TargetId = targetId;
-            ButtonIndex = code;
+            Device = device;
+            Task = action;
+            UUID = uuid;
+        }
+
+        public HotkeyJoystick(DeviceType deviceType, string name, Guid targetId, int code, HotkeyTask action, string uuid)
+        {
+            Device = new JoystickDevice(deviceType, name, targetId, code);
             Task = action;
             UUID = uuid;
         }
@@ -83,7 +110,7 @@ namespace DisplayMagician
         private readonly Dictionary<Guid, IDirectInputDevice8> _keyboardDevices;
         private readonly Dictionary<Guid, IDirectInputDevice8> _joystickDevices;
         private readonly Dictionary<List<Key>, Action> _keyBindings = new Dictionary<List<Key>, Action>(new KeyCombinationComparer());
-        private readonly Dictionary<(Guid, int), Action> _buttonBindings = new();
+        private readonly Dictionary<JoystickDevice, Action> _buttonBindings = new();
         private Thread _pollThread;
         private CancellationTokenSource _cts;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -210,14 +237,14 @@ namespace DisplayMagician
         /// <summary>
         /// Register a joystick button on a device GUID for an action.
         /// </summary>
-        public void RegisterJoystickButton(Guid deviceGuid, int buttonIndex, Action action)
-            => _buttonBindings[(deviceGuid, buttonIndex)] = action;
+        public void RegisterJoystickButton(JoystickDevice joystick, Action action)
+            => _buttonBindings[joystick] = action;
 
         /// <summary>
         /// Remove a previously registered joystick button.
         /// </summary>
-        public bool RemoveJoystickButton(Guid deviceGuid, int buttonIndex)
-            => _buttonBindings.Remove((deviceGuid, buttonIndex));
+        public bool RemoveJoystickButton(JoystickDevice joystick)
+            => _buttonBindings.Remove(joystick);
 
         /// <summary>The background poll loop: reads buffered events and fires your callbacks.</summary>
         private void PollLoop(CancellationToken token, int intervalMs)
@@ -289,7 +316,7 @@ namespace DisplayMagician
 
                             foreach (var upd in bufferedData)
                             {
-                                if (upd.Value > 0 && _buttonBindings.TryGetValue((joystick.Key, (int)upd.Offset), out var act))
+                                if (upd.Value > 0 && _buttonBindings.TryGetValue(new JoystickDevice(joystick.Value.DeviceInfo.Type, joystick.Value.DeviceInfo.InstanceName, joystick.Key, (int)upd.Offset), out var act))
                                 {
                                     if (Program.AppMainForm.InvokeRequired)
                                     {
@@ -343,7 +370,7 @@ namespace DisplayMagician
         {
             foreach (var device in _joystickDevices)
             {
-                if (device.Key == joystickHotkey.TargetId)
+                if (device.Key == joystickHotkey.Device.DeviceTargetId)
                 {
                     return device.Value.DeviceInfo.ProductName;
                 }
@@ -437,43 +464,43 @@ namespace DisplayMagician
                     {
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.ButtonIndex}' on device '{GetNameOfJoystickHotkey(hotkey)}' to open the main window.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' to open the main window.");
                             Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
-                            RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, openMainWindow);
+                            RegisterJoystickButton(hotkey.Device, openMainWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.OpenDisplayProfileWindow)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.ButtonIndex}' on device '{GetNameOfJoystickHotkey(hotkey)}' to open the display profile window.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' to open the display profile window.");
                             Action openDisplayProfileWindow = delegate { Program.AppMainForm.openDisplayProfileWindow(); };
-                            RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, openDisplayProfileWindow);
+                            RegisterJoystickButton(hotkey.Device, openDisplayProfileWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.OpenShortcutLibraryWindow)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.ButtonIndex}' on device '{GetNameOfJoystickHotkey(hotkey)}' to open the shortcut library  window.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' to open the shortcut library  window.");
                             Action openShortcutLibraryWindow = delegate { Program.AppMainForm.openShortcutLibraryWindow(); };
-                            RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, openShortcutLibraryWindow);
+                            RegisterJoystickButton(hotkey.Device, openShortcutLibraryWindow);
                         }
                         else if (hotkey.Task == HotkeyTask.RunGameShortcut)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.ButtonIndex}' on device '{GetNameOfJoystickHotkey(hotkey)}' to run the game shortcut {hotkey.UUID.ToString()}.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' to run the game shortcut {hotkey.UUID.ToString()}.");
                             Action runGameShortcut = delegate { Program.RunShortcut(hotkey.UUID.ToString()); ; };
-                            RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, runGameShortcut);
+                            RegisterJoystickButton(hotkey.Device, runGameShortcut);
                         }
                         else if (hotkey.Task == HotkeyTask.ChangeDisplayProfile)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.ButtonIndex}' on device '{GetNameOfJoystickHotkey(hotkey)}' to change to display profile {hotkey.UUID.ToString()}.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' to change to display profile {hotkey.UUID.ToString()}.");
                             Action changeDisplayProfile = delegate { Program.RunProfile(hotkey.UUID.ToString()); };
-                            RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, changeDisplayProfile);
+                            RegisterJoystickButton(hotkey.Device, changeDisplayProfile);
                         }
                         else if (hotkey.Task == HotkeyTask.ExitApplication)
                         {
-                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.ButtonIndex}' on device '{GetNameOfJoystickHotkey(hotkey)}' to exit the application.");
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' to exit the application.");
                             Action exitApplication = delegate { Program.AppMainForm.exitApplication(); };
-                            RegisterJoystickButton(hotkey.TargetId, hotkey.ButtonIndex, exitApplication);
+                            RegisterJoystickButton(hotkey.Device, exitApplication);
                         }
                         else
                         {
-                            logger.Warn($"DirectInputManager/RegisterStoredHotkeys: WARNING - The joystick button '{hotkey.ButtonIndex}' on device '{GetNameOfJoystickHotkey(hotkey)}' is not a valid hotkey. Please check the hotkey and try again.");
+                            logger.Warn($"DirectInputManager/RegisterStoredHotkeys: WARNING - The joystick button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' is not a valid hotkey. Please check the hotkey and try again.");
                         }
 
                     }
@@ -494,27 +521,119 @@ namespace DisplayMagician
             return true;
         }
 
-        public string HotkeyToString(Keys hotkey)
+        public bool UpdateOrAddHotkeys(List<HotkeyKeyboard> updatedKeyboardHotkeys, List<HotkeyJoystick> updatedJoystickHotkeys)
         {
-            string parsedHotkey = string.Empty;
-            KeysConverter kc = new KeysConverter();
+            try
+            {
+                if (updatedKeyboardHotkeys != null && updatedKeyboardHotkeys is List<HotkeyKeyboard> && updatedKeyboardHotkeys.Count > 0)
+                {
+                    foreach (var hotkey in updatedKeyboardHotkeys)
+                    {
+                        // check if the hotkey is already in the list, and if so, remove it
+                        if (Program.AppProgramSettings.KeyboardHotkeys != null && Program.AppProgramSettings.KeyboardHotkeys is List<HotkeyKeyboard> && Program.AppProgramSettings.KeyboardHotkeys.Count > 0)
+                        {
+                            foreach (var existingHotkey in Program.AppProgramSettings.KeyboardHotkeys)
+                            {
+                                if (existingHotkey.UUID.ToString() == hotkey.UUID.ToString() && existingHotkey.KeyCodes.Equals(hotkey.KeyCodes))
+                                {
+                                    // Remove it from the stored list
+                                    Program.AppProgramSettings.KeyboardHotkeys.Remove(existingHotkey);
+                                    // If it is currently registered, then deregister it
+                                    RemoveKeyCombination(existingHotkey.KeyCodes);
+                                }
+                            }
+                        }
 
-            // Lets parse the hotkey to create the text we need
-            parsedHotkey = kc.ConvertToString(hotkey);
+                        if (hotkey.Task == HotkeyTask.OpenMainWindow)
+                        {
+                            Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
+                            RegisterKeyCombination(hotkey.KeyCodes, openMainWindow);
+                        }
+                        else if (hotkey.Task == HotkeyTask.OpenDisplayProfileWindow)
+                        {
+                            Action openDisplayProfileWindow = delegate { Program.AppMainForm.openDisplayProfileWindow(); };
+                            RegisterKeyCombination(hotkey.KeyCodes, openDisplayProfileWindow);
+                        }
+                        else if (hotkey.Task == HotkeyTask.OpenShortcutLibraryWindow)
+                        {
+                            Action openShortcutLibraryWindow = delegate { Program.AppMainForm.openShortcutLibraryWindow(); };
+                            RegisterKeyCombination(hotkey.KeyCodes, openShortcutLibraryWindow);
+                        }
+                        else if (hotkey.Task == HotkeyTask.RunGameShortcut)
+                        {
+                            Action runGameShortcut = delegate { Program.RunShortcut(hotkey.UUID.ToString()); ; };
+                            RegisterKeyCombination(hotkey.KeyCodes, runGameShortcut);
+                        }
+                        else if (hotkey.Task == HotkeyTask.ChangeDisplayProfile)
+                        {
+                            Action changeDisplayProfile = delegate { Program.RunProfile(hotkey.UUID.ToString()); };
+                            RegisterKeyCombination(hotkey.KeyCodes, changeDisplayProfile);
+                        }
+                        else if (hotkey.Task == HotkeyTask.ExitApplication)
+                        {
+                            Action exitApplication = delegate { Program.AppMainForm.exitApplication(); };
+                            RegisterKeyCombination(hotkey.KeyCodes, exitApplication);
+                        }
+                    }
+                }
+                if (updatedJoystickHotkeys != null && updatedJoystickHotkeys is List<HotkeyJoystick> && updatedJoystickHotkeys.Count > 0)
+                {
+                    // check if the hotkey is already in the list, and if so, remove it
+                    if (Program.AppProgramSettings.JoystickHotkeys != null && Program.AppProgramSettings.JoystickHotkeys is List<HotkeyJoystick> && Program.AppProgramSettings.JoystickHotkeys.Count > 0)
+                    {
+                        foreach (var existingHotkey in Program.AppProgramSettings.JoystickHotkeys)
+                        {
+                            if (existingHotkey.UUID.ToString() == updatedJoystickHotkeys[0].UUID.ToString() && existingHotkey.Device.DeviceButtonIndex == updatedJoystickHotkeys[0].Device.DeviceButtonIndex)
+                            {
+                                // Remove it from the stored list
+                                Program.AppProgramSettings.JoystickHotkeys.Remove(existingHotkey);
+                                // If it is currently registered, then deregister it
+                                RemoveJoystickButton(existingHotkey.Device);
+                            }
+                        }
+                    }
 
-            // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
-            if (parsedHotkey.Contains("+ControlKey"))
-                parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
+                    foreach (var hotkey in updatedJoystickHotkeys)
+                    {
+                        if (hotkey.Task == HotkeyTask.OpenMainWindow)
+                        {
+                            Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
+                            RegisterJoystickButton(hotkey.Device, openMainWindow);
+                        }
+                        else if (hotkey.Task == HotkeyTask.OpenDisplayProfileWindow)
+                        {
+                            Action openDisplayProfileWindow = delegate { Program.AppMainForm.openDisplayProfileWindow(); };
+                            RegisterJoystickButton(hotkey.Device, openDisplayProfileWindow);
+                        }
+                        else if (hotkey.Task == HotkeyTask.OpenShortcutLibraryWindow)
+                        {
+                            Action openShortcutLibraryWindow = delegate { Program.AppMainForm.openShortcutLibraryWindow(); };
+                            RegisterJoystickButton(hotkey.Device, openShortcutLibraryWindow);
+                        }
+                        else if (hotkey.Task == HotkeyTask.RunGameShortcut)
+                        {
+                            Action runGameShortcut = delegate { Program.RunShortcut(hotkey.UUID.ToString()); ; };
+                            RegisterJoystickButton(hotkey.Device, runGameShortcut);
+                        }
+                        else if (hotkey.Task == HotkeyTask.ChangeDisplayProfile)
+                        {
+                            Action changeDisplayProfile = delegate { Program.RunProfile(hotkey.UUID.ToString()); };
+                            RegisterJoystickButton(hotkey.Device, changeDisplayProfile);
+                        }
+                        else if (hotkey.Task == HotkeyTask.ExitApplication)
+                        {
+                            Action exitApplication = delegate { Program.AppMainForm.exitApplication(); };
+                            RegisterJoystickButton(hotkey.Device, exitApplication);
+                        }
+                    }
+                }
 
-            // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
-            if (parsedHotkey.Contains("+ShiftKey"))
-                parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
-
-            // Alt also shows as Alt+Menu, so we trim the +Menu
-            if (parsedHotkey.Contains("+Menu"))
-                parsedHotkey = parsedHotkey.Replace("+Menu", "");
-
-            return parsedHotkey;
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"DirectInputManager/UpdateOrAddHotkeys: WARNING - Exception while trying to updated or add the Hotkeys.");
+            }
+            return true;
         }
 
         public bool RemoveHotkeysByUUID(string uuid)
@@ -555,7 +674,7 @@ namespace DisplayMagician
                         Program.AppProgramSettings.JoystickHotkeys.Remove(hotkey);
 
                         // If it is currently registered, then deregister it
-                        RemoveJoystickButton(hotkey.TargetId, hotkey.ButtonIndex);
+                        RemoveJoystickButton(hotkey.Device);
                     }
                 }
             }
@@ -596,7 +715,7 @@ namespace DisplayMagician
             return hotkeysToReturn;
         }
 
-        public List<HotkeyJoystick> GeJoystickHotkeysByUUID(string uuid)
+        public List<HotkeyJoystick> GetJoystickHotkeysByUUID(string uuid)
         {
             List<HotkeyJoystick> hotkeysToReturn = new List<HotkeyJoystick>();
 
@@ -626,6 +745,35 @@ namespace DisplayMagician
             return hotkeysToReturn;
         }
 
+        public string GenerateKeyboardHotkeyText(List<HotkeyKeyboard> keyboardHotkeys)
+        {
+            if (!keyboardHotkeys.Any())
+                return string.Empty;
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            string hotkeyText = string.Empty;
+            foreach (var hotkey in keyboardHotkeys)
+            {
+                string keyText = string.Empty;
+                foreach (var key in hotkey.KeyCodes)
+                {
+                    keyText = key.ToString("G");
+                }
+                hotkeyText += string.Join(" + ", keyText);
+            }
+
+
+            return hotkeyText;
+        }
+
+        public string GenerateJoystickHotkeyText(List<HotkeyJoystick> joystickHotkeys)
+        {
+            if (!joystickHotkeys.Any())
+                return string.Empty;
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            IEnumerable<string> hotkeyNames = joystickHotkeys.Select(k => k.Device.DeviceName.ToString() + " Button #" + k.Device.DeviceButtonIndex.ToString());
+            string hotkeyText = string.Join(" + ", hotkeyNames);
+            return hotkeyText;
+        }
     }
 
     public class KeyCombinationComparer : IEqualityComparer<List<Key>>

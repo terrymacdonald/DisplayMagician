@@ -3342,28 +3342,44 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_Click(object sender, EventArgs e)
         {
-            Keys testHotkey = Keys.None;
-            /*if (_shortcutToEdit.Hotkey != Keys.None)
-                testHotkey = _shortcutToEdit.Hotkey;
-            else
-                testHotkey = Keys.None;*/
+            // Find the matching hotkeys so that we can load them in
+            // and then show the hotkey form
+            List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
+            _keyboardHotkeys.AddRange(Program.AppDirectInputManager.GetKeyboardHotkeysByUUID(Shortcut.UUID));
+            List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
+            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(Shortcut.UUID));
+
             string hotkeyHeading = $"Choose a '{_shortcutToEdit.Name}' Shortcut Hotkey";
-            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can run this" + Environment.NewLine +
+            string hotkeyDescription = $"Choose one or more Hotkey (a keyboard shortcut) so that you can run this" + Environment.NewLine +
                 "game shortcut using your keyboard. This must be a Hotkey that" + Environment.NewLine +
                 "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
-                "might not see it.";
-            HotkeyForm displayHotkeyForm = new HotkeyForm(testHotkey, hotkeyHeading, hotkeyDescription);
+                "might not see it. Click Add to add it to the list, or delete from the list.";
+            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.RunGameShortcut, Shortcut.UUID, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
             //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {
-                /*// If the hotkey has changed, then set the unsaved warning to true
-                if (!_hotkey.Equals(displayHotkeyForm.Hotkey))
+                // If the hotkey has changed, then set the unsaved warning to true
+                if (displayHotkeyForm.Changed)
+                {
                     _isUnsaved = true;
-                // now we store the Hotkey to be saved later
-                _hotkey = displayHotkeyForm.Hotkey;
-                // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                UpdateHotkeyLabel(_hotkey);*/
+                    // now we store the Hotkey to be saved later
+                    Program.AppDirectInputManager.UpdateOrAddHotkeys(displayHotkeyForm.KeyboardHotkeys, displayHotkeyForm.JoystickHotkeys);
+                    // And if we get back and this is a Hotkey with a value, we need to show that in the UI
+                    string hotkeyText = Program.AppDirectInputManager.GenerateKeyboardHotkeyText(displayHotkeyForm.KeyboardHotkeys);
+                    hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(_joystickHotkeys);
+
+                    if (displayHotkeyForm.KeyboardHotkeys.Any() || displayHotkeyForm.JoystickHotkeys.Any())
+                    {
+                        lbl_hotkey_assigned.Text = "Hotkey: " + hotkeyText;
+                        lbl_hotkey_assigned.Visible = true;
+                    }
+                    else
+                    {
+                        lbl_hotkey_assigned.Text = "Hotkey: None";
+                        lbl_hotkey_assigned.Visible = false;
+                    }
+                }                    
             }
         }
 
@@ -3372,38 +3388,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey.PerformClick();
         }
 
-        private void UpdateHotkeyLabel(Keys myHotkey)
-        {
-            // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-            if (myHotkey != Keys.None)
-            {
-                KeysConverter kc = new KeysConverter();
-
-                lbl_hotkey_assigned.Text = "Hotkey: " + kc.ConvertToString(myHotkey);
-                lbl_hotkey_assigned.Visible = true;
-            }
-            else
-            {
-                lbl_hotkey_assigned.Text = "Hotkey: None";
-                lbl_hotkey_assigned.Visible = false;
-            }
-
-        }
-
-        /*
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-        public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-        {
-            if (ShortcutRepository.ContainsShortcut(e.Name))
-            {
-                string shortcutUUID = e.Name;
-                ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
-                if (chosenShortcut is ShortcutItem)
-                    Program.RunShortcutTask(chosenShortcut);
-            }
-        }*/
-
+       
         private void StartProgramControl_MouseDown(object sender, MouseEventArgs e)
         {
             DoDragDrop(sender, DragDropEffects.Move);

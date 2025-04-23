@@ -80,7 +80,7 @@ namespace DisplayMagician.UIForms
             btn_save.TabIndex = 3;
             btn_save.Text = "&Add";
             btn_save.UseVisualStyleBackColor = false;
-            btn_save.Click += btn_save_Click;
+            btn_save.Click += btn_apply_Click;
             // 
             // btn_clear
             // 

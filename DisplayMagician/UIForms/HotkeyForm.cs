@@ -26,13 +26,15 @@ namespace DisplayMagician.UIForms
         List<Keys> _invalidKeyCombination = new List<Keys>() { };
         List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>() { };
         List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>() { };
-        //KeysConverter kc = new KeysConverter() { };
+        string _uuid = string.Empty;
+        HotkeyTask _taskMode = HotkeyTask.RunGameShortcut;
+        bool _changed = false;
 
         private CancellationTokenSource _captureCts;
         private Thread _captureThread;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private List<Key> _lastKeys = new List<Key>();
-        private List<(Guid deviceId, int buttonIndex)> _lastButtons = new();
+        private List<JoystickDevice> _lastButtons = new();
 
         private DateTime _lastUpdateTime = DateTime.MinValue;
 
@@ -65,6 +67,45 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        public string UUID 
+        {
+            get
+            {
+                if (_uuid == null)
+                    _uuid = string.Empty;
+                return _uuid;
+            }
+            set
+            {
+                _uuid = value;
+            }
+        }
+
+        public HotkeyTask TaskMode 
+        {
+            get
+            {
+                if (_taskMode == null)
+                    _taskMode = HotkeyTask.RunGameShortcut;
+                return _taskMode;
+            }
+            set
+            {
+                _taskMode = value;
+            }
+        }
+
+        public bool Changed
+        {
+            get
+            {
+                return _changed;
+            }
+            set
+            {
+                _changed = value;
+            }
+        }
 
         public HotkeyForm()
         {
@@ -77,13 +118,11 @@ namespace DisplayMagician.UIForms
             //txt_hotkey.DeselectAll();
         }
 
-        public HotkeyForm(Keys hotkeyToEdit = Keys.None, string hotkeyHeading = "", string hotkeyDescription = "")
+        public HotkeyForm(HotkeyTask taskMode, string uuid, List<HotkeyKeyboard> keyboardHotkeys, List<HotkeyJoystick> joystickHotkeys, string hotkeyHeading = "", string hotkeyDescription = "")
         {
             InitializeComponent();
 
             GenerateInvalidModifiers();
-            myHotkey = hotkeyToEdit;
-            //Refresh(txt_hotkey);
 
             if (!String.IsNullOrEmpty(hotkeyHeading))
             {
@@ -103,6 +142,13 @@ namespace DisplayMagician.UIForms
             }
             Point newHeadingPoint = new Point((this.Width - lbl_hotkey_heading.Width) / 2, lbl_hotkey_heading.Location.Y);
             lbl_hotkey_heading.Location = newHeadingPoint;
+
+            // Set the variables we need
+            _taskMode = taskMode;
+            UUID = uuid;
+            KeyboardHotkeys = keyboardHotkeys;
+            JoystickHotkeys = joystickHotkeys;
+
 
             // Disable the hotkey monitoring while we're on this form 
             Program.AppDirectInputManager.Stop();
@@ -161,18 +207,33 @@ namespace DisplayMagician.UIForms
             //txt_hotkey.DeselectAll();
         }
 
-        private void btn_save_Click(object sender, EventArgs e)
+        private void btn_apply_Click(object sender, EventArgs e)
         {
-
-            //this.Hotkey = myHotkey;
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            if (_lastKeys.Any())
+            {
+                _keyboardHotkeys.Add(new HotkeyKeyboard(_lastKeys, TaskMode, UUID));
+                lv_hotkeys.Items.Add(new ListViewItem(new string[] { txt_hotkey.Text, TaskMode.ToString() }));
+            }
+            else if (_lastButtons.Any())
+            {                
+                _joystickHotkeys.Add(new HotkeyJoystick(_lastButtons[0], HotkeyTask.RunGameShortcut, UUID));
+                lv_hotkeys.Items.Add(new ListViewItem(new string[] { txt_hotkey.Text, TaskMode.ToString() }));
+            }
+            txt_hotkey.Text = string.Empty;
+            _changed = true;
         }
 
         private void btn_back_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.Cancel;
-            this.Close();
+            if (_changed)
+            {
+                DialogResult = DialogResult.OK;
+            }
+            else
+            {
+                DialogResult = DialogResult.Cancel;
+            }
+                this.Close();
         }
 
 
@@ -183,7 +244,7 @@ namespace DisplayMagician.UIForms
             {
 
                 var pressedKeys = new List<Key>();
-                var pressedButtons = new List<(Guid deviceId, int buttonIndex)>();
+                var pressedButtons = new List<JoystickDevice>();
 
                 // Poll keyboard devices
                 foreach (var keyboard in Program.AppDirectInputManager.GetKeyboards())
@@ -231,7 +292,7 @@ namespace DisplayMagician.UIForms
                         {
                             if (buttons[i])
                             {
-                                pressedButtons.Add((joystick.DeviceInfo.InstanceGuid, i));
+                                pressedButtons.Add(new JoystickDevice(joystick.DeviceInfo.Type, joystick.DeviceInfo.InstanceName, joystick.DeviceInfo.InstanceGuid, i));
                             }
                         }
                     }
@@ -251,7 +312,7 @@ namespace DisplayMagician.UIForms
                         {
                             // No change in pressed keys or buttons
                             _lastKeys = new List<Key>(pressedKeys);
-                            _lastButtons = new List<(Guid, int)>(pressedButtons);
+                            _lastButtons = new List<JoystickDevice>(pressedButtons);
                             UpdateHotkeyText(_lastKeys, _lastButtons);
                             _lastUpdateTime = DateTime.Now;
                         }
@@ -262,14 +323,14 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void UpdateHotkeyText(List<Key> keys, List<(Guid deviceId, int buttonIndex)> buttons)
+        private void UpdateHotkeyText(List<Key> keys, List<JoystickDevice> buttons)
         {
 
             // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
             IEnumerable<string> hotkeyNames = keys.Select(k => k.ToString());
             if (!hotkeyNames.Any())
             {
-                hotkeyNames = buttons.Select(b => $"Joystick {b.deviceId} Button {b.buttonIndex}");
+                hotkeyNames = buttons.Select(b => $"{b.DeviceName} Button #{b.DeviceButtonIndex}");
             }
             string hotkeyText = string.Join(" + ", hotkeyNames);
 
