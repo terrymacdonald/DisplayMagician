@@ -118,8 +118,8 @@ namespace DisplayMagician.UIForms
             lv_hotkeys.FullRowSelect = true;
 
             //Add column header
-            lv_hotkeys.Columns.Add("Hotkey Combination", 300);
-            lv_hotkeys.Columns.Add("Action", 300);
+            lv_hotkeys.Columns.Add("Hotkey Combination", 200);
+            lv_hotkeys.Columns.Add("Action", 200);
 
         }
 
@@ -177,19 +177,13 @@ namespace DisplayMagician.UIForms
 
 
         private void CaptureLoop(CancellationToken token)
-        {
-            var pressedKeys = new List<Key>();
-            var pressedButtons = new List<(Guid deviceId, int buttonIndex)>();
+        {          
 
             while (!token.IsCancellationRequested)
             {
-                /*if (_noPressedKeysOrButtons)
-                {
-                    _noPressedKeysOrButtons = false;
-                    pressedKeys.Clear();
-                    pressedButtons.Clear();
-                }*/
 
+                var pressedKeys = new List<Key>();
+                var pressedButtons = new List<(Guid deviceId, int buttonIndex)>();
 
                 // Poll keyboard devices
                 foreach (var keyboard in Program.AppDirectInputManager.GetKeyboards())
@@ -248,14 +242,19 @@ namespace DisplayMagician.UIForms
                 }
 
                 // Check if 500ms have passed since the last update
-                if ((DateTime.Now - _lastUpdateTime).TotalMilliseconds >= 500)
+                
+                if (pressedKeys.Any() || pressedButtons.Any())
                 {
-                    if (pressedKeys.Any() || pressedButtons.Any())
+                    if (!pressedKeys.SequenceEqual(_lastKeys) || !pressedButtons.SequenceEqual(_lastButtons))
                     {
-                        _lastKeys = new List<Key>(pressedKeys);
-                        _lastButtons = new List<(Guid, int)>(pressedButtons);
-                        UpdateHotkeyText(_lastKeys, _lastButtons);
-                        _lastUpdateTime = DateTime.Now;
+                        if ((DateTime.Now - _lastUpdateTime).TotalMilliseconds >= 250)
+                        {
+                            // No change in pressed keys or buttons
+                            _lastKeys = new List<Key>(pressedKeys);
+                            _lastButtons = new List<(Guid, int)>(pressedButtons);
+                            UpdateHotkeyText(_lastKeys, _lastButtons);
+                            _lastUpdateTime = DateTime.Now;
+                        }
                     }
                 }
 
