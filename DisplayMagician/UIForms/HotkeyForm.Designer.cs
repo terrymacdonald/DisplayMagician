@@ -37,33 +37,32 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_heading = new System.Windows.Forms.Label();
             lbl_hotkey_description = new System.Windows.Forms.Label();
             btn_back = new System.Windows.Forms.Button();
+            lv_hotkeys = new System.Windows.Forms.ListView();
             SuspendLayout();
             // 
             // txt_hotkey
             // 
             txt_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_hotkey.HideSelection = false;
-            txt_hotkey.Location = new System.Drawing.Point(100, 177);
+            txt_hotkey.Location = new System.Drawing.Point(50, 291);
             txt_hotkey.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_hotkey.Name = "txt_hotkey";
             txt_hotkey.ReadOnly = true;
-            txt_hotkey.Size = new System.Drawing.Size(314, 26);
+            txt_hotkey.Size = new System.Drawing.Size(413, 26);
             txt_hotkey.TabIndex = 1;
-            txt_hotkey.KeyDown += OnKeyDown;
-            txt_hotkey.KeyPress += OnKeyPress;
-            txt_hotkey.KeyUp += OnKeyUp;
             // 
             // lbl_hotkey_selector
             // 
             lbl_hotkey_selector.AutoSize = true;
             lbl_hotkey_selector.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             lbl_hotkey_selector.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_selector.Location = new System.Drawing.Point(99, 210);
+            lbl_hotkey_selector.Location = new System.Drawing.Point(122, 320);
             lbl_hotkey_selector.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_selector.Name = "lbl_hotkey_selector";
             lbl_hotkey_selector.Size = new System.Drawing.Size(270, 13);
             lbl_hotkey_selector.TabIndex = 2;
             lbl_hotkey_selector.Text = "Hold down the keys you'd like to use, then release them";
+            lbl_hotkey_selector.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btn_save
             // 
@@ -72,14 +71,14 @@ namespace DisplayMagician.UIForms
             btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_save.ForeColor = System.Drawing.Color.White;
-            btn_save.Location = new System.Drawing.Point(235, 256);
+            btn_save.Location = new System.Drawing.Point(471, 291);
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
-            btn_save.Size = new System.Drawing.Size(138, 38);
+            btn_save.Size = new System.Drawing.Size(91, 26);
             btn_save.TabIndex = 3;
-            btn_save.Text = "&Save";
+            btn_save.Text = "&Add";
             btn_save.UseVisualStyleBackColor = false;
             btn_save.Click += btn_save_Click;
             // 
@@ -91,12 +90,12 @@ namespace DisplayMagician.UIForms
             btn_clear.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_clear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_clear.ForeColor = System.Drawing.Color.White;
-            btn_clear.Location = new System.Drawing.Point(424, 177);
+            btn_clear.Location = new System.Drawing.Point(474, 244);
             btn_clear.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_clear.Name = "btn_clear";
             btn_clear.Size = new System.Drawing.Size(88, 26);
             btn_clear.TabIndex = 6;
-            btn_clear.Text = "&Clear";
+            btn_clear.Text = "&Clear All";
             btn_clear.UseVisualStyleBackColor = true;
             btn_clear.Click += btn_clear_Click;
             // 
@@ -106,7 +105,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_heading.AutoSize = true;
             lbl_hotkey_heading.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_hotkey_heading.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_heading.Location = new System.Drawing.Point(113, 27);
+            lbl_hotkey_heading.Location = new System.Drawing.Point(141, 24);
             lbl_hotkey_heading.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_heading.Name = "lbl_hotkey_heading";
             lbl_hotkey_heading.Size = new System.Drawing.Size(326, 20);
@@ -119,7 +118,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_description.AutoSize = true;
             lbl_hotkey_description.BackColor = System.Drawing.Color.Black;
             lbl_hotkey_description.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_description.Location = new System.Drawing.Point(122, 77);
+            lbl_hotkey_description.Location = new System.Drawing.Point(127, 62);
             lbl_hotkey_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_description.Name = "lbl_hotkey_description";
             lbl_hotkey_description.Size = new System.Drawing.Size(354, 60);
@@ -135,7 +134,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(506, 276);
+            btn_back.Location = new System.Drawing.Point(506, 352);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -144,12 +143,21 @@ namespace DisplayMagician.UIForms
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
             // 
+            // lv_hotkeys
+            // 
+            lv_hotkeys.Location = new System.Drawing.Point(50, 151);
+            lv_hotkeys.Name = "lv_hotkeys";
+            lv_hotkeys.Size = new System.Drawing.Size(417, 119);
+            lv_hotkeys.TabIndex = 9;
+            lv_hotkeys.UseCompatibleStateImageBehavior = false;
+            // 
             // HotkeyForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(608, 316);
+            ClientSize = new System.Drawing.Size(608, 392);
+            Controls.Add(lv_hotkeys);
             Controls.Add(btn_back);
             Controls.Add(lbl_hotkey_heading);
             Controls.Add(btn_clear);
@@ -166,6 +174,8 @@ namespace DisplayMagician.UIForms
             Text = "Choose a Hotkey";
             TopMost = true;
             Activated += HotkeyForm_Activated;
+            FormClosing += HotkeyForm_FormClosing;
+            Load += HotkeyForm_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -178,5 +188,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_hotkey_heading;
         private System.Windows.Forms.Label lbl_hotkey_description;
         private System.Windows.Forms.Button btn_back;
+        private System.Windows.Forms.ListView lv_hotkeys;
     }
 }

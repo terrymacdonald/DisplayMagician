@@ -5,9 +5,14 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using NHotkey.WindowsForms;
+using DisplayMagician;
+using Microsoft.VisualBasic.Devices;
+using SharpGen.Runtime;
+using Vortice.DirectInput;
+using WinCopies.Util;
 
 namespace DisplayMagician.UIForms
 {
@@ -19,32 +24,52 @@ namespace DisplayMagician.UIForms
         string emptyHotkeyText = "";
         string invalidHotkeyText = " (invalid - try again!)";
         List<Keys> _invalidKeyCombination = new List<Keys>() { };
-        KeysConverter kc = new KeysConverter() { };
-        //List<int> _needNonShiftModifier = new List<int>() { };
-        //List<int> _needNonAltGrModifier = new List<int>() { };
+        List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>() { };
+        List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>() { };
+        //KeysConverter kc = new KeysConverter() { };
+
+        private CancellationTokenSource _captureCts;
+        private Thread _captureThread;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private List<Key> _lastKeys = new List<Key>();
+        private List<(Guid deviceId, int buttonIndex)> _lastButtons = new();
+
+        private DateTime _lastUpdateTime = DateTime.MinValue;
 
 
-#pragma warning disable CS3003 // Type is not CLS-compliant
-        public Keys Hotkey
-#pragma warning restore CS3003 // Type is not CLS-compliant
+        public List<HotkeyKeyboard> KeyboardHotkeys
         {
-            get;
-            /*{ 
-                return myHotkey; 
-            }*/
-            set;
-            /*{
-                if (value is Keys)
-                    myHotkey = value;
-            }*/
-
+            get
+            {
+                if (_keyboardHotkeys == null)
+                    _keyboardHotkeys = new List<HotkeyKeyboard>() { };
+                return _keyboardHotkeys;
+            }
+            set
+            {
+                _keyboardHotkeys = value;
+            }
         }
-               
+
+        public List<HotkeyJoystick> JoystickHotkeys
+        {
+            get
+            {
+                if (_joystickHotkeys == null)
+                    _joystickHotkeys = new List<HotkeyJoystick>() { };
+                return _joystickHotkeys;
+            }
+            set
+            {
+                _joystickHotkeys = value;
+            }
+        }
+
 
         public HotkeyForm()
         {
             InitializeComponent();
-            
+
             //hks = new HotkeySelector();
             //hks.EmptyHotkeyText = "";
             //hks.Enable(txt_hotkey);
@@ -52,24 +77,22 @@ namespace DisplayMagician.UIForms
             //txt_hotkey.DeselectAll();
         }
 
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
         public HotkeyForm(Keys hotkeyToEdit = Keys.None, string hotkeyHeading = "", string hotkeyDescription = "")
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             InitializeComponent();
 
             GenerateInvalidModifiers();
             myHotkey = hotkeyToEdit;
-            Refresh(txt_hotkey);
+            //Refresh(txt_hotkey);
 
             if (!String.IsNullOrEmpty(hotkeyHeading))
             {
                 if (hotkeyHeading.Length > 60)
-                    lbl_hotkey_heading.Text = hotkeyHeading.Substring(0,50);
+                    lbl_hotkey_heading.Text = hotkeyHeading.Substring(0, 50);
                 else
                     lbl_hotkey_heading.Text = hotkeyHeading;
                 lbl_hotkey_description.Text = hotkeyDescription;
-            } 
+            }
             else
             {
                 lbl_hotkey_heading.Text = $"Choose a Hotkey";
@@ -80,8 +103,54 @@ namespace DisplayMagician.UIForms
             }
             Point newHeadingPoint = new Point((this.Width - lbl_hotkey_heading.Width) / 2, lbl_hotkey_heading.Location.Y);
             lbl_hotkey_heading.Location = newHeadingPoint;
+
+            // Disable the hotkey monitoring while we're on this form 
+            Program.AppDirectInputManager.Stop();
+            // Now start the capture thread to listen for hotkeys
+            StartCapture();
         }
 
+        private void HotkeyForm_Load(object sender, EventArgs e)
+        {
+            // Setup the Keyboard ListView
+            lv_hotkeys.View = View.Details;
+            lv_hotkeys.GridLines = true;
+            lv_hotkeys.FullRowSelect = true;
+
+            //Add column header
+            lv_hotkeys.Columns.Add("Hotkey Combination", 300);
+            lv_hotkeys.Columns.Add("Action", 300);
+
+        }
+
+        /// <summary>
+        /// Start the background polling thread (idempotent).
+        /// </summary>
+        public void StartCapture()
+        {
+            if (_captureThread?.IsAlive == true) return;
+
+            _captureCts = new CancellationTokenSource();
+            _captureThread = new Thread(() => CaptureLoop(_captureCts.Token))
+            {
+                IsBackground = true,
+                Name = "DisplayMagician Input Poller"
+            };
+            _captureThread.Start();
+        }
+
+        /// <summary>
+        /// Stops polling and waits for thread to exit.
+        /// </summary>
+        public void StopCapture()
+        {
+            if (_captureCts == null) return;
+            _captureCts.Cancel();
+            _captureThread.Join();
+            _captureCts.Dispose();
+            _captureCts = null;
+            _captureThread = null;
+        }
 
         private void btn_clear_Click(object sender, EventArgs e)
         {
@@ -95,7 +164,7 @@ namespace DisplayMagician.UIForms
         private void btn_save_Click(object sender, EventArgs e)
         {
 
-            this.Hotkey = myHotkey;
+            //this.Hotkey = myHotkey;
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
@@ -107,98 +176,112 @@ namespace DisplayMagician.UIForms
         }
 
 
-        /// <summary>
-        /// Fires when a key is pressed down. Here, we'll want to update the Text  
-        /// property to notify the user what key combination is currently pressed.
-        /// </summary>
-        private void OnKeyDown(object sender, KeyEventArgs e)
+        private void CaptureLoop(CancellationToken token)
         {
-            if (e.Alt || e.Control || e.Shift)
+            var pressedKeys = new List<Key>();
+            var pressedButtons = new List<(Guid deviceId, int buttonIndex)>();
+
+            while (!token.IsCancellationRequested)
             {
-                myHotkey = e.KeyCode | e.Modifiers;
-                Refresh(txt_hotkey);
-            }
-            
-        }
-
-        /// <summary>
-        /// Fires when all keys are released. If the current hotkey isn't valid, reset it.
-        /// Otherwise, do nothing and keep the Text and hotkey as it was.
-        /// </summary>
-        private void OnKeyUp(object sender, KeyEventArgs e)
-        {
-            if (myHotkey == Keys.None)
-            {
-                myHotkey = Keys.None;
-                Refresh(txt_hotkey);
-
-                return;
-            }
-        }
-
-        /// <summary>
-        /// Prevents anything entered in Input controls from being displayed.
-        /// Without this, a "A" key press would appear as "aControl, Alt + A".
-        /// </summary>
-        private void OnKeyPress(object sender, KeyPressEventArgs e)
-        {
-            e.Handled = true;
-        }
-
-        private void Refresh(Control control)
-        {
-            try
-            {
-                string parsedHotkey = string.Empty;
-
-                // No hotkey set.
-                if (myHotkey == Keys.None)
+                /*if (_noPressedKeysOrButtons)
                 {
-                    // There is nothing selected so just return
-                    txt_hotkey.Text = emptyHotkeyText;
-                    return;
+                    _noPressedKeysOrButtons = false;
+                    pressedKeys.Clear();
+                    pressedButtons.Clear();
+                }*/
+
+
+                // Poll keyboard devices
+                foreach (var keyboard in Program.AppDirectInputManager.GetKeyboards())
+                {
+
+                    Result result = keyboard.Poll();  // Update state
+
+                    if (result.Failure)
+                    {
+                        result = keyboard.Acquire();
+
+                        if (result.Failure)
+                            break;
+                    }
+
+                    try
+                    {
+                        var state = keyboard.GetCurrentKeyboardState();
+                        pressedKeys.AddRange(state.PressedKeys);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Write(ex.Message);
+                    }
                 }
-                else if (_invalidKeyCombination.Contains(myHotkey))
+
+                // Poll joystick devices
+                foreach (var joystick in Program.AppDirectInputManager.GetJoysticks())
                 {
-                    // Tell the user this is an invalid combination
-                    parsedHotkey = kc.ConvertToString(myHotkey);
+                    Result result = joystick.Poll();  // Update state
 
-                    // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
-                    if (parsedHotkey.Contains("+ControlKey"))
-                        parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
+                    if (result.Failure)
+                    {
+                        result = joystick.Acquire();
 
-                    // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
-                    if (parsedHotkey.Contains("+ShiftKey"))
-                        parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
+                        if (result.Failure)
+                            break;
+                    }
 
-                    // Alt also shows as Alt+Menu, so we trim the +Menu
-                    if (parsedHotkey.Contains("+Menu"))
-                        parsedHotkey = parsedHotkey.Replace("+Menu", "");
-
-                    txt_hotkey.Text = parsedHotkey + $" {invalidHotkeyText}";
-                } 
-                else
-                {
-                    // This key combination is ok so lets update the textbox
-                    // and save the Hotkey for later
-                    parsedHotkey = kc.ConvertToString(myHotkey);
-
-                    // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
-                    if (parsedHotkey.Contains("+ControlKey"))
-                        parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
-
-                    // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
-                    if (parsedHotkey.Contains("+ShiftKey"))
-                        parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
-
-                    // Alt also shows as Alt+Menu, so we trim the +Menu
-                    if (parsedHotkey.Contains("+Menu"))
-                        parsedHotkey = parsedHotkey.Replace("+Menu", "");
-
-                    txt_hotkey.Text = parsedHotkey;
+                    try
+                    {
+                        var state = joystick.GetCurrentJoystickState();
+                        var buttons = state.Buttons;
+                        for (int i = 0; i < buttons.Length; i++)
+                        {
+                            if (buttons[i])
+                            {
+                                pressedButtons.Add((joystick.DeviceInfo.InstanceGuid, i));
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Write(ex.Message);
+                    }
                 }
+
+                // Check if 500ms have passed since the last update
+                if ((DateTime.Now - _lastUpdateTime).TotalMilliseconds >= 500)
+                {
+                    if (pressedKeys.Any() || pressedButtons.Any())
+                    {
+                        _lastKeys = new List<Key>(pressedKeys);
+                        _lastButtons = new List<(Guid, int)>(pressedButtons);
+                        UpdateHotkeyText(_lastKeys, _lastButtons);
+                        _lastUpdateTime = DateTime.Now;
+                    }
+                }
+
+                Thread.Sleep(50);
             }
-            catch (Exception) { }
+        }
+
+        private void UpdateHotkeyText(List<Key> keys, List<(Guid deviceId, int buttonIndex)> buttons)
+        {
+
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            IEnumerable<string> hotkeyNames = keys.Select(k => k.ToString());
+            if (!hotkeyNames.Any())
+            {
+                hotkeyNames = buttons.Select(b => $"Joystick {b.deviceId} Button {b.buttonIndex}");
+            }
+            string hotkeyText = string.Join(" + ", hotkeyNames);
+
+            if (txt_hotkey.InvokeRequired)
+            {
+                txt_hotkey.Invoke(new Action(() => txt_hotkey.Text = hotkeyText));
+            }
+            else
+            {
+                txt_hotkey.Text = hotkeyText;
+            }
         }
 
         private void GenerateInvalidModifiers()
@@ -229,7 +312,7 @@ namespace DisplayMagician.UIForms
             // Shift + Alt
             _invalidKeyCombination.Add(Keys.Alt | Keys.Shift);
             _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.ShiftKey);
-            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu| Keys.Shift | Keys.ShiftKey);
+            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu | Keys.Shift | Keys.ShiftKey);
             // Ctrl + Shift + Alt
             _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.Control);
             _invalidKeyCombination.Add(Keys.Alt | Keys.Menu | Keys.Shift | Keys.Control);
@@ -287,5 +370,14 @@ namespace DisplayMagician.UIForms
             txt_hotkey.DeselectAll();
         }
 
+        private void HotkeyForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Now stop the capture thread to listen for hotkeys
+            StopCapture();
+
+            // restart the hotkey monitoring as we're leaving this form
+            Program.AppDirectInputManager.Start();
+            
+        }
     }
 }

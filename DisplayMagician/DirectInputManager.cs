@@ -183,6 +183,16 @@ namespace DisplayMagician
             _pollThread = null;
         }
 
+        public IEnumerable<IDirectInputDevice8> GetKeyboards()
+        {
+            return _keyboardDevices.Values;
+        }
+
+        public IEnumerable<IDirectInputDevice8> GetJoysticks()
+        {
+            return _joystickDevices.Values;
+        }
+
         /// <summary>
         /// Register key combinations for an action.
         /// </summary>

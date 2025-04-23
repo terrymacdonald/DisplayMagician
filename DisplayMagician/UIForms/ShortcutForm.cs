@@ -13,6 +13,7 @@ using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
 //using NHotkey.WindowsForms;
 //using NHotkey;
+using DisplayMagician;
 using System.Threading;
 using DisplayMagician.AppLibraries;
 using static DisplayMagician.GameLibraries.ProductInformation;
@@ -64,7 +65,7 @@ namespace DisplayMagician.UIForms
         private CoreAudioDevice selectedAudioDevice = null;
         private List<CoreAudioDevice> captureDevices = null;
         private CoreAudioDevice selectedCaptureDevice = null;
-        private Keys _hotkey = Keys.None;
+        //private Keys _hotkey = Keys.None;
         //private bool _userChoseOwnGameIcon = false;
         //private string _userGameIconPath = "";
         //private bool _userChoseOwnExeIcon = false;
@@ -508,8 +509,7 @@ namespace DisplayMagician.UIForms
                         _startPrograms,
                         _stopPrograms,
                         _autoName,
-                        _uuid,
-                        _hotkey
+                        _uuid
                     );
                 }
 
@@ -1073,7 +1073,6 @@ namespace DisplayMagician.UIForms
             selectedAudioDevice = null;
             captureDevices = null;
             selectedCaptureDevice = null;
-            _hotkey = Keys.None;
 
 
             // Prepare the Game process priority combo box
@@ -3358,13 +3357,13 @@ namespace DisplayMagician.UIForms
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {
-                // If the hotkey has changed, then set the unsaved warning to true
+                /*// If the hotkey has changed, then set the unsaved warning to true
                 if (!_hotkey.Equals(displayHotkeyForm.Hotkey))
                     _isUnsaved = true;
                 // now we store the Hotkey to be saved later
                 _hotkey = displayHotkeyForm.Hotkey;
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                UpdateHotkeyLabel(_hotkey);
+                UpdateHotkeyLabel(_hotkey);*/
             }
         }
 
