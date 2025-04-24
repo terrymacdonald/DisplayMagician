@@ -365,7 +365,7 @@ namespace DisplayMagician.UIForms
                 "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
                 "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
                 "go to the Main Window and click the Settings button. ";
-            HotkeyForm mainHotkeyForm = new HotkeyForm(HotkeyTask.OpenDisplayProfileWindow, string.Empty, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
+            HotkeyForm mainHotkeyForm = new HotkeyForm(HotkeyTask.OpenMainWindow, string.Empty, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
             mainHotkeyForm.ShowDialog(this);
             if (mainHotkeyForm.Changed)
             {
@@ -389,22 +389,6 @@ namespace DisplayMagician.UIForms
         private void lbl_hotkey_main_window_Click(object sender, EventArgs e)
         {
             btn_hotkey_main_window.PerformClick();
-        }
-
-        private void UpdateHotkeyLabel(Keys myHotkey, Control myControl)
-        {
-            // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-            if (myHotkey != Keys.None)
-            {
-                KeysConverter kc = new KeysConverter();
-
-                myControl.Text = "Hotkey: " + kc.ConvertToString(myHotkey);
-            }
-            else
-            {
-                myControl.Text = "None Set";
-            }
-
         }
 
         private void btn_hotkey_display_profile_Click(object sender, EventArgs e)

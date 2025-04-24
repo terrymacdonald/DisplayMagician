@@ -686,7 +686,6 @@ namespace DisplayMagician
                         // Add the key combination to the store of keyboard hotkeys
                         Program.AppProgramSettings.KeyboardHotkeys.Add(hotkey);
 
-
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
                             Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
@@ -739,7 +738,6 @@ namespace DisplayMagician
                         // Add the button combination to the store of joystick hotkeys
                         Program.AppProgramSettings.JoystickHotkeys.Add(hotkey);
 
-
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
                             Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
@@ -772,6 +770,10 @@ namespace DisplayMagician
                         }
                     }
                 }
+
+                // Save the settings
+                Program.AppProgramSettings.SaveSettings();
+                
 
             }
             catch (Exception ex)
