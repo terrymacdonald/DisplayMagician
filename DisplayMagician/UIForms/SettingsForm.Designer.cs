@@ -46,7 +46,7 @@ namespace DisplayMagician.UIForms
             label7 = new System.Windows.Forms.Label();
             button1 = new System.Windows.Forms.Button();
             label6 = new System.Windows.Forms.Label();
-            lv_keyboard_hotkeys = new System.Windows.Forms.ListView();
+            lv_hotkeys = new System.Windows.Forms.ListView();
             btn_clear_all_hotkeys = new System.Windows.Forms.Button();
             lbl_hotkey_shortcut_library_description = new System.Windows.Forms.Label();
             lbl_hotkey_display_profile_description = new System.Windows.Forms.Label();
@@ -254,7 +254,7 @@ namespace DisplayMagician.UIForms
             gb_hotkeys.Controls.Add(label7);
             gb_hotkeys.Controls.Add(button1);
             gb_hotkeys.Controls.Add(label6);
-            gb_hotkeys.Controls.Add(lv_keyboard_hotkeys);
+            gb_hotkeys.Controls.Add(lv_hotkeys);
             gb_hotkeys.Controls.Add(btn_clear_all_hotkeys);
             gb_hotkeys.Controls.Add(lbl_hotkey_shortcut_library_description);
             gb_hotkeys.Controls.Add(lbl_hotkey_display_profile_description);
@@ -311,14 +311,14 @@ namespace DisplayMagician.UIForms
             label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             label6.Click += label6_Click;
             // 
-            // lv_keyboard_hotkeys
+            // lv_hotkeys
             // 
-            lv_keyboard_hotkeys.Location = new System.Drawing.Point(37, 171);
-            lv_keyboard_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            lv_keyboard_hotkeys.Name = "lv_keyboard_hotkeys";
-            lv_keyboard_hotkeys.Size = new System.Drawing.Size(724, 223);
-            lv_keyboard_hotkeys.TabIndex = 48;
-            lv_keyboard_hotkeys.UseCompatibleStateImageBehavior = false;
+            lv_hotkeys.Location = new System.Drawing.Point(37, 171);
+            lv_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            lv_hotkeys.Name = "lv_hotkeys";
+            lv_hotkeys.Size = new System.Drawing.Size(724, 223);
+            lv_hotkeys.TabIndex = 48;
+            lv_hotkeys.UseCompatibleStateImageBehavior = false;
             // 
             // btn_clear_all_hotkeys
             // 
@@ -582,7 +582,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_show_minimise_action;
         private System.Windows.Forms.CheckBox cb_upgrade_enabled;
         private System.Windows.Forms.Button btn_context_menu_reinstall;
-        private System.Windows.Forms.ListView lv_keyboard_hotkeys;
+        private System.Windows.Forms.ListView lv_hotkeys;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button button1;

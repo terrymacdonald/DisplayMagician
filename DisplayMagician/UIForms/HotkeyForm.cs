@@ -180,7 +180,7 @@ namespace DisplayMagician.UIForms
             _captureThread = new Thread(() => CaptureLoop(_captureCts.Token))
             {
                 IsBackground = true,
-                Name = "DisplayMagician Input Poller"
+                Name = "DisplayMagician Capture Poller"
             };
             _captureThread.Start();
         }
@@ -209,16 +209,29 @@ namespace DisplayMagician.UIForms
 
         private void btn_apply_Click(object sender, EventArgs e)
         {
+            if (txt_hotkey.Text == string.Empty)
+            {
+                MessageBox.Show("Please select a hotkey first.", "No Hotkey Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check if the hotkey is a keyboard hotkey or a joystick hotkey, and add it to the list of hotkeys
             if (_lastKeys.Any())
             {
-                _keyboardHotkeys.Add(new HotkeyKeyboard(_lastKeys, TaskMode, UUID));
-                lv_hotkeys.Items.Add(new ListViewItem(new string[] { txt_hotkey.Text, TaskMode.ToString() }));
+                HotkeyKeyboard newHotkey = new HotkeyKeyboard(_lastKeys, TaskMode, UUID);
+                _keyboardHotkeys.Add(newHotkey);
+                lv_hotkeys.Items.Add(new ListViewItem(new string[] { newHotkey.Description, TaskMode.ToString() }));
             }
             else if (_lastButtons.Any())
             {                
-                _joystickHotkeys.Add(new HotkeyJoystick(_lastButtons[0], HotkeyTask.RunGameShortcut, UUID));
-                lv_hotkeys.Items.Add(new ListViewItem(new string[] { txt_hotkey.Text, TaskMode.ToString() }));
+                HotkeyJoystick newHotkey = new HotkeyJoystick(_lastButtons[0], TaskMode, UUID);
+                _joystickHotkeys.Add(newHotkey);
+                lv_hotkeys.Items.Add(new ListViewItem(new string[] { newHotkey.Description, TaskMode.ToString() }));
             }
+            
+            // Also trigger the saving of the hotkey data to the settings file to make the settings permananet
+            Program.AppProgramSettings.SaveSettings();
+
             txt_hotkey.Text = string.Empty;
             _changed = true;
         }
@@ -308,7 +321,7 @@ namespace DisplayMagician.UIForms
                 {
                     if (!pressedKeys.SequenceEqual(_lastKeys) || !pressedButtons.SequenceEqual(_lastButtons))
                     {
-                        if ((DateTime.Now - _lastUpdateTime).TotalMilliseconds >= 250)
+                        if ((DateTime.Now - _lastUpdateTime).TotalMilliseconds >= 300)
                         {
                             // No change in pressed keys or buttons
                             _lastKeys = new List<Key>(pressedKeys);
@@ -319,7 +332,7 @@ namespace DisplayMagician.UIForms
                     }
                 }
 
-                Thread.Sleep(50);
+                Thread.Sleep(150);
             }
         }
 

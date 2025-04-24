@@ -384,6 +384,47 @@ namespace DisplayMagician
 
         }
 
+        public static string GetShortcutName(string shortcutNameOrUuid)
+        {
+            logger.Trace($"ShortcutRepository/GetShortcutName: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
+
+            if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
+            {
+                logger.Error($"ShortcutRepository/GetShortcutName: Shortcut to get was empty or only whitespace");
+                return string.Empty;
+            }
+
+            Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                foreach (ShortcutItem testShortcut in _allShortcuts)
+                {
+                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.Trace($"ShortcutRepository/GetShortcutName: Returning shortcut '{testShortcut.Name}' with UUID {shortcutNameOrUuid}");
+                        return testShortcut.Name;
+                    }
+                }
+
+            }
+            else
+            {
+                foreach (ShortcutItem testShortcut in _allShortcuts)
+                {
+                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.Trace($"ShortcutRepository/GetShortcutName: Returning shortcut '{testShortcut.Name}' with Name {shortcutNameOrUuid}");
+                        return testShortcut.Name;
+                    }
+                }
+
+            }
+
+            logger.Warn($"ShortcutRepository/GetShortcutName: No shortcut was found to return with UUID or Name {shortcutNameOrUuid}");
+            return string.Empty;
+
+        }
+
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
         public static bool RenameShortcutProfile(ProfileItem newProfile)
 #pragma warning restore CS3001 // Argument type is not CLS-compliant

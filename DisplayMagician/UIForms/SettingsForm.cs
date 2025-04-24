@@ -159,31 +159,23 @@ namespace DisplayMagician.UIForms
             }
 
             // Setup the Keyboard ListView
-            lv_keyboard_hotkeys.View = View.Details;
-            lv_keyboard_hotkeys.GridLines = true;
-            lv_keyboard_hotkeys.FullRowSelect = true;
+            lv_hotkeys.View = View.Details;
+            lv_hotkeys.GridLines = true;
+            lv_hotkeys.FullRowSelect = true;
 
             //Add column header
-            lv_keyboard_hotkeys.Columns.Add("Hotkey Combination", 300);
-            lv_keyboard_hotkeys.Columns.Add("Action", 300);
-
-            /*// Add the ListView Group
-            ListViewGroup displayProfile = new ListViewGroup("Display Profile");
-            ListViewGroup gameShortcut = new ListViewGroup("Game Shortcut");
-
-            lv_joystick_hotkeys.Groups.Add(displayProfile);
-            lv_joystick_hotkeys.Groups.Add(gameShortcut);
-            */
+            lv_hotkeys.Columns.Add("Hotkey Combination", 200);
+            lv_hotkeys.Columns.Add("Action", 200);
 
             // Add the hotkeys from the joystick and keyboard hotkeys to the ListViews
             foreach (var keyboardHotkey in Program.AppProgramSettings.KeyboardHotkeys)
             {
                 if (keyboardHotkey.KeyCodes.Count > 0)
                 {
-                    string[] itemText = { keyboardHotkey.Task.ToString("G"), $"{Program.AppDirectInputManager.GetNameOfKeyboardHotkey(keyboardHotkey)}" };
+                    string[] itemText = { $"{Program.AppDirectInputManager.GetNameOfKeyboardHotkey(keyboardHotkey)}", keyboardHotkey.Description };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);
                     //dynamicHotkey.Group = displayProfile;
-                    lv_keyboard_hotkeys.Items.Add(dynamicHotkey);
+                    lv_hotkeys.Items.Add(dynamicHotkey);
                 }
             }
 
@@ -191,10 +183,10 @@ namespace DisplayMagician.UIForms
             {
                 if (joystickHotkey.Device.DeviceTargetId != Guid.Empty)
                 {
-                    string[] itemText = { joystickHotkey.Task.ToString("G"), $"{Program.AppDirectInputManager.GetNameOfJoystickHotkey(joystickHotkey)}" };
+                    string[] itemText = { $"{Program.AppDirectInputManager.GetNameOfJoystickHotkey(joystickHotkey)}", joystickHotkey.Description };
                     ListViewItem dynamicHotkey = new ListViewItem(itemText);
                     //dynamicHotkey.Group = displayProfile;
-                    lv_keyboard_hotkeys.Items.Add(dynamicHotkey);
+                    lv_hotkeys.Items.Add(dynamicHotkey);
                 }
             }
 

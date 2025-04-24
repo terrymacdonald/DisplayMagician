@@ -1,4 +1,5 @@
 ﻿using DisplayMagician.UIForms;
+using DisplayMagicianShared;
 using NLog;
 using NLog.Targets;
 using SharpGen.Runtime;
@@ -30,12 +31,14 @@ namespace DisplayMagician
 
     public struct HotkeyKeyboard
     {
+        public string Description;
         public List<Key> KeyCodes; // List of keys in the combination
         public HotkeyTask Task;
         public string UUID; // profile or shortcut UUID
 
         public HotkeyKeyboard()
         {
+            Description = string.Empty;
             KeyCodes = new List<Key>();
             Task = HotkeyTask.None;
             UUID = string.Empty; // profile or shortcut UUID
@@ -46,7 +49,53 @@ namespace DisplayMagician
             KeyCodes = keyCodes;
             Task = task;
             UUID = uuid; // profile or shortcut UUID
+
+            string myDescription = string.Empty;
+            switch (task)
+            {
+                case HotkeyTask.ChangeDisplayProfile:
+                    string profileName = ProfileRepository.GetProfileName(uuid);
+                    if (string.IsNullOrEmpty(profileName))
+                    {
+                        myDescription = "Change Display Profile to 'Unknown'";
+                    }
+                    else
+                    {
+                        myDescription = "Change Display Profile to '" + profileName + "'";
+                    }
+                    break;
+                case HotkeyTask.RunGameShortcut:
+                    string shortcutName = ShortcutRepository.GetShortcutName(uuid);
+                    if (string.IsNullOrEmpty(shortcutName))
+                    {
+                        myDescription = "Run Game Shortcut 'Unknown'";
+                    }
+                    else
+                    {
+                        myDescription = "Run Game Shortcut '" + shortcutName + "'";
+                    }
+                    break;
+                case HotkeyTask.OpenShortcutLibraryWindow:
+                    myDescription = "Open Shortcut Library Window";
+                    break;
+                case HotkeyTask.OpenMainWindow:
+                    myDescription = "Open Main Window";
+                    break;
+                case HotkeyTask.OpenDisplayProfileWindow:
+                    myDescription = "Open Display Profile Window";
+                    break;
+                case HotkeyTask.ExitApplication:
+                    myDescription = "Exit Application";
+                    break;
+                default:
+                    myDescription = "Unknown Task";
+                    break;
+            }
+            Description = myDescription;
+
         }
+
+
     }
 
     public struct JoystickDevice
@@ -71,33 +120,123 @@ namespace DisplayMagician
             DeviceName = name;
             DeviceButtonIndex = code;
         }
+
     }
 
     public struct HotkeyJoystick
     {
+        public string Description;
         public JoystickDevice Device;
         public HotkeyTask Task;
         public string UUID; // profile or shortcut UUID
 
         public HotkeyJoystick()
         {
+            Description = string.Empty;
             Device = new JoystickDevice();
             Task = HotkeyTask.None;
             UUID = string.Empty;
         }
 
-        public HotkeyJoystick(JoystickDevice device, HotkeyTask action, string uuid)
+        public HotkeyJoystick(JoystickDevice device, HotkeyTask task, string uuid)
         {
             Device = device;
-            Task = action;
+            Task = task;
             UUID = uuid;
+
+            string myDescription = string.Empty;
+            switch (task)
+            {
+                case HotkeyTask.ChangeDisplayProfile:
+                    string profileName = ProfileRepository.GetProfileName(uuid);
+                    if (string.IsNullOrEmpty(profileName))
+                    {
+                        myDescription = "Change Display Profile to 'Unknown'";
+                    }
+                    else
+                    {
+                        myDescription = "Change Display Profile to '" + profileName + "'";
+                    }
+                    break;
+                case HotkeyTask.RunGameShortcut:
+                    string shortcutName = ShortcutRepository.GetShortcutName(uuid);
+                    if (string.IsNullOrEmpty(shortcutName))
+                    {
+                        myDescription = "Run Game Shortcut 'Unknown'";
+                    }
+                    else
+                    {
+                        myDescription = "Run Game Shortcut '" + shortcutName + "'";
+                    }
+                    break;
+                case HotkeyTask.OpenShortcutLibraryWindow:
+                    myDescription = "Open Shortcut Library Window";
+                    break;
+                case HotkeyTask.OpenMainWindow:
+                    myDescription = "Open Main Window";
+                    break;
+                case HotkeyTask.OpenDisplayProfileWindow:
+                    myDescription = "Open Display Profile Window";
+                    break;
+                case HotkeyTask.ExitApplication:
+                    myDescription = "Exit Application";
+                    break;
+                default:
+                    myDescription = "Unknown Task";
+                    break;
+            }
+            Description = myDescription;
         }
 
-        public HotkeyJoystick(DeviceType deviceType, string name, Guid targetId, int code, HotkeyTask action, string uuid)
+        public HotkeyJoystick(string description, DeviceType deviceType, string name, Guid targetId, int code, HotkeyTask task, string uuid)
         {
+            Description = description;
             Device = new JoystickDevice(deviceType, name, targetId, code);
-            Task = action;
+            Task = task;
             UUID = uuid;
+
+            string myDescription = string.Empty;
+            switch (task)
+            {
+                case HotkeyTask.ChangeDisplayProfile:
+                    string profileName = ProfileRepository.GetProfileName(uuid);
+                    if (string.IsNullOrEmpty(profileName))
+                    {
+                        myDescription = "Change Display Profile to 'Unknown'";
+                    }
+                    else
+                    {
+                        myDescription = "Change Display Profile to '" + profileName + "'";
+                    }
+                    break;
+                case HotkeyTask.RunGameShortcut:
+                    string shortcutName = ShortcutRepository.GetShortcutName(uuid);
+                    if (string.IsNullOrEmpty(shortcutName))
+                    {
+                        myDescription = "Run Game Shortcut 'Unknown'";
+                    }
+                    else
+                    {
+                        myDescription = "Run Game Shortcut '" + shortcutName + "'";
+                    }
+                    break;
+                case HotkeyTask.OpenShortcutLibraryWindow:
+                    myDescription = "Open Shortcut Library Window";
+                    break;
+                case HotkeyTask.OpenMainWindow:
+                    myDescription = "Open Main Window";
+                    break;
+                case HotkeyTask.OpenDisplayProfileWindow:
+                    myDescription = "Open Display Profile Window";
+                    break;
+                case HotkeyTask.ExitApplication:
+                    myDescription = "Exit Application";
+                    break;
+                default:
+                    myDescription = "Unknown Task";
+                    break;
+            }
+            Description = myDescription;
         }
     }
 
@@ -389,6 +528,7 @@ namespace DisplayMagician
             return string.Join(" + ", keyboardHotkey.KeyCodes.Select(k => k.ToString()));
         }
 
+        
         public bool RegisterStoredHotkeys(ProgramSettings programSettings)
         {
             try

@@ -681,6 +681,43 @@ namespace DisplayMagicianShared
             return null;
         }
 
+        public static string GetProfileName(string ProfileNameOrId)
+        {
+
+            SharedLogger.logger.Debug($"ProfileRepository/GetProfileName: Finding and returning {ProfileNameOrId} if it exists in our profile repository");
+
+            if (String.IsNullOrWhiteSpace(ProfileNameOrId))
+            {
+                SharedLogger.logger.Error($"ProfileRepository/GetProfileName: Profile to get was empty or only whitespace");
+                return string.Empty;
+            }
+
+
+            if (ProfileItem.IsValidUUID(ProfileNameOrId))
+                foreach (ProfileItem testProfile in _allProfiles)
+                {
+                    if (testProfile.UUID.Equals(ProfileNameOrId))
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/GetProfileName: Returning profile name '{testProfile.Name}' with UUID {ProfileNameOrId}");
+                        return testProfile.Name;
+                    }
+
+                }
+            else
+                foreach (ProfileItem testProfile in _allProfiles)
+                {
+                    if (testProfile.Name.Equals(ProfileNameOrId))
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/GetProfileName: Returning profile name '{testProfile.Name}' with Name {ProfileNameOrId}");
+                        return testProfile.Name;
+                    }
+
+                }
+
+            SharedLogger.logger.Debug($"ProfileRepository/GetProfileName: Didn't match any profiles with UUD or Name {ProfileNameOrId}");
+            return string.Empty;
+        }
+
         public static bool RenameProfile(ProfileItem profile, string renamedName)
         {
             if (!(profile is ProfileItem))
