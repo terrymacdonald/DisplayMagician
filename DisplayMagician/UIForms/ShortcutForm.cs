@@ -3345,16 +3345,16 @@ namespace DisplayMagician.UIForms
             // Find the matching hotkeys so that we can load them in
             // and then show the hotkey form
             List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
-            _keyboardHotkeys.AddRange(Program.AppDirectInputManager.GetKeyboardHotkeysByUUID(Shortcut.UUID));
+            _keyboardHotkeys.AddRange(Program.AppDirectInputManager.GetKeyboardHotkeysByUUID(_shortcutToEdit.UUID));
             List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
-            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(Shortcut.UUID));
+            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(_shortcutToEdit.UUID));
 
             string hotkeyHeading = $"Choose a '{_shortcutToEdit.Name}' Shortcut Hotkey";
             string hotkeyDescription = $"Choose one or more Hotkey (a keyboard shortcut) so that you can run this" + Environment.NewLine +
                 "game shortcut using your keyboard. This must be a Hotkey that" + Environment.NewLine +
                 "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
                 "might not see it. Click Add to add it to the list, or delete from the list.";
-            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.RunGameShortcut, Shortcut.UUID, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
+            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.RunGameShortcut, _shortcutToEdit.UUID, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
             //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
