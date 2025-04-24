@@ -43,9 +43,9 @@ namespace DisplayMagician.UIForms
             cmb_loglevel = new System.Windows.Forms.ComboBox();
             cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             gb_hotkeys = new System.Windows.Forms.GroupBox();
-            label7 = new System.Windows.Forms.Label();
-            button1 = new System.Windows.Forms.Button();
-            label6 = new System.Windows.Forms.Label();
+            lbl_hotkey_exit = new System.Windows.Forms.Label();
+            btn_hotkey_exit = new System.Windows.Forms.Button();
+            lbl_hotkey_exit_app = new System.Windows.Forms.Label();
             lv_hotkeys = new System.Windows.Forms.ListView();
             btn_clear_all_hotkeys = new System.Windows.Forms.Button();
             lbl_hotkey_shortcut_library_description = new System.Windows.Forms.Label();
@@ -251,9 +251,9 @@ namespace DisplayMagician.UIForms
             // 
             // gb_hotkeys
             // 
-            gb_hotkeys.Controls.Add(label7);
-            gb_hotkeys.Controls.Add(button1);
-            gb_hotkeys.Controls.Add(label6);
+            gb_hotkeys.Controls.Add(lbl_hotkey_exit);
+            gb_hotkeys.Controls.Add(btn_hotkey_exit);
+            gb_hotkeys.Controls.Add(lbl_hotkey_exit_app);
             gb_hotkeys.Controls.Add(lv_hotkeys);
             gb_hotkeys.Controls.Add(btn_clear_all_hotkeys);
             gb_hotkeys.Controls.Add(lbl_hotkey_shortcut_library_description);
@@ -273,43 +273,44 @@ namespace DisplayMagician.UIForms
             gb_hotkeys.TabStop = false;
             gb_hotkeys.Text = "Hotkeys";
             // 
-            // label7
+            // lbl_hotkey_exit
             // 
-            label7.AutoSize = true;
-            label7.Location = new System.Drawing.Point(456, 40);
-            label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            label7.Name = "label7";
-            label7.Size = new System.Drawing.Size(194, 16);
-            label7.TabIndex = 52;
-            label7.Text = "Hotkey to exit DisplayMagician:";
+            lbl_hotkey_exit.AutoSize = true;
+            lbl_hotkey_exit.Location = new System.Drawing.Point(456, 40);
+            lbl_hotkey_exit.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_hotkey_exit.Name = "lbl_hotkey_exit";
+            lbl_hotkey_exit.Size = new System.Drawing.Size(194, 16);
+            lbl_hotkey_exit.TabIndex = 52;
+            lbl_hotkey_exit.Text = "Hotkey to exit DisplayMagician:";
+            lbl_hotkey_exit.Click += lbl_hotkey_exit_Click;
             // 
-            // button1
+            // btn_hotkey_exit
             // 
-            button1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            button1.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            button1.ForeColor = System.Drawing.Color.White;
-            button1.Location = new System.Drawing.Point(658, 35);
-            button1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            button1.Name = "button1";
-            button1.Size = new System.Drawing.Size(103, 27);
-            button1.TabIndex = 51;
-            button1.Text = "Set Hotkey";
-            button1.UseVisualStyleBackColor = true;
+            btn_hotkey_exit.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btn_hotkey_exit.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_hotkey_exit.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_hotkey_exit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_hotkey_exit.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_hotkey_exit.ForeColor = System.Drawing.Color.White;
+            btn_hotkey_exit.Location = new System.Drawing.Point(658, 35);
+            btn_hotkey_exit.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_hotkey_exit.Name = "btn_hotkey_exit";
+            btn_hotkey_exit.Size = new System.Drawing.Size(103, 27);
+            btn_hotkey_exit.TabIndex = 51;
+            btn_hotkey_exit.Text = "Set Hotkey";
+            btn_hotkey_exit.UseVisualStyleBackColor = true;
+            btn_hotkey_exit.Click += btn_hotkey_exit_app_Click;
             // 
-            // label6
+            // lbl_hotkey_exit_app
             // 
-            label6.AutoSize = true;
-            label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label6.Location = new System.Drawing.Point(329, 148);
-            label6.Name = "label6";
-            label6.Size = new System.Drawing.Size(137, 20);
-            label6.TabIndex = 50;
-            label6.Text = "All Saved Hotkeys";
-            label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            label6.Click += label6_Click;
+            lbl_hotkey_exit_app.AutoSize = true;
+            lbl_hotkey_exit_app.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_hotkey_exit_app.Location = new System.Drawing.Point(329, 148);
+            lbl_hotkey_exit_app.Name = "lbl_hotkey_exit_app";
+            lbl_hotkey_exit_app.Size = new System.Drawing.Size(137, 20);
+            lbl_hotkey_exit_app.TabIndex = 50;
+            lbl_hotkey_exit_app.Text = "All Saved Hotkeys";
+            lbl_hotkey_exit_app.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // lv_hotkeys
             // 
@@ -583,8 +584,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_upgrade_enabled;
         private System.Windows.Forms.Button btn_context_menu_reinstall;
         private System.Windows.Forms.ListView lv_hotkeys;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label lbl_hotkey_exit_app;
+        private System.Windows.Forms.Label lbl_hotkey_exit;
+        private System.Windows.Forms.Button btn_hotkey_exit;
     }
 }

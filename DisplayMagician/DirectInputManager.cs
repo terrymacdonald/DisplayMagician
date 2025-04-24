@@ -6,6 +6,7 @@ using SharpGen.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -681,7 +682,10 @@ namespace DisplayMagician
                                 RemoveKeyCombination(existingHotkey.KeyCodes);
                             }
                         }
-                        
+
+                        // Add the key combination to the store of keyboard hotkeys
+                        Program.AppProgramSettings.KeyboardHotkeys.Add(hotkey);
+
 
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
@@ -717,22 +721,25 @@ namespace DisplayMagician
                 }
                 if (updatedJoystickHotkeys != null && updatedJoystickHotkeys is List<HotkeyJoystick> && updatedJoystickHotkeys.Count > 0)
                 {
-                    // check if the hotkey is already in the list, and if so, remove it
-                    
-                    foreach (var existingHotkey in Program.AppProgramSettings.JoystickHotkeys)
-                    {
-                        if (existingHotkey.UUID.ToString() == updatedJoystickHotkeys[0].UUID.ToString() && existingHotkey.Device.DeviceButtonIndex == updatedJoystickHotkeys[0].Device.DeviceButtonIndex)
-                        {
-                            // Remove it from the stored list
-                            Program.AppProgramSettings.JoystickHotkeys.Remove(existingHotkey);
-                            // If it is currently registered, then deregister it
-                            RemoveJoystickButton(existingHotkey.Device);
-                        }
-                    }
-                    
-
                     foreach (var hotkey in updatedJoystickHotkeys)
                     {
+                        // check if the hotkey is already in the list, and if so, remove it
+
+                        foreach (var existingHotkey in Program.AppProgramSettings.JoystickHotkeys)
+                        {
+                            if (existingHotkey.UUID.ToString() == updatedJoystickHotkeys[0].UUID.ToString() && existingHotkey.Device.DeviceButtonIndex == updatedJoystickHotkeys[0].Device.DeviceButtonIndex)
+                            {
+                                // Remove it from the stored list
+                                Program.AppProgramSettings.JoystickHotkeys.Remove(existingHotkey);
+                                // If it is currently registered, then deregister it
+                                RemoveJoystickButton(existingHotkey.Device);
+                            }
+                        }
+
+                        // Add the button combination to the store of joystick hotkeys
+                        Program.AppProgramSettings.JoystickHotkeys.Add(hotkey);
+
+
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
                             Action openMainWindow = delegate { Program.AppMainForm.openApplicationWindow(); };
@@ -945,14 +952,14 @@ namespace DisplayMagician
         public string GenerateKeyboardHotkeyText(HotkeyKeyboard keyboardHotkey)
         {
             // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
-            string hotkeyText = string.Empty;
+            List<string> keyNames = new List<string>();
 
             foreach (var key in keyboardHotkey.KeyCodes)
             {
-                hotkeyText = string.Join(" + ", key.ToString("G")); ;
+                keyNames.Add(key.ToString("G"));
             }
             
-            return hotkeyText;
+            return string.Join(" + ", keyNames);
         }
 
         public string GenerateKeyboardHotkeyText(List<HotkeyKeyboard> keyboardHotkeys)

@@ -360,31 +360,29 @@ namespace DisplayMagician.UIForms
             List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
             _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByTask(HotkeyTask.OpenMainWindow));
 
-            string hotkeyHeading = $"Choose a Hotkey for the main DisplayMagician window";
-            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply use to" + Environment.NewLine +
-                "open the main DisplayMgician window. This must be a Hotkey that" + Environment.NewLine +
-                "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
-                "might not see it.";
+            string hotkeyHeading = $"Manage your Hotkeys for the main DisplayMagician window";
+            string hotkeyDescription = $"Choose one or more Hotkeys so that you can open the main DisplayMgician window using your keyboard, joystick or button box. " +
+                "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
+                "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
+                "go to the Main Window and click the Settings button. ";
             HotkeyForm mainHotkeyForm = new HotkeyForm(HotkeyTask.OpenDisplayProfileWindow, string.Empty, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
             mainHotkeyForm.ShowDialog(this);
             if (mainHotkeyForm.Changed)
             {
                 // now we store the Hotkey to be saved later
                 Program.AppDirectInputManager.UpdateOrAddHotkeys(mainHotkeyForm.KeyboardHotkeys, mainHotkeyForm.JoystickHotkeys);
-                // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                string hotkeyText = Program.AppDirectInputManager.GenerateKeyboardHotkeyText(mainHotkeyForm.KeyboardHotkeys);
-                hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(mainHotkeyForm.JoystickHotkeys);
-
-                /*if (dpHotkeyForm.KeyboardHotkeys.Any() || dpHotkeyForm.JoystickHotkeys.Any())
+                // Pause Drawing whilst we update
+                lv_hotkeys.BeginUpdate();
+                lv_hotkeys.Items.Clear();
+                foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
                 {
-                    lbl_hotkey_assigned.Text = "Hotkey: " + hotkeyText;
-                    lbl_hotkey_assigned.Visible = true;
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateKeyboardHotkeyText(hotkey), hotkey.Description }));
                 }
-                else
+                foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
                 {
-                    lbl_hotkey_assigned.Text = "Hotkey: None";
-                    lbl_hotkey_assigned.Visible = false;
-                }*/
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateJoystickHotkeyText(hotkey), hotkey.Description }));
+                }
+                lv_hotkeys.EndUpdate();
             }
         }
 
@@ -418,31 +416,29 @@ namespace DisplayMagician.UIForms
             List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
             _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByTask(HotkeyTask.OpenDisplayProfileWindow));
 
-            string hotkeyHeading = $"Choose a Hotkey for the Display Profile window";
-            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply use to" + Environment.NewLine +
-                "open the Display Profile window. This must be a Hotkey that" + Environment.NewLine +
-                "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
-                "might not see it.";
+            string hotkeyHeading = $"Manage your Hotkeys for the Display Profile window";
+            string hotkeyDescription = $"Choose one or more Hotkeys so that you can open the Display Profile window using your keyboard, joystick or button box. " +
+                "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
+                "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
+                "go to the Main Window and click the Settings button. ";
             HotkeyForm dpHotkeyForm = new HotkeyForm(HotkeyTask.OpenDisplayProfileWindow, string.Empty, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
             dpHotkeyForm.ShowDialog(this);
             if (dpHotkeyForm.Changed)
             {
                 // now we store the Hotkey to be saved later
                 Program.AppDirectInputManager.UpdateOrAddHotkeys(dpHotkeyForm.KeyboardHotkeys, dpHotkeyForm.JoystickHotkeys);
-                // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                string hotkeyText = Program.AppDirectInputManager.GenerateKeyboardHotkeyText(dpHotkeyForm.KeyboardHotkeys);
-                hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(dpHotkeyForm.JoystickHotkeys);
-
-                /*if (dpHotkeyForm.KeyboardHotkeys.Any() || dpHotkeyForm.JoystickHotkeys.Any())
+                // Pause Drawing whilst we update
+                lv_hotkeys.BeginUpdate();
+                lv_hotkeys.Items.Clear();
+                foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
                 {
-                    lbl_hotkey_assigned.Text = "Hotkey: " + hotkeyText;
-                    lbl_hotkey_assigned.Visible = true;
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateKeyboardHotkeyText(hotkey), hotkey.Description }));
                 }
-                else
+                foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
                 {
-                    lbl_hotkey_assigned.Text = "Hotkey: None";
-                    lbl_hotkey_assigned.Visible = false;
-                }*/
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateJoystickHotkeyText(hotkey), hotkey.Description }));
+                }
+                lv_hotkeys.EndUpdate();
             }
         }
 
@@ -460,37 +456,75 @@ namespace DisplayMagician.UIForms
             List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
             _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByTask(HotkeyTask.OpenShortcutLibraryWindow));
 
-            string hotkeyHeading = $"Choose a Hotkey for the Shortcut Library window";
-            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply use to" + Environment.NewLine +
-                "open the Shortcut Library window. This must be a Hotkey that" + Environment.NewLine +
-                "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
-                "might not see it.";
+            string hotkeyHeading = $"Manage your Hotkeys for the Shortcut Library window";
+            string hotkeyDescription = $"Choose one or more Hotkeys so that you can open the Shortcut Library window using your keyboard, joystick or button box. " +
+                "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
+                "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
+                "go to the Main Window and click the Settings button. ";
             HotkeyForm scHotkeyForm = new HotkeyForm(HotkeyTask.OpenShortcutLibraryWindow, string.Empty, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
             scHotkeyForm.ShowDialog(this);
             if (scHotkeyForm.Changed)
             {
                 // now we store the Hotkey to be saved later
                 Program.AppDirectInputManager.UpdateOrAddHotkeys(scHotkeyForm.KeyboardHotkeys, scHotkeyForm.JoystickHotkeys);
-                // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                string hotkeyText = Program.AppDirectInputManager.GenerateKeyboardHotkeyText(scHotkeyForm.KeyboardHotkeys);
-                hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(scHotkeyForm.JoystickHotkeys);
-
-                /*if (scHotkeyForm.KeyboardHotkeys.Any() || scHotkeyForm.JoystickHotkeys.Any())
+                // Pause Drawing whilst we update
+                lv_hotkeys.BeginUpdate();
+                lv_hotkeys.Items.Clear();
+                foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
                 {
-                    lbl_hotkey_assigned.Text = "Hotkey: " + hotkeyText;
-                    lbl_hotkey_assigned.Visible = true;
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateKeyboardHotkeyText(hotkey), hotkey.Description }));
                 }
-                else
+                foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
                 {
-                    lbl_hotkey_assigned.Text = "Hotkey: None";
-                    lbl_hotkey_assigned.Visible = false;
-                }*/
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateJoystickHotkeyText(hotkey), hotkey.Description }));
+                }
+                lv_hotkeys.EndUpdate();
             }
         }
 
         private void lbl_hotkey_shortcut_library_Click(object sender, EventArgs e)
         {
             btn_hotkey_shortcuts.PerformClick();
+        }
+
+        private void btn_hotkey_exit_app_Click(object sender, EventArgs e)
+        {
+            // Find the matching hotkeys so that we can load them in
+            // and then show the hotkey form
+            List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
+            _keyboardHotkeys.AddRange(Program.AppDirectInputManager.GetKeyboardHotkeysByTask(HotkeyTask.ExitApplication));
+            List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
+            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByTask(HotkeyTask.ExitApplication));
+
+            string hotkeyHeading = $"Manage your Hotkeys to quit DisplayMagician";
+            string hotkeyDescription = $"Choose one or more Hotkeys so that you can close and quite DisplayMagician using your keyboard, joystick or button box. " +
+                "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
+                "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
+                "go to the Main Window and click the Settings button. ";
+            HotkeyForm exitHotkeyForm = new HotkeyForm(HotkeyTask.ExitApplication, string.Empty, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
+            exitHotkeyForm.ShowDialog(this);
+            if (exitHotkeyForm.Changed)
+            {
+                // now we store the Hotkey to be saved later
+                Program.AppDirectInputManager.UpdateOrAddHotkeys(exitHotkeyForm.KeyboardHotkeys, exitHotkeyForm.JoystickHotkeys);
+                // Pause Drawing whilst we update
+                lv_hotkeys.BeginUpdate();
+                lv_hotkeys.Items.Clear();
+                foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
+                {
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateKeyboardHotkeyText(hotkey), hotkey.Description }));
+                }
+                foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
+                {
+                    lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateJoystickHotkeyText(hotkey), hotkey.Description }));
+                }
+                lv_hotkeys.EndUpdate();
+            }
+        }
+
+        private void lbl_hotkey_exit_Click(object sender, EventArgs e)
+        {
+            btn_hotkey_exit.PerformClick();
         }
 
         private void btn_clear_all_hotkeys_Click(object sender, EventArgs e)
@@ -501,48 +535,10 @@ namespace DisplayMagician.UIForms
                 // Clear the Hotkeys
                 Program.AppProgramSettings.KeyboardHotkeys.Clear();
                 Program.AppProgramSettings.JoystickHotkeys.Clear();
+                // Save the empty Hotkeys to JSON file
+                Program.AppProgramSettings.SaveSettings();
                 // Then clear the ListView here too!
                 lv_hotkeys.Items.Clear();
-            }
-        }
-
-        private string ConvertHotkeyToText(Keys hotkey)
-        {
-            try
-            {
-                string parsedHotkey = string.Empty;
-
-                // No hotkey set.
-                if (hotkey == Keys.None)
-                {
-                    // There is nothing selected so just return
-                    return parsedHotkey;
-                }
-                else
-                {
-                    // This key combination is ok so lets update the textbox
-                    // and save the Hotkey for later
-                    KeysConverter kc = new KeysConverter() { };
-                    parsedHotkey = kc.ConvertToString(hotkey);
-
-                    // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
-                    if (parsedHotkey.Contains("+ControlKey"))
-                        parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
-
-                    // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
-                    if (parsedHotkey.Contains("+ShiftKey"))
-                        parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
-
-                    // Alt also shows as Alt+Menu, so we trim the +Menu
-                    if (parsedHotkey.Contains("+Menu"))
-                        parsedHotkey = parsedHotkey.Replace("+Menu", "");
-
-                    return parsedHotkey;
-                }
-            }
-            catch (Exception)
-            {
-                return String.Empty;
             }
         }
 
@@ -717,9 +713,6 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void label6_Click(object sender, EventArgs e)
-        {
 
-        }
     }
 }

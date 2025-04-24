@@ -115,13 +115,12 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_hotkey_description
             // 
-            lbl_hotkey_description.AutoSize = true;
             lbl_hotkey_description.BackColor = System.Drawing.Color.Black;
             lbl_hotkey_description.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_description.Location = new System.Drawing.Point(127, 62);
+            lbl_hotkey_description.Location = new System.Drawing.Point(50, 54);
             lbl_hotkey_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_description.Name = "lbl_hotkey_description";
-            lbl_hotkey_description.Size = new System.Drawing.Size(354, 60);
+            lbl_hotkey_description.Size = new System.Drawing.Size(627, 84);
             lbl_hotkey_description.TabIndex = 0;
             lbl_hotkey_description.Text = resources.GetString("lbl_hotkey_description.Text");
             lbl_hotkey_description.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;

@@ -783,11 +783,11 @@ namespace DisplayMagician.UIForms
             List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
             _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(_selectedProfile.UUID));
 
-            string hotkeyHeading = $"Choose a '{_selectedProfile.Name}' Display Profile Hotkey";
-            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply this" + Environment.NewLine +
-                "Display Profile using your keyboard. This must be a Hotkey that" + Environment.NewLine +
-                "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
-                "might not see it.";
+            string hotkeyHeading = $"Manage your '{_selectedProfile.Name}' Display Profile Hotkeys";
+            string hotkeyDescription = $"Choose one or more Hotkeys so that you can apply this Display Profile using your keyboard, joystick or button box. " +
+                "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
+                "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
+                "go to the Main Window and click the Settings button. ";
             HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.ChangeDisplayProfile, _selectedProfile.UUID, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
             //ilv_saved_shortcuts.SuspendLayout();
             //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
