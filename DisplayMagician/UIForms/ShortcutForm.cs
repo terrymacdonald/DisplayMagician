@@ -3367,7 +3367,7 @@ namespace DisplayMagician.UIForms
                     Program.AppDirectInputManager.UpdateOrAddHotkeys(displayHotkeyForm.KeyboardHotkeys, displayHotkeyForm.JoystickHotkeys);
                     // And if we get back and this is a Hotkey with a value, we need to show that in the UI
                     string hotkeyText = Program.AppDirectInputManager.GenerateKeyboardHotkeyText(displayHotkeyForm.KeyboardHotkeys);
-                    hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(_joystickHotkeys);
+                    hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(displayHotkeyForm.JoystickHotkeys);
 
                     if (displayHotkeyForm.KeyboardHotkeys.Any() || displayHotkeyForm.JoystickHotkeys.Any())
                     {

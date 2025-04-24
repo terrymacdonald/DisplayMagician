@@ -220,13 +220,13 @@ namespace DisplayMagician.UIForms
             {
                 HotkeyKeyboard newHotkey = new HotkeyKeyboard(_lastKeys, TaskMode, UUID);
                 _keyboardHotkeys.Add(newHotkey);
-                lv_hotkeys.Items.Add(new ListViewItem(new string[] { newHotkey.Description, TaskMode.ToString() }));
+                lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateKeyboardHotkeyText(newHotkey) , newHotkey.Description }));
             }
             else if (_lastButtons.Any())
             {                
                 HotkeyJoystick newHotkey = new HotkeyJoystick(_lastButtons[0], TaskMode, UUID);
                 _joystickHotkeys.Add(newHotkey);
-                lv_hotkeys.Items.Add(new ListViewItem(new string[] { newHotkey.Description, TaskMode.ToString() }));
+                lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateJoystickHotkeyText(newHotkey), newHotkey.Description }));
             }
             
             // Also trigger the saving of the hotkey data to the settings file to make the settings permananet

@@ -670,19 +670,18 @@ namespace DisplayMagician
                     foreach (var hotkey in updatedKeyboardHotkeys)
                     {
                         // check if the hotkey is already in the list, and if so, remove it
-                        if (Program.AppProgramSettings.KeyboardHotkeys != null && Program.AppProgramSettings.KeyboardHotkeys is List<HotkeyKeyboard> && Program.AppProgramSettings.KeyboardHotkeys.Count > 0)
+                        
+                        foreach (var existingHotkey in Program.AppProgramSettings.KeyboardHotkeys)
                         {
-                            foreach (var existingHotkey in Program.AppProgramSettings.KeyboardHotkeys)
+                            if (existingHotkey.UUID.ToString() == hotkey.UUID.ToString() && existingHotkey.KeyCodes.Equals(hotkey.KeyCodes))
                             {
-                                if (existingHotkey.UUID.ToString() == hotkey.UUID.ToString() && existingHotkey.KeyCodes.Equals(hotkey.KeyCodes))
-                                {
-                                    // Remove it from the stored list
-                                    Program.AppProgramSettings.KeyboardHotkeys.Remove(existingHotkey);
-                                    // If it is currently registered, then deregister it
-                                    RemoveKeyCombination(existingHotkey.KeyCodes);
-                                }
+                                // Remove it from the stored list
+                                Program.AppProgramSettings.KeyboardHotkeys.Remove(existingHotkey);
+                                // If it is currently registered, then deregister it
+                                RemoveKeyCombination(existingHotkey.KeyCodes);
                             }
                         }
+                        
 
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
@@ -719,19 +718,18 @@ namespace DisplayMagician
                 if (updatedJoystickHotkeys != null && updatedJoystickHotkeys is List<HotkeyJoystick> && updatedJoystickHotkeys.Count > 0)
                 {
                     // check if the hotkey is already in the list, and if so, remove it
-                    if (Program.AppProgramSettings.JoystickHotkeys != null && Program.AppProgramSettings.JoystickHotkeys is List<HotkeyJoystick> && Program.AppProgramSettings.JoystickHotkeys.Count > 0)
+                    
+                    foreach (var existingHotkey in Program.AppProgramSettings.JoystickHotkeys)
                     {
-                        foreach (var existingHotkey in Program.AppProgramSettings.JoystickHotkeys)
+                        if (existingHotkey.UUID.ToString() == updatedJoystickHotkeys[0].UUID.ToString() && existingHotkey.Device.DeviceButtonIndex == updatedJoystickHotkeys[0].Device.DeviceButtonIndex)
                         {
-                            if (existingHotkey.UUID.ToString() == updatedJoystickHotkeys[0].UUID.ToString() && existingHotkey.Device.DeviceButtonIndex == updatedJoystickHotkeys[0].Device.DeviceButtonIndex)
-                            {
-                                // Remove it from the stored list
-                                Program.AppProgramSettings.JoystickHotkeys.Remove(existingHotkey);
-                                // If it is currently registered, then deregister it
-                                RemoveJoystickButton(existingHotkey.Device);
-                            }
+                            // Remove it from the stored list
+                            Program.AppProgramSettings.JoystickHotkeys.Remove(existingHotkey);
+                            // If it is currently registered, then deregister it
+                            RemoveJoystickButton(existingHotkey.Device);
                         }
                     }
+                    
 
                     foreach (var hotkey in updatedJoystickHotkeys)
                     {
@@ -844,13 +842,42 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    logger.Trace($"DirectInputManager/GetKeyboardHotkeysByUUID: We have no  keyboard hotkeys to set up so skipping them.");
+                    logger.Trace($"DirectInputManager/GetKeyboardHotkeysByUUID: We have no  keyboard hotkeys to find so returning an empty list.");
                 }
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"DirectInputManager/GetKeyboardHotkeysByUUID: WARNING - Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.");                
+                logger.Warn(ex, $"DirectInputManager/GetKeyboardHotkeysByUUID: WARNING - Exception while trying to find a keyboard hotkey by task.");                
             }            
+
+            return hotkeysToReturn;
+        }
+
+        public List<HotkeyKeyboard> GetKeyboardHotkeysByTask(HotkeyTask task)
+        {
+            List<HotkeyKeyboard> hotkeysToReturn = new List<HotkeyKeyboard>();
+
+            try
+            {
+                if (Program.AppProgramSettings.KeyboardHotkeys != null && Program.AppProgramSettings.KeyboardHotkeys is List<HotkeyKeyboard> && Program.AppProgramSettings.KeyboardHotkeys.Count > 0)
+                {
+                    foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
+                    {
+                        if (hotkey.Task == task)
+                        {
+                            hotkeysToReturn.Add(hotkey);
+                        }
+                    }
+                }
+                else
+                {
+                    logger.Trace($"DirectInputManager/GetKeyboardHotkeysByTask: We have no keyboard hotkeys to find so returning an empty list.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"DirectInputManager/GetKeyboardHotkeysByTask: WARNING - Exception while trying to find a keyboard hotkey by task.");
+            }
 
             return hotkeysToReturn;
         }
@@ -873,47 +900,97 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    logger.Trace($"DirectInputManager/GetKeyboardHotkeysByUUID: We have no  keyboard hotkeys to set up so skipping them.");
+                    logger.Trace($"DirectInputManager/GetKeyboardHotkeysByUUID: We have no joystick hotkeys to find so returning an empty list.");
                 }
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"DirectInputManager/GetKeyboardHotkeysByUUID: WARNING - Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.");
+                logger.Warn(ex, $"DirectInputManager/GetKeyboardHotkeysByUUID: WARNING - Exception while trying to find a joystick hotkey by task.");
             }
 
 
             return hotkeysToReturn;
         }
 
-        public string GenerateKeyboardHotkeyText(List<HotkeyKeyboard> keyboardHotkeys)
+        public List<HotkeyJoystick> GetJoystickHotkeysByTask(HotkeyTask task)
         {
-            if (!keyboardHotkeys.Any())
-                return string.Empty;
-            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
-            string hotkeyText = string.Empty;
-            foreach (var hotkey in keyboardHotkeys)
+            List<HotkeyJoystick> hotkeysToReturn = new List<HotkeyJoystick>();
+
+            try
             {
-                string keyText = string.Empty;
-                foreach (var key in hotkey.KeyCodes)
+                if (Program.AppProgramSettings.JoystickHotkeys != null && Program.AppProgramSettings.JoystickHotkeys is List<HotkeyJoystick> && Program.AppProgramSettings.JoystickHotkeys.Count > 0)
                 {
-                    keyText = key.ToString("G");
+                    foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
+                    {
+                        if (hotkey.Task == task)
+                        {
+                            hotkeysToReturn.Add(hotkey);
+                        }
+                    }
                 }
-                hotkeyText += string.Join(" + ", keyText);
+                else
+                {
+                    logger.Trace($"DirectInputManager/GetJoystickHotkeysByTask: We have no joystick hotkeys to find so returning an empty list.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"DirectInputManager/GetJoystickHotkeysByTask: WARNING - Exception while trying to find a joystick hotkey by task.");
             }
 
 
+            return hotkeysToReturn;
+        }
+
+        public string GenerateKeyboardHotkeyText(HotkeyKeyboard keyboardHotkey)
+        {
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            string hotkeyText = string.Empty;
+
+            foreach (var key in keyboardHotkey.KeyCodes)
+            {
+                hotkeyText = string.Join(" + ", key.ToString("G")); ;
+            }
+            
             return hotkeyText;
+        }
+
+        public string GenerateKeyboardHotkeyText(List<HotkeyKeyboard> keyboardHotkeys)
+        {
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            
+            string hotkeyListText = string.Empty;
+
+            foreach (var singleHotkey in keyboardHotkeys)
+            {
+                if (singleHotkey.KeyCodes == null || !singleHotkey.KeyCodes.Any())
+                    continue;
+
+                hotkeyListText += string.Join(", ", GenerateKeyboardHotkeyText(singleHotkey));
+
+            }
+            return hotkeyListText;
+        }
+
+        public string GenerateJoystickHotkeyText(HotkeyJoystick joystickHotkey)
+        {
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            return joystickHotkey.Device.DeviceName.ToString() + " Button #" + joystickHotkey.Device.DeviceButtonIndex.ToString();
         }
 
         public string GenerateJoystickHotkeyText(List<HotkeyJoystick> joystickHotkeys)
         {
-            if (!joystickHotkeys.Any())
-                return string.Empty;
             // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
-            IEnumerable<string> hotkeyNames = joystickHotkeys.Select(k => k.Device.DeviceName.ToString() + " Button #" + k.Device.DeviceButtonIndex.ToString());
-            string hotkeyText = string.Join(" + ", hotkeyNames);
-            return hotkeyText;
+
+            string hotkeyListText = string.Empty;
+
+            foreach (var singleHotkey in joystickHotkeys)
+            {
+                hotkeyListText += string.Join(", ", GenerateJoystickHotkeyText(singleHotkey));
+            }
+            return hotkeyListText;
         }
+
     }
 
     public class KeyCombinationComparer : IEqualityComparer<List<Key>>
