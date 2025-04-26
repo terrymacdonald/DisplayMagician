@@ -37,7 +37,6 @@ namespace DisplayMagician.UIForms
         private const double _gracePeriodMilliseconds = 15000; // 15 seconds
         private TimeSpan _gracePeriod = TimeSpan.FromMilliseconds(_gracePeriodMilliseconds);
 
-        //private DateTime _lastUpdateTime = DateTime.MinValue;
 
 
         public List<HotkeyKeyboard> KeyboardHotkeys
@@ -215,6 +214,7 @@ namespace DisplayMagician.UIForms
         {
             if (txt_hotkey.Text == string.Empty)
             {
+                logger.Warn($"HotkeyForm/btn_apply_Click: User pressed the Apply button but there was no hotkey selected.");
                 MessageBox.Show("Please select a hotkey first.", "No Hotkey Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -279,10 +279,14 @@ namespace DisplayMagician.UIForms
 
                     if (result.Failure)
                     {
+                        logger.Warn($"HotkeyForm/CaptureLoop: Couldn't poll the keyboard to access the keyboard data.");
                         result = keyboard.Acquire();
 
                         if (result.Failure)
+                        {
+                            logger.Warn($"HotkeyForm/CaptureLoop: Couldn't acquire the keyboard to poll it a second time to get the keyboard data.");
                             break;
+                        }
                     }
 
                     try
@@ -292,7 +296,7 @@ namespace DisplayMagician.UIForms
                     }
                     catch (Exception ex)
                     {
-                        Console.Write(ex.Message);
+                        logger.Error(ex, $"HotkeyForm/CaptureLoop: Exception attempting to read the keyboard data with GetCurrentKeyboardState().");
                     }
                 }
 
@@ -303,10 +307,15 @@ namespace DisplayMagician.UIForms
 
                     if (result.Failure)
                     {
+                        logger.Warn($"HotkeyForm/CaptureLoop: Couldn't poll the joystick to access the joystick data.");
                         result = joystick.Acquire();
 
                         if (result.Failure)
+                        {
+                            logger.Warn($"HotkeyForm/CaptureLoop: Couldn't Acquire the joystick to poll it a second time to get the joystick data.");
                             break;
+                        }
+                            
                     }
 
                     try
@@ -323,7 +332,7 @@ namespace DisplayMagician.UIForms
                     }
                     catch (Exception ex)
                     {
-                        Console.Write(ex.Message);
+                        logger.Error(ex, $"HotkeyForm/CaptureLoop: Exception attempting to read the joystick data with GetCurrentJoystickState().");
                     }
                 }
 

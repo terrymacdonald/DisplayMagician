@@ -536,9 +536,17 @@ namespace DisplayMagician
             {
                 if (programSettings.KeyboardHotkeys != null && programSettings.KeyboardHotkeys is List<HotkeyKeyboard> && programSettings.KeyboardHotkeys.Count > 0)
                 {
-                    logger.Trace($"DirectInputManager/RegisterStoredHotkeys: We have {Program.AppProgramSettings.KeyboardHotkeys.Count} keyboard hotkeys to set up.");
+                    logger.Trace($"DirectInputManager/RegisterStoredHotkeys: We have {Program.AppProgramSettings.KeyboardHotkeys.Count} keyboard hotkeys to set up and register.");
                     foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
                     {
+
+                        // Check to make sure that the hotkey has at least one key assigned to it, and skip it as faulty if it doesn't
+                        if (hotkey.KeyCodes.Count == 0)
+                        {
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Skipping registering key combination as it has no keys associaited with it!");
+                            continue;
+                        }
+
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering key combination '{hotkey.KeyCodes}' to open the main window.");
@@ -603,6 +611,13 @@ namespace DisplayMagician
                     logger.Trace($"DirectInputManager/RegisterStoredHotkeys: We have {Program.AppProgramSettings.JoystickHotkeys.Count} joystick and gamepad hotkeys to set up.");
                     foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
                     {
+                        // Check to make sure that the hotkey has a guid assigned to it, and skip it as faulty if it doesn't
+                        if (hotkey.Device.DeviceTargetId == Guid.Empty)
+                        {
+                            logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Skipping registering joystick combination as it has no guid associated with it!");
+                            continue;
+                        }
+                        
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Registering button '{hotkey.Device.DeviceButtonIndex}' on device '{hotkey.Device.DeviceName}' to open the main window.");

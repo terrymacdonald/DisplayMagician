@@ -72,7 +72,9 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Resources\redcross.png" />
+    <Compile Remove="Resources\**" />
+    <None Remove="Resources\**" />
+    <Page Remove="Resources\**" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="HotkeySelector.cs">
@@ -144,7 +146,6 @@
     <Content Include="Properties\DisplayMagician.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary">
@@ -215,17 +216,6 @@
     <Reference Include="ImageListViewCore">
       <HintPath>DLL\ImageListViewCore.dll</HintPath>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Resources\applogo.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Resources\DisplayMagician.ico">
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <PropertyGroup>
     <PackageLicenseFile>EULA_en-us.rtf</PackageLicenseFile>
