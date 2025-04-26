@@ -180,6 +180,21 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\ChooseExecutableForm.resx" />
+    <EmbeddedResource Include="UIForms\ChooseImageForm.resx" />
+    <EmbeddedResource Include="UIForms\DisplayProfileForm.resx" />
+    <EmbeddedResource Include="UIForms\DonationForm.resx" />
+    <EmbeddedResource Include="UIForms\FovCalcForm.resx" />
+    <EmbeddedResource Include="UIForms\HotkeyForm.resx" />
+    <EmbeddedResource Include="UIForms\LoadingForm.resx" />
+    <EmbeddedResource Include="UIForms\MainForm.resx" />
+    <EmbeddedResource Include="UIForms\ProfileSettingsForm.resx" />
+    <EmbeddedResource Include="UIForms\SettingsForm.resx" />
+    <EmbeddedResource Include="UIForms\ShortcutErrorForm.resx" />
+    <EmbeddedResource Include="UIForms\ShortcutForm.resx" />
+    <EmbeddedResource Include="UIForms\ShortcutLibraryForm.resx" />
+    <EmbeddedResource Include="UIForms\ShortcutLoadingForm.resx" />
+    <EmbeddedResource Include="UIForms\StartMessageForm.resx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />

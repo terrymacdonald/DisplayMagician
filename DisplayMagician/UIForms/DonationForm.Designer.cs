@@ -73,7 +73,7 @@ namespace DisplayMagician.UIForms
             btn_donate.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             btn_donate.ForeColor = System.Drawing.Color.White;
             btn_donate.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_donate.Location = new System.Drawing.Point(312, 299);
+            btn_donate.Location = new System.Drawing.Point(302, 299);
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(161, 53);

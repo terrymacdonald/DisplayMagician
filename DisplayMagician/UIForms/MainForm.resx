@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -129,6 +129,7 @@
   <data name="splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -390,7 +391,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAALDAAACwwBP0AiyAAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
+        /wJiW2fk/tJodwAAAAlwSFlzAAALEgAACxIB0t1+/AAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
         Y+IBYxBoAE1oLFWVVKWhNJTmWUISiEFgMDaDDY4xYMdJXycrt3M7N3ct90o6vrnd6b6d21n3+todD3GG
         a5J2PDtux5lsEzcGgYaaTt1V+9H7//779+y9v/c751TplKgfrFrfeb/3HFWdb+/n+f++/b77O2n37t1X
         XHHFzp07t2/fvmPHju2FKwrbCvHg8onLjEsnLjEuLlxUeGeHCy+88ILC+eefH3+ef/755xXOTbxj4u3G
@@ -10868,7 +10869,7 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>346, 285</value>
+    <value>346, 287</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10913,7 +10914,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_minimise_notification_area.Location" type="System.Drawing.Point, System.Drawing">
-    <value>228, 416</value>
+    <value>228, 419</value>
   </data>
   <data name="cb_minimise_notification_area.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -10949,7 +10950,7 @@
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
   <data name="lbl_version.Location" type="System.Drawing.Point, System.Drawing">
-    <value>13, 417</value>
+    <value>13, 420</value>
   </data>
   <data name="lbl_version.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10988,7 +10989,7 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 200</value>
+    <value>247, 202</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11024,7 +11025,7 @@
     <value>NoControl</value>
   </data>
   <data name="btn_exit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>822, 409</value>
+    <value>822, 412</value>
   </data>
   <data name="btn_exit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11062,7 +11063,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAAOvAAADrwBlbxySQAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
+        /wJiW2fk/tJodwAAAAlwSFlzAAAOwwAADsMBx2+oZAAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
         2TImDjpmi5mZGSwzQxxmZiYnDpqZLduywJLFrMsMxXVBet+pfXVy2+mZN/9Mzz/zXnW1c1W34NSpqlt7
         nbX22g5uXnPcved6+c33CVjo6TvP1TPUwyfMJ2Chh0+Ys3sw/OnqGeriEQKf3b3nunqGunnN8fKb7+49
         181rDiz0CVgIO/H2X+DiETLL2R82EdaZ6+oZ4uYV6uoZ4uoZ4u4918MnzMtvvpvXHDevOZ6+86AB3v4L
@@ -64414,18 +64415,18 @@
   <data name="&gt;&gt;splitContainer1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="notifyIcon.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  <metadata name="notifyIcon.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
-  </data>
+  </metadata>
   <data name="notifyIcon.BalloonTipText" xml:space="preserve">
     <value>Use this application to automatically change your display settings when you run a game.</value>
   </data>
   <data name="notifyIcon.BalloonTipTitle" xml:space="preserve">
     <value>DisplayMagician</value>
   </data>
-  <data name="mainContextMenuStrip.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  <metadata name="mainContextMenuStrip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>152, 17</value>
-  </data>
+  </metadata>
   <data name="toolStripMenuItemHeading.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
@@ -72330,15 +72331,15 @@
   <data name="notifyIcon.Visible" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
-  <data name="$this.Localizable" type="System.Boolean, mscorlib">
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
-  </data>
-  <data name="$this.Locked" type="System.Boolean, mscorlib">
+  </metadata>
+  <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
-  </data>
-  <data name="$this.TrayHeight" type="System.Int32, mscorlib">
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>43</value>
-  </data>
+  </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>7, 15</value>
   </data>

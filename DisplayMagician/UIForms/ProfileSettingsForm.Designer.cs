@@ -42,13 +42,13 @@ namespace DisplayMagician.UIForms
             lbl_style = new System.Windows.Forms.Label();
             cmb_wallpaper_display_mode = new System.Windows.Forms.ComboBox();
             gb_multiple_applies = new System.Windows.Forms.GroupBox();
+            label2 = new System.Windows.Forms.Label();
+            cb_force_restart_explorer = new System.Windows.Forms.CheckBox();
             nud_apply_profile_delay = new System.Windows.Forms.NumericUpDown();
             lbl_apply_profile_delay = new System.Windows.Forms.Label();
             nud_apply_profile_count = new System.Windows.Forms.NumericUpDown();
             label1 = new System.Windows.Forms.Label();
             lbl_seconds = new System.Windows.Forms.Label();
-            cb_force_restart_explorer = new System.Windows.Forms.CheckBox();
-            label2 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pb_wallpaper).BeginInit();
             gb_multiple_applies.SuspendLayout();
@@ -247,6 +247,27 @@ namespace DisplayMagician.UIForms
             gb_multiple_applies.TabStop = false;
             gb_multiple_applies.Text = "Profile Settings";
             // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label2.Location = new System.Drawing.Point(52, 94);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(462, 13);
+            label2.TabIndex = 6;
+            label2.Text = "(Note: This will close any Windows Explorer windows you have open when this profile is applied.)";
+            // 
+            // cb_force_restart_explorer
+            // 
+            cb_force_restart_explorer.AutoSize = true;
+            cb_force_restart_explorer.Location = new System.Drawing.Point(36, 72);
+            cb_force_restart_explorer.Name = "cb_force_restart_explorer";
+            cb_force_restart_explorer.Size = new System.Drawing.Size(442, 20);
+            cb_force_restart_explorer.TabIndex = 5;
+            cb_force_restart_explorer.Text = "Force Windows Explorer to restart to redraw missing windows taskbars";
+            cb_force_restart_explorer.UseVisualStyleBackColor = true;
+            cb_force_restart_explorer.CheckedChanged += cb_force_restart_explorer_CheckedChanged;
+            // 
             // nud_apply_profile_delay
             // 
             nud_apply_profile_delay.Location = new System.Drawing.Point(535, 32);
@@ -294,27 +315,6 @@ namespace DisplayMagician.UIForms
             lbl_seconds.Size = new System.Drawing.Size(61, 15);
             lbl_seconds.TabIndex = 4;
             lbl_seconds.Text = "(seconds)";
-            // 
-            // cb_force_restart_explorer
-            // 
-            cb_force_restart_explorer.AutoSize = true;
-            cb_force_restart_explorer.Location = new System.Drawing.Point(36, 72);
-            cb_force_restart_explorer.Name = "cb_force_restart_explorer";
-            cb_force_restart_explorer.Size = new System.Drawing.Size(442, 20);
-            cb_force_restart_explorer.TabIndex = 5;
-            cb_force_restart_explorer.Text = "Force Windows Explorer to restart to redraw missing windows taskbars";
-            cb_force_restart_explorer.UseVisualStyleBackColor = true;
-            cb_force_restart_explorer.CheckedChanged += cb_force_restart_explorer_CheckedChanged;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label2.Location = new System.Drawing.Point(52, 94);
-            label2.Name = "label2";
-            label2.Size = new System.Drawing.Size(462, 13);
-            label2.TabIndex = 6;
-            label2.Text = "(Note: This will close any Windows Explorer windows you have open when this profile is applied.)";
             // 
             // ProfileSettingsForm
             // 

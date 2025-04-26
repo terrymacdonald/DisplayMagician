@@ -204,7 +204,7 @@ namespace DisplayMagician.UIForms
             // 
             pb_down_arrow.Anchor = System.Windows.Forms.AnchorStyles.None;
             pb_down_arrow.BackColor = System.Drawing.Color.DimGray;
-            pb_down_arrow.Image = (System.Drawing.Image)resources.GetObject("pb_down_arrow.Image");
+            pb_down_arrow.Image = Properties.Resources.redarrowsdown;
             pb_down_arrow.Location = new System.Drawing.Point(517, 539);
             pb_down_arrow.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             pb_down_arrow.Name = "pb_down_arrow";
@@ -448,7 +448,7 @@ namespace DisplayMagician.UIForms
             dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
             dv_profile.Location = new System.Drawing.Point(0, 110);
-            dv_profile.Margin = new System.Windows.Forms.Padding(21, 21, 21, 21);
+            dv_profile.Margin = new System.Windows.Forms.Padding(21);
             dv_profile.Name = "dv_profile";
             dv_profile.PaddingX = 100;
             dv_profile.PaddingY = 100;
