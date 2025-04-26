@@ -348,19 +348,30 @@ namespace DisplayMagician.UIForms
         private void btn_setup_display_profiles_Click(object sender, EventArgs e)
         {
             logger.Trace($"MainForm/btn_setup_display_profiles_Click: User pressed the Display Profiles button (or selected the menu item)");
+
+            // Check if *any* other modal window is already open
+            foreach (Form f in Application.OpenForms)
+            {
+                if (f.Modal && f.Visible && f != this)
+                {
+                    // Another modal window is already open!
+                    MessageBox.Show($"Please close the {f.Text} window before opening the Display Profiles window.",
+                        "DisplayMagician",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
             if (DisplayProfileWindow == null || DisplayProfileWindow.IsDisposed)
             {
                 DisplayProfileWindow = new DisplayProfileForm();
                 DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
-            }
-
-            if (DisplayProfileWindow.Visible)
-            {
-                DisplayProfileWindow.Activate();
+                DisplayProfileWindow.ShowDialog(this);
             }
             else
             {
-                DisplayProfileWindow.ShowDialog(this);
+                DisplayProfileWindow.Activate();
             }                
         }
 
@@ -372,18 +383,31 @@ namespace DisplayMagician.UIForms
         private void btn_setup_game_shortcuts_Click(object sender, EventArgs e)
         {
             logger.Trace($"MainForm/btn_setup_game_shortcuts_Click: User pressed the Game Shortcuts button (or selected the menu item)");
+
+            // Check if *any* other modal window is already open
+            foreach (Form f in Application.OpenForms)
+            {
+                if (f.Modal && f.Visible && f != this)
+                {
+                    logger.Trace($"MainForm/btn_setup_game_shortcuts_Click: User pressed the Game Shortcuts button (or selected the menu item) but another dialog window was open");
+                    // Another modal window is already open!
+                    MessageBox.Show($"Please close the {f.Text} window before opening the Shortcut Library window.",
+                        "DisplayMagician",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
             if (ShortcutLibraryWindow == null || ShortcutLibraryWindow.IsDisposed)
             {
                 ShortcutLibraryWindow = new ShortcutLibraryForm();
                 ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
+                ShortcutLibraryWindow.ShowDialog(this);
             }
-            if (ShortcutLibraryWindow.Visible)
+            else 
             {
                 ShortcutLibraryWindow.Activate();
-            }
-            else
-            {
-                ShortcutLibraryWindow.ShowDialog(this);
             }
         }
 
