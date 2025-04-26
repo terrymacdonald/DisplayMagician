@@ -22,7 +22,7 @@ namespace DisplayMagician.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public class Resources {
+    internal class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace DisplayMagician.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Resources.ResourceManager ResourceManager {
+        internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("DisplayMagician.Properties.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace DisplayMagician.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Globalization.CultureInfo Culture {
+        internal static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -61,41 +61,11 @@ namespace DisplayMagician.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap amdblack {
-            get {
-                object obj = ResourceManager.GetObject("amdblack", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap amdwhite {
-            get {
-                object obj = ResourceManager.GetObject("amdwhite", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon DisplayMagician {
+        internal static System.Drawing.Icon displaymagician {
             get {
-                object obj = ResourceManager.GetObject("DisplayMagician", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
-        /// </summary>
-        public static System.Drawing.Icon DisplayMagician2 {
-            get {
-                object obj = ResourceManager.GetObject("DisplayMagician2", resourceCulture);
+                object obj = ResourceManager.GetObject("displaymagician", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
@@ -103,7 +73,7 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap Epic {
+        internal static System.Drawing.Bitmap Epic {
             get {
                 object obj = ResourceManager.GetObject("Epic", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -113,9 +83,9 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap Error {
+        internal static System.Drawing.Bitmap error {
             get {
-                object obj = ResourceManager.GetObject("Error", resourceCulture);
+                object obj = ResourceManager.GetObject("error", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -123,7 +93,7 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap exe {
+        internal static System.Drawing.Bitmap exe {
             get {
                 object obj = ResourceManager.GetObject("exe", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -133,7 +103,7 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap GOG {
+        internal static System.Drawing.Bitmap GOG {
             get {
                 object obj = ResourceManager.GetObject("GOG", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -143,27 +113,7 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap nvidiablack {
-            get {
-                object obj = ResourceManager.GetObject("nvidiablack", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap nvidiawhite {
-            get {
-                object obj = ResourceManager.GetObject("nvidiawhite", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Origin {
+        internal static System.Drawing.Bitmap Origin {
             get {
                 object obj = ResourceManager.GetObject("Origin", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -173,9 +123,9 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap RedArrows {
+        internal static System.Drawing.Bitmap redarrowsdown {
             get {
-                object obj = ResourceManager.GetObject("RedArrows", resourceCulture);
+                object obj = ResourceManager.GetObject("redarrowsdown", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -183,7 +133,7 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap redarrowsup {
+        internal static System.Drawing.Bitmap redarrowsup {
             get {
                 object obj = ResourceManager.GetObject("redarrowsup", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -193,7 +143,17 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap Steam {
+        internal static System.Drawing.Bitmap redcross {
+            get {
+                object obj = ResourceManager.GetObject("redcross", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Steam {
             get {
                 object obj = ResourceManager.GetObject("Steam", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -203,7 +163,7 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap Uplay {
+        internal static System.Drawing.Bitmap Uplay {
             get {
                 object obj = ResourceManager.GetObject("Uplay", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -213,9 +173,9 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap Warning {
+        internal static System.Drawing.Bitmap warning {
             get {
-                object obj = ResourceManager.GetObject("Warning", resourceCulture);
+                object obj = ResourceManager.GetObject("warning", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -223,7 +183,7 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap whitearrows {
+        internal static System.Drawing.Bitmap whitearrows {
             get {
                 object obj = ResourceManager.GetObject("whitearrows", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -233,29 +193,9 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        public static System.Drawing.Bitmap whitearrowsup {
+        internal static System.Drawing.Bitmap whitearrowsup {
             get {
                 object obj = ResourceManager.GetObject("whitearrowsup", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap winblack {
-            get {
-                object obj = ResourceManager.GetObject("winblack", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap winwhite {
-            get {
-                object obj = ResourceManager.GetObject("winwhite", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

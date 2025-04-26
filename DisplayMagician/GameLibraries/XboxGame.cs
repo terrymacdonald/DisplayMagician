@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security;
-using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using Microsoft.Win32;
 using System.Diagnostics;
 using DisplayMagician.Processes;
@@ -215,17 +215,17 @@ namespace DisplayMagician.GameLibraries
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                name = Language.Unknown;
+                name = "Unknown";
             }
 
             if (IsRunning)
             {
-                return name + " " + Language.Running;
+                return name + " " + "[Running]";
             }
 
             if (IsUpdating)
             {
-                return name + " " + Language.Updating;
+                return name + " " + "[Updating]";
             }
 
             return name;

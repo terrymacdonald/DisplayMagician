@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagician.GameLibraries;
 using Manina.Windows.Forms;
@@ -771,8 +771,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_file,
-                        Language.Executable,
+                        "Selected file is not a valid file.",
+                        "Executable",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }
@@ -1646,7 +1646,7 @@ namespace DisplayMagician.UIForms
                         if (_availableImages.Count == 0)
                         {
                             logger.Trace($"ShortcutForm/ShortcutForm_Load: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                            ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                            ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.displaymagician.ToBitmap(), "DisplayMagician Icon", "", 0);
                             _availableImages.Add(bm);
 
                         }
@@ -1766,7 +1766,7 @@ namespace DisplayMagician.UIForms
                         if (_availableImages.Count == 0)
                         {
                             logger.Trace($"ShortcutForm/ShortcutForm_Load: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                            ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                            ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.displaymagician.ToBitmap(), "DisplayMagician Icon", "", 0);
                             _availableImages.Add(bm);
 
                         }
@@ -2009,7 +2009,7 @@ namespace DisplayMagician.UIForms
                             else
                             {
                                 logger.Trace($"ShortcutForm/ShortcutForm_Load: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                                ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                                ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.displaymagician.ToBitmap(), "DisplayMagician Icon", "", 0);
                                 _availableImages.Add(bm);
                             }
 
@@ -2462,8 +2462,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_file,
-                        Language.Executable,
+                        "Selected file is not a valid file.",
+                        "Executable",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }
@@ -2791,7 +2791,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.displaymagician.ToBitmap(), "DisplayMagician Icon", "", 0);
                 _availableImages.Add(bm);
                 _shortcutToEdit.SelectedImage = _selectedImage;
             }
@@ -2836,8 +2836,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_file,
-                        Language.Executable,
+                        "Selected file is not a valid file.",
+                        "Executable",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }
@@ -3265,8 +3265,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_file,
-                        Language.Executable,
+                        "Selected file is not a valid file.",
+                        "Executable",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }

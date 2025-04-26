@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Resources;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -9,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician;
+//using DisplayMagician.Resources;
 using Microsoft.VisualBasic.Devices;
 using SharpGen.Runtime;
 using Vortice.DirectInput;
@@ -18,12 +20,7 @@ namespace DisplayMagician.UIForms
 {
     public partial class HotkeyForm : Form
     {
-        //HotkeyListener myHotkeyListener = null;
-        //HotkeySelector hks;
-        Keys myHotkey = Keys.None;
-        string emptyHotkeyText = "";
-        string invalidHotkeyText = " (invalid - try again!)";
-        List<Keys> _invalidKeyCombination = new List<Keys>() { };
+        //List<Keys> _invalidKeyCombination = new List<Keys>() { };
         List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>() { };
         List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>() { };
         string _uuid = string.Empty;
@@ -33,10 +30,14 @@ namespace DisplayMagician.UIForms
         private CancellationTokenSource _captureCts;
         private Thread _captureThread;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private List<Key> _lastKeys = new List<Key>();
-        private List<JoystickDevice> _lastButtons = new();
+        private List<Key> _displayedKeys = new List<Key>();
+        private List<JoystickDevice> _displayedButtons = new();
 
-        private DateTime _lastUpdateTime = DateTime.MinValue;
+        private DateTime _lastNonEmptyPressTime = DateTime.MinValue;
+        private const double _gracePeriodMilliseconds = 15000; // 15 seconds
+        private TimeSpan _gracePeriod = TimeSpan.FromMilliseconds(_gracePeriodMilliseconds);
+
+        //private DateTime _lastUpdateTime = DateTime.MinValue;
 
 
         public List<HotkeyKeyboard> KeyboardHotkeys
@@ -67,7 +68,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        public string UUID 
+        public string UUID
         {
             get
             {
@@ -81,12 +82,10 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        public HotkeyTask TaskMode 
+        public HotkeyTask TaskMode
         {
             get
             {
-                if (_taskMode == null)
-                    _taskMode = HotkeyTask.RunGameShortcut;
                 return _taskMode;
             }
             set
@@ -122,7 +121,7 @@ namespace DisplayMagician.UIForms
         {
             InitializeComponent();
 
-            GenerateInvalidModifiers();
+            //GenerateInvalidModifiers();
 
             if (!String.IsNullOrEmpty(hotkeyHeading))
             {
@@ -166,6 +165,14 @@ namespace DisplayMagician.UIForms
             //Add column header
             lv_hotkeys.Columns.Add("Hotkey Combination", 200);
             lv_hotkeys.Columns.Add("Action", 200);
+            lv_hotkeys.Columns.Add("Delete", 50); // New column for delete icon!
+
+            // Create ImageList
+            var imageList = new ImageList();
+            imageList.ImageSize = new Size(16, 16);
+            // Directly access strongly-typed resources
+            imageList.Images.Add("delete", (Bitmap)Properties.Resources.redcross);
+            lv_hotkeys.SmallImageList = imageList;
 
         }
 
@@ -202,9 +209,6 @@ namespace DisplayMagician.UIForms
         {
             this.DialogResult = DialogResult.None;
             txt_hotkey.Text = "";
-            myHotkey = Keys.None;
-            //this.ActiveControl = txt_hotkey;
-            //txt_hotkey.DeselectAll();
         }
 
         private void btn_apply_Click(object sender, EventArgs e)
@@ -216,19 +220,27 @@ namespace DisplayMagician.UIForms
             }
 
             // Check if the hotkey is a keyboard hotkey or a joystick hotkey, and add it to the list of hotkeys
-            if (_lastKeys.Any())
+            if (_displayedKeys.Any())
             {
-                HotkeyKeyboard newHotkey = new HotkeyKeyboard(_lastKeys, TaskMode, UUID);
+                HotkeyKeyboard newHotkey = new HotkeyKeyboard(_displayedKeys, TaskMode, UUID);
                 _keyboardHotkeys.Add(newHotkey);
-                lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateKeyboardHotkeyText(newHotkey) , newHotkey.Description }));
+                ListViewItem lvItem = new ListViewItem(Program.AppDirectInputManager.GenerateKeyboardHotkeyText(newHotkey));
+                lvItem.SubItems.Add(newHotkey.Description);
+                lvItem.SubItems.Add("");
+                lvItem.ImageIndex = 0; // Set the image index for the delete icon
+                lv_hotkeys.Items.Add(lvItem);
             }
-            else if (_lastButtons.Any())
-            {                
-                HotkeyJoystick newHotkey = new HotkeyJoystick(_lastButtons[0], TaskMode, UUID);
+            else if (_displayedButtons.Any())
+            {
+                HotkeyJoystick newHotkey = new HotkeyJoystick(_displayedButtons[0], TaskMode, UUID);
                 _joystickHotkeys.Add(newHotkey);
-                lv_hotkeys.Items.Add(new ListViewItem(new string[] { Program.AppDirectInputManager.GenerateJoystickHotkeyText(newHotkey), newHotkey.Description }));
+                ListViewItem lvItem = new ListViewItem(Program.AppDirectInputManager.GenerateJoystickHotkeyText(newHotkey));
+                lvItem.SubItems.Add(newHotkey.Description);
+                lvItem.SubItems.Add("");
+                lvItem.ImageIndex = 0; // Set the image index for the delete icon
+                lv_hotkeys.Items.Add(lvItem);
             }
-            
+
             // Also trigger the saving of the hotkey data to the settings file to make the settings permananet
             Program.AppProgramSettings.SaveSettings();
 
@@ -246,12 +258,12 @@ namespace DisplayMagician.UIForms
             {
                 DialogResult = DialogResult.Cancel;
             }
-                this.Close();
+            this.Close();
         }
 
 
         private void CaptureLoop(CancellationToken token)
-        {          
+        {
 
             while (!token.IsCancellationRequested)
             {
@@ -315,24 +327,25 @@ namespace DisplayMagician.UIForms
                     }
                 }
 
-                // Check if 500ms have passed since the last update
-                
-                if (pressedKeys.Any() || pressedButtons.Any())
+                bool isComboBigger = (pressedKeys.Count() > _displayedKeys.Count()) || (pressedButtons.Count() > _displayedButtons.Count());
+                bool isPressActive = pressedKeys.Any() || pressedButtons.Any();
+                //bool isInvalidKeyCombination = _invalidKeyCombination.Equals(pressedKeys);
+
+                if (isComboBigger && isPressActive)
                 {
-                    if (!pressedKeys.SequenceEqual(_lastKeys) || !pressedButtons.SequenceEqual(_lastButtons))
-                    {
-                        if ((DateTime.Now - _lastUpdateTime).TotalMilliseconds >= 300)
-                        {
-                            // No change in pressed keys or buttons
-                            _lastKeys = new List<Key>(pressedKeys);
-                            _lastButtons = new List<JoystickDevice>(pressedButtons);
-                            UpdateHotkeyText(_lastKeys, _lastButtons);
-                            _lastUpdateTime = DateTime.Now;
-                        }
-                    }
+                    // New bigger valid combination — display immediately
+                    _displayedKeys = new List<Key>(pressedKeys);
+                    _displayedButtons = new List<JoystickDevice>(pressedButtons);
+                    _lastNonEmptyPressTime = DateTime.Now;
+                    UpdateHotkeyText(_displayedKeys, _displayedButtons);
+                }
+                else if (!isPressActive && (DateTime.Now - _lastNonEmptyPressTime) < _gracePeriod)
+                {
+                    // Still within grace period — keep displaying
+                    UpdateHotkeyText(_displayedKeys, _displayedButtons);
                 }
 
-                Thread.Sleep(150);
+                Thread.Sleep(50);
             }
         }
 
@@ -357,84 +370,84 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void GenerateInvalidModifiers()
-        {
-            // Create a List of all Invalid key combinations
-            _invalidKeyCombination = new List<Keys>() { };
+        /* private void GenerateInvalidModifiers()
+         {
+             // Create a List of all Invalid key combinations
+             _invalidKeyCombination = new List<Keys>() { };
 
-            // Shift by itself
-            _invalidKeyCombination.Add(Keys.Shift);
-            _invalidKeyCombination.Add(Keys.ShiftKey);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.ShiftKey);
-            // Control by itself
-            _invalidKeyCombination.Add(Keys.Control);
-            _invalidKeyCombination.Add(Keys.ControlKey);
-            _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey);
-            // Alt by itself
-            _invalidKeyCombination.Add(Keys.Alt);
-            _invalidKeyCombination.Add(Keys.Menu);
-            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu);
-            // Control + Alt
-            _invalidKeyCombination.Add(Keys.Control | Keys.Alt);
-            _invalidKeyCombination.Add(Keys.Control | Keys.Alt | Keys.Menu);
-            _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey | Keys.Alt | Keys.Menu);
-            // Control + Shift
-            _invalidKeyCombination.Add(Keys.Control | Keys.Shift);
-            _invalidKeyCombination.Add(Keys.Control | Keys.Shift | Keys.ShiftKey);
-            _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey | Keys.Shift | Keys.ShiftKey);
-            // Shift + Alt
-            _invalidKeyCombination.Add(Keys.Alt | Keys.Shift);
-            _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.ShiftKey);
-            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu | Keys.Shift | Keys.ShiftKey);
-            // Ctrl + Shift + Alt
-            _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.Control);
-            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu | Keys.Shift | Keys.Control);
+             // Shift by itself
+             _invalidKeyCombination.Add(Keys.Shift);
+             _invalidKeyCombination.Add(Keys.ShiftKey);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.ShiftKey);
+             // Control by itself
+             _invalidKeyCombination.Add(Keys.Control);
+             _invalidKeyCombination.Add(Keys.ControlKey);
+             _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey);
+             // Alt by itself
+             _invalidKeyCombination.Add(Keys.Alt);
+             _invalidKeyCombination.Add(Keys.Menu);
+             _invalidKeyCombination.Add(Keys.Alt | Keys.Menu);
+             // Control + Alt
+             _invalidKeyCombination.Add(Keys.Control | Keys.Alt);
+             _invalidKeyCombination.Add(Keys.Control | Keys.Alt | Keys.Menu);
+             _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey | Keys.Alt | Keys.Menu);
+             // Control + Shift
+             _invalidKeyCombination.Add(Keys.Control | Keys.Shift);
+             _invalidKeyCombination.Add(Keys.Control | Keys.Shift | Keys.ShiftKey);
+             _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey | Keys.Shift | Keys.ShiftKey);
+             // Shift + Alt
+             _invalidKeyCombination.Add(Keys.Alt | Keys.Shift);
+             _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.ShiftKey);
+             _invalidKeyCombination.Add(Keys.Alt | Keys.Menu | Keys.Shift | Keys.ShiftKey);
+             // Ctrl + Shift + Alt
+             _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.Control);
+             _invalidKeyCombination.Add(Keys.Alt | Keys.Menu | Keys.Shift | Keys.Control);
 
-            // LWin by itself
-            _invalidKeyCombination.Add(Keys.LWin);
-            // RWin by itself
-            _invalidKeyCombination.Add(Keys.RWin);
+             // LWin by itself
+             _invalidKeyCombination.Add(Keys.LWin);
+             // RWin by itself
+             _invalidKeyCombination.Add(Keys.RWin);
 
-            // Delete by itself
-            _invalidKeyCombination.Add(Keys.Delete);
+             // Delete by itself
+             _invalidKeyCombination.Add(Keys.Delete);
 
-            // Shift + 0 - 9, A - Z.
-            for (Keys k = Keys.D0; k <= Keys.Z; k++)
-                _invalidKeyCombination.Add(Keys.Shift | k);
+             // Shift + 0 - 9, A - Z.
+             for (Keys k = Keys.D0; k <= Keys.Z; k++)
+                 _invalidKeyCombination.Add(Keys.Shift | k);
 
-            // Shift + Numpad keys.
-            for (Keys k = Keys.NumPad0; k <= Keys.NumPad9; k++)
-                _invalidKeyCombination.Add(Keys.Shift | k);
+             // Shift + Numpad keys.
+             for (Keys k = Keys.NumPad0; k <= Keys.NumPad9; k++)
+                 _invalidKeyCombination.Add(Keys.Shift | k);
 
-            // Shift + Misc (,;<./ etc).
-            for (Keys k = Keys.Oem1; k <= Keys.OemBackslash; k++)
-                _invalidKeyCombination.Add(Keys.Shift | k);
+             // Shift + Misc (,;<./ etc).
+             for (Keys k = Keys.Oem1; k <= Keys.OemBackslash; k++)
+                 _invalidKeyCombination.Add(Keys.Shift | k);
 
-            // Shift + Space, PgUp, PgDn, End, Home.
-            for (Keys k = Keys.Space; k <= Keys.Home; k++)
-                _invalidKeyCombination.Add(Keys.Shift | k);
+             // Shift + Space, PgUp, PgDn, End, Home.
+             for (Keys k = Keys.Space; k <= Keys.Home; k++)
+                 _invalidKeyCombination.Add(Keys.Shift | k);
 
-            // Misc keys that we can't loop through.
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Insert);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Help);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Multiply);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Add);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Subtract);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Divide);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Decimal);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Return);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Escape);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.NumLock);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Scroll);
-            _invalidKeyCombination.Add(Keys.Shift | Keys.Pause);
+             // Misc keys that we can't loop through.
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Insert);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Help);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Multiply);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Add);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Subtract);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Divide);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Decimal);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Return);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Escape);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.NumLock);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Scroll);
+             _invalidKeyCombination.Add(Keys.Shift | Keys.Pause);
 
-            // Ctrl+Alt + 0 - 9.
-            for (Keys k = Keys.D0; k <= Keys.D9; k++)
-                _invalidKeyCombination.Add(Keys.Control | Keys.Alt & k);
+             // Ctrl+Alt + 0 - 9.
+             for (Keys k = Keys.D0; k <= Keys.D9; k++)
+                 _invalidKeyCombination.Add(Keys.Control | Keys.Alt & k);
 
-            // Ctrl + Del
-            _invalidKeyCombination.Add(Keys.Control | Keys.Delete);
-        }
+             // Ctrl + Del
+             _invalidKeyCombination.Add(Keys.Control | Keys.Delete);
+         }*/
 
         private void HotkeyForm_Activated(object sender, EventArgs e)
         {
@@ -450,7 +463,34 @@ namespace DisplayMagician.UIForms
 
             // restart the hotkey monitoring as we're leaving this form
             Program.AppDirectInputManager.Start();
-            
+
+        }
+
+        private void btn_clear_Click_1(object sender, EventArgs e)
+        {
+            _displayedKeys.Clear();
+            _displayedButtons.Clear();
+            txt_hotkey.Text = string.Empty;
+        }
+
+        private void lv_hotkeys_MouseClick(object sender, MouseEventArgs e)
+        {
+            var hit = lv_hotkeys.HitTest(e.Location);
+            if (hit.Item != null && hit.SubItem != null)
+            {
+                int subItemIndex = hit.Item.SubItems.IndexOf(hit.SubItem);
+
+                // Check if the clicked subitem is the "Delete" column
+                if (subItemIndex == 2) // assuming 3rd column is Delete
+                {
+                    if (MessageBox.Show("Are you sure you want to delete this hotkey?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        lv_hotkeys.Items.Remove(hit.Item);
+
+                        // TODO: Remove from Program.AppProgramSettings as well if needed
+                    }
+                }
+            }
         }
     }
 }

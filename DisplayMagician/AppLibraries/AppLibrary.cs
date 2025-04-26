@@ -276,7 +276,7 @@ namespace DisplayMagician.AppLibraries
                     }
                     else
                     {
-                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", App.ExePath, 0);
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.displaymagician.ToBitmap(), "DisplayMagician Icon", App.ExePath, 0);
                     }
                     // Add the shortcutbitmap to the list
                     App.AvailableAppBitmaps.Add(bm);

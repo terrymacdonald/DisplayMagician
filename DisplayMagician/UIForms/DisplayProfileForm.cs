@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
 using Manina.Windows.Forms;
@@ -56,8 +56,8 @@ namespace DisplayMagician.UIForms
 
             if (!_selectedProfile.IsPossible)
             {
-                MessageBox.Show(this, Language.This_profile_is_currently_impossible_to_apply,
-                    Language.Apply_Profile,
+                MessageBox.Show(this, "This profile is currently impossible to apply.",
+                    "Apply Profile",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 return;
@@ -229,16 +229,15 @@ namespace DisplayMagician.UIForms
                         if (_selectedProfile.CreateShortcut(dialog_save.FileName))
                         {
                             MessageBox.Show(
-                                String.Format(Language.Shortcut_placed_successfully, dialog_save.FileName),
-                                Language.Shortcut,
+                                String.Format("Shortcut successfully saved to '{0}'", dialog_save.FileName),
+                                "Shortcut",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
                         }
                         else
                         {
-                            MessageBox.Show(
-                                Language.Failed_to_create_the_shortcut_Unexpected_exception_occurred,
-                                Language.Shortcut,
+                            MessageBox.Show("Failed to create the shortcut. Unexpected exception occurred.",
+                                "Shortcut",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Exclamation);
                         }
@@ -249,7 +248,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(ex.Message, "Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
 
             }

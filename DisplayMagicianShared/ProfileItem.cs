@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
-using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -1954,7 +1953,7 @@ namespace DisplayMagicianShared
         // IMPORTANT - This ProfileItem ToString function is required to make the Profile ImageListView work properly! DO NOT DELETE!
         public override string ToString()
         {
-            return (Name ?? Language.UN_TITLED_PROFILE);
+            return (Name ?? "Untitled Profile");
         }
 
         public string CreateCommand()

@@ -1,4 +1,4 @@
-﻿using DisplayMagician.Resources;
+﻿//using DisplayMagician.Resources;
 using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
@@ -328,7 +328,7 @@ namespace DisplayMagician.UIForms
             // 
             dialog_save.DefaultExt = "lnk";
             dialog_save.DereferenceLinks = false;
-            dialog_save.Filter = Language.Shortcuts_Filter;
+            dialog_save.Filter = "Shortcuts|*.lnk";
             dialog_save.RestoreDirectory = true;
             // 
             // btn_hotkey

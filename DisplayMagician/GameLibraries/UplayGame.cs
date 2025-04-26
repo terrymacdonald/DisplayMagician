@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using DisplayMagician.Resources;
 using System.Diagnostics;
 using DisplayMagician.Processes;
 using Newtonsoft.Json;
@@ -183,12 +182,12 @@ namespace DisplayMagician.GameLibraries
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                name = Language.Unknown;
+                name = "Unknown";
             }
 
             if (IsRunning)
             {
-                return name + " " + Language.Running;
+                return name + " " + "[Running]";
             }
 
             /*if (IsUpdating)

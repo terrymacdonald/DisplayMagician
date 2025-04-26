@@ -1,5 +1,6 @@
 ﻿using DisplayMagician.GameLibraries;
-using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
+using System.Drawing;
 using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
@@ -1470,7 +1471,7 @@ namespace DisplayMagician
                 // If we fail to create an icon any other way, then we use the default profile icon
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileToUse.Name} as the icon instead.");
                 SingleIcon si = shortcutIcon.Add("icon2");
-                si.Add(Properties.Resources.DisplayMagician);
+                si.Add(Properties.Resources.displaymagician);
                 shortcutIcon.SelectedIndex = 0; 
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
                 shortcutIcon.Save(_savedShortcutIconCacheFilename);
@@ -1769,7 +1770,7 @@ namespace DisplayMagician
                 if (Category == ShortcutCategory.Executable)
                 {
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Execute_application_with_profile, programName, ProfileToUse.Name);
+                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", programName, ProfileToUse.Name);
 
                 }
                 // Only add the rest of the options if the temporary switch radio button is set
@@ -1777,7 +1778,7 @@ namespace DisplayMagician
                 else if (DisplayPermanence == ShortcutPermanence.Temporary)
                 {
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Execute_application_with_profile, GameName, ProfileToUse.Name);
+                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", GameName, ProfileToUse.Name);
                 }
 
             }
@@ -1785,7 +1786,7 @@ namespace DisplayMagician
             else
             {
                 // Prepare text for the shortcut description field
-                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, ProfileToUse.Name);
+                shortcutDescription = string.Format("Switching display profile to '{0}'.", ProfileToUse.Name);
             }
 
             // Now we are ready to create a shortcut based on the filename the user gave us

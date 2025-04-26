@@ -1,7 +1,7 @@
 ﻿using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
-using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using NHotkey.WindowsForms;
@@ -197,16 +197,16 @@ namespace DisplayMagician.UIForms
                         if (_selectedShortcut.CreateShortcut(dialog_save.FileName))
                         {
                             MessageBox.Show(
-                                String.Format(Language.Shortcut_placed_successfully, dialog_save.FileName),
-                                Language.Shortcut,
+                                "Shortcut successfully saved to '{0}'.",
+                                "Shortcut",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
                         }
                         else
                         {
                             MessageBox.Show(
-                                Language.Failed_to_create_the_shortcut_Unexpected_exception_occurred,
-                                Language.Shortcut,
+                                "Failed to create the shortcut. Unexpected exception occurred.",
+                                "Shortcut",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Exclamation);
                         }
@@ -218,7 +218,7 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"ShortcutLibraryForm/btn_save_Click: Exception saving shortcut to {dialog_save.FileName}.");
-                    MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(ex.Message, "Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
         }

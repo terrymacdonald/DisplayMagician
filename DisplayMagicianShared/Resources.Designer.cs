@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace DisplayMagicianShared.Resources {
+namespace DisplayMagicianShared {
     using System;
     
     
@@ -22,14 +22,14 @@ namespace DisplayMagicianShared.Resources {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Language {
+    internal class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Language() {
+        internal Resources() {
         }
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace DisplayMagicianShared.Resources {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("DisplayMagicianShared.Resources.Language", typeof(Language).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("DisplayMagicianShared.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -57,42 +57,6 @@ namespace DisplayMagicianShared.Resources {
             }
             set {
                 resourceCulture = value;
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to [Active].
-        /// </summary>
-        internal static string _Active_ {
-            get {
-                return ResourceManager.GetString("_Active_", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Pulling everything apart.
-        /// </summary>
-        internal static string Applying_First_Message {
-            get {
-                return ResourceManager.GetString("Applying_First_Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Putting it back together.
-        /// </summary>
-        internal static string Applying_Second_Message {
-            get {
-                return ResourceManager.GetString("Applying_Second_Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to UN-TITLED-PROFILE.
-        /// </summary>
-        internal static string UN_TITLED_PROFILE {
-            get {
-                return ResourceManager.GetString("UN_TITLED_PROFILE", resourceCulture);
             }
         }
     }

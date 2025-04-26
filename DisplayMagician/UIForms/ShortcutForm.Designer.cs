@@ -1,4 +1,4 @@
-﻿using DisplayMagician.Resources;
+﻿//using DisplayMagician.Resources;
 using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms

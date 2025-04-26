@@ -108,7 +108,7 @@ namespace DisplayMagician.UIForms
 
                     // Draw a warning triangle over it
                     // right in the centre
-                    g.DrawImage(Properties.Resources.Error, pos.X + 30, pos.Y + 30, 40, 40);
+                    g.DrawImage(Properties.Resources.error, pos.X + 30, pos.Y + 30, 40, 40);
                 }
                 else if (shortcutToRender.IsValid == ShortcutValidity.Warning)
                 {
@@ -119,7 +119,7 @@ namespace DisplayMagician.UIForms
 
                     // Draw a warning triangle over it
                     // right in the centre
-                    g.DrawImage(Properties.Resources.Warning, pos.X + 30, pos.Y + 30, 40, 40);
+                    g.DrawImage(Properties.Resources.warning, pos.X + 30, pos.Y + 30, 40, 40);
                 }
                 else
                 {
@@ -284,7 +284,7 @@ namespace DisplayMagician.UIForms
 
                     // Draw a warning triangle over it
                     // right in the centre
-                    g.DrawImage(Properties.Resources.Warning, pos.X + 30, pos.Y + 30, 40, 40);
+                    g.DrawImage(Properties.Resources.warning, pos.X + 30, pos.Y + 30, 40, 40);
                 }
 
 

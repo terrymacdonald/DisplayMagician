@@ -1,4 +1,4 @@
-﻿using DisplayMagician.Resources;
+﻿//using DisplayMagician.Resources;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -212,8 +212,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_file,
-                        Language.Executable,
+                        "Selected file is not a valid file.",
+                        "Executable",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }
@@ -239,7 +239,7 @@ namespace DisplayMagician.UIForms
 
         private void pb_down_arrow_MouseEnter(object sender, EventArgs e)
         {
-            pb_down_arrow.Image = DisplayMagician.Properties.Resources.RedArrows;
+            pb_down_arrow.Image = DisplayMagician.Properties.Resources.redarrowsdown;
         }
 
         private void pb_down_arrow_MouseLeave(object sender, EventArgs e)

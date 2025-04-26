@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System.Windows.Forms;
-using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using DisplayMagician.GameLibraries;
@@ -901,7 +900,7 @@ namespace DisplayMagician {
                 logger.Error(ex, $"Program/CreateProfile top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 MessageBox.Show(
                     ex.Message,
-                    Language.Fatal_Error,
+                    "Fatal Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 errLevel = ERRORLEVEL.ERROR_EXCEPTION;
@@ -937,7 +936,7 @@ namespace DisplayMagician {
                     // Save a copy of the DisplayMagician Icon
                     if (!File.Exists(AppDisplayMagicianIconFilename))
                     {
-                        Icon heliosIcon = (Icon)Properties.Resources.DisplayMagician;
+                        Icon heliosIcon = (Icon)Properties.Resources.displaymagician;
                         using (FileStream fs = new FileStream(AppDisplayMagicianIconFilename, FileMode.Create))
                             heliosIcon.Save(fs);
                     }
@@ -966,7 +965,7 @@ namespace DisplayMagician {
                 logger.Error(ex, $"Program/StartUpApplication top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 MessageBox.Show(
                     ex.Message,
-                    Language.Fatal_Error,
+                    "Fatal Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
 

@@ -20,7 +20,12 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 	<UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
+	<GenerateResourceDesigner>true</GenerateResourceDesigner>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+	  <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+	  <GenerateResourceDesigner>true</GenerateResourceDesigner>
+	  <EnableWinFormsAnalyzers>true</EnableWinFormsAnalyzers>
+	  <UseWinForms>true</UseWinForms>
 	  <!-- Set this to prevent target framework and runtime subfolders -->
 	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
@@ -48,7 +53,7 @@
 	  <NoWarn>1701;1702;CA1416</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
+    <ApplicationIcon>Properties\DisplayMagician.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>DisplayMagician.Program</StartupObject>
@@ -67,8 +72,16 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Resources\redcross.png" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="HotkeySelector.cs">
       <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Update="UIForms\DonationForm.cs">
       <SubType>Form</SubType>
@@ -107,6 +120,7 @@
     <PackageReference Include="protobuf-net">
       <Version>3.2.52</Version>
     </PackageReference>
+    <PackageReference Include="System.Drawing.Common" Version="9.0.4" />
     <PackageReference Include="System.Management" Version="9.0.4" />
     <PackageReference Include="ValveKeyValue">
       <Version>0.13.1.398</Version>
@@ -127,7 +141,7 @@
     <PackageReference Include="System.ServiceModel.Federation" Version="8.1.2" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\DisplayMagician.ico">
+    <Content Include="Properties\DisplayMagician.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\redarrows.png" />
@@ -160,6 +174,12 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />

@@ -1,6 +1,6 @@
 ﻿using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
-using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
@@ -142,8 +142,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_file,
-                        Language.Executable,
+                        "Selected file is not a valid file.",
+                        "Executable",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }
