@@ -276,7 +276,11 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            if (DisplayProfileWindow == null || DisplayProfileWindow.IsDisposed)
+            DisplayProfileWindow = new DisplayProfileForm();
+            DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
+            DisplayProfileWindow.ShowDialog(this);
+
+            /*if (DisplayProfileWindow == null || DisplayProfileWindow.IsDisposed)
             {
                 DisplayProfileWindow = new DisplayProfileForm();
                 DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
@@ -285,7 +289,7 @@ namespace DisplayMagician.UIForms
             else
             {
                 DisplayProfileWindow.Activate();
-            }                
+            }                */
         }
 
         private void pb_game_shortcut_Click(object sender, EventArgs e)
@@ -312,7 +316,11 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            if (ShortcutLibraryWindow == null || ShortcutLibraryWindow.IsDisposed)
+            ShortcutLibraryWindow = new ShortcutLibraryForm();
+            ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
+            ShortcutLibraryWindow.ShowDialog(this);
+
+            /*if (ShortcutLibraryWindow == null || ShortcutLibraryWindow.IsDisposed)
             {
                 ShortcutLibraryWindow = new ShortcutLibraryForm();
                 ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
@@ -321,7 +329,7 @@ namespace DisplayMagician.UIForms
             else 
             {
                 ShortcutLibraryWindow.Activate();
-            }
+            }*/
         }
 
         private void MainForm_Load(object sender, EventArgs e)

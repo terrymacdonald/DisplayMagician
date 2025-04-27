@@ -61,7 +61,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_selector.Name = "lbl_hotkey_selector";
             lbl_hotkey_selector.Size = new System.Drawing.Size(420, 59);
             lbl_hotkey_selector.TabIndex = 2;
-            lbl_hotkey_selector.Text = "Hold down the keys or buttons you'd like to use as a Hotkey, then release them. Selected keys or buttons will clear automatically in 15 seconds or you can clear them yourself with the Clear button.";
+            lbl_hotkey_selector.Text = "Hold down the keys or buttons you'd like to use as a Hotkey, then release them. Selected keys or buttons will clear automatically in 10 seconds or you can clear them yourself with the Clear button.";
             lbl_hotkey_selector.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // btn_save
@@ -146,6 +146,7 @@ namespace DisplayMagician.UIForms
             // 
             lv_hotkeys.Location = new System.Drawing.Point(50, 151);
             lv_hotkeys.Name = "lv_hotkeys";
+            lv_hotkeys.ShowGroups = false;
             lv_hotkeys.Size = new System.Drawing.Size(519, 119);
             lv_hotkeys.TabIndex = 9;
             lv_hotkeys.UseCompatibleStateImageBehavior = false;

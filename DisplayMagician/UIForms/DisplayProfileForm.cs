@@ -29,6 +29,9 @@ namespace DisplayMagician.UIForms
         //public bool  _monitorTaskBarRegKeysForChanges = false;
         //private readonly object _monitorTaskBarRegKeysForChangesLock = new object();
 
+        private List<HotkeyKeyboard> _shownKeyboardHotkeys = new();
+        private List<HotkeyJoystick> _shownJoystickHotkeys = new();
+
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public DisplayProfileForm()
@@ -361,6 +364,7 @@ namespace DisplayMagician.UIForms
                 Utils.AddAnimation(btn_donate);
             }
 
+            UpdateHotkeyText();
         }
 
 
@@ -433,7 +437,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Update the Hotkey Label text
-            //UpdateHotkeyLabel(_selectedProfile.Hotkey);
+            UpdateHotkeyText();
 
             // Refresh the image list view
             //RefreshImageListView(profile);
@@ -777,42 +781,24 @@ namespace DisplayMagician.UIForms
         {
             // Find the matching hotkeys so that we can load them in
             // and then show the hotkey form
-            List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
+            /*List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
             _keyboardHotkeys.AddRange(Program.AppDirectInputManager.GetKeyboardHotkeysByUUID(_selectedProfile.UUID));
             List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
-            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(_selectedProfile.UUID));
+            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(_selectedProfile.UUID));*/
 
             string hotkeyHeading = $"Manage your '{_selectedProfile.Name}' Display Profile Hotkeys";
             string hotkeyDescription = $"Choose one or more Hotkeys so that you can apply this Display Profile using your keyboard, joystick or button box. " +
                 "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
                 "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
                 "go to the Main Window and click the Settings button. ";
-            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.ChangeDisplayProfile, _selectedProfile.UUID, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
+            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.ChangeDisplayProfile, _selectedProfile.UUID, hotkeyHeading, hotkeyDescription);
             //ilv_saved_shortcuts.SuspendLayout();
             //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
-            if (displayHotkeyForm.DialogResult == DialogResult.OK)
-            {
-                // If the hotkey has changed, then set the unsaved warning to true
-                if (displayHotkeyForm.Changed)
-                {
-                    // now we store the Hotkey to be saved later
-                    Program.AppDirectInputManager.UpdateOrAddHotkeys(displayHotkeyForm.KeyboardHotkeys, displayHotkeyForm.JoystickHotkeys);
-                    // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                    string hotkeyText = Program.AppDirectInputManager.GenerateKeyboardHotkeyText(displayHotkeyForm.KeyboardHotkeys);
-                    hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(displayHotkeyForm.JoystickHotkeys);
-
-                    if (displayHotkeyForm.KeyboardHotkeys.Any() || displayHotkeyForm.JoystickHotkeys.Any())
-                    {
-                        lbl_hotkey_assigned.Text = "Hotkey: " + hotkeyText;
-                        lbl_hotkey_assigned.Visible = true;
-                    }
-                    else
-                    {
-                        lbl_hotkey_assigned.Text = "Hotkey: None";
-                        lbl_hotkey_assigned.Visible = false;
-                    }
-                }
+            if (displayHotkeyForm.Changed)
+            {                
+                UpdateHotkeyText();
+                
             }
         }
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
@@ -820,36 +806,78 @@ namespace DisplayMagician.UIForms
             btn_hotkey.PerformClick();
         }
 
-        private void UpdateHotkeyLabel (Keys myHotkey)
+        private void UpdateHotkeyText()
         {
-            // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-            if (myHotkey != Keys.None)
-            {
-                KeysConverter kc = new KeysConverter();
 
-                lbl_hotkey_assigned.Text = "Hotkey: " + kc.ConvertToString(myHotkey);
-                lbl_hotkey_assigned.Visible = true;
-            }
-            else 
+            try
             {
-                lbl_hotkey_assigned.Text = "Hotkey: None";
-                lbl_hotkey_assigned.Visible = false;
+                _shownKeyboardHotkeys = Program.AppProgramSettings.KeyboardHotkeys.Where(k => k.Task == HotkeyTask.ChangeDisplayProfile && k.UUID == _selectedProfile.UUID).ToList();
             }
-            
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"DisplayProfileForm/UpdateHotkeyText: Exception attempting to get the keyboard hotkeys from the settings file that match this taskmode ChangeDisplayProfile and UUID {_selectedProfile.UUID}.");
+            }
+            try
+            {
+                _shownJoystickHotkeys = Program.AppProgramSettings.JoystickHotkeys.Where(k => k.Task == HotkeyTask.ChangeDisplayProfile && k.UUID == _selectedProfile.UUID).ToList();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"DisplayProfileForm/UpdateHotkeyText: Exception attempting to get the joystick hotkeys from the settings file that match this taskmode ChangeDisplayProfile and UUID {_selectedProfile.UUID}.");
+            }
+
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            List<string> hotkeyList = new List<string>();
+            if (_shownKeyboardHotkeys.Count > 0)
+            {                
+                foreach (HotkeyKeyboard kb in _shownKeyboardHotkeys)
+                {
+                    hotkeyList.Add(Program.AppDirectInputManager.GetNameOfKeyboardHotkey(kb));
+                }
+            }
+            else if (_shownJoystickHotkeys.Count > 0)
+            {
+                foreach (HotkeyJoystick kb in _shownJoystickHotkeys)
+                {
+                    hotkeyList.Add(Program.AppDirectInputManager.GetNameOfJoystickHotkey(kb));
+                }                
+            }
+            string hotkeyText = string.Join(", ", hotkeyList);
+            if (hotkeyList.Count > 0)
+            {
+                if (lbl_hotkey_assigned.InvokeRequired)
+                {
+                    lbl_hotkey_assigned.Invoke(new Action(() =>
+                    {
+                        lbl_hotkey_assigned.Text = $"Hotkeys: {hotkeyText}";
+                        lbl_hotkey_assigned.Visible = true;
+                    }));
+                }
+                else
+                {
+                    lbl_hotkey_assigned.Text = $"Hotkeys: {hotkeyText}";
+                    lbl_hotkey_assigned.Visible = true;
+                }
+            }
+            else
+            {
+                if (lbl_hotkey_assigned.InvokeRequired)
+                {
+                    lbl_hotkey_assigned.Invoke(new Action(() =>
+                    {
+                        lbl_hotkey_assigned.Text = "Hotkeys: None";
+                        lbl_hotkey_assigned.Visible = false;
+                    }));
+                }
+                else
+                {
+                    lbl_hotkey_assigned.Text = "Hotkeys: None";
+                    lbl_hotkey_assigned.Visible = false;
+                }
+
+            }
+
         }
-
-        /*public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
-        {
-            if (ProfileRepository.ContainsProfile(e.Name))
-            {
-                string displayProfileUUID = e.Name;
-                ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
-                if (chosenProfile is ProfileItem)
-                    //ProfileRepository.ApplyProfile(chosenProfile);
-                    Program.ApplyProfileTask(chosenProfile);
-            }
-            
-        }*/
 
         private void btn_profile_settings_Click(object sender, EventArgs e)
         {

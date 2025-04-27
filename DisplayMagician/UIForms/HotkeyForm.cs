@@ -21,8 +21,9 @@ namespace DisplayMagician.UIForms
     public partial class HotkeyForm : Form
     {
         //List<Keys> _invalidKeyCombination = new List<Keys>() { };
-        List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>() { };
-        List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>() { };
+        private List<HotkeyKeyboard> _shownKeyboardHotkeys = new();
+        private List<HotkeyJoystick> _shownJoystickHotkeys = new();
+
         string _uuid = string.Empty;
         HotkeyTask _taskMode = HotkeyTask.RunGameShortcut;
         bool _changed = false;
@@ -31,39 +32,37 @@ namespace DisplayMagician.UIForms
         private Thread _captureThread;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private List<Key> _displayedKeys = new List<Key>();
-        private List<JoystickDevice> _displayedButtons = new();
+        private List<JoystickButton> _displayedButtons = new();
 
         private DateTime _lastNonEmptyPressTime = DateTime.MinValue;
-        private const double _gracePeriodMilliseconds = 15000; // 15 seconds
-        private TimeSpan _gracePeriod = TimeSpan.FromMilliseconds(_gracePeriodMilliseconds);
+        private const double _gracePeriodMilliseconds = 10000; // 10 seconds
+        private TimeSpan _gracePeriod = TimeSpan.FromMilliseconds(_gracePeriodMilliseconds);       
 
-
-
-        public List<HotkeyKeyboard> KeyboardHotkeys
+        public List<HotkeyKeyboard> ShownKeyboardHotkeys
         {
             get
             {
-                if (_keyboardHotkeys == null)
-                    _keyboardHotkeys = new List<HotkeyKeyboard>() { };
-                return _keyboardHotkeys;
+                if (_shownKeyboardHotkeys == null)
+                    _shownKeyboardHotkeys = new List<HotkeyKeyboard>() { };
+                return _shownKeyboardHotkeys;
             }
             set
             {
-                _keyboardHotkeys = value;
+                _shownKeyboardHotkeys = value;
             }
         }
 
-        public List<HotkeyJoystick> JoystickHotkeys
+        public List<HotkeyJoystick> ShownJoystickHotkeys
         {
             get
             {
-                if (_joystickHotkeys == null)
-                    _joystickHotkeys = new List<HotkeyJoystick>() { };
-                return _joystickHotkeys;
+                if (_shownJoystickHotkeys == null)
+                    _shownJoystickHotkeys = new List<HotkeyJoystick>() { };
+                return _shownJoystickHotkeys;
             }
             set
             {
-                _joystickHotkeys = value;
+                _shownJoystickHotkeys = value;
             }
         }
 
@@ -116,7 +115,7 @@ namespace DisplayMagician.UIForms
             //txt_hotkey.DeselectAll();
         }
 
-        public HotkeyForm(HotkeyTask taskMode, string uuid, List<HotkeyKeyboard> keyboardHotkeys, List<HotkeyJoystick> joystickHotkeys, string hotkeyHeading = "", string hotkeyDescription = "")
+        public HotkeyForm(HotkeyTask taskMode, string uuid, string hotkeyHeading = "", string hotkeyDescription = "")
         {
             InitializeComponent();
 
@@ -144,8 +143,49 @@ namespace DisplayMagician.UIForms
             // Set the variables we need
             _taskMode = taskMode;
             UUID = uuid;
-            KeyboardHotkeys = keyboardHotkeys;
-            JoystickHotkeys = joystickHotkeys;
+            _changed = false;
+            _shownKeyboardHotkeys.Clear();
+            _shownJoystickHotkeys.Clear();
+
+            // Find the matching hotkeys in the settings file that match what we want to show here and add them to the list of shown hotkeys
+            if (String.IsNullOrEmpty(uuid))
+            {
+                try
+                {
+                    _shownKeyboardHotkeys = Program.AppProgramSettings.KeyboardHotkeys.Where(k => k.Task == taskMode).ToList();
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"HotkeyForm/HotkeyForm: Exception attempting to get the keyboard hotkeys from the settings file that match this taskmode {taskMode}.");
+                }
+                try
+                {
+                    _shownJoystickHotkeys = Program.AppProgramSettings.JoystickHotkeys.Where(k => k.Task == taskMode).ToList();
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"HotkeyForm/HotkeyForm: Exception attempting to get the joystick hotkeys from the settings file that match this taskmode {taskMode}.");
+                }
+            }
+            else
+            {
+                try
+                {
+                    _shownKeyboardHotkeys = Program.AppProgramSettings.KeyboardHotkeys.Where(k => k.Task == taskMode && k.UUID == uuid).ToList();
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"HotkeyForm/HotkeyForm: Exception attempting to get the keyboard hotkeys from the settings file that match this taskmode {taskMode} and UUID {UUID}.");
+                }
+                try
+                {
+                    _shownJoystickHotkeys = Program.AppProgramSettings.JoystickHotkeys.Where(k => k.Task == taskMode && k.UUID == uuid).ToList();
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"HotkeyForm/HotkeyForm: Exception attempting to get the joystick hotkeys from the settings file that match this taskmode {taskMode} and UUID {UUID}.");
+                }
+            }
 
 
             // Disable the hotkey monitoring while we're on this form 
@@ -162,9 +202,9 @@ namespace DisplayMagician.UIForms
             lv_hotkeys.FullRowSelect = true;
 
             //Add column header
+            lv_hotkeys.Columns.Add("", 25); // New column for delete icon!
             lv_hotkeys.Columns.Add("Hotkey Combination", 200);
-            lv_hotkeys.Columns.Add("Action", 200);
-            lv_hotkeys.Columns.Add("Delete", 50); // New column for delete icon!
+            lv_hotkeys.Columns.Add("Action", 274);
 
             // Create ImageList
             var imageList = new ImageList();
@@ -172,6 +212,32 @@ namespace DisplayMagician.UIForms
             // Directly access strongly-typed resources
             imageList.Images.Add("delete", (Bitmap)Properties.Resources.redcross);
             lv_hotkeys.SmallImageList = imageList;
+
+            // Load the list with any pre-existing hotkeys we have been given
+            // Check if the hotkey is a keyboard hotkey or a joystick hotkey, and add it to the list of hotkeys
+            if (_shownKeyboardHotkeys.Any())
+            {                
+                foreach (var existingHotkey in _shownKeyboardHotkeys)
+                {
+                    ListViewItem lvItem = new ListViewItem("");
+                    lvItem.SubItems.Add(Program.AppDirectInputManager.GenerateKeyboardHotkeyText(existingHotkey));
+                    lvItem.SubItems.Add(existingHotkey.Description);
+
+                    lvItem.ImageIndex = 0; // Set the image index for the delete icon
+                    lv_hotkeys.Items.Add(lvItem);
+                }
+            }
+            if (_shownJoystickHotkeys.Any())
+            {               
+                foreach (var existingHotkey in _shownJoystickHotkeys)
+                {
+                    ListViewItem lvItem = new ListViewItem("");
+                    lvItem.SubItems.Add(Program.AppDirectInputManager.GenerateJoystickHotkeyText(existingHotkey));
+                    lvItem.SubItems.Add(existingHotkey.Description);
+                    lvItem.ImageIndex = 0; // Set the image index for the delete icon
+                    lv_hotkeys.Items.Add(lvItem);
+                }
+            }
 
         }
 
@@ -208,56 +274,72 @@ namespace DisplayMagician.UIForms
         {
             this.DialogResult = DialogResult.None;
             txt_hotkey.Text = "";
+
         }
 
         private void btn_apply_Click(object sender, EventArgs e)
         {
             if (txt_hotkey.Text == string.Empty)
             {
-                logger.Warn($"HotkeyForm/btn_apply_Click: User pressed the Apply button but there was no hotkey selected.");
-                MessageBox.Show("Please select a hotkey first.", "No Hotkey Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                logger.Warn($"HotkeyForm/btn_apply_Click: User pressed the Apply button but there was no key combination or button pressed.");
+                MessageBox.Show("Please press a key or button combination and then press the Apply button.", "No Hotkey Detected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
+            
             // Check if the hotkey is a keyboard hotkey or a joystick hotkey, and add it to the list of hotkeys
             if (_displayedKeys.Any())
             {
+                // Check that the hotkey wasn't already added
+                if (Program.AppProgramSettings.KeyboardHotkeys.Any(h => h.KeyCodes.SequenceEqual(_displayedKeys)))
+                {
+                    logger.Warn($"HotkeyForm/btn_apply_Click: User pressed the Apply button but the hotkey key combination was already added.");
+                    MessageBox.Show("This key combination is already assigned. Please delete the existing hotkey or choose a different combination.", "Duplicate Hotkey Key Combination", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 HotkeyKeyboard newHotkey = new HotkeyKeyboard(_displayedKeys, TaskMode, UUID);
-                _keyboardHotkeys.Add(newHotkey);
-                ListViewItem lvItem = new ListViewItem(Program.AppDirectInputManager.GenerateKeyboardHotkeyText(newHotkey));
+                Program.AppProgramSettings.KeyboardHotkeys.AddIfNotContains(newHotkey);
+                ListViewItem lvItem = new ListViewItem("");
+                lvItem.SubItems.Add(Program.AppDirectInputManager.GenerateKeyboardHotkeyText(newHotkey));
                 lvItem.SubItems.Add(newHotkey.Description);
-                lvItem.SubItems.Add("");
+
                 lvItem.ImageIndex = 0; // Set the image index for the delete icon
                 lv_hotkeys.Items.Add(lvItem);
+                _changed = true;
             }
             else if (_displayedButtons.Any())
             {
-                HotkeyJoystick newHotkey = new HotkeyJoystick(_displayedButtons[0], TaskMode, UUID);
-                _joystickHotkeys.Add(newHotkey);
-                ListViewItem lvItem = new ListViewItem(Program.AppDirectInputManager.GenerateJoystickHotkeyText(newHotkey));
+                // Check that the hotkey wasn't already added
+                if (Program.AppProgramSettings.JoystickHotkeys.Any(h => h.Buttons.SequenceEqual(_displayedButtons)))
+                {
+                    logger.Warn($"HotkeyForm/btn_apply_Click: User pressed the Apply button but the hotkey button combination was already added.");
+                    MessageBox.Show("This button combination is already assigned. Please delete the existing hotkey or choose a different combination.", "Duplicate Hotkey Button Combination", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+
+                HotkeyJoystick newHotkey = new HotkeyJoystick(_displayedButtons, TaskMode, UUID);
+                Program.AppProgramSettings.JoystickHotkeys.AddIfNotContains(newHotkey);
+                ListViewItem lvItem = new ListViewItem("");
+                lvItem.SubItems.Add(Program.AppDirectInputManager.GenerateJoystickHotkeyText(newHotkey));
                 lvItem.SubItems.Add(newHotkey.Description);
-                lvItem.SubItems.Add("");
                 lvItem.ImageIndex = 0; // Set the image index for the delete icon
                 lv_hotkeys.Items.Add(lvItem);
+                _changed = true;
             }
 
             // Also trigger the saving of the hotkey data to the settings file to make the settings permananet
             Program.AppProgramSettings.SaveSettings();
 
             txt_hotkey.Text = string.Empty;
+            _displayedKeys.Clear();
+            _displayedButtons.Clear();
             _changed = true;
         }
 
         private void btn_back_Click(object sender, EventArgs e)
         {
-            if (_changed)
-            {
-                DialogResult = DialogResult.OK;
-            }
-            else
-            {
-                DialogResult = DialogResult.Cancel;
-            }
             this.Close();
         }
 
@@ -269,7 +351,7 @@ namespace DisplayMagician.UIForms
             {
 
                 var pressedKeys = new List<Key>();
-                var pressedButtons = new List<JoystickDevice>();
+                var pressedButtons = new List<JoystickButton>();
 
                 // Poll keyboard devices
                 foreach (var keyboard in Program.AppDirectInputManager.GetKeyboards())
@@ -326,7 +408,7 @@ namespace DisplayMagician.UIForms
                         {
                             if (buttons[i])
                             {
-                                pressedButtons.Add(new JoystickDevice(joystick.DeviceInfo.Type, joystick.DeviceInfo.InstanceName, joystick.DeviceInfo.InstanceGuid, i));
+                                pressedButtons.Add(new JoystickButton(joystick.DeviceInfo.Type, joystick.DeviceInfo.InstanceName, joystick.DeviceInfo.InstanceGuid, i));
                             }
                         }
                     }
@@ -340,11 +422,12 @@ namespace DisplayMagician.UIForms
                 bool isPressActive = pressedKeys.Any() || pressedButtons.Any();
                 //bool isInvalidKeyCombination = _invalidKeyCombination.Equals(pressedKeys);
 
+                // Check if the new key combination is bigger if it is a keypress
                 if (isComboBigger && isPressActive)
                 {
                     // New bigger valid combination — display immediately
                     _displayedKeys = new List<Key>(pressedKeys);
-                    _displayedButtons = new List<JoystickDevice>(pressedButtons);
+                    _displayedButtons = new List<JoystickButton>(pressedButtons);
                     _lastNonEmptyPressTime = DateTime.Now;
                     UpdateHotkeyText(_displayedKeys, _displayedButtons);
                 }
@@ -352,31 +435,50 @@ namespace DisplayMagician.UIForms
                 {
                     // Still within grace period — keep displaying
                     UpdateHotkeyText(_displayedKeys, _displayedButtons);
-                }
+                }/* 
+                else
+                {
+                    // We clear the selection if the user has not pressed any keys or buttons for a while
+                    _displayedKeys.Clear();
+                    _displayedButtons.Clear();
+                    UpdateHotkeyText(_displayedKeys, _displayedButtons);
+                }*/
 
                 Thread.Sleep(50);
             }
         }
 
-        private void UpdateHotkeyText(List<Key> keys, List<JoystickDevice> buttons)
+        private void UpdateHotkeyText(List<Key> keys, List<JoystickButton> buttons)
         {
 
             // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
-            IEnumerable<string> hotkeyNames = keys.Select(k => k.ToString());
-            if (!hotkeyNames.Any())
+            if (keys.Count > 0)
             {
-                hotkeyNames = buttons.Select(b => $"{b.DeviceName} Button #{b.DeviceButtonIndex}");
+                IEnumerable<string> hotkeyNames = keys.Select(k => k.ToString());
+                string hotkeyText = string.Join(" + ", hotkeyNames);
+                if (txt_hotkey.InvokeRequired)
+                {
+                    txt_hotkey.Invoke(new Action(() => txt_hotkey.Text = hotkeyText));
+                }
+                else
+                {
+                    txt_hotkey.Text = hotkeyText;
+                }
             }
-            string hotkeyText = string.Join(" + ", hotkeyNames);
-
-            if (txt_hotkey.InvokeRequired)
+            else if (buttons.Count > 0)
             {
-                txt_hotkey.Invoke(new Action(() => txt_hotkey.Text = hotkeyText));
+                IEnumerable<string> hotkeyNames = buttons.Select(b => $"{b.DeviceName} Button #{b.DeviceButtonIndex}");
+                string hotkeyText = string.Join(" + ", hotkeyNames);
+                if (txt_hotkey.InvokeRequired)
+                {
+                    txt_hotkey.Invoke(new Action(() => txt_hotkey.Text = hotkeyText));
+                }
+                else
+                {
+                    txt_hotkey.Text = hotkeyText;
+                }
             }
-            else
-            {
-                txt_hotkey.Text = hotkeyText;
-            }
+            
         }
 
         /* private void GenerateInvalidModifiers()
@@ -467,6 +569,15 @@ namespace DisplayMagician.UIForms
 
         private void HotkeyForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (_changed)
+            {
+                DialogResult = DialogResult.OK;
+            }
+            else
+            {
+                DialogResult = DialogResult.Cancel;
+            }
+
             // Now stop the capture thread to listen for hotkeys
             StopCapture();
 
@@ -490,13 +601,14 @@ namespace DisplayMagician.UIForms
                 int subItemIndex = hit.Item.SubItems.IndexOf(hit.SubItem);
 
                 // Check if the clicked subitem is the "Delete" column
-                if (subItemIndex == 2) // assuming 3rd column is Delete
+                if (subItemIndex == 0) // assuming 1st column is Delete
                 {
                     if (MessageBox.Show("Are you sure you want to delete this hotkey?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
                         lv_hotkeys.Items.Remove(hit.Item);
-
-                        // TODO: Remove from Program.AppProgramSettings as well if needed
+                        // remove the joystick hotkey from the list stored in the settings and deregister it
+                        Program.AppDirectInputManager.RemoveHotkeysByName(hit.Item.SubItems[1].Text);
+                        _changed = true;
                     }
                 }
             }

@@ -317,9 +317,12 @@ namespace DisplayMagician.UIForms
             lv_hotkeys.Location = new System.Drawing.Point(37, 171);
             lv_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             lv_hotkeys.Name = "lv_hotkeys";
+            lv_hotkeys.ShowGroups = false;
             lv_hotkeys.Size = new System.Drawing.Size(724, 223);
             lv_hotkeys.TabIndex = 48;
             lv_hotkeys.UseCompatibleStateImageBehavior = false;
+            lv_hotkeys.View = System.Windows.Forms.View.Details;
+            lv_hotkeys.MouseClick += lv_hotkeys_MouseClick;
             // 
             // btn_clear_all_hotkeys
             // 

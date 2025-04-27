@@ -19,6 +19,7 @@ using DisplayMagician.AppLibraries;
 using static DisplayMagician.GameLibraries.ProductInformation;
 using System.ComponentModel;
 using DisplayMagician.Processes;
+using System.Globalization;
 
 namespace DisplayMagician.UIForms
 {
@@ -70,6 +71,10 @@ namespace DisplayMagician.UIForms
         //private string _userGameIconPath = "";
         //private bool _userChoseOwnExeIcon = false;
         //private string _userExeIconPath = "";
+
+        private List<HotkeyKeyboard> _shownKeyboardHotkeys = new();
+        private List<HotkeyJoystick> _shownJoystickHotkeys = new();
+
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
         private bool _firstShow = true;
@@ -3344,44 +3349,98 @@ namespace DisplayMagician.UIForms
         {
             // Find the matching hotkeys so that we can load them in
             // and then show the hotkey form
-            List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
+            /*List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
             _keyboardHotkeys.AddRange(Program.AppDirectInputManager.GetKeyboardHotkeysByUUID(_shortcutToEdit.UUID));
             List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
-            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(_shortcutToEdit.UUID));
+            _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(_shortcutToEdit.UUID));*/
 
             string hotkeyHeading = $"Manage your '{_shortcutToEdit.Name}' Game Shortcut Hotkeys";
             string hotkeyDescription = $"Choose one or more Hotkeys so that you can run this Game Shortcut using your keyboard, joystick or button box. "  +
                 "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. "  +
                 "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
                 "go to the Main Window and click the Settings button. ";
-            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.RunGameShortcut, _shortcutToEdit.UUID, _keyboardHotkeys, _joystickHotkeys, hotkeyHeading, hotkeyDescription);
+            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.RunGameShortcut, _shortcutToEdit.UUID,  hotkeyHeading, hotkeyDescription);
             //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
-            if (displayHotkeyForm.DialogResult == DialogResult.OK)
+            if (displayHotkeyForm.Changed)
             {
-                // If the hotkey has changed, then set the unsaved warning to true
-                if (displayHotkeyForm.Changed)
-                {
-                    _isUnsaved = true;
-                    // now we store the Hotkey to be saved later
-                    Program.AppDirectInputManager.UpdateOrAddHotkeys(displayHotkeyForm.KeyboardHotkeys, displayHotkeyForm.JoystickHotkeys);
-                    // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                    string hotkeyText = Program.AppDirectInputManager.GenerateKeyboardHotkeyText(displayHotkeyForm.KeyboardHotkeys);
-                    hotkeyText += Program.AppDirectInputManager.GenerateJoystickHotkeyText(displayHotkeyForm.JoystickHotkeys);
-
-                    if (displayHotkeyForm.KeyboardHotkeys.Any() || displayHotkeyForm.JoystickHotkeys.Any())
-                    {
-                        lbl_hotkey_assigned.Text = "Hotkey: " + hotkeyText;
-                        lbl_hotkey_assigned.Visible = true;
-                    }
-                    else
-                    {
-                        lbl_hotkey_assigned.Text = "Hotkey: None";
-                        lbl_hotkey_assigned.Visible = false;
-                    }
-                }                    
+                UpdateHotkeyText();
             }
         }
+
+        private void UpdateHotkeyText()
+        {
+
+            try
+            {
+                _shownKeyboardHotkeys = Program.AppProgramSettings.KeyboardHotkeys.Where(k => k.Task == HotkeyTask.RunGameShortcut && k.UUID == _shortcutToEdit.UUID).ToList();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"DisplayProfileForm/UpdateHotkeyText: Exception attempting to get the keyboard hotkeys from the settings file that match this taskmode RunGameShortcut and UUID {_shortcutToEdit.UUID}.");
+            }
+            try
+            {
+                _shownJoystickHotkeys = Program.AppProgramSettings.JoystickHotkeys.Where(k => k.Task == HotkeyTask.RunGameShortcut && k.UUID == _shortcutToEdit.UUID).ToList();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"DisplayProfileForm/UpdateHotkeyText: Exception attempting to get the joystick hotkeys from the settings file that match this taskmode RunGameShortcut and UUID {_shortcutToEdit.UUID}.");
+            }
+
+            // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
+            List<string> hotkeyList = new List<string>();
+            if (_shownKeyboardHotkeys.Count > 0)
+            {
+                foreach (HotkeyKeyboard kb in _shownKeyboardHotkeys)
+                {
+                    hotkeyList.Add(Program.AppDirectInputManager.GetNameOfKeyboardHotkey(kb));
+                }
+            }
+            else if (_shownJoystickHotkeys.Count > 0)
+            {
+                foreach (HotkeyJoystick kb in _shownJoystickHotkeys)
+                {
+                    hotkeyList.Add(Program.AppDirectInputManager.GetNameOfJoystickHotkey(kb));
+                }
+            }
+            string hotkeyText = string.Join(", ", hotkeyList);
+            if (hotkeyList.Count > 0)
+            {
+                if (lbl_hotkey_assigned.InvokeRequired)
+                {
+                    lbl_hotkey_assigned.Invoke(new Action(() =>
+                    {
+                        lbl_hotkey_assigned.Text = $"Hotkeys: {hotkeyText}";
+                        lbl_hotkey_assigned.Visible = true;
+                    }));
+                }
+                else
+                {
+                    lbl_hotkey_assigned.Text = $"Hotkeys: {hotkeyText}";
+                    lbl_hotkey_assigned.Visible = true;
+                }
+            }
+            else
+            {
+                if (lbl_hotkey_assigned.InvokeRequired)
+                {
+                    lbl_hotkey_assigned.Invoke(new Action(() =>
+                    {
+                        lbl_hotkey_assigned.Text = "Hotkeys: None";
+                        lbl_hotkey_assigned.Visible = false;
+                    }));
+                }
+                else
+                {
+                    lbl_hotkey_assigned.Text = "Hotkeys: None";
+                    lbl_hotkey_assigned.Visible = false;
+                }
+
+            }
+
+        }
+
 
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
         {
