@@ -97,7 +97,7 @@ namespace DisplayMagician.UIForms
             btn_clear_all.TabIndex = 6;
             btn_clear_all.Text = "&Remove All";
             btn_clear_all.UseVisualStyleBackColor = true;
-            btn_clear_all.Click += btn_clear_Click;
+            btn_clear_all.Click += btn_remove_all_Click;
             // 
             // lbl_hotkey_heading
             // 
@@ -168,7 +168,7 @@ namespace DisplayMagician.UIForms
             btn_clear.TabIndex = 10;
             btn_clear.Text = "&Clear";
             btn_clear.UseVisualStyleBackColor = false;
-            btn_clear.Click += btn_clear_Click_1;
+            btn_clear.Click += btn_clear_Click;
             // 
             // HotkeyForm
             // 

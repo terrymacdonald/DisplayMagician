@@ -15,6 +15,7 @@ using Microsoft.VisualBasic.Devices;
 using SharpGen.Runtime;
 using Vortice.DirectInput;
 using WinCopies.Util;
+using System.Windows.Documents;
 
 namespace DisplayMagician.UIForms
 {
@@ -270,11 +271,20 @@ namespace DisplayMagician.UIForms
             _captureThread = null;
         }
 
-        private void btn_clear_Click(object sender, EventArgs e)
+        private void btn_remove_all_Click(object sender, EventArgs e)
         {
             this.DialogResult = DialogResult.None;
-            txt_hotkey.Text = "";
-
+            // remove the joystick hotkey from the list stored in the settings and deregister it
+            ListView.ListViewItemCollection hitList = lv_hotkeys.Items;
+            foreach (var hit in hitList)
+            {
+                if (hit is ListViewItem item)
+                {
+                    Program.AppDirectInputManager.RemoveHotkeysByName(item.SubItems[1].Text);
+                }
+            }
+            lv_hotkeys.Items.Clear();
+            _changed = true;
         }
 
         private void btn_apply_Click(object sender, EventArgs e)
@@ -586,7 +596,7 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void btn_clear_Click_1(object sender, EventArgs e)
+        private void btn_clear_Click(object sender, EventArgs e)
         {
             _displayedKeys.Clear();
             _displayedButtons.Clear();

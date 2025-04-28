@@ -352,15 +352,16 @@ namespace DisplayMagician.UIForms
             // 
             lbl_hotkey_assigned.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             lbl_hotkey_assigned.AutoSize = true;
-            lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
-            lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_hotkey_assigned.BackColor = System.Drawing.Color.Brown;
+            lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_assigned.Location = new System.Drawing.Point(13, 14);
+            lbl_hotkey_assigned.Location = new System.Drawing.Point(148, 12);
             lbl_hotkey_assigned.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
-            lbl_hotkey_assigned.Size = new System.Drawing.Size(56, 16);
+            lbl_hotkey_assigned.Size = new System.Drawing.Size(113, 20);
             lbl_hotkey_assigned.TabIndex = 36;
-            lbl_hotkey_assigned.Text = "Hotkey: ";
+            lbl_hotkey_assigned.Text = "Hotkeys: None";
+            lbl_hotkey_assigned.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             lbl_hotkey_assigned.Visible = false;
             lbl_hotkey_assigned.Click += lbl_hotkey_assigned_Click;
             // 
