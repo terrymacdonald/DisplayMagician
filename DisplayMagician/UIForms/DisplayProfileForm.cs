@@ -29,6 +29,7 @@ namespace DisplayMagician.UIForms
         //public bool  _monitorTaskBarRegKeysForChanges = false;
         //private readonly object _monitorTaskBarRegKeysForChangesLock = new object();
 
+
         private List<HotkeyKeyboard> _shownKeyboardHotkeys = new();
         private List<HotkeyJoystick> _shownJoystickHotkeys = new();
 
@@ -644,6 +645,11 @@ namespace DisplayMagician.UIForms
             //RecenterWindow();
         }
 
+        public void RefreshCurrentView()
+        {
+            btn_view_current.PerformClick();
+        }
+
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode.Equals(Keys.Enter))
@@ -653,105 +659,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        protected override void WndProc(ref Message m)
-        {
-            const int WM_DISPLAYCHANGE = 0x007E;
-            const int WM_SETTINGCHANGE = 0x001A;
-            const int WM_DEVICECHANGE = 0x0219;
-
-            const int DBT_DEVICEARRIVAL = 0x8000;
-            const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
-
-            // Only do this if we're not in the middle of changing profiles (it causes a race condition otherwise)
-            if (!ProfileRepository.UserChangingProfiles)
-            {
-                switch (m.Msg)
-                {
-
-                    case WM_DEVICECHANGE:
-                        switch ((int)m.WParam)
-                        {
-                            case DBT_DEVICEARRIVAL:
-                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been added. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
-                                btn_view_current.PerformClick();
-                                break;
-
-                            case DBT_DEVICEREMOVECOMPLETE:
-                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been removed. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
-                                btn_view_current.PerformClick();
-                                break;
-                        }
-                        break;
-
-                    case WM_DISPLAYCHANGE:
-                        logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
-                        if (!ProfileRepository.UserChangingProfiles)
-                        {
-                            btn_view_current.PerformClick();
-                        }
-                        break;
-
-                        // This auto taskbar detection logic just doesn't work at the moment
-                        // It tries to set a 5 second timer when it detects a settings change, and tries every 1 second to see if the taskbar position has changed
-                        // If taskbar position changed, then it attempts to get the new display layout.
-                        // In reality, it appears that multiple tasks are firing for each message, and the multople tasks are confusing each other. So I'm going to leave this be for now.
-                        /*case WM_SETTINGCHANGE:
-                            switch ((int)m.WParam)
-                            {
-                                case 0x2f:
-                                    // This occurs when the taskbar is moved! We use it to set a timer to monitor the relevant registry keys for changes within the next 10 seconds
-                                    logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a taskbar has been moved. We need to set a timer to check for registry key changes within the next 10 seconds, and update the current view if that happens.");
-                                    if (_monitorTaskBarRegKeysForChangesTask == null)
-                                    {
-                                        logger.Trace($"DisplayProfileForm/WndProc: We are starting to monitor the taskbar for changes for the next 10 seconds.");
-                                        //_monitorTaskBarRegKeysForChanges = true;                                
-                                        List<TaskBarStuckRectangle> original = TaskBarStuckRectangle.GetAllTaskBarStuckRectangles();
-                                        _monitorTaskBarRegKeysForChangesTask = new Task((Action)delegate
-                                        {
-                                            bool _itChanged = false;                                    
-                                            for (int d = 0; d < 10; d++)
-                                            {
-                                                Task.Delay(1000);
-                                                List<TaskBarStuckRectangle> subsequent = TaskBarStuckRectangle.GetAllTaskBarStuckRectangles();
-                                                bool matched = true;
-                                                for (int x = 0; x < subsequent.Count; x++)
-                                                {
-                                                    if (!original[x].Equals(subsequent[x]))
-                                                    {
-                                                        matched = false;
-                                                        break;
-                                                    }
-                                                }
-                                                if (!matched)
-                                                {
-                                                    logger.Trace($"DisplayProfileForm/WndProc: The taskbar registry key has been updated within the 10 seconds of a taskbar move message, so updating the config again window.");
-                                                    if (btn_view_current.InvokeRequired)
-                                                    {
-                                                        this.Invoke(new Action(() => btn_view_current.PerformClick()));
-                                                    }
-                                                    else
-                                                    {
-                                                        btn_view_current.PerformClick();
-                                                    }
-                                                    _itChanged = true;
-                                                    break;
-                                                }
-                                            }                                    
-                                            if (!_itChanged)
-                                            {
-                                                logger.Trace($"DisplayProfileForm/WndProc: The taskbar registry key did not update within 5 seconds of a taskbar move message. Returning without doing anything.");
-                                            }
-                                            _monitorTaskBarRegKeysForChangesTask = null;
-                                        });
-                                        _monitorTaskBarRegKeysForChangesTask.Start();
-                                    }
-                                    break;
-                            }
-                            break;*/
-                }
-            }
-            base.WndProc(ref m);
-        }
+        
 
         private void ilv_saved_profiles_ItemHover(object sender, ItemHoverEventArgs e)
         {

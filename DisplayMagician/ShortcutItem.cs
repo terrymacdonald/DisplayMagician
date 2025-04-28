@@ -1810,10 +1810,10 @@ namespace DisplayMagician
                     WshShell shell = new WshShell();
                     IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
 
-                    shortcut.TargetPath = Application.ExePath;
+                    shortcut.TargetPath = Environment.ProcessPath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
                     shortcut.Description = shortcutDescription;
-                    shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExePath) ??
+                    shortcut.WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath) ??
                                                 string.Empty;
 
                     shortcut.IconLocation = shortcutIconFileName;

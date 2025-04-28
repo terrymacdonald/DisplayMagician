@@ -167,29 +167,7 @@ namespace DisplayMagician.UIForms
                     // Set the Shortcut save folder to the Desktop as that's where people will want it most likely
                     dialog_save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                     // Try to set up some sensible suggestions for the Shortcut name
-                    if (_selectedShortcut.AutoName)
-                    {
-                        if (_selectedShortcut.DisplayPermanence == ShortcutPermanence.Permanent)
-                        {
-
-                            dialog_save.FileName = _selectedShortcut.Name;
-                        }
-                        else
-                        {
-                            if (_selectedShortcut.Category == ShortcutCategory.Executable)
-                            {
-                                dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(_selectedShortcut.ExecutableNameAndPath), @" (", _selectedShortcut.Name.ToLower(CultureInfo.InvariantCulture), @")");
-                            }
-                            else
-                            {
-                                dialog_save.FileName = _selectedShortcut.Name;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        dialog_save.FileName = _selectedShortcut.Name;
-                    }
+                    dialog_save.FileName = _selectedShortcut.Name;
 
                     // Show the Save Shortcut window
                     if (dialog_save.ShowDialog(this) == DialogResult.OK)
@@ -197,7 +175,7 @@ namespace DisplayMagician.UIForms
                         if (_selectedShortcut.CreateShortcut(dialog_save.FileName))
                         {
                             MessageBox.Show(
-                                "Shortcut successfully saved to '{0}'.",
+                                $"Shortcut successfully saved to '{dialog_save.FileName}'.",
                                 "Shortcut",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);

@@ -679,10 +679,10 @@ namespace DisplayMagicianShared
                     WshShell shell = new WshShell();
                     IWshShortcut shortcut = shell.CreateShortcut(shortcutFileName) as IWshShortcut;
 
-                    shortcut.TargetPath = Application.ExecutablePath;
+                    shortcut.TargetPath = Environment.ProcessPath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
                     shortcut.Description = shortcutDescription;
-                    shortcut.WorkingDirectory = System.IO.Path.GetDirectoryName(Application.ExecutablePath) ??
+                    shortcut.WorkingDirectory = System.IO.Path.GetDirectoryName(Environment.ProcessPath) ??
                                                 string.Empty;
 
                     shortcut.IconLocation = shortcutIconFileName;

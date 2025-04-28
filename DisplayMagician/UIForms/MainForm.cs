@@ -28,6 +28,7 @@ namespace DisplayMagician.UIForms
 
         private DisplayProfileForm DisplayProfileWindow = new DisplayProfileForm();
         private ShortcutLibraryForm ShortcutLibraryWindow = new ShortcutLibraryForm();
+        private bool _screenHasChanged = false; // Used to stop the screen changing when the user is changing profiles
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -723,6 +724,96 @@ namespace DisplayMagician.UIForms
             ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
+        }
+
+        public void RepositionDisplayMagician()
+        {
+            // Step 1: Check if MainForm is visible on any screen
+            bool isMainFormVisible = Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(this.Bounds));
+
+            if (!isMainFormVisible)
+            {
+                this.ShowCenteredOnPrimaryScreen();
+
+                /*// Step 2: Reposition MainForm to the center of the primary screen
+                Screen primaryScreen = Screen.PrimaryScreen;
+                Rectangle workingArea = primaryScreen.WorkingArea;
+
+                int newX = workingArea.Left + (workingArea.Width - this.Width) / 2;
+                int newY = workingArea.Top + (workingArea.Height - this.Height) / 2;
+
+                this.StartPosition = FormStartPosition.Manual;
+                this.Location = new Point(newX, newY);*/
+            }
+
+            //this.Activate();
+
+            // Step 3: Reposition child forms to center on MainForm
+            foreach (Form childForm in Application.OpenForms)
+            {
+                if (childForm != this && childForm.Owner == this)
+                {
+                    // Calculate the center position relative to MainForm
+                    int childX = this.Left + (this.Width - childForm.Width) / 2;
+                    int childY = this.Top + (this.Height - childForm.Height) / 2;
+
+                    /*childForm.StartPosition = FormStartPosition.Manual;
+                    childForm.Location = new Point(childX, childY);*/
+                    childForm.SetDesktopLocation(childX,childY);
+                }
+            }
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_DISPLAYCHANGE = 0x007E;
+            const int WM_SETTINGCHANGE = 0x001A;
+            const int WM_DEVICECHANGE = 0x0219;
+
+            const int DBT_DEVICEARRIVAL = 0x8000;
+            const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
+
+            // if the user is changing profiles, then we want to record if anything changed! We change the status of the _screenHasChanged variable if we detect a change
+            if (ProfileRepository.UserChangingProfiles)
+            {
+                switch (m.Msg)
+                {
+
+                    case WM_DEVICECHANGE:
+                        switch ((int)m.WParam)
+                        {
+                            case DBT_DEVICEARRIVAL:
+                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been added. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
+                                _screenHasChanged = true;
+                                break;
+
+                            case DBT_DEVICEREMOVECOMPLETE:
+                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been removed. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
+                                _screenHasChanged = true;
+                                break;
+                        }
+                        break;
+
+                    case WM_DISPLAYCHANGE:
+                        logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
+                        _screenHasChanged = true;
+                        break;
+                }
+            }
+            else if (_screenHasChanged)
+            {
+                // If the user is not changing profiles, then the first time we hit this we need to reposition DM and reset the _screenHasChanged variable
+                RepositionDisplayMagician();
+                // if the DisplayProfileForm is open, Update the current view by running btn_view_current.
+                if (DisplayProfileWindow != null && !DisplayProfileWindow.IsDisposed)
+                {
+                    DisplayProfileWindow.RefreshCurrentView();
+                }
+
+                _screenHasChanged = false;
+            }
+
+            base.WndProc(ref m);
         }
     }
 }
