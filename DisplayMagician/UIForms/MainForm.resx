@@ -391,7 +391,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAALEgAACxIB0t1+/AAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
+        /wJiW2fk/tJodwAAAAlwSFlzAAALEQAACxEBf2RfkQAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
         Y+IBYxBoAE1oLFWVVKWhNJTmWUISiEFgMDaDDY4xYMdJXycrt3M7N3ct90o6vrnd6b6d21n3+todD3GG
         a5J2PDtux5lsEzcGgYaaTt1V+9H7//779+y9v/c751TplKgfrFrfeb/3HFWdb+/n+f++/b77O2n37t1X
         XHHFzp07t2/fvmPHju2FKwrbCvHg8onLjEsnLjEuLlxUeGeHCy+88ILC+eefH3+ef/755xXOTbxj4u3G
@@ -10869,7 +10869,7 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>346, 287</value>
+    <value>346, 289</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10914,7 +10914,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_minimise_notification_area.Location" type="System.Drawing.Point, System.Drawing">
-    <value>228, 419</value>
+    <value>228, 416</value>
   </data>
   <data name="cb_minimise_notification_area.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -10950,7 +10950,7 @@
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
   <data name="lbl_version.Location" type="System.Drawing.Point, System.Drawing">
-    <value>13, 420</value>
+    <value>9, 418</value>
   </data>
   <data name="lbl_version.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10989,7 +10989,7 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 202</value>
+    <value>247, 204</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11025,7 +11025,7 @@
     <value>NoControl</value>
   </data>
   <data name="btn_exit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>822, 412</value>
+    <value>823, 410</value>
   </data>
   <data name="btn_exit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11063,7 +11063,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAAOwwAADsMBx2+oZAAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
+        /wJiW2fk/tJodwAAAAlwSFlzAAAOwgAADsIBFShKgAAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
         2TImDjpmi5mZGSwzQxxmZiYnDpqZLduywJLFrMsMxXVBet+pfXVy2+mZN/9Mzz/zXnW1c1W34NSpqlt7
         nbX22g5uXnPcved6+c33CVjo6TvP1TPUwyfMJ2Chh0+Ys3sw/OnqGeriEQKf3b3nunqGunnN8fKb7+49
         181rDiz0CVgIO/H2X+DiETLL2R82EdaZ6+oZ4uYV6uoZ4uoZ4u4918MnzMtvvpvXHDevOZ6+86AB3v4L
