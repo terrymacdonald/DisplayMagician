@@ -120,6 +120,18 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowStatusMessageInActionCenter set to false");
             }
 
+            // load the DLLs that keep NVIDIA and AMD from turning off their dGPUs in gaming laptops
+            if (Program.AppProgramSettings.WakeUpGpus == true)
+            {
+                cb_wake_up_gpus.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings WakeUpGPUs set to true");
+            }
+            else
+            {
+                cb_wake_up_gpus.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings WakeUpGpus set to false");
+            }
+
             // start upgrade settings 
             if (Program.AppProgramSettings.UpgradeToPreReleases == true)
             {
@@ -254,6 +266,18 @@ namespace DisplayMagician.UIForms
             else
                 Program.AppProgramSettings.ShowStatusMessageInActionCenter = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowStatusMessageInActionCenter as {Program.AppProgramSettings.ShowStatusMessageInActionCenter}");
+
+            // save the wakeupgpus setting that controls loading the DLLs that keep NVIDIA and AMD from turning off their dGPUs in gaming laptops
+            if (cb_wake_up_gpus.Checked == true)
+            {
+                Program.AppProgramSettings.WakeUpGpus = true;
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: AppProgramSettings WakeUpGPUs now set to true");
+            }
+            else
+            {
+                Program.AppProgramSettings.WakeUpGpus = false;
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: AppProgramSettings WakeUpGpus now set to false");
+            }
 
             // save loglevel on close
             // and make that log level live in NLog straight away
@@ -416,7 +440,7 @@ namespace DisplayMagician.UIForms
                 "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
                 "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
                 "go to the Main Window and click the Settings button. ";
-            HotkeyForm scHotkeyForm = new HotkeyForm(HotkeyTask.OpenShortcutLibraryWindow, string.Empty,  hotkeyHeading, hotkeyDescription);
+            HotkeyForm scHotkeyForm = new HotkeyForm(HotkeyTask.OpenShortcutLibraryWindow, string.Empty, hotkeyHeading, hotkeyDescription);
             scHotkeyForm.ShowDialog(this);
             if (scHotkeyForm.Changed)
             {
@@ -694,10 +718,11 @@ namespace DisplayMagician.UIForms
                     {
                         lv_hotkeys.Items.Remove(hit.Item);
                         // remove the joystick hotkey from the list stored in the settings and deregister it
-                        Program.AppDirectInputManager.RemoveHotkeysByName(hit.Item.SubItems[1].Text);                        
+                        Program.AppDirectInputManager.RemoveHotkeysByName(hit.Item.SubItems[1].Text);
                     }
                 }
             }
         }
+
     }
 }

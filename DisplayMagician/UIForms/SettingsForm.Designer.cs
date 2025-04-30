@@ -61,6 +61,7 @@ namespace DisplayMagician.UIForms
             gb_support = new System.Windows.Forms.GroupBox();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
+            cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
             gb_general.SuspendLayout();
             gb_hotkeys.SuspendLayout();
             gb_upgrades.SuspendLayout();
@@ -86,6 +87,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            gb_general.Controls.Add(cb_wake_up_gpus);
             gb_general.Controls.Add(btn_context_menu_reinstall);
             gb_general.Controls.Add(cb_show_status_action);
             gb_general.Controls.Add(cb_show_minimise_action);
@@ -217,7 +219,7 @@ namespace DisplayMagician.UIForms
             label1.AutoSize = true;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label1.ForeColor = System.Drawing.Color.Transparent;
-            label1.Location = new System.Drawing.Point(30, 260);
+            label1.Location = new System.Drawing.Point(30, 306);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(136, 16);
@@ -228,7 +230,7 @@ namespace DisplayMagician.UIForms
             // 
             cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_loglevel.FormattingEnabled = true;
-            cmb_loglevel.Location = new System.Drawing.Point(197, 256);
+            cmb_loglevel.Location = new System.Drawing.Point(197, 302);
             cmb_loglevel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_loglevel.Name = "cmb_loglevel";
             cmb_loglevel.Size = new System.Drawing.Size(388, 24);
@@ -524,6 +526,24 @@ namespace DisplayMagician.UIForms
             label3.Text = "Use this button to save a support zip file to your computer. You can then upload this file to GitHub when you have a problem you need me to fix";
             label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // cb_wake_up_gpus
+            // 
+            cb_wake_up_gpus.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            cb_wake_up_gpus.AutoSize = true;
+            cb_wake_up_gpus.Checked = true;
+            cb_wake_up_gpus.CheckState = System.Windows.Forms.CheckState.Checked;
+            cb_wake_up_gpus.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            cb_wake_up_gpus.ForeColor = System.Drawing.Color.White;
+            cb_wake_up_gpus.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            cb_wake_up_gpus.Location = new System.Drawing.Point(32, 253);
+            cb_wake_up_gpus.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_wake_up_gpus.Name = "cb_wake_up_gpus";
+            cb_wake_up_gpus.Size = new System.Drawing.Size(507, 20);
+            cb_wake_up_gpus.TabIndex = 48;
+            cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable (uses more battery)";
+            cb_wake_up_gpus.UseVisualStyleBackColor = true;
+            cb_wake_up_gpus.CheckedChanged += cb_wake_up_gpus_CheckedChanged;
+            // 
             // SettingsForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -590,5 +610,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_hotkey_exit_app;
         private System.Windows.Forms.Label lbl_hotkey_exit;
         private System.Windows.Forms.Button btn_hotkey_exit;
+        private System.Windows.Forms.CheckBox cb_wake_up_gpus;
     }
 }

@@ -57,6 +57,7 @@ namespace DisplayMagician
         private bool _upgradeToPrereleases = false;
         private bool _upgradeEnabled = true;
         private bool _installDesktopContextMenu = true;
+        private bool _wakeUpGpus = true;
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Warn.ToString();
@@ -544,7 +545,19 @@ namespace DisplayMagician
                 _fovCalcBezelSizeUnit = value;
             }
         }
-        
+
+        [DefaultValue(true)]
+        public bool WakeUpGpus
+        {
+            get
+            {
+                return _wakeUpGpus;
+            }
+            set
+            {
+                _wakeUpGpus = value;
+            }
+        }
 
         #endregion
 
