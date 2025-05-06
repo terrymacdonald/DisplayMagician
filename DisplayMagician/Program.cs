@@ -1690,9 +1690,9 @@ namespace DisplayMagician {
             }
             else
             {
-                /*// Shut down the splash screen
+                // Shut down the splash screen
                 if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
-                    Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));*/
+                    Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
                 if (args.Error is WebException)
                 {
