@@ -257,6 +257,11 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Registering DisplayMagicain with Windows.");
             RegisterDisplayMagicianWithWindows();
 
+            logger.Trace($"Program/Main: Setting visual styles and rendering mode");
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             // Set up some defaults for the shared HttpClient
             AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
 
@@ -364,7 +369,23 @@ namespace DisplayMagician {
 
                 // Store the updated settings
                 AppProgramSettings.SaveSettings();
-            }            
+            }
+
+            logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");
+            if (AppProgramSettings.ShowSplashScreen)
+            {
+                logger.Trace($"Program/Main: Showing the splashscreen as the user wants it shown");
+                //Show Splash Form
+                AppSplashScreen = new LoadingForm();
+                var splashThread = new Thread(new ThreadStart(
+                    () => Application.Run(AppSplashScreen)));
+                splashThread.SetApartmentState(ApartmentState.STA);
+                splashThread.Start();
+            }
+            else
+            {
+                logger.Trace($"Program/Main: Not showing the splashscreen as the user wants it hidden");
+            }
 
 
             // Create the other DM Dir if it doesn't exist so that it's avilable for all 
@@ -434,11 +455,6 @@ namespace DisplayMagician {
                 logger.Trace($"Program/Main: Application Wallpaper Folder {AppWallpaperPath} already exists so skipping creating it");
             }
 
-            logger.Trace($"Program/Main: Setting visual styles and rendering mode");
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false); 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
             if (AppVersionUpgrade)
             {
                 // Do all the upgrade things
@@ -493,8 +509,8 @@ namespace DisplayMagician {
             AppDirectInputManager = new DirectInputManager();
             logger.Trace($"Program/Main: Initilising DirectInput Device Manager with the MainForm window handle");
             AppDirectInputManager.Initialize(AppMainForm.Handle);
-            logger.Trace($"Program/Main: Making sure that DirectInput Device Manager is disposed correctly when application exits");
-            Application.ApplicationExit += (_, _) => AppDirectInputManager.Dispose();
+            /*logger.Trace($"Program/Main: Making sure that DirectInput Device Manager is disposed correctly when application exits");
+            Application.ApplicationExit += (_, _) => AppDirectInputManager.Dispose();*/
             logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
 
             // 3) Register keyboard hotkeys (e.g. F9 => next profile)
@@ -513,6 +529,7 @@ namespace DisplayMagician {
             AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.RightBracket, HotkeyTask.RunGameShortcut, new Guid("a08f9f68-13d0-4695-a8e1-57f5ea2408d0")));*/
 
             // Load the stored hotkeys from the settings file
+            logger.Trace($"Program/Main: Registering stored keys and buttons with the DirectInput Device Manager");
             AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);
 
             //_directInputManager.RegisterKey(Key.F10, () => AppMainForm.openDisplayProfileWindow(););
@@ -782,6 +799,8 @@ namespace DisplayMagician {
                 }
                 logger.Info("Program/Main: Starting Normally...");
 
+                
+
                 /* // Update the Active Profile before we load the Main Form
                  ProfileRepository.UpdateActiveProfile();*/
 
@@ -805,29 +824,20 @@ namespace DisplayMagician {
                     return (int)ERRORLEVEL.ERROR_EXCEPTION;
                 }
 
-            });
-
-            logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");
-            if (AppProgramSettings.ShowSplashScreen)
-            {
-                logger.Trace($"Program/Main: Showing the splashscreen as the user wants it shown");
-                //Show Splash Form
-                AppSplashScreen = new LoadingForm();
-                var splashThread = new Thread(new ThreadStart(
-                    () => Application.Run(AppSplashScreen)));
-                splashThread.SetApartmentState(ApartmentState.STA);
-                splashThread.Start();
-            }
-            else
-            {
-                logger.Trace($"Program/Main: Not showing the splashscreen as the user wants it hidden");
-            }
+            });            
 
             // default level of errorlevel to return to the OS is OK (unless overridden)
             int errorLevelToReturnToOS = (int)ERRORLEVEL.OK;
 
             try
             {
+                // Close the splash screen if it's still open (happens with some errors)
+                if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                {
+                    logger.Trace($"Closing the SplashScreen as it may still be open");
+                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+                }
+
                 logger.Debug($"Executing the app.execute commandline processing to start parsing the command line options");
                 // This begins the actual execution of the application
                 errorLevelToReturnToOS = app.Execute(args);
@@ -946,7 +956,11 @@ namespace DisplayMagician {
                 CheckForUpdates();
 
                  // Show any messages we need to show
-                ShowMessages();                
+                ShowMessages();
+
+                // Close the splash screen
+                if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                 // Run the program with normal startup
                 Application.Run(AppMainForm);                

@@ -74,10 +74,6 @@ namespace DisplayMagician.UIForms
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
 
-            // Shut down the splash screen
-            if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
-                Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
-
             if (Program.AppProgramSettings.MinimiseOnStart)
             {
                 // Make the form minimised on start 
@@ -196,8 +192,6 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.LastDonationFormDate = DateTime.UtcNow;
                 Program.AppProgramSettings.SaveSettings();
             }
-
-
         }
 
         protected override void SetVisibleCore(bool value)
@@ -337,6 +331,11 @@ namespace DisplayMagician.UIForms
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+
+            // Shut down the splash screen
+            //if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+            //    Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
+
             EnableShortcutButtonIfProfiles();
 
             logger.Trace($"MainForm/MainForm_Load: User has run DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times.");

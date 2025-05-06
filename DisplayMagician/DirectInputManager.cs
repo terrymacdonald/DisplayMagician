@@ -418,8 +418,22 @@ namespace DisplayMagician
             }
 
             // dispose all devices and the interface
-            foreach (var dev in _keyboardDevices.Values) { dev.Unacquire(); dev.Dispose(); }
-            foreach (var dev in _joystickDevices.Values) { dev.Unacquire(); dev.Dispose(); }
+            foreach (var dev in _keyboardDevices.Values) 
+            {
+                if (dev != null)
+                {
+                    dev.Unacquire();
+                    dev.Dispose();
+                }
+            }
+            foreach (var dev in _joystickDevices.Values) 
+            {
+                if (dev != null)
+                {
+                    dev.Unacquire();
+                    dev.Dispose();
+                }
+            }
             _directInput.Dispose();
         }
 
