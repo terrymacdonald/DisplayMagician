@@ -14,7 +14,8 @@
     },
     "manualUpgrade": false,
     "updatesDisplayProfiles": true,
-    "updatesGameShortcuts": true
+    "updatesGameShortcuts": true,
+    "updatesSettings": true
   },
   "prerelease": {
     "version": "2.7.2.1",
