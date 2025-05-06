@@ -782,16 +782,6 @@ namespace DisplayMagician {
                 }
                 logger.Info("Program/Main: Starting Normally...");
 
-                /*// Try to load all the games in parallel to this process
-                //Task.Run(() => LoadGamesInBackground());
-                logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
-                // Load the games in background on execute
-                GameLibrary.LoadGamesInBackground();
-
-                logger.Trace($"Program/Main: Starting the Loading the Games in the background tasks.");
-                // Load the apps in background on execute
-                AppLibrary.LoadAppsInBackground();*/
-
                 /* // Update the Active Profile before we load the Main Form
                  ProfileRepository.UpdateActiveProfile();*/
 
@@ -817,18 +807,23 @@ namespace DisplayMagician {
 
             });
 
-            logger.Trace($"Program/Main: Showing the splashscreen if requested");
-
-            /*if (AppProgramSettings.ShowSplashScreen)
+            logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");
+            if (AppProgramSettings.ShowSplashScreen)
             {
+                logger.Trace($"Program/Main: Showing the splashscreen as the user wants it shown");
                 //Show Splash Form
                 AppSplashScreen = new LoadingForm();
                 var splashThread = new Thread(new ThreadStart(
                     () => Application.Run(AppSplashScreen)));
                 splashThread.SetApartmentState(ApartmentState.STA);
                 splashThread.Start();
-            }*/
+            }
+            else
+            {
+                logger.Trace($"Program/Main: Not showing the splashscreen as the user wants it hidden");
+            }
 
+            // default level of errorlevel to return to the OS is OK (unless overridden)
             int errorLevelToReturnToOS = (int)ERRORLEVEL.OK;
 
             try
@@ -951,10 +946,7 @@ namespace DisplayMagician {
                 CheckForUpdates();
 
                  // Show any messages we need to show
-                ShowMessages();
-
-                // Enable the MainForm to be shown
-                AppMainForm.AllowVisible = true;
+                ShowMessages();                
 
                 // Run the program with normal startup
                 Application.Run(AppMainForm);                
@@ -1847,117 +1839,6 @@ namespace DisplayMagician {
                 return false;
             }
         }
-
-/*
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-        public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-        {
-            if (e.Name == "HotkeyMainWindow")
-                openApplicationWindow();
-            else if (e.Name == "HotkeyDisplayProfileWindow")
-                btn_setup_display_profiles.PerformClick();
-            else if (e.Name == "HotkeyShortcutLibraryWindow")
-                btn_setup_game_shortcuts.PerformClick();
-            else if (hotkeyDisplayProfiles.Contains(e.Name))
-            {
-                // Stop the user from applying this profile if one is already being applied
-                if (ProfileRepository.UserChangingProfiles)
-                {
-                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.");
-                    MessageBox.Show("The User is currently changing to another Display Profile. We can't change to a different Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                string displayProfileUUID = e.Name;
-                ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
-                if (chosenProfile is ProfileItem)
-                    //ProfileRepository.ApplyProfile(chosenProfile);
-                    Program.ApplyProfileTask(chosenProfile);
-            }
-            else if (hotkeyShortcuts.Contains(e.Name))
-            {
-                // Stop the user from running a game shortcut if a display profile is already being applied
-                if (ProfileRepository.UserChangingProfiles)
-                {
-                    logger.Error($"MainForm/OnWindowHotkeyPressed: The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.");
-                    MessageBox.Show("The User is currently changing to another Display Profile. We can't run a Game Shortcut right now. Please wait and try again.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                string shortcutUUID = e.Name;
-                ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
-                if (chosenShortcut is ShortcutItem)
-                    //ShortcutRepository.RunShortcut(chosenShortcut);
-                    Program.RunShortcutTask(chosenShortcut);
-            }
-        }*/
-
-        /*private static void OnKeyboardPressed(byte[] state)
-        {
-            logger.Trace($"Program/OnKeyboardPressed: A keyboard button was pressed with state byte {state}!");
-            // Find any keyboard bindings whose scan-code bit is now “down”
-            foreach (var bind in AppProgramSettings.HotkeyBindings
-                                         .Where(b => b.DeviceClass == DeviceClass.Keyboard))
-            {
-                if (state[bind.Code] != 0)
-                {
-                    logger.Trace($"Program/OnKeyboardPressed: Found that bind code {bind.Code} was pressed!");
-                    Execute(bind);
-                }                
-            }
-        }
-
-        private static void OnButtonBoxPressed(byte[] state)
-        {
-            logger.Trace($"Program/OnKeyboardPressed: A keyboard button was pressed!");
-            // ButtonBox codes are 0–31 in state array
-            foreach (var bind in AppProgramSettings.HotkeyBindings
-                                         .Where(b => (b.DeviceClass == DeviceClass.Joystick || b.DeviceClass == DeviceClass.Gamepad)))
-            {
-                if (bind.Code < state.Length && state[bind.Code] != 0)
-                    Execute(bind);
-            }
-        }
-
-        private static void Execute(HotkeyBinding bind)
-        {
-            switch (bind.Action)
-            {
-                case HotkeyTask.ChangeDisplayProfile:
-                    Program.RunProfile(bind.TargetId.ToString());
-                    break;
-                case HotkeyTask.RunGameShortcut:
-                    Program.RunShortcut(bind.TargetId.ToString());
-                    break;
-                case HotkeyTask.OpenShortcutLibraryWindow:
-                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
-                    {
-                        Program.AppMainForm.openShortcutLibraryWindow();
-                    });
-                    break;
-                case HotkeyTask.OpenDisplayProfileWindow:
-                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
-                    {
-                        Program.AppMainForm.openDisplayProfileWindow();
-                    });
-                    break;
-                case HotkeyTask.OpenMainWindow:
-                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
-                    {
-                        Program.AppMainForm.openApplicationWindow();
-                    });
-                    break;
-                case HotkeyTask.ExitApplication:
-                    Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
-                    {
-                        Program.AppMainForm.exitApplication();
-                    });
-                    break;
-
-            }
-        }*/
-
 
     }
 

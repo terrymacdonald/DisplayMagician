@@ -81,7 +81,7 @@ namespace DisplayMagician.UIForms
             if (Program.AppProgramSettings.MinimiseOnStart)
             {
                 // Make the form minimised on start 
-                //_allowVisible = false;
+                _allowVisible = false;
                 // Hide the application to notification area when the form is closed
                 _allowClose = false;
                 cb_minimise_notification_area.Checked = true;
@@ -127,6 +127,8 @@ namespace DisplayMagician.UIForms
                 //_allowVisible = true;
                 // Really close the application when the form is closed
                 _allowClose = true;
+                // Now show the form
+                _allowVisible = true;
             }
 
             if (Program.AppProgramSettings.MinimiseOnStart && Program.AppProgramSettings.StartOnBootUp)
@@ -518,6 +520,7 @@ namespace DisplayMagician.UIForms
         {
             _allowVisible = true;
             // Center the form on the primary screen
+            this.Show();
             //Utils.ActivateCenteredOnPrimaryScreen(this);
         }
 
