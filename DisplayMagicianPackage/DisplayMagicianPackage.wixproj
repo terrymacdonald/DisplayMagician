@@ -1,4 +1,4 @@
-﻿<Project Sdk="WixToolset.Sdk/5.0.1">
+﻿<Project Sdk="WixToolset.Sdk/6.0.0">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BindFiles>false</BindFiles>
     <OutputPath>bin\Debug\</OutputPath>
@@ -13,9 +13,9 @@
     <Content Include="WixUIDialogBmp.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.2" />
-    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="6.0.0" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="6.0.0" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Publish="true" />

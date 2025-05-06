@@ -1,7 +1,7 @@
-﻿<Project Sdk="WixToolset.Sdk/5.0.1">
+﻿<Project Sdk="WixToolset.Sdk/6.0.0">
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
-	<OutputName>DisplayMagicianSetup</OutputName>
+    <OutputName>DisplayMagicianSetup</OutputName>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
@@ -9,8 +9,8 @@
     <Content Include="EULA_en-us.rtf" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.Bal.wixext" Version="5.0.2" />
-    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Bal.wixext" Version="6.0.0" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="6.0.0" />
   </ItemGroup>
   <Target Name="RenameBundleFile" AfterTargets="Build">
     <!-- Use PowerShell to rename the bundle output file after the build -->
