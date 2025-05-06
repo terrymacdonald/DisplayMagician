@@ -542,7 +542,6 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus.TabIndex = 48;
             cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable (uses more battery)";
             cb_wake_up_gpus.UseVisualStyleBackColor = true;
-            cb_wake_up_gpus.CheckedChanged += cb_wake_up_gpus_CheckedChanged;
             // 
             // SettingsForm
             // 

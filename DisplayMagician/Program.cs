@@ -96,7 +96,7 @@ namespace DisplayMagician {
 
         public struct UpgradeExtraDetails
         {
-            public bool PreleaseUpgrade;
+            //public bool PreleaseUpgrade;
             public bool ManualUpgrade;
             public bool UpdatesDisplayProfiles;
             public bool UpdatesGameShortcuts;
@@ -1409,7 +1409,7 @@ namespace DisplayMagician {
             AutoUpdater.InstalledVersion = new Version(AppVersion);
 
             string connectionUrl = "http://displaymagician.littlebitbig.com/update/update.json";
-            connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppProgramSettings.DisplayMagicianVersion)}");
+            connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppVersion)}");
             connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
             AutoUpdater.Start(connectionUrl);
         }
@@ -1443,7 +1443,7 @@ namespace DisplayMagician {
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the Prerelease extraDetails in the received Update JSON file.");
                     AppUpgradeExtraDetails = new UpgradeExtraDetails
                     {
-                        PreleaseUpgrade = true,
+                        //PreleaseUpgrade = true,
                         ManualUpgrade = (bool)json["prerelease"]["manualUpgrade"],
                         UpdatesDisplayProfiles = (bool)json["prerelease"]["updatesDisplayProfiles"],
                         UpdatesGameShortcuts = (bool)json["prerelease"]["updatesGameShortcuts"],
@@ -1474,7 +1474,7 @@ namespace DisplayMagician {
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpgradeExtraDetails object from the Stable extraDetails in the received Update JSON file.");
                     AppUpgradeExtraDetails = new UpgradeExtraDetails
                     {
-                        PreleaseUpgrade = false,
+                        //PreleaseUpgrade = false,
                         ManualUpgrade = (bool)json["stable"]["manualUpgrade"],
                         UpdatesDisplayProfiles = (bool)json["stable"]["updatesDisplayProfiles"],
                         UpdatesGameShortcuts = (bool)json["stable"]["updatesGameShortcuts"],
