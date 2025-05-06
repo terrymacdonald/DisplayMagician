@@ -590,13 +590,13 @@ namespace DisplayMagician {
                     }
                                        
 
-                    /*logger.Trace($"Program/Main: Closing the splashscreen if it is open.");
+                    logger.Trace($"Program/Main: Closing the splashscreen if it is open.");
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));*/
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
-            try
-            {
+                    try
+                    {
                         logger.Trace($"Program/Main: Starting the RunShortcut process with Shortcut UUID {argumentShortcut.Value.ToString()}.");
                         ERRORLEVEL errLevel = RunShortcut(argumentShortcut.Value);
                         logger.Trace($"Program/Main: Deregistering DisplayMagician with Windows.");
@@ -653,11 +653,11 @@ namespace DisplayMagician {
                     AppMainForm = new MainForm();
                     AppMainForm.Load += MainForm_LoadCompleted;*/
 
-                    /*logger.Trace($"Program/Main: Closing the Splashscreen if it is open.");*/
+                    logger.Trace($"Program/Main: Closing the Splashscreen if it is open.");
 
-                    /*// Close the splash screen
+                    // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));*/
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                     try
                     {
@@ -853,12 +853,12 @@ namespace DisplayMagician {
             logger.Debug($"SHUTDOWN HAS BEGUN! The app command has finished executing and we're starting to get ready for shutdown.");
 
             // Close the splash screen if it's still open (happens with some errors)
-            /*if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
             {
                 logger.Trace($"Closing the SplashScreen as it may still be open");
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
-            }*/
-                
+            }
+
             logger.Trace($"Program/Main: Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
@@ -883,9 +883,9 @@ namespace DisplayMagician {
             ERRORLEVEL errLevel = ERRORLEVEL.OK;
             try
             {
-                /*// Close the splash screen
+                // Close the splash screen
                 if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));*/
+                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                 // Enable the MainForm to be shown
                 AppMainForm.AllowVisible = true;
