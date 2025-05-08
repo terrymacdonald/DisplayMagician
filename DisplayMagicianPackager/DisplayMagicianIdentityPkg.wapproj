@@ -77,7 +77,6 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" />
   </ItemGroup>
 </Project>
