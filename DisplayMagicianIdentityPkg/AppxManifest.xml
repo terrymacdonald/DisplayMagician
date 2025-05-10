@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap10 rescap">
+
+  <Identity
+    Name="4f6354a7-065d-432a-bb6b-b65acc257555"
+    Publisher="CN=LittleBitBig"
+    Version="1.0.0.0"
+	ProcessorArchitecture="neutral" />
+
+    <Properties>
+        <DisplayName>DisplayMagician</DisplayName>
+        <PublisherDisplayName>LittleBitBig</PublisherDisplayName>
+        <Logo>Assets\StoreLogo.png</Logo>
+        <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
+    </Properties>
+    <Resources>
+        <Resource Language="en-US"/>
+    </Resources>
+	<Dependencies>
+		<TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+	</Dependencies>
+	<Capabilities>
+		<Capability Name="internetClient" />
+		<rescap:Capability Name="runFullTrust" />
+		<rescap:Capability Name="unvirtualizedResources"/>
+		<rescap:Capability Name="appDiagnostics" />
+	</Capabilities>
+	<Applications>
+        <Application Id="DisplayMagician"
+          Executable="DisplayMagician.exe"
+	      uap10:TrustLevel="mediumIL" 
+	      uap10:RuntimeBehavior="win32App">
+	        <uap:VisualElements
+                AppListEntry="none"
+		        DisplayName="DisplayMagicianSetup"
+                Description="DisplayMagicianSetup"
+                BackgroundColor="transparent"
+                Square150x150Logo="Assets\Square150x150Logo.png"
+                Square44x44Logo="Assets\Square44x44Logo.png">
+                <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+                <!--<uap:SplashScreen Image="Images\SplashScreen.png" />-->
+                <uap:InitialRotationPreference>
+                    <uap:Rotation Preference="landscape"/>
+				</uap:InitialRotationPreference>
+            </uap:VisualElements>
+        </Application>
+    </Applications>
+</Package>

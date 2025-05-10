@@ -320,6 +320,13 @@ namespace DisplayMagician.AppLibraries
         {
             try
             {
+                var accessStatus = await AppDiagnosticInfo.RequestAccessAsync();
+                if (accessStatus != DiagnosticAccessStatus.Allowed)
+                {
+                    logger.Debug($"LocalApp/UWPIsRunning: Access to app diagnostics denied by user or limited: {accessStatus}");
+                    return false;
+                }
+
                 IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid);
                 foreach (var thing in infos)
                 {
@@ -416,6 +423,13 @@ namespace DisplayMagician.AppLibraries
             }
             else if (LocalAppType == InstalledAppType.UWP)
             {
+                var accessStatus = AppDiagnosticInfo.RequestAccessAsync().GetResults();
+                if (accessStatus != DiagnosticAccessStatus.Allowed)
+                {
+                    logger.Debug($"LocalApp/UWPIsRunning: Access to app diagnostics denied by user or limited: {accessStatus}");
+                    return false;
+                }
+
                 // Create UWP watcher to watch this app starting
                 var _LocalAppUWPWatcher = Windows.System.AppDiagnosticInfo.CreateWatcher();
                 _LocalAppUWPWatcher.Added += UWPWatcherAdded;
