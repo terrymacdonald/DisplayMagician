@@ -323,6 +323,8 @@ namespace DisplayMagician.UIForms
             // Use the NLog configuration with the LogLevel we just changed.
             NLog.LogManager.Configuration = config;
 
+            NLog.LogManager.ReconfigExistingLoggers();
+
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved LogLevel as {Program.AppProgramSettings.LogLevel}");
 
             // save upgrade in prereleases setting

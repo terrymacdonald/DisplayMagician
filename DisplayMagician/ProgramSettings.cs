@@ -354,7 +354,7 @@ namespace DisplayMagician
             }
         }
 
-        [DefaultValue("Trace")]
+        [DefaultValue("warn")]
         public string LogLevel
         {
             get
@@ -385,7 +385,7 @@ namespace DisplayMagician
                         _logLevel = NLog.LogLevel.Fatal.ToString();
                         break;
                     default:
-                        _logLevel = NLog.LogLevel.Info.ToString();
+                        _logLevel = NLog.LogLevel.Warn.ToString();
                         break;
 
                 }
