@@ -27,6 +27,13 @@ using System.Web;
 using Vortice.DirectInput;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 using System.Windows.Documents;
+using System.Diagnostics;
+
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Activation;
+using Windows.ApplicationModel.DataTransfer.ShareTarget;
+using Windows.Management.Deployment;
+using System.IO.Packaging;
 //using static System.Net.Mime.MediaTypeNames;
 
 
@@ -50,6 +57,7 @@ namespace DisplayMagician {
         public static string AppVersion = ThisAssembly.AssemblyFileVersion;
         public static DirectInputManager AppDirectInputManager;
 
+        public static string AppIdentityPkgPath = Path.Combine(Application.StartupPath, "DisplayMagicianIdentityPkg.msix");
         public static string AppPermStartMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "DisplayMagician","DisplayMagician.lnk");
         public static string AppTempStartMenuPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.Programs),"DisplayMagician.lnk");
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
@@ -116,6 +124,22 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
+
+
+            //if app isn't running with identity, register its identity package
+            if (!ExecutionMode.IsRunningWithIdentity())
+            {
+                //Attempt registration
+                if (RegisterPackageWithExternalLocationAsync(AppStartupPath, AppIdentityPkgPath).Result)
+                {
+                    //Registration succeeded, restart the app to run with identity
+                    Console.WriteLine($"Program/Main: PackageManager Registration succeeded. The application now has package identity so can track UWP applications. THis will allow the user to use UWP applications in Game Shortcuts.");
+                    //Application.Restart();
+                    //Process.Start(Application.ResourceAssembly.Location, arguments: cmdArgs?.ToString());
+                }
+            }
+
+
             // Create the Logging Dir if it doesn't exist so that it's avilable for all
             // parts of the program to use
             if (!Directory.Exists(AppDataPath))
@@ -142,6 +166,8 @@ namespace DisplayMagician {
                 }
             }
 
+
+            
             // Prepare NLog for internal logging - Comment out when not required
             //NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             //NLog.Common.InternalLogger.LogToConsole = true;
@@ -1238,9 +1264,75 @@ namespace DisplayMagician {
             // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
             //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
             return result;
+        }        
+
+        private static async Task<bool> RegisterPackageWithExternalLocationAsync(string externalLocation, string packagePath)
+        {
+            bool registration = false;
+            try
+            {
+                var externalUri = new Uri(externalLocation);
+                var packageUri = new Uri(packagePath);
+
+                Console.WriteLine("exe Location {0}", externalLocation);
+                Console.WriteLine("msix Address {0}", packagePath);
+
+                Console.WriteLine("  exe Uri {0}", externalUri);
+                Console.WriteLine("  msix Uri {0}", packageUri);
+
+                var packageManager = new PackageManager();
+
+                //Declare use of an external location
+                var options = new AddPackageOptions();
+                options.ExternalLocationUri = externalUri;
+
+                Console.WriteLine("Installing package {0}", packagePath);
+                Debug.WriteLine("Waiting for package registration to complete...");
+
+                var deploymentOperation = packageManager.AddPackageByUriAsync(packageUri, options);
+
+                await deploymentOperation;
+
+                if (deploymentOperation.Status == Windows.Foundation.AsyncStatus.Error)
+                {
+                    Windows.Management.Deployment.DeploymentResult deploymentResult = deploymentOperation.GetResults();
+                    Debug.WriteLine("Installation Error: {0}", deploymentOperation.ErrorCode);
+                    Debug.WriteLine("Detailed Error Text: {0}", deploymentResult.ErrorText);
+
+                }
+                else if (deploymentOperation.Status == Windows.Foundation.AsyncStatus.Canceled)
+                {
+                    Debug.WriteLine("Package Registration Canceled");
+                }
+                else if (deploymentOperation.Status == Windows.Foundation.AsyncStatus.Completed)
+                {
+                    registration = true;
+                    Debug.WriteLine("Package Registration succeeded!");
+                }
+                else
+                {
+                    Debug.WriteLine("Installation status unknown");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("AddPackageSample failed, error message: {0}", ex.Message);
+                Console.WriteLine("Full Stacktrace: {0}", ex.ToString());
+
+                return registration;
+            }
+
+            return registration;
         }
 
+        private static async void RemovePackageWithExternalLocationAsync() //example of how to uninstall an identity package
+        {
+            var packageManager = new PackageManager();
 
+            Debug.WriteLine("Uninstalling package..");
+            // TODO remove the package identity name on uninstall.
+            await packageManager.RemovePackageAsync("PhotoStoreDemo_0.0.0.1_x86__rg009sv5qtcca");
+        }
 
         public static void ShowMessages()
         {
