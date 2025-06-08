@@ -93,7 +93,7 @@ namespace DisplayMagician
             {
                 if (_displayMagicianVersion == null)
                 {
-                    return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                    return Program.AppVersion;
                 }
                 return _displayMagicianVersion;
             }
