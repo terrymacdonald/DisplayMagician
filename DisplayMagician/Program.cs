@@ -1051,6 +1051,9 @@ namespace DisplayMagician {
                 shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (shortcutToRun is ShortcutItem)
                 {
+                    // We need to update the active profile if we've been run from a shortcut.
+                    ProfileRepository.UpdateActiveProfile();
+                    // Now refresh the shortcut validity
                     shortcutToRun.RefreshValidity();
                     //ShortcutRepository.RunShortcut(shortcutToRun);
                     Program.RunShortcutTask(shortcutToRun);
@@ -1089,6 +1092,10 @@ namespace DisplayMagician {
                 // Get the profile
                 ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
 
+                // We need to update the active profile if we've been run from a profile shortcut.
+                ProfileRepository.UpdateActiveProfile();
+
+                // Apply the profile change
                 ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
                 if (result == ApplyProfileResult.Cancelled)
                     errLevel = ERRORLEVEL.CANCELED_BY_USER;
