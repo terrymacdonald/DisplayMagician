@@ -1,8 +1,6 @@
 ﻿using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
 //using Microsoft.Win32;
-using NHotkey;
-using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

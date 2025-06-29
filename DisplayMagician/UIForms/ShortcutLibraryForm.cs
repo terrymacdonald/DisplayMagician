@@ -4,7 +4,6 @@ using DisplayMagician.Processes;
 //using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
-using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
