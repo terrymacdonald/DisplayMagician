@@ -225,9 +225,10 @@ namespace DisplayMagician {
                 else
                 {
 
-                    // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
+                    // if we're the second instance of DisplayMagician, then                   
+                    // lets close down as the first instance will continue with what we wanted to do.
                     logger.Trace($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
-                    if (System.Windows.Forms.Application.MessageLoop)
+                    if (Application.MessageLoop)
                     {
                         // WinForms have loaded
                         Application.Exit();
