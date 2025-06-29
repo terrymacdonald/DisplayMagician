@@ -521,6 +521,7 @@ namespace DisplayMagician.UIForms
             // Center the form on the primary screen
             this.Show();
             //Utils.ActivateCenteredOnPrimaryScreen(this);
+            this.BringToFront();
         }
 
         public void openShortcutLibraryWindow()

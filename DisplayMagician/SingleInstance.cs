@@ -87,9 +87,23 @@ namespace DisplayMagician
             else
             {
                 // If we only have the path, we assume they just want to bring the topmost window to the foreground
+                // Replace the selected code with the following to ensure UI thread safety using Invoke
                 logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments, only the path '{args[0]}'. Opening the Main Display Window.");
                 MainForm myMainForm = Program.AppMainForm;
-                myMainForm?.openApplicationWindow();
+                if (myMainForm != null)
+                {
+                    if (myMainForm.InvokeRequired)
+                    {
+                        myMainForm.Invoke(new Action(() =>
+                        {
+                            myMainForm.openApplicationWindow();                            
+                        }));
+                    }
+                    else
+                    {
+                        myMainForm.openApplicationWindow();
+                    }
+                }
             }
         }           
 
