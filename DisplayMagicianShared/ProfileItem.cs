@@ -1270,7 +1270,7 @@ namespace DisplayMagicianShared
                 // Now we need to check for Spanned screens (Surround)
                 if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled && _nvidiaDisplayConfig.MosaicConfig.MosaicCurrentTopo.MosaicGridCount > 0)
                 {
-                    for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicCurrentTopo.MosaicGridCount; i++)
+                    for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies.Length; i++)
                     {
 
                         ScreenPosition screen = new ScreenPosition();
@@ -1296,18 +1296,17 @@ namespace DisplayMagicianShared
                             int overallHeight = 0;
 
                             // The same display size is used across the entire grid, so we can calculate here and reuse
-                            DisplaySettingsV2 dispSettings = _nvidiaDisplayConfig.MosaicConfig.MosaicDisplaySettings;
+                            var dispSettings = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].DisplaySettings;
                             int eachDisplayWidth = dispSettings.Width;
                             int eachDisplayHeight = dispSettings.Height;
-                            int numRows = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
-                            int numColumns = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
-
+                            int numRows = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Rows;
+                            int numColumns = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Columns;
                             // Need to look for the Windows layout details now we know the size of this display
                             // Set some basics about the screen
                             try
                             {
-                                UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                                List<PathInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                                UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Displays[0].DisplayId;
+                                var displaySources = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Displays;
                                 bool breakOuterLoop = false;
                                 foreach (var displaySource in displaySources)
                                 {
@@ -1479,7 +1478,7 @@ namespace DisplayMagicianShared
                     try
                     {
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Mosaic isn't enabled so using the DisplayConfig based screen details.");
-                        List<PathInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                        List<PathInfoV2> displaySources = _nvidiaDisplayConfig.PhysicalAdapters[i].DisplayConfig;
                         foreach (var displaySource in displaySources)
                         {
                             int targetInfoIndex = 0;
@@ -1816,6 +1815,213 @@ namespace DisplayMagicianShared
 
             return _screens;
         }
+
+        private List<ScreenPosition> GetIntelScreenPositions()
+        {
+            // If Intel is not installed or not in use, then we can't get the screen positions so return an empty list
+            if (!IntelLibrary.GetLibrary().IsInstalled || !_intelDisplayConfig.IsInUse)
+            {
+                return new List<ScreenPosition>() { };
+            }
+
+            // Set up some colours
+            Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
+            Color spannedScreenColor = Color.FromArgb(0, 113, 197); // represents Intel Blue
+            Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
+
+            // Now we create the screens structure from the Intel profile information
+            _screens = new List<ScreenPosition>() { };
+
+            try
+            {
+                int pathCount = _windowsDisplayConfig.DisplayConfigPaths.Length;
+                // First of all we need to figure out how many display paths we have.
+                if (pathCount < 1)
+                {
+                    // Return an empty screen if we have no Display Config Paths to use!
+                    return _screens;
+                }
+
+                // Go through the AMD Eyefinity screens
+                if (_amdDisplayConfig.SlsConfig.IsSlsEnabled)
+                {
+                    for (int i = 0; i < _amdDisplayConfig.DisplayMaps.Count; i++)
+                    {
+                        ScreenPosition screen = new ScreenPosition();
+                        screen.Library = "AMD";
+                        screen.Colour = normalScreenColor;
+                        screen.Name = "AMD Eyefinity";
+                        screen.Colour = spannedScreenColor;
+
+                        //screen.Name = targetId.ToString();
+                        //screen.DisplayConnector = displayMode.DisplayConnector;
+                        screen.ScreenX = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XPos;
+                        screen.ScreenY = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YPos;
+                        screen.Rotation = ScreenRotation.ROTATE_0;
+
+                        // If we're at the 0,0 coordinate then we're the primary monitor
+                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                        {
+                            // Record we're primary screen
+                            screen.IsPrimary = true;
+                            // Change the colour to be the primary colour, but only if it isn't a surround screen
+                            if (screen.Colour != spannedScreenColor)
+                            {
+                                screen.Colour = primaryScreenColor;
+                            }
+                        }
+
+                        // Set the initial taskbar location for this screen at the bottom
+                        screen.TaskbarPosition = TaskbarPosition.Bottom;
+
+                        SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+
+                        _screens.Add(screen);
+                    }
+                }
+
+                // Next, go through the screens as Windows knows them, and then enhance the info with Eyefinity data if it applies
+                foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
+                {
+                    // For each path we go through and get the relevant info we need.
+                    if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
+                    {
+                        UInt64 adapterId = path.SourceInfo.AdapterId.Value;
+                        UInt32 sourceId = path.SourceInfo.Id;
+                        UInt32 targetId = path.TargetInfo.Id;
+
+                        // Set some basics about the screen
+                        ScreenPosition screen = new ScreenPosition();
+                        screen.Library = "AMD";
+                        screen.Name = "DISPLAY";
+                        screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
+                        screen.IsClone = false;
+                        screen.ClonedCopies = 0;
+                        // Set the default taskbar position as the bottom of the screen                        
+                        screen.TaskbarPosition = TaskbarPosition.Bottom;
+
+                        // Find out if this source is cloned
+                        foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
+                        {
+                            // All of the items in the Value array are the same source, so we can just check the first one in the array!
+                            if (displaySource.Value[0].SourceId == sourceId)
+                            {
+                                // If there is more than one item in the array, then it's a cloned source!
+                                if (displaySource.Value.Count > 1)
+                                {
+                                    // We have a cloned display
+                                    screen.IsClone = true;
+                                    screen.ClonedCopies = displaySource.Value.Count;
+                                }
+                                break;
+                            }
+                        }
+
+                        // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
+                        foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
+                        {
+                            // Find the matching Display Config Source Mode
+                            if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
+                            {
+                                screen.Name = targetId.ToString();
+                                screen.ScreenX = displayMode.SourceMode.Position.X;
+                                screen.ScreenY = displayMode.SourceMode.Position.Y;
+
+                                if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY)
+                                {
+                                    screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                    screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                    screen.Rotation = ScreenRotation.ROTATE_0;
+                                }
+                                else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE90)
+                                {
+                                    // Portrait screen so need to change width and height
+                                    screen.ScreenWidth = (int)displayMode.SourceMode.Height;
+                                    screen.ScreenHeight = (int)displayMode.SourceMode.Width;
+                                    screen.Rotation = ScreenRotation.ROTATE_90;
+                                }
+                                else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE180)
+                                {
+                                    screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                    screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                    screen.Rotation = ScreenRotation.ROTATE_180;
+                                }
+                                else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
+                                {
+                                    screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                    screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                    screen.Rotation = ScreenRotation.ROTATE_270;
+                                }
+                                else
+                                {
+                                    screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                    screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                    screen.Rotation = ScreenRotation.ROTATE_0;
+                                }
+
+                                // If we're at the 0,0 coordinate then we're the primary monitor
+                                if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                                {
+                                    screen.IsPrimary = true;
+                                    screen.Colour = primaryScreenColor;
+                                }
+                                break;
+                            }
+                        }
+
+                        // Decide if this screen is one we've had earlier, and if so, skip it
+                        if (_screens.Any(s => s.ScreenX == screen.ScreenX && s.ScreenY == screen.ScreenY && s.ScreenWidth == screen.ScreenWidth && s.ScreenHeight == screen.ScreenHeight))
+                        {
+                            SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: We've already got the {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) screen from the AMD driver, so skipping it from the Windows driver.");
+                            continue;
+                        }
+
+                        if (_windowsDisplayConfig.DisplayHDRStates.Count > 0)
+                        {
+                            foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                            {
+                                // Find the matching HDR information
+                                if (hdrInfo.Id == targetId)
+                                {
+                                    // HDR information
+                                    if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
+                                    {
+                                        screen.HDRSupported = true;
+                                        if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
+                                        {
+                                            screen.HDREnabled = true;
+                                        }
+                                        else
+                                        {
+                                            screen.HDREnabled = false;
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        screen.HDRSupported = false;
+                                        screen.HDREnabled = false;
+                                    }
+                                    break;
+                                }
+                            }
+
+                        }
+
+                        SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+
+                        _screens.Add(screen);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"ProfileItem/GetAMDScreenPositions: Exception within GetAMDScreenPositions function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+            }
+
+            return _screens;
+        }
+
 
         private List<ScreenPosition> GetWindowsScreenPositions()
         {
