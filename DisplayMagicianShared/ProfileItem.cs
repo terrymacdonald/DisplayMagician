@@ -1848,9 +1848,9 @@ namespace DisplayMagicianShared
                     for (int i = 0; i < _amdDisplayConfig.DisplayMaps.Count; i++)
                     {
                         ScreenPosition screen = new ScreenPosition();
-                        screen.Library = "AMD";
+                        screen.Library = "INTEL";
                         screen.Colour = normalScreenColor;
-                        screen.Name = "AMD Eyefinity";
+                        screen.Name = "Intel Combined Display";
                         screen.Colour = spannedScreenColor;
 
                         //screen.Name = targetId.ToString();
@@ -1874,7 +1874,7 @@ namespace DisplayMagicianShared
                         // Set the initial taskbar location for this screen at the bottom
                         screen.TaskbarPosition = TaskbarPosition.Bottom;
 
-                        SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+                        SharedLogger.logger.Trace($"ProfileItem/GetIntelScreenPositions: Added a new Intel Combined Display {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                         _screens.Add(screen);
                     }
@@ -1892,7 +1892,7 @@ namespace DisplayMagicianShared
 
                         // Set some basics about the screen
                         ScreenPosition screen = new ScreenPosition();
-                        screen.Library = "AMD";
+                        screen.Library = "INTEL";
                         screen.Name = "DISPLAY";
                         screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                         screen.IsClone = false;
@@ -1972,7 +1972,7 @@ namespace DisplayMagicianShared
                         // Decide if this screen is one we've had earlier, and if so, skip it
                         if (_screens.Any(s => s.ScreenX == screen.ScreenX && s.ScreenY == screen.ScreenY && s.ScreenWidth == screen.ScreenWidth && s.ScreenHeight == screen.ScreenHeight))
                         {
-                            SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: We've already got the {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) screen from the AMD driver, so skipping it from the Windows driver.");
+                            SharedLogger.logger.Trace($"ProfileItem/GetIntelScreenPositions: We've already got the {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) screen from the Intel driver, so skipping it from the Windows driver.");
                             continue;
                         }
 
@@ -2008,7 +2008,7 @@ namespace DisplayMagicianShared
 
                         }
 
-                        SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+                        SharedLogger.logger.Trace($"ProfileItem/GetIntelScreenPositions: Added a new Intel Display {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                         _screens.Add(screen);
                     }
@@ -2016,7 +2016,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, $"ProfileItem/GetAMDScreenPositions: Exception within GetAMDScreenPositions function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                SharedLogger.logger.Error(ex, $"ProfileItem/GetIntelScreenPositions: Exception within GetIntelScreenPositions function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
             return _screens;
