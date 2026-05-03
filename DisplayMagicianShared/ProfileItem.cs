@@ -1,20 +1,22 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Windows;
-using System.Windows.Forms;
-using Newtonsoft.Json;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Text.RegularExpressions;
-using IWshRuntimeLibrary;
 using DisplayMagicianShared.AMD;
+using DisplayMagicianShared.Intel;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
+using IWshRuntimeLibrary;
+using Newtonsoft.Json;
 using NLog.Targets;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Windows;
+using System.Windows.Forms;
 
 namespace DisplayMagicianShared
 {
@@ -75,6 +77,7 @@ namespace DisplayMagicianShared
         private List<ScreenPosition> _screens = new List<ScreenPosition>();
         private NVIDIA_DISPLAY_CONFIG _nvidiaDisplayConfig;
         private AMD_DISPLAY_CONFIG _amdDisplayConfig;
+        private INTEL_DISPLAY_CONFIG _intelDisplayConfig;
         private WINDOWS_DISPLAY_CONFIG _windowsDisplayConfig;
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -85,6 +88,7 @@ namespace DisplayMagicianShared
         private bool _isPossible = false;
         private bool _isNVIDIAPossible = false;
         private bool _isAMDPossible = false;
+        private bool _isIntelPossible = false;
         private bool _isWindowsPossible = false;
         private bool _forceExplorerRestart = false;
         private string _wallpaperBitmapFilename = "";
@@ -191,6 +195,16 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Error(ex, $"ProfileItem/ProfileItem: Exception getting the default configuration from AMDLibrary - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
+
+            try 
+            {
+                _intelDisplayConfig = IntelLibrary.GetLibrary().CreateDefaultConfig();
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"ProfileItem/ProfileItem: Exception getting the default configuration from IntelLibrary - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+            }
+
             try 
             {
                 _windowsDisplayConfig = WinLibrary.GetLibrary().CreateDefaultConfig();
@@ -278,6 +292,19 @@ namespace DisplayMagicianShared
             set
             {
                 _amdDisplayConfig = value;
+            }
+        }
+
+        [JsonRequired]
+        public INTEL_DISPLAY_CONFIG IntelDisplayConfig
+        {
+            get
+            {
+                return _intelDisplayConfig;
+            }
+            set
+            {
+                _intelDisplayConfig = value;
             }
         }
 
@@ -493,11 +520,13 @@ namespace DisplayMagicianShared
         {
             NVIDIALibrary nvidiaLibrary;
             AMDLibrary amdLibrary;
+            IntelLibrary intelLibrary;
             WinLibrary winLibrary;
             try
             {
                 nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 amdLibrary = AMDLibrary.GetLibrary();
+                intelLibrary = IntelLibrary.GetLibrary();
                 winLibrary = WinLibrary.GetLibrary();
 
                 if (nvidiaLibrary.IsInstalled)
@@ -514,6 +543,15 @@ namespace DisplayMagicianShared
                     if (!amdLibrary.IsValidConfig(_amdDisplayConfig))
                     {
                         SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid AMD display config");
+                        return false;
+                    }
+                }
+
+                if (intelLibrary.IsInstalled)
+                {
+                    if (!intelLibrary.IsValidConfig(_intelDisplayConfig))
+                    {
+                        SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid Intel display config");
                         return false;
                     }
                 }
@@ -553,6 +591,7 @@ namespace DisplayMagicianShared
             profile.Name = Name;
             profile.AMDDisplayConfig = AMDDisplayConfig;
             profile.NVIDIADisplayConfig = NVIDIADisplayConfig; 
+            profile.IntelDisplayConfig = IntelDisplayConfig;
             profile.WindowsDisplayConfig = WindowsDisplayConfig;            
             profile.ProfileIcon = ProfileIcon;
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
@@ -593,6 +632,7 @@ namespace DisplayMagicianShared
                 //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+                IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
                 if (nvidiaLibrary.IsInstalled)
@@ -603,13 +643,18 @@ namespace DisplayMagicianShared
                 {
                     amdLibrary.UpdateActiveConfig();
                 }
+                if (intelLibrary.IsInstalled)
+                {
+                    intelLibrary.UpdateActiveConfig();
+                }
 
                 // Always update Windows display settings
                 winLibrary.UpdateActiveConfig(fastScan);         
 
                 // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;
-                _amdDisplayConfig = amdLibrary.ActiveDisplayConfig;                
+                _amdDisplayConfig = amdLibrary.ActiveDisplayConfig;         
+                _intelDisplayConfig = intelLibrary.ActiveDisplayConfig;
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
                 _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers();
                              
@@ -724,172 +769,243 @@ namespace DisplayMagicianShared
         }
 
         // Actually set this profile active
-        public bool SetActive()
+        public bool SetActive(bool useADLEyefinity = false, int delayInMs = 500)
         {
             try
             {
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+                IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
                 bool applyNVIDIASettings = false;
                 bool applyAMDSettings = false;
+                bool applyIntelSettings = false;
                 bool itWorkedforNVIDIA = false;
                 bool itWorkedforAMD = false;
+                bool itWorkedforIntel = false;
                 bool itWorkedforWindows = false;
                 bool itWorkedforNVIDIAOverride = false;
                 bool itWorkedforAMDOverride = false;
+                bool itWorkedforIntelOverride = false;
                 bool errorApplyingSomething = false;
 
                 // Wake up all attached displays in case they have gone to sleep
-                winLibrary.WakeUpAllDisplays();
+                WinLibrary.WakeUpAllDisplays(delayInMs);
 
                 if (nvidiaLibrary.IsInstalled)
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA NvAPI DLL is available to use on this computer.");
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA NvAPI DLL is available to use on this computer.");
                     if (_nvidiaDisplayConfig.IsInUse)
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings are used in this display profile.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings are used in this display profile.");
                         if (_nvidiaDisplayConfig.DisplayIdentifiers.Count > 0)
                         {
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: There are {_nvidiaDisplayConfig.DisplayIdentifiers.Count} displays connected to the NVIDIA video card.");
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: There are {_nvidiaDisplayConfig.DisplayIdentifiers.Count} displays connected to the NVIDIA video card.");
 
                             if (nvidiaLibrary.IsPossibleConfig(_nvidiaDisplayConfig))
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name} are possible to use right now, so we'll use attempt to use them shortly.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {Name} are possible to use right now, so we'll use attempt to use them shortly.");
                                 applyNVIDIASettings = true;
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name} were NOT possible to be applied.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {Name    } were NOT possible to be applied.");
                             }
                         }
                         else
                         {
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying NVIDIA display settings as no screens are connected to the NVIDIA video card.");
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display settings as no screens are connected to the NVIDIA video card.");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying NVIDIA display settings as the NVIDIA settings are not in use in this display profile.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display settings as the NVIDIA settings are not in use in this display profile.");
                     }
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying NVIDIA display settings as the NVIDIA library isn't installed.");
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display settings as the NVIDIA library isn't installed.");
                 }
 
                 if (amdLibrary.IsInstalled)
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD ADL DLL is available to use on this computer.");
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD ADL DLL is available to use on this computer.");
                     if (_amdDisplayConfig.IsInUse)
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings are used in this display profile.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings are used in this display profile.");
 
                         if (_amdDisplayConfig.DisplayIdentifiers.Count > 0)
                         {
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: There are {_amdDisplayConfig.DisplayIdentifiers.Count} displays connected to the AMD video card.");
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: There are {_amdDisplayConfig.DisplayIdentifiers.Count} displays connected to the AMD video card.");
                             if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within {Name} are possible to use right now, so we'll use attempt to use them.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {Name} are possible to use right now, so we'll use attempt to use them.");
                                 applyAMDSettings = true;
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within {Name} were NOT possible to be applied.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {Name} were NOT possible to be applied.");
                             }
                         }
                         else
                         {
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display settings as the AMD library isn't installed.");
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display settings as the AMD library isn't installed.");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display settings as the NVIDIA settings are not in use in this display profile.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display settings as the NVIDIA settings are not in use in this display profile.");
                     }
 
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display settings as the AMD library isn't installed.");
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display settings as the AMD library isn't installed.");
                 }
+
+                if (intelLibrary.IsInstalled)
+                {
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel IGCL DLL is available to use on this computer.");
+                    if (_intelDisplayConfig.IsInUse)
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel display settings are used in this display profile.");
+                        if (_intelDisplayConfig.DisplayIdentifiers.Count > 0)
+                        {
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: There are {_intelDisplayConfig.DisplayIdentifiers.Count} displays connected to the Intel video card.");
+
+                            if (intelLibrary.IsPossibleConfig(_intelDisplayConfig))
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel display settings within {Name} are possible to use right now, so we'll use attempt to use them shortly.");
+                                applyIntelSettings = true;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel display settings within {Name} were NOT possible to be applied.");
+                            }
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying Intel display settings as no screens are connected to the Intel video card.");
+                        }
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying Intel display settings as the Intel settings are not in use in this display profile.");
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying Intel display settings as the Intel library isn't installed.");
+                }
+
 
                 if (applyNVIDIASettings)
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply NVIDIA display config from {Name}...");
-                    itWorkedforNVIDIA = nvidiaLibrary.SetActiveConfig(_nvidiaDisplayConfig);
+                    Console.Write($"Attempting to apply NVIDIA display config from {Name}...");
+                    itWorkedforNVIDIA = nvidiaLibrary.SetActiveConfig(_nvidiaDisplayConfig, delayInMs);
+                    Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforNVIDIA)
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name} were sucessfully applied.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {Name} were sucessfully applied.");
                         Console.WriteLine($"Done.");
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name} were NOT applied successfully.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {Name} were NOT applied successfully.");
+                        Console.WriteLine($"\nERROR - NVIDIA display settings were not applied correctly.");
                         errorApplyingSomething = true;
                     }
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping NVIDIA Settings as they are not used in {Name}.");
+                    Console.WriteLine($"Skipping NVIDIA Settings as they are not used in {Name}.");
                 }
+
 
                 if (applyAMDSettings)
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply AMD display config from {Name}...");
-                    itWorkedforAMD = amdLibrary.SetActiveConfig(_amdDisplayConfig);
+                    Console.Write($"Attempting to apply AMD display config from {Name}...");
+                    itWorkedforAMD = amdLibrary.SetActiveConfig(_amdDisplayConfig, useADLEyefinity, delayInMs);
+                    Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforAMD)
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within {Name} were sucessfully applied.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {Name} were sucessfully applied.");
                         Console.WriteLine($"Done.");
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within {Name} were NOT applied successfully.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings within {Name} were NOT applied successfully.");
+                        Console.WriteLine($"\nERROR - AMD display settings were not applied correctly.");
                         errorApplyingSomething = true;
                     }
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping AMD Settings as they are not used in {Name}.");
+                    Console.WriteLine($"Skipping AMD Settings as they are not used in {Name}.");
                 }
 
-
-                // If either AMD or NVIDIA settings were applied, then we need to update our windows layout to make sure it
-                // matches current reality.
-                if ((amdLibrary.IsInstalled && itWorkedforAMD) || (nvidiaLibrary.IsInstalled && itWorkedforNVIDIA))
+                if (applyIntelSettings)
                 {
-                    // if other changes were made, then ets update the screens so Windows knows whats happening
-                    // NVIDIA and AMD make such large changes to the available screens in windows, we need to do this.
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: NVIDIA and/or AMD display settings within {Name} were applied successfully, so updating Windows Active Config so it knows of the changes made.");
+                    Console.Write($"Attempting to apply Intel display config from {Name}...");
+                    itWorkedforIntel = intelLibrary.SetActiveConfig(_intelDisplayConfig, delayInMs);
+                    Thread.Sleep(delayInMs); // Give it a second to wake up the displays
+                    if (itWorkedforIntel)
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel display settings within {Name} were sucessfully applied.");
+                        Console.WriteLine($"Done.");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel display settings within {Name} were NOT applied successfully.");
+                        Console.WriteLine($"\nERROR - Intel display settings were not applied correctly.");
+                        errorApplyingSomething = true;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Skipping Intel Settings as they are not used in {Name}.");
+                }
+
+                // If any AMD, NVIDIA or Intel settings were applied, then we need to update our windows layout to make sure it
+                // matches current reality.
+                if ((intelLibrary.IsInstalled && itWorkedforIntel) || (amdLibrary.IsInstalled && itWorkedforAMD) || (nvidiaLibrary.IsInstalled && itWorkedforNVIDIA))
+                {
+                    WinLibrary.EnableAllConnectedDisplays();
+                    Thread.Sleep(delayInMs); // Give it a second to wake up the displays
+                                             // if other changes were made, then ets update the screens so Windows knows whats happening
+                                             // NVIDIA and AMD make such large changes to the available screens in windows, we need to do this.
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: NVIDIA, AMD or Intel display settings within {Name} were applied successfully, so updating Windows Active Config so it knows of the changes made.");
                     winLibrary.UpdateActiveConfig();
                 }
 
                 // Then let's try to also apply the windows changes
                 // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a Mosaic config,
                 // or if the display config we want to change to is a Mosaic config. So we just have to assume that it will work!
-                SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply Windows display config from {Name}...");
-                itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig);
-
+                Console.Write($"Attempting to apply Windows display config from {Name}...");
+                itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig, delayInMs);
+                Thread.Sleep(delayInMs);
                 if (itWorkedforWindows)
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within {Name} were applied correctly, so now attempting to apply any overrides.");
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Windows CCD display settings within {Name} were applied correctly, so now attempting to apply any overrides.");
+                    Console.WriteLine($"Done.");
 
                     if (applyNVIDIASettings)
                     {
                         if (itWorkedforNVIDIA)
                         {
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply 2nd part of the NVIDIA display config from {Name}....");
-                            itWorkedforNVIDIAOverride = nvidiaLibrary.SetActiveConfigOverride(_nvidiaDisplayConfig);
-
+                            Console.Write($"Attempting to apply 2nd part of the NVIDIA display config from {Name}...");
+                            itWorkedforNVIDIAOverride = nvidiaLibrary.SetActiveConfigOverride(_nvidiaDisplayConfig, delayInMs);
+                            Thread.Sleep(delayInMs);
                             if (itWorkedforNVIDIAOverride)
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings that override windows within {Name} were applied correctly.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings that override windows within {Name} were applied correctly.");
+                                Console.WriteLine($"Done.");
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings that override windows within {Name} were NOT applied correctly.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings that override windows within {Name} were NOT applied correctly.");
+                                Console.WriteLine($"ERROR - 2nd part of NVIDIA settings were not applied correctly.");
                                 errorApplyingSomething = true;
                             }
                         }
@@ -897,34 +1013,37 @@ namespace DisplayMagicianShared
                         {
                             if (nvidiaLibrary.IsInstalled)
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying NVIDIA display overrides as the NVIDIA display settings didn't apply correctly!");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display overrides as the NVIDIA display settings didn't apply correctly!");
+                                Console.Write($"Skipping 2nd part of the NVIDIA display config from {Name} as the 1st part didn't work...");
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying NVIDIA display overrides as the NVIDIA library isn't installed.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display overrides as the NVIDIA library isn't installed.");
                             }
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying NVIDIA display overrides as the NVIDIA video card doesn't have any displays in this profile.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying NVIDIA display overrides as the NVIDIA video card doesn't have any displays in this profile.");
+                        Console.WriteLine($"Skipping 2nd part of NVIDIA Settings as they are not used in {Name}.");
                     }
-
 
                     if (applyAMDSettings)
                     {
                         if (itWorkedforAMD)
                         {
-                            SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply 2nd part of the AMD display config from {Name}....");
-                            itWorkedforAMDOverride = amdLibrary.SetActiveConfigOverride(_amdDisplayConfig);
-
+                            Console.Write($"Attempting to apply 2nd part of the AMD display config from {Name}...");
+                            itWorkedforAMDOverride = amdLibrary.SetActiveConfigOverride(_amdDisplayConfig, delayInMs);
+                            Thread.Sleep(delayInMs);
                             if (itWorkedforAMDOverride)
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings that override windows within {Name} were applied correctly.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings that override windows within {Name} were applied correctly.");
+                                Console.WriteLine($"Done.");
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings that override windows within {Name} were NOT applied correctly.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The AMD display settings that override windows within {Name} were NOT applied correctly.");
+                                Console.WriteLine($"ERROR - 2nd part of AMD settings were not applied correctly.");
                                 errorApplyingSomething = true;
                             }
                         }
@@ -932,32 +1051,64 @@ namespace DisplayMagicianShared
                         {
                             if (amdLibrary.IsInstalled)
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display overrides as the AMD display settings didn't apply correctly!");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display overrides as the AMD display settings didn't apply correctly!");
+                                Console.Write($"Skipping 2nd part of the AMD display config from {Name} as the 1st part didn't work...");
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display overrides as the AMD library isn't installed.");
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display overrides as the AMD library isn't installed.");
                             }
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display overrides as the AMD video card doesn't have any displays in this profile.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying AMD display overrides as the AMD video card doesn't have any displays in this profile.");
+                        Console.WriteLine($"Skipping 2nd part of AMD Settings as they are not used in {Name}.");
                     }
 
-                    if (_forceExplorerRestart)
+                    if (applyIntelSettings)
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to force restart the explorer process to restore missing taskbars. The user will lose any open windows explorer windows.");
-                        winLibrary.ForceRestartExplorer();
+                        if (itWorkedforIntel)
+                        {
+                            Console.Write($"Attempting to apply 2nd part of the Intel display config from {Name}...");
+                            itWorkedforIntelOverride = intelLibrary.SetActiveConfigOverride(_intelDisplayConfig, delayInMs);
+                            Thread.Sleep(delayInMs);
+                            if (itWorkedforIntelOverride)
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel display settings that override windows within {Name} were applied correctly.");
+                                Console.WriteLine($"Done.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Intel display settings that override windows within {Name} were NOT applied correctly.");
+                                Console.WriteLine($"ERROR - 2nd part of Intel settings were not applied correctly.");
+                                errorApplyingSomething = true;
+                            }
+                        }
+                        else
+                        {
+                            if (intelLibrary.IsInstalled)
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying Intel display overrides as the Intel display settings didn't apply correctly!");
+                                Console.Write($"Skipping 2nd part of the Intel display config from {Name} as the 1st part didn't work...");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying Intel display overrides as the Intel library isn't installed.");
+                            }
+                        }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping restarting the explorer process as it is not required.");
+                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: Skipping applying Intel display overrides as the Intel video card doesn't have any displays in this profile.");
+                        Console.WriteLine($"Skipping 2nd part of Intel Settings as they are not used in {Name}.");
                     }
+
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within {Name} were NOT applied correctly, so skipping setting the overrides.");
+                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Windows CCD display settings within {Name} were NOT applied correctly, so skipping setting the overrides.");
+                    Console.WriteLine($"ERROR - VideoInfo Windows CCD settings were not applied correctly so skipping setting the overrides.");
                 }
 
                 // Write a blank line to the console
@@ -966,13 +1117,15 @@ namespace DisplayMagicianShared
                 // Give the final error if there are any
                 if (errorApplyingSomething)
                 {
-                    SharedLogger.logger.Info($"ProfileItem/SetActive: VideoInfo was unable to successfully apply your display profile within {Name}.");
+                    SharedLogger.logger.Info($"VideoInfo/loadFromFile: VideoInfo was unable to successfully apply your display profile within {Name}.");
+                    Console.WriteLine($"ERROR - VideoInfo was unable to successfully apply your display profile within {Name}.");
                 }
                 else
                 {
-                    SharedLogger.logger.Info($"ProfileItem/SetActive: VideoInfo successfully applied your display profile contained within {Name}.");
+                    SharedLogger.logger.Info($"VideoInfo/loadFromFile: VideoInfo successfully applied your display profile contained within {Name}.");
+                    Console.WriteLine($"VideoInfo successfully applied your display profile contained within {Name}.");
                 }
-
+            
                 return true;
             }
             catch (Exception ex)
@@ -1025,6 +1178,23 @@ namespace DisplayMagicianShared
                         }
                     }
 
+                }
+
+                List<ScreenPosition> intelScreens = new List<ScreenPosition>() { };
+
+                if (IntelLibrary.GetLibrary().IsInstalled)
+                {
+                    intelScreens.AddRange(GetIntelScreenPositions());
+                    // Ignore any windows screens that already exist from AMD and NVIDIA
+                    // IMPORTANT: This logic depends on allScreens only containing NVIDIA and AMD screens, and also that AMD and NVIDIA don't each add the same screen
+                    // If you change any code above this, then you need to make suyre this is still true!
+                    foreach (var screen in intelScreens)
+                    {
+                        if (!allScreens.Contains(screen))
+                        {
+                            allScreens.Add(screen);
+                        }
+                    }
                 }
 
                 List<ScreenPosition> winScreens = new List<ScreenPosition>() { };
@@ -1098,14 +1268,14 @@ namespace DisplayMagicianShared
                 }
 
                 // Now we need to check for Spanned screens (Surround)
-                if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled && _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount > 0)
+                if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled && _nvidiaDisplayConfig.MosaicConfig.MosaicCurrentTopo.MosaicGridCount > 0)
                 {
-                    for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
+                    for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicCurrentTopo.MosaicGridCount; i++)
                     {
 
                         ScreenPosition screen = new ScreenPosition();
                         screen.Library = "NVIDIA";
-                        if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount > 1)
+                        if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].DisplayCount > 1)
                         {
                             // It's a spanned screen across multiple subscreens!
                             // Set some basics about the screen                        

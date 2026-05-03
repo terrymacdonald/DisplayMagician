@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using FARPROC = System.IntPtr;
 using HMODULE = System.IntPtr;
@@ -176,19 +177,70 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_MODE other && this.Equals(other);
         public bool Equals(ADL_MODE other)
-            => AdapterIndex == other.AdapterIndex &&
-                DisplayID.Equals(other.DisplayID) &&
-                XPos == other.XPos &&
-                YPos == other.YPos &&
-                XRes == other.XRes &&
-                YRes == other.YRes &&
-                ColourDepth == other.ColourDepth &&
-                RefreshRate == other.RefreshRate &&
-                Orientation == other.Orientation &&
-                ModeFlag == other.ModeFlag &&
-                ModeMask == other.ModeMask &&
-                ModeValue == other.ModeValue;
-
+        {
+            if(AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if(!DisplayID.Equals(other.DisplayID))
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The DisplayID values don't equal each other");
+                return false;
+            }
+            if (XPos != other.XPos)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The XPos values don't equal each other");
+                return false;
+            }
+            if (YPos != other.YPos)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The YPos values don't equal each other");
+                return false;
+            }
+            if (XRes != other.XRes)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The XRes values don't equal each other");
+                return false;
+            }
+            if (YRes != other.YRes)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The YRes values don't equal each other");
+                return false;
+            }
+            if (ColourDepth != other.ColourDepth)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The ColourDepth values don't equal each other");
+                return false;
+            }
+            if (RefreshRate != other.RefreshRate)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The RefreshRate values don't equal each other");
+                return false;
+            }
+            if (Orientation != other.Orientation)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The Orientation values don't equal each other");
+                return false;
+            }
+            if (ModeFlag != other.ModeFlag)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The ModeFlag values don't equal each other");
+                return false;
+            }
+            if (ModeMask != other.ModeMask)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The ModeMask values don't equal each other");
+                return false;
+            }
+            if (ModeValue != other.ModeValue)
+            {
+                SharedLogger.logger.Trace($"ADL_MODE/Equals: The ModeValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
+             
         public override int GetHashCode()
         {
             return (AdapterIndex, DisplayID, XPos, YPos, XRes, YRes, ColourDepth, RefreshRate, Orientation, ModeFlag, ModeMask, ModeValue).GetHashCode();
@@ -222,10 +274,29 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_DISPLAY_TARGET other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_TARGET other)
-            => DisplayID.Equals(other.DisplayID) &&
-                DisplayMapIndex == other.DisplayMapIndex &&
-                DisplayTargetMask == other.DisplayTargetMask &&
-                DisplayTargetValue == other.DisplayTargetValue;
+        {
+            if (!DisplayID.Equals(other.DisplayID))
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_TARGET/Equals: The DisplayID values don't equal each other");
+                return false;
+            }
+            if (DisplayMapIndex != other.DisplayMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_TARGET/Equals: The DisplayMapIndex values don't equal each other");
+                return false;
+            }
+            if (DisplayTargetMask != other.DisplayTargetMask)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_TARGET/Equals: The DisplayTargetMask values don't equal each other");
+                return false;
+            }
+            if (DisplayTargetValue != other.DisplayTargetValue)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_TARGET/Equals: The DisplayTargetValue values don't equal each other");
+                return false;
+            }
+            return true;    
+        }
 
         public override int GetHashCode()
         {
@@ -275,7 +346,7 @@ namespace DisplayMagicianShared.AMD
         public bool PreferDisplaySet => (AdapterDisplayCapValue & 0x1) == 0x100;
         public bool BezelSet => (AdapterDisplayCapValue & 0x1) == 0x200;
 
-        /*        #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_NOTACTIVE        0x00000001
+                /*#define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_NOTACTIVE        0x00000001
                 #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_SINGLE            0x00000002
                 #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_CLONE            0x00000004
                 #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_NSTRETCH1GPU    0x00000008
@@ -291,9 +362,24 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_ADAPTER_DISPLAY_CAP other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_DISPLAY_CAP other)
-            => AdapterIndex == other.AdapterIndex &&
-                AdapterDisplayCapMask == other.AdapterDisplayCapMask &&
-                AdapterDisplayCapValue == other.AdapterDisplayCapValue;
+        {
+            if(AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_DISPLAY_CAP/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (AdapterDisplayCapMask != other.AdapterDisplayCapMask)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_DISPLAY_CAP/Equals: The AdapterDisplayCapMask values don't equal each other");
+                return false;
+            }
+            if (AdapterDisplayCapValue != other.AdapterDisplayCapValue)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_DISPLAY_CAP/Equals: The AdapterDisplayCapValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -349,21 +435,84 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_ADAPTER_INFO other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_INFO other)
-            => Size == other.Size &&
-                AdapterIndex == other.AdapterIndex &&
-                UDID.Equals(other.UDID) &&
-                BusNumber == other.BusNumber &&
-                DriverNumber == other.DriverNumber &&
-                FunctionNumber == other.FunctionNumber &&
-                VendorID == other.VendorID &&
-                AdapterName.Equals(other.AdapterName) &&
-                DisplayName.Equals(other.DisplayName) &&
-                Present == other.Present &&
-                Exist == other.Exist &&
-                DriverPath.Equals(other.DriverPath) &&
-                DriverPathExt.Equals(other.DriverPathExt) &&
-                PNPString.Equals(other.PNPString) &&
-                OSDisplayIndex == other.OSDisplayIndex;
+        {
+            if(Size != other.Size)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The Size values don't equal each other");
+                return false;
+            }
+            if (AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (!UDID.Equals(other.UDID))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The UDID values don't equal each other");
+                return false;
+            }
+            if (BusNumber != other.BusNumber)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The BusNumber values don't equal each other");
+                return false;
+            }
+            if (DriverNumber != other.DriverNumber)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DriverNumber values don't equal each other");
+                return false;
+            }
+            if (FunctionNumber != other.FunctionNumber)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The FunctionNumber values don't equal each other");
+                return false;
+            }
+            if (VendorID != other.VendorID)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The VendorID values don't equal each other");
+                return false;
+            }
+            if(AdapterName.Equals(other.AdapterName))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The AdapterName values don't equal each other");
+                return false;
+            }
+            if (DisplayName.Equals(other.DisplayName))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DisplayName values don't equal each other");
+                return false;
+            }
+            if (Present != other.Present)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The Present values don't equal each other");
+                return false;
+            }
+            if (Exist != other.Exist)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The Exist values don't equal each other");
+                return false;
+            }
+            if (DriverPath.Equals(other.DriverPath))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DriverPath values don't equal each other");
+                return false;
+            }
+            if (DriverPathExt.Equals(other.DriverPathExt))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DriverPathExt values don't equal each other");
+                return false;
+            }
+            if (PNPString.Equals(other.PNPString))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The PNPString values don't equal each other");
+                return false;
+            }
+            if (OSDisplayIndex != other.OSDisplayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The OSDisplayIndex values don't equal each other");
+                return false;
+            }
+            return true;    
+        }             
 
         public override int GetHashCode()
         {
@@ -464,23 +613,94 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_ADAPTER_INFOX2 other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_INFOX2 other)
-            => Size == other.Size &&
-                AdapterIndex == other.AdapterIndex &&
-                UDID.Equals(other.UDID) &&
-                BusNumber == other.BusNumber &&
-                DeviceNumber == other.DeviceNumber &&
-                FunctionNumber == other.FunctionNumber &&
-                VendorID == other.VendorID &&
-                AdapterName.Equals(other.AdapterName) &&
-                DisplayName.Equals(other.DisplayName) &&
-                Present == other.Present &&
-                Exist == other.Exist &&
-                DriverPath.Equals(other.DriverPath) &&
-                DriverPathExt.Equals(other.DriverPathExt) &&
-                PNPString.Equals(other.PNPString) &&
-                OSDisplayIndex == other.OSDisplayIndex &&
-                InfoMask == other.InfoMask &&
-                InfoValue == other.InfoValue;
+        {
+            if (Size != other.Size)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The Size values don't equal each other");
+                return false;
+            }
+            if (AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (!UDID.Equals(other.UDID))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The UDID values don't equal each other");
+                return false;
+            }
+            if (BusNumber != other.BusNumber)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The BusNumber values don't equal each other");
+                return false;
+            }
+            if (DeviceNumber != other.DeviceNumber)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DeviceNumber values don't equal each other");
+                return false;
+            }
+            if (FunctionNumber != other.FunctionNumber)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The FunctionNumber values don't equal each other");
+                return false;
+            }
+            if (VendorID != other.VendorID)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The VendorID values don't equal each other");
+                return false;
+            }
+            if (AdapterName.Equals(other.AdapterName))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The AdapterName values don't equal each other");
+                return false;
+            }
+            if (DisplayName.Equals(other.DisplayName))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DisplayName values don't equal each other");
+                return false;
+            }
+            if (Present != other.Present)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The Present values don't equal each other");
+                return false;
+            }
+            if (Exist != other.Exist)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The Exist values don't equal each other");
+                return false;
+            }
+            if (DriverPath.Equals(other.DriverPath))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DriverPath values don't equal each other");
+                return false;
+            }
+            if (DriverPathExt.Equals(other.DriverPathExt))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The DriverPathExt values don't equal each other");
+                return false;
+            }
+            if (PNPString.Equals(other.PNPString))
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The PNPString values don't equal each other");
+                return false;
+            }
+            if (OSDisplayIndex != other.OSDisplayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The OSDisplayIndex values don't equal each other");
+                return false;
+            }
+            if (InfoMask != other.InfoMask)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The InfoMask values don't equal each other");
+                return false;
+            }
+            if (InfoValue != other.InfoValue)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_INFO/Equals: The InfoValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -514,11 +734,33 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_DISPLAY_EDID_DATA other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_EDID_DATA other)
-            => Size == other.Size &&
-                Flag == other.Flag &&
-                EDIDSize == other.EDIDSize &&
-                BlockIndex == other.BlockIndex &&
-                EDIDData.Equals(other.EDIDData);
+        {
+            if (Size != other.Size) {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_EDID_DATA/Equals: The Size values don't equal each other");
+                return false;
+            }
+            if (Flag != other.Flag)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_EDID_DATA/Equals: The Flag values don't equal each other");
+                return false;
+            }
+            if (EDIDSize != other.EDIDSize)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_EDID_DATA/Equals: The EDIDSize values don't equal each other");
+                return false;
+            }
+            if (BlockIndex != other.BlockIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_EDID_DATA/Equals: The BlockIndex values don't equal each other");
+                return false;
+            }
+            if (!EDIDData.Equals(other.EDIDData))
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_EDID_DATA/Equals: The EDIDData values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -669,43 +911,201 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_DDC_INFO2 other && this.Equals(other);
         public bool Equals(ADL_DDC_INFO2 other)
-            => Size == other.Size &&
-            SupportsDDC == other.SupportsDDC &&
-            ManufacturerID == other.ManufacturerID &&
-            ProductID == other.ProductID &&
-            DisplayName.Equals(other.DisplayName) &&
-            MaxHResolution == other.MaxHResolution &&
-            MaxVResolution == other.MaxVResolution &&
-            MaxRefresh == other.MaxRefresh &&
-            PTMCx == other.PTMCx &&
-            PTMCy == other.PTMCy &&
-            PTMRefreshRate == other.PTMRefreshRate &&
-            DDCInfoFlag == other.DDCInfoFlag &&
-            PackedPixelSupported == other.PackedPixelSupported &&
-            PanelPixelFormat == other.PanelPixelFormat &&
-            SerialID == other.SerialID &&
-            MinLuminanceData == other.MinLuminanceData &&
-            AvgLuminanceData == other.AvgLuminanceData &&
-            MaxLuminanceData == other.MaxLuminanceData &&
-            SupportedTransferFunction == other.SupportedTransferFunction &&
-            SupportedColorSpace == other.SupportedColorSpace &&
-            NativeDisplayChromaticityRedX == other.NativeDisplayChromaticityRedX &&
-            NativeDisplayChromaticityRedY == other.NativeDisplayChromaticityRedY &&
-            NativeDisplayChromaticityGreenX == other.NativeDisplayChromaticityGreenX &&
-            NativeDisplayChromaticityGreenY == other.NativeDisplayChromaticityGreenY &&
-            NativeDisplayChromaticityBlueX == other.NativeDisplayChromaticityBlueX &&
-            NativeDisplayChromaticityBlueY == other.NativeDisplayChromaticityBlueY &&
-            NativeDisplayChromaticityWhiteX == other.NativeDisplayChromaticityWhiteX &&
-            NativeDisplayChromaticityWhiteY == other.NativeDisplayChromaticityWhiteY &&
-            DiffuseScreenReflectance == other.DiffuseScreenReflectance &&
-            SpecularScreenReflectance == other.SpecularScreenReflectance &&
-            SupportedHDR == other.SupportedHDR &&
-            FreesyncFlags == other.FreesyncFlags &&
-            MinLuminanceNoDimmingData == other.MinLuminanceNoDimmingData &&
-            MaxBacklightMaxLuminanceData == other.MaxBacklightMaxLuminanceData &&
-            MinBacklightMaxLuminanceData == other.MinBacklightMaxLuminanceData &&
-            MaxBacklightMinLuminanceData == other.MaxBacklightMinLuminanceData &&
-            MinBacklightMinLuminanceData == other.MinBacklightMinLuminanceData;
+        {
+            if(Size != other.Size)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The Size values don't equal each other");
+                return false;
+            }
+            if (SupportsDDC != other.SupportsDDC)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SupportsDDC values don't equal each other");
+                return false;
+            }
+            if (ManufacturerID != other.ManufacturerID)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The ManufacturerID values don't equal each other");
+                return false;
+            }
+            if (ProductID != other.ProductID)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The ProductID values don't equal each other");
+                return false;
+            }
+            if(!DisplayName.Equals(other.DisplayName))
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The DisplayName values don't equal each other");
+                return false;
+            }
+            if (MaxHResolution != other.MaxHResolution)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MaxHResolution values don't equal each other");
+                return false;
+            }
+            if (MaxVResolution != other.MaxVResolution)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MaxVResolution values don't equal each other");
+                return false;
+            }
+            if (MaxRefresh != other.MaxRefresh)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MaxRefresh values don't equal each other");
+                return false;
+            }
+            if (PTMCx != other.PTMCx)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The PTMCx values don't equal each other");
+                return false;
+            }
+            if (PTMCy != other.PTMCy)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The PTMCy values don't equal each other");
+                return false;
+            }
+            if (PTMRefreshRate != other.PTMRefreshRate)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The PTMRefreshRate values don't equal each other");
+                return false;
+            }
+            if (DDCInfoFlag != other.DDCInfoFlag)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The DDCInfoFlag values don't equal each other");
+                return false;
+            }
+            if (PackedPixelSupported != other.PackedPixelSupported)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The PackedPixelSupported values don't equal each other");
+                return false;
+            }
+            if (PanelPixelFormat != other.PanelPixelFormat)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The PanelPixelFormat values don't equal each other");
+                return false;
+            }
+            if(SerialID != other.SerialID)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SerialID values don't equal each other");
+                return false;
+            }
+            if(MinLuminanceData != other.MinLuminanceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MinLuminanceData values don't equal each other");
+                return false;
+            }
+            if (AvgLuminanceData != other.AvgLuminanceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The AvgLuminanceData values don't equal each other");
+                return false;
+            }
+            if (MaxLuminanceData != other.MaxLuminanceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MaxLuminanceData values don't equal each other");
+                return false;
+            }
+            if (SupportedTransferFunction != other.SupportedTransferFunction)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SupportedTransferFunction values don't equal each other");
+                return false;
+            }
+            if(SupportedTransferFunction != other.SupportedTransferFunction)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SupportedTransferFunction values don't equal each other");
+                return false;
+            }
+            if(SupportedColorSpace != other.SupportedColorSpace)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SupportedColorSpace values don't equal each other");
+                return false;
+            }
+            if(NativeDisplayChromaticityRedX != other.NativeDisplayChromaticityRedX)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityRedX values don't equal each other");
+                return false;
+            }
+            if (NativeDisplayChromaticityRedY != other.NativeDisplayChromaticityRedY)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityRedY values don't equal each other");
+                return false;
+            }
+            if(NativeDisplayChromaticityGreenX != other.NativeDisplayChromaticityGreenX)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityGreenX values don't equal each other");
+                return false;
+            }
+            if(NativeDisplayChromaticityGreenY != other.NativeDisplayChromaticityGreenY)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityGreenY values don't equal each other");
+                return false;
+            }
+            if(NativeDisplayChromaticityBlueX != other.NativeDisplayChromaticityBlueX)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityBlueX values don't equal each other");
+                return false;
+            }
+            if(NativeDisplayChromaticityBlueY != other.NativeDisplayChromaticityBlueY)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityBlueY values don't equal each other");
+                return false;
+            }
+            if(NativeDisplayChromaticityWhiteX != other.NativeDisplayChromaticityWhiteX)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityWhiteX values don't equal each other");
+                return false;
+            }
+            if(NativeDisplayChromaticityWhiteY != other.NativeDisplayChromaticityWhiteY)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The NativeDisplayChromaticityWhiteY values don't equal each other");
+                return false;
+            }
+            if(DiffuseScreenReflectance != other.DiffuseScreenReflectance)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The DiffuseScreenReflectance values don't equal each other");
+                return false;
+            }
+            if(SpecularScreenReflectance != other.SpecularScreenReflectance)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SpecularScreenReflectance values don't equal each other");
+                return false;
+            }
+            if(SupportedHDR != other.SupportedHDR)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SupportedHDR values don't equal each other");
+                return false;
+            }
+            if(FreesyncFlags != other.FreesyncFlags)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The FreesyncFlags values don't equal each other");
+                return false;
+            }
+            if(MinLuminanceNoDimmingData != other.MinLuminanceNoDimmingData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MinLuminanceNoDimmingData values don't equal each other");
+                return false;
+            }
+            if(MaxBacklightMaxLuminanceData != other.MaxBacklightMaxLuminanceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MaxBacklightMaxLuminanceData values don't equal each other");
+                return false;
+            }
+            if(MinBacklightMaxLuminanceData != other.MinBacklightMaxLuminanceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MinBacklightMaxLuminanceData values don't equal each other");
+                return false;
+            }
+            if (MaxBacklightMinLuminanceData != other.MaxBacklightMinLuminanceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MaxBacklightMinLuminanceData values don't equal each other");
+                return false;
+            }
+            if(MinBacklightMinLuminanceData != other.MinBacklightMinLuminanceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The MinBacklightMinLuminanceData values don't equal each other");
+                return false;
+            }
+            return true;
+        }
+            
+            
 
         public override int GetHashCode()
         {
@@ -739,10 +1139,29 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_DISPLAY_ID other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_ID other)
-            => DisplayLogicalIndex == other.DisplayLogicalIndex &&
-                DisplayPhysicalIndex == other.DisplayPhysicalIndex &&
-                DisplayLogicalAdapterIndex == other.DisplayLogicalAdapterIndex &&
-                DisplayPhysicalAdapterIndex == other.DisplayPhysicalAdapterIndex;
+        {
+            if(DisplayLogicalIndex != other.DisplayLogicalIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_ID/Equals: The DisplayLogicalIndex values don't equal each other");
+                return false;
+            }
+            if(DisplayPhysicalIndex != other.DisplayPhysicalIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_ID/Equals: The DisplayPhysicalIndex values don't equal each other");
+                return false;
+            }
+            if (DisplayLogicalAdapterIndex != other.DisplayLogicalAdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_ID/Equals: The DisplayLogicalAdapterIndex values don't equal each other");
+                return false;
+            }
+            if (DisplayPhysicalAdapterIndex != other.DisplayPhysicalAdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_ID/Equals: The DisplayPhysicalAdapterIndex values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -853,8 +1272,8 @@ namespace DisplayMagicianShared.AMD
         #define ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI 10
         #define ADL_CONNECTION_TYPE_MST 11
         #define ADL_CONNECTION_TYPE_ACTIVE_DONGLE          12
-        #define ADL_CONNECTION_TYPE_VIRTUAL    13*/
-
+        #define ADL_CONNECTION_TYPE_VIRTUAL    13
+*/
 
         // Display Info Mask settings
         public bool DisplayConnectedSupported => (DisplayInfoMask & 0x1) == 0x1;
@@ -898,15 +1317,55 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_DISPLAY_INFO other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_INFO other)
-            => DisplayID.Equals(other.DisplayID) &&
-                DisplayControllerIndex == other.DisplayControllerIndex &&
-                DisplayName.Equals(other.DisplayName) &&
-                DisplayID.Equals(other.DisplayID) &&
-                DisplayType == other.DisplayType &&
-                DisplayOutputType == other.DisplayOutputType &&
-                DisplayConnector == other.DisplayConnector &&
-                DisplayInfoMask == other.DisplayInfoMask &&
-                DisplayInfoValue == other.DisplayInfoValue;
+        {
+            if (!DisplayID.Equals(other.DisplayID))
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayID values don't equal each other");
+                return false;
+            }
+            if (DisplayControllerIndex != other.DisplayControllerIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayControllerIndex values don't equal each other");
+                return false;
+            }
+            if (DisplayName != other.DisplayName)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayName values don't equal each other");
+                return false;
+            }
+            if (DisplayManufacturerName != other.DisplayManufacturerName)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayManufacturerName values don't equal each other");
+                return false;
+            }
+            if (DisplayType != other.DisplayType)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayType values don't equal each other");
+                return false;
+            }
+            if (DisplayOutputType != other.DisplayOutputType)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayOutputType values don't equal each other");
+                return false;
+            }
+            if (DisplayConnector != other.DisplayConnector)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayConnector values don't equal each other");
+                return false;
+            }
+            if (DisplayInfoMask != other.DisplayInfoMask)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayInfoMask values don't equal each other");
+                return false;
+            }
+            if (DisplayInfoValue != other.DisplayInfoValue)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_INFO/Equals: The DisplayInfoValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
+            
 
         public override int GetHashCode()
         {
@@ -950,10 +1409,29 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_CONFIG other)
-            => Size == other.Size &&
-                ConnectorType == other.ConnectorType &&
-                DeviceData == other.DeviceData &&
-                OverriddedDeviceData == other.OverriddedDeviceData;
+        {
+            if (Size != other.Size)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_CONFIG/Equals: The Size values don't equal each other");
+                return false;
+            }
+            if (ConnectorType != other.ConnectorType)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_CONFIG/Equals: The ConnectorType values don't equal each other");
+                return false;
+            }
+            if (DeviceData != other.DeviceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_CONFIG/Equals: The DeviceData values don't equal each other");
+                return false;
+            }
+            if (OverriddedDeviceData != other.OverriddedDeviceData)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_CONFIG/Equals: The OverriddedDeviceData values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1006,12 +1484,39 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_DISPLAY_MAP other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_MAP other)
-            => DisplayMapIndex == other.DisplayMapIndex &&
-                DisplayMode.Equals(other.DisplayMode) &&
-                NumDisplayTarget == other.NumDisplayTarget &&
-                FirstDisplayTargetArrayIndex == other.FirstDisplayTargetArrayIndex &&
-                DisplayMapMask == other.DisplayMapMask &&
-                DisplayMapValue == other.DisplayMapValue;
+        {
+            if (DisplayMapIndex != other.DisplayMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_MAP/Equals: The DisplayMapIndex values don't equal each other");
+                return false;
+            }
+            if (!DisplayMode.Equals(other.DisplayMode))
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_MAP/Equals: The DisplayMode values don't equal each other");
+                return false;
+            }
+            if (NumDisplayTarget != other.NumDisplayTarget)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_MAP/Equals: The NumDisplayTarget values don't equal each other");
+                return false;
+            }
+            if (FirstDisplayTargetArrayIndex != other.FirstDisplayTargetArrayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_MAP/Equals: The FirstDisplayTargetArrayIndex values don't equal each other");
+                return false;
+            }
+            if (DisplayMapMask != other.DisplayMapMask)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_MAP/Equals: The DisplayMapMask values don't equal each other");
+                return false;
+            }
+            if (DisplayMapValue != other.DisplayMapValue)
+            {
+                SharedLogger.logger.Trace($"ADL_DISPLAY_MAP/Equals: The DisplayMapValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1072,14 +1577,50 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_ADAPTER_CAPSX2 other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_CAPSX2 other)
-            => AdapterID == other.AdapterID &&
-                NumControllers == other.NumControllers &&
-                NumDisplays == other.NumDisplays &&
-                NumOverlays == other.NumOverlays &&
-                NumOfGLSyncConnectors == other.NumOfGLSyncConnectors &&
-                CapsMask == other.CapsMask &&
-                CapsValue == other.CapsValue &&
-                NumConnectors == other.NumConnectors;
+        {
+            if(AdapterID != other.AdapterID)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The AdapterID values don't equal each other");
+                return false;
+            }
+            if (NumControllers != other.NumControllers)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The NumControllers values don't equal each other");
+                return false;
+            }
+            if (NumDisplays != other.NumDisplays)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The NumDisplays values don't equal each other");
+                return false;
+            }
+            if (NumOverlays != other.NumOverlays)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The NumOverlays values don't equal each other");
+                return false;
+            }
+            if (NumOfGLSyncConnectors != other.NumOfGLSyncConnectors)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The NumOfGLSyncConnectors values don't equal each other");
+                return false;
+            }
+            if (CapsMask != other.CapsMask)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The CapsMask values don't equal each other");
+                return false;
+            }
+            if (CapsValue != other.CapsValue)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The CapsValue values don't equal each other");
+                return false;
+            }
+            if (NumConnectors != other.NumConnectors)
+            {
+                SharedLogger.logger.Trace($"ADL_ADAPTER_CAPSX2/Equals: The NumConnectors values don't equal each other");
+                return false;
+            }
+            return true;
+
+        }
 
         public override int GetHashCode()
         {
@@ -1112,12 +1653,39 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_POSSIBLE_MAP other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_MAP other)
-            => Index == other.Index &&
-                AdapterIndex == other.AdapterIndex &&
-                NumDisplayMap == other.NumDisplayMap &&
-                DisplayMaps.Equals(other.DisplayMaps) &&
-                NumDisplayTarget == other.NumDisplayTarget &&
-                DisplayTargets.Equals(other.DisplayTargets);
+        {
+            if(Index != other.Index)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The Index values don't equal each other");
+                return false;
+            }
+            if (AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (NumDisplayMap != other.NumDisplayMap)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The NumDisplayMap values don't equal each other");
+                return false;
+            }
+            if (DisplayMaps.Equals(other.DisplayMaps))
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The DisplayMaps values don't equal each other");
+                return false;
+            }
+            if (NumDisplayTarget != other.NumDisplayTarget)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The NumDisplayTarget values don't equal each other");
+                return false;
+            }
+            if (DisplayTargets.Equals(other.DisplayTargets))
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The DisplayTargets values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1166,9 +1734,24 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_POSSIBLE_MAPPING other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_MAPPING other)
-            => DisplayIndex == other.DisplayIndex &&
-                DisplayControllerIndex == other.DisplayControllerIndex &&
-                DisplayMannerSupported == other.DisplayMannerSupported;
+        {
+            if(DisplayIndex != other.DisplayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAPPING/Equals: The DisplayIndex values don't equal each other");
+                return false;
+            }
+            if (DisplayControllerIndex != other.DisplayControllerIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAPPING/Equals: The DisplayControllerIndex values don't equal each other");
+                return false;
+            }
+            if (DisplayMannerSupported != other.DisplayMannerSupported)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAPPING/Equals: The DisplayMannerSupported values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1214,9 +1797,24 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_POSSIBLE_MAP_RESULT other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_MAP_RESULT other)
-            => Index == other.Index &&
-                PossibleMapResultMask == other.PossibleMapResultMask &&
-                PossibleMapResultValue == other.PossibleMapResultValue;
+        {
+            if(Index != other.Index)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP_RESULT/Equals: The Index values don't equal each other");
+                return false;
+            }
+            if (PossibleMapResultMask != other.PossibleMapResultMask)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP_RESULT/Equals: The PossibleMapResultMask values don't equal each other");
+                return false;
+            }
+            if (PossibleMapResultValue != other.PossibleMapResultValue)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP_RESULT/Equals: The PossibleMapResultValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1267,25 +1865,62 @@ namespace DisplayMagicianShared.AMD
         public bool SLSGridDisplayRotationSet => (SLSGridValue & 0x40) == 0x40;
         public bool SLSGridDesktopRotationSet => (SLSGridValue & 0x80) == 0x80;
 
-        /*#define ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE     0x00000001
-        #define ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE     0x00000002
-        #define ADL_DISPLAY_SLSGRID_PORTAIT_MODE                         0x00000004
-        #define ADL_DISPLAY_SLSGRID_KEEPTARGETROTATION                  0x00000080
+        /* #define ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE     0x00000001
+         #define ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE     0x00000002
+         #define ADL_DISPLAY_SLSGRID_PORTAIT_MODE                         0x00000004
+         #define ADL_DISPLAY_SLSGRID_KEEPTARGETROTATION                  0x00000080
 
-        #define ADL_DISPLAY_SLSGRID_SAMEMODESLS_SUPPORT        0x00000010
-        #define ADL_DISPLAY_SLSGRID_MIXMODESLS_SUPPORT        0x00000020
-        #define ADL_DISPLAY_SLSGRID_DISPLAYROTATION_SUPPORT    0x00000040
-        #define ADL_DISPLAY_SLSGRID_DESKTOPROTATION_SUPPORT    0x00000080*/
+         #define ADL_DISPLAY_SLSGRID_SAMEMODESLS_SUPPORT        0x00000010
+         #define ADL_DISPLAY_SLSGRID_MIXMODESLS_SUPPORT        0x00000020
+         #define ADL_DISPLAY_SLSGRID_DISPLAYROTATION_SUPPORT    0x00000040
+         #define ADL_DISPLAY_SLSGRID_DESKTOPROTATION_SUPPORT    0x00000080*/
+
+        public ADL_SLS_GRID()
+        {
+            AdapterIndex = 0;
+            SLSGridIndex = 0;
+            SLSGridRow = 0;
+            SLSGridColumn = 0;
+            SLSGridMask = 0;
+            SLSGridValue = 0;
+        }
 
         public override bool Equals(object obj) => obj is ADL_SLS_GRID other && this.Equals(other);
         public bool Equals(ADL_SLS_GRID other)
-            => AdapterIndex == other.AdapterIndex &&
-                SLSGridIndex == other.SLSGridIndex &&
-                SLSGridRow == other.SLSGridRow &&
-                SLSGridColumn == other.SLSGridColumn &&
-                SLSGridMask == other.SLSGridMask &&
-                SLSGridValue == other.SLSGridValue;
-
+        {
+            if (AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_GRID/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (SLSGridIndex != other.SLSGridIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_GRID/Equals: The SLSGridIndex values don't equal each other");
+                return false;
+            }
+            if (SLSGridRow != other.SLSGridRow)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_GRID/Equals: The SLSGridRow values don't equal each other");
+                return false;
+            }
+            if (SLSGridColumn != other.SLSGridColumn)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_GRID/Equals: The SLSGridColumn values don't equal each other");
+                return false;
+            }
+            if (SLSGridMask != other.SLSGridMask)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_GRID/Equals: The SLSGridMask values don't equal each other");
+                return false;
+            }
+            if (SLSGridValue != other.SLSGridValue)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_GRID/Equals: The SLSGridValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }   
+ 
         public override int GetHashCode()
         {
             return (AdapterIndex, SLSGridIndex, SLSGridRow, SLSGridColumn, SLSGridMask, SLSGridValue).GetHashCode();
@@ -1374,26 +2009,108 @@ namespace DisplayMagicianShared.AMD
         #define ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_EXPAND     0x0400
         #define ADL_DISPLAY_SLSMAP_IS_SLS        0x1000
         #define ADL_DISPLAY_SLSMAP_IS_SLSBUILDER 0x2000
-        #define ADL_DISPLAY_SLSMAP_IS_CLONEVT     0x4000
-        */
+        #define ADL_DISPLAY_SLSMAP_IS_CLONEVT     0x4000*/
+
+        public ADL_SLS_MAP()
+        {
+            AdapterIndex = 0;
+            SLSMapIndex = 0;
+            Grid = new ADL_SLS_GRID();
+            SurfaceMapIndex = 0;
+            Orientation = 0;
+            NumSLSTarget = 0;
+            FirstSLSTargetArrayIndex = 0;
+            NumNativeMode = 0;
+            FirstNativeModeArrayIndex = 0;
+            NumBezelMode = 0;
+            FirstBezelModeArrayIndex = 0;
+            NumBezelOffset = 0;
+            FirstBezelOffsetArrayIndex = 0;
+            SLSMapMask = 0;
+            SLSMapValue = 0;
+        }
+
 
         public override bool Equals(object obj) => obj is ADL_SLS_MAP other && this.Equals(other);
         public bool Equals(ADL_SLS_MAP other)
-            => AdapterIndex == other.AdapterIndex &&
-                SLSMapIndex == other.SLSMapIndex &&
-                Grid.Equals(other.Grid) &&
-                SurfaceMapIndex == other.SurfaceMapIndex &&
-                Orientation == other.Orientation &&
-                NumSLSTarget == other.NumSLSTarget &&
-                FirstSLSTargetArrayIndex == other.FirstSLSTargetArrayIndex &&
-                NumNativeMode == other.NumNativeMode &&
-                FirstNativeModeArrayIndex == other.FirstNativeModeArrayIndex &&
-                NumBezelMode == other.NumBezelMode &&
-                FirstBezelModeArrayIndex == other.FirstBezelModeArrayIndex &&
-                NumBezelOffset == other.NumBezelOffset &&
-                FirstBezelOffsetArrayIndex == other.FirstBezelOffsetArrayIndex &&
-                SLSMapMask == other.SLSMapMask &&
-                SLSMapValue == other.SLSMapValue;
+        {
+            if (AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (SLSMapIndex != other.SLSMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The SLSMapIndex values don't equal each other");
+                return false;
+            }
+            if (!Grid.Equals(other.Grid))
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The Grid values don't equal each other");
+                return false;
+            }
+            if (SurfaceMapIndex != other.SurfaceMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The SurfaceMapIndex values don't equal each other");
+                return false;
+            }
+            if (Orientation != other.Orientation)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The Orientation values don't equal each other");
+                return false;
+            }
+            if (NumSLSTarget != other.NumSLSTarget)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The NumSLSTarget values don't equal each other");
+                return false;
+            }
+            if (FirstSLSTargetArrayIndex != other.FirstSLSTargetArrayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The FirstSLSTargetArrayIndex values don't equal each other");
+                return false;
+            }
+            if (NumNativeMode != other.NumNativeMode)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The NumNativeMode values don't equal each other");
+                return false;
+            }
+            if (FirstNativeModeArrayIndex != other.FirstNativeModeArrayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The FirstNativeModeArrayIndex values don't equal each other");
+                return false;
+            }
+            if (NumBezelMode != other.NumBezelMode)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The NumBezelMode values don't equal each other");
+                return false;
+            }
+            if (FirstBezelModeArrayIndex != other.FirstBezelModeArrayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The FirstBezelModeArrayIndex values don't equal each other");
+                return false;
+            }
+            if (NumBezelOffset != other.NumBezelOffset)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The NumBezelOffset values don't equal each other");
+                return false;
+            }
+            if (FirstBezelOffsetArrayIndex != other.FirstBezelOffsetArrayIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The FirstBezelOffsetArrayIndex values don't equal each other");
+                return false;
+            }
+            if (SLSMapMask != other.SLSMapMask)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The SLSMapMask values don't equal each other");
+                return false;
+            }
+            if (SLSMapValue != other.SLSMapValue)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MAP/Equals: The SLSMapValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1438,14 +2155,49 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_SLS_TARGET other && this.Equals(other);
         public bool Equals(ADL_SLS_TARGET other)
-            => AdapterIndex == other.AdapterIndex &&
-                SLSMapIndex == other.SLSMapIndex &&
-                DisplayTarget.Equals(other.DisplayTarget) &&
-                SLSGridPositionX == other.SLSGridPositionX &&
-                SLSGridPositionY == other.SLSGridPositionY &&
-                ViewSize.Equals(other.ViewSize) &&
-                SLSTargetMask == other.SLSTargetMask &&
-                SLSTargetValue == other.SLSTargetValue;
+        {
+            if(AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (SLSMapIndex != other.SLSMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The SLSMapIndex values don't equal each other");
+                return false;
+            }
+            if(!DisplayTarget.Equals(other.DisplayTarget))
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The DisplayTarget values don't equal each other");
+                return false;
+            }
+            if (SLSGridPositionX != other.SLSGridPositionX)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The SLSGridPositionX values don't equal each other");
+                return false;
+            }
+            if (SLSGridPositionY != other.SLSGridPositionY)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The SLSGridPositionY values don't equal each other");
+                return false;
+            }
+            if (!ViewSize.Equals(other.ViewSize))
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The ViewSize values don't equal each other");
+                return false;
+            }
+            if (SLSTargetMask != other.SLSTargetMask)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The SLSTargetMask values don't equal each other");
+                return false;
+            }
+            if (SLSTargetValue != other.SLSTargetValue)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_TARGET/Equals: The SLSTargetValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1478,12 +2230,39 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_SLS_MODE other && this.Equals(other);
         public bool Equals(ADL_SLS_MODE other)
-            => AdapterIndex == other.AdapterIndex &&
-                SLSMapIndex == other.SLSMapIndex &&
-                SLSModeIndex == other.SLSModeIndex &&
-                DisplayMode.Equals(other.DisplayMode) &&
-                SLSNativeModeMask == other.SLSNativeModeMask &&
-                SLSNativeModeValue == other.SLSNativeModeValue;
+        {
+            if(AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MODE/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (SLSMapIndex != other.SLSMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MODE/Equals: The SLSMapIndex values don't equal each other");
+                return false;
+            }
+            if (SLSModeIndex != other.SLSModeIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MODE/Equals: The SLSModeIndex values don't equal each other");
+                return false;
+            }
+            if (!DisplayMode.Equals(other.DisplayMode))
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MODE/Equals: The DisplayMode values don't equal each other");
+                return false;
+            }
+            if (SLSNativeModeMask != other.SLSNativeModeMask)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MODE/Equals: The SLSNativeModeMask values don't equal each other");
+                return false;
+            }
+            if (SLSNativeModeValue != other.SLSNativeModeValue)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_MODE/Equals: The SLSNativeModeValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1520,14 +2299,50 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_BEZEL_TRANSIENT_MODE other && this.Equals(other);
         public bool Equals(ADL_BEZEL_TRANSIENT_MODE other)
-            => AdapterIndex == other.AdapterIndex &&
-                SLSMapIndex == other.SLSMapIndex &&
-                SLSModeIndex == other.SLSModeIndex &&
-                DisplayMode.Equals(other.DisplayMode) &&
-                NumBezelOffset == other.NumBezelOffset &&
-                FirstBezelOffsetArrayIndex == other.FirstBezelOffsetArrayIndex &&
-                SLSBezelTransientModeMask == other.SLSBezelTransientModeMask &&
-                SLSBezelTransientModeValue == other.SLSBezelTransientModeValue;
+        {
+            if(AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (SLSMapIndex != other.SLSMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The SLSMapIndex values don't equal each other");
+                return false;
+            }
+            if (SLSModeIndex != other.SLSModeIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The SLSModeIndex values don't equal each other");
+                return false;
+            }
+            if (!DisplayMode.Equals(other.DisplayMode))
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The DisplayMode values don't equal each other");
+                return false;
+            }
+            if(NumBezelOffset != other.NumBezelOffset)
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The NumBezelOffset values don't equal each other");
+                return false;
+            }
+            if (FirstBezelOffsetArrayIndex != other.FirstBezelOffsetArrayIndex) 
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The FirstBezelOffsetArrayIndex values don't equal each other");
+                return false;
+            }
+            if (SLSBezelTransientModeMask != other.SLSBezelTransientModeMask)
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The SLSBezelTransientModeMask values don't equal each other");
+                return false;
+            }
+            if (SLSBezelTransientModeValue != other.SLSBezelTransientModeValue)
+            {
+                SharedLogger.logger.Trace($"ADL_BEZEL_TRANSIENT_MODE/Equals: The SLSBezelTransientModeValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
+            
 
         public override int GetHashCode()
         {
@@ -1558,11 +2373,34 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_POSSIBLE_SLS_MAP other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_SLS_MAP other)
-            => SLSMapIndex == other.SLSMapIndex &&
-                NumSLSMap == other.NumSLSMap &&
-                SLSMaps.Equals(other.SLSMaps) &&
-                NumSLSTarget == other.NumSLSTarget &&
-                SLSTargets.Equals(other.SLSTargets);
+        {
+            if(SLSMapIndex != other.SLSMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_SLS_MAP/Equals: The SLSMapIndex values don't equal each other");
+                return false;
+            }
+            if (NumSLSMap != other.NumSLSMap)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_SLS_MAP/Equals: The NumSLSMap values don't equal each other");
+                return false;
+            }
+            if (!SLSMaps.Equals(other.SLSMaps))
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_SLS_MAP/Equals: The SLSMaps values don't equal each other");
+                return false;
+            }
+            if(NumSLSTarget != other.NumSLSTarget)
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_SLS_MAP/Equals: The NumSLSTarget values don't equal each other");
+                return false;
+            }
+            if(!SLSTargets.Equals(other.SLSTargets))
+            {
+                SharedLogger.logger.Trace($"ADL_POSSIBLE_SLS_MAP/Equals: The SLSTargets values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1615,16 +2453,59 @@ namespace DisplayMagicianShared.AMD
 
         public override bool Equals(object obj) => obj is ADL_SLS_OFFSET other && this.Equals(other);
         public bool Equals(ADL_SLS_OFFSET other)
-            => AdapterIndex == other.AdapterIndex &&
-                SLSMapIndex == other.SLSMapIndex &&
-                DisplayID.Equals(other.DisplayID) &&
-                BezelModeIndex == other.BezelModeIndex &&
-                BezelOffsetX == other.BezelOffsetX &&
-                BezelOffsetY == other.BezelOffsetY &&
-                DisplayWidth == other.DisplayWidth &&
-                DisplayHeight == other.DisplayHeight &&
-                BezelOffsetMask == other.BezelOffsetMask &&
-                BezelOffsetValue == other.BezelOffsetValue;
+        {
+            if(AdapterIndex != other.AdapterIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The AdapterIndex values don't equal each other");
+                return false;
+            }
+            if (SLSMapIndex != other.SLSMapIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The SLSMapIndex values don't equal each other");
+                return false;
+            }
+            if (!DisplayID.Equals(other.DisplayID))
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The DisplayID values don't equal each other");
+                return false;
+            }
+            if (BezelModeIndex != other.BezelModeIndex)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The BezelModeIndex values don't equal each other");
+                return false;
+            }
+            if (BezelOffsetX != other.BezelOffsetX)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The BezelOffsetX values don't equal each other");
+                return false;
+            }
+            if (BezelOffsetY != other.BezelOffsetY)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The BezelOffsetY values don't equal each other");
+                return false;
+            }
+            if (DisplayWidth != other.DisplayWidth)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The DisplayWidth values don't equal each other");
+                return false;
+            }
+            if (DisplayHeight != other.DisplayHeight)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The DisplayHeight values don't equal each other");
+                return false;
+            }
+            if (BezelOffsetMask != other.BezelOffsetMask)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The BezelOffsetMask values don't equal each other");
+                return false;
+            }
+            if (BezelOffsetValue != other.BezelOffsetValue)
+            {
+                SharedLogger.logger.Trace($"ADL_SLS_OFFSET/Equals: The BezelOffsetValue values don't equal each other");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {

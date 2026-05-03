@@ -62,6 +62,10 @@ namespace DisplayMagicianShared.Windows
                                                             // Supported starting in Windows�10 Fall Creators Update (Version 1709).
         DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_SPECIALIZATION = 12,
         DISPLAYCONFIG_DEVICE_INFO_SET_MONITOR_SPECIALIZATION = 13,
+        DISPLAYCONFIG_DEVICE_INFO_SET_RESERVED1 = 14,              // Reserved - do not use
+        DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO_2 = 15,  // Get advanced color info v2 (Windows 11 22H2+) - associated struct not yet publicly documented by Microsoft
+        DISPLAYCONFIG_DEVICE_INFO_SET_HDR_STATE = 16,              // Set HDR state (Windows 11 22H2+) - associated struct not yet publicly documented by Microsoft
+        DISPLAYCONFIG_DEVICE_INFO_SET_WCG_STATE = 17,              // Set Wide Color Gamut state (Windows 11 22H2+) - associated struct not yet publicly documented by Microsoft
         //DISPLAYCONFIG_DEVICE_INFO_FORCE_UINT32 = 0xFFFFFFFF // Only here to 
     }
 
@@ -951,8 +955,32 @@ namespace DisplayMagicianShared.Windows
 
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_ADAPTER_NAME other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_ADAPTER_NAME other)
-            => Header.Equals(other.Header) &&
-               AdapterDevicePath == other.AdapterDevicePath;
+        {
+            if (!Header.Equals(other.Header))
+            {
+                SharedLogger.logger.Warn($"CCD/DISPLAYCONFIG_ADAPTER_NAME Equals: The Header values don't equal each other");
+                return false;
+            }
+            // We have to ignore the DISPLAY ID part of the AdapterDevicePath as it is changed by the Intel driver after a Combinbed Display Change
+            // The only way to ensure that the comparison works is to ignore the DISPLAY ID part
+            var thisDevicePathParts = AdapterDevicePath.Split('#');
+            var otherDevicePathParts = other.AdapterDevicePath.Split('#');
+            for (int i = 0; i < thisDevicePathParts.Length - 1; i++)
+            {
+                if (i == 1)
+                {
+                    // This is the DISPLAY ID part, we skip it
+                    continue;
+                }
+                if (thisDevicePathParts[i] != otherDevicePathParts[i])
+                {
+                    SharedLogger.logger.Warn($"CCD/DISPLAYCONFIG_ADAPTER_NAME Equals: The AdapterDevicePath values don't equal each other");
+                    return false;
+                }
+            }
+            return true;
+        }
+            
 
         public override int GetHashCode()
         {

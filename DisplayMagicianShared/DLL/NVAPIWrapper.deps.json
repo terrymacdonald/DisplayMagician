@@ -1,0 +1,121 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "NVAPIWrapper/1.0.75": {
+        "dependencies": {
+          "ClangSharp": "20.1.2",
+          "ClangSharp.Interop": "20.1.2",
+          "ClangSharp.PInvokeGenerator": "20.1.2",
+          "System.Management": "9.0.5"
+        },
+        "runtime": {
+          "NVAPIWrapper.dll": {}
+        }
+      },
+      "ClangSharp/20.1.2": {
+        "dependencies": {
+          "ClangSharp.Interop": "20.1.2"
+        },
+        "runtime": {
+          "lib/net8.0/ClangSharp.dll": {
+            "assemblyVersion": "20.1.2.0",
+            "fileVersion": "20.1.2.0"
+          }
+        }
+      },
+      "ClangSharp.Interop/20.1.2": {
+        "runtime": {
+          "lib/net8.0/ClangSharp.Interop.dll": {
+            "assemblyVersion": "20.1.2.0",
+            "fileVersion": "20.1.2.0"
+          }
+        }
+      },
+      "ClangSharp.PInvokeGenerator/20.1.2": {
+        "dependencies": {
+          "ClangSharp": "20.1.2"
+        },
+        "runtime": {
+          "lib/net8.0/ClangSharp.PInvokeGenerator.dll": {
+            "assemblyVersion": "20.1.2.0",
+            "fileVersion": "20.1.2.0"
+          }
+        }
+      },
+      "System.CodeDom/9.0.5": {
+        "runtime": {
+          "lib/net9.0/System.CodeDom.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.525.21509"
+          }
+        }
+      },
+      "System.Management/9.0.5": {
+        "dependencies": {
+          "System.CodeDom": "9.0.5"
+        },
+        "runtime": {
+          "lib/net9.0/System.Management.dll": {
+            "assemblyVersion": "9.0.0.5",
+            "fileVersion": "9.0.525.21509"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net9.0/System.Management.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "9.0.0.5",
+            "fileVersion": "9.0.525.21509"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "NVAPIWrapper/1.0.75": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ClangSharp/20.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4NsqvrM7NBTw14RQG6vBTrnwKV6rYnLJkOgL3Q3kjsyxkwv/XcGAt1rsWFRQ+83m3YzhV06NvyRmNV8xzbr6sw==",
+      "path": "clangsharp/20.1.2",
+      "hashPath": "clangsharp.20.1.2.nupkg.sha512"
+    },
+    "ClangSharp.Interop/20.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-1HsFS5IN4AMFAG8lrGlR5tUGNijZ4A0bTAMj2kiio/pfpmtCGB1lwwEnDDqayBbUdy8si/nBvP5T4A2Vwu8EdQ==",
+      "path": "clangsharp.interop/20.1.2",
+      "hashPath": "clangsharp.interop.20.1.2.nupkg.sha512"
+    },
+    "ClangSharp.PInvokeGenerator/20.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mDTx1axEaINH9ko/OdBh/52C2lEWIqXEun0GlX3zdC5aSQj6oiINCK2WK2VRnoYUFvOU920lj4LLL4B+jRroPQ==",
+      "path": "clangsharp.pinvokegenerator/20.1.2",
+      "hashPath": "clangsharp.pinvokegenerator.20.1.2.nupkg.sha512"
+    },
+    "System.CodeDom/9.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cuzLM2MWutf9ZBEMPYYfd0DXwYdvntp7VCT6a/wvbKCa2ZuvGmW74xi+YBa2mrfEieAXqM4TNKlMmSnfAfpUoQ==",
+      "path": "system.codedom/9.0.5",
+      "hashPath": "system.codedom.9.0.5.nupkg.sha512"
+    },
+    "System.Management/9.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-n6o9PZm9p25+zAzC3/48K0oHnaPKTInRrxqFq1fi/5TPbMLjuoCm/h//mS3cUmSy+9AO1Z+qsC/Ilt/ZFatv5Q==",
+      "path": "system.management/9.0.5",
+      "hashPath": "system.management.9.0.5.nupkg.sha512"
+    }
+  }
+}

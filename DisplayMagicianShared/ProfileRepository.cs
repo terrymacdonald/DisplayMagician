@@ -8,6 +8,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using DisplayMagicianShared.AMD;
+using DisplayMagicianShared.Intel;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.Serialization;
@@ -22,25 +23,7 @@ using NLog;
 
 namespace DisplayMagicianShared
 {
-    // This enum sets the video card mode used within DisplayMagician
-    // It effectively controls what video card library is used to store profiles on the computer
-    // We look up the PCI vendor ID for the video cards, and then we look for them in the order from most commonly
-    // sold video card to the least, followed by the generic 'catch-all' windows mode.
-    /*    public enum VIDEO_MODE : Int32
-        {
-            WINDOWS = 0,
-            NVIDIA = 1,
-            AMD = 2,
-        }
-
-        public enum FORCED_VIDEO_MODE : Int32
-        {
-            WINDOWS = 0,
-            NVIDIA = 1,
-            AMD = 2,
-            DETECT = 99,
-        }*/
-
+    
     public enum ApplyProfileResult
     {
         Successful,
@@ -81,6 +64,7 @@ namespace DisplayMagicianShared
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;
         private static AMDLibrary amdLibrary;
+        private static IntelLibrary intelLibrary;
         private static NVIDIALibrary nvidiaLibrary;
         private static WinLibrary winLibrary;
 
@@ -91,7 +75,7 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileFileVersion = "3";
+        private static string _profileFileVersion = "4";
         private static readonly string _profileStorageJsonFileName = "DisplayProfiles.json";
         private static readonly string _profileStorageJsonFullFileName = System.IO.Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
 
@@ -195,31 +179,6 @@ namespace DisplayMagicianShared
         {
             get => _profileStorageJsonFullFileName;
         }
-
-        /* public static VIDEO_MODE CurrentVideoMode
-         {
-             get
-             {
-                 return _currentVideoMode;
-             }
-             set
-             {
-                 _currentVideoMode = value;
-             }
-         }
-         public static FORCED_VIDEO_MODE ForcedVideoMode
-         {
-             get
-             {
-                 return _forcedVideoMode;
-             }
-             set
-             {
-                 _forcedVideoMode = value;
-                 SetVideoCardMode(value);
-             }
-         }*/
-
 
         public static List<string> ConnectedDisplayIdentifiers
         {
@@ -1422,6 +1381,7 @@ namespace DisplayMagicianShared
             {
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+                IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
 
@@ -1434,6 +1394,11 @@ namespace DisplayMagicianShared
                 {
                     allConnectedDisplayIdentifiers.AddRange(amdLibrary.GetAllConnectedDisplayIdentifiers());
                 }
+
+                if (intelLibrary.IsInstalled) 
+                {
+                    allConnectedDisplayIdentifiers.AddRange(intelLibrary.GetAllConnectedDisplayIdentifiers(out bool failure));
+                } 
 
                 allConnectedDisplayIdentifiers.AddRange(winLibrary.GetAllConnectedDisplayIdentifiers());
 
@@ -1464,13 +1429,18 @@ namespace DisplayMagicianShared
                 if (NVIDIALibrary.GetLibrary().IsInstalled)
                     currentDisplayIdentifiers.AddRange(NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers);
 
-                // Next, we grab the AMD display identifiersas we know they also always list each attached screen (even in Eyefinity mode)
+                // Next, we grab the AMD display identifiers as we know they also always list each attached screen (even in Eyefinity mode)
                 if (AMDLibrary.GetLibrary().IsInstalled)
                     currentDisplayIdentifiers.AddRange(AMDLibrary.GetLibrary().CurrentDisplayIdentifiers);
+
+                // Next, we grab the Intel display identifiers as we know they also always list each attached screen
+                if (IntelLibrary.GetLibrary().IsInstalled)
+                    currentDisplayIdentifiers.AddRange(IntelLibrary.GetLibrary().CurrentDisplayIdentifiers);
 
                 // The tricky part is finding any other screens, ignoring any NVIDIA surround or AMD Eyefinity screens
                 NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().GetActiveConfig();
                 AMD_DISPLAY_CONFIG amdDisplayConfig = AMDLibrary.GetLibrary().GetActiveConfig();
+                INTEL_DISPLAY_CONFIG intelDisplayConfig = IntelLibrary.GetLibrary().GetActiveConfig();
                 WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
                 List<string> displayNamesToIgnore = new List<string>();
                 // Find all the Windows Display Names that NVIDIA has already provided a display identifier for
@@ -1482,6 +1452,12 @@ namespace DisplayMagicianShared
                 foreach (var j in amdDisplayConfig.AdapterConfigs)
                 {
                     displayNamesToIgnore.Add(j.DisplayName);
+                }
+                // Find all the Windows Display Names that Intel has already provided a display identifier for
+                // TODO - Fix this as I'm not sure this is correct!
+                foreach (var i in intelDisplayConfig.PhysicalAdapters) 
+                {
+                    displayNamesToIgnore.Add(i.Key);
                 }
 
                 // Find the Windows DevicePaths to ignore, based on the DisplayNames we want to ignore
