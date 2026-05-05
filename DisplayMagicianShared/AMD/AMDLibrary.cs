@@ -3,7 +3,6 @@ using DisplayMagicianShared;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using EDIDParser;
-using IGCLWrapper;
 using Microsoft.VisualBasic;
 using Microsoft.Win32.SafeHandles;
 using System;

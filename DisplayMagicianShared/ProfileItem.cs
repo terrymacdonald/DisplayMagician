@@ -4,6 +4,8 @@ using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using IWshRuntimeLibrary;
 using NVAPIWrapper;
+using ADLXWrapper;
+using IGCLWrapper;
 using Newtonsoft.Json;
 using NLog.Targets;
 using System;

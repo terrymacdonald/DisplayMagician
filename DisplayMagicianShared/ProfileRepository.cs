@@ -1392,7 +1392,7 @@ namespace DisplayMagicianShared
 
                 if (amdLibrary.IsInstalled)
                 {
-                    allConnectedDisplayIdentifiers.AddRange(amdLibrary.GetAllConnectedDisplayIdentifiers());
+                    allConnectedDisplayIdentifiers.AddRange(amdLibrary.GetAllConnectedDisplayIdentifiers(out bool failure));
                 }
 
                 if (intelLibrary.IsInstalled) 
@@ -1449,15 +1449,15 @@ namespace DisplayMagicianShared
                     displayNamesToIgnore.Add(i.Value);
                 }
                 // Find all the Windows Display Names that AMD has already provided a display identifier for
-                foreach (var j in amdDisplayConfig.AdapterConfigs)
+                foreach (var i in amdDisplayConfig.Displays)
                 {
-                    displayNamesToIgnore.Add(j.DisplayName);
+                    displayNamesToIgnore.Add(i.Value.Name);
                 }
                 // Find all the Windows Display Names that Intel has already provided a display identifier for
                 // TODO - Fix this as I'm not sure this is correct!
-                foreach (var i in intelDisplayConfig.PhysicalAdapters) 
+                foreach (var i in intelDisplayConfig.Displays) 
                 {
-                    displayNamesToIgnore.Add(i.Key);
+                    displayNamesToIgnore.Add(i.Value.Name);
                 }
 
                 // Find the Windows DevicePaths to ignore, based on the DisplayNames we want to ignore

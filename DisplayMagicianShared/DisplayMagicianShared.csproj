@@ -71,8 +71,14 @@
     <Content Include="Properties\DisplayMagician.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="ADLXWrapper">
+      <HintPath>DLL\ADLXWrapper.dll</HintPath>
+    </Reference>
     <Reference Include="IconLib">
       <HintPath>..\DisplayMagician\DLL\IconLib.dll</HintPath>
+    </Reference>
+    <Reference Include="IGCLWrapper">
+      <HintPath>DLL\IGCLWrapper.dll</HintPath>
     </Reference>
     <Reference Include="NVAPIWrapper">
       <HintPath>DLL\NVAPIWrapper.dll</HintPath>
