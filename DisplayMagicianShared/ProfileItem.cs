@@ -3,6 +3,7 @@ using DisplayMagicianShared.Intel;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using IWshRuntimeLibrary;
+using NVAPIWrapper;
 using Newtonsoft.Json;
 using NLog.Targets;
 using System;
@@ -1248,7 +1249,6 @@ namespace DisplayMagicianShared
                 return new List<ScreenPosition>() { };
             }
 
-
             // Set up some colours
             Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
             Color spannedScreenColor = Color.FromArgb(118, 185, 0); // represents NVIDIA Green
@@ -1267,66 +1267,58 @@ namespace DisplayMagicianShared
                     return _screens;
                 }
 
-                // Now we need to check for Spanned screens (Surround)
-                if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled && _nvidiaDisplayConfig.MosaicConfig.MosaicCurrentTopo.MosaicGridCount > 0)
-                {
-                    for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies.Length; i++)
-                    {
+                // Gather the mosaic grids from the new DTO
+                var mosaicGrids = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies.Grids ?? Array.Empty<NVAPIMosaicGridTopoDto>();
 
+                // Now we need to check for Spanned screens (Surround)
+                if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled && mosaicGrids.Length > 0)
+                {
+                    for (int i = 0; i < mosaicGrids.Length; i++)
+                    {
                         ScreenPosition screen = new ScreenPosition();
                         screen.Library = "NVIDIA";
-                        if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].DisplayCount > 1)
+                        if (mosaicGrids[i].Displays.Length > 1)
                         {
                             // It's a spanned screen across multiple subscreens!
-                            // Set some basics about the screen                        
+                            // Set some basics about the screen
                             screen.Name = "NVIDIA Surround/Mosaic";
                             screen.Colour = spannedScreenColor;
                             screen.Rotation = ScreenRotation.ROTATE_0;
                             // Set the initial taskbar location for this screen at the bottom
                             screen.TaskbarPosition = TaskbarPosition.Bottom;
 
-
-                            // This is a combined surround/mosaic screen
-                            // We need to build the size of the screen to match it later so we check the MosaicViewports
-                            int minX = 0;
-                            int minY = 0;
-                            int maxX = 0;
-                            int maxY = 0;
-                            int overallWidth = 0;
-                            int overallHeight = 0;
-
                             // The same display size is used across the entire grid, so we can calculate here and reuse
-                            var dispSettings = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].DisplaySettings;
-                            int eachDisplayWidth = dispSettings.Width;
-                            int eachDisplayHeight = dispSettings.Height;
-                            int numRows = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Rows;
-                            int numColumns = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Columns;
-                            // Need to look for the Windows layout details now we know the size of this display
-                            // Set some basics about the screen
+                            var dispSettings = mosaicGrids[i].DisplaySettings;
+                            int eachDisplayWidth = (int)dispSettings.Width;
+                            int eachDisplayHeight = (int)dispSettings.Height;
+                            int numRows = (int)mosaicGrids[i].Rows;
+                            int numColumns = (int)mosaicGrids[i].Columns;
+
+                            // Look up the position/resolution for this spanned screen from the adapter display config paths
                             try
                             {
-                                UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Displays[0].DisplayId;
-                                var displaySources = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopologies[i].Displays;
-                                bool breakOuterLoop = false;
-                                foreach (var displaySource in displaySources)
+                                uint displayId = mosaicGrids[i].Displays[0].DisplayId;
+                                bool found = false;
+                                foreach (var adapterKvp in _nvidiaDisplayConfig.PhysicalAdapters)
                                 {
-                                    foreach (PathTargetInfoV2 targetInfo in displaySource.TargetsInfo)
+                                    if (found) break;
+                                    foreach (var path in adapterKvp.Value.DisplayConfig.Paths ?? Array.Empty<NVAPIDisplayConfigPathDto>())
                                     {
-                                        if (targetInfo.DisplayId == displayId)
+                                        if (path.SourceModeInfo == null) continue;
+                                        foreach (var target in path.Targets ?? Array.Empty<NVAPIDisplayConfigTargetDto>())
                                         {
-                                            screen.Name = displayId.ToString();
-                                            screen.ScreenX = displaySource.SourceModeInfo.Position.X;
-                                            screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                            screen.ScreenWidth = displaySource.SourceModeInfo.Resolution.Width;
-                                            screen.ScreenHeight = displaySource.SourceModeInfo.Resolution.Height;
-                                            breakOuterLoop = true;
-                                            break;
+                                            if (target.DisplayId == displayId)
+                                            {
+                                                screen.Name = displayId.ToString();
+                                                screen.ScreenX = path.SourceModeInfo.Value.Position.x;
+                                                screen.ScreenY = path.SourceModeInfo.Value.Position.y;
+                                                screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                found = true;
+                                                break;
+                                            }
                                         }
-                                    }
-
-                                    if (breakOuterLoop)
-                                    {
-                                        break;
+                                        if (found) break;
                                     }
                                 }
                             }
@@ -1350,86 +1342,85 @@ namespace DisplayMagicianShared
                                 screen.ScreenHeight = eachDisplayHeight * numRows;
                                 screen.Rotation = ScreenRotation.ROTATE_0;
                             }
-
                         }
                         else
                         {
-                            // It's a standalone screen
-                            screen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
+                            // It's a standalone screen within a mosaic topology
+                            screen.Name = mosaicGrids[i].Displays[0].DisplayId.ToString();
                             screen.Colour = normalScreenColor;
 
                             try
                             {
-                                UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                                List<PathInfoV2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
-                                bool breakOuterLoop = false;
-                                foreach (var displaySource in displaySources)
+                                uint displayId = mosaicGrids[i].Displays[0].DisplayId;
+                                bool found = false;
+                                foreach (var adapterKvp in _nvidiaDisplayConfig.PhysicalAdapters)
                                 {
-                                    foreach (PathTargetInfoV2 targetInfo in displaySource.TargetsInfo)
+                                    if (found) break;
+                                    foreach (var path in adapterKvp.Value.DisplayConfig.Paths ?? Array.Empty<NVAPIDisplayConfigPathDto>())
                                     {
-                                        if (targetInfo.DisplayId == displayId)
+                                        if (path.SourceModeInfo == null) continue;
+                                        foreach (var targetInfo in path.Targets ?? Array.Empty<NVAPIDisplayConfigTargetDto>())
                                         {
-                                            screen.Name = displayId.ToString();
-                                            screen.ScreenX = displaySource.SourceModeInfo.Position.X;
-                                            screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
+                                            if (targetInfo.DisplayId == displayId)
+                                            {
+                                                screen.Name = displayId.ToString();
+                                                screen.ScreenX = path.SourceModeInfo.Value.Position.x;
+                                                screen.ScreenY = path.SourceModeInfo.Value.Position.y;
 
-                                            if (targetInfo.Details.HasValue){
-
-                                                if (targetInfo.Details.Value.Rotation == Rotate.Degree0)
+                                                if (targetInfo.Details.HasValue)
                                                 {
-                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                    screen.Rotation = ScreenRotation.ROTATE_0;
-                                                }
-                                                else if (targetInfo.Details.Value.Rotation == Rotate.Degree90)
-                                                {
-                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                    screen.Rotation = ScreenRotation.ROTATE_90;
-                                                }
-                                                else if (targetInfo.Details.Value.Rotation == Rotate.Degree180)
-                                                {
-                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                    screen.Rotation = ScreenRotation.ROTATE_180;
-                                                }
-                                                else if (targetInfo.Details.Value.Rotation == Rotate.Degree270)
-                                                {
-                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                    screen.Rotation = ScreenRotation.ROTATE_270;
+                                                    if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_0)
+                                                    {
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.Rotation = ScreenRotation.ROTATE_0;
+                                                    }
+                                                    else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_90)
+                                                    {
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                        screen.Rotation = ScreenRotation.ROTATE_90;
+                                                    }
+                                                    else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_180)
+                                                    {
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.Rotation = ScreenRotation.ROTATE_180;
+                                                    }
+                                                    else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_270)
+                                                    {
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                        screen.Rotation = ScreenRotation.ROTATE_270;
+                                                    }
+                                                    else
+                                                    {
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.Rotation = ScreenRotation.ROTATE_0;
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                                    screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                    screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
                                                     screen.Rotation = ScreenRotation.ROTATE_0;
-                                                }                                                
-                                            }
-                                            else
-                                            {
-                                                screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                                screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                                screen.Rotation = ScreenRotation.ROTATE_0;
-                                            }
+                                                }
 
-                                            if (screen.ScreenWidth == 0)
-                                            {
-                                                SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The mosaic screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
-                                            }
-                                            if (screen.ScreenHeight == 0)
-                                            {
-                                                SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The mosaic screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
-                                            }
+                                                if (screen.ScreenWidth == 0)
+                                                {
+                                                    SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The mosaic screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                                                }
+                                                if (screen.ScreenHeight == 0)
+                                                {
+                                                    SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The mosaic screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                                                }
 
-                                            breakOuterLoop = true;
-                                            break;
+                                                found = true;
+                                                break;
+                                            }
                                         }
-                                    }
-
-                                    if (breakOuterLoop)
-                                    {
-                                        break;
+                                        if (found) break;
                                     }
                                 }
                             }
@@ -1448,7 +1439,6 @@ namespace DisplayMagicianShared
                                 // Some other exception has occurred and we need to report it.
                                 SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Unable to get the non-mosaic screen size for a secondary screen to a surround screen.");
                             }
-
                         }
 
                         // If we're at the 0,0 coordinate then we're the primary monitor
@@ -1469,7 +1459,6 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                         _screens.Add(screen);
-
                     }
                 }
                 else
@@ -1478,120 +1467,118 @@ namespace DisplayMagicianShared
                     try
                     {
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Mosaic isn't enabled so using the DisplayConfig based screen details.");
-                        List<PathInfoV2> displaySources = _nvidiaDisplayConfig.PhysicalAdapters[i].DisplayConfig;
-                        foreach (var displaySource in displaySources)
+                        foreach (var adapterKvp in _nvidiaDisplayConfig.PhysicalAdapters)
                         {
-                            int targetInfoIndex = 0;
-                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing screen source index #{targetInfoIndex}.");
-
-                            foreach (PathTargetInfoV2 targetInfo in displaySource.TargetsInfo)
+                            foreach (var displaySource in adapterKvp.Value.DisplayConfig.Paths ?? Array.Empty<NVAPIDisplayConfigPathDto>())
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing target screen ID:{targetInfo.DisplayId}.");
+                                if (displaySource.SourceModeInfo == null) continue;
+                                int targetInfoIndex = 0;
+                                SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing screen source index #{targetInfoIndex}.");
 
-                                ScreenPosition screen = new ScreenPosition();
-                                screen.Library = "NVIDIA";
-                                screen.Name = "DISPLAY";
-                                screen.Name = targetInfo.DisplayId.ToString();
-                                screen.Colour = normalScreenColor;
-                                screen.Rotation = ScreenRotation.ROTATE_0;
-                                // Set the initial taskbar location for this screen at the bottom
-                                screen.TaskbarPosition = TaskbarPosition.Bottom;
-                                screen.ScreenX = displaySource.SourceModeInfo.Position.X;
-                                screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-
-
-                                // Find out if we're a cloned screen
-                                if (_nvidiaDisplayConfig.IsCloned && displaySource.TargetInfoCount > 1)
+                                foreach (NVAPIDisplayConfigTargetDto targetInfo in displaySource.Targets ?? Array.Empty<NVAPIDisplayConfigTargetDto>())
                                 {
-                                    if (targetInfoIndex == 0)
-                                    {
-                                        // Show that this window has clones, and show how many there are.
-                                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is the source of a cloned group.");
-                                        screen.IsClone = true;
-                                        screen.ClonedCopies = (int)displaySource.TargetInfoCount;
-                                    }
-                                    else
-                                    {
-                                        // Skip getting layout details from the clones themselves, as we have no idea where they are!
-                                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is part of a cloned group (but we don'tt need to show it so skipping).");
-                                        continue;
-                                    }
+                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing target screen ID:{targetInfo.DisplayId}.");
 
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is NOT part of a cloned group.");
-                                }
-
-                                if (targetInfo.Details.HasValue)
-                                {
-
-                                    if (targetInfo.Details.Value.Rotation == Rotate.Degree0)
-                                    {
-                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                        screen.Rotation = ScreenRotation.ROTATE_0;
-                                    }
-                                    else if (targetInfo.Details.Value.Rotation == Rotate.Degree90)
-                                    {
-                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                        screen.Rotation = ScreenRotation.ROTATE_90;
-                                    }
-                                    else if (targetInfo.Details.Value.Rotation == Rotate.Degree180)
-                                    {
-                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                        screen.Rotation = ScreenRotation.ROTATE_180;
-                                    }
-                                    else if (targetInfo.Details.Value.Rotation == Rotate.Degree270)
-                                    {
-                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                        screen.Rotation = ScreenRotation.ROTATE_270;
-                                    }
-                                    else
-                                    {
-                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                        screen.Rotation = ScreenRotation.ROTATE_0;
-                                    }
-                                }
-                                else
-                                {
-                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                    ScreenPosition screen = new ScreenPosition();
+                                    screen.Library = "NVIDIA";
+                                    screen.Name = targetInfo.DisplayId.ToString();
+                                    screen.Colour = normalScreenColor;
                                     screen.Rotation = ScreenRotation.ROTATE_0;
-                                }
+                                    // Set the initial taskbar location for this screen at the bottom
+                                    screen.TaskbarPosition = TaskbarPosition.Bottom;
+                                    screen.ScreenX = displaySource.SourceModeInfo.Value.Position.x;
+                                    screen.ScreenY = displaySource.SourceModeInfo.Value.Position.y;
 
-                                if (screen.ScreenWidth == 0)
-                                {
-                                    SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
-                                }
-                                if (screen.ScreenHeight == 0)
-                                {
-                                    SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
-                                }
-
-                                // If we're at the 0,0 coordinate then we're the primary monitor
-                                if (screen.ScreenX == 0 && screen.ScreenY == 0)
-                                {
-                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: NVIDIA Screen {screen.Name} is the primary monitor.");
-                                    // Record we're primary screen
-                                    screen.IsPrimary = true;
-                                    // Change the colour to be the primary colour, but only if it isn't a surround screen
-                                    if (screen.Colour != spannedScreenColor)
+                                    // Find out if we're a cloned screen
+                                    if (_nvidiaDisplayConfig.IsCloned && displaySource.Targets.Length > 1)
                                     {
-                                        screen.Colour = primaryScreenColor;
+                                        if (targetInfoIndex == 0)
+                                        {
+                                            // Show that this window has clones, and show how many there are.
+                                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is the source of a cloned group.");
+                                            screen.IsClone = true;
+                                            screen.ClonedCopies = displaySource.Targets.Length;
+                                        }
+                                        else
+                                        {
+                                            // Skip getting layout details from the clones themselves, as we have no idea where they are!
+                                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is part of a cloned group (but we don'tt need to show it so skipping).");
+                                            continue;
+                                        }
                                     }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is NOT part of a cloned group.");
+                                    }
+
+                                    if (targetInfo.Details.HasValue)
+                                    {
+                                        if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_0)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.Rotation = ScreenRotation.ROTATE_0;
+                                        }
+                                        else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_90)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                            screen.Rotation = ScreenRotation.ROTATE_90;
+                                        }
+                                        else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_180)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.Rotation = ScreenRotation.ROTATE_180;
+                                        }
+                                        else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_270)
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                            screen.Rotation = ScreenRotation.ROTATE_270;
+                                        }
+                                        else
+                                        {
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.Rotation = ScreenRotation.ROTATE_0;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                        screen.Rotation = ScreenRotation.ROTATE_0;
+                                    }
+
+                                    if (screen.ScreenWidth == 0)
+                                    {
+                                        SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                                    }
+                                    if (screen.ScreenHeight == 0)
+                                    {
+                                        SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                                    }
+
+                                    // If we're at the 0,0 coordinate then we're the primary monitor
+                                    if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                                    {
+                                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: NVIDIA Screen {screen.Name} is the primary monitor.");
+                                        // Record we're primary screen
+                                        screen.IsPrimary = true;
+                                        // Change the colour to be the primary colour, but only if it isn't a surround screen
+                                        if (screen.Colour != spannedScreenColor)
+                                        {
+                                            screen.Colour = primaryScreenColor;
+                                        }
+                                    }
+
+                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non-surround NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+
+                                    _screens.Add(screen);
+                                    targetInfoIndex++;
                                 }
-
-                                SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non-surround NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
-
-                                _screens.Add(screen);
-                                targetInfoIndex++;
                             }
-
                         }
                     }
                     catch (Exception ex)
@@ -1599,7 +1586,6 @@ namespace DisplayMagicianShared
                         // Some other exception has occurred and we need to report it.
                         SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception while trying to get the screen details. (#2) Mosaic isn't enabled, but unable to get the screen details. ");
                     }
-
                 }
             }
             catch (Exception ex)
@@ -1637,20 +1623,21 @@ namespace DisplayMagicianShared
                 }
 
                 // Go through the AMD Eyefinity screens
-                if (_amdDisplayConfig.SlsConfig.IsSlsEnabled)
+                if (_amdDisplayConfig.IsEyefinity)
                 {
-                    for (int i = 0; i < _amdDisplayConfig.DisplayMaps.Count; i++)
+                    foreach (var desktop in _amdDisplayConfig.Desktops)
                     {
+                        if (desktop.Type != ADLX_DESKTOP_TYPE.DESKTOP_EYEFINITY)
+                            continue;
+
                         ScreenPosition screen = new ScreenPosition();
                         screen.Library = "AMD";
-                        screen.Colour = normalScreenColor;
                         screen.Name = "AMD Eyefinity";
                         screen.Colour = spannedScreenColor;
-
-                        //screen.Name = targetId.ToString();
-                        //screen.DisplayConnector = displayMode.DisplayConnector;
-                        screen.ScreenX = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XPos;
-                        screen.ScreenY = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YPos;
+                        screen.ScreenX = desktop.TopLeftX;
+                        screen.ScreenY = desktop.TopLeftY;
+                        screen.ScreenWidth = desktop.SizeWidth;
+                        screen.ScreenHeight = desktop.SizeHeight;
                         screen.Rotation = ScreenRotation.ROTATE_0;
 
                         // If we're at the 0,0 coordinate then we're the primary monitor
@@ -1668,7 +1655,7 @@ namespace DisplayMagicianShared
                         // Set the initial taskbar location for this screen at the bottom
                         screen.TaskbarPosition = TaskbarPosition.Bottom;
 
-                        SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+                        SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Eyefinity Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                         _screens.Add(screen);
                     }
@@ -1842,45 +1829,21 @@ namespace DisplayMagicianShared
                     return _screens;
                 }
 
-                // Go through the AMD Eyefinity screens
-                if (_amdDisplayConfig.SlsConfig.IsSlsEnabled)
+                // Build a set of combined display sizes from the Intel driver to identify Intel Combined Displays
+                var combinedDisplaySizes = new HashSet<(uint Width, uint Height)>();
+                if (_intelDisplayConfig.CombinedDisplayIsInUse)
                 {
-                    for (int i = 0; i < _amdDisplayConfig.DisplayMaps.Count; i++)
+                    foreach (var adapterKvp in _intelDisplayConfig.PhysicalAdapters)
                     {
-                        ScreenPosition screen = new ScreenPosition();
-                        screen.Library = "INTEL";
-                        screen.Colour = normalScreenColor;
-                        screen.Name = "Intel Combined Display";
-                        screen.Colour = spannedScreenColor;
-
-                        //screen.Name = targetId.ToString();
-                        //screen.DisplayConnector = displayMode.DisplayConnector;
-                        screen.ScreenX = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XPos;
-                        screen.ScreenY = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YPos;
-                        screen.Rotation = ScreenRotation.ROTATE_0;
-
-                        // If we're at the 0,0 coordinate then we're the primary monitor
-                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                        if (adapterKvp.Value.IsCombinedDisplay)
                         {
-                            // Record we're primary screen
-                            screen.IsPrimary = true;
-                            // Change the colour to be the primary colour, but only if it isn't a surround screen
-                            if (screen.Colour != spannedScreenColor)
-                            {
-                                screen.Colour = primaryScreenColor;
-                            }
+                            combinedDisplaySizes.Add((adapterKvp.Value.CombinedDisplay.CombinedDesktopWidth, adapterKvp.Value.CombinedDisplay.CombinedDesktopHeight));
+                            SharedLogger.logger.Trace($"ProfileItem/GetIntelScreenPositions: Intel Combined Display found on adapter {adapterKvp.Value.Name}: {adapterKvp.Value.CombinedDisplay.CombinedDesktopWidth}x{adapterKvp.Value.CombinedDisplay.CombinedDesktopHeight}.");
                         }
-
-                        // Set the initial taskbar location for this screen at the bottom
-                        screen.TaskbarPosition = TaskbarPosition.Bottom;
-
-                        SharedLogger.logger.Trace($"ProfileItem/GetIntelScreenPositions: Added a new Intel Combined Display {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
-
-                        _screens.Add(screen);
                     }
                 }
 
-                // Next, go through the screens as Windows knows them, and then enhance the info with Eyefinity data if it applies
+                // Next, go through the screens as Windows knows them
                 foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
                 {
                     // For each path we go through and get the relevant info we need.
@@ -1957,6 +1920,13 @@ namespace DisplayMagicianShared
                                     screen.ScreenWidth = (int)displayMode.SourceMode.Width;
                                     screen.ScreenHeight = (int)displayMode.SourceMode.Height;
                                     screen.Rotation = ScreenRotation.ROTATE_0;
+                                }
+
+                                // Check if this screen is an Intel Combined Display
+                                if (combinedDisplaySizes.Contains(((uint)screen.ScreenWidth, (uint)screen.ScreenHeight)))
+                                {
+                                    screen.Colour = spannedScreenColor;
+                                    SharedLogger.logger.Trace($"ProfileItem/GetIntelScreenPositions: Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) is an Intel Combined Display.");
                                 }
 
                                 // If we're at the 0,0 coordinate then we're the primary monitor

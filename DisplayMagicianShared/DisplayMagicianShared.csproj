@@ -74,6 +74,9 @@
     <Reference Include="IconLib">
       <HintPath>..\DisplayMagician\DLL\IconLib.dll</HintPath>
     </Reference>
+    <Reference Include="NVAPIWrapper">
+      <HintPath>DLL\NVAPIWrapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources.resx">
