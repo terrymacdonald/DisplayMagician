@@ -192,7 +192,7 @@ namespace DisplayMagician.UIForms
             // We update the Game Shortcut context menu is always updated and correct.
             if (Program.AppProgramSettings.InstallDesktopContextMenu)
             {
-                ContextMenu.UpdateShortcutContextMenu();
+                DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
             }
 
             // Also refresh the right-click menu (if we have a main form loaded)
@@ -595,7 +595,7 @@ namespace DisplayMagician.UIForms
             // We update the Game Shortcut context menu is always updated and correct.
             if (Program.AppProgramSettings.InstallDesktopContextMenu)
             {
-                ContextMenu.UpdateShortcutContextMenu();
+                DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
             }
 
 

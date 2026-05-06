@@ -675,7 +675,7 @@ namespace DisplayMagician.UIForms
             _installDesktopContextMenu = false;
             Program.AppProgramSettings.InstallDesktopContextMenu = false;
 
-            if (ContextMenu.UninstallContextMenu())
+            if (DisplayMagician.ContextMenu.UninstallContextMenu())
             {
                 MessageBox.Show("Successfully removed the Desktop Background Context Menu.",
                                         "Removed Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -692,7 +692,7 @@ namespace DisplayMagician.UIForms
             _installDesktopContextMenu = true;
             Program.AppProgramSettings.InstallDesktopContextMenu = true;
 
-            if (ContextMenu.InstallContextMenu())
+            if (DisplayMagician.ContextMenu.InstallContextMenu())
             {
                 MessageBox.Show("Successfully added the Desktop Background Context Menu.",
                                         "Added Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
