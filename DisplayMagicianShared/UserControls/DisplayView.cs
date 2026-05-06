@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using DisplayMagicianShared.Windows;
@@ -15,9 +16,15 @@ namespace DisplayMagicianShared.UserControls
             ResizeRedraw = true;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(100)]
         public int PaddingX { get; set; } = 100;
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(100)]
         public int PaddingY { get; set; } = 100;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ProfileItem Profile
         {
             get => _profile;

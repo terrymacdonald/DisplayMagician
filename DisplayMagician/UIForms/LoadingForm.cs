@@ -22,6 +22,7 @@ namespace DisplayMagician.UIForms
         }
 
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Title
         {
             get
@@ -36,6 +37,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             get

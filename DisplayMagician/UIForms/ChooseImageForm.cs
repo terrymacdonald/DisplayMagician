@@ -21,12 +21,14 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public List<ShortcutBitmap> AvailableImages
         {
             get;
             set;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ShortcutBitmap SelectedImage
         {
             get;

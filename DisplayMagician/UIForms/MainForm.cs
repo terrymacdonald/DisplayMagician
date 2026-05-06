@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using System.ComponentModel;
 
 namespace DisplayMagician.UIForms
 {
@@ -35,6 +36,7 @@ namespace DisplayMagician.UIForms
         /// <summary>
         /// When true, allows the form to become visible.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AllowVisible
         {
             get => _allowVisible;
@@ -51,6 +53,7 @@ namespace DisplayMagician.UIForms
         /// <summary>
         /// When true, allows the form to become visible.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AllowClose
         {
             get => _allowClose;

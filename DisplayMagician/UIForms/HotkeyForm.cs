@@ -39,6 +39,7 @@ namespace DisplayMagician.UIForms
         private const double _gracePeriodMilliseconds = 10000; // 10 seconds
         private TimeSpan _gracePeriod = TimeSpan.FromMilliseconds(_gracePeriodMilliseconds);       
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public List<HotkeyKeyboard> ShownKeyboardHotkeys
         {
             get
@@ -53,6 +54,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public List<HotkeyJoystick> ShownJoystickHotkeys
         {
             get
@@ -67,6 +69,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string UUID
         {
             get
@@ -81,6 +84,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public HotkeyTask TaskMode
         {
             get
@@ -93,6 +97,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Changed
         {
             get

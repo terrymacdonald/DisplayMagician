@@ -75,6 +75,8 @@ namespace DisplayMagician
         /// control when no hotkey has been set. 
         /// (Preferred default text is "None")
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue("None")]
         public string EmptyHotkeyText { get; set; } = "None";
 
         /// <summary>
@@ -82,6 +84,8 @@ namespace DisplayMagician
         /// when an invalid or unsupported hotkey is pressed.
         /// (Preferred default text is "(Unsupported)")
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue("Unsupported")]
         public string InvalidHotkeyText { get; set; } = "Unsupported";
 
         #endregion

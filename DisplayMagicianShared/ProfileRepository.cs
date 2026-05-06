@@ -1438,10 +1438,16 @@ namespace DisplayMagicianShared
                     currentDisplayIdentifiers.AddRange(IntelLibrary.GetLibrary().CurrentDisplayIdentifiers);
 
                 // The tricky part is finding any other screens, ignoring any NVIDIA surround or AMD Eyefinity screens
-                NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().GetActiveConfig();
-                AMD_DISPLAY_CONFIG amdDisplayConfig = AMDLibrary.GetLibrary().GetActiveConfig();
-                INTEL_DISPLAY_CONFIG intelDisplayConfig = IntelLibrary.GetLibrary().GetActiveConfig();
-                WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
+                //NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().GetActiveConfig();
+                //AMD_DISPLAY_CONFIG amdDisplayConfig = AMDLibrary.GetLibrary().GetActiveConfig();
+                //INTEL_DISPLAY_CONFIG intelDisplayConfig = IntelLibrary.GetLibrary().GetActiveConfig();
+                //WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
+                NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().ActiveDisplayConfig;
+                AMD_DISPLAY_CONFIG amdDisplayConfig = AMDLibrary.GetLibrary().ActiveDisplayConfig;
+                INTEL_DISPLAY_CONFIG intelDisplayConfig = IntelLibrary.GetLibrary().ActiveDisplayConfig;
+                WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = WinLibrary.GetLibrary().ActiveDisplayConfig;
+                //
+
                 List<string> displayNamesToIgnore = new List<string>();
                 // Find all the Windows Display Names that NVIDIA has already provided a display identifier for
                 foreach (var i in nvidiaDisplayConfig.DisplayNames)
