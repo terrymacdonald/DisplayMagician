@@ -2488,8 +2488,10 @@ namespace DisplayMagicianShared.Intel
         public bool IsValidConfig(INTEL_DISPLAY_CONFIG displayConfig)
         {
             SharedLogger.logger.Trace($"IntelLibrary/IsValidConfig: Testing whether the display configuration is valid");
-            if (displayConfig.IsInUse)
+
+            if (!_initialised || !displayConfig.IsInUse)
             {
+                SharedLogger.logger.Trace($"IntelLibrary/IsValidConfig: The Intel display configuration is not in use, so it has no bearing in terms of whether it can be applied now. Returning true.");
                 return true;
             }
             else
@@ -2501,6 +2503,12 @@ namespace DisplayMagicianShared.Intel
         public bool IsPossibleConfig(INTEL_DISPLAY_CONFIG displayConfig)
         {
             SharedLogger.logger.Trace($"IntelLibrary/IsPossibleConfig: Testing whether the Intel display configuration is possible to be used now");
+
+            if (!_initialised || !displayConfig.IsInUse)
+            {
+                SharedLogger.logger.Trace($"IntelLibrary/IsPossibleConfig: The Intel display configuration is not in use, so it has no bearing in terms of whether it can be applied now. Returning true.");
+                return true;
+            }
 
             // If both display identifiers are 0 then no displays were connected via Intel and we should just return true.
             if (displayConfig.DisplayIdentifiers.Count == 0 && _allConnectedDisplayIdentifiers.Count == 0)

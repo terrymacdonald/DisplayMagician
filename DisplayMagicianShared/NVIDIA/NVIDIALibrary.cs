@@ -3314,6 +3314,13 @@ namespace DisplayMagicianShared.NVIDIA
             // We want to check the NVIDIA Surround (Mosaic) config is valid
             SharedLogger.logger.Trace($"NVIDIALibrary/IsValidConfig: Testing whether the display configuration is valid");
             // 
+
+            if (!_initialised || !displayConfig.IsInUse)
+            {
+                SharedLogger.logger.Trace($"NVIDIALibrary/IsValidConfig: The NVIDIA display configuration is not in use, so it has no bearing in terms of whether it can be applied now. Returning true.");
+                return true;
+            }
+
             if (displayConfig.MosaicConfig.IsMosaicEnabled)
             {
 
@@ -3516,6 +3523,12 @@ namespace DisplayMagicianShared.NVIDIA
         {
             // We want to check the NVIDIA profile can be used now
             SharedLogger.logger.Trace($"NVIDIALibrary/IsPossibleConfig: Testing whether the NVIDIA display configuration is possible to be used now");
+
+            if (!_initialised || !displayConfig.IsInUse)
+            {
+                SharedLogger.logger.Trace($"NVIDIALibrary/IsPossibleConfig: The NVIDIA display configuration is not in use, so it has no bearing in terms of whether it can be applied now. Returning true.");
+                return true;
+            }
 
             // CHeck that we have all the displayConfig DisplayIdentifiers we need available now
             if (displayConfig.DisplayIdentifiers.All(value => _allConnectedDisplayIdentifiers.Contains(value)))

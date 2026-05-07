@@ -3,6 +3,7 @@ using DisplayMagicianShared;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using EDIDParser;
+using IGCLWrapper;
 using Microsoft.VisualBasic;
 using Microsoft.Win32.SafeHandles;
 using System;
@@ -4028,6 +4029,13 @@ namespace DisplayMagicianShared.AMD
             // We want to check the AMD Eyefinity (SLS) config is valid
             SharedLogger.logger.Trace($"AMDLibrary/IsValidConfig: Testing whether the display configuration is valid");
             // 
+
+            if (!_initialised || !displayConfig.IsInUse)
+            {
+                SharedLogger.logger.Trace($"AMDLibrary/IsValidConfig: The AMD display configuration is not in use, so it has no bearing in terms of whether it can be applied now. Returning true.");
+                return true;
+            }
+
             if (displayConfig.IsInUse && displayConfig.IsEyefinity)
             {
                 // At the moment we just assume the config is true so we try to use it
@@ -4044,6 +4052,12 @@ namespace DisplayMagicianShared.AMD
         {
             // We want to check the AMD profile can be used now
             SharedLogger.logger.Trace($"AMDLibrary/IsPossibleConfig: Testing whether the AMD display configuration is possible to be used now");
+
+            if (!_initialised || !displayConfig.IsInUse)
+            {
+                SharedLogger.logger.Trace($"AMDLibrary/IsPossibleConfig: The AMD display configuration is not in use, so it has no bearing in terms of whether it can be applied now. Returning true.");
+                return true;
+            }
 
             // If both display identifiers are 0 then no displays were connected via AMD and we should just return true.
             if (displayConfig.DisplayIdentifiers.Count == 0 && _allConnectedDisplayIdentifiers.Count == 0)
