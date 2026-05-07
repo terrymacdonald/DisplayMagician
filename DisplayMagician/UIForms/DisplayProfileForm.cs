@@ -889,6 +889,9 @@ namespace DisplayMagician.UIForms
                     // Refresh the profiles to see whats valid
                     ProfileRepository.IsPossibleRefresh();
 
+                    // Update the active profile so the UI knows which profile is currently in use
+                    ProfileRepository.UpdateActiveProfile(false);
+
                     // Refresh the Profile UI
                     RefreshDisplayProfileUI();
                     // Recenter the Window

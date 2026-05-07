@@ -457,9 +457,6 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            // Apply it by running the Application.DoEvents();
-            Application.DoEvents();
-
         }
 
         private void runProfileToolStripMenuItem_Click(object sender, EventArgs e)

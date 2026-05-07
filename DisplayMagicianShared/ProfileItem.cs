@@ -758,6 +758,7 @@ namespace DisplayMagicianShared
             // Set isPossible to true unless we find it can't be done.
             _isPossible = true;
 
+            //=== ORIGINAL FAULTY CODE
             //// Now go through each item and check if this is in there
             //foreach (string identifier in _profileDisplayIdentifiers)
             //{
@@ -769,7 +770,8 @@ namespace DisplayMagicianShared
             //    }
             //}
 
-            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+            //=== NEW FAULTY CODE - doesn't work with Intel Combined displays.
+            /*NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
             AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
             IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
             WinLibrary winLibrary = WinLibrary.GetLibrary();
@@ -782,7 +784,7 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Trace($"ProfileItem/RefreshPossbility: The {Name} file contains a display setting that will NOT work on this computer right now.");
                 _isPossible = false;
-            }
+            }*/
 
         }
 
