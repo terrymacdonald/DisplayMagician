@@ -624,7 +624,7 @@ namespace DisplayMagicianShared
         }
 
 
-        public bool CreateProfileFromCurrentDisplaySettings(bool fastScan = true)
+        public bool CreateProfileFromCurrentDisplaySettings()
         {
             // Calling the 3 different libraries automatically gets the different configs from each of the 3 video libraries.
             // If the video library isn't in use then it also fills in the defaults so that the JSON file can save properly
@@ -652,7 +652,7 @@ namespace DisplayMagicianShared
                 }
 
                 // Always update Windows display settings
-                winLibrary.UpdateActiveConfig(fastScan);         
+                winLibrary.UpdateActiveConfig();         
 
                 // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;

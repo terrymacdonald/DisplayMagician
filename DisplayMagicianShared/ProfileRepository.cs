@@ -724,12 +724,10 @@ namespace DisplayMagicianShared
             profile = new ProfileItem();
 
             // If the display layout is changing then wait until it's completed before continuing...
-            int totalDelay = 0;
-
             // Get the display settings
             try
             {
-                profile.CreateProfileFromCurrentDisplaySettings(fastScan);
+                profile.CreateProfileFromCurrentDisplaySettings();
             }
             catch (Exception ex)
             {
