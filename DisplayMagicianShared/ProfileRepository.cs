@@ -973,7 +973,7 @@ namespace DisplayMagicianShared
             SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
 
             // Actually do the updating of the display settings
-            profile.CreateProfileFromCurrentDisplaySettings(false);
+            profile.CreateProfileFromCurrentDisplaySettings();
 
         }
 
