@@ -1047,13 +1047,36 @@ namespace DisplayMagician {
                 // We need to update the active profile if we've been run from a profile shortcut.
                 ProfileRepository.UpdateActiveProfile();
 
-                // Apply the profile change
-                ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
-                if (result == ApplyProfileResult.Cancelled)
-                    errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                else if (result == ApplyProfileResult.Error)
-                    errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
-            }
+                // Only apply the profile if it is not already active
+                if (ProfileRepository.IsActiveProfile(profileToUse))
+                {
+                    logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} is already the active profile. Notifying user.");
+                    new ToastContentBuilder()
+                        .AddText("Display Profile Already Active", hintMaxLines: 1)
+                        .AddText($"\"{profileToUse.Name}\" is already the current display profile.")
+                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                        .SetToastDuration(ToastDuration.Short)
+                        .Show();
+                }
+                else
+                {
+                    // Apply the profile change
+                    ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
+                    if (result == ApplyProfileResult.Successful)
+                    {
+                        logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} was successfully applied.");
+                        new ToastContentBuilder()
+                            .AddText("Display Profile Applied", hintMaxLines: 1)
+                            .AddText($"\"{profileToUse.Name}\" has been applied successfully.")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                            .SetToastDuration(ToastDuration.Short)
+                            .Show();
+                    }
+                    else if (result == ApplyProfileResult.Cancelled)
+                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
+                    else if (result == ApplyProfileResult.Error)
+                        errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
+                }
             else 
             { 
                 logger.Error($"Program/RunProfile: We tried looking for a profile called {profileName} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
