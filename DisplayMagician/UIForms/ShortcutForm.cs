@@ -1331,7 +1331,6 @@ namespace DisplayMagician.UIForms
             }
             ilv_games.Update();
             ilv_games.ResumeLayout();
-            Application.DoEvents();
 
             // =============================================
             // IF THE SHORTCUT IS AN EXISTING SHORTCUT
