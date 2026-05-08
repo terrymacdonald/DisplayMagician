@@ -1135,17 +1135,8 @@ namespace DisplayMagician {
                 CancellationToken cancelToken = AppCancellationTokenSource.Token;
                 // Start the RunShortcut Task in a new thread
                 Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, ref cancelToken), cancelToken);
-                // And then wait here until the task completes
-                while (true)
-                {
-                    Application.DoEvents();
-                    Thread.Sleep(2000);
-                    if (output.IsCompleted || cancelToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                }
-                //output.Wait(cancelToken);                
+                // Wait for the task to complete (RunShortcut runs on a background thread)
+                output.Wait(cancelToken);
             }
             catch (OperationCanceledException ex)
             {

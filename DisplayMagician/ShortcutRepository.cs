@@ -1413,7 +1413,6 @@ namespace DisplayMagician
                             logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {appToUse.Name} to exit.");
                             while (true)
                             {
-                                Application.DoEvents();
                                 // If we have no more processes left then we're done!
                                 if (!appToUse.IsRunning)
                                 {
@@ -1512,7 +1511,6 @@ namespace DisplayMagician
                     {
                         while (true)
                         {
-                            Application.DoEvents();
                             // If we have no more processes left then we're done!
                             if (ProcessUtils.ProcessExited(processesToMonitor))
                             {
@@ -1730,7 +1728,6 @@ namespace DisplayMagician
                 {                        
                     while (true)
                     {
-                        Application.DoEvents();
                         // If we have no more processes left then we're done!
                         if (ProcessUtils.ProcessExited(processesToMonitor))
                         {
@@ -2197,7 +2194,6 @@ namespace DisplayMagician
                                 logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit.");
                                 while (true)
                                 {
-                                    Application.DoEvents();
                                     if (!gameToRun.IsRunning)
                                     {
                                         logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
@@ -2289,7 +2285,6 @@ namespace DisplayMagician
 
                             while (true)
                             {
-                                Application.DoEvents();
                                 processesToMonitor = Process.GetProcessesByName(altGameProcessToMonitor).ToList();
 
                                 // If we have no more processes left then we're done!
@@ -2391,7 +2386,6 @@ namespace DisplayMagician
                             if (gameToRun.IsRunning)
                             {
                                 // The game is running! So now we continue processing
-                                Application.DoEvents();
                                 gameRunning = true;
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found the '{gameToRun.Name}' process has started");
 
@@ -2452,7 +2446,6 @@ namespace DisplayMagician
                             logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to exit.");
                             while (true)
                             {
-                                Application.DoEvents();
                                 if (!gameToRun.IsRunning)
                                 {
                                     logger.Debug($"ShortcutRepository/RunShortcut: {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
