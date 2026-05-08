@@ -487,6 +487,16 @@ namespace DisplayMagician.UIForms
                         {
                             logger.Trace($"MainForm/runProfileToolStripMenuItem_Click: Profile {profileToRun.Name} was successfully applied.");
                             UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
+                            ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                                .AddText("Display Profile Applied", hintMaxLines: 1)
+                                .AddText($"\"{profileToRun.Name}\" has been applied successfully.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                            ToastContent toastContent = tcBuilder.Content;
+                            var doc = new Windows.Data.Xml.Dom.XmlDocument();
+                            doc.LoadXml(toastContent.GetContent());
+                            var toast = new ToastNotification(doc);
+                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
                         }
                         else if (result == ApplyProfileResult.Cancelled)
                         {
