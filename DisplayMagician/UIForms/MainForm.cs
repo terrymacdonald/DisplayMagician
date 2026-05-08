@@ -736,7 +736,23 @@ namespace DisplayMagician.UIForms
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            openApplicationWindow();
+            switch (Program.AppProgramSettings.NotifyIconDoubleClickAction)
+            {
+                case NotifyIconDoubleClickAction.DoNothing:
+                    break;
+                case NotifyIconDoubleClickAction.DisplayProfileForm:
+                    openApplicationWindow();
+                    openDisplayProfileWindow();
+                    break;
+                case NotifyIconDoubleClickAction.MainForm:
+                    openApplicationWindow();
+                    break;
+                default:
+                    // Default is ShortcutLibraryForm
+                    openApplicationWindow();
+                    openShortcutLibraryWindow();
+                    break;
+            }
         }
 
         private void btn_help_Click(object sender, EventArgs e)

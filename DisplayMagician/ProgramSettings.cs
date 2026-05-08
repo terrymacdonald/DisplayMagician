@@ -36,6 +36,14 @@ namespace DisplayMagician
         public static bool operator !=(SettingsFile lhs, SettingsFile rhs) => !(lhs == rhs);
     }
 
+    public enum NotifyIconDoubleClickAction
+    {
+        DoNothing,
+        MainForm,
+        ShortcutLibraryForm,
+        DisplayProfileForm
+    }
+
     public class ProgramSettings
     {
         #region Class Variables
@@ -83,6 +91,7 @@ namespace DisplayMagician
         private ScreenMeasurementUnit _fovCalcDistanceToScreenUnit = ScreenMeasurementUnit.CM; 
         private double _fovCalcBezelSize = 3;
         private ScreenMeasurementUnit _fovCalcBezelSizeUnit = ScreenMeasurementUnit.MM;
+        private NotifyIconDoubleClickAction _notifyIconDoubleClickAction = NotifyIconDoubleClickAction.ShortcutLibraryForm;
         #endregion
 
         #region Class Properties
@@ -303,8 +312,21 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(NotifyIconDoubleClickAction.ShortcutLibraryForm)]
+        public NotifyIconDoubleClickAction NotifyIconDoubleClickAction
+        {
+            get
+            {
+                return _notifyIconDoubleClickAction;
+            }
+            set
+            {
+                _notifyIconDoubleClickAction = value;
+            }
+        }
+
         [DefaultValue(false)]
-        public bool MinimiseOnStart { 
+        public bool MinimiseOnStart {
             get
             {
                 return _minimiseOnStart;
