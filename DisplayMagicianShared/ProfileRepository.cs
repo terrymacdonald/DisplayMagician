@@ -1359,8 +1359,6 @@ namespace DisplayMagicianShared
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
-                int totalDelay = 0;
-
                 ProfileRepository.ConnectedDisplayIdentifiers = ProfileRepository.GetAllConnectedDisplayIdentifiers();
 
                 foreach (ProfileItem loadedProfile in AllProfiles)
@@ -1371,8 +1369,6 @@ namespace DisplayMagicianShared
 
         public static List<string> GetAllConnectedDisplayIdentifiers()
         {
-            int totalDelay = 0;
-
             List<string> allConnectedDisplayIdentifiers = new List<string>();
 
             try
@@ -1415,8 +1411,6 @@ namespace DisplayMagicianShared
 
         public static List<string> GetCurrentDisplayIdentifiers()
         {
-            int totalDelay = 0;
-
             List<string> currentDisplayIdentifiers = new List<string>();           
 
             try
@@ -1648,7 +1642,7 @@ namespace DisplayMagicianShared
 
                 }
                 // Display the TimeSpan time and result.
-                SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
+                SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {resultString}.");
             }
             return result;
         }

@@ -1077,8 +1077,9 @@ namespace DisplayMagician {
                     else if (result == ApplyProfileResult.Error)
                         errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
                 }
-            else 
-            { 
+            }
+            else
+            {
                 logger.Error($"Program/RunProfile: We tried looking for a profile called {profileName} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
                 errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
             }
