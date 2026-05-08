@@ -772,7 +772,6 @@ namespace DisplayMagician.UIForms
 
                 }
                 notifyIcon.Text = shortText;
-                Application.DoEvents();
             }
         }
 
