@@ -854,7 +854,7 @@ namespace DisplayMagician
         }
 
 
-        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, ref CancellationToken cancelToken)
+        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, CancellationToken cancelToken)
         {
             logger.Debug($"ShortcutRepository/RunShortcut: Running the shortcut {shortcutToUse.Name}.");
 
@@ -862,7 +862,7 @@ namespace DisplayMagician
             // And that we have enough to try and action within the shortcut
             // including checking the Profile in the shortcut is possible
             // (in other words check everything in the shortcut is still valid)
-            if (!(shortcutToUse is ShortcutItem))
+            if (shortcutToUse == null)
                 return RunShortcutResult.Error;
 
             // Check the shortcut is still valid.
@@ -1031,22 +1031,12 @@ namespace DisplayMagician
                                 if (shortcutToUse.SetAudioVolume)
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} volume level to {shortcutToUse.AudioVolume}%.");
-                                    Task myTask = new Task(() =>
-                                    {
-                                        _audioController.DefaultPlaybackDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
-                                    });
-                                    myTask.Start();
-                                    myTask.Wait(2000);
+                                    _audioController.DefaultPlaybackDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume)).Wait(2000);
 
                                     if (shortcutToUse.UseAsCommsAudioDevice)
                                     {
                                         logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} Communications Audio volume level to be {shortcutToUse.AudioVolume}%.");
-                                        myTask = new Task(() =>
-                                        {
-                                            _audioController.DefaultPlaybackCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
-                                        });
-                                        myTask.Start();
-                                        myTask.Wait(2000);
+                                        _audioController.DefaultPlaybackCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume)).Wait(2000);
                                     }
                                     else
                                     {
@@ -1163,22 +1153,12 @@ namespace DisplayMagician
                                 if (shortcutToUse.SetCaptureVolume)
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
-                                    Task myTask = new Task(() =>
-                                    {
-                                        _audioController.DefaultCaptureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
-                                    });
-                                    myTask.Start();
-                                    myTask.Wait(2000);
+                                    _audioController.DefaultCaptureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume)).Wait(2000);
 
                                     if (shortcutToUse.UseAsCommsAudioDevice)
                                     {
                                         logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} Communications Audio volume level to be {shortcutToUse.AudioVolume}%.");
-                                        myTask = new Task(() =>
-                                        {
-                                            _audioController.DefaultCaptureCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
-                                        });
-                                        myTask.Start();
-                                        myTask.Wait(2000);
+                                        _audioController.DefaultCaptureCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume)).Wait(2000);
                                     }
                                     else
                                     {
@@ -1321,16 +1301,7 @@ namespace DisplayMagician
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
             {
                 // Add a status notification icon in the status area
-                if (myMainForm.InvokeRequired)
-                {
-                    myMainForm.BeginInvoke((MethodInvoker)delegate {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ApplicationName} application...");
-                    });
-                }
-                else
-                {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ApplicationName} application...");
-                }
+                SetTrayText(myMainForm, $"DisplayMagician: Running {shortcutToUse.ApplicationName} application...");
 
                 string processToMonitorName;
                 //bool isUWPApp = false;
@@ -1357,17 +1328,7 @@ namespace DisplayMagician
                             .SetBackgroundActivation())
                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                         .SetToastDuration(ToastDuration.Short);
-                    toastContent = tcBuilder.Content;
-                    // Make sure to use Windows.Data.Xml.Dom
-                    doc = new Windows.Data.Xml.Dom.XmlDocument();
-                    doc.LoadXml(toastContent.GetContent());
-                    // And create the toast notification
-                    toast = new ToastNotification(doc);
-                    toast.SuppressPopup = false;
-                    // Remove any other Notifications from us
-                    ToastNotificationManagerCompat.History.Clear();
-                    // And then show this notification
-                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    ShowStatusToast(tcBuilder);
                 }
 
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
@@ -1425,9 +1386,6 @@ namespace DisplayMagician
                                     logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for application {appToUse.Name} to close.");
                                     break;
                                 }
-                                // Send a message to windows so that it doesn't think
-                                // we're locked and try to kill us
-                                System.Threading.Thread.CurrentThread.Join(0);
                                 Thread.Sleep(1000);
                             }
 
@@ -1467,16 +1425,7 @@ namespace DisplayMagician
                                 .SetToastDuration(ToastDuration.Short);
 
                         }
-                        toastContent = tcBuilder.Content;
-                        // Make sure to use Windows.Data.Xml.Dom
-                        doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        // And create the toast notification
-                        toast = new ToastNotification(doc);
-                        // Remove any other Notifications from us
-                        ToastNotificationManagerCompat.History.Clear();
-                        // And then show it
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        ShowStatusToast(tcBuilder);
 
                     }
                 }
@@ -1556,16 +1505,7 @@ namespace DisplayMagician
                                     .SetToastDuration(ToastDuration.Short);
 
                             }
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show it
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            ShowStatusToast(tcBuilder);
 
                         }
                     }
@@ -1582,21 +1522,12 @@ namespace DisplayMagician
                                 .AddText($"A different executable {shortcutToUse.DifferentExecutableToMonitor} process couldn't be detected. Stopping monitoring.")
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                 .SetToastDuration(ToastDuration.Short);
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show it
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            ShowStatusToast(tcBuilder);
 
                         }
                     }
                 }                
-                
+
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Executable))
             {
@@ -1605,16 +1536,7 @@ namespace DisplayMagician
                 //IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                 // Add a status notification icon in the status area
-                if (myMainForm.InvokeRequired)
-                {
-                    myMainForm.BeginInvoke((MethodInvoker)delegate {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath} executable...");
-                    });
-                }
-                else
-                {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath} executable...");
-                }
+                SetTrayText(myMainForm, $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath} executable...");
 
                 string processToMonitorName;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
@@ -1641,19 +1563,9 @@ namespace DisplayMagician
                             .SetBackgroundActivation())
                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                         .SetToastDuration(ToastDuration.Short);
-                    toastContent = tcBuilder.Content;
-                    // Make sure to use Windows.Data.Xml.Dom
-                    doc = new Windows.Data.Xml.Dom.XmlDocument();
-                    doc.LoadXml(toastContent.GetContent());
-                    // And create the toast notification
-                    toast = new ToastNotification(doc);
-                    toast.SuppressPopup = false;
-                    // Remove any other Notifications from us
-                    ToastNotificationManagerCompat.History.Clear();
-                    // And then show this notification
-                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    ShowStatusToast(tcBuilder);
                 }
-                
+
 
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
                 // Start the main executable
@@ -1695,8 +1607,16 @@ namespace DisplayMagician
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
                     processesToMonitor = processesCreated;
-                    logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{processToMonitorName}' created processes to monitor are running");
-                    foundSomethingToMonitor = true;
+                    if (processesToMonitor.Count > 0)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{processToMonitorName}' created processes to monitor are running");
+                        foundSomethingToMonitor = true;
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RunShortcut: No '{processToMonitorName}' processes were created to monitor, so we didn't find anything to monitor!");
+                        foundSomethingToMonitor = false;
+                    }
                 }
                 else
                 {
@@ -1740,9 +1660,6 @@ namespace DisplayMagician
                             logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for application {shortcutToUse.ExecutableNameAndPath} to close.");
                             break;
                         }
-                        // Send a message to windows so that it doesn't think
-                        // we're locked and try to kill us
-                        System.Threading.Thread.CurrentThread.Join(0);
                         Thread.Sleep(1000);
                     }
                     if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
@@ -1798,16 +1715,7 @@ namespace DisplayMagician
                             }
 
                         }
-                        toastContent = tcBuilder.Content;
-                        // Make sure to use Windows.Data.Xml.Dom
-                        doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        // And create the toast notification
-                        toast = new ToastNotification(doc);
-                        // Remove any other Notifications from us
-                        ToastNotificationManagerCompat.History.Clear();
-                        // And then show it
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        ShowStatusToast(tcBuilder);
 
                     }
                 }
@@ -1839,22 +1747,13 @@ namespace DisplayMagician
                                 .SetToastDuration(ToastDuration.Short);
                         }
 
-                        
-                        toastContent = tcBuilder.Content;
-                        // Make sure to use Windows.Data.Xml.Dom
-                        doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        // And create the toast notification
-                        toast = new ToastNotification(doc);
-                        // Remove any other Notifications from us
-                        ToastNotificationManagerCompat.History.Clear();
-                        // And then show it
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        ShowStatusToast(tcBuilder);
 
                     }
                 }
 
-                
+
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Game))
             {
@@ -1863,11 +1762,11 @@ namespace DisplayMagician
                 Game gameToRun = null;
 
                 gameToRun = GameLibrary.GetAnyGameById(shortcutToUse.GameAppId);
-                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameToRun.GameLibrary.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
 
                 // If the GameAppID is not null, then we've matched a game! Lets run it.
                 if (gameToRun != null)
                 {
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameToRun.GameLibrary.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");                
 
                     string processToMonitorName;
                     if (shortcutToUse.MonitorDifferentGameExe)
@@ -1880,16 +1779,7 @@ namespace DisplayMagician
                     }
 
                     // Add a status notification icon in the status area
-                    if (myMainForm.InvokeRequired)
-                    {
-                        myMainForm.BeginInvoke((MethodInvoker)delegate {
-                            myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
-                        });
-                    }
-                    else
-                    {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
-                    }
+                    SetTrayText(myMainForm, $"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
 
                     if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                     {
@@ -1900,18 +1790,9 @@ namespace DisplayMagician
                         .AddText($"Waiting for {gameToRun.GameLibraryType} Game Library to start (and update if needed)...")
                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                         .SetToastDuration(ToastDuration.Short);
-                        toastContent = tcBuilder.Content;
-                        // Make sure to use Windows.Data.Xml.Dom
-                        doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        // And create the toast notification
-                        toast = new ToastNotification(doc);
-                        // Remove any other Notifications from us
-                        ToastNotificationManagerCompat.History.Clear();
-                        // And then show this notification
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        ShowStatusToast(tcBuilder);
                     }
-                        
+
 
                     // Start the game!
                     // NOTE: We now have to try and find the processes, as the game library will start to run the game itself, and we have no idea what process it is
@@ -1973,16 +1854,7 @@ namespace DisplayMagician
                             .AddText($"Waiting for {gameToRun.GameLibrary.GameLibraryName} Game Library to update itself...")
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show this notification
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            ShowStatusToast(tcBuilder);
                         }                            
 
                         // Wait for up to 5 minutes for GameLibrary to update
@@ -2025,18 +1897,9 @@ namespace DisplayMagician
                             .AddText($"Waiting for {gameToRun.Name} Game to update...")
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                             .SetToastDuration(ToastDuration.Short);
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show this notification
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            ShowStatusToast(tcBuilder);
                         }
-                            
+
                         // Wait for up to 15 minutes for the Game to update
                         for (int secs = 0; secs <= 15000; secs += 500)
                         {
@@ -2055,18 +1918,9 @@ namespace DisplayMagician
                     }
 
                     // Now we actually start looking for and monitoring the game!
-                    if (myMainForm.InvokeRequired)
-                    {
-                        myMainForm.BeginInvoke((MethodInvoker)delegate {
-                            myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {gameToRun.Name}...");
-                        });
-                    }
-                    else
-                    {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {gameToRun.Name}...");
-                    }
+                    SetTrayText(myMainForm, $"DisplayMagician: Running {gameToRun.Name}...");
 
-                    // At this point, if the user wants to actually monitor a different process, 
+                    // At this point, if the user wants to actually monitor a different process,
                     // then we actually need to monitor that instead
                     if (shortcutToUse.MonitorDifferentGameExe)
                     {
@@ -2145,18 +1999,9 @@ namespace DisplayMagician
                                     .AddText($"Could not detect {shortcutToUse.GameName} Game starting, so reverting changes back if needed. You may need to monitor a different game executable.")
                                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                     .SetToastDuration(ToastDuration.Short);
-                                    toastContent = tcBuilder.Content;
-                                    // Make sure to use Windows.Data.Xml.Dom
-                                    doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                    doc.LoadXml(toastContent.GetContent());
-                                    // And create the toast notification
-                                    toast = new ToastNotification(doc);
-                                    // Remove any other Notifications from us
-                                    ToastNotificationManagerCompat.History.Clear();
-                                    // And then show this notification
-                                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                    ShowStatusToast(tcBuilder);
                                 }
-                                    
+
 
                             } 
                             else
@@ -2177,16 +2022,7 @@ namespace DisplayMagician
                                         .SetBackgroundActivation())
                                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                     .SetToastDuration(ToastDuration.Short);
-                                    toastContent = tcBuilder.Content;
-                                    // Make sure to use Windows.Data.Xml.Dom
-                                    doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                    doc.LoadXml(toastContent.GetContent());
-                                    // And create the toast notification
-                                    toast = new ToastNotification(doc);
-                                    // Remove any other Notifications from us
-                                    ToastNotificationManagerCompat.History.Clear();
-                                    // And then show this notification
-                                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                    ShowStatusToast(tcBuilder);
                                 }                                    
 
                                 // This is the main waiting thread!
@@ -2205,7 +2041,6 @@ namespace DisplayMagician
                                         logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameToRun.GameLibrary.GameLibraryName} Game {gameToRun.Name} to close.");
                                         break;
                                     }
-
                                     // Send a message to windows so that it doesn't think
                                     // we're locked and try to kill us
                                     Thread.CurrentThread.Join(0);
@@ -2238,18 +2073,9 @@ namespace DisplayMagician
                                             .SetToastDuration(ToastDuration.Short);
                                     }
 
-                                    toastContent = tcBuilder.Content;
-                                    // Make sure to use Windows.Data.Xml.Dom
-                                    doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                    doc.LoadXml(toastContent.GetContent());
-                                    // And create the toast notification
-                                    toast = new ToastNotification(doc);
-                                    // Remove any other Notifications from us
-                                    ToastNotificationManagerCompat.History.Clear();
-                                    // And then show it
-                                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                    ShowStatusToast(tcBuilder);
                                 }
-                                    
+
                             }                            
                         }
                         else
@@ -2271,16 +2097,7 @@ namespace DisplayMagician
                                     .SetBackgroundActivation())
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                 .SetToastDuration(ToastDuration.Short);
-                                toastContent = tcBuilder.Content;
-                                // Make sure to use Windows.Data.Xml.Dom
-                                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                doc.LoadXml(toastContent.GetContent());
-                                // And create the toast notification
-                                toast = new ToastNotification(doc);
-                                // Remove any other Notifications from us
-                                ToastNotificationManagerCompat.History.Clear();
-                                // And then show this notification
-                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                ShowStatusToast(tcBuilder);
                             }                                
 
                             while (true)
@@ -2334,18 +2151,9 @@ namespace DisplayMagician
                                         .SetToastDuration(ToastDuration.Short);
                                 }
 
-                                toastContent = tcBuilder.Content;
-                                // Make sure to use Windows.Data.Xml.Dom
-                                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                doc.LoadXml(toastContent.GetContent());
-                                // And create the toast notification
-                                toast = new ToastNotification(doc);
-                                // Remove any other Notifications from us
-                                ToastNotificationManagerCompat.History.Clear();
-                                // And then show it
-                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                ShowStatusToast(tcBuilder);
                             }
-                                
+
                         }                        
                     }
                     else
@@ -2365,19 +2173,10 @@ namespace DisplayMagician
                                 .SetBackgroundActivation())
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                             .SetToastDuration(ToastDuration.Short);
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show this notification
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            ShowStatusToast(tcBuilder);
                         }                            
 
-                        // Now we know the game library app is running then 
+                        // Now we know the game library app is running then
                         // we wait until the game has started running (*allows for updates to occur)
                         bool gameRunning = false;
                         for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
@@ -2426,16 +2225,7 @@ namespace DisplayMagician
                                 .AddText($"Could not detect {shortcutToUse.GameName} Game starting, so reverting changes back if needed. You may need to monitor a different game executable.")
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, false)
                                 .SetToastDuration(ToastDuration.Short);
-                                toastContent = tcBuilder.Content;
-                                // Make sure to use Windows.Data.Xml.Dom
-                                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                doc.LoadXml(toastContent.GetContent());
-                                // And create the toast notification
-                                toast = new ToastNotification(doc);
-                                // Remove any other Notifications from us
-                                ToastNotificationManagerCompat.History.Clear();
-                                // And then show this notification
-                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                ShowStatusToast(tcBuilder);
                             }                                
 
                         } 
@@ -2490,18 +2280,9 @@ namespace DisplayMagician
                                         .SetToastDuration(ToastDuration.Short);
                                 }
 
-                                toastContent = tcBuilder.Content;
-                                // Make sure to use Windows.Data.Xml.Dom
-                                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                doc.LoadXml(toastContent.GetContent());
-                                // And create the toast notification
-                                toast = new ToastNotification(doc);
-                                // Remove any other Notifications from us
-                                ToastNotificationManagerCompat.History.Clear();
-                                // And then show it
-                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                ShowStatusToast(tcBuilder);
                             }
-                                
+
                         }                                                
 
                     }
@@ -2571,12 +2352,7 @@ namespace DisplayMagician
                     rollbackAudioDevice.SetAsDefault();
 
                     logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to orignal volume");
-                    Task myTask = new Task(() =>
-                    {
-                        rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
-                    });
-                    myTask.Start();
-                    myTask.Wait(2000);
+                    rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume)).Wait(2000);
 
                 }
                 else
@@ -2592,12 +2368,7 @@ namespace DisplayMagician
                     rollbackCommunicationAudioDevice.SetAsDefaultCommunications();
 
                     logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications audio volume back to original volume");
-                    Task myTask = new Task(() =>
-                    {
-                        rollbackCommunicationAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationAudioVolume));
-                    });
-                    myTask.Start();
-                    myTask.Wait(2000);
+                    rollbackCommunicationAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationAudioVolume)).Wait(2000);
                 }
                 else
                 {
@@ -2623,12 +2394,7 @@ namespace DisplayMagician
                     if (shortcutToUse.SetCaptureVolume)
                     {
                         logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to original volume");
-                        Task myTask = new Task(() =>
-                        {
-                            rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
-                        });
-                        myTask.Start();
-                        myTask.Wait(2000);
+                        rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume)).Wait(2000);
                     }
                     else
                     {
@@ -2650,12 +2416,7 @@ namespace DisplayMagician
                     if (shortcutToUse.SetCaptureVolume)
                     {
                         logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications capture (microphone) volume back to original volume");
-                        Task myTask = new Task(() =>
-                        {
-                            rollbackCommunicationCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationCaptureVolume));
-                        });
-                        myTask.Start();
-                        myTask.Wait(2000);
+                        rollbackCommunicationCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationCaptureVolume)).Wait(2000);
                     }
                     else
                     {
@@ -2757,18 +2518,9 @@ namespace DisplayMagician
 
             // Reset the popup over the system tray icon to what's normal for it.
             // Set the notifyIcon text with the current profile
-            if (myMainForm.InvokeRequired)
-            {
-                myMainForm.BeginInvoke((MethodInvoker)delegate {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
-                });
-            }
-            else
-            {
-                myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
-            }
+            SetTrayText(myMainForm, $"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
 
-            // If we're running DisplayMagician from a Desktop Shortcut and then shutting down again, then it will quit, leaving behind a desktop icon
+            // If we're running DisplayMagician from a Desktop Shortcut
             // We need to remove that Desktopicon to tidy up in that case.
             /*if (temporaryMainForm)
             {
@@ -2777,6 +2529,25 @@ namespace DisplayMagician
             
             return RunShortcutResult.Successful;
 
+        }
+
+        private static void ShowStatusToast(ToastContentBuilder builder)
+        {
+            var toastContent = builder.Content;
+            var doc = new Windows.Data.Xml.Dom.XmlDocument();
+            doc.LoadXml(toastContent.GetContent());
+            var toast = new ToastNotification(doc);
+            toast.SuppressPopup = false;
+            ToastNotificationManagerCompat.History.Clear();
+            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+        }
+
+        private static void SetTrayText(MainForm form, string text)
+        {
+            if (form.InvokeRequired)
+                form.BeginInvoke((MethodInvoker)delegate { form.UpdateNotifyIconText(text); });
+            else
+                form.UpdateNotifyIconText(text);
         }
 
         #endregion
