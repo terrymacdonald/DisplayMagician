@@ -19,6 +19,7 @@ namespace DisplayMagician.UIForms
 
         private StartProgram myStartProgram = new StartProgram() { };
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public StartProgram StartProgram
         {
             get

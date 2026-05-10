@@ -134,18 +134,21 @@ namespace DisplayMagician.UIForms
 
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ShortcutItem Shortcut
         {
             get => _shortcutToEdit;
             set => _shortcutToEdit = value;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool EditingExistingShortcut
         {
             get => _editingExistingShortcut;
             set => _editingExistingShortcut = value;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SupportedGameLibraryType GameLibrary
         {
             get
@@ -1328,7 +1331,6 @@ namespace DisplayMagician.UIForms
             }
             ilv_games.Update();
             ilv_games.ResumeLayout();
-            Application.DoEvents();
 
             // =============================================
             // IF THE SHORTCUT IS AN EXISTING SHORTCUT

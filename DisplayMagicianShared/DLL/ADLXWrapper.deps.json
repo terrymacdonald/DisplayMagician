@@ -1,0 +1,137 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "ADLXWrapper/1.1.13": {
+        "dependencies": {
+          "ClangSharp": "20.1.2.4",
+          "ClangSharp.Interop": "20.1.2.4",
+          "ClangSharp.PInvokeGenerator": "20.1.2.4",
+          "Newtonsoft.Json": "13.0.4",
+          "System.Management": "8.0.0"
+        },
+        "runtime": {
+          "ADLXWrapper.dll": {}
+        }
+      },
+      "ClangSharp/20.1.2.4": {
+        "dependencies": {
+          "ClangSharp.Interop": "20.1.2.4"
+        },
+        "runtime": {
+          "lib/net10.0/ClangSharp.dll": {
+            "assemblyVersion": "20.1.2.4",
+            "fileVersion": "20.1.2.4"
+          }
+        }
+      },
+      "ClangSharp.Interop/20.1.2.4": {
+        "runtime": {
+          "lib/net10.0/ClangSharp.Interop.dll": {
+            "assemblyVersion": "20.1.2.4",
+            "fileVersion": "20.1.2.4"
+          }
+        }
+      },
+      "ClangSharp.PInvokeGenerator/20.1.2.4": {
+        "dependencies": {
+          "ClangSharp": "20.1.2.4"
+        },
+        "runtime": {
+          "lib/net10.0/ClangSharp.PInvokeGenerator.dll": {
+            "assemblyVersion": "20.1.2.4",
+            "fileVersion": "20.1.2.4"
+          }
+        }
+      },
+      "Newtonsoft.Json/13.0.4": {
+        "runtime": {
+          "lib/net6.0/Newtonsoft.Json.dll": {
+            "assemblyVersion": "13.0.0.0",
+            "fileVersion": "13.0.4.30916"
+          }
+        }
+      },
+      "System.CodeDom/8.0.0": {
+        "runtime": {
+          "lib/net8.0/System.CodeDom.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.23.53103"
+          }
+        }
+      },
+      "System.Management/8.0.0": {
+        "dependencies": {
+          "System.CodeDom": "8.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/System.Management.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.23.53103"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net8.0/System.Management.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.23.53103"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ADLXWrapper/1.1.13": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ClangSharp/20.1.2.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XtObZyqqU26yazgoUCxQLw8AFjiZLY/mc10FtEHIY/Go+pvgSFGx+Ai5IlpxolIvxlQ+WWcPA2wLvULL+L7mVA==",
+      "path": "clangsharp/20.1.2.4",
+      "hashPath": "clangsharp.20.1.2.4.nupkg.sha512"
+    },
+    "ClangSharp.Interop/20.1.2.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OxvJ9rxNM8Uq3WNLfUh/rq+8LBnK5GVrPJsQ9kR41upX3kWhIiKgoZC3XFQzhu2HTUp86jOu9RlnAaO82s9bWg==",
+      "path": "clangsharp.interop/20.1.2.4",
+      "hashPath": "clangsharp.interop.20.1.2.4.nupkg.sha512"
+    },
+    "ClangSharp.PInvokeGenerator/20.1.2.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0EWrim3inqM+JrizPFkUYeMiJck9E7bNrjXd08j842AGEEfeFiExRB/9f9ZiyzKYro3PRyomqJl4O+Dl/WjuUQ==",
+      "path": "clangsharp.pinvokegenerator/20.1.2.4",
+      "hashPath": "clangsharp.pinvokegenerator.20.1.2.4.nupkg.sha512"
+    },
+    "Newtonsoft.Json/13.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A==",
+      "path": "newtonsoft.json/13.0.4",
+      "hashPath": "newtonsoft.json.13.0.4.nupkg.sha512"
+    },
+    "System.CodeDom/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-WTlRjL6KWIMr/pAaq3rYqh0TJlzpouaQ/W1eelssHgtlwHAH25jXTkUphTYx9HaIIf7XA6qs/0+YhtLEQRkJ+Q==",
+      "path": "system.codedom/8.0.0",
+      "hashPath": "system.codedom.8.0.0.nupkg.sha512"
+    },
+    "System.Management/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jrK22i5LRzxZCfGb+tGmke2VH7oE0DvcDlJ1HAKYU8cPmD8XnpUT0bYn2Gy98GEhGjtfbR/sxKTVb+dE770pfA==",
+      "path": "system.management/8.0.0",
+      "hashPath": "system.management.8.0.0.nupkg.sha512"
+    }
+  }
+}

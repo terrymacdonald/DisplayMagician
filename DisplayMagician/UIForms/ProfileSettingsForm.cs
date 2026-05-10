@@ -1,10 +1,9 @@
 ﻿using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
 //using Microsoft.Win32;
-using NHotkey;
-using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -42,12 +41,14 @@ namespace DisplayMagician.UIForms
 
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ProfileItem Profile
         {
             get;
             set;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ProfileSettingChanged
         {
             get

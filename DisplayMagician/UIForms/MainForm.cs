@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using System.ComponentModel;
 
 namespace DisplayMagician.UIForms
 {
@@ -35,6 +36,7 @@ namespace DisplayMagician.UIForms
         /// <summary>
         /// When true, allows the form to become visible.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AllowVisible
         {
             get => _allowVisible;
@@ -51,6 +53,7 @@ namespace DisplayMagician.UIForms
         /// <summary>
         /// When true, allows the form to become visible.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AllowClose
         {
             get => _allowClose;
@@ -68,6 +71,9 @@ namespace DisplayMagician.UIForms
             // Refresh all possible profiles and shortcuts
             ProfileRepository.IsPossibleRefresh();
             ShortcutRepository.IsValidRefresh();
+
+            // Update the active profile so the UI knows which profile is currently in use
+            ProfileRepository.UpdateActiveProfile();
 
             // Update the system tray menus
             notifyIcon.Visible = true;
@@ -136,18 +142,18 @@ namespace DisplayMagician.UIForms
                 cb_minimise_notification_area.Checked = false;
             }
 
-            // Set the notifyIcon text with the current profile
-            if (notifyIcon != null)
-            {
-                string shortProfileName = ProfileRepository.CurrentProfile.Name;
-                if (shortProfileName.Length >= 64)
-                {
-                    shortProfileName = ProfileRepository.CurrentProfile.Name.Substring(0, 45);
+            //// Set the notifyIcon text with the current profile
+            //if (notifyIcon != null)
+            //{
+            //    string shortProfileName = ProfileRepository.CurrentProfile.Name;
+            //    if (shortProfileName.Length >= 64)
+            //    {
+            //        shortProfileName = ProfileRepository.CurrentProfile.Name.Substring(0, 45);
 
-                }
-                notifyIcon.Text = $"DisplayMagician ({shortProfileName})";
-                Application.DoEvents();
-            }
+            //    }
+            //    notifyIcon.Text = $"DisplayMagician ({shortProfileName})";
+            //    Application.DoEvents();
+            //}
 
             // If we've been handed a Form of some kind, then open it straight away
             if (formToOpen is DisplayProfileForm)
@@ -210,43 +216,43 @@ namespace DisplayMagician.UIForms
             {
                 this.Hide();
                 e.Cancel = true;
+
+                if (cb_minimise_notification_area.Checked && Program.AppProgramSettings.ShowMinimiseMessageInActionCenter)
+                {
+                    // Tell the user that DisplayMagician is still running in the background
+                    ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                        .AddText("DisplayMagician is minimised...", hintMaxLines: 1)
+                        .AddText("DisplayMagician will wait in the background until you need it.")
+                        .AddButton(new ToastButton()
+                            .SetContent("Open")
+                            .AddArgument("action", "open")
+                            .SetBackgroundActivation())
+                        .AddButton(new ToastButton()
+                            .SetContent("Exit")
+                            .AddArgument("action", "exit")
+                            .SetBackgroundActivation())
+                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                        .SetToastDuration(ToastDuration.Short);
+                    ToastContent toastContent = tcBuilder.Content;
+                    // Make sure to use Windows.Data.Xml.Dom
+                    var doc = new Windows.Data.Xml.Dom.XmlDocument();
+                    doc.LoadXml(toastContent.GetContent());
+
+                    // And create the toast notification
+                    var toast = new ToastNotification(doc);
+
+                    // Remove any other Notifications from us
+                    ToastNotificationManagerCompat.History.Clear();
+
+                    // And then show it
+                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                }
             }
             base.OnFormClosing(e);
         }
 
         private void btn_exit_Click(object sender, EventArgs e)
         {
-            if (cb_minimise_notification_area.Checked && Program.AppProgramSettings.ShowMinimiseMessageInActionCenter)
-            {
-                // Tell the user that 
-                // Construct the toast content
-                ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                    .AddText("DisplayMagician is minimised...", hintMaxLines: 1)
-                    .AddText("DisplayMagician will wait in the background until you need it.")
-                    .AddButton(new ToastButton()
-                        .SetContent("Open")
-                        .AddArgument("action", "open")
-                        .SetBackgroundActivation())
-                    .AddButton(new ToastButton()
-                        .SetContent("Exit")
-                        .AddArgument("action", "exit")
-                        .SetBackgroundActivation())
-                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                    .SetToastDuration(ToastDuration.Short);
-                ToastContent toastContent = tcBuilder.Content;
-                // Make sure to use Windows.Data.Xml.Dom
-                var doc = new Windows.Data.Xml.Dom.XmlDocument();
-                doc.LoadXml(toastContent.GetContent());
-
-                // And create the toast notification
-                var toast = new ToastNotification(doc);
-
-                // Remove any other Notifications from us
-                ToastNotificationManagerCompat.History.Clear();
-
-                // And then show it
-                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-            }
             Application.Exit();
         }
 
@@ -454,9 +460,6 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            // Apply it by running the Application.DoEvents();
-            Application.DoEvents();
-
         }
 
         private void runProfileToolStripMenuItem_Click(object sender, EventArgs e)
@@ -474,12 +477,54 @@ namespace DisplayMagician.UIForms
                     }
                 }
 
-                // Run the shortcut if it's still there
+                // Only apply the profile if it exists and is not already the active profile
                 if (profileToRun != null)
-                    //ProfileRepository.ApplyProfile(profileToRun);
-                    Program.ApplyProfileTask(profileToRun);
+                {
+                    if (!ProfileRepository.IsActiveProfile(profileToRun))
+                    {
+                        ApplyProfileResult result = Program.ApplyProfileTask(profileToRun);
+                        if (result == ApplyProfileResult.Successful)
+                        {
+                            logger.Trace($"MainForm/runProfileToolStripMenuItem_Click: Profile {profileToRun.Name} was successfully applied.");
+                            UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
+                            ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                                .AddText("Display Profile Applied", hintMaxLines: 1)
+                                .AddText($"\"{profileToRun.Name}\" has been applied successfully.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                .SetToastDuration(ToastDuration.Short);
+                            ToastContent toastContent = tcBuilder.Content;
+                            var doc = new Windows.Data.Xml.Dom.XmlDocument();
+                            doc.LoadXml(toastContent.GetContent());
+                            var toast = new ToastNotification(doc);
+                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        }
+                        else if (result == ApplyProfileResult.Cancelled)
+                        {
+                            logger.Warn($"MainForm/runProfileToolStripMenuItem_Click: The user cancelled changing to Profile {profileToRun.Name}.");
+                        }
+                        else
+                        {
+                            logger.Error($"MainForm/runProfileToolStripMenuItem_Click: Error applying Profile {profileToRun.Name}.");
+                        }
+                    }
+                    else
+                    {
+                        // Profile is already active - notify the user via toast
+                        logger.Trace($"MainForm/runProfileToolStripMenuItem_Click: Profile {profileToRun.Name} is already the active profile.");
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddText("Display Profile Already Active", hintMaxLines: 1)
+                            .AddText($"\"{profileToRun.Name}\" is already the current display profile.")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                            .SetToastDuration(ToastDuration.Short);
+                        ToastContent toastContent = tcBuilder.Content;
+                        var doc = new Windows.Data.Xml.Dom.XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        var toast = new ToastNotification(doc);
+                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    }
+                }
 
-                // Also refresh the right-click menu (if we have a main form loaded)
+                // Refresh the right-click menu to reflect the new state
                 if (Program.AppMainForm is Form)
                 {
                     Program.AppMainForm.RefreshNotifyIconMenus();
@@ -521,6 +566,7 @@ namespace DisplayMagician.UIForms
             // Center the form on the primary screen
             this.Show();
             //Utils.ActivateCenteredOnPrimaryScreen(this);
+            this.BringToFront();
         }
 
         public void openShortcutLibraryWindow()
@@ -690,7 +736,23 @@ namespace DisplayMagician.UIForms
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            openApplicationWindow();
+            switch (Program.AppProgramSettings.NotifyIconDoubleClickAction)
+            {
+                case NotifyIconDoubleClickAction.DoNothing:
+                    break;
+                case NotifyIconDoubleClickAction.DisplayProfileForm:
+                    openApplicationWindow();
+                    openDisplayProfileWindow();
+                    break;
+                case NotifyIconDoubleClickAction.MainForm:
+                    openApplicationWindow();
+                    break;
+                default:
+                    // Default is ShortcutLibraryForm
+                    openApplicationWindow();
+                    openShortcutLibraryWindow();
+                    break;
+            }
         }
 
         private void btn_help_Click(object sender, EventArgs e)
@@ -710,7 +772,6 @@ namespace DisplayMagician.UIForms
 
                 }
                 notifyIcon.Text = shortText;
-                Application.DoEvents();
             }
         }
 
@@ -769,50 +830,39 @@ namespace DisplayMagician.UIForms
         protected override void WndProc(ref Message m)
         {
             const int WM_DISPLAYCHANGE = 0x007E;
-            const int WM_SETTINGCHANGE = 0x001A;
-            const int WM_DEVICECHANGE = 0x0219;
 
-            const int DBT_DEVICEARRIVAL = 0x8000;
-            const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
-
-            // if the user is changing profiles, then we want to record if anything changed! We change the status of the _screenHasChanged variable if we detect a change
+            // If the user is changing profiles, record if a display change occurred so we can react after they finish
             if (ProfileRepository.UserChangingProfiles)
             {
-                switch (m.Msg)
+                if (m.Msg == WM_DISPLAYCHANGE)
                 {
-
-                    case WM_DEVICECHANGE:
-                        switch ((int)m.WParam)
-                        {
-                            case DBT_DEVICEARRIVAL:
-                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been added. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
-                                _screenHasChanged = true;
-                                break;
-
-                            case DBT_DEVICEREMOVECOMPLETE:
-                                logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been removed. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
-                                _screenHasChanged = true;
-                                break;
-                        }
-                        break;
-
-                    case WM_DISPLAYCHANGE:
-                        logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
-                        _screenHasChanged = true;
-                        break;
+                    logger.Trace($"MainForm/WndProc: Display changed while user was changing profiles. Will update view afterwards.");
+                    _screenHasChanged = true;
                 }
+            }
+            else if (m.Msg == WM_DISPLAYCHANGE)
+            {
+                // Display changed while idle - flag it for handling on the next message
+                logger.Trace($"MainForm/WndProc: Windows sent WM_DISPLAYCHANGE while idle. Flagging screen as changed.");
+                _screenHasChanged = true;
             }
             else if (_screenHasChanged)
             {
-                // If the user is not changing profiles, then the first time we hit this we need to reposition DM and reset the _screenHasChanged variable
+                // Display change has settled - update all state and UI
+                logger.Trace($"MainForm/WndProc: Handling display change - refreshing profile state and menus.");
+                _screenHasChanged = false;
+
                 RepositionDisplayMagician();
-                // if the DisplayProfileForm is open, Update the current view by running btn_view_current.
+
+                ProfileRepository.IsPossibleRefresh();
+                ProfileRepository.UpdateActiveProfile();
+                RefreshNotifyIconMenus();
+
+                // If the DisplayProfileForm is open, refresh its view too
                 if (DisplayProfileWindow != null && !DisplayProfileWindow.IsDisposed)
                 {
                     DisplayProfileWindow.RefreshCurrentView();
                 }
-
-                _screenHasChanged = false;
             }
 
             base.WndProc(ref m);

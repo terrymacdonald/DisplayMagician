@@ -86,7 +86,8 @@ namespace DisplayMagician {
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
         public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
-
+        private static NLog.LogLevel _userWantedLogLevel = NLog.LogLevel.Info; // Default log level is Info, but can be changed later based on user settings
+        private static bool _userOverrodeLogLevel = false; // Used to track if the user has overridden the log level via command line options
         private static readonly System.Net.Http.HttpClient AppHttpClient = new System.Net.Http.HttpClient();
 
         public enum ERRORLEVEL: int
@@ -175,34 +176,23 @@ namespace DisplayMagician {
 
             var config = new NLog.Config.LoggingConfiguration();
 
-            // Rules for mapping loggers to targets          
-            /* NLog.LogLevel logLevel = null;
-            switch (AppProgramSettings.LogLevel)
+            // To enable us to start logging early, set the logLevel to Info, and then later on we can change it if the user wants it different
+            NLog.LogLevel logLevel = NLog.LogLevel.Info;
+            _userWantedLogLevel = NLog.LogLevel.Info;
+            if (args.Contains("--debug"))
             {
-                case "Trace":
-                    logLevel = NLog.LogLevel.Trace;
-                    break;
-                case "Info":
-                    logLevel = NLog.LogLevel.Info;
-                    break;
-                case "Warn":
-                    logLevel = NLog.LogLevel.Warn;
-                    break;
-                case "Error":
-                    logLevel = NLog.LogLevel.Error;
-                    break;
-                case "Debug":
-                    logLevel = NLog.LogLevel.Debug;
-                    break;
-                default:
-                    logLevel = NLog.LogLevel.Info;
-                    break;
-            }*/
-            // TODO - remove this temporary action to force Trace level logging
-            // I've set this as it was too onerous continuously teaching people how to turn on TRACE logging
-            // While there are a large number of big changes taking place with DisplayMagician, this will minimise
-            // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
-            NLog.LogLevel logLevel = NLog.LogLevel.Trace;
+                // Set things to debug mode as the user provided this on the command line
+                logLevel = NLog.LogLevel.Debug;
+                _userWantedLogLevel = NLog.LogLevel.Trace;
+                _userOverrodeLogLevel = true; // User has overridden the log level to debug, so we will use this for the rest of the program
+            }
+            else if (args.Contains("--trace"))
+            {
+                // Set things to trace mode as the user provided this on the command line
+                logLevel = NLog.LogLevel.Trace;
+                _userWantedLogLevel = NLog.LogLevel.Trace;
+                _userOverrodeLogLevel = true; // User has overridden the log level to trace, so we will use this for the rest of the program
+            }
 
             // Targets where to log to: File and Console
             string appLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{DateTime.Now.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture)}.log");
@@ -261,9 +251,10 @@ namespace DisplayMagician {
                 else
                 {
 
-                    // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
+                    // if we're the second instance of DisplayMagician, then                   
+                    // lets close down as the first instance will continue with what we wanted to do.
                     logger.Trace($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
-                    if (System.Windows.Forms.Application.MessageLoop)
+                    if (Application.MessageLoop)
                     {
                         // WinForms have loaded
                         Application.Exit();
@@ -378,9 +369,27 @@ namespace DisplayMagician {
             AppProgramSettings.NumberOfStartsSinceLastDonationForm++;
             AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppProgramSettings.NumberOfTimesRun++;
-            // Force the logging level to be trace for now!
-            // TODO: Remove.
-            AppProgramSettings.LogLevel = "Trace";
+
+            // Now we are at the point that the user settings are loaded, we can set the logging level based on the stored user settings
+            // but only if the user hasn't already overridden the log level via command line options
+            if (!_userOverrodeLogLevel)
+            {
+                // If the user has set a log level in the settings, then use that, otherwise use the default of Info
+                if (AppProgramSettings.LogLevel != null && AppProgramSettings.LogLevel != "")
+                {
+                    // Set the log level to the user wanted log level
+                    _userWantedLogLevel = NLog.LogLevel.FromString(AppProgramSettings.LogLevel);
+                    logger.Info($"Program/Main: User has set the log level to {_userWantedLogLevel} in the settings file.");
+                    // ALso update the logging level in logger
+                    logger.Trace($"Program/Main: Setting the log level to {_userWantedLogLevel} as it was loaded from the settings file.");
+                    config.FindRuleByName("LogToFile").SetLoggingLevels(_userWantedLogLevel, NLog.LogLevel.Fatal);
+                    // apply the new logging configuration
+                    logger.Trace($"Program/Main: Reconfiguring the updated logging configuration.");
+                    NLog.LogManager.ReconfigExistingLoggers();
+
+                }
+            }
+
             // If app settings is new, then set the initial settings we need
             if (AppNewInstall)
             {
@@ -527,44 +536,18 @@ namespace DisplayMagician {
             // Next we create the MainForm object but keep it hidden for now
             logger.Trace($"Program/Main: Creating the MainForm object");
             AppMainForm = new MainForm();
-            // Set up the AppMainForm variable that we need to use later
-            //AppMainForm.Load += MainForm_LoadCompleted;
 
             // Next we set up the hotkeys if we have any
             logger.Trace($"Program/Main: Creating DirectInput Device Manager");
             AppDirectInputManager = new DirectInputManager();
             logger.Trace($"Program/Main: Initilising DirectInput Device Manager with the MainForm window handle");
             AppDirectInputManager.Initialize(AppMainForm.Handle);
-            /*logger.Trace($"Program/Main: Making sure that DirectInput Device Manager is disposed correctly when application exits");
-            Application.ApplicationExit += (_, _) => AppDirectInputManager.Dispose();*/
             logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
-
-            // 3) Register keyboard hotkeys (e.g. F9 => next profile)
-            /*Action openDisplayProfileWindow = delegate { AppMainForm.openDisplayProfileWindow(); };
-            List<Key> openProfileKeyCombination = new List<Key>() { Key.LeftControl, Key.LeftShift, Key.Minus };
-            AppDirectInputManager.RegisterKeyCombination(openProfileKeyCombination, openDisplayProfileWindow);
-            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(openProfileKeyCombination, HotkeyTask.OpenDisplayProfileWindow, Guid.Empty));*/
-            /*Action openShortcutLibraryWindow = delegate { AppMainForm.openShortcutLibraryWindow(); };
-            AppDirectInputManager.RegisterKey(Key.Equals, openShortcutLibraryWindow);
-            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.Equals, HotkeyTask.OpenShortcutLibraryWindow, Guid.Empty));
-            Action changeDisplayProfile = delegate { Program.RunProfile("8d6c437c-1fab-4935-878a-96c9f899bc30"); };
-            AppDirectInputManager.RegisterKey(Key.LeftBracket, changeDisplayProfile);
-            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.LeftBracket, HotkeyTask.ChangeDisplayProfile, new Guid("8d6c437c-1fab-4935-878a-96c9f899bc30")));
-            Action runGameShortcut = delegate { Program.RunShortcut("a08f9f68-13d0-4695-a8e1-57f5ea2408d0"); };
-            AppDirectInputManager.RegisterKey(Key.RightBracket, runGameShortcut);
-            AppProgramSettings.KeyboardHotkeys.Add(new HotkeyKeyboard(Key.RightBracket, HotkeyTask.RunGameShortcut, new Guid("a08f9f68-13d0-4695-a8e1-57f5ea2408d0")));*/
 
             // Load the stored hotkeys from the settings file
             logger.Trace($"Program/Main: Registering stored keys and buttons with the DirectInput Device Manager");
             AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);
-
-            //_directInputManager.RegisterKey(Key.F10, () => AppMainForm.openDisplayProfileWindow(););
-
-            // 4) Register joystick/gamepad buttons
-            //    Suppose you already know the GUID of your target device:
-            //_directInputManager.RegisterJoystickButton(myGamepadGuid, 0, () => ProfileManager.NextProfile());
-            //_directInputManager.RegisterJoystickButton(myGamepadGuid, 1, () => ShortcutRunner.RunDefault());
-            //
+          
             // Start the background polling thread
             AppDirectInputManager.Start(pollIntervalMs: 50);
 
@@ -591,17 +574,12 @@ namespace DisplayMagician {
             CommandOption appDebug = app.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
             CommandOption appTrace = app.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
 
-            //CommandOption forcedVideoLibrary = app.Option("--force-video-library", "Bypass the normal video detection logic to force a particular video library (AMD, NVIDIA, Windows)", CommandOptionType.SingleValue);
-
             logger.Trace($"Program/Main: Preparing the RunShortcut command...");
 
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
                 logger.Trace($"Program/Main: Setting up the {DisplayMagicianStartupAction.RunShortcut.ToString()} command...");
-
-                // Try to load all the games in parallel to this process
-                //Task.Run(() => LoadGamesInBackground());
 
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
@@ -1095,15 +1073,39 @@ namespace DisplayMagician {
                 // We need to update the active profile if we've been run from a profile shortcut.
                 ProfileRepository.UpdateActiveProfile();
 
-                // Apply the profile change
-                ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
-                if (result == ApplyProfileResult.Cancelled)
-                    errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                else if (result == ApplyProfileResult.Error)
-                    errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
+                // Only apply the profile if it is not already active
+                if (ProfileRepository.IsActiveProfile(profileToUse))
+                {
+                    logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} is already the active profile. Notifying user.");
+                    new ToastContentBuilder()
+                        .AddText("Display Profile Already Active", hintMaxLines: 1)
+                        .AddText($"\"{profileToUse.Name}\" is already the current display profile.")
+                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                        .SetToastDuration(ToastDuration.Short)
+                        .Show();
+                }
+                else
+                {
+                    // Apply the profile change
+                    ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
+                    if (result == ApplyProfileResult.Successful)
+                    {
+                        logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} was successfully applied.");
+                        new ToastContentBuilder()
+                            .AddText("Display Profile Applied", hintMaxLines: 1)
+                            .AddText($"\"{profileToUse.Name}\" has been applied successfully.")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                            .SetToastDuration(ToastDuration.Short)
+                            .Show();
+                    }
+                    else if (result == ApplyProfileResult.Cancelled)
+                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
+                    else if (result == ApplyProfileResult.Error)
+                        errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
+                }
             }
-            else 
-            { 
+            else
+            {
                 logger.Error($"Program/RunProfile: We tried looking for a profile called {profileName} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
                 errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
             }
@@ -1158,18 +1160,9 @@ namespace DisplayMagician {
             {
                 CancellationToken cancelToken = AppCancellationTokenSource.Token;
                 // Start the RunShortcut Task in a new thread
-                Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, ref cancelToken), cancelToken);
-                // And then wait here until the task completes
-                while (true)
-                {
-                    Application.DoEvents();
-                    Thread.Sleep(2000);
-                    if (output.IsCompleted || cancelToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                }
-                //output.Wait(cancelToken);                
+                Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, cancelToken), cancelToken);
+                // Wait for the task to complete (RunShortcut runs on a background thread)
+                output.Wait(cancelToken);
             }
             catch (OperationCanceledException ex)
             {

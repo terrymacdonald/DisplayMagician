@@ -45,70 +45,81 @@ namespace DisplayMagicianShared.Windows
         /// <summary>
         /// Attempts to power-cycle all physical monitors using DDC/CI (off then on).
         /// </summary>
-        public static void PokeAllMonitors()
+        public static void WakeAllMonitors()
         {
-            SharedLogger.logger.Info("DDC/CI: Attempting to poke all monitors.");
+            SharedLogger.logger.Info("DDC/CI/WakeAllMonitors: Attempting to wake all monitors.");
 
+            SharedLogger.logger.Trace("DDC/CI/WakeAllMonitors: Creating callback function to wake up a single monitor.");
             MonitorEnumProc callback = new MonitorEnumProc((IntPtr hMonitor, IntPtr hdc, ref Rect rect, IntPtr data) =>
             {
-                PokeSingleMonitor(hMonitor);
+                WakeSingleMonitor(hMonitor);
                 return true;
             });
 
+            SharedLogger.logger.Trace("DDC/CI/WakeAllMonitors: Attempting to run the callback across all monitors using Windows Display Drivers.");
             if (!EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero))
             {
-                SharedLogger.logger.Warn("DDC/CI: EnumDisplayMonitors failed.");
+                SharedLogger.logger.Warn("DDC/CI/WakeAllMonitors: WARNING - Failed to wake all monitors.");
             }
-
+            else
+            {
+                SharedLogger.logger.Info("DDC/CI/WakeAllMonitors: Successfully contacted all monitors to wake them up.");
+            }
         }
 
-        private static void PokeSingleMonitor(IntPtr hMonitor)
+        private static void WakeSingleMonitor(IntPtr hMonitor)
         {
+            SharedLogger.logger.Trace("DDC/CI/PokeSingleMonitor: Getting number of physical monitors from supplied monitor reference.");
             if (!GetNumberOfPhysicalMonitorsFromHMONITOR(hMonitor, out uint count) || count == 0)
             {
                 SharedLogger.logger.Warn("DDC/CI: Could not get number of physical monitors.");
                 return;
             }
 
+            SharedLogger.logger.Trace($"DDC/CI/PokeSingleMonitor: Found {count} physical monitors from supplied monitor reference.");
             var monitors = new PHYSICAL_MONITOR[count];
             if (!GetPhysicalMonitorsFromHMONITOR(hMonitor, count, monitors))
             {
-                SharedLogger.logger.Warn("DDC/CI: Could not get physical monitor handles.");
-                return;
+                SharedLogger.logger.Warn("DDC/CI/PokeSingleMonitor: Could not get physical monitor handles.");
+                return;            
             }
+
+            SharedLogger.logger.Trace($"DDC/CI/PokeSingleMonitor: Got {count} physical monitor handes to enable control of the physical monitors.");
 
             foreach (var mon in monitors)
             {
                 try
                 {
-                    SharedLogger.logger.Info($"DDC/CI: Sending power cycle to monitor: {mon.szPhysicalMonitorDescription}");
-
-                    // Power off
+                    // Disabling the power off we do before we ask the monitor to wake up
+                    // Some monitors will not wake up again due to bios issues. So only keeping the wake up command.
+                    /*// Power off
                     if (!SetVCPFeature(mon.hPhysicalMonitor, VCP_POWER_MODE, POWER_OFF))
                     {
                         int err = Marshal.GetLastWin32Error();
                         SharedLogger.logger.Warn($"DDC/CI: Failed to power off monitor. Error: {err}");
                     }
+                    Thread.Sleep(1000);*/
 
-                    Thread.Sleep(500);
+                    SharedLogger.logger.Trace($"DDC/CI: Sending power on/wake up command (VCP_POWER_MODE = POWER_ON) to monitor: {mon.szPhysicalMonitorDescription}");
 
                     // Power on
                     if (!SetVCPFeature(mon.hPhysicalMonitor, VCP_POWER_MODE, POWER_ON))
                     {
                         int err = Marshal.GetLastWin32Error();
-                        SharedLogger.logger.Warn($"DDC/CI: Failed to power on monitor. Error: {err}");
+                        SharedLogger.logger.Warn($"DDC/CI: Failed to power on monitor {mon.szPhysicalMonitorDescription}. Error: {err}");
                     }
                     else
                     {
-                        SharedLogger.logger.Info($"DDC/CI: Monitor successfully power-cycled.");
+                        SharedLogger.logger.Info($"DDC/CI: Monitor {mon.szPhysicalMonitorDescription} successfully powered on.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    SharedLogger.logger.Error($"DDC/CI: Exception while power cycling monitor: {ex.Message}");
+                    SharedLogger.logger.Error(ex, $"DDC/CI: Exception while sending power-on command to monitor {mon.szPhysicalMonitorDescription}: {ex.Message}");
                 }
             }
 
+            SharedLogger.logger.Trace($"DDC/CI/PokeSingleMonitor: Freeing physical monitor handle memory.");
             DestroyPhysicalMonitors(count, monitors);
         }
     }

@@ -4,7 +4,6 @@ using DisplayMagician.Processes;
 //using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
-using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -302,7 +301,7 @@ namespace DisplayMagician.UIForms
                 // We update the Game Shortcut context menu is always updated and correct.
                 if (Program.AppProgramSettings.InstallDesktopContextMenu)
                 {
-                    ContextMenu.UpdateShortcutContextMenu();
+                    DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
                 }
 
             }
@@ -389,7 +388,7 @@ namespace DisplayMagician.UIForms
                     // We update the Game Shortcut context menu is always updated and correct.
                     if (Program.AppProgramSettings.InstallDesktopContextMenu)
                     {
-                        ContextMenu.UpdateShortcutContextMenu();
+                        DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
                     }
 
                 }
@@ -442,7 +441,7 @@ namespace DisplayMagician.UIForms
             // We update the Game Shortcut context menu is always updated and correct.
             if (Program.AppProgramSettings.InstallDesktopContextMenu)
             {
-                ContextMenu.UpdateShortcutContextMenu();
+                DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
             }
 
 

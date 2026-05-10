@@ -43,6 +43,7 @@ namespace DisplayMagician.UIForms
             ilv_installed_apps.SetRenderer(new AppILVRenderer());
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public App AppToUse
         {
             get
@@ -58,6 +59,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ExeToUse
         {
             get
@@ -73,6 +75,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string PreviousExe
         {
             get
@@ -88,6 +91,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string PreviousAppId
         {
             get
@@ -103,6 +107,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ChooseExecutableFormMode Mode
         {
             get

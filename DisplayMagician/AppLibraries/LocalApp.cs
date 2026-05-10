@@ -318,41 +318,54 @@ namespace DisplayMagician.AppLibraries
 
         private async Task<bool> UWPIsRunning(string aumid)
         {
+            // First check whether we actually have permission to use the AppDiagnosticInfo APIs.
+            // Without a package identity (i.e. running as an unpackaged Win32 app), this will
+            // return Limited or Denied, and calling RequestInfoForAppAsync will throw a
+            // ThreadAbortException / "insufficient rights" error. Fall back to the watcher state
+            // in that case — the watcher was started in Start() and tracks Added/Removed events.
+            var accessStatus = await AppDiagnosticInfo.RequestAccessAsync();
+            if (accessStatus != DiagnosticAccessStatus.Allowed)
+            {
+                logger.Debug($"LocalApp/UWPIsRunning: AppDiagnosticInfo access is {accessStatus} (not Allowed) for {aumid}. Falling back to watcher state.");
+                return _LocalAppIsRunning == AppResourceGroupExecutionState.Running;
+            }
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             try
             {
-                var accessStatus = await AppDiagnosticInfo.RequestAccessAsync();
-                if (accessStatus != DiagnosticAccessStatus.Allowed)
-                {
-                    logger.Debug($"LocalApp/UWPIsRunning: Access to app diagnostics denied by user or limited: {accessStatus}");
-                    return false;
-                }
-
-                IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid);
+                IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(aumid).AsTask(cts.Token);
                 foreach (var thing in infos)
                 {
-                    // We only monitor the first item in the resource group, as it seems to be the main part of the UWP app in most apps
-                    // NOTE - this may not always monitor the right part of the app, but I'm not sure how to make this logic better.
-                    AppResourceGroupExecutionState status = thing.GetResourceGroups()[0].GetStateReport().ExecutionState;
-                    if (status == AppResourceGroupExecutionState.NotRunning || status == AppResourceGroupExecutionState.Suspended || status == AppResourceGroupExecutionState.Suspending || status == AppResourceGroupExecutionState.Unknown)
-                    {
-                        // IMPORTANT - This status only occurs when Windows terminates the app processes (or if it doesn't know the status of the app).
-                        // This happens 10 seconds after the app is closed using the X, or when windows runs out of resources and has to terminate the app due to low resources.
-                        // This UWP application lifecycle means that there is a 10 second delay between when the UWP app is closed, and when it is really closed by Windows
-                        // (and therefore when DisplayMagician can detect it).
+                    var groups = thing.GetResourceGroups();
+                    if (groups.Count == 0)
                         return false;
-                    }
-                    else
-                    {
-                        // False is returned if the UWP app is Running, Suspended or Suspending.
-                        return true;
-                    }
+
+                    // We only check the first resource group as it represents the main part of the UWP app.
+                    // NOTE: this may not always be the right group, but there is no reliable way to pick the correct one.
+                    AppResourceGroupExecutionState status = groups[0].GetStateReport().ExecutionState;
+
+                    // NotRunning: Windows has terminated the app (~10s after user closes it).
+                    // Unknown:    Windows cannot determine the state — treat as not running.
+                    // Running / Suspending: the app is alive (Suspending is a transient state, app is still present).
+                    // Suspended: the app is frozen in memory. Treated as not running so DisplayMagician
+                    //            reverts settings promptly once the app is suspended/closed.
+                    //            Change to `true` here if you want to keep waiting while the app is suspended.
+                    return status == AppResourceGroupExecutionState.Running
+                        || status == AppResourceGroupExecutionState.Suspending;
                 }
+
+                // No diagnostic info returned — app is not running.
                 return false;
             }
-            catch(Exception ex)
+            catch (OperationCanceledException)
             {
-                logger.Debug(ex, $"LocalApp/UWPIsRunning: AppDiagnosticInfo.RequestInfoForAppAsync({aumid}) cause an exception due to insufficent rights.");
-                return false;
+                logger.Debug($"LocalApp/UWPIsRunning: Timeout waiting for AppDiagnosticInfo for {aumid}. Falling back to watcher state.");
+                return _LocalAppIsRunning == AppResourceGroupExecutionState.Running;
+            }
+            catch (Exception ex)
+            {
+                logger.Debug(ex, $"LocalApp/UWPIsRunning: AppDiagnosticInfo.RequestInfoForAppAsync({aumid}) caused an exception. Falling back to watcher state.");
+                return _LocalAppIsRunning == AppResourceGroupExecutionState.Running;
             }
         }
 

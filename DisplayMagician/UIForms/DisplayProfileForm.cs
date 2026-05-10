@@ -192,7 +192,7 @@ namespace DisplayMagician.UIForms
             // We update the Game Shortcut context menu is always updated and correct.
             if (Program.AppProgramSettings.InstallDesktopContextMenu)
             {
-                ContextMenu.UpdateShortcutContextMenu();
+                DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
             }
 
             // Also refresh the right-click menu (if we have a main form loaded)
@@ -595,7 +595,7 @@ namespace DisplayMagician.UIForms
             // We update the Game Shortcut context menu is always updated and correct.
             if (Program.AppProgramSettings.InstallDesktopContextMenu)
             {
-                ContextMenu.UpdateShortcutContextMenu();
+                DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
             }
 
 
@@ -888,6 +888,9 @@ namespace DisplayMagician.UIForms
 
                     // Refresh the profiles to see whats valid
                     ProfileRepository.IsPossibleRefresh();
+
+                    // Update the active profile so the UI knows which profile is currently in use
+                    ProfileRepository.UpdateActiveProfile(false);
 
                     // Refresh the Profile UI
                     RefreshDisplayProfileUI();

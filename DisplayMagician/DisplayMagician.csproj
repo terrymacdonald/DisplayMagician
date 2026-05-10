@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
@@ -110,20 +110,14 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NHotkey">
-      <Version>3.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="NHotkey.WindowsForms">
-      <Version>3.0.0</Version>
-    </PackageReference>
     <PackageReference Include="NLog">
-      <Version>5.4.0</Version>
+      <Version>5.5.0</Version>
     </PackageReference>
     <PackageReference Include="protobuf-net">
       <Version>3.2.52</Version>
     </PackageReference>
-    <PackageReference Include="System.Drawing.Common" Version="9.0.4" />
-    <PackageReference Include="System.Management" Version="9.0.4" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.5" />
+    <PackageReference Include="System.Management" Version="9.0.5" />
     <PackageReference Include="ValveKeyValue">
       <Version>0.13.1.398</Version>
     </PackageReference>

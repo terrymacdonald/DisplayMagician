@@ -16,18 +16,23 @@ namespace DisplayMagician.UIForms
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string MessageMode
         { get; set; } = "rtf";
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Filename
         { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string URL
         { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string HeadingText
         { get; set; } = "DisplayMagician Message";
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ButtonText
         { get; set; } = "&Close";
 

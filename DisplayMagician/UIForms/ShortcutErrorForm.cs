@@ -17,6 +17,7 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public List<string> Errors
         {
             get;

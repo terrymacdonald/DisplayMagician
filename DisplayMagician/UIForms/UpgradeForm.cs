@@ -20,10 +20,13 @@ namespace DisplayMagician.UIForms
             lnk_changelog.Text = ChangelogURL;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Remind { get; set;  } = false;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Message { get; set; } = "You have an upgrade available for DisplayMagician. Do you wish to upgrade now?";
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ChangelogURL { get; set; } = "https://github.com/terrymacdonald/DisplayMagician/releases";
 
         private void btn_skip_Click(object sender, EventArgs e)

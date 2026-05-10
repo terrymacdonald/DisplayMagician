@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DisplayMagician.UIForms;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Pipes;
@@ -36,8 +37,6 @@ namespace DisplayMagician
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        //private static string GetMutexName() => $@"Mutex_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
-        //private static string GetPipeName() => $@"Pipe_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
         private static string GetMutexName() => $@"Mutex_{UniqueName}";
         private static string GetPipeName() => $@"Pipe_{UniqueName}";
 
@@ -85,18 +84,24 @@ namespace DisplayMagician
                         break;
                 }
             }
-            else if (args.Length == 1)
-            {
-                logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments, only the path '{args[0]}'");
-            }
             else
             {
-                logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments at all so bringing the topmost window to the foreground.");
-                foreach (Form aForm in Application.OpenForms)
+                // If we only have the path, we assume they just want to bring the topmost window to the foreground
+                // Replace the selected code with the following to ensure UI thread safety using Invoke
+                logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments, only the path '{args[0]}'. Opening the Main Display Window.");
+                MainForm myMainForm = Program.AppMainForm;
+                if (myMainForm != null)
                 {
-                    if (aForm.TopMost)
+                    if (myMainForm.InvokeRequired)
                     {
-                        aForm.Activate();
+                        myMainForm.Invoke(new Action(() =>
+                        {
+                            myMainForm.openApplicationWindow();                            
+                        }));
+                    }
+                    else
+                    {
+                        myMainForm.openApplicationWindow();
                     }
                 }
             }

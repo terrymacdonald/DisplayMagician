@@ -193,6 +193,32 @@ namespace DisplayMagician.UIForms
             // Update the listview
             RefreshHotkeyListView();
 
+            // setup the notify icon double click action
+            var cmb_notify_icon_double_click = this.Controls.Find("cmb_notify_icon_double_click", true).FirstOrDefault() as ComboBox;
+            if (cmb_notify_icon_double_click != null)
+            {
+                cmb_notify_icon_double_click.Items.Clear();
+                cmb_notify_icon_double_click.Items.Add("Do Nothing");
+                cmb_notify_icon_double_click.Items.Add("Open Main Window");
+                cmb_notify_icon_double_click.Items.Add("Open Game Shortcuts");
+                cmb_notify_icon_double_click.Items.Add("Open Display Profiles");
+                switch (Program.AppProgramSettings.NotifyIconDoubleClickAction)
+                {
+                    case NotifyIconDoubleClickAction.DoNothing:
+                        cmb_notify_icon_double_click.SelectedItem = "Do Nothing";
+                        break;
+                    case NotifyIconDoubleClickAction.MainForm:
+                        cmb_notify_icon_double_click.SelectedItem = "Open Main Window";
+                        break;
+                    case NotifyIconDoubleClickAction.DisplayProfileForm:
+                        cmb_notify_icon_double_click.SelectedItem = "Open Display Profiles";
+                        break;
+                    default:
+                        cmb_notify_icon_double_click.SelectedItem = "Open Game Shortcuts";
+                        break;
+                }
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings NotifyIconDoubleClickAction set to {Program.AppProgramSettings.NotifyIconDoubleClickAction}");
+            }
         }
 
         public static bool SetBootMeUp(bool enabled)
@@ -323,6 +349,8 @@ namespace DisplayMagician.UIForms
             // Use the NLog configuration with the LogLevel we just changed.
             NLog.LogManager.Configuration = config;
 
+            NLog.LogManager.ReconfigExistingLoggers();
+
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved LogLevel as {Program.AppProgramSettings.LogLevel}");
 
             // save upgrade in prereleases setting
@@ -355,6 +383,21 @@ namespace DisplayMagician.UIForms
                 AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
                 AutoUpdater.PersistenceProvider.SetRemindLater(DateTime.Now);
                 logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from looking for upgrades when starting");
+            }
+
+            // save notify icon double click action
+            var cmb_notify_icon_double_click = this.Controls.Find("cmb_notify_icon_double_click", true).FirstOrDefault() as ComboBox;
+            if (cmb_notify_icon_double_click != null)
+            {
+                if (cmb_notify_icon_double_click.SelectedItem?.ToString() == "Do Nothing")
+                    Program.AppProgramSettings.NotifyIconDoubleClickAction = NotifyIconDoubleClickAction.DoNothing;
+                else if (cmb_notify_icon_double_click.SelectedItem?.ToString() == "Open Main Window")
+                    Program.AppProgramSettings.NotifyIconDoubleClickAction = NotifyIconDoubleClickAction.MainForm;
+                else if (cmb_notify_icon_double_click.SelectedItem?.ToString() == "Open Display Profiles")
+                    Program.AppProgramSettings.NotifyIconDoubleClickAction = NotifyIconDoubleClickAction.DisplayProfileForm;
+                else
+                    Program.AppProgramSettings.NotifyIconDoubleClickAction = NotifyIconDoubleClickAction.ShortcutLibraryForm;
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved NotifyIconDoubleClickAction as {Program.AppProgramSettings.NotifyIconDoubleClickAction}");
             }
 
             // Save ProgramSettings
@@ -673,7 +716,7 @@ namespace DisplayMagician.UIForms
             _installDesktopContextMenu = false;
             Program.AppProgramSettings.InstallDesktopContextMenu = false;
 
-            if (ContextMenu.UninstallContextMenu())
+            if (DisplayMagician.ContextMenu.UninstallContextMenu())
             {
                 MessageBox.Show("Successfully removed the Desktop Background Context Menu.",
                                         "Removed Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -690,7 +733,7 @@ namespace DisplayMagician.UIForms
             _installDesktopContextMenu = true;
             Program.AppProgramSettings.InstallDesktopContextMenu = true;
 
-            if (ContextMenu.InstallContextMenu())
+            if (DisplayMagician.ContextMenu.InstallContextMenu())
             {
                 MessageBox.Show("Successfully added the Desktop Background Context Menu.",
                                         "Added Desktop Background Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
