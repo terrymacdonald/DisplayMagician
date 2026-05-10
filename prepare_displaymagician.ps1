@@ -7,6 +7,7 @@
     This script:
       1. Installs WiX Toolset v7.0.0 dotnet global tool
       2. Restores WiX NuGet SDK packages into the local cache
+      2b. Restores Microsoft.Build.NoTargets SDK for the MSIX identity project
       3. Installs the HeatWave VS extension (.wixproj support in Visual Studio)
       4. Creates a self-signed code-signing certificate (CN=LittleBitBig)
       5. Exports it to a PFX file at a path you choose
@@ -91,6 +92,23 @@ try {
 } catch {
     Write-Warning "Could not restore NuGet packages: $_"
     Write-Warning "Run manually: dotnet restore `"$wixprojPath`""
+}
+Write-Host ""
+
+# Restore Microsoft.Build.NoTargets SDK for the MSIX identity project
+Write-Host "Restoring NuGet packages for DisplayMagicianIdentityPkg (Microsoft.Build.NoTargets)..."
+$identityProjPath = Join-Path $PSScriptRoot "DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj"
+try {
+    $restoreOutput = & dotnet restore "$identityProjPath" 2>&1
+    Write-Host ($restoreOutput | Out-String).Trim()
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  NuGet packages restored." -ForegroundColor Green
+    } else {
+        Write-Warning "  dotnet restore returned exit code $LASTEXITCODE - check output above."
+    }
+} catch {
+    Write-Warning "Could not restore NuGet packages for identity project: $_"
+    Write-Warning "Run manually: dotnet restore `"$identityProjPath`""
 }
 Write-Host ""
 
@@ -460,6 +478,7 @@ Write-Host ""
 Write-Host "Tools installed:" -ForegroundColor White
 Write-Host "  WiX Toolset v$requiredWixVersion (dotnet global tool)"
 Write-Host "  HeatWave VS extension (.wixproj support in Visual Studio)"
+Write-Host "  Microsoft.Build.NoTargets SDK (DisplayMagicianIdentityPkg NuGet restore)"
 Write-Host "  .NET $runtimeVersion Desktop Runtime installer (DisplayMagicianBundle\Packages\)"
 Write-Host ""
 Write-Host "Files created/updated:" -ForegroundColor White
