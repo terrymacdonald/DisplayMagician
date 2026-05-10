@@ -1,0 +1,24 @@
+<!--
+  Copy this file to SigningConfig.props in the same directory and fill in your values.
+  SigningConfig.props is gitignored — never commit it.
+
+  To generate a self-signed certificate for development use:
+    create_new_self-signed_cert.ps1
+  Then export it to a .pfx and set the path/password below.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Full path to the PFX code-signing certificate -->
+    <SigningCertificatePfx>C:\path\to\DisplayMagicianCodeSigning.pfx</SigningCertificatePfx>
+
+    <!-- Password for the PFX (leave empty if none) -->
+    <SigningCertificatePassword>YourPasswordHere</SigningCertificatePassword>
+
+    <!--
+      Timestamp server URL (optional but recommended for production).
+      Leave empty to skip timestamping (fine for local dev).
+      Example: http://timestamp.digicert.com
+    -->
+    <SigningTimestampUrl></SigningTimestampUrl>
+  </PropertyGroup>
+</Project>

@@ -1,21 +1,27 @@
 ﻿<Project Sdk="WixToolset.Sdk/6.0.0">
+
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
     <OutputName>DisplayMagicianSetup</OutputName>
   </PropertyGroup>
+
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
     <Content Include="DisplayMagicianTheme.xml" />
     <Content Include="EULA_en-us.rtf" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="WixToolset.Bal.wixext" Version="6.0.0" />
     <PackageReference Include="WixToolset.Netfx.wixext" Version="6.0.0" />
   </ItemGroup>
+
   <Target Name="RenameBundleFile" AfterTargets="Build">
     <!-- Use PowerShell to rename the bundle output file after the build -->
     <Exec Command="powershell -ExecutionPolicy Bypass -File .\renamedisplaymagician.ps1 -outputDir $(ProjectDir)$(OutputPath)" />
   </Target>
-  <!-- Added as workaround for FireGiaant Heatwave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
+
+  <!-- Added as workaround for FireGiant HeatWave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
   <Target Name="CollectSuggestedVisualStudioComponentIds" />
+
 </Project>

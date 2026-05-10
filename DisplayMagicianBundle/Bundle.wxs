@@ -4,11 +4,11 @@
 	  <BootstrapperApplication>
 		<bal:WixInternalUIBootstrapperApplication />
 	  </BootstrapperApplication>
-	  
-    <Chain>
+
+	<Chain>
 		<PackageGroupRef Id="DotNetDesktopRedist" />
 		<MsiPackage Id="DisplayMagicianPackage" SourceFile="..\DisplayMagicianPackage\bin\Debug\en-US\DisplayMagicianPackage.msi" Vital="yes" />
-    </Chain>
+	</Chain>
 
   </Bundle>
 </Wix>

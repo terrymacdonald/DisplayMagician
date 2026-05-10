@@ -12,31 +12,24 @@
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="NewInstall" Value="1"/>
 				<RemoveRegistryKey Root="HKCU" Key="SOFTWARE\Classes\DesktopBackground\Shell\DisplayMagician.ContextMenu.Anchor" Action="removeOnUninstall"/>
 				<RemoveRegistryKey Root="HKCU" Key="SOFTWARE\Classes\DisplayMagician.ContextMenus" Action="removeOnUninstall"/>
-				<!--<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />
-				<Shortcut
-							Id="DisplayMagicianStartMenuShortcut"
-							Name="DisplayMagician"
-							Description="DisplayMagician"
-							Target="[INSTALLFOLDER]DisplayMagician.exe"
-							WorkingDirectory="INSTALLFOLDER"
-							Icon="DisplayMagicianIcon"
-							IconIndex="0"
-							Directory="ApplicationProgramsFolder"/>-->
 			</Component>
 			<Component>
 				<File Source="$(var.DisplayMagician.TargetDir)publish\DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
-				<!--<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
-							Directory="ProgramMenuFolder" Advertise="yes" Icon="dm.exe">
-					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician" />
-					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}" />
-				</Shortcut>-->
 				<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
 							Directory="ProgramMenuFolder" Advertise="yes" Icon="dm.exe" />
 				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />				
 			</Component>
-			
+
 			<File Source="$(var.DisplayMagician.TargetDir)publish\WebView2Loader.dll" />
+
+			<!-- Sparse MSIX identity package — installed alongside the app and registered via custom action -->
+			<Component Id="IdentityMsixComponent">
+				<File Id="IdentityMsixFile"
+					  Source="Packages\DisplayMagicianIdentityPkg.msix"
+					  KeyPath="yes" />
+			</Component>
 		</ComponentGroup>
+
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
 			<Component>
 				<!-- Install the DisplayMagician Console file -->
@@ -45,6 +38,7 @@
 				<Environment Name="PATH" System="yes" Value="[INSTALLFOLDER]" Action="set" Part="last"/>
 			</Component>
 		</ComponentGroup>
+
 		<Icon Id="dm.exe" SourceFile="DisplayMagician.ico" />
 	</Fragment>
 </Wix>

@@ -26,29 +26,55 @@
 			<!-- Add in some text styles to make the text white -->
 			<TextStyle Id="White_Normal" FaceName="Tahoma" Size="8" Red="255" Green="255" Blue="255" />
 			<TextStyle Id="White_Title" FaceName="Tahoma" Size="9" Bold="yes" Red="255" Green="255" Blue="255" />
-		
+
 			<!-- These dialog references are needed for CloseApplication above to work correctly -->
 			<DialogRef Id="FilesInUse" />
 			<DialogRef Id="MsiRMFilesInUse" />
-			
+
 			<!-- Automatically start DisplayMagician -->
 			<Publish Dialog="ExitDialog" Control="Finish"  Event="DoAction"	 Value="LaunchApplication" />
-			
+
 		</UI>
+
+		<InstallExecuteSequence>
+			<!-- Register sparse MSIX after files are copied (install/upgrade only) -->
+			<Custom Action="RegisterIdentityPkg" After="InstallFiles">NOT Installed OR REINSTALL</Custom>
+			<!-- Unregister sparse MSIX before files are removed (uninstall only) -->
+			<Custom Action="UnregisterIdentityPkg" Before="RemoveFiles">REMOVE~="ALL"</Custom>
+		</InstallExecuteSequence>
 		
 		<!-- Set our executable (its ID) as custom action target -->
 		<Property Id="WixShellExecTarget" Value="[#DisplayMagicianExe]"/>
 
-		<!-- Run launch application  custom action -->
+		<!-- Run launch application custom action -->
 		<CustomAction Id="LaunchApplication"
 			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
 			DllEntry="WixShellExec"
 			Impersonate="yes" />
+
+		<!-- Register the sparse MSIX identity package after files are installed -->
+		<Property Id="RegisterIdentityPkgCmd"
+			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Add-AppxPackage -ExternalLocation '[INSTALLFOLDER]' -Path '[INSTALLFOLDER]DisplayMagicianIdentityPkg.msix'&quot;" />
+		<CustomAction Id="RegisterIdentityPkg"
+			Property="RegisterIdentityPkgCmd"
+			Execute="deferred"
+			Impersonate="no"
+			Return="ignore" />
+
+		<!-- Unregister the sparse MSIX identity package before files are removed -->
+		<Property Id="UnregisterIdentityPkgCmd"
+			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Get-AppxPackage -Name '4f6354a7-065d-432a-bb6b-b65acc257555' | Remove-AppxPackage -ErrorAction SilentlyContinue&quot;" />
+		<CustomAction Id="UnregisterIdentityPkg"
+			Property="UnregisterIdentityPkgCmd"
+			Execute="deferred"
+			Impersonate="no"
+			Return="ignore" />
 					
 		<!-- Set application components that will be installed -->
 		<Feature Id="Main">
 			<ComponentGroupRef Id="DisplayMagicianComponents" />
 			<ComponentGroupRef Id="DisplayMagicianConsoleComponents" />
+			<ComponentRef Id="IdentityMsixComponent" />
 		</Feature>
 	</Package>
 </Wix>
