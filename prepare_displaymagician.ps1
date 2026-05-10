@@ -78,7 +78,29 @@ if (-not $wixInstalled) {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 2. Choose where to save the PFX
+# 2. Restore WiX NuGet SDK packages (required by both VS and VS Code)
+# ---------------------------------------------------------------------------
+Write-Host "Restoring WiX NuGet packages (WixToolset.Sdk, extensions)..."
+Write-Host "  This downloads WixToolset.Sdk v$requiredWixVersion and extension packages into the NuGet cache."
+Write-Host "  Both Visual Studio and VS Code use this cache when building .wixproj files."
+
+$wixprojPath = Join-Path $PSScriptRoot "DisplayMagicianPackage\DisplayMagicianPackage.wixproj"
+try {
+    $restoreOutput = & dotnet restore "$wixprojPath" 2>&1
+    Write-Host ($restoreOutput | Out-String).Trim()
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  NuGet packages restored." -ForegroundColor Green
+    } else {
+        Write-Warning "  dotnet restore returned exit code $LASTEXITCODE - check output above."
+    }
+} catch {
+    Write-Warning "Could not restore NuGet packages: $_"
+    Write-Warning "Run manually: dotnet restore `"$wixprojPath`""
+}
+Write-Host ""
+
+# ---------------------------------------------------------------------------
+# 3. Choose where to save the PFX
 # ---------------------------------------------------------------------------
 $defaultPfxPath = "$env:USERPROFILE\DisplayMagicianCodeSigning.pfx"
 Write-Host "Where do you want to save the PFX certificate file?"
@@ -93,7 +115,7 @@ Write-Host "  PFX will be saved to: $pfxPath" -ForegroundColor Green
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 3. Choose a secure password (typed hidden, confirmed)
+# 4. Choose a secure password (typed hidden, confirmed)
 # ---------------------------------------------------------------------------
 Write-Host "Choose a password to protect the PFX file."
 Write-Host "  The password is never stored in plain text anywhere." -ForegroundColor Yellow
@@ -121,7 +143,7 @@ $plain2 = $null
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 4. Create the self-signed certificate (if one doesn't already exist)
+# 5. Create the self-signed certificate (if one doesn't already exist)
 # ---------------------------------------------------------------------------
 $certSubject  = 'CN=LittleBitBig'
 $friendlyName = 'LittleBitBig Code Signing Certificate'
@@ -149,7 +171,7 @@ if ($existingCert) {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 5. Export to PFX
+# 6. Export to PFX
 # ---------------------------------------------------------------------------
 $pfxDir = Split-Path $pfxPath -Parent
 if (-not (Test-Path $pfxDir)) {
@@ -165,7 +187,7 @@ Write-Host "  Exported." -ForegroundColor Green
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 6. Import into LocalMachine\TrustedPeople (requires elevation)
+# 7. Import into LocalMachine\TrustedPeople (requires elevation)
 # ---------------------------------------------------------------------------
 $alreadyTrusted = Get-ChildItem Cert:\LocalMachine\TrustedPeople |
     Where-Object { $_.Thumbprint -eq $cert.Thumbprint }
@@ -183,7 +205,7 @@ if ($alreadyTrusted) {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 7. Write SigningConfig.props (plain-text password stored here only)
+# 8. Write SigningConfig.props (plain-text password stored here only)
 # ---------------------------------------------------------------------------
 $repoRoot       = $PSScriptRoot
 $signingProps   = Join-Path $repoRoot 'SigningConfig.props'
