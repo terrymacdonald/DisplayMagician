@@ -1,4 +1,4 @@
-﻿<Project Sdk="WixToolset.Sdk/6.0.0">
+﻿<Project Sdk="WixToolset.Sdk/7.0.0">
 
   <!-- Import local signing config (copy SigningConfig.props.example to SigningConfig.props and fill in values) -->
   <Import Project="..\SigningConfig.props" Condition="Exists('..\SigningConfig.props')" />
@@ -27,9 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixToolset.Netfx.wixext" Version="6.0.0" />
-    <PackageReference Include="WixToolset.UI.wixext" Version="6.0.0" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="6.0.0" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="7.0.0" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="7.0.0" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>

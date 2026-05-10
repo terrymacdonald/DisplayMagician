@@ -1,4 +1,4 @@
-﻿<Project Sdk="WixToolset.Sdk/6.0.0">
+﻿<Project Sdk="WixToolset.Sdk/7.0.0">
 
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
@@ -12,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="WixToolset.Bal.wixext" Version="6.0.0" />
-    <PackageReference Include="WixToolset.Netfx.wixext" Version="6.0.0" />
+    <PackageReference Include="WixToolset.Bal.wixext" Version="7.0.0" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="7.0.0" />
   </ItemGroup>
 
   <Target Name="RenameBundleFile" AfterTargets="Build">
