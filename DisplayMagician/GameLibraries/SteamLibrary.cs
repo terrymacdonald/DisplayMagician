@@ -525,9 +525,9 @@ namespace DisplayMagician.GameLibraries
                 catch (Exception ex)
                 {
                     // If we have a problem then we just have to return no Steam Games!
+                    logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: Exception while reading appinfo.vdf");
                     return false;
                 }
-
                 logger.Trace($"SteamLibrary/LoadInstalledGames: Found {newAppInfo.Apps.Count} apps in the {appInfoVdfFile} VDF file");
 
                 // Chec through all the apps we've extracted
