@@ -5,10 +5,12 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BindFiles>false</BindFiles>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>	
   </PropertyGroup>
+	
   <PropertyGroup>
     <OutputName>DisplayMagicianPackage</OutputName>
+	<AcceptEula>wix7</AcceptEula>
     <!-- Windows SDK tools -->
     <WindowsKitBinDir>C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64</WindowsKitBinDir>
     <MakeAppxExe>$(WindowsKitBinDir)\makeappx.exe</MakeAppxExe>

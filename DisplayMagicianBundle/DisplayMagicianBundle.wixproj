@@ -3,8 +3,9 @@
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
     <OutputName>DisplayMagicianSetup</OutputName>
+	<AcceptEula>wix7</AcceptEula>
   </PropertyGroup>
-
+	
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
     <Content Include="DisplayMagicianTheme.xml" />
