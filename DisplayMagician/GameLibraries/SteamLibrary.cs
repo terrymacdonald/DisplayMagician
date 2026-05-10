@@ -549,57 +549,57 @@ namespace DisplayMagician.GameLibraries
                             };
                             string steamAppType = "";
 
-                            foreach (KVObject data in app.Data)
+                            foreach (var (dataKey, data) in app.Data)
                             {
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found App: {app.AppID} - Data.Name: {data.Name}");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found App: {app.AppID} - Data.Name: {dataKey}");
 
-                                if (data.Name == "common")
+                                if (dataKey == "common")
                                 {
-                                    foreach (KVObject common in data.Children)
+                                    foreach (var (commonKey, common) in data)
                                     {
 
-                                        if (common.Name == "name")
+                                        if (commonKey == "name")
                                         {
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: name: App: {app.AppID} - Common {common.Name}: {common.Value}");
-                                            steamGameAppInfo.GameName = common.Value.ToString();
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: name: App: {app.AppID} - Common {commonKey}: {(string)common}");
+                                            steamGameAppInfo.GameName = (string)common;
                                         }
-                                        else if (common.Name == "clienticon")
+                                        else if (commonKey == "clienticon")
                                         {
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: clienticon: App: {app.AppID} - Common {common.Name}: {common.Value}");
-                                            steamGameAppInfo.GameIconPath = Path.Combine(_steamPath, @"steam", @"games", String.Concat(common.Value, @".ico"));
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: clienticon: App: {app.AppID} - Common {commonKey}: {(string)common}");
+                                            steamGameAppInfo.GameIconPath = Path.Combine(_steamPath, @"steam", @"games", String.Concat((string)common, @".ico"));
                                         }
-                                        else if (common.Name == "type")
+                                        else if (commonKey == "type")
                                         {
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: type: App: {app.AppID} - Common {common.Name}: {common.Value}");
-                                            steamAppType = common.Value.ToString();
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: type: App: {app.AppID} - Common {commonKey}: {(string)common}");
+                                            steamAppType = (string)common;
                                         }
                                         else
                                         {
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found unrecognised line App: {app.AppID} - Common {common.Name}: {common.Value}");
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found unrecognised line App: {app.AppID} - Common {commonKey}: {(string)common}");
                                         }
                                     }
                                 }
-                                else if (data.Name == "config")
+                                else if (dataKey == "config")
                                 {
-                                    foreach (KVObject config in data.Children)
+                                    foreach (var (configKey, config) in data)
                                     {
-                                        //Console.WriteLine($"App: {app.AppID} - Config {config.Name}: {config.Value}");
+                                        //Console.WriteLine($"App: {app.AppID} - Config {configKey}: {(string)config}");
 
-                                        if (config.Name == "installdir")
+                                        if (configKey == "installdir")
                                         {
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found installdir App: {detectedAppID} - Config {config.Name}: {config.Value}");
-                                            steamGameAppInfo.GameInstallDir = config.Value.ToString();
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found installdir App: {detectedAppID} - Config {configKey}: {(string)config}");
+                                            steamGameAppInfo.GameInstallDir = (string)config;
                                         }
-                                        else if (config.Name == "launch")
+                                        else if (configKey == "launch")
                                         {
-                                            foreach (KVObject launch in config.Children)
+                                            foreach (var (launchKey, launch) in config)
                                             {
-                                                foreach (KVObject launch_num in launch.Children)
+                                                foreach (var (launchNumKey, launch_num) in launch)
                                                 {
-                                                    if (launch_num.Name == "executable")
+                                                    if (launchNumKey == "executable")
                                                     {
-                                                        logger.Trace($"SteamLibrary/LoadInstalledGames: Found launch executable App: {detectedAppID} - Config - Launch {launch.Name} - {launch_num.Name}: {launch_num.Value}");
-                                                        steamGameAppInfo.GameExes.Add(launch_num.Value.ToString());
+                                                        logger.Trace($"SteamLibrary/LoadInstalledGames: Found launch executable App: {detectedAppID} - Config - Launch {launchKey} - {launchNumKey}: {(string)launch_num}");
+                                                        steamGameAppInfo.GameExes.Add((string)launch_num);
                                                     }
 
                                                 }
@@ -853,7 +853,7 @@ namespace DisplayMagician.GameLibraries
                                         var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
                                         var kvDoc = deserializer.Deserialize(fs);
                                         // Each line is a new shortcut
-                                        foreach (var kvItem in kvDoc.Children)
+                                        foreach (var (kvItemKey, kvItem) in kvDoc.Root)
                                         {
 
                                             string shortcutGameID = "";
@@ -861,25 +861,25 @@ namespace DisplayMagician.GameLibraries
                                             string shortcutGameExe = "";
                                             string shortcutGameIconPath = "";
 
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam shortcut kvItem {kvItem.Name} with value {kvItem.Value}.");
-                                            foreach (var subItem in kvItem.Children)
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam shortcut kvItem {kvItemKey} with value {(string)kvItem}.");
+                                            foreach (var (subItemKey, subItem) in kvItem)
                                             {
 
-                                                logger.Trace($"- SteamLibrary/LoadInstalledGames: Found Steam shortcut subitem {subItem.Name} with value {subItem.Value}.");
-                                                switch (subItem.Name.ToLower())
+                                                logger.Trace($"- SteamLibrary/LoadInstalledGames: Found Steam shortcut subitem {subItemKey} with value {(string)subItem}.");
+                                                switch (subItemKey.ToLower())
                                                 {
                                                     case "appid":
                                                         // This amazing bit of code was courtesy of Eamonn Rea (sonic2kk). He was extremely helpful when I asked him for help. He is an expert in Steam files and processing of them. 
                                                         // He said this particular gem was provided by Steam ROM Manager (SRM)
-                                                        var appid = (UInt64)(int)subItem.Value;
+                                                        var appid = (UInt64)(int)subItem;
                                                         shortcutGameID = ((appid << 32) | 0x02000000).ToString();
-                                                        
+
                                                         break;
                                                     case "appname":
-                                                        shortcutGameName = $"{subItem.Value.ToString()} (via Steam)";
+                                                        shortcutGameName = $"{(string)subItem} (via Steam)";
                                                         break;
                                                     case "exe":
-                                                        string tempString2 = subItem.Value.ToString();
+                                                        string tempString2 = (string)subItem;
                                                         if (tempString2.StartsWith("\"") && tempString2.EndsWith("\""))
                                                         {
                                                             shortcutGameExe = tempString2.Substring(1, (tempString2.Length - 2));
@@ -894,11 +894,11 @@ namespace DisplayMagician.GameLibraries
                                                         }
                                                         break;
                                                     case "icon":
-                                                        if (!String.IsNullOrWhiteSpace(subItem.Value.ToString()))
+                                                        if (!String.IsNullOrWhiteSpace((string)subItem))
                                                         {
-                                                            if (File.Exists(subItem.Value.ToString()))
+                                                            if (File.Exists((string)subItem))
                                                             {
-                                                                shortcutGameIconPath = subItem.Value.ToString();
+                                                                shortcutGameIconPath = (string)subItem;
                                                             }
                                                         }
                                                         break;

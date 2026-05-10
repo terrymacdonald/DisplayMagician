@@ -117,7 +117,7 @@
     </PackageReference>
     <PackageReference Include="System.Management" Version="10.0.7" />
     <PackageReference Include="ValveKeyValue">
-      <Version>0.13.1.398</Version>
+      <Version>0.70.0.499</Version>
     </PackageReference>
     <PackageReference Include="Vortice.DirectInput" Version="3.8.3" />
     <PackageReference Include="WinCopies.IconExtractor">
