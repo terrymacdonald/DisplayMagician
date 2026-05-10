@@ -182,16 +182,35 @@ if ($vsInstalls.Count -eq 0) {
         # Check whether HeatWave is already installed for this VS instance.
         # VS stores per-user extensions under:
         #   %LOCALAPPDATA%\Microsoft\VisualStudio\{major}.0_{instanceId}\Extensions\
-        # Each sub-folder contains an extension.vsixmanifest whose Identity Id
-        # matches the extension name we care about.
-        $instanceId     = $vs.instanceId
-        $extensionsRoot = "$env:LOCALAPPDATA\Microsoft\VisualStudio\${vsMajor}.0_${instanceId}\Extensions"
+        # The extension.vsixmanifest <Identity Id> for HeatWave is 'FireGiant.HeatWave'
+        # (not the gallery slug). We also accept exit code 1001 from VSIXInstaller
+        # as a secondary signal that the extension is already present.
+        $instanceId       = $vs.instanceId
+        $extensionsRoot   = "$env:LOCALAPPDATA\Microsoft\VisualStudio\${vsMajor}.0_${instanceId}\Extensions"
         $alreadyInstalled = $false
         if (Test-Path $extensionsRoot) {
             $alreadyInstalled = [bool](
                 Get-ChildItem "$extensionsRoot\*\extension.vsixmanifest" -ErrorAction SilentlyContinue |
-                    Where-Object { (Get-Content $_ -Raw -ErrorAction SilentlyContinue) -match $extName }
+                    Where-Object {
+                        $xml = Get-Content $_ -Raw -ErrorAction SilentlyContinue
+                        # Match on known HeatWave identity IDs (gallery slug or package Id)
+                        $xml -match 'FireGiant\.HeatWave' -or $xml -match 'FireGiantHeatWaveDev1[67]'
+                    }
             )
+        }
+
+        # Also check the VS installation's own Extensions folder (machine-wide installs)
+        if (-not $alreadyInstalled) {
+            $vsExtRoot = Join-Path $vs.installationPath 'Common7\IDE\Extensions'
+            if (Test-Path $vsExtRoot) {
+                $alreadyInstalled = [bool](
+                    Get-ChildItem "$vsExtRoot\*\extension.vsixmanifest" -Recurse -ErrorAction SilentlyContinue |
+                        Where-Object {
+                            $xml = Get-Content $_ -Raw -ErrorAction SilentlyContinue
+                            $xml -match 'FireGiant\.HeatWave' -or $xml -match 'FireGiantHeatWaveDev1[67]'
+                        }
+                )
+            }
         }
 
         if ($alreadyInstalled) {
