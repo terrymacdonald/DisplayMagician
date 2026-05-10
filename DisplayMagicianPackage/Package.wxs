@@ -38,11 +38,13 @@
 
 		<InstallExecuteSequence>
 			<!-- Register sparse MSIX after files are copied (install/upgrade only) -->
-			<Custom Action="RegisterIdentityPkg" After="InstallFiles">NOT Installed OR REINSTALL</Custom>
+			<Custom Action="RegisterIdentityPkgData" After="InstallFiles" Condition="NOT Installed OR REINSTALL" />
+			<Custom Action="RegisterIdentityPkg" After="RegisterIdentityPkgData" Condition="NOT Installed OR REINSTALL" />
 			<!-- Unregister sparse MSIX before files are removed (uninstall only) -->
-			<Custom Action="UnregisterIdentityPkg" Before="RemoveFiles">REMOVE~="ALL"</Custom>
+			<Custom Action="UnregisterIdentityPkgData" Before="RemoveFiles" Condition='REMOVE~="ALL"' />
+			<Custom Action="UnregisterIdentityPkg" After="UnregisterIdentityPkgData" Condition='REMOVE~="ALL"' />
 		</InstallExecuteSequence>
-		
+
 		<!-- Set our executable (its ID) as custom action target -->
 		<Property Id="WixShellExecTarget" Value="[#DisplayMagicianExe]"/>
 
@@ -53,19 +55,25 @@
 			Impersonate="yes" />
 
 		<!-- Register the sparse MSIX identity package after files are installed -->
-		<Property Id="RegisterIdentityPkgCmd"
+		<!-- WixQuietExec64 pattern: set CustomActionData property, then call the CA -->
+		<Property Id="WixQuietExec64CmdLine" Value="powershell.exe" />
+		<CustomAction Id="RegisterIdentityPkgData"
+			Property="WixQuietExec64CmdLine"
 			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Add-AppxPackage -ExternalLocation '[INSTALLFOLDER]' -Path '[INSTALLFOLDER]DisplayMagicianIdentityPkg.msix'&quot;" />
 		<CustomAction Id="RegisterIdentityPkg"
-			Property="RegisterIdentityPkgCmd"
+			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+			DllEntry="WixQuietExec64"
 			Execute="deferred"
 			Impersonate="no"
 			Return="ignore" />
 
 		<!-- Unregister the sparse MSIX identity package before files are removed -->
-		<Property Id="UnregisterIdentityPkgCmd"
+		<CustomAction Id="UnregisterIdentityPkgData"
+			Property="WixQuietExec64CmdLine"
 			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Get-AppxPackage -Name '4f6354a7-065d-432a-bb6b-b65acc257555' | Remove-AppxPackage -ErrorAction SilentlyContinue&quot;" />
 		<CustomAction Id="UnregisterIdentityPkg"
-			Property="UnregisterIdentityPkgCmd"
+			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+			DllEntry="WixQuietExec64"
 			Execute="deferred"
 			Impersonate="no"
 			Return="ignore" />

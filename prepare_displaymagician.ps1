@@ -403,6 +403,34 @@ Write-Host "  (This file is gitignored and will not be committed.)" -ForegroundC
 Write-Host ""
 
 # ---------------------------------------------------------------------------
+# Download .NET 10 Desktop Runtime installer into DisplayMagicianBundle\Packages\
+# ---------------------------------------------------------------------------
+$runtimeVersion  = '10.0.7'
+$runtimeFilename = "windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
+$runtimeUrl      = "https://download.visualstudio.microsoft.com/download/pr/windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
+$bundlePackagesDir = Join-Path $PSScriptRoot 'DisplayMagicianBundle\Packages'
+$runtimeDest     = Join-Path $bundlePackagesDir $runtimeFilename
+
+Write-Host "Checking for .NET $runtimeVersion Desktop Runtime installer..."
+if (Test-Path $runtimeDest) {
+    Write-Host "  Already present: $runtimeDest" -ForegroundColor Green
+} else {
+    New-Item -ItemType Directory -Force -Path $bundlePackagesDir | Out-Null
+    Write-Host "  Downloading $runtimeFilename from Microsoft..."
+    try {
+        # Use the official aka.ms redirect which always resolves to the correct CDN URL
+        $redirectUrl = "https://aka.ms/dotnet/$runtimeVersion/windowsdesktop-runtime-win-x64.exe"
+        Invoke-WebRequest -Uri $redirectUrl -OutFile $runtimeDest -UseBasicParsing
+        Write-Host "  Downloaded: $runtimeDest" -ForegroundColor Green
+    } catch {
+        Write-Warning "Could not download .NET Desktop Runtime: $_"
+        Write-Warning "Download manually from https://dotnet.microsoft.com/download/dotnet/10.0"
+        Write-Warning "and place the installer at: $runtimeDest"
+    }
+}
+Write-Host ""
+
+# ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 Write-Host "=== Setup complete ===" -ForegroundColor Cyan
@@ -413,6 +441,7 @@ Write-Host ""
 Write-Host "Tools installed:" -ForegroundColor White
 Write-Host "  WiX Toolset v$requiredWixVersion (dotnet global tool)"
 Write-Host "  HeatWave VS extension (.wixproj support in Visual Studio)"
+Write-Host "  .NET $runtimeVersion Desktop Runtime installer (DisplayMagicianBundle\Packages\)"
 Write-Host ""
 Write-Host "Files created/updated:" -ForegroundColor White
 Write-Host "  $pfxPath"

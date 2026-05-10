@@ -9,17 +9,15 @@
   </PropertyGroup>
 	
   <PropertyGroup>
-    <OutputName>DisplayMagicianPackage</OutputName>
+	<OutputName>DisplayMagicianPackage</OutputName>
 	<AcceptEula>wix7</AcceptEula>
-    <!-- Windows SDK tools -->
-    <WindowsKitBinDir>C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64</WindowsKitBinDir>
-    <MakeAppxExe>$(WindowsKitBinDir)\makeappx.exe</MakeAppxExe>
-    <SignToolExe>$(WindowsKitBinDir)\signtool.exe</SignToolExe>
-    <!-- MSIX paths — built into DisplayMagicianPackage\Packages so the MSI can bundle it -->
-    <IdentityPkgDir>$(MSBuildThisFileDirectory)..\DisplayMagicianIdentityPkg</IdentityPkgDir>
-    <IdentityPkgOutputDir>$(MSBuildThisFileDirectory)Packages</IdentityPkgOutputDir>
-    <IdentityMsixPath>$(IdentityPkgOutputDir)\DisplayMagicianIdentityPkg.msix</IdentityMsixPath>
+	<!-- Publish output dirs passed to WiX as preprocessor variables via DefineConstants -->
+	<DmPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician\</DmPublishDir>
+	<DmConsolePublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagicianConsole\</DmConsolePublishDir>
+	<DefineConstants>DmPublishDir=$(DmPublishDir);DmConsolePublishDir=$(DmConsolePublishDir)</DefineConstants>
   </PropertyGroup>
+
+
 
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
@@ -35,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.proj" />
     <ProjectReference Include="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Publish="true" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" Publish="true" />
   </ItemGroup>
@@ -68,28 +67,6 @@
       <Output TaskParameter="TargetOutputs" ItemName="PublishedFiles" />
     </MSBuild>
     <Message Importance="high" Text="DisplayMagicianConsole has been built and published using the $(Configuration) profile." />
-  </Target>
-
-  <!-- Build and sign the sparse MSIX identity package so it is ready for the MSI to include -->
-  <Target Name="BuildIdentityMsix" BeforeTargets="BeforeBuild">
-    <MakeDir Directories="$(IdentityPkgOutputDir)" />
-
-    <!-- Pack the MSIX from the manifest + assets folder -->
-    <Exec Command="&quot;$(MakeAppxExe)&quot; pack /o /d &quot;$(IdentityPkgDir)&quot; /p &quot;$(IdentityMsixPath)&quot; /nv"
-          ConsoleToMsBuild="true" />
-    <Message Importance="high" Text="MSIX packed: $(IdentityMsixPath)" />
-
-    <!-- Sign the MSIX when a certificate is configured -->
-    <PropertyGroup>
-      <_SigningConfigured Condition="'$(SigningCertificatePfx)' != '' and Exists('$(SigningCertificatePfx)')">true</_SigningConfigured>
-      <_TimestampArg Condition="'$(SigningTimestampUrl)' != ''">/tr $(SigningTimestampUrl) /td sha256</_TimestampArg>
-    </PropertyGroup>
-
-    <Exec Condition="'$(_SigningConfigured)' == 'true'"
-          Command="&quot;$(SignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_TimestampArg) &quot;$(IdentityMsixPath)&quot;"
-          ConsoleToMsBuild="true" />
-    <Message Condition="'$(_SigningConfigured)' == 'true'" Importance="high" Text="MSIX signed with $(SigningCertificatePfx)" />
-    <Warning Condition="'$(_SigningConfigured)' != 'true'" Text="SigningConfig.props not found or PFX path missing — MSIX was NOT signed. Copy SigningConfig.props.example to SigningConfig.props and configure your certificate." />
   </Target>
 
   <Target Name="CollectSuggestedVisualStudioComponentIds" />

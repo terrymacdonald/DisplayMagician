@@ -13,7 +13,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianConsole", "DisplayMagicianConsole\DisplayMagicianConsole.csproj", "{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DisplayMagicianIdentityPkg", "DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.proj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianPackage", "DisplayMagicianPackage\DisplayMagicianPackage.wixproj", "{E43CF746-F46B-4889-95AA-16DB13AB7B9E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
+	EndProjectSection
 EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianBundle", "DisplayMagicianBundle\DisplayMagicianBundle.wixproj", "{36D1EA30-F200-40CC-83E9-B2D9794510F5}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -94,7 +99,17 @@ Global
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x64.Build.0 = Release|Any CPU
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Release|x86.Build.0 = Release|Any CPU
-		{E43CF746-F46B-4889-95AA-16DB13AB7B9E}.Debug|AnyCPU.ActiveCfg = Debug|x64
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|ARM.ActiveCfg = Debug|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|ARM64.ActiveCfg = Debug|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|x64.ActiveCfg = Debug|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|x86.ActiveCfg = Debug|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|ARM.ActiveCfg = Release|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|ARM64.ActiveCfg = Release|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x64.ActiveCfg = Release|AnyCPU
+{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x86.ActiveCfg = Release|AnyCPU
+{E43CF746-F46B-4889-95AA-16DB13AB7B9E}.Debug|AnyCPU.ActiveCfg = Debug|x64
 		{E43CF746-F46B-4889-95AA-16DB13AB7B9E}.Debug|AnyCPU.Build.0 = Debug|x64
 		{E43CF746-F46B-4889-95AA-16DB13AB7B9E}.Debug|ARM.ActiveCfg = Debug|x64
 		{E43CF746-F46B-4889-95AA-16DB13AB7B9E}.Debug|ARM.Build.0 = Debug|x64

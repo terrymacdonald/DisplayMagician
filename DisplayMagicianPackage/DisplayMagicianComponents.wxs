@@ -14,13 +14,13 @@
 				<RemoveRegistryKey Root="HKCU" Key="SOFTWARE\Classes\DisplayMagician.ContextMenus" Action="removeOnUninstall"/>
 			</Component>
 			<Component>
-				<File Source="$(var.DisplayMagician.TargetDir)publish\DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
+				<File Source="$(var.DmPublishDir)DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
 				<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
 							Directory="ProgramMenuFolder" Advertise="yes" Icon="dm.exe" />
 				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />				
 			</Component>
 
-			<File Source="$(var.DisplayMagician.TargetDir)publish\WebView2Loader.dll" />
+			<File Source="$(var.DmPublishDir)WebView2Loader.dll" />
 
 			<!-- Sparse MSIX identity package — installed alongside the app and registered via custom action -->
 			<Component Id="IdentityMsixComponent">
@@ -33,7 +33,7 @@
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
 			<Component>
 				<!-- Install the DisplayMagician Console file -->
-				<File Source="$(var.DisplayMagicianConsole.TargetDir)publish\DisplayMagicianConsole.exe" />
+				<File Source="$(var.DmConsolePublishDir)DisplayMagicianConsole.exe" />
 				<!-- Add the install location to the system PATH so that users can use the DisplayMagicianConsole.exe from anywhere on the PC -->
 				<Environment Name="PATH" System="yes" Value="[INSTALLFOLDER]" Action="set" Part="last"/>
 			</Component>
