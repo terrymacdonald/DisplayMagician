@@ -333,8 +333,8 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 # 6. Create the self-signed certificate (if one doesn't already exist)
 # ---------------------------------------------------------------------------
-$certSubject  = 'CN=LittleBitBig'
-$friendlyName = 'LittleBitBig Code Signing Certificate'
+$certSubject  = 'CN=AC8F2FDD-977F-4390-B92A-B9CFAEE91973'
+$friendlyName = 'Terry MacDonald Code Signing Certificate'
 
 if ($pfxExists) {
     Write-Host "Skipping certificate creation - using existing PFX." -ForegroundColor Green

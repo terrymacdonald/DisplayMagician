@@ -8,14 +8,14 @@
   IgnorableNamespaces="uap uap10 rescap">
 
   <Identity
-    Name="4f6354a7-065d-432a-bb6b-b65acc257555"
-    Publisher="CN=LittleBitBig"
-    Version="1.0.0.0"
+	Name="50566LittleBitBig.DisplayMagician"
+	Publisher="CN=AC8F2FDD-977F-4390-B92A-B9CFAEE91973"
+	Version="2.7.2.137"
 	ProcessorArchitecture="neutral" />
 
     <Properties>
         <DisplayName>DisplayMagician</DisplayName>
-        <PublisherDisplayName>LittleBitBig</PublisherDisplayName>
+		<PublisherDisplayName>Little Bit Big</PublisherDisplayName>
         <Logo>Assets\StoreLogo.png</Logo>
         <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
     </Properties>
@@ -26,7 +26,6 @@
 		<TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
 	</Dependencies>
 	<Capabilities>
-		<Capability Name="internetClient" />
 		<rescap:Capability Name="runFullTrust" />
 		<rescap:Capability Name="unvirtualizedResources"/>
 		<rescap:Capability Name="appDiagnostics" />
@@ -37,7 +36,7 @@
 		  uap10:TrustLevel="mediumIL" 
 		  uap10:RuntimeBehavior="win32App">
 			<uap:VisualElements
-				AppListEntry="default"
+				AppListEntry="none"
 				DisplayName="DisplayMagician"
 				Description="Automatically run your games with a different display profile or audio settings, then revert everything back when you're done."
 				BackgroundColor="transparent"

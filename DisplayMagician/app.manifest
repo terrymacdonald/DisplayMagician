@@ -2,10 +2,10 @@
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
   <assemblyIdentity version="1.0.0.0" name="DisplayMagician"/>
   <msix xmlns="urn:schemas-microsoft-com:msix.v1"
-		publisher="CN=LittleBitBig"
-		packageName="DisplayMagician"
+		publisher="CN=AC8F2FDD-977F-4390-B92A-B9CFAEE91973"
+		packageName="50566LittleBitBig.DisplayMagician"
 		applicationId="DisplayMagician"  
-	/>	
+	/>
 	
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>

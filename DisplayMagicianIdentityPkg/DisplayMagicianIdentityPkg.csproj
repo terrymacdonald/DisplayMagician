@@ -35,18 +35,10 @@
     </PropertyGroup>
 
     <Warning Condition="!Exists('$(_DmExePath)')"
-             Text="DisplayMagician.exe not found at '$(_DmExePath)' — AppxManifest version will not be patched. Build DisplayMagician first." />
+             Text="DisplayMagician.exe not found — AppxManifest version will not be patched. Build DisplayMagician first." />
 
     <Exec Condition="Exists('$(_DmExePath)')"
-          Command="powershell -NoProfile -Command &quot;
-            $exe = '$(_DmExePath)';
-            $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe).FileVersion;
-            if (-not $ver) { throw 'Could not read FileVersion from ' + $exe }
-            $manifest = '$(IdentityPkgDir)AppxManifest.xml';
-            $xml = Get-Content $manifest -Raw;
-            $xml = $xml -replace 'Version=\&quot;[\d.]+\&quot;', ('Version=\&quot;' + $ver + '\&quot;');
-            [System.IO.File]::WriteAllText($manifest, $xml, [System.Text.Encoding]::UTF8);
-            Write-Host 'Patched AppxManifest.xml Identity Version to ' + $ver&quot;"
+          Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)PatchMsixVersion.ps1&quot; -ExePath &quot;$(_DmExePath)&quot; -ManifestPath &quot;$(MSBuildThisFileDirectory)AppxManifest.xml&quot;"
           ConsoleToMsBuild="true" />
   </Target>
 
@@ -70,8 +62,21 @@
     <Error Condition="!Exists('$(MakeAppxExe)')"
            Text="makeappx.exe not found at '$(MakeAppxExe)'. Install the Windows 10 SDK." />
 
-    <!-- Pack the sparse MSIX from manifest + assets -->
-    <Exec Command="&quot;$(MakeAppxExe)&quot; pack /o /d &quot;$(IdentityPkgDir)&quot; /p &quot;$(IdentityMsixPath)&quot; /nv"
+    <!-- Stage only the files that belong in the MSIX into a clean temp directory -->
+    <PropertyGroup>
+      <_MsixStagingDir>$(MSBuildThisFileDirectory)obj\MsixStaging\</_MsixStagingDir>
+    </PropertyGroup>
+    <RemoveDir Directories="$(_MsixStagingDir)" />
+    <MakeDir Directories="$(_MsixStagingDir)" />
+    <MakeDir Directories="$(_MsixStagingDir)Assets" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)AppxManifest.xml" DestinationFolder="$(_MsixStagingDir)" />
+    <ItemGroup>
+      <_AssetFiles Include="$(MSBuildThisFileDirectory)Assets\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_AssetFiles)" DestinationFolder="$(_MsixStagingDir)Assets\" />
+
+    <!-- Pack the sparse MSIX from the clean staging directory -->
+    <Exec Command="&quot;$(MakeAppxExe)&quot; pack /o /d &quot;$(_MsixStagingDir.TrimEnd('\'))&quot; /p &quot;$(IdentityMsixPath)&quot; /nv"
           ConsoleToMsBuild="true" />
     <Message Importance="high" Text="MSIX packed: $(IdentityMsixPath)" />
 
@@ -83,7 +88,8 @@
 
     <Exec Condition="'$(_SigningConfigured)' == 'true'"
           Command="&quot;$(SignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_TimestampArg) &quot;$(IdentityMsixPath)&quot;"
-          ConsoleToMsBuild="true" />
+          ConsoleToMsBuild="true"
+          EchoOff="true" />
     <Message Condition="'$(_SigningConfigured)' == 'true'" Importance="high"
              Text="MSIX signed with: $(SigningCertificatePfx)" />
     <Warning Condition="'$(_SigningConfigured)' != 'true'"
