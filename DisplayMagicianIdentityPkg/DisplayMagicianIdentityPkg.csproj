@@ -28,7 +28,7 @@
   </PropertyGroup>
 
   <!-- ─────────────────────────────────────────────────────────────────────── -->
-  <Target Name="Build" AfterTargets="AfterBuild">
+  <Target Name="BuildMsix" AfterTargets="Build">
 
     <!-- Resolve highest installed Windows 10 SDK version via PowerShell -->
     <Exec Command="powershell -NoProfile -Command &quot;(Get-ChildItem '$(WindowsKitRoot)bin' -Filter '10.*' -Directory | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName)&quot;"

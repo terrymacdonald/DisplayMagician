@@ -1,0 +1,6 @@
+<Project>
+  <!-- Suppress CA1416 (platform compatibility) solution-wide, including WiX projects -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+</Project>

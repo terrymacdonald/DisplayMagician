@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.proj" />
+    <ProjectReference Include="..\DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj" />
     <ProjectReference Include="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Publish="true" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" Publish="true" />
   </ItemGroup>

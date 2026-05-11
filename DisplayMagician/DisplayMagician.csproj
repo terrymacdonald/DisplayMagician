@@ -44,7 +44,7 @@
     <UseVSHostingProcess>true</UseVSHostingProcess>
     <WarningLevel>4</WarningLevel>
 	  <OutputPath>$(ProjectDir)bin\Debug\</OutputPath>
-	  <NoWarn>1701;1702;CA1416</NoWarn>
+	  <NoWarn>1701;1702</NoWarn>
 	  <WarningsAsErrors />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
