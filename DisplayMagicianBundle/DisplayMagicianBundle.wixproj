@@ -3,7 +3,6 @@
     <OutputType>Bundle</OutputType>
     <OutputName>DisplayMagicianSetup</OutputName>
     <AcceptEula>wix7</AcceptEula>
-    <SuppressSpecificWarnings>CA1416</SuppressSpecificWarnings>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
