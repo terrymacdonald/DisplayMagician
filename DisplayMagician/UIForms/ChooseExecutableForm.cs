@@ -116,10 +116,7 @@ namespace DisplayMagician.UIForms
             }
             set
             {
-                if (value is ChooseExecutableFormMode)
-                {
-                    _chooseExecutableFormMode = value;
-                }
+                _chooseExecutableFormMode = value;
             }
         }
 
