@@ -32,23 +32,23 @@
 		<rescap:Capability Name="appDiagnostics" />
 	</Capabilities>
 	<Applications>
-        <Application Id="DisplayMagician"
-          Executable="DisplayMagician.exe"
-	      uap10:TrustLevel="mediumIL" 
-	      uap10:RuntimeBehavior="win32App">
-	        <uap:VisualElements
-                AppListEntry="none"
-		        DisplayName="DisplayMagicianSetup"
-                Description="DisplayMagicianSetup"
-                BackgroundColor="transparent"
-                Square150x150Logo="Assets\Square150x150Logo.png"
-                Square44x44Logo="Assets\Square44x44Logo.png">
-                <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
-                <!--<uap:SplashScreen Image="Images\SplashScreen.png" />-->
-                <uap:InitialRotationPreference>
-                    <uap:Rotation Preference="landscape"/>
+		<Application Id="DisplayMagician"
+		  Executable="DisplayMagician.exe"
+		  uap10:TrustLevel="mediumIL" 
+		  uap10:RuntimeBehavior="win32App">
+			<uap:VisualElements
+				AppListEntry="default"
+				DisplayName="DisplayMagician"
+				Description="Automatically run your games with a different display profile or audio settings, then revert everything back when you're done."
+				BackgroundColor="transparent"
+				Square150x150Logo="Assets\Square150x150Logo.scale-200.png"
+				Square44x44Logo="Assets\Square44x44Logo.scale-200.png">
+				<uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.scale-200.png"
+								 ShortName="DisplayMagician" />
+				<uap:InitialRotationPreference>
+					<uap:Rotation Preference="landscape"/>
 				</uap:InitialRotationPreference>
-            </uap:VisualElements>
-        </Application>
-    </Applications>
+			</uap:VisualElements>
+		</Application>
+	</Applications>
 </Package>

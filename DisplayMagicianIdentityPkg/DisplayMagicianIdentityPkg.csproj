@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <!-- All paths are relative to this file's directory -->
-    <IdentityPkgDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory).'))</IdentityPkgDir>
+    <IdentityPkgDir>$(MSBuildThisFileDirectory)</IdentityPkgDir>
     <!-- Output lands directly into DisplayMagicianPackage\Packages\ so the MSI picks it up -->
     <PackagesOutputDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\DisplayMagicianPackage\Packages'))</PackagesOutputDir>
     <IdentityMsixPath>$(PackagesOutputDir)\DisplayMagicianIdentityPkg.msix</IdentityMsixPath>
@@ -26,6 +26,29 @@
         RegistryView.Default))</WindowsKitRoot>
     <!-- WindowsKitBinDir and tool paths are resolved in the Build target after globbing SDK versions -->
   </PropertyGroup>
+
+  <!-- ─────────────────────────────────────────────────────────────────────── -->
+  <!-- Patch the AppxManifest Identity Version to match DisplayMagician.exe  -->
+  <Target Name="PatchMsixVersion" BeforeTargets="BuildMsix">
+    <PropertyGroup>
+      <_DmExePath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\DisplayMagician\bin\$(Configuration)\DisplayMagician.exe'))</_DmExePath>
+    </PropertyGroup>
+
+    <Warning Condition="!Exists('$(_DmExePath)')"
+             Text="DisplayMagician.exe not found at '$(_DmExePath)' — AppxManifest version will not be patched. Build DisplayMagician first." />
+
+    <Exec Condition="Exists('$(_DmExePath)')"
+          Command="powershell -NoProfile -Command &quot;
+            $exe = '$(_DmExePath)';
+            $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe).FileVersion;
+            if (-not $ver) { throw 'Could not read FileVersion from ' + $exe }
+            $manifest = '$(IdentityPkgDir)AppxManifest.xml';
+            $xml = Get-Content $manifest -Raw;
+            $xml = $xml -replace 'Version=\&quot;[\d.]+\&quot;', ('Version=\&quot;' + $ver + '\&quot;');
+            [System.IO.File]::WriteAllText($manifest, $xml, [System.Text.Encoding]::UTF8);
+            Write-Host 'Patched AppxManifest.xml Identity Version to ' + $ver&quot;"
+          ConsoleToMsBuild="true" />
+  </Target>
 
   <!-- ─────────────────────────────────────────────────────────────────────── -->
   <Target Name="BuildMsix" AfterTargets="Build">

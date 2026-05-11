@@ -14,11 +14,8 @@
 				<RemoveRegistryKey Root="HKCU" Key="SOFTWARE\Classes\DisplayMagician.ContextMenus" Action="removeOnUninstall"/>
 			</Component>
 			<Component>
-				<File Source="$(var.DmPublishDir)DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
-				<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="!(loc.ProductDescription)"
-							Directory="ProgramMenuFolder" Advertise="yes" Icon="dm.exe" />
-				<RemoveFolder Id="CleanUpShortcuts" Directory="ApplicationProgramsFolder" On="uninstall" />				
-			</Component>
+					<File Source="$(var.DmPublishDir)DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
+				</Component>
 
 			<File Source="$(var.DmPublishDir)WebView2Loader.dll" />
 
