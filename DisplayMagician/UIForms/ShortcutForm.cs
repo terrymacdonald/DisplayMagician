@@ -78,6 +78,9 @@ namespace DisplayMagician.UIForms
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
         private bool _firstShow = true;
+
+        // Debounce timer: delays the icon scan until the user stops typing in txt_executable
+        private readonly System.Windows.Forms.Timer _exePathDebounceTimer = new System.Windows.Forms.Timer { Interval = 600 };
         private ShortcutLoadingForm _loadingScreen;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -85,6 +88,18 @@ namespace DisplayMagician.UIForms
         public ShortcutForm()
         {
             InitializeComponent();
+
+            // Fire icon scan only once the user has stopped typing for 600 ms
+            _exePathDebounceTimer.Tick += (s, e) =>
+            {
+                _exePathDebounceTimer.Stop();
+                string path = txt_executable.Text.Trim();
+                if (File.Exists(path) && ProcessUtils.IsExecutableFileType(path))
+                {
+                    logger.Debug($"ShortcutForm/ExePathDebounceTimer: Scanning icons for '{path}'.");
+                    UpdateExeImagesUI(null);
+                }
+            };
             // Set the profileAdaptor we need to load images from Profiles
             // into the Profiles ImageListView
             try
@@ -801,11 +816,12 @@ namespace DisplayMagician.UIForms
 
             // If the user has typed or pasted a valid exe path directly (rather than using the browse button),
             // we still need to scan it for icons — otherwise ShortcutBitmap will be null and the renderer crashes.
+            // Restart the debounce timer so we only scan once the user stops typing.
             string typedPath = txt_executable.Text.Trim();
             if (File.Exists(typedPath) && ProcessUtils.IsExecutableFileType(typedPath))
             {
-                logger.Debug($"ShortcutForm/txt_executable_TextChanged: Valid exe path entered manually ('{typedPath}'). Scanning for icons.");
-                UpdateExeImagesUI(null);
+                _exePathDebounceTimer.Stop();
+                _exePathDebounceTimer.Start();
             }
         }
 
@@ -838,6 +854,11 @@ namespace DisplayMagician.UIForms
                         logger.Error($"ShortcutForm/AllowedToSave: The executable {txt_executable.Text} doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
                         errors.Add("The executable you have chosen does not exist! Please reselect the executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                     }
+                    else if (!ProcessUtils.IsExecutableFileType(txt_executable.Text))
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: The file '{txt_executable.Text}' is not a supported executable type.");
+                        errors.Add($"The file '{Path.GetFileName(txt_executable.Text)}' is not a supported executable type. Please choose an executable file (.exe, .com, .msi, .bat, .cmd, .ps1, .lnk, or .url).");
+                    }
 
 
                     if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
@@ -859,6 +880,11 @@ namespace DisplayMagician.UIForms
                         {
                             logger.Error($"ShortcutForm/AllowedToSave: The alternative executable the user wants to monitor as part of an executable shortcut doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
                             errors.Add("The alternative executable you have chosen does not exist! Please reselect the alternative executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
+                        }
+                        else if (!ProcessUtils.IsExecutableFileType(txt_alternative_executable.Text))
+                        {
+                            logger.Error($"ShortcutForm/AllowedToSave: The alternative executable file '{txt_alternative_executable.Text}' is not a supported executable type.");
+                            errors.Add($"The alternative executable file '{Path.GetFileName(txt_alternative_executable.Text)}' is not a supported executable type. Please choose a file with an executable extension (.exe, .com, .msi, .bat, .cmd, .ps1, .lnk, or .url).");
                         }
                     }
                 }
@@ -2462,7 +2488,13 @@ namespace DisplayMagician.UIForms
 
         private void btn_choose_alternative_executable_Click(object sender, EventArgs e)
         {
-            dialog_open.InitialDirectory = Path.GetDirectoryName(_executableToUse.ExecutableNameAndPath);
+            // _executableToUse is only populated after Save; fall back to the textbox or ProgramFiles
+            string initialDir = Environment.SpecialFolder.ProgramFiles.ToString();
+            if (!String.IsNullOrWhiteSpace(txt_executable.Text) && File.Exists(txt_executable.Text))
+                initialDir = Path.GetDirectoryName(txt_executable.Text);
+            else if (!String.IsNullOrWhiteSpace(_executableToUse.ExecutableNameAndPath))
+                initialDir = Path.GetDirectoryName(_executableToUse.ExecutableNameAndPath);
+            dialog_open.InitialDirectory = initialDir;
             dialog_open.DefaultExt = "*.exe";
             dialog_open.Filter = "Executable files (*.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url) | *.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url | All files(*.*) | *.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
@@ -2808,6 +2840,7 @@ namespace DisplayMagician.UIForms
             {
                 ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.displaymagician.ToBitmap(), "DisplayMagician Icon", "", 0);
                 _availableImages.Add(bm);
+                _selectedImage = bm;
                 _shortcutToEdit.SelectedImage = _selectedImage;
             }
             pb_exe_icon.Image = _selectedImage.Image;
