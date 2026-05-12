@@ -527,21 +527,41 @@ namespace DisplayMagician.Processes
             //return false;
         }
        
+        /// <summary>
+        /// Returns true for PE-format binaries that can contain embedded icon resources
+        /// (.exe, .com, .msi). Use this to decide whether TsudaKageyu.IconExtractor is appropriate.
+        /// </summary>
+        public static bool IsPEExecutable(string executable)
+        {
+            string ext = Path.GetExtension(executable);
+            return ext.Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
+                   ext.Equals(".com", StringComparison.OrdinalIgnoreCase) ||
+                   ext.Equals(".msi", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Returns true for file types that Windows Shell can launch but which do not contain
+        /// embedded PE icon resources (.bat, .cmd, .ps1, .lnk, .url).
+        /// Their icon comes from the Shell association or the shortcut target.
+        /// Use WindowsThumbnailProvider to retrieve it.
+        /// </summary>
+        public static bool IsShellLaunchable(string executable)
+        {
+            string ext = Path.GetExtension(executable);
+            return ext.Equals(".bat", StringComparison.OrdinalIgnoreCase) ||
+                   ext.Equals(".cmd", StringComparison.OrdinalIgnoreCase) ||
+                   ext.Equals(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                   ext.Equals(".lnk", StringComparison.OrdinalIgnoreCase) ||
+                   ext.Equals(".url", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Returns true for any file type that DisplayMagician can launch as a shortcut target.
+        /// This is the single source of truth for validating user-supplied executable paths.
+        /// </summary>
         public static bool IsExecutableFileType(string executable)
         {
-            if (Path.GetExtension(executable).Equals(".exe", StringComparison.CurrentCultureIgnoreCase) ||
-                    Path.GetExtension(executable).Equals(".com", StringComparison.CurrentCultureIgnoreCase) ||
-                    Path.GetExtension(executable).Equals(".msi", StringComparison.CurrentCultureIgnoreCase) ||
-                    Path.GetExtension(executable).Equals(".bat", StringComparison.CurrentCultureIgnoreCase) ||
-                    Path.GetExtension(executable).Equals(".cmd", StringComparison.CurrentCultureIgnoreCase) ||
-                    Path.GetExtension(executable).Equals(".ps1", StringComparison.CurrentCultureIgnoreCase))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return IsPEExecutable(executable) || IsShellLaunchable(executable);
         }
 
         public static string GetProcessName(string executable)

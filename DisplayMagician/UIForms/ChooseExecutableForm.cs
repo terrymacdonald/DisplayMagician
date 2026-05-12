@@ -132,7 +132,7 @@ namespace DisplayMagician.UIForms
             dialog_open.InitialDirectory = Environment.SpecialFolder.ProgramFiles.ToString();
             dialog_open.FileName = "";
             dialog_open.DefaultExt = "*.exe";
-            dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
+            dialog_open.Filter = "Executable files (*.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url) | *.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url | All files(*.*) | *.*";
             string textToReturn = "";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {

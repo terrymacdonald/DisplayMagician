@@ -771,7 +771,7 @@ namespace DisplayMagician.UIForms
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
-                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
+                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -798,6 +798,15 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             SuggestShortcutName();
+
+            // If the user has typed or pasted a valid exe path directly (rather than using the browse button),
+            // we still need to scan it for icons — otherwise ShortcutBitmap will be null and the renderer crashes.
+            string typedPath = txt_executable.Text.Trim();
+            if (File.Exists(typedPath) && ProcessUtils.IsExecutableFileType(typedPath))
+            {
+                logger.Debug($"ShortcutForm/txt_executable_TextChanged: Valid exe path entered manually ('{typedPath}'). Scanning for icons.");
+                UpdateExeImagesUI(null);
+            }
         }
 
         private bool AllowedToSave(bool showErrorsToUser = false)
@@ -2455,13 +2464,12 @@ namespace DisplayMagician.UIForms
         {
             dialog_open.InitialDirectory = Path.GetDirectoryName(_executableToUse.ExecutableNameAndPath);
             dialog_open.DefaultExt = "*.exe";
-            dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
+            dialog_open.Filter = "Executable files (*.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url) | *.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url | All files(*.*) | *.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                string fileExt = Path.GetExtension(dialog_open.FileName);
-                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com"))
+                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_alternative_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -2831,7 +2839,7 @@ namespace DisplayMagician.UIForms
         {
             dialog_open.InitialDirectory = Environment.SpecialFolder.ProgramFiles.ToString();
             dialog_open.DefaultExt = "*.exe";
-            dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
+            dialog_open.Filter = "Executable files (*.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url) | *.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url | All files(*.*) | *.*";
             string textToReturn = "";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
