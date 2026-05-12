@@ -45,10 +45,14 @@ namespace DisplayMagician.UIForms
                 ShortcutItem shortcut = (ShortcutItem) key;
 
                 if (shortcut.ShortcutBitmap == null)
-                    return null;
+                {
+                    logger.Warn($"ShortcutAdaptor/GetThumbnail: ShortcutBitmap is null for shortcut '{shortcut.Name}' (UUID: {shortcut.UUID}). Returning default exe icon thumbnail.");
+                    Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
+                    return Properties.Resources.exe.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
+                }
 
-                Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
-                return shortcut.ShortcutBitmap.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
+                Image.GetThumbnailImageAbort myCallback2 = new Image.GetThumbnailImageAbort(() => { return false; });
+                return shortcut.ShortcutBitmap.GetThumbnailImage(256, 256, myCallback2, IntPtr.Zero);
             }
             catch (Exception ex)
             {
