@@ -99,7 +99,12 @@ namespace DisplayMagician.UIForms
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
                 ShortcutItem shortcutToRender = ShortcutRepository.GetShortcut(item.EquipmentModel);
-                if (shortcutToRender.IsValid == ShortcutValidity.Error)
+                if (shortcutToRender == null)
+                {
+                    // Shortcut no longer exists in the repository; just draw the image as-is
+                    g.DrawImage(img, pos);
+                }
+                else if (shortcutToRender.IsValid == ShortcutValidity.Error)
                 {
                     // The shortcut is permanently invalid (game removed or profile deleted)
                     // so we make the image grayscale

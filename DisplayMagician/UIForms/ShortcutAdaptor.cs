@@ -44,6 +44,9 @@ namespace DisplayMagician.UIForms
             {
                 ShortcutItem shortcut = (ShortcutItem) key;
 
+                if (shortcut.ShortcutBitmap == null)
+                    return null;
+
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
                 return shortcut.ShortcutBitmap.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
             }
