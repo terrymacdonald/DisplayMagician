@@ -95,7 +95,13 @@ namespace DisplayMagician.UIForms
 
             // Draw the image
             Image img = ImageUtils.RoundCorners(item.GetCachedImage(CachedImageType.Thumbnail), 20);
-            if (img != null)
+            if (img == null)
+            {
+                logger.Warn($"ShortcutILVRenderer/DrawItem: No cached thumbnail available for shortcut '{item.EquipmentModel}'. Drawing default exe icon.");
+                Rectangle defaultPos = new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize);
+                g.DrawImage(Properties.Resources.exe, defaultPos);
+            }
+            else
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
@@ -207,6 +213,7 @@ namespace DisplayMagician.UIForms
     public class ProfileILVRenderer : ImageListView.ImageListViewRenderer
 #pragma warning restore CS3009 // Base type is not CLS-compliant
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         // Returns item size for the given view mode.
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
         public override Size MeasureItem(Manina.Windows.Forms.View view)
@@ -280,12 +287,32 @@ namespace DisplayMagician.UIForms
 
             // Draw the image
             Image img = ImageUtils.RoundCorners(item.GetCachedImage(CachedImageType.Thumbnail), 20);
-            if (img != null)
+            if (img == null)
+            {
+                logger.Warn($"ProfileILVRenderer/DrawItem: No cached thumbnail available for profile '{item.EquipmentModel}'. Drawing default exe icon.");
+                Rectangle defaultPos = new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize);
+                g.DrawImage(Properties.Resources.exe, defaultPos);
+            }
+            else
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
                 ProfileItem profileToRender = ProfileRepository.GetProfile(item.EquipmentModel);
-                if (profileToRender.IsPossible)
+                if (profileToRender == null)
+                {
+                    // Profile no longer exists in the repository; try the cached image first, fall back to default
+                    logger.Warn($"ProfileILVRenderer/DrawItem: Profile with key '{item.EquipmentModel}' was not found in the repository. Attempting to draw cached image.");
+                    try
+                    {
+                        g.DrawImage(img, pos);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ProfileILVRenderer/DrawItem: Failed to draw cached image for missing profile '{item.EquipmentModel}'. Falling back to default exe icon.");
+                        g.DrawImage(Properties.Resources.exe, pos);
+                    }
+                }
+                else if (profileToRender.IsPossible)
                 {
                     // Draw the full color image as the shortcuts is not invalid
                     g.DrawImage(img, pos);

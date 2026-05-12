@@ -65,8 +65,13 @@ namespace DisplayMagician.UIForms
                     profileToUse = ProfileRepository.CurrentProfile;
                 }
 
-                // Stop the callback doing anything
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
+
+                if (profileToUse.ProfileBitmap == null)
+                {
+                    logger.Warn($"ProfileAdaptor/GetThumbnail: ProfileBitmap is null for profile '{profileToUse.Name}' (UUID: {profileToUse.UUID}). Returning default whitearrows icon thumbnail.");
+                    return Properties.Resources.whitearrows.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+                }
 
                 Image imageToUse;
                 imageToUse = profileToUse.ProfileBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);                
@@ -74,7 +79,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileAdaptor/GetThumbnail exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Warn(ex, $"ProfileAdaptor/GetThumbnail exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
