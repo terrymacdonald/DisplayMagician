@@ -569,12 +569,13 @@ namespace DisplayMagician
                         };
 
                         ShortcutFile shortcutFile = JsonConvert.DeserializeObject<ShortcutFile>(json, mySerializerSettings);
-                        _allShortcuts = shortcutFile.Shortcuts;
 
                         if (shortcutFile.Shortcuts == null)
                         {
                             throw new Exception("ShortcutRepository/LoadShortcuts: The Shortcuts file was an older file format, so we need to upgrade it.");
                         }
+
+                        _allShortcuts = shortcutFile.Shortcuts;
 
                     }
                     catch (JsonReaderException ex)
@@ -646,9 +647,9 @@ namespace DisplayMagician
                     if (jsonErrors.Count > 0)
                     {
                         foreach (string jsonError in jsonErrors)
-                        {
-                            logger.Error($"ShortcutRepository/LoadShortcuts: JSON.Net Error found while loading {_shortcutStorageJsonFullFileName}: {jsonErrors}");
-                        }
+                            {
+                                logger.Error($"ShortcutRepository/LoadShortcuts: JSON.Net Error found while loading {_shortcutStorageJsonFullFileName}: {jsonError}");
+                            }
                     }
 
                     logger.Trace($"ShortcutRepository/LoadShortcuts: Loaded {_allShortcuts.Count} shortcuts from {_shortcutStorageJsonFullFileName} Shortcut JSON file");
@@ -805,7 +806,7 @@ namespace DisplayMagician
             {
                 foreach (string jsonError in jsonErrors)
                 {
-                    logger.Error($"ProfileRepository/SaveProfiles: {jsonErrors}");
+                    logger.Error($"ShortcutRepository/SaveShortcuts: {jsonError}");
                 }
             }
 
@@ -1095,9 +1096,9 @@ namespace DisplayMagician
                                 if (rollbackCommunicationCaptureDevice != null)
                                 {
                                     rollbackCommunicationCaptureVolume = _audioController.DefaultCaptureCommunicationsDevice.Volume;
-                                    if (!rollbackCommunicationCaptureDevice.FullName.Equals(shortcutToUse.AudioDevice))
-                                    {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} communications audio device.");
+                                    if (!rollbackCommunicationCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                                        {
+                                            logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} communications capture device.");
                                         needToChangeCommsCaptureDevice = true;
                                     }
                                 }
@@ -1155,15 +1156,15 @@ namespace DisplayMagician
                                     logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
                                     _audioController.DefaultCaptureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume)).Wait(2000);
 
-                                    if (shortcutToUse.UseAsCommsAudioDevice)
-                                    {
-                                        logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} Communications Audio volume level to be {shortcutToUse.AudioVolume}%.");
-                                        _audioController.DefaultCaptureCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume)).Wait(2000);
-                                    }
-                                    else
-                                    {
-                                        logger.Info($"ShortcutRepository/RunShortcut: No need to set {shortcutToUse.AudioDevice} Communications Audio volume level. Skipping");
-                                    }
+                                    if (shortcutToUse.UseAsCommsCaptureDevice)
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} Communications Capture volume level to be {shortcutToUse.CaptureVolume}%.");
+                                            _audioController.DefaultCaptureCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume)).Wait(2000);
+                                        }
+                                        else
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: No need to set {shortcutToUse.CaptureDevice} Communications Capture volume level. Skipping");
+                                        }
                                 }
                                 else
                                 {
@@ -1340,7 +1341,7 @@ namespace DisplayMagician
                 {
                      if (shortcutToUse.Application is App)
                     {
-                        if (appToUse.Start(out processesCreated, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
+                        if (appToUse.Start(out processesCreated, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} was launched as the main application to monitor.");                            
                         }

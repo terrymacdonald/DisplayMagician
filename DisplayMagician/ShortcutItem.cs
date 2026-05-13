@@ -143,7 +143,7 @@ namespace DisplayMagician
         public override bool Equals(object obj) => obj is ShortcutBitmap other && this.Equals(other);
 
         public bool Equals(ShortcutBitmap other)
-        => Size.Equals(Size) &&
+        => Size.Equals(other.Size) &&
             Image.Equals(other.Image);
 
         public override int GetHashCode()
@@ -637,7 +637,7 @@ namespace DisplayMagician
 
             set
             {
-                if (_gameArguments == null)
+                if (value == null)
                 {
                     _gameArguments = "";
                 }
@@ -1031,6 +1031,7 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _stopPrograms = stopPrograms;
             _originalIconPath = "";
 
             // Now we need to find and populate the profileUuid
@@ -1773,9 +1774,7 @@ namespace DisplayMagician
                     shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", programName, ProfileToUse.Name);
 
                 }
-                // Only add the rest of the options if the temporary switch radio button is set
-                // and if the game launching radio button is set
-                else if (DisplayPermanence == ShortcutPermanence.Temporary)
+                else
                 {
                     // Prepare text for the shortcut description field
                     shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", GameName, ProfileToUse.Name);
