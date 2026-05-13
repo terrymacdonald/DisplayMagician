@@ -449,34 +449,46 @@ namespace DisplayMagician.UIForms
                 if (_gameLauncher == SupportedGameLibraryType.Steam.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
-                    // Find the SteamGame
-
-                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).First();
+                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).FirstOrDefault();
                 }
                 // If the game is a UplayGame
                 else if (_gameLauncher == SupportedGameLibraryType.Uplay.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
-                    // Find the UplayGame
-                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
+                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).FirstOrDefault();
                 }
                 // If the game is an Origin Game
                 else if (_gameLauncher == SupportedGameLibraryType.Origin.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Origin game!");
-                    _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First();
+                    _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).FirstOrDefault();
                 }
                 // If the game is an Epic Game
                 else if (_gameLauncher == SupportedGameLibraryType.Epic.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Epic game!");
-                    _gameToUse.GameToPlay = (from epicGame in EpicLibrary.GetLibrary().AllInstalledGames where epicGame.Id == _gameId select epicGame).First();
+                    _gameToUse.GameToPlay = (from epicGame in EpicLibrary.GetLibrary().AllInstalledGames where epicGame.Id == _gameId select epicGame).FirstOrDefault();
                 }
                 // If the game is an GOG Game
                 else if (_gameLauncher == SupportedGameLibraryType.GOG.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an GOG game!");
-                    _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).First();
+                    _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).FirstOrDefault();
+                }
+                else
+                {
+                    logger.Error($"ShortcutForm/btn_save_Click: Unknown game launcher type '{_gameLauncher}' — cannot resolve game to save.");
+                }
+
+                if (_gameToUse.GameToPlay == null)
+                {
+                    logger.Error($"ShortcutForm/btn_save_Click: Could not find game with ID '{_gameId}' in library '{_gameLauncher}'. The game may have been uninstalled. Aborting save.");
+                    MessageBox.Show(
+                        $"The selected game could not be found in the '{_gameLauncher}' library. It may have been uninstalled since this shortcut was created. Please re-select the game.",
+                        "Game Not Found",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
                 }
 
                 try
@@ -975,6 +987,11 @@ namespace DisplayMagician.UIForms
                     {
                         logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_game.Text}' is still there, and that the file has the correct permissions.");
                         errors.Add("The different game executable you have chosen to monitor does not exist! Please reselect the different game executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
+                    }
+                    else if (!ProcessUtils.IsExecutableFileType(txt_alternative_game.Text))
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable '{txt_alternative_game.Text}' is not a valid executable file type.");
+                        errors.Add("The different game executable you have chosen to monitor is not a valid executable file type. Please select a valid executable (.exe, .com, .bat, .cmd, .ps1, .lnk, .url, .msi) using the Choose button.");
                     }
 
                 }
@@ -3297,15 +3314,23 @@ namespace DisplayMagician.UIForms
                 }
             }
 
+            // Fall back to the existing text or Program Files if the game directory is not found
+            if (string.IsNullOrWhiteSpace(gamePath))
+            {
+                if (!string.IsNullOrWhiteSpace(txt_alternative_game.Text) && File.Exists(txt_alternative_game.Text))
+                    gamePath = Path.GetDirectoryName(txt_alternative_game.Text);
+                else
+                    gamePath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            }
+
             dialog_open.InitialDirectory = gamePath;
             dialog_open.DefaultExt = "*.exe";
-            dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
+            dialog_open.Filter = "Executable files (*.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url) | *.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url | All files(*.*) | *.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                string fileExt = Path.GetExtension(dialog_open.FileName);
-                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com"))
+                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_alternative_game.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -3583,9 +3608,16 @@ namespace DisplayMagician.UIForms
                     _gameLauncher = game.GameLibraryType.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = game.Id;
-                    _availableImages = game.AvailableGameBitmaps;
-                    _shortcutToEdit.AvailableImages = game.AvailableGameBitmaps;
-                    _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                    _availableImages = game.AvailableGameBitmaps ?? new List<ShortcutBitmap>();
+                    _shortcutToEdit.AvailableImages = _availableImages;
+                    _selectedImage = _availableImages.Count > 0
+                        ? ImageUtils.GetMeLargestAvailableBitmap(_availableImages)
+                        : ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExePath);
+                    if (_selectedImage.Image == null)
+                    {
+                        logger.Warn($"ShortcutForm/ilv_games_ItemClick: No image resolved for game '{game.Name}'; using default exe icon.");
+                        _selectedImage = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExePath);
+                    }
                     _shortcutToEdit.SelectedImage = _selectedImage;
                     txt_game_name.Text = game.Name;
                     pb_game_icon.Image = _selectedImage.Image;

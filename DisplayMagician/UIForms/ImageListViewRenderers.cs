@@ -390,6 +390,7 @@ namespace DisplayMagician.UIForms
     public class GameILVRenderer : ImageListView.ImageListViewRenderer
 #pragma warning restore CS3009 // Base type is not CLS-compliant
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         // Returns item size for the given view mode.
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
         public override Size MeasureItem(Manina.Windows.Forms.View view)
@@ -469,13 +470,41 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
+                bool gameFound = false;
                 foreach (Game gameToTest in GameLibrary.AllInstalledGamesInAllLibraries)
                 {
                     if (gameToTest.Name.Equals(item.Text))
                     {
-                        // Draw the full color image as the shortcuts is not invalid
                         g.DrawImage(img, pos);
+                        gameFound = true;
                         break;
+                    }
+                }
+
+                if (!gameFound)
+                {
+                    // Game is no longer installed; draw with a greyed-out appearance as a fallback
+                    try
+                    {
+                        using (ImageAttributes ia = new ImageAttributes())
+                        {
+                            float[][] colorMatrixElements =
+                            {
+                                new float[] { 0.3f, 0.3f, 0.3f, 0, 0 },
+                                new float[] { 0.59f, 0.59f, 0.59f, 0, 0 },
+                                new float[] { 0.11f, 0.11f, 0.11f, 0, 0 },
+                                new float[] { 0, 0, 0, 0.6f, 0 },
+                                new float[] { 0, 0, 0, 0, 1 }
+                            };
+                            ia.SetColorMatrix(new ColorMatrix(colorMatrixElements));
+                            g.DrawImage(img, pos, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, ia);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"GameILVRenderer/DrawItem: Failed to draw greyed image for uninstalled game '{item.Text}'; falling back to default icon.");
+                        try { g.DrawImage(Properties.Resources.exe, pos); }
+                        catch (Exception ex2) { logger.Error(ex2, $"GameILVRenderer/DrawItem: Failed to draw fallback icon for '{item.Text}'."); }
                     }
                 }
 

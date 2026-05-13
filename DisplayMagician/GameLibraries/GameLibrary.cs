@@ -389,7 +389,7 @@ namespace DisplayMagician.GameLibraries
             }
             else
             {
-                logger.Info($"GameLibrary/GetGameById: Didn't find App {gameToUse.Name} from ID {gameId}");
+                logger.Info($"GameLibrary/GetGameById: Didn't find App with ID {gameId}");
                 return gameToUse;
             }
         }
