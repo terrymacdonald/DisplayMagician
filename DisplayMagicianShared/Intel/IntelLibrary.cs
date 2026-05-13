@@ -1140,12 +1140,18 @@ namespace DisplayMagicianShared.Intel
 
                         // Set basic info                     
                         newDisplay.DisplayProperties = displayProperties;
-                        // Derive connector type gating booleans. DP and HDMI support the full IGCL feature set;
-                        // other types (DVI, CRT/VGA, MIPI internal panel, INVALID) do not.
+                        // Derive connector type gating booleans.
+                        // isDisplayPort / isHdmi gate protocol-specific features (Arc Sync = DP/HDMI VRR, HDMI quality, etc.).
+                        // isMipi covers the internal laptop panel (MIPI-DSI/eDP via IGCL).
+                        // isDigitalWithProtocol covers all digital outputs that support colour/feature APIs:
+                        //   DP, HDMI, MIPI (internal panel), and DVI.
+                        // CRT and INVALID are the only types excluded.
                         bool isDisplayPort        = displayProperties.Type == ctl_display_output_types_t.CTL_DISPLAY_OUTPUT_TYPES_DISPLAYPORT;
                         bool isHdmi               = displayProperties.Type == ctl_display_output_types_t.CTL_DISPLAY_OUTPUT_TYPES_HDMI;
-                        bool isDigitalWithProtocol = isDisplayPort || isHdmi;
-                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Display {logDisplayId} output type is {displayProperties.Type}. isDisplayPort={isDisplayPort}, isHdmi={isHdmi}, isDigitalWithProtocol={isDigitalWithProtocol}.");
+                        bool isMipi               = displayProperties.Type == ctl_display_output_types_t.CTL_DISPLAY_OUTPUT_TYPES_MIPI;
+                        bool isDvi                = displayProperties.Type == ctl_display_output_types_t.CTL_DISPLAY_OUTPUT_TYPES_DVI;
+                        bool isDigitalWithProtocol = isDisplayPort || isHdmi || isMipi || isDvi;
+                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Display {logDisplayId} output type is {displayProperties.Type}. isDisplayPort={isDisplayPort}, isHdmi={isHdmi}, isMipi={isMipi}, isDvi={isDvi}, isDigitalWithProtocol={isDigitalWithProtocol}.");
                         // make up a adapter DeviceID that includes the PCI device and subsystem IDs that we can match on.
                         newDisplay.DeviceID = adapterDeviceID;
                         
