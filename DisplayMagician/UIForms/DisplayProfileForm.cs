@@ -489,7 +489,7 @@ namespace DisplayMagician.UIForms
             foreach (ProfileItem savedProfile in ProfileRepository.AllProfiles)
             {
                 //if (String.Equals(txt_profile_save_name.Text, savedProfile.Name, StringComparison.InvariantCultureIgnoreCase))
-                if (savedProfile.Name.Equals(txt_profile_save_name.Text))
+                if (savedProfile.Name.Equals(txt_profile_save_name.Text, StringComparison.OrdinalIgnoreCase))
                 {
                     logger.Warn($"DisplayProfileForm/btn_save_as_Click: The profile name {txt_profile_save_name.Text} already exists. Each profile name must be unique. Unable to save this profile.");
                     MessageBox.Show("Sorry, each saved display profile needs a unique name. Please change the profile name.", "Profile name already exists", MessageBoxButtons.OK, MessageBoxIcon.Error);

@@ -696,6 +696,7 @@ namespace DisplayMagicianShared
                 return false;
             }
 
+            string oldProfileName = profile.Name;
             profile.Name = GetValidFilename(renamedName);
 
             IsPossibleRefresh();
@@ -706,12 +707,12 @@ namespace DisplayMagicianShared
             {
                 // Save the Profiles JSON as it's different now
                 SaveProfiles();
-                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was successfully renamed from {profile.Name} to {renamedName}");
+                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was successfully renamed from {oldProfileName} to {renamedName}");
                 return true;
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {profile.Name} to {renamedName}");
+                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {oldProfileName} to {renamedName}");
                 return false;
             }
         }
@@ -774,7 +775,7 @@ namespace DisplayMagicianShared
 
             if (profile == null)
             {
-                SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is null. Not changing anything, and reporting an error");
+                SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The requested profile is null. Not changing anything, and reporting an error");
                 return false;
             }
 
@@ -917,7 +918,7 @@ namespace DisplayMagicianShared
                         catch (JsonReaderException nex)
                         {
                             // If there is a error in the JSON format
-                            if (ex.HResult == -2146233088)
+                            if (nex.HResult == -2146233088)
                             {
                                 SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
@@ -940,7 +941,7 @@ namespace DisplayMagicianShared
                     {
                         foreach (string jsonError in jsonErrors)
                         {
-                            SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: {jsonErrors}");
+                            SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: {jsonError}");
                         }
                     }
 
@@ -1188,7 +1189,7 @@ namespace DisplayMagicianShared
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFullFileName}.");
-                SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException.Source}:{ex.InnerException.StackTrace} - {ex.InnerException.Message}\"");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException?.Source}:{ex.InnerException?.StackTrace} - {ex.InnerException?.Message}\"");
                 return false;
             }
         }
@@ -1611,11 +1612,11 @@ namespace DisplayMagicianShared
                 {
                     if (Wallpaper.Set(profile.WallpaperBitmapFilename, profile.WallpaperStyle))
                     {
-                        SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it worked!");
+                        SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.WallpaperBitmapFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it worked!");
                     }
                     else
                     {
-                        SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it failed :(");
+                        SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.WallpaperBitmapFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it failed :(");
                     }
                 }
                 else if (profile.WallpaperMode.Equals(Wallpaper.Mode.Clear))

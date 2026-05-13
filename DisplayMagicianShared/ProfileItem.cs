@@ -926,11 +926,11 @@ namespace DisplayMagicianShared
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforNVIDIA)
                     {
-                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {Name} were sucessfully applied.");
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name} were sucessfully applied.");
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The NVIDIA display settings within {Name} were NOT applied successfully.");
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name} were NOT applied successfully.");
                         errorApplyingSomething = true;
                     }
                 }
@@ -976,7 +976,7 @@ namespace DisplayMagicianShared
                 }
                 else
                 {
-                    Console.WriteLine($"Skipping Intel Settings as they are not used in {Name}.");
+                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping Intel Settings as they are not used in {Name}.");
                 }
 
                 // If any AMD, NVIDIA or Intel settings were applied, then we need to update our windows layout to make sure it
@@ -987,7 +987,7 @@ namespace DisplayMagicianShared
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                                              // if other changes were made, then ets update the screens so Windows knows whats happening
                                              // NVIDIA and AMD make such large changes to the available screens in windows, we need to do this.
-                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: NVIDIA, AMD or Intel display settings within {Name} were applied successfully, so updating Windows Active Config so it knows of the changes made.");
+                    SharedLogger.logger.Trace($"ProfileItem/SetActive: NVIDIA, AMD or Intel display settings within {Name} were applied successfully, so updating Windows Active Config so it knows of the changes made.");
                     winLibrary.UpdateActiveConfig();
                 }
 
@@ -999,13 +999,13 @@ namespace DisplayMagicianShared
                 Thread.Sleep(delayInMs);
                 if (itWorkedforWindows)
                 {
-                    SharedLogger.logger.Trace($"VideoInfo/loadFromFile: The Windows CCD display settings within {Name} were applied correctly, so now attempting to apply any overrides.");
+                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within {Name} were applied correctly, so now attempting to apply any overrides.");
 
                     if (applyNVIDIASettings)
                     {
                         if (itWorkedforNVIDIA)
                         {
-                            Console.Write($"Attempting to apply 2nd part of the NVIDIA display config from {Name}...");
+                            SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply 2nd part of the NVIDIA display config from {Name}...");
                             itWorkedforNVIDIAOverride = nvidiaLibrary.SetActiveConfigOverride(_nvidiaDisplayConfig, delayInMs);
                             Thread.Sleep(delayInMs);
                             if (itWorkedforNVIDIAOverride)
@@ -2155,7 +2155,7 @@ namespace DisplayMagicianShared
 
                     // Set a default
                     screenToLocate.TaskbarPosition = TaskbarPosition.Bottom;
-                    
+
                     // find which taskbar is in this window
                     foreach ((Rect taskbarRectangle, TaskbarPosition taskbarPosition) in _windowsDisplayConfig.TaskbarPositions)
                     {
@@ -2169,6 +2169,9 @@ namespace DisplayMagicianShared
                             break;
                         }
                     }
+
+                    // Write the (possibly modified) struct back into the list
+                    screensToLocate[i] = screenToLocate;
                 }
                 return true;
             }
