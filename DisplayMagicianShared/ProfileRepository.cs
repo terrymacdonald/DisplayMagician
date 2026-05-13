@@ -766,16 +766,16 @@ namespace DisplayMagicianShared
 
         public static bool IsActiveProfile(ProfileItem profile)
         {
-            SharedLogger.logger.Trace($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
-            if (_currentProfile == null)
-            {
-                SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The current profile {profile.Name} is null, so can't test it against anything.");
-                return false;
-            }
-
             if (profile == null)
             {
                 SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The requested profile is null. Not changing anything, and reporting an error");
+                return false;
+            }
+
+            SharedLogger.logger.Trace($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
+            if (_currentProfile == null)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The current profile is null, so can't test it against anything.");
                 return false;
             }
 
@@ -867,6 +867,7 @@ namespace DisplayMagicianShared
                         {
                             WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
                             WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                            profile.WindowsDisplayConfig = winProfile;
                         }
 
                     }
@@ -912,6 +913,7 @@ namespace DisplayMagicianShared
                             {
                                 WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
                                 WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                                profile.WindowsDisplayConfig = winProfile;
                             }
 
                         }
@@ -1247,6 +1249,7 @@ namespace DisplayMagicianShared
                             {
                                 WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
                                 WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                                profile.WindowsDisplayConfig = winProfile;
                             }
 
                         }

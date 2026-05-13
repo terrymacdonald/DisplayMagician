@@ -809,7 +809,7 @@ namespace DisplayMagician.UIForms
 
         private void saveProfileToDesktopToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            btn_save.PerformClick();
+            Save_Click(sender, e);
         }
 
         private void applyToolStripMenuItem_Click(object sender, EventArgs e)
@@ -860,7 +860,7 @@ namespace DisplayMagician.UIForms
                 // Check there is a name
                 if (String.IsNullOrWhiteSpace(txt_profile_save_name.Text))
                 {
-                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: You need to provide a name for this profile before it can be updated.");
+                    logger.Warn($"DisplayProfileForm/btn_update_Click: You need to provide a name for this profile before it can be updated.");
                     MessageBox.Show("You need to provide a name for this profile before it can be updated.", "Your profile needs a name", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
