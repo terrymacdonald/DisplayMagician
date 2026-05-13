@@ -882,14 +882,22 @@ namespace DisplayMagicianShared.Windows
                 // Get the Windows Scaling DPI per display
                 DPIScalingInfo sourceDPIScalingInfo = GetDPISettings(paths[i].SourceInfo.AdapterId, paths[i].SourceInfo.Id, paths[i].TargetInfo.Id);
 
-                // Derive connector type gating booleans using positive allow-listing.
-                // Only DISPLAYPORT and HDMI connections support advanced colour / HDR / SDR white level queries.
-                // The old block-list missed LVDS, SDI, Miracast, INDIRECT_VIRTUAL (NV Surround), UDI, and OTHER;
-                // positive gating is safe-by-default and handles all edge cases automatically.
-                bool isDisplayPort        = paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EXTERNAL ||
-                                            paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED;
-                bool isHdmi               = paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HDMI;
-                bool isDigitalWithProtocol = isDisplayPort || isHdmi;
+                // Derive connector type gating booleans using a block-list of analogue/legacy connectors.
+                // DisplayConfigGetDeviceInfo(GET_ADVANCED_COLOR_INFO) works on any digital path including
+                // internal/eDP panels (DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL), embedded DisplayPort,
+                // HDMI, DVI, UDI, Miracast, and indirect virtual displays.
+                // We only skip the query for connectors that are inherently analogue and have never
+                // supported colour-space communication: VGA/HD15, S-Video, composite, component, D-JPN, SDI,
+                // SDTV dongle, and LVDS (old analogue flat-panel signalling).
+                bool isAnalogueConnector = paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HD15 ||
+                                           paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SVIDEO ||
+                                           paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPOSITE_VIDEO ||
+                                           paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPONENT_VIDEO ||
+                                           paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_D_JPN ||
+                                           paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SDI ||
+                                           paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SDTVDONGLE ||
+                                           paths[i].TargetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_LVDS;
+                bool isDigitalWithProtocol = !isAnalogueConnector;
 
                 // get display source name
                 var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();

@@ -182,7 +182,15 @@ namespace DisplayMagicianShared.UserControls
                     str = $"({screen.AdapterName}){Environment.NewLine}";
                 }
                 str += $"{screen.Name}{Environment.NewLine}";
-                str += $"{screen.ScreenWidth}×{ screen.ScreenHeight}{ Environment.NewLine}{ screen.DisplayConnector}";
+                // Resolution with optional refresh rate
+                if (screen.RefreshRateHz > 0)
+                    str += $"{screen.ScreenWidth}×{screen.ScreenHeight} @ {screen.RefreshRateHz:0.###}hz{Environment.NewLine}";
+                else
+                    str += $"{screen.ScreenWidth}×{screen.ScreenHeight}{Environment.NewLine}";
+                // Colour encoding / depth
+                if (!string.IsNullOrEmpty(screen.ColorEncoding) && screen.BitsPerColorChannel > 0)
+                    str += $"{screen.ColorEncoding} {screen.BitsPerColorChannel * 3}-bit{Environment.NewLine}";
+                str += screen.DisplayConnector;
                 if (screen.IsClone)
                 {
                     str += $"(+{screen.ClonedCopies-1} Clone)";

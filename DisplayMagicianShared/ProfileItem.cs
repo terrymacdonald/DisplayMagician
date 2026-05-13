@@ -52,6 +52,9 @@ namespace DisplayMagicianShared
         public List<string> Features;
         public TaskbarPosition TaskbarPosition;
         public ScreenRotation Rotation;
+        public double RefreshRateHz;
+        public string ColorEncoding;
+        public int BitsPerColorChannel;
 
         public override bool Equals(object obj) => obj is ScreenPosition other && this.Equals(other);
         public bool Equals(ScreenPosition other)
@@ -1234,6 +1237,16 @@ namespace DisplayMagicianShared
             return allScreens;
         }        
 
+        private static string FormatColorEncoding(DISPLAYCONFIG_COLOR_ENCODING encoding) => encoding switch
+        {
+            DISPLAYCONFIG_COLOR_ENCODING.DISPLAYCONFIG_COLOR_ENCODING_RGB      => "RGB",
+            DISPLAYCONFIG_COLOR_ENCODING.DISPLAYCONFIG_COLOR_ENCODING_YCBCR444 => "YCbCr444",
+            DISPLAYCONFIG_COLOR_ENCODING.DISPLAYCONFIG_COLOR_ENCODING_YCBCR422 => "YCbCr422",
+            DISPLAYCONFIG_COLOR_ENCODING.DISPLAYCONFIG_COLOR_ENCODING_YCBCR420 => "YCbCr420",
+            DISPLAYCONFIG_COLOR_ENCODING.DISPLAYCONFIG_COLOR_ENCODING_INTENSITY => "Intensity",
+            _ => encoding.ToString(),
+        };
+
         private List<ScreenPosition> GetNVIDIAScreenPositions()
         {
             // If NVIDIA is not installed or not in use, then we can't get the screen positions so return an empty list
@@ -1586,6 +1599,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception within GetNVIDIAScreenPositions function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
+            PopulateWindowsMetadata(_screens);
             return _screens;
         }
 
@@ -1793,6 +1807,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error(ex, $"ProfileItem/GetAMDScreenPositions: Exception within GetAMDScreenPositions function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
+            PopulateWindowsMetadata(_screens);
             return _screens;
         }
 
@@ -1982,6 +1997,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error(ex, $"ProfileItem/GetIntelScreenPositions: Exception within GetIntelScreenPositions function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
+            PopulateWindowsMetadata(_screens);
             return _screens;
         }
 
@@ -2139,7 +2155,89 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception within GetWindowsScreenPositions function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
+            PopulateWindowsMetadata(windowsScreens);
             return windowsScreens;
+        }
+
+        /// <summary>
+        /// Fills RefreshRateHz, ColorEncoding, and BitsPerColorChannel on each ScreenPosition
+        /// by matching its X/Y origin against the Windows display config paths.
+        /// </summary>
+        private void PopulateWindowsMetadata(List<ScreenPosition> screens)
+        {
+            try
+            {
+                // Build a lookup: source position -> (refreshRate, targetId) from Windows paths + modes
+                // Step 1: map each source mode to its position
+                var sourcePosById = new Dictionary<(ulong adapterId, uint sourceId), (int x, int y)>();
+                foreach (var mode in _windowsDisplayConfig.DisplayConfigModes)
+                {
+                    if (mode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
+                    {
+                        sourcePosById[(mode.AdapterId.Value, mode.Id)] = (mode.SourceMode.Position.X, mode.SourceMode.Position.Y);
+                    }
+                }
+
+                // Step 2: map (adapterId, targetId) -> HDR/color info
+                var colorByTarget = new Dictionary<(ulong adapterId, uint targetId), DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
+                foreach (var hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                {
+                    // We don't have the adapterId on ADVANCED_HDR_INFO_PER_PATH.Id directly; use path to find it
+                    colorByTarget[(hdrInfo.AdapterId.Value, hdrInfo.Id)] = hdrInfo.AdvancedColorInfo;
+                }
+
+                // Step 3: for each path, determine the screen position and record refresh rate + target id
+                var posToRefreshRate = new Dictionary<(int x, int y), double>();
+                var posToColor = new Dictionary<(int x, int y), (string encoding, int bpc)>();
+
+                foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
+                {
+                    ulong sourceAdapterId = path.SourceInfo.AdapterId.Value;
+                    ulong targetAdapterId = path.TargetInfo.AdapterId.Value;
+                    uint sourceId = path.SourceInfo.Id;
+                    uint targetId = path.TargetInfo.Id;
+
+                    if (!sourcePosById.TryGetValue((sourceAdapterId, sourceId), out var pos))
+                        continue;
+
+                    // Refresh rate
+                    if (path.TargetInfo.RefreshRate.Denominator > 0)
+                    {
+                        double hz = (double)path.TargetInfo.RefreshRate.Numerator / path.TargetInfo.RefreshRate.Denominator;
+                        posToRefreshRate[(pos.x, pos.y)] = hz;
+                    }
+
+                    // Color encoding & bpc — keyed by target adapter + target id (matches how WinLibrary stores HDR states)
+                    if (colorByTarget.TryGetValue((targetAdapterId, targetId), out var colorInfo))
+                    {
+                        string enc = FormatColorEncoding(colorInfo.ColorEncoding);
+                        int bpc = (int)colorInfo.BitsPerColorChannel;
+                        posToColor[(pos.x, pos.y)] = (enc, bpc);
+                    }
+                }
+
+                // Step 4: apply to the screen list
+                for (int i = 0; i < screens.Count; i++)
+                {
+                    var screen = screens[i];
+                    var key = (screen.ScreenX, screen.ScreenY);
+
+                    if (posToRefreshRate.TryGetValue(key, out double refreshHz))
+                        screen.RefreshRateHz = refreshHz;
+
+                    if (posToColor.TryGetValue(key, out var color))
+                    {
+                        screen.ColorEncoding = color.encoding;
+                        screen.BitsPerColorChannel = color.bpc;
+                    }
+
+                    screens[i] = screen;
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"ProfileItem/PopulateWindowsMetadata: Exception populating Windows metadata - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+            }
         }
 
         private bool GetTaskbarLocations(ref List<ScreenPosition> screensToLocate)
@@ -2148,7 +2246,7 @@ namespace DisplayMagicianShared
             // We're going to use the taskbar rectangle to figure out which screen its on, so we can do this with any screen position
             try
             {
-                
+
                 for (int i = 0; i < screensToLocate.Count; i++)
                 {
                     var screenToLocate = screensToLocate[i];
