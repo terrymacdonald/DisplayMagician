@@ -655,7 +655,7 @@ namespace DisplayMagician.UIForms
             if (e.KeyCode.Equals(Keys.Enter))
             {
                 //MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                btn_save.PerformClick();                
+                btn_save_or_rename.PerformClick();                
             }
         }
 

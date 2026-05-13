@@ -450,8 +450,10 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile3: Removing profile wih profileId {profileId} if it exists in our profile repository");
 
+            string profileIdStr = profileId.ToString();
+
             // Remove the Profile Icons from the Cache
-            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profileId));
+            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profileIdStr));
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
                 // Attempt to delete the icon
@@ -509,7 +511,7 @@ namespace DisplayMagicianShared
             }
 
             // Remove the Profile from the list.
-            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profileId));
+            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profileIdStr));
 
             if (numRemoved == 1)
             {
@@ -851,12 +853,13 @@ namespace DisplayMagicianShared
                         };
 
                         ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
-                        _allProfiles = profileFile.Profiles;
 
                         if (profileFile.Profiles == null)
                         {
                             throw new Exception("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
                         }
+
+                        _allProfiles = profileFile.Profiles;
 
                         // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                         foreach (ProfileItem profile in _allProfiles)
@@ -1133,7 +1136,7 @@ namespace DisplayMagicianShared
                 {
                     foreach (string jsonError in jsonErrors)
                     {
-                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: {jsonErrors}");
+                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: {jsonError}");
                     }
 
                     SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: JSON data: {json}");
@@ -1270,7 +1273,7 @@ namespace DisplayMagicianShared
                         {
                             foreach (string jsonError in jsonErrors)
                             {
-                                SharedLogger.logger.Error($"ProfileRepository/ValidateProfiles: {jsonErrors}");
+                                SharedLogger.logger.Error($"ProfileRepository/ValidateProfiles: {jsonError}");
                             }
                         }
 
@@ -1280,7 +1283,7 @@ namespace DisplayMagicianShared
                         //_allProfiles.Sort();
 
                         // Actually perform the validation
-                        if (profilesToValidate.SequenceEqual(profilesToValidate))
+                        if (profilesToValidate.SequenceEqual(_allProfiles))
                         {
                             return true;
                         }
@@ -1528,14 +1531,14 @@ namespace DisplayMagicianShared
             Regex regInvalidFileName = new Regex("[" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
 
             if (regInvalidFileName.IsMatch(testName)) {
-                SharedLogger.logger.Trace($"ProfileRepository/IsValidFilename: {testName} is a valid filename");
+                SharedLogger.logger.Trace($"ProfileRepository/IsValidFilename: {testName} isn't a valid filename as it contains one of these characters [" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
                 return false;
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsValidFilename: {testName} isn't a valid filename as it contains one of these characters [" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
+                SharedLogger.logger.Debug($"ProfileRepository/IsValidFilename: {testName} is a valid filename");
                 return true;
-            }            
+            }
         }
 
         public static string GetValidFilename(string uncheckedFilename)

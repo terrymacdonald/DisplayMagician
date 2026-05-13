@@ -482,7 +482,7 @@ namespace DisplayMagicianShared
         }
 
         // The setting that controls whether or not we force a restart of the explorer process to restore missing windows taskbars
-        [DefaultValue(0)]
+        [DefaultValue(false)]
         public bool ForceExplorerRestart
         {
             get
@@ -875,7 +875,7 @@ namespace DisplayMagicianShared
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display settings as the NVIDIA settings are not in use in this display profile.");
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying AMD display settings as the AMD settings are not in use in this display profile.");
                     }
 
                 }
@@ -1209,7 +1209,7 @@ namespace DisplayMagicianShared
                 for (int i = 0; i < allScreens.Count; i++)
                 {
                     ScreenPosition screen = allScreens[i];
-                    
+
                     foreach (var taskbarPosition in _windowsDisplayConfig.TaskbarPositions)
                     {
                         if (screen.ScreenX == taskbarPosition.Key.Left &&
@@ -1222,6 +1222,7 @@ namespace DisplayMagicianShared
                         }
 
                     }
+                    allScreens[i] = screen;
                 }
 
             }
@@ -2263,7 +2264,7 @@ namespace DisplayMagicianShared
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             // If different types then can't be true
-            if (obj.GetType() == this.GetType()) return false;
+            if (obj.GetType() != this.GetType()) return false;
             if (!(obj is ProfileItem)) return false;
             // Check the object fields as this must the same object as obj, and we need to test in more detail
             return Equals((ProfileItem) obj);
