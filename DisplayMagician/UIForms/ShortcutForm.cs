@@ -1467,12 +1467,15 @@ namespace DisplayMagician.UIForms
 
                 _profileToUse = chosenProfile;
                 // Also need to select the chosenProfile in the UI so it gets saved properly
-                foreach (var item in ilv_saved_profiles.Items)
+                if (chosenProfile != null)
                 {
-                    if (item.Text == chosenProfile.Name)
+                    foreach (var item in ilv_saved_profiles.Items)
                     {
-                        item.Selected = true;
-                        break;
+                        if (item.Text == chosenProfile.Name)
+                        {
+                            item.Selected = true;
+                            break;
+                        }
                     }
                 }
 
@@ -2413,9 +2416,11 @@ namespace DisplayMagician.UIForms
                     _gameLauncher = _selectedGame.GameLibraryType.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = _selectedGame.Id;
-                    _availableImages = _selectedGame.AvailableGameBitmaps;
-                    _shortcutToEdit.AvailableImages = _selectedGame.AvailableGameBitmaps;
-                    _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                    _availableImages = _selectedGame.AvailableGameBitmaps ?? new List<ShortcutBitmap>();
+                    _shortcutToEdit.AvailableImages = _availableImages;
+                    _selectedImage = _availableImages.Count > 0
+                        ? ImageUtils.GetMeLargestAvailableBitmap(_availableImages)
+                        : new ShortcutBitmap();
                     _shortcutToEdit.SelectedImage = _selectedImage;
                     txt_game_name.Text = _selectedGame.Name;
                     pb_game_icon.Image = _selectedImage.Image;
@@ -2506,7 +2511,7 @@ namespace DisplayMagician.UIForms
         private void btn_choose_alternative_executable_Click(object sender, EventArgs e)
         {
             // _executableToUse is only populated after Save; fall back to the textbox or ProgramFiles
-            string initialDir = Environment.SpecialFolder.ProgramFiles.ToString();
+            string initialDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             if (!String.IsNullOrWhiteSpace(txt_executable.Text) && File.Exists(txt_executable.Text))
                 initialDir = Path.GetDirectoryName(txt_executable.Text);
             else if (!String.IsNullOrWhiteSpace(_executableToUse.ExecutableNameAndPath))
@@ -2887,7 +2892,7 @@ namespace DisplayMagician.UIForms
 
         private string getExeFile()
         {
-            dialog_open.InitialDirectory = Environment.SpecialFolder.ProgramFiles.ToString();
+            dialog_open.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             dialog_open.DefaultExt = "*.exe";
             dialog_open.Filter = "Executable files (*.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url) | *.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url | All files(*.*) | *.*";
             string textToReturn = "";
@@ -2960,6 +2965,9 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
 
+            if (audioController == null)
+                return;
+
             // Populate all the Audio devices in the audio devices list.
             // Set the Audio device to the shortcut audio device only if 
             // the Change Audio radiobutton is set
@@ -2999,6 +3007,9 @@ namespace DisplayMagician.UIForms
 
         private void btn_rescan_audio_Click(object sender, EventArgs e)
         {
+            if (audioController == null)
+                return;
+
             // Populate all the Audio devices in the audio devices list.
             // Set the Audio device to the shortcut audio device only if 
             // the Change Audio radiobutton is set
@@ -3079,7 +3090,7 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            if (rb_set_audio_volume.Checked)
+            if (rb_keep_audio_volume.Checked)
                 nud_audio_volume.Enabled = false;
         }
 
@@ -3093,6 +3104,9 @@ namespace DisplayMagician.UIForms
 
         private void btn_rescan_capture_Click(object sender, EventArgs e)
         {
+            if (audioController == null)
+                return;
+
             // Populate all the Capture devices in the capture devices list.
             // Set the capture  device to the shortcut capture  device only if 
             // the Change capture  radiobutton is set
@@ -3174,6 +3188,9 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
 
+            if (audioController == null)
+                return;
+
             // Populate all the Capture devices in the capture devices list.
             // Set the Capture device to the shortcut capture device only if 
             // the Change Capture radiobutton is set
@@ -3236,7 +3253,7 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            if (rb_set_capture_volume.Checked)
+            if (rb_keep_capture_volume.Checked)
             {
                 nud_capture_volume.Enabled = false;
             }
