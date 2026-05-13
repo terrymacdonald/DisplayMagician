@@ -887,8 +887,7 @@ namespace DisplayMagician.UIForms
                             logger.Error($"ShortcutForm/AllowedToSave: The user asked to wait for an alternative executable as part of an executable shortcut, but failed to provide one!");
                             errors.Add("If you have chosen to monitor an alternative executable when this Executable shortcut is run, then you need to select that alternative executable using the Choose button or paste in a valid path into the alternative executable textbox. If you didn't want to monitor an alternative executable then please select the 'Wait until the executable above is closed before continuing' option instead.");
                         }
-
-                        if (!File.Exists(txt_alternative_executable.Text))
+                        else if (!File.Exists(txt_alternative_executable.Text))
                         {
                             logger.Error($"ShortcutForm/AllowedToSave: The alternative executable the user wants to monitor as part of an executable shortcut doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
                             errors.Add("The alternative executable you have chosen does not exist! Please reselect the alternative executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
@@ -935,8 +934,7 @@ namespace DisplayMagician.UIForms
                             logger.Error($"ShortcutForm/AllowedToSave: The user asked to wait for an alternative executable as part of an application shortcut, but failed to provide one!");
                             errors.Add("If you have chosen to monitor an alternative executable when this Application shortcut is run, then you need to select that alternative executable using the Choose button or paste in a valid path into the alternative executable textbox. If you didn't want to monitor an alternative executable then please select the 'Wait until the executable above is closed before continuing' option instead.");
                         }
-
-                        if (!File.Exists(txt_alternative_executable.Text))
+                        else if (!File.Exists(txt_alternative_executable.Text))
                         {
                             logger.Error($"ShortcutForm/AllowedToSave: The alternative executable the user wants to monitor as part of an application shortcut doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
                             errors.Add("The alternative executable you have chosen does not exist! Please reselect the alternative executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
@@ -999,16 +997,13 @@ namespace DisplayMagician.UIForms
             }
 
             // Look for any start programs without an exe
-            if (_shortcutToEdit.StartPrograms.Count > 0)
+            foreach (StartProgramControl spControl in flp_start_programs.Controls)
             {
-                List<StartProgram> startProgramsToStartWithoutExe = _shortcutToEdit.StartPrograms.Where(program => program.Executable == null).ToList();
-                if (startProgramsToStartWithoutExe.Count > 0)
+                if (String.IsNullOrWhiteSpace(spControl.StartProgram.Executable))
                 {
-                    foreach (StartProgram myStartProgram in startProgramsToStartWithoutExe)
-                    {
-                        logger.Error($"ShortcutForm/AllowedToSave: The start program at position #{myStartProgram.Priority} doesn't have an executable listed");
-                        errors.Add($"The start program executable at position #{myStartProgram.Priority} doesn't have an executable listed. Please either add a valid path to an executable, or remove the start program from the list.");
-                    }
+                    int priority = flp_start_programs.Controls.GetChildIndex(spControl) + 1;
+                    logger.Error($"ShortcutForm/AllowedToSave: The start program at position #{priority} doesn't have an executable listed");
+                    errors.Add($"The start program executable at position #{priority} doesn't have an executable listed. Please either add a valid path to an executable, or remove the start program from the list.");
                 }
             }
 
@@ -1124,6 +1119,8 @@ namespace DisplayMagician.UIForms
             _setCaptureVolume = false;
             _captureVolume = -1;
             _selectedGame = null;
+            _selectedApp = null;
+            _selectedAppId = "";
             _isUnsaved = true;
             _loadedShortcut = false;
             _autoName = true;
@@ -2357,7 +2354,7 @@ namespace DisplayMagician.UIForms
                 if (_loadedShortcut)
                     _isUnsaved = true;
 
-                if (_shortcutToEdit.Category == ShortcutCategory.Application)
+                if (_shortcutCategory == ShortcutCategory.Application)
                 {
                     _shortcutCategory = ShortcutCategory.Application;
                 }
@@ -3719,6 +3716,8 @@ namespace DisplayMagician.UIForms
 
         private void cb_run_cmd_afterwards_CheckedChanged(object sender, EventArgs e)
         {
+            if (_loadedShortcut)
+                _isUnsaved = true;
             if (cb_run_cmd_afterwards.Checked)
             {
                 txt_run_cmd_afterwards.Enabled = true;
