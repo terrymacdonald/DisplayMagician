@@ -1,15 +1,10 @@
 <#
 .SYNOPSIS
-    Builds the full DisplayMagician installer chain from the command line.
+    Builds the full DisplayMagician solution from the command line.
 
 .DESCRIPTION
-    Runs in order:
-      1. Build + pack the sparse MSIX identity package (DisplayMagicianIdentityPkg)
-      2. Build + publish the app and create the MSI (DisplayMagicianPackage)
-      3. Build the Burn bootstrapper (DisplayMagicianBundle)
-
-    Mirrors what Visual Studio does when you build the solution with project
-    dependencies configured.
+    Builds the entire DisplayMagician.sln using MSBuild, which respects the
+    project dependency order defined in the solution file.
 
 .PARAMETER Configuration
     Debug or Release (default: Debug).
@@ -74,32 +69,21 @@ function Invoke-Step {
 }
 
 # ---------------------------------------------------------------------------
-# 1. Build identity MSIX
+# Clean, restore + build the solution (project order is determined by solution dependencies)
 # ---------------------------------------------------------------------------
-Invoke-Step "Build DisplayMagicianIdentityPkg ($Configuration)" {
-    $proj = Join-Path $root 'DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj'
-    & $msbuild $proj -t:Build -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
+Invoke-Step "Clean DisplayMagician.sln" {
+    $sln = Join-Path $root 'DisplayMagician.sln'
+    & $msbuild $sln -t:Clean -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
 }
 
-# ---------------------------------------------------------------------------
-# 2. Restore + build the MSI (which publishes the app internally)
-# ---------------------------------------------------------------------------
-Invoke-Step "Restore DisplayMagicianPackage" {
-    $proj = Join-Path $root 'DisplayMagicianPackage\DisplayMagicianPackage.wixproj'
-    & $msbuild $proj -t:Restore -nologo -v:minimal
+Invoke-Step "Restore DisplayMagician.sln" {
+    $sln = Join-Path $root 'DisplayMagician.sln'
+    & $msbuild $sln -t:Restore -nologo -v:minimal
 }
 
-Invoke-Step "Build DisplayMagicianPackage ($Configuration|$Platform)" {
-    $proj = Join-Path $root 'DisplayMagicianPackage\DisplayMagicianPackage.wixproj'
-    & $msbuild $proj -t:Build -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
-}
-
-# ---------------------------------------------------------------------------
-# 3. Build the Burn bootstrapper
-# ---------------------------------------------------------------------------
-Invoke-Step "Build DisplayMagicianBundle ($Configuration|$Platform)" {
-    $proj = Join-Path $root 'DisplayMagicianBundle\DisplayMagicianBundle.wixproj'
-    & $msbuild $proj -t:Build -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
+Invoke-Step "Build DisplayMagician.sln ($Configuration|$Platform)" {
+    $sln = Join-Path $root 'DisplayMagician.sln'
+    & $msbuild $sln -t:Build -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
 }
 
 Write-Host ""
