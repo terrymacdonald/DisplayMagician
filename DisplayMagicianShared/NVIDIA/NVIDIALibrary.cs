@@ -1078,11 +1078,15 @@ namespace DisplayMagicianShared.NVIDIA
         ~NVIDIALibrary()
         {
             SharedLogger.logger.Trace("NVIDIALibrary/~NVIDIALibrary: Destroying NVIDIA NVAPI library interface");
-            // The NVAPI library automatically runs NVAPI_Unload on Exit, so no need for anything here.
+            Dispose(false);
         }
 
         // Public implementation of Dispose pattern callable by consumers.
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)

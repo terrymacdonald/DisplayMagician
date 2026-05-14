@@ -298,7 +298,7 @@ namespace DisplayMagicianShared
             try
             {
                 RestartManagerSession restartManager = new RestartManagerSession();
-                FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
+                FileInfo explorerFileInfo = new FileInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"));
                 restartManager.RegisterProcessFile(explorerFileInfo);
                 restartManager.Shutdown(RestartManagerSession.ShutdownType.Normal);
                 restartManager.Restart();

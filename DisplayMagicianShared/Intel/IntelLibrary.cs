@@ -745,11 +745,15 @@ namespace DisplayMagicianShared.Intel
         ~IntelLibrary()
         {
             SharedLogger.logger.Trace("IntelLibrary/~IntelLibrary: Destroying IGCL Library");
-            Dispose(true);
+            Dispose(false);
         }
 
         // Public implementation of Dispose pattern callable by consumers.
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
@@ -1129,7 +1133,6 @@ namespace DisplayMagicianShared.Intel
                             continue;
                         }
 
-                        displayCount++;
                         SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Processing display {displayCount}/{displayTotalCount} on adapter {adapterNum}");
 
                         // Create display with settings

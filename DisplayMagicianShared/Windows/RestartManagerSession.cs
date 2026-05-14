@@ -298,7 +298,7 @@ namespace DisplayMagicianShared.Windows
             RestartManagerSession restartManager = new RestartManagerSession();
             try
             {                
-                FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
+                FileInfo explorerFileInfo = new FileInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"));
                 restartManager.RegisterProcessFile(explorerFileInfo);
                 restartManager.Shutdown(RestartManagerSession.ShutdownType.ForceShutdown);
                 restartManager.Restart();
@@ -343,7 +343,6 @@ namespace DisplayMagicianShared.Windows
                 {
                     SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ErrorCode = {ex.ErrorCode}.");
                 }
-                restartManager.Restart();
                 restartManager.Dispose();
 
                 return false;

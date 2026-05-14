@@ -817,7 +817,7 @@ namespace DisplayMagicianShared.Windows
                 // Clear the autohide flag
                 abd.lParam &= ~ABS_SETTING.ABS_AUTOHIDE;
             }
-            SHAppBarMessage(ABM_MESSAGE.ABM_GETSTATE, ref abd);
+            SHAppBarMessage(ABM_MESSAGE.ABM_SETSTATE, ref abd);
         }
 
         [DllImport("user32.dll")]

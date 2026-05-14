@@ -53,7 +53,7 @@ namespace DisplayMagicianShared.AMD
             BezelModePercent= 0;
         }
 
-        public override bool Equals(object obj) => obj is AMD_SLS_CONFIG other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_SLSMAP_CONFIG other && this.Equals(other);
 
         public bool Equals(AMD_SLSMAP_CONFIG other)
         => SLSMap == other.SLSMap &&
@@ -1912,7 +1912,11 @@ namespace DisplayMagicianShared.AMD
         }
 
         // Public implementation of Dispose pattern callable by consumers.
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)

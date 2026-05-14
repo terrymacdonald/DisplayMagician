@@ -47,7 +47,7 @@ namespace DisplayMagicianShared
         {
             if (percentageChange <= 0 || percentageChange > 100)
                 return currentSize;
-            float percent = percentageChange / 100;
+            float percent = (float)percentageChange / 100;
             return new Size(Convert.ToInt32(currentSize.Width * percent), Convert.ToInt32(currentSize.Height * percent));
         }
 
