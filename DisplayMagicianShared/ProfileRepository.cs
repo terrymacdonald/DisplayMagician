@@ -62,11 +62,6 @@ namespace DisplayMagicianShared
         private static bool _profilesLoaded = false;
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
-        private static bool notifiedEDIDErrorToUser = false;
-        private static AMDLibrary amdLibrary;
-        private static IntelLibrary intelLibrary;
-        private static NVIDIALibrary nvidiaLibrary;
-        private static WinLibrary winLibrary;
 
         private static bool _userChangingProfiles = false;
 
@@ -885,7 +880,7 @@ namespace DisplayMagicianShared
                         MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         try
                         {
@@ -1663,9 +1658,6 @@ namespace DisplayMagicianShared
         public ProfileRepositoryException() { }
         public ProfileRepositoryException(string message) : base(message) { }
         public ProfileRepositoryException(string message, Exception inner) : base(message, inner) { }
-        protected ProfileRepositoryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 
@@ -1678,8 +1670,6 @@ namespace DisplayMagicianShared
         { }
 
         public ApplyTopologyException(string message, Exception innerException) : base(message, innerException)
-        { }
-        public ApplyTopologyException(SerializationInfo info, StreamingContext context) : base(info, context)
         { }
     }
 }

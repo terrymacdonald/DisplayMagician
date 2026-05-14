@@ -92,10 +92,6 @@ namespace DisplayMagicianShared
 
         private string _uuid = "";
         private bool _isPossible = false;
-        private bool _isNVIDIAPossible = false;
-        private bool _isAMDPossible = false;
-        private bool _isIntelPossible = false;
-        private bool _isWindowsPossible = false;
         private bool _forceExplorerRestart = false;
         private string _wallpaperBitmapFilename = "";
         private int _applyProfileCount = 1;
