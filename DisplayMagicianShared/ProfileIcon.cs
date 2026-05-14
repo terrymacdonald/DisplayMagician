@@ -315,16 +315,21 @@ namespace DisplayMagicianShared
                                 new RectangleF(viewSize.Width * 0.375f + viewSize.X,
                                     viewSize.Height + standPadding / factor,
                                     viewSize.Width / 4, standPadding * 7 / factor), 2 * standPadding / factor))
+                    using (var standBrush = new SolidBrush(Color.FromArgb(250, 50, 50, 50)))
+                    using (var standPen = new Pen(Color.FromArgb(50, 255, 255, 255), 2 / factor))
                     {
-                        g.FillPath(new SolidBrush(Color.FromArgb(250, 50, 50, 50)), boundRect);
-                        g.DrawPath(new Pen(Color.FromArgb(50, 255, 255, 255), 2 / factor), boundRect);
+                        g.FillPath(standBrush, boundRect);
+                        g.DrawPath(standPen, boundRect);
                     }
                 }
                 else
                 {
-                    g.FillRectangle(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), viewSize);
-                    g.DrawRectangle(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), viewSize.X, viewSize.Y,
-                        viewSize.Width, viewSize.Height);
+                    using (var fallbackBrush = new SolidBrush(Color.FromArgb(200, 255, 255, 255)))
+                    using (var fallbackPen = new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor))
+                    {
+                        g.FillRectangle(fallbackBrush, viewSize);
+                        g.DrawRectangle(fallbackPen, viewSize.X, viewSize.Y, viewSize.Width, viewSize.Height);
+                    }
                 }
             }            
 
@@ -337,13 +342,15 @@ namespace DisplayMagicianShared
 
                 // Draw the outline of the monitor
                 outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
+                using (var outlineBrush = new SolidBrush(Color.FromArgb(255, 33, 33, 33)))
+                    g.FillRectangle(outlineBrush, outlineRect);
                 g.DrawRectangle(Pens.Black, outlineRect);
 
                 // Draw the screen of the monitor
                 screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                    
-                g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
+
+                using (var screenBrush = new SolidBrush(screen.Colour))
+                    g.FillRectangle(screenBrush, screenRect);
                 g.DrawRectangle(Pens.Black, screenRect);
 
 
@@ -371,7 +378,8 @@ namespace DisplayMagicianShared
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
                         break;
                 }
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 200, 200, 200)), taskBarRect);
+                using (var taskBarBrush = new SolidBrush(Color.FromArgb(255, 200, 200, 200)))
+                    g.FillRectangle(taskBarBrush, taskBarRect);
             }
         }
 

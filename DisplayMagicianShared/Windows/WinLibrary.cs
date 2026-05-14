@@ -271,10 +271,15 @@ namespace DisplayMagicianShared.Windows
         {
             // The WinLibrary was initialised, but doesn't need to be freed.
             SharedLogger.logger.Trace("WinLibrary/~WinLibrary: Destroying Windows CCD library interface");
+            Dispose(false);
         }
 
         // Public implementation of Dispose pattern callable by consumers.
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)

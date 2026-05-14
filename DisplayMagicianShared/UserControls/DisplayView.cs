@@ -59,7 +59,7 @@ namespace DisplayMagicianShared.UserControls
             StringAlignment vertical = StringAlignment.Center,
             StringAlignment horizontal = StringAlignment.Center)
         {
-            var format = new StringFormat(StringFormat.GenericTypographic)
+            using var format = new StringFormat(StringFormat.GenericTypographic)
             {
                 Alignment = horizontal,
                 LineAlignment = vertical,
@@ -69,8 +69,8 @@ namespace DisplayMagicianShared.UserControls
 
             if (drawingPoint != null)
             {
-                g.DrawString(str, font, new SolidBrush(colour), new RectangleF(drawingPoint.Value, drawingSize),
-                    format);
+                using (var textBrush = new SolidBrush(colour))
+                    g.DrawString(str, font, textBrush, new RectangleF(drawingPoint.Value, drawingSize), format);
             }
 
             return new Size((int) stringSize.Width, (int) stringSize.Height);
@@ -95,9 +95,9 @@ namespace DisplayMagicianShared.UserControls
             Color darkTextColour = Color.Black;
 
             Font selectedWordFont;
-            Font normalWordFont = new Font(Font.FontFamily, 55);
-            Font bigWordFont = new Font(Font.FontFamily, 80);
-            Font hugeWordFont = new Font(Font.FontFamily, 110);
+            using Font normalWordFont = new Font(Font.FontFamily, 55);
+            using Font bigWordFont = new Font(Font.FontFamily, 80);
+            using Font hugeWordFont = new Font(Font.FontFamily, 110);
 
 
             // Figure out the sized font we need
@@ -124,12 +124,14 @@ namespace DisplayMagicianShared.UserControls
                 // We do these things only if the screen isn't spanned!
                 // Draw the outline of the monitor
                 outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
+                using (var outlineBrush = new SolidBrush(Color.FromArgb(255, 33, 33, 33)))
+                    g.FillRectangle(outlineBrush, outlineRect);
                 g.DrawRectangle(Pens.Black, outlineRect);
 
                 // Draw the screen of the monitor
                 screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
+                using (var screenBrush = new SolidBrush(screen.Colour))
+                    g.FillRectangle(screenBrush, screenRect);
                 g.DrawRectangle(Pens.Black, screenRect);
 
                 // Draw the location of the taskbar for this screen
@@ -161,8 +163,10 @@ namespace DisplayMagicianShared.UserControls
                         startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
                         break;
                 }
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 200, 200, 200)), taskBarRect);
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 3, 194, 252)), startButtonRect);
+                using (var taskBarBrush = new SolidBrush(Color.FromArgb(255, 200, 200, 200)))
+                    g.FillRectangle(taskBarBrush, taskBarRect);
+                using (var startButtonBrush = new SolidBrush(Color.FromArgb(255, 3, 194, 252)))
+                    g.FillRectangle(startButtonBrush, startButtonRect);
                 //g.DrawRectangle(Pens.Black, outlineRect);
 
                 Rectangle wordRect = new Rectangle(screen.ScreenX + screenBezel + screenWordBuffer, screen.ScreenY + screenBezel + screenWordBuffer, screen.ScreenWidth - (screenBezel * 2) - (screenWordBuffer * 2), screen.ScreenHeight - (screenBezel * 2) - (screenWordBuffer * 2));
@@ -232,7 +236,8 @@ namespace DisplayMagicianShared.UserControls
         private void DrawEmptyView(Graphics g)
         {
             RectangleF rect = g.VisibleClipBounds;
-            g.FillRectangle(new SolidBrush(Color.FromArgb(15, Color.White)), rect);
+            using (var emptyBrush = new SolidBrush(Color.FromArgb(15, Color.White)))
+                g.FillRectangle(emptyBrush, rect);
             g.DrawRectangle(Pens.Black, rect.X, rect.Y, rect.Width, rect.Height);
         }
     }

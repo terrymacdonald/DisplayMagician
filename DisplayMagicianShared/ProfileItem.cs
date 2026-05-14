@@ -2103,21 +2103,20 @@ namespace DisplayMagicianShared
                                 screen.ScreenHeight = (int)displayMode.SourceMode.Height;
                                 screen.Rotation = ScreenRotation.ROTATE_0;
                             }
+                            // If we're at the 0,0 coordinate then we're the primary monitor
+                            if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                            {
+                                screen.IsPrimary = true;
+                                screen.Colour = primaryScreenColor;
+                            }
+                            break;
                         }
                         else
                         {
                             // Skip DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE
                             continue;
                         }
-
-                        // If we're at the 0,0 coordinate then we're the primary monitor
-                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
-                        {
-                            screen.IsPrimary = true;
-                            screen.Colour = primaryScreenColor;
-                        }
                     }
-
 
                     foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
                     {
@@ -2356,7 +2355,8 @@ namespace DisplayMagicianShared
             // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
             // that fact.                        
             return NVIDIADisplayConfig.Equals(other.NVIDIADisplayConfig) &&
-                AMDDisplayConfig.Equals(other.AMDDisplayConfig) && 
+                AMDDisplayConfig.Equals(other.AMDDisplayConfig) &&
+                IntelDisplayConfig.Equals(other.IntelDisplayConfig) &&
                 WindowsDisplayConfig.Equals(other.WindowsDisplayConfig) &&
                 ProfileDisplayIdentifiers.SequenceEqual (other.ProfileDisplayIdentifiers);
         }
@@ -2379,7 +2379,7 @@ namespace DisplayMagicianShared
         public override int GetHashCode()
         {
             // Calculate the hash code for the product.
-            return (NVIDIADisplayConfig, AMDDisplayConfig, WindowsDisplayConfig, ProfileDisplayIdentifiers).GetHashCode();
+            return (NVIDIADisplayConfig, AMDDisplayConfig, IntelDisplayConfig, WindowsDisplayConfig, ProfileDisplayIdentifiers).GetHashCode();
 
         }
 

@@ -1563,7 +1563,6 @@ namespace DisplayMagicianShared
             SharedLogger.logger.Trace($"Program/ApplyProfile: Starting");
             // We try to time the profile display swap
             Stopwatch stopWatch = new Stopwatch();
-            bool wasDisplayChangeSuccessful = true;
             ApplyProfileResult result = ApplyProfileResult.Successful;
 
             if (profile == null)
@@ -1605,7 +1604,6 @@ namespace DisplayMagicianShared
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"ProfileRepository/ApplyProfile: Failed to complete changing the Windows Display layout");
-                wasDisplayChangeSuccessful = false;
                 result = ApplyProfileResult.Error;
             }
             finally
@@ -1642,7 +1640,7 @@ namespace DisplayMagicianShared
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
                 string resultString = "failed";
-                if (wasDisplayChangeSuccessful)
+                if (result == ApplyProfileResult.Successful)
                 {
                     resultString = "was successful";
                     ProfileRepository.UpdateActiveProfile();
