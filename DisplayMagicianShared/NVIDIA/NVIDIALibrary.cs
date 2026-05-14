@@ -3945,14 +3945,14 @@ namespace DisplayMagicianShared.NVIDIA
             {
                 for (int i = 0; i < a1.Length; i++)
                 {
-                    if (a1[i].Length == a2[i].Length)
+                    if (a1[i].Length != a2[i].Length)
+                        return false;
+
+                    for (int j = 0; j < a1[i].Length; j++)
                     {
-                        for (int j = 0; j < a1[i].Length; j++)
+                        if (a1[i][j] != a2[i][j])
                         {
-                            if (a1[i][j] != a2[i][j])
-                            {
-                                return false;
-                            }
+                            return false;
                         }
                     }
                 }
@@ -3975,12 +3975,13 @@ namespace DisplayMagicianShared.NVIDIA
                 var currentPALength = savedDisplayConfig.PhysicalAdapters.Count;
                 for (int i = 0; i < currentPALength; i++)
                 {
-                    var displaysList = savedDisplayConfig.PhysicalAdapters[currentPAKeys[i]].Displays.Values.ToList();
-                    if (displaysList != null && displaysList.Count > 0)
+                    var displaysDict = savedDisplayConfig.PhysicalAdapters[currentPAKeys[i]].Displays;
+                    if (displaysDict != null && displaysDict.Count > 0)
                     {
-                        for (int j = 0; j < displaysList.Count; j++)
+                        var displayKeys = displaysDict.Keys.ToList();
+                        for (int j = 0; j < displayKeys.Count; j++)
                         {
-                            var displayIdInfo = displaysList[j];
+                            var displayIdInfo = displaysDict[displayKeys[j]];
                             var displayIdInfoAdapterLuid = displayIdInfo.DisplayIdInfo.AdapterLuid;
 
                             if (adapterOldToNewMap.ContainsKey((ulong)displayIdInfoAdapterLuid))
@@ -3998,9 +3999,10 @@ namespace DisplayMagicianShared.NVIDIA
                                 SharedLogger.logger.Warn($"WinLibrary/PatchNVIDADisplayConfig: Uh Oh. Adapter {displayIdInfoAdapterLuid} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
                                 displayIdInfo.DisplayIdInfo.AdapterLuid = (long)newAdapterValue;
                             }
-                            displaysList[j] = displayIdInfo;
+                            // Write the modified struct back into the dictionary
+                            displaysDict[displayKeys[j]] = displayIdInfo;
                         }
-                    }                   
+                    }
                 }
             }
             catch (Exception ex)

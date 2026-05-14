@@ -1354,7 +1354,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Warn(ex, $"ProfileRepository/SaveProfileIconToCache: Exception saving the profile icon {profile.SavedProfileIconCacheFilename} to the {AppProfileStoragePath} folder. Using the default DisplayMagician icon instead");
                 // If we fail to create an icon based on the Profile, then we use the standard DisplayMagician profile one.
                 // Which is created on program startup.
-                File.Copy(AppDisplayMagicianIconFilename, profile.SavedProfileIconCacheFilename);
+                File.Copy(AppDisplayMagicianIconFilename, profile.SavedProfileIconCacheFilename, overwrite: true);
             }
         }
 

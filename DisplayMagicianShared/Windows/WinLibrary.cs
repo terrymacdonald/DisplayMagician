@@ -471,8 +471,17 @@ namespace DisplayMagicianShared.Windows
                         // We get here if there is a matching adapter
                         newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value];
                         savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
-                        newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value];
-                        savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                        if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value))
+                        {
+                            newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value];
+                            savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                        }
+                        else
+                        {
+                            newAdapterValue = currentAdapterMap.First().Key;
+                            SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Target adapter {savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value} for path #{i} didn't have a current match! Attempting to use adapter {newAdapterValue} instead.");
+                            savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                        }
                         SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated DisplayConfig Path #{i} from adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} to adapter {newAdapterValue} instead.");
                     }
                     else

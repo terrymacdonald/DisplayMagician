@@ -313,7 +313,7 @@ namespace DisplayMagicianShared.Windows
 
             try
             {
-                string[] resources = { @"C:\Windows\explorer.exe" };
+                string[] resources = { Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe") };
                 result = RmRegisterResources(sessionHandle, (uint)resources.Length, resources, 0, null, 0, null);
                 if (result != 0)
                 {

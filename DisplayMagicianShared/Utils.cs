@@ -619,10 +619,13 @@ namespace DisplayMagicianShared
 
         public static bool IsWindows11()
         {
-            var reg = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+            using var reg = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+            if (reg == null)
+                return false;
 
-            var currentBuildStr = (string)reg.GetValue("CurrentBuild");
-            var currentBuild = int.Parse(currentBuildStr);
+            var currentBuildStr = reg.GetValue("CurrentBuild") as string;
+            if (!int.TryParse(currentBuildStr, out int currentBuild))
+                return false;
 
             return currentBuild >= 22000;
         }
@@ -778,7 +781,7 @@ namespace DisplayMagicianShared
                     foreach (var filename in filesThatMatch)
                     {
                         // If this is the file we should skip, then let's skip it
-                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        if (Path.GetFileName(filename).Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
                         {
                             SharedLogger.logger.Trace($"SharedUtils/OldFileVersionsExist: Skipping {filename} as we want to ignore the {skipFilename} file.");
                             continue;
@@ -828,7 +831,7 @@ namespace DisplayMagicianShared
                     foreach (var filename in filesToRename)
                     {
                         // If this is the file we should skip, then let's skip it
-                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        if (Path.GetFileName(filename).Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
                         {
                             SharedLogger.logger.Trace($"SharedUtils/RenameOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {skipFilename} file.");
                             continue;
