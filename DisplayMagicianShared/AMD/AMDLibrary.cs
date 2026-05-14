@@ -272,7 +272,7 @@ namespace DisplayMagicianShared.AMD
         {
             if (Rows != other.Rows)
             {
-                SharedLogger.logger.Trace($"AMD_EYEFINITY_DESKTOP/Rows: The Rows values don't equal each other");
+                SharedLogger.logger.Trace($"AMD_EYEFINITY_DESKTOP/Equals: The Rows values don't equal each other");
                 return false;
             }
             if (Columns != other.Columns)
@@ -411,6 +411,11 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Trace($"AMD_3DLUT_INFO/Equals: The IsSupportedSCEVividGaming values don't equal each other");
                 return false;
             }
+            if (IsSupportedSCEDynamicContrast != other.IsSupportedSCEDynamicContrast)
+            {
+                SharedLogger.logger.Trace($"AMD_3DLUT_INFO/Equals: The IsSupportedSCEDynamicContrast values don't equal each other");
+                return false;
+            }
             if (IsSupportedUser3DLUT != other.IsSupportedUser3DLUT)
             {
                 SharedLogger.logger.Trace($"AMD_3DLUT_INFO/Equals: The IsSupportedUser3DLUT values don't equal each other");
@@ -424,6 +429,11 @@ namespace DisplayMagicianShared.AMD
             if (IsCurrentSCEVividGaming != other.IsCurrentSCEVividGaming)
             {
                 SharedLogger.logger.Trace($"AMD_3DLUT_INFO/Equals: The IsCurrentSCEVividGaming values don't equal each other");
+                return false;
+            }
+            if (HasDynamicContrast != other.HasDynamicContrast)
+            {
+                SharedLogger.logger.Trace($"AMD_3DLUT_INFO/Equals: The HasDynamicContrast values don't equal each other");
                 return false;
             }
             if (CurrentDynamicContrastValue != other.CurrentDynamicContrastValue)

@@ -179,7 +179,7 @@ namespace DisplayMagicianShared.UserControls
                 }
                 if (!String.IsNullOrEmpty(screen.AdapterName))
                 {
-                    str = $"({screen.AdapterName}){Environment.NewLine}";
+                    str += $"({screen.AdapterName}){Environment.NewLine}";
                 }
                 str += $"{screen.Name}{Environment.NewLine}";
                 // Resolution with optional refresh rate

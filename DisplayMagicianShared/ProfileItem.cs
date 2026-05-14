@@ -833,7 +833,7 @@ namespace DisplayMagicianShared
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name    } were NOT possible to be applied.");
+                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within {Name} were NOT possible to be applied.");
                             }
                         }
                         else
@@ -1736,8 +1736,9 @@ namespace DisplayMagicianShared
                                 }
                                 else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
                                 {
-                                    screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                                    screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                    // Portrait screen so need to change width and height
+                                    screen.ScreenWidth = (int)displayMode.SourceMode.Height;
+                                    screen.ScreenHeight = (int)displayMode.SourceMode.Width;
                                     screen.Rotation = ScreenRotation.ROTATE_270;
                                 }
                                 else
@@ -1919,8 +1920,9 @@ namespace DisplayMagicianShared
                                 }
                                 else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
                                 {
-                                    screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                                    screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                    // Portrait screen so need to change width and height
+                                    screen.ScreenWidth = (int)displayMode.SourceMode.Height;
+                                    screen.ScreenHeight = (int)displayMode.SourceMode.Width;
                                     screen.Rotation = ScreenRotation.ROTATE_270;
                                 }
                                 else
@@ -2014,7 +2016,7 @@ namespace DisplayMagicianShared
             Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
             Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
 
-            // Now we create the screens structure from the AMD profile information
+            // Now we create the screens structure from the Windows profile information
             List<ScreenPosition> windowsScreens = new List<ScreenPosition>() { };
             try
             {
@@ -2090,8 +2092,9 @@ namespace DisplayMagicianShared
                             }
                             else if (path.TargetInfo.Rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
                             {
-                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                                // Portrait screen so need to change width and height
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Height;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Width;
                                 screen.Rotation = ScreenRotation.ROTATE_270;
                             }
                             else
@@ -2103,7 +2106,7 @@ namespace DisplayMagicianShared
                         }
                         else
                         {
-                            // Skip DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE and DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET objects
+                            // Skip DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE
                             continue;
                         }
 

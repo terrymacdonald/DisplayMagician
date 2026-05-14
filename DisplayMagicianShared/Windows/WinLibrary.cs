@@ -159,7 +159,7 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(WINDOWS_DISPLAY_CONFIG other)
         {
-            if (!IsCloned == other.IsCloned)
+            if (IsCloned != other.IsCloned)
             {
                 SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: IsCloned is not equal.");
                 return false;
@@ -534,7 +534,7 @@ namespace DisplayMagicianShared.Windows
                         // Change the Mode AdapterID
                         if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value))
                         {
-                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: adapterOldToNewMap contains adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} so using the new adapter ID of {newAdapterValue} instead.");
+                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: adapterOldToNewMap contains adapter {hdrInfo.AdapterId.Value} so using the new adapter ID of {newAdapterValue} instead.");
                             // We get here if there is a matching adapter
                             newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value];
                             hdrInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
@@ -542,7 +542,7 @@ namespace DisplayMagicianShared.Windows
                             hdrInfo.AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                             newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId.Value];
                             hdrInfo.SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
-                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated Display HDR state #{i} from adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} to adapter {newAdapterValue} instead.");
+                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated Display HDR state #{i} from adapter {hdrInfo.AdapterId.Value} to adapter {newAdapterValue} instead.");
                         }
                         else
                         {

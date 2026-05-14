@@ -790,10 +790,9 @@ namespace DisplayMagicianShared
                 else
                 {
                     SharedLogger.logger.Trace($"SharedUtils/OldFileVersionsExist: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
-                    return false;
                 }
 
-                return true;
+                return false;
             }
             catch (Exception ex)
             {
@@ -911,7 +910,7 @@ namespace DisplayMagicianShared
                     foreach (var filename in filesToUpgrade)
                     {
                         // If this is the file we should skip, then let's skip it
-                        if (filename.Equals(newFilename, StringComparison.InvariantCultureIgnoreCase))
+                        if (filename.Equals(newFullFilename, StringComparison.InvariantCultureIgnoreCase))
                         {
                             SharedLogger.logger.Trace($"SharedUtils/UpgradeOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {newFilename} file.");
                             continue;
@@ -937,7 +936,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, $"SharedUtils/UpgradeOldFileVersions: Exception while trying to RenameOldFileVersions. Unable to rename the files.");
+                SharedLogger.logger.Error(ex, $"SharedUtils/UpgradeOldFileVersions: Exception while trying to UpgradeOldFileVersions. Unable to upgrade the files.");
                 return false;
             }
         }

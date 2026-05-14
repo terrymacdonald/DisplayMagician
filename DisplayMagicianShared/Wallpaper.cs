@@ -40,11 +40,7 @@ namespace DisplayMagicianShared
 
         public static bool Set(String filename, Style style)
         {
-            //System.IO.Stream s = new System.Net.WebClient().OpenRead(uri.ToString());
-
-            Bitmap img = new Bitmap(filename);            
-
-            RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
+            using RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
             if (style == Style.Fill)
             {
                 key.SetValue(@"WallpaperStyle", 10.ToString());
@@ -93,10 +89,10 @@ namespace DisplayMagicianShared
 
         public static bool Clear()
         {
-            RegistryKey desktopKey = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
+            using RegistryKey desktopKey = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
             desktopKey.SetValue(@"WallPaper", "");
 
-            RegistryKey explorerKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true);
+            using RegistryKey explorerKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true);
             explorerKey.SetValue(@"BackgroundType", 1);
 
             if (SystemParametersInfo(SPI_SETDESKWALLPAPER,
