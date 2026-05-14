@@ -5,7 +5,8 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BindFiles>false</BindFiles>
-    <OutputPath>bin\Debug\</OutputPath>	
+    <OutputPath>bin\Debug\</OutputPath>
+    <SuppressValidation>true</SuppressValidation>
   </PropertyGroup>
 	
   <PropertyGroup>
