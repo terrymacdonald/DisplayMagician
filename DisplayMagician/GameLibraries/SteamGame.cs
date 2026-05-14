@@ -26,12 +26,6 @@ namespace DisplayMagician.GameLibraries
         private static readonly SteamLibrary _steamGameLibrary = SteamLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static SteamGame()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (send, certificate, chain, sslPolicyErrors) => true;
-        }
-
 
         public SteamGame(string steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
         {

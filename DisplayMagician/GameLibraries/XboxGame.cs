@@ -26,12 +26,6 @@ namespace DisplayMagician.GameLibraries
         private static readonly SteamLibrary _xboxGameLibrary = SteamLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static XboxGame()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (send, certificate, chain, sslPolicyErrors) => true;
-        }
-
         public XboxGame() { }
 
         public XboxGame(string xboxGameId, string xboxGameName, string xboxGameExePath, string xboxGameIconPath)

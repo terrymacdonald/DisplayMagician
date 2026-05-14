@@ -38,12 +38,6 @@ namespace DisplayMagician.AppLibraries
         private static readonly LocalLibrary _LocalAppLibrary = LocalLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static LocalApp()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (send, certificate, chain, sslPolicyErrors) => true;
-        }
-
         public LocalApp() 
         {
             // put in some sensible defaults for the properties

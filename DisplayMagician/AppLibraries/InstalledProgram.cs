@@ -475,7 +475,6 @@ namespace DisplayMagician.AppLibraries
                         continue;
                     }
 
-                    bool worked = true;
                     try
                     {
                        
@@ -512,7 +511,7 @@ namespace DisplayMagician.AppLibraries
                                 bitmap.Size = new Size(bitmap.Image.Width, bitmap.Image.Height);
                                 bitmap.Order = 0;
                             }
-                            catch (Exception ex2)
+                            catch (Exception)
                             {
                                 bitmap.UUID = Guid.NewGuid().ToString("D");
                                 bitmap.Image = new Bitmap(package.Logo.LocalPath);
@@ -546,9 +545,8 @@ namespace DisplayMagician.AppLibraries
                         }
                         
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        worked = false;
                     }
 
                     
@@ -588,7 +586,6 @@ namespace DisplayMagician.AppLibraries
                         continue;
                     }
 
-                    bool worked = true;
                     try
                     {
                         IReadOnlyList<AppListEntry> applListEntries = (IReadOnlyList<AppListEntry>)package.GetAppListEntries();
@@ -598,7 +595,6 @@ namespace DisplayMagician.AppLibraries
                         }
                         foreach (AppListEntry entry in applListEntries)
                         {
-                            string name = "";
                             string aumi = "";
 
                             aumi = entry.AppUserModelId;
@@ -609,7 +605,7 @@ namespace DisplayMagician.AppLibraries
                         }                                               
       
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         return null;
                     }
@@ -650,7 +646,6 @@ namespace DisplayMagician.AppLibraries
                         continue;
                     }
 
-                    bool worked = true;
                     try
                     {
                         IReadOnlyList<AppListEntry> applListEntries = (IReadOnlyList<AppListEntry>)package.GetAppListEntries();
@@ -658,7 +653,6 @@ namespace DisplayMagician.AppLibraries
                         {
                             continue;
                         }
-                        string name = "";
                         string aumi = "";
 
                         var entry = applListEntries[0];
@@ -669,7 +663,7 @@ namespace DisplayMagician.AppLibraries
                         }
 
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         return null;
                     }

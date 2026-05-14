@@ -18,7 +18,6 @@ namespace DisplayMagician.UIForms
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private bool _installDesktopContextMenu = true;
 
         private Dictionary<string, string> logLevelText = new Dictionary<string, string>();
 
@@ -713,7 +712,6 @@ namespace DisplayMagician.UIForms
 
         private void btn_context_menu_remove_Click(object sender, EventArgs e)
         {
-            _installDesktopContextMenu = false;
             Program.AppProgramSettings.InstallDesktopContextMenu = false;
 
             if (DisplayMagician.ContextMenu.UninstallContextMenu())
@@ -730,7 +728,6 @@ namespace DisplayMagician.UIForms
 
         private void btn_context_menu_add_Click(object sender, EventArgs e)
         {
-            _installDesktopContextMenu = true;
             Program.AppProgramSettings.InstallDesktopContextMenu = true;
 
             if (DisplayMagician.ContextMenu.InstallContextMenu())

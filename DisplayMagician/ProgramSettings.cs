@@ -47,8 +47,6 @@ namespace DisplayMagician
     public class ProgramSettings
     {
         #region Class Variables
-        // Common items to the class
-        private static bool _programSettingsLoaded = false;
         // Other constants that are useful
         private static string _programSettingsFileVersion = "4";
         private static readonly string _programSettingsStorageJsonFileName = "Settings.json";
@@ -131,7 +129,7 @@ namespace DisplayMagician
         {
             get
             {
-                if (_installDate == null || _installDate == DateTime.MinValue)
+                if (_installDate == DateTime.MinValue)
                 {
                     // Lookup Install Date from Registry
                     // else just set it to the current date
@@ -598,7 +596,6 @@ namespace DisplayMagician
             // loglevel settings so we know what level to configure the logger to write!
             // This means we have to only use console.write in this function....
             ProgramSettings programSettings = null;
-            _programSettingsLoaded = false;
 
             // Figure out if we need to upgrade the shortcuts file
             if (Utils.OldFileVersionsExist(Program.AppDataPath, "Settings_*.json"))
@@ -742,7 +739,6 @@ namespace DisplayMagician
             // If there isn't any settings in the file then create a new ProgramSettings object
             if (programSettings == null)
                 programSettings = new ProgramSettings();
-            _programSettingsLoaded = true;
 
             return programSettings ;
         }

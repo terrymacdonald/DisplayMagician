@@ -621,9 +621,6 @@ namespace DisplayMagician.GameLibraries
         public GogLibraryException() { }
         public GogLibraryException(string message) : base(message) { }
         public GogLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected GogLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }

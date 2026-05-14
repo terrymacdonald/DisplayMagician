@@ -5,7 +5,6 @@ using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Drawing.Drawing2D;
 using IconLib;
 using System.Drawing.Imaging;
@@ -205,7 +204,6 @@ namespace DisplayMagician
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
         private string _originalIconPath;
-        private bool _userChoseOwnIcon = false;
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
 

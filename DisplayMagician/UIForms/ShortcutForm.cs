@@ -81,7 +81,6 @@ namespace DisplayMagician.UIForms
 
         // Debounce timer: delays the icon scan until the user stops typing in txt_executable
         private readonly System.Windows.Forms.Timer _exePathDebounceTimer = new System.Windows.Forms.Timer { Interval = 600 };
-        private ShortcutLoadingForm _loadingScreen;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -901,12 +900,9 @@ namespace DisplayMagician.UIForms
                 }
                 else if (_shortcutCategory == ShortcutCategory.Application)
                 {
-                    bool isUWP = false;
                     // If it is a UWP application
                     if (txt_executable.Text.EndsWith("explorer.exe") && txt_args_executable.Text.StartsWith("shell:AppsFolder"))
                     {
-                        isUWP = true;
-
                         if (!File.Exists(txt_executable.Text))
                         {
                             logger.Error($"ShortcutForm/AllowedToSave: The explorer executable {txt_executable.Text} used to launch UWP apps doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");

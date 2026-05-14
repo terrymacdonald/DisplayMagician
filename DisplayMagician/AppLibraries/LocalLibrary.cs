@@ -27,8 +27,6 @@ namespace DisplayMagician.AppLibraries
 
         // Common items to the class
         private List<App> _allLocalApps = new List<App>();
-        private string _LocalExe;
-        private string _LocalPath;
         private bool _isLocalInstalled = false;
         private List<string> _LocalProcessList = new List<string>(){ "LocalAppServices" };
         private string LocalAppIdRegex = @"/^[0-9A-F]{1,10}$";
@@ -90,7 +88,7 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
-                return _LocalExe;
+                return null;
             }
         }
 
@@ -98,7 +96,7 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
-                return _LocalPath;
+                return null;
             }
         }
 

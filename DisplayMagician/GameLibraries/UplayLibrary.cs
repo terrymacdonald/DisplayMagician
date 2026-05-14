@@ -944,9 +944,6 @@ namespace DisplayMagician.GameLibraries
         public UplayLibraryException() { }
         public UplayLibraryException(string message) : base(message) { }
         public UplayLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected UplayLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }

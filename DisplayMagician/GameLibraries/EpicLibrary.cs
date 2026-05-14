@@ -663,9 +663,6 @@ namespace DisplayMagician.GameLibraries
         public EpicLibraryException() { }
         public EpicLibraryException(string message) : base(message) { }
         public EpicLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected EpicLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }

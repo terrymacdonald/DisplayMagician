@@ -23,12 +23,6 @@ namespace DisplayMagician.GameLibraries
         private static readonly EpicLibrary _epicGameLibrary = EpicLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static EpicGame()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (send, certificate, chain, sslPolicyErrors) => true;
-        }
-
         public EpicGame() { }
 
         public EpicGame(string epicGameId, string epicGameName, string epicGameExePath, string epicGameIconPath)

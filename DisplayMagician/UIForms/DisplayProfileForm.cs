@@ -531,7 +531,7 @@ namespace DisplayMagician.UIForms
                 }               
                 catch (Exception ex)
                 {
-                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: Exception whilst trying to save the display layout. We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
+                    logger.Warn(ex, $"DisplayProfileForm/btn_save_as_Click: Exception whilst trying to save the display layout. We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
                     MessageBox.Show("Exception whilst trying to save the display layout. We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
 

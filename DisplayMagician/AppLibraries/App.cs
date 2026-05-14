@@ -14,7 +14,6 @@ namespace DisplayMagician.AppLibraries
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private bool isUWP = false;
 
         public App()
         {

@@ -32,7 +32,7 @@ namespace DisplayMagician
                     anchor.SetValue("Icon", Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe"));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -50,7 +50,7 @@ namespace DisplayMagician
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -66,7 +66,7 @@ namespace DisplayMagician
                     //gs.SetValue("Icon", AppContext.BaseDirectory + "\\DisplayMagician.exe");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -105,7 +105,7 @@ namespace DisplayMagician
                 {
                     Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
                 }
-                catch(Exception ex)
+                catch(Exception)
                 {
                     // Ignore if the key doesn't exist
                 }
@@ -135,7 +135,7 @@ namespace DisplayMagician
 
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -151,7 +151,7 @@ namespace DisplayMagician
                 {
                     Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Ignore if the key doesn't exist
                 }
@@ -178,7 +178,7 @@ namespace DisplayMagician
 
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }

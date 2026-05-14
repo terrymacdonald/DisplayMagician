@@ -23,12 +23,6 @@ namespace DisplayMagician.GameLibraries
         private static readonly GogLibrary _gogGameLibrary = GogLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static GogGame()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (send, certificate, chain, sslPolicyErrors) => true;
-        }
-
         public GogGame() { }
 
         public GogGame(string gogGameId, string gogGameName, string gogGameExePath, string gogGameIconPath)

@@ -271,7 +271,7 @@ namespace DisplayMagician.UIForms
                 //rtb_results.Rtf = FovCalculator.CreateRtfResults();
                 rtb_results.Text = FovCalculator.CreateTxtResults();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 rtb_results.Text = "System Error creating the Results. Please log an issue at https://github.com/terrymacdonald/DisplayMagician/issues/new.";
             }
@@ -379,7 +379,7 @@ namespace DisplayMagician.UIForms
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.SixteenByNine;
             }

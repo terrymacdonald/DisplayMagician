@@ -132,7 +132,6 @@ namespace DisplayMagician.UIForms
                 App app = (App)key;
 
                 // Get file info
-                if (app.AppBitmap is ShortcutBitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
                     // System.Drawing.Image exception created while accessing the Size

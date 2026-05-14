@@ -405,9 +405,6 @@ namespace DisplayMagician.GameLibraries
         public GameLibraryException() { }
         public GameLibraryException(string message) : base(message) { }
         public GameLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected GameLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }

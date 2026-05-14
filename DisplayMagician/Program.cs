@@ -82,7 +82,6 @@ namespace DisplayMagician {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;        
         
-        private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
         public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
@@ -277,7 +276,6 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Setting visual styles and rendering mode");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             // Set up some defaults for the shared HttpClient
             AppHttpClient.Timeout = TimeSpan.FromSeconds(30);

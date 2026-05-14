@@ -131,7 +131,6 @@ namespace DisplayMagician.UIForms
                 Game game = (Game)key;
 
                 // Get file info
-                if (game.GameBitmap is ShortcutBitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
                     // System.Drawing.Image exception created while accessing the Size

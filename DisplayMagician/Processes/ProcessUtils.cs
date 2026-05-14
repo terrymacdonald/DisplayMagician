@@ -390,7 +390,7 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns></returns>
-        private static Process? TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        private static Process TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             //StringBuilder outputBuilder = new StringBuilder();            
             ProcessStartInfo psi;

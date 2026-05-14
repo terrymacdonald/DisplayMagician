@@ -2561,9 +2561,6 @@ namespace DisplayMagician
         public ShortcutRepositoryException() { }
         public ShortcutRepositoryException(string message) : base(message) { }
         public ShortcutRepositoryException(string message, Exception inner) : base(message, inner) { }
-        protected ShortcutRepositoryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }

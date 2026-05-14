@@ -23,12 +23,6 @@ namespace DisplayMagician.GameLibraries
         private static readonly OriginLibrary _originGameLibrary = OriginLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static OriginGame()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (send, certificate, chain, sslPolicyErrors) => true;
-        }
-
 
         public OriginGame(string originGameId, string originGameName, string originGameExePath, string originGameIconPath)
         {

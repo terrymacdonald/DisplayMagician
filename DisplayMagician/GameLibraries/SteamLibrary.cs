@@ -1010,9 +1010,6 @@ namespace DisplayMagician.GameLibraries
         public SteamLibraryException() { }
         public SteamLibraryException(string message) : base(message) { }
         public SteamLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected SteamLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }

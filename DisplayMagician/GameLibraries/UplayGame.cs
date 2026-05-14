@@ -23,12 +23,6 @@ namespace DisplayMagician.GameLibraries
         private static readonly UplayLibrary _uplayGameLibrary = UplayLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static UplayGame()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (send, certificate, chain, sslPolicyErrors) => true;
-        }
-
 
         public UplayGame(string uplayGameId, string uplayGameName, string uplayGameExePath, string uplayGameIconPath)
         {

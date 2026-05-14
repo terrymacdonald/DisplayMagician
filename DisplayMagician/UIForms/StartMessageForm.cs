@@ -125,7 +125,9 @@ namespace DisplayMagician.UIForms
                     return;
                 }
                 // If we get here, then the URL is good. See if we can access the URL supplied
+#pragma warning disable SYSLIB0014
                 WebClient client = new WebClient();
+#pragma warning restore SYSLIB0014
                 if (MessageMode == "rtf")
                 {
                     try

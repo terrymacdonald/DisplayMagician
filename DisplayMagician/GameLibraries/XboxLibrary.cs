@@ -179,7 +179,7 @@ namespace DisplayMagician.GameLibraries
                     else
                         return false;
                 }                
-                catch (Exception ex) { 
+                catch (Exception) { 
                     return false; 
                 }
             }
@@ -621,9 +621,6 @@ namespace DisplayMagician.GameLibraries
         public XboxLibraryException() { }
         public XboxLibraryException(string message) : base(message) { }
         public XboxLibraryException(string message, Exception inner) : base(message, inner) { }
-        protected XboxLibraryException(
-            System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 }
