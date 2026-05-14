@@ -77,7 +77,7 @@ function Invoke-Step {
 # 1. Build identity MSIX
 # ---------------------------------------------------------------------------
 Invoke-Step "Build DisplayMagicianIdentityPkg ($Configuration)" {
-    $proj = Join-Path $root 'DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.proj'
+    $proj = Join-Path $root 'DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj'
     & $msbuild $proj -t:Build -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
 }
 
