@@ -2,10 +2,10 @@
 {
     public enum Rotation
     {
-        Identity,
-        Rotate90,
-        Rotate180,
-        Rotate270,
-        Unknown
+        Identity = 1,
+        Rotate90 = 2,
+        Rotate180 = 3,
+        Rotate270 = 4,
+        Unknown = 0
     }
 }
