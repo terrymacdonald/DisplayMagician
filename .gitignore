@@ -244,3 +244,7 @@ ModelManifest.xml
 
 # Local code-signing certificate config — contains secrets, never commit
 /SigningConfig.props
+
+
+# VSCode files
+*.lscache
