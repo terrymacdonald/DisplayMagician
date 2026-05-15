@@ -26,6 +26,9 @@ namespace DisplayMagicianConsole
             ERROR_CANNOT_FIND_PROFILE = 102,  // Errorlevel returned when RunProfile command is used, and it cannot find the profile to apply
             ERROR_APPLYING_PROFILE = 103,  // Errorlevel returned when RunProfile command is used, and it cannot apply the profile for some reason
             ERROR_UNKNOWN_COMMAND = 104, // Errorlevel returned when DisplayMagician is given an unregonised command
+            ERROR_PROFILE_SETTINGS_ALREADY_EXIST = 105, // Errorlevel returned when CreateProfile command is used, and the current display settings already match an existing saved profile
+            ERROR_PROFILE_NAME_TAKEN = 106, // Errorlevel returned when CreateProfile command is used, and the supplied name is already used by a different profile (and -force was not supplied)
+            ERROR_CREATING_PROFILE = 107, // Errorlevel returned when CreateProfile command is used, and the profile could not be saved for an unexpected reason
         };
 
         public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
@@ -131,6 +134,38 @@ namespace DisplayMagicianConsole
                     if (verboseMode) Console.WriteLine($"Program/Main: AllProfiles commandline command was invoked!");
                     ERRORLEVEL errLevel = AllProfiles();
                     return (int)errLevel;
+                });
+            });
+
+            // This is the CreateProfile command
+            // This will save the current display configuration as a new named profile
+            app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
+            {
+                var argumentName = createProfileCmd.Argument("\"Name\"", "(required) The name to give the new display profile.").IsRequired();
+
+                //description and help text of the command.
+                createProfileCmd.Description = "Use this command to save the current display configuration as a new display profile.";
+                CommandOption forceCreateProfile = createProfileCmd.Option("-force", "Force replacement of an existing profile that has the same name (only applies to name conflicts; duplicate display settings are always blocked)", CommandOptionType.NoValue);
+                CommandOption verboseCreateProfile = createProfileCmd.Option("-v", "Communicate more about what is happening whilst doing it", CommandOptionType.NoValue);
+                CommandOption parseableCreateProfile = createProfileCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
+
+                createProfileCmd.OnExecute(() =>
+                {
+                    if (verboseCreateProfile.HasValue()) verboseMode = true;
+                    if (parseableCreateProfile.HasValue()) parseableMode = true;
+
+                    if (verboseMode) Console.WriteLine($"Program/Main: CreateProfile commandline command was invoked!");
+
+                    try
+                    {
+                        ERRORLEVEL errLevel = CreateProfile(argumentName.Value, forceCreateProfile.HasValue());
+                        return (int)errLevel;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Program/Main: Exception running CreateProfile: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                    }
                 });
             });
 
@@ -291,6 +326,90 @@ namespace DisplayMagicianConsole
                 Console.WriteLine($"Program/CurrentProfile: ERROR - Exception while trying to get the list of all saved DisplayMagician profiles: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }            
+
+            return errLevel;
+        }
+
+        public static ERRORLEVEL CreateProfile(string name, bool force)
+        {
+            if (verboseMode) Console.WriteLine($"Program/CreateProfile: Attempting to create a new display profile named \"{name}\"");
+
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
+
+            // Step 1 — capture the current display settings into a new ProfileItem
+            ProfileItem newProfile = new ProfileItem();
+            try
+            {
+                if (!newProfile.CreateProfileFromCurrentDisplaySettings())
+                {
+                    Console.WriteLine($"Program/CreateProfile: ERROR - Failed to read the current display settings.");
+                    return ERRORLEVEL.ERROR_EXCEPTION;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Program/CreateProfile: ERROR - Exception while reading the current display settings: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+
+            // Step 2 — block if the current display settings are already saved under any existing profile
+            // (equality is based on display config only, not name or UUID)
+            ProfileItem settingsMatch = ProfileRepository.AllProfiles.FirstOrDefault(p => p.Equals(newProfile));
+            if (settingsMatch != null)
+            {
+                if (parseableMode)
+                {
+                    Console.WriteLine($"DUPLICATE_SETTINGS|{settingsMatch.Name}|{settingsMatch.UUID}");
+                }
+                else
+                {
+                    Console.WriteLine($"Program/CreateProfile: ERROR - The current display settings are already saved as profile \"{settingsMatch.Name}\" (UUID: \"{settingsMatch.UUID}\"). Cannot create a duplicate profile with the same display settings.");
+                }
+                return ERRORLEVEL.ERROR_PROFILE_SETTINGS_ALREADY_EXIST;
+            }
+
+            // Step 3 — assign the user-supplied name
+            newProfile.Name = name;
+
+            // Step 4 — check for a name conflict with a different profile
+            ProfileItem nameMatch = ProfileRepository.AllProfiles.FirstOrDefault(p => p.Name.Equals(name));
+            if (nameMatch != null)
+            {
+                if (!force)
+                {
+                    if (parseableMode)
+                    {
+                        Console.WriteLine($"NAME_TAKEN|{nameMatch.Name}|{nameMatch.UUID}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Program/CreateProfile: ERROR - A profile named \"{name}\" already exists (UUID: \"{nameMatch.UUID}\"). Use the -force option to replace it with the current display settings.");
+                    }
+                    return ERRORLEVEL.ERROR_PROFILE_NAME_TAKEN;
+                }
+
+                // -force supplied — remove the conflicting profile before adding the new one
+                if (verboseMode) Console.WriteLine($"Program/CreateProfile: Removing existing profile \"{nameMatch.Name}\" (UUID: \"{nameMatch.UUID}\") to replace it.");
+                ProfileRepository.RemoveProfile(nameMatch);
+            }
+
+            // Step 5 — save the new profile
+            if (verboseMode) Console.WriteLine($"Program/CreateProfile: Saving new profile \"{name}\" to the profile repository.");
+            bool saved = ProfileRepository.AddProfile(newProfile);
+            if (!saved)
+            {
+                Console.WriteLine($"Program/CreateProfile: ERROR - The profile \"{name}\" could not be saved to the profile repository.");
+                return ERRORLEVEL.ERROR_CREATING_PROFILE;
+            }
+
+            if (parseableMode)
+            {
+                Console.WriteLine($"{newProfile.Name}|{newProfile.UUID}");
+            }
+            else
+            {
+                Console.WriteLine($"Display profile \"{newProfile.Name}\" (UUID: \"{newProfile.UUID}\") created successfully.");
+            }
 
             return errLevel;
         }
