@@ -2562,9 +2562,9 @@ namespace DisplayMagician.UIForms
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
             // Check if the user clicked the special "Skip Display Change" item first
-            if (e.Item.Text == ProfileItem.SkipDisplayChangeName)
+            if (e.Item.EquipmentModel == ProfileItem.SkipDisplayChangeUUID)
             {
-                ChangeSelectedProfile(_profileSkipDisplayChange);
+                ChangeSelectedProfile(ShortcutItem.SkipDisplayChangeProfile);
                 SuggestShortcutName();
                 return;
             }
