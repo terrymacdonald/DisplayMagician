@@ -903,6 +903,7 @@ namespace DisplayMagician
             if (shortcutToUse.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} doesn't have a profile to apply, so we won't change profiles.");
+                needToChangeProfiles = false;
             }
             else
             {

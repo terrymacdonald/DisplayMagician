@@ -201,16 +201,15 @@ namespace DisplayMagician
         private List<StartProgram> _startPrograms = new List<StartProgram> ();
         private List<StopProgram> _stopPrograms = new List<StopProgram>();
         private Bitmap _shortcutBitmap, _originalBitmap;
-        [JsonIgnore]
+
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
         private string _originalIconPath;
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
-
-        [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
+        private static ProfileItem _skipDisplayChangeProfile;
 #pragma warning restore CS3008 // Identifier is not CLS-compliant
-        
+
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutItem()
@@ -312,8 +311,9 @@ namespace DisplayMagician
         }
 
         [DefaultValue("")]
-        public string ProfileUUID { 
-            get 
+        public string ProfileUUID
+        {
+            get
             {
                 return _profileUuid;
             }
@@ -321,7 +321,19 @@ namespace DisplayMagician
             {
                 _profileUuid = value;
 
-                // We try to find and set the ProfileTouse
+                // The skip UUID is a special virtual profile - not in AllProfiles, handle it directly
+                if (_profileUuid.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                {
+                    _profileToUse = new ProfileItem
+                    {
+                        Name = ProfileItem.SkipDisplayChangeName,
+                        UUID = ProfileItem.SkipDisplayChangeUUID,
+                        ProfileBitmap = Properties.Resources.skipdisplaychange
+                    };
+                    return;
+                }
+
+                // We try to find and set the ProfileToUse
                 foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
                     if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
@@ -986,6 +998,19 @@ namespace DisplayMagician
         }
 
 
+        [JsonIgnore]
+        public static ProfileItem SkipDisplayChangeProfile
+        {
+            get
+            {
+                if (_skipDisplayChangeProfile == null)
+                {
+                    _skipDisplayChangeProfile  = CreateSkipDisplayChangeProfile();
+                }
+                return _skipDisplayChangeProfile;
+            }
+        }
+
         public void UpdateNoGameShortcut(
             string name,
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
@@ -1489,32 +1514,40 @@ namespace DisplayMagician
             ShortcutValidity worstError = ShortcutValidity.Valid;
 
             // Does the profile we want to Use still exist?
-            if (!ProfileRepository.ContainsProfile(ProfileUUID))
+            if (ProfileUUID == ProfileItem.SkipDisplayChangeUUID)
             {
-                logger.Warn($"ShortcutItem/RefreshValidity: The profile UUID {ProfileUUID} isn't in the ProfileRepository");
-                ShortcutError error = new ShortcutError();
-                error.Name = "ProfileNotExist";
-                error.Validity = ShortcutValidity.Error;
-                error.Message = $"The profile does not exist (probably deleted) and cannot be used.";
-                _shortcutErrors.Add(error);
-                if (worstError != ShortcutValidity.Error)
-                    worstError = ShortcutValidity.Error;
+                // Skip Display Change is a special virtual profile - always valid, never needs checking
+                logger.Trace($"ShortcutItem/RefreshValidity: ProfileUUID is SkipDisplayChangeUUID - skipping profile existence and possibility checks.");
             }
-            // Is the profile still valid right now? i.e. are all the screens available?
-            if (ProfileToUse != null)
+            else
             {
-                ProfileToUse.RefreshPossbility();
-                if (!ProfileToUse.IsPossible)
+                if (!ProfileRepository.ContainsProfile(ProfileUUID))
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The profile UUID {ProfileUUID} isn't in the ProfileRepository");
                     ShortcutError error = new ShortcutError();
-                    error.Name = "InvalidProfile";
-                    error.Validity = ShortcutValidity.Warning;
-                    error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
+                    error.Name = "ProfileNotExist";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The profile does not exist (probably deleted) and cannot be used.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
-                        worstError = ShortcutValidity.Warning;
-                }                
+                        worstError = ShortcutValidity.Error;
+                }
+                // Is the profile still valid right now? i.e. are all the screens available?
+                if (ProfileToUse != null)
+                {
+                    ProfileToUse.RefreshPossbility();
+                    if (!ProfileToUse.IsPossible)
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "InvalidProfile";
+                        error.Validity = ShortcutValidity.Warning;
+                        error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Warning;
+                    }
+                }
             }
 
             logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is named: {Name}");
@@ -1837,6 +1870,16 @@ namespace DisplayMagician
         public string CreateCommand()
         {
             return $"{Application.ExePath} {DisplayMagicianStartupAction.RunShortcut} \"{UUID}\"";
+        }
+
+        public static ProfileItem CreateSkipDisplayChangeProfile()
+        {
+            return new ProfileItem
+            {
+                Name = ProfileItem.SkipDisplayChangeName,
+                UUID = ProfileItem.SkipDisplayChangeUUID,
+                ProfileBitmap = Properties.Resources.skipdisplaychange
+            };
         }
 
 

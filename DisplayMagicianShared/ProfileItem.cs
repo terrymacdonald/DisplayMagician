@@ -90,7 +90,7 @@ namespace DisplayMagicianShared
         private static string AppWallpaperPath = Path.Combine(AppDataPath, $"Wallpaper");
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
-        public static string SkipDisplayChangeName = "Skip Display Change";
+        public static string SkipDisplayChangeName = "No Change";
         public static string SkipDisplayChangeUUID = "00000000-0000-4000-8000-000000000000";
 
 
@@ -222,6 +222,7 @@ namespace DisplayMagicianShared
         }
 
         public static Version Version = new Version(2, 1);
+
 
         #region Instance Properties
 

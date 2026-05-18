@@ -130,14 +130,7 @@ namespace DisplayMagician.UIForms
                 logger.Error(ex, $"ShortcutForm/ShortcutForm: Exception while trying to setup the game ImageListView and set the render.");
             }
 
-
-            _profileSkipDisplayChange = new ProfileItem
-            {
-                Name = ProfileItem.SkipDisplayChangeName,
-                UUID = ProfileItem.SkipDisplayChangeUUID,
-                ProfileBitmap = Properties.Resources.skipdisplaychange
-            };
-            _skipDisplayChangeILVItem = new ImageListViewItem(_profileSkipDisplayChange, ProfileItem.SkipDisplayChangeName);
+            _skipDisplayChangeILVItem = new ImageListViewItem(ShortcutItem.SkipDisplayChangeProfile, ProfileItem.SkipDisplayChangeName);
 
             lbl_profile_shown.Text = "No Display Profiles available";
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
@@ -1407,9 +1400,14 @@ namespace DisplayMagician.UIForms
                 // Set the Hotkey text
                 //UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
 
-                // *** 1. Choose Display Profile Tab ***
-                // Find the profile
-                if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
+                    // *** 1. Choose Display Profile Tab ***
+                    // Find the profile
+                if (_shortcutToEdit.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.InvariantCulture))
+                {
+                    chosenProfile = ShortcutItem.SkipDisplayChangeProfile;
+                    foundChosenProfileInLoadedProfiles = true;
+                }
+                else if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
                 {
                     // We have loaded the profile used last time
                     // so we need to show the selected profile in the UI
