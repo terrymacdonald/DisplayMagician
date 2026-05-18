@@ -311,29 +311,18 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
 
-                // attempt to delete the wallpaper
-                try
+                // attempt to delete all stored per-monitor wallpaper images
+                foreach (WallpaperMonitorConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
                 {
-                    if (File.Exists(ProfileToRemove.WallpaperBitmapFilename))
+                    try
                     {
-                        File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                        if (!string.IsNullOrEmpty(mon.StoredFilename) && File.Exists(mon.StoredFilename))
+                            File.Delete(mon.StoredFilename);
                     }
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename}.");
-                }
-                catch (ArgumentException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} due to an invalid argument.");
-                }
-                catch (PathTooLongException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the path is too long.");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the parent folder isn't there.");
+                    catch (Exception ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.StoredFilename}: {ex.Message}");
+                    }
                 }
 
             }
@@ -394,29 +383,18 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
 
-                // attempt to delete the wallpaper
-                try
+                // attempt to delete all stored per-monitor wallpaper images
+                foreach (WallpaperMonitorConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
                 {
-                    if (File.Exists(ProfileToRemove.WallpaperBitmapFilename))
+                    try
                     {
-                        File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                        if (!string.IsNullOrEmpty(mon.StoredFilename) && File.Exists(mon.StoredFilename))
+                            File.Delete(mon.StoredFilename);
                     }
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename}.");
-                }
-                catch (ArgumentException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} due to an invalid argument.");
-                }
-                catch (PathTooLongException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the path is too long.");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the parent folder isn't there.");
+                    catch (Exception ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.StoredFilename}: {ex.Message}");
+                    }
                 }
 
             }
@@ -478,29 +456,20 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
 
-                // attempt to delete the wallpaper
-                try
+                // attempt to delete the wallpaper files
+                foreach (WallpaperMonitorConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
                 {
-                    if (File.Exists(ProfileToRemove.WallpaperBitmapFilename))
+                    try
                     {
-                        File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                        if (!string.IsNullOrEmpty(mon.StoredFilename) && File.Exists(mon.StoredFilename))
+                        {
+                            File.Delete(mon.StoredFilename);
+                        }
                     }
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename}.");
-                }
-                catch (ArgumentException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} due to an invalid argument.");
-                }
-                catch (PathTooLongException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the path is too long.");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the parent folder isn't there.");
+                    catch (Exception ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Exception while deleting wallpaper file {mon.StoredFilename} for profile {ProfileToRemove.Name}.");
+                    }
                 }
 
             }
@@ -1604,18 +1573,18 @@ namespace DisplayMagicianShared
             finally
             {
                 // If the applying path info worked, then we attempt to set the desktop background if needed
-                if (profile.WallpaperMode.Equals(Wallpaper.Mode.Apply) && !String.IsNullOrWhiteSpace(profile.WallpaperBitmapFilename))
+                if (profile.WallpaperConfiguration.WallpaperMode.Equals(Wallpaper.Mode.Apply))
                 {
-                    if (Wallpaper.Set(profile.WallpaperBitmapFilename, profile.WallpaperStyle))
+                    if (Wallpaper.Apply(profile.WallpaperConfiguration))
                     {
-                        SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.WallpaperBitmapFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it worked!");
+                        SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to apply the desktop wallpaper configuration for profile {profile.Name}, and it worked!");
                     }
                     else
                     {
-                        SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.WallpaperBitmapFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it failed :(");
+                        SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to apply the desktop wallpaper configuration for profile {profile.Name}, and it failed :(");
                     }
                 }
-                else if (profile.WallpaperMode.Equals(Wallpaper.Mode.Clear))
+                else if (profile.WallpaperConfiguration.WallpaperMode.Equals(Wallpaper.Mode.Clear))
                 {
                     if (Wallpaper.Clear())
                     {

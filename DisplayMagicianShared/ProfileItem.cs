@@ -87,7 +87,7 @@ namespace DisplayMagicianShared
         private WINDOWS_DISPLAY_CONFIG _windowsDisplayConfig;
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
-        private static string AppWallpaperPath = Path.Combine(AppDataPath, $"Wallpaper");
+        internal static string AppWallpaperPath = Path.Combine(AppDataPath, $"Wallpaper");
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         public static string SkipDisplayChangeName = "No Change";
@@ -97,7 +97,7 @@ namespace DisplayMagicianShared
         private string _uuid = "";
         private bool _isPossible = false;
         private bool _forceExplorerRestart = false;
-        private string _wallpaperBitmapFilename = "";
+        private WallpaperConfig _wallpaperConfiguration = new WallpaperConfig();
         private int _applyProfileCount = 1;
         private int _applyProfileDelay = 0;
 
@@ -175,7 +175,7 @@ namespace DisplayMagicianShared
 
             // Create default filenames to avoid null exceptions
             SavedProfileIconCacheFilename = "";
-            WallpaperBitmapFilename = "";
+            WallpaperConfiguration = new WallpaperConfig { WallpaperMode = Wallpaper.Mode.Apply };
 
 
             // Fill out a new NVIDIA and AMD object when a profile is being created
@@ -369,22 +369,11 @@ namespace DisplayMagicianShared
         [DefaultValue("")]
         public string SavedProfileIconCacheFilename { get; set; }
 
-        [DefaultValue(Wallpaper.Mode.DoNothing)]
-        public Wallpaper.Mode WallpaperMode { get; set; }
-
-        [DefaultValue(Wallpaper.Style.Fill)]
-        public Wallpaper.Style WallpaperStyle { get; set; }
-
-        [DefaultValue("")]
-        public string WallpaperBitmapFilename{ 
-            get
-            {
-                return _wallpaperBitmapFilename;
-            }
-            set
-            {
-                _wallpaperBitmapFilename = value;
-            }
+        [JsonRequired]
+        public WallpaperConfig WallpaperConfiguration
+        {
+            get => _wallpaperConfiguration;
+            set => _wallpaperConfiguration = value ?? new WallpaperConfig { WallpaperMode = Wallpaper.Mode.Apply };
         }
 
         [DefaultValue(default(List<string>))]
@@ -605,9 +594,7 @@ namespace DisplayMagicianShared
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
-            profile.WallpaperMode = WallpaperMode;
-            profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
-            profile.WallpaperStyle = WallpaperStyle;
+            profile.WallpaperConfiguration = WallpaperConfiguration;
             profile.ApplyProfileCount = ApplyProfileCount;
             profile.ApplyProfileDelay = ApplyProfileDelay;
             profile.ForceExplorerRestart = ForceExplorerRestart;
@@ -664,7 +651,9 @@ namespace DisplayMagicianShared
                 _intelDisplayConfig = intelLibrary.ActiveDisplayConfig;
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
                 _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers();
-                             
+
+                // Capture per-monitor wallpaper settings for this profile
+                _wallpaperConfiguration = Wallpaper.GetCurrentWallpaperConfig(AppWallpaperPath);
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
