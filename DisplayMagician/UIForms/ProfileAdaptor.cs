@@ -47,17 +47,26 @@ namespace DisplayMagician.UIForms
 
             try
             {
+                ProfileItem profileToUse = key as ProfileItem;
+
+                // Handle the special "Skip Display Change" profile
+                if (profileToUse != null && profileToUse.UUID == ProfileItem.SkipDisplayChangeUUID)
+                {
+                    return Properties.Resources.skipdisplaychange.GetThumbnailImage(size.Width, size.Height, new Image.GetThumbnailImageAbort(() => { return false; }), IntPtr.Zero);
+                }
+
+                // Fall back to searching by name (existing behaviour)
                 string profileName = key.ToString();
 
-                ProfileItem profileToUse = null;
-
-                foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+                if (profileToUse == null)
                 {
-                    if (profileToTest.Name == profileName)
+                    foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                     {
-                        profileToUse = profileToTest;
+                        if (profileToTest.Name == profileName)
+                        {
+                            profileToUse = profileToTest;
+                        }
                     }
-
                 }
 
                 if (profileToUse == null)
@@ -69,13 +78,12 @@ namespace DisplayMagician.UIForms
 
                 if (profileToUse.ProfileBitmap == null)
                 {
-                    logger.Warn($"ProfileAdaptor/GetThumbnail: ProfileBitmap is null for profile '{profileToUse.Name}' (UUID: {profileToUse.UUID}). Returning default whitearrows icon thumbnail.");
-                    return Properties.Resources.whitearrows.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+                    logger.Warn($"ProfileAdaptor/GetThumbnail: ProfileBitmap is null for profile '{profileToUse.Name}' (UUID: {profileToUse.UUID}). Returning default exe icon thumbnail.");
+                    return Properties.Resources.exe.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
                 }
 
-                Image imageToUse;
-                imageToUse = profileToUse.ProfileBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);                
-                return imageToUse;
+                return profileToUse.ProfileBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+
             }
             catch (Exception ex)
             {

@@ -81,6 +81,9 @@
     <Page Remove="Resources\**" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Properties\nodisplaychange.png" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="HotkeySelector.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -276,6 +276,8 @@ namespace DisplayMagician.UIForms
                 }
             }
 
+
+
             if ((state & ItemState.Selected) != ItemState.None)
             {
                 //using (Brush bSelected = new LinearGradientBrush(bounds, ImageListView.Colors.SelectedColor1, ImageListView.Colors.SelectedColor2, LinearGradientMode.Vertical))
@@ -297,37 +299,54 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                ProfileItem profileToRender = ProfileRepository.GetProfile(item.EquipmentModel);
-                if (profileToRender == null)
-                {
-                    // Profile no longer exists in the repository; try the cached image first, fall back to default
-                    logger.Warn($"ProfileILVRenderer/DrawItem: Profile with key '{item.EquipmentModel}' was not found in the repository. Attempting to draw cached image.");
-                    try
+                //if (item.EquipmentModel.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                //{
+                //    logger.Trace($"ProfileILVRenderer/DrawItem: Rendering special 'skip display change' profile item with key '{item.EquipmentModel}'. Drawing with warning icon overlay.");
+                //    // This is a special "profile" that represents the "skip display change" option, which isn't a real profile and doesn't have a repository entry
+                //    // so we just draw it with a warning icon to indicate it's not a real profile
+                //    Image grayImg = ImageUtils.MakeGrayscale(img);
+                //    g.DrawImage(grayImg, pos);
+                //    // And return early as there's no need to do any repository checks for this item
+                //    //return;
+                //}
+                //else
+                //{
+                    logger.Trace($"ProfileILVRenderer/DrawItem: Rendering profile item with key '{item.EquipmentModel}'.");
+                    ProfileItem profileToRender = ProfileRepository.GetProfile(item.EquipmentModel);
+                    if (profileToRender == null)
                     {
+                        // Profile no longer exists in the repository; try the cached image first, fall back to default
+                        logger.Warn($"ProfileILVRenderer/DrawItem: Profile with key '{item.EquipmentModel}' was not found in the repository. Attempting to draw cached image.");
+                        try
+                        {
+                            g.DrawImage(img, pos);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ProfileILVRenderer/DrawItem: Failed to draw cached image for missing profile '{item.EquipmentModel}'. Falling back to default exe icon.");
+                            g.DrawImage(Properties.Resources.exe, pos);
+                        }
+                    }
+                    else if (profileToRender.IsPossible)
+                    {
+                        // Draw the full color image as the shortcut is not invalid
+                        logger.Trace($"ProfileILVRenderer/DrawItem: Rendering valid profile item with key '{item.EquipmentModel}'.");
                         g.DrawImage(img, pos);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Warn(ex, $"ProfileILVRenderer/DrawItem: Failed to draw cached image for missing profile '{item.EquipmentModel}'. Falling back to default exe icon.");
-                        g.DrawImage(Properties.Resources.exe, pos);
-                    }
-                }
-                else if (profileToRender.IsPossible)
-                {
-                    // Draw the full color image as the shortcuts is not invalid
-                    g.DrawImage(img, pos);
-                }
-                else
-                {
-                    // THe shortcut is invalid
-                    // so we make the image grayscale
-                    Image grayImg = ImageUtils.MakeGrayscale(img);
-                    g.DrawImage(grayImg, pos);
+                        logger.Trace($"ProfileILVRenderer/DrawItem: Rendering invalid profile item with key '{item.EquipmentModel}'. Drawing with warning icon overlay.");
+                        // THe shortcut is invalid
+                        // so we make the image grayscale
+                        Image grayImg = ImageUtils.MakeGrayscale(img);
+                        g.DrawImage(grayImg, pos);
 
-                    // Draw a warning triangle over it
-                    // right in the centre
-                    g.DrawImage(Properties.Resources.warning, pos.X + 30, pos.Y + 30, 40, 40);
-                }
+                        // Draw a warning triangle over it
+                        // right in the centre
+                        g.DrawImage(Properties.Resources.warning, pos.X + 30, pos.Y + 30, 40, 40);
+                    }
+
+                //}
 
 
                 // Draw image border

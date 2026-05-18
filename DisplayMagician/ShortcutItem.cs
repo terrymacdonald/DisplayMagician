@@ -210,6 +210,7 @@ namespace DisplayMagician
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
 #pragma warning restore CS3008 // Identifier is not CLS-compliant
+        
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutItem()

@@ -99,6 +99,7 @@ namespace DisplayMagician
         #endregion
 
         #region Class Properties
+
         public static List<ShortcutItem> AllShortcuts
         {
             get
@@ -669,6 +670,13 @@ namespace DisplayMagician
                             continue;
                         }
 
+                        if (updatedShortcut.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.Debug($"ShortcutRepository/LoadShortcuts: Shortcut '{updatedShortcut.Name}' uses 'No Display Change' profile. Setting ProfileToUse to null as we don't want to link it to a profile.");
+                            updatedShortcut.ProfileToUse = null;
+                            continue;
+                        }
+
                         bool foundProfile = false;
                         foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                         {
@@ -891,14 +899,24 @@ namespace DisplayMagician
             // Remember the profile we are on now
             bool needToChangeProfiles = false;
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
-            if (!rollbackProfile.Equals(shortcutToUse.ProfileToUse))
+
+            if (shortcutToUse.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.ProfileToUse} profile.");
-                needToChangeProfiles = true;
+                logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} doesn't have a profile to apply, so we won't change profiles.");
             }
             else
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: We're already on the {rollbackProfile.Name} profile so no need to change profiles.");
+                logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} has a profile to apply, so we need to check whether we need to change profiles.");
+                if (!rollbackProfile.Equals(shortcutToUse.ProfileToUse))
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.ProfileToUse} profile.");
+                    needToChangeProfiles = true;
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We're already on the {rollbackProfile.Name} profile so no need to change profiles.");
+                }
+
             }
             // Tell the IPC Service we are busy right now, and keep the previous status for later
             //InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;

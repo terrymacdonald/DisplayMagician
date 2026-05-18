@@ -236,7 +236,7 @@ namespace DisplayMagicianShared.UserControls
         private void DrawEmptyView(Graphics g)
         {
             RectangleF rect = g.VisibleClipBounds;
-            using (var emptyBrush = new SolidBrush(Color.FromArgb(15, Color.White)))
+            using (var emptyBrush = new SolidBrush(BackColor))
                 g.FillRectangle(emptyBrush, rect);
             g.DrawRectangle(Pens.Black, rect.X, rect.Y, rect.Width, rect.Height);
         }

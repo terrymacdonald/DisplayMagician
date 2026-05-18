@@ -33,6 +33,9 @@ namespace DisplayMagician.UIForms
         private ShortcutCategory _shortcutCategory = ShortcutCategory.Game;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
         private ProfileItem _profileToUse = null;
+        private ProfileItem _profileSkipDisplayChange = null;
+        private ImageListViewItem _skipDisplayChangeILVItem;
+
         private string _gameLauncher = "";
         private GameShorcutData _gameToUse;
         private ExecutableShortcutData _executableToUse;
@@ -61,6 +64,7 @@ namespace DisplayMagician.UIForms
         private bool _autoName = true;
         private string _gameId = "0";
         private string _uuid = "";
+
         private CoreAudioController audioController = null;
         private List<CoreAudioDevice> audioDevices = null;
         private CoreAudioDevice selectedAudioDevice = null;
@@ -125,6 +129,15 @@ namespace DisplayMagician.UIForms
             {
                 logger.Error(ex, $"ShortcutForm/ShortcutForm: Exception while trying to setup the game ImageListView and set the render.");
             }
+
+
+            _profileSkipDisplayChange = new ProfileItem
+            {
+                Name = ProfileItem.SkipDisplayChangeName,
+                UUID = ProfileItem.SkipDisplayChangeUUID,
+                ProfileBitmap = Properties.Resources.skipdisplaychange
+            };
+            _skipDisplayChangeILVItem = new ImageListViewItem(_profileSkipDisplayChange, ProfileItem.SkipDisplayChangeName);
 
             lbl_profile_shown.Text = "No Display Profiles available";
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
@@ -1077,7 +1090,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void RefreshProfileImageListView(ProfileItem profile)
+        private void UpdateProfileImageListView(ProfileItem profile)
         {
             ilv_saved_profiles.ClearSelection();
             IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
@@ -1361,6 +1374,8 @@ namespace DisplayMagician.UIForms
             ilv_games.Visible = true;
             ilv_games.SuspendLayout();
             ilv_games.Items.Clear();
+
+            // Add the rest of the true profiles
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
                 // Add the game to the game array
@@ -2548,6 +2563,14 @@ namespace DisplayMagician.UIForms
 
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
+            // Check if the user clicked the special "Skip Display Change" item first
+            if (e.Item.Text == ProfileItem.SkipDisplayChangeName)
+            {
+                ChangeSelectedProfile(_profileSkipDisplayChange);
+                SuggestShortcutName();
+                return;
+            }
+
             foreach (ProfileItem savedProfile in ProfileRepository.AllProfiles)
             {
                 if (savedProfile.Name == e.Item.Text)
@@ -2564,26 +2587,27 @@ namespace DisplayMagician.UIForms
         private void ChangeSelectedProfile(ProfileItem profile)
         {
             // If the profile is null then return
-            // (this happens when a new blank shortcut is created
+            // (this happens when a new blank shortcut is created)
             if (profile == null)
                 return;
 
             // And we need to update the actual selected profile too!
             _profileToUse = profile;
 
-            // And show the logo for the driver
-            /*if (_profileToUse.VideoMode == VIDEO_MODE.NVIDIA)
+            // Handle the special "Skip Display Change" profile
+            if (profile.UUID == ProfileItem.SkipDisplayChangeUUID)
             {
-                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.nvidiablack, Properties.Resources.nvidiawhite);
+                lbl_profile_shown.Text = ProfileItem.SkipDisplayChangeName;
+                lbl_profile_shown_subtitle.Text = "The display configuration will not be changed when this shortcut runs.";
+                lbl_profile_shown_subtitle.Visible = true;
+
+                // Clear the display view - DrawEmptyView will be called automatically
+                dv_profile.Profile = null;
+                dv_profile.Refresh();
+
+                UpdateProfileImageListView(profile);
+                return;
             }
-            else if (_profileToUse.VideoMode == VIDEO_MODE.AMD)
-            {
-                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.amdblack, Properties.Resources.amdwhite);
-            }
-            else
-            {
-                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.winblack, Properties.Resources.winwhite);
-            }*/
 
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _profileToUse.Name;
@@ -2599,26 +2623,28 @@ namespace DisplayMagician.UIForms
                 lbl_profile_shown_subtitle.Visible = false;
             }
 
-
             // Refresh the image list view
-            RefreshProfileImageListView(profile);
+            UpdateProfileImageListView(profile);
 
             // And finally show the profile in the display view
             dv_profile.Profile = profile;
             dv_profile.Refresh();
-
         }
+
 
         private void RefreshShortcutUI()
         {
 
 
-            if (ProfileRepository.ProfileCount > 0)
-            {
+            //if (ProfileRepository.ProfileCount > 0)
+            //{
 
                 // Temporarily stop updating the saved_profiles listview
                 ilv_saved_profiles.SuspendLayout();
 
+                // Clear the saved_profiles listview so we can refill it with all the profiles (including the new one if we just created a new shortcut)
+                ilv_saved_profiles.Items.Clear();
+               
                 ImageListViewItem newItem = null;
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
@@ -2631,9 +2657,13 @@ namespace DisplayMagician.UIForms
 
                 }
 
-                // Restart updating the saved_profiles listview
-                ilv_saved_profiles.ResumeLayout();
-            }
+            // Add the Skip Display Change option last
+            ilv_saved_profiles.Items.Add(_skipDisplayChangeILVItem, _profileAdaptor);
+
+
+            // Restart updating the saved_profiles listview
+            ilv_saved_profiles.ResumeLayout();
+            //}
 
             //UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
         }
