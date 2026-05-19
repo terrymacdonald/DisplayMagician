@@ -88,9 +88,9 @@ namespace DisplayMagician.UIForms
             cb_apply_wallpaper.Location = new System.Drawing.Point(33, 35);
             cb_apply_wallpaper.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_apply_wallpaper.Name = "cb_apply_wallpaper";
-            cb_apply_wallpaper.Size = new System.Drawing.Size(360, 20);
+            cb_apply_wallpaper.Size = new System.Drawing.Size(339, 20);
             cb_apply_wallpaper.TabIndex = 0;
-            cb_apply_wallpaper.Text = "Apply wallpapers when switching to this profile";
+            cb_apply_wallpaper.Text = "Apply stored wallpapers when switching to this profile";
             cb_apply_wallpaper.UseVisualStyleBackColor = true;
             cb_apply_wallpaper.CheckedChanged += cb_apply_wallpaper_CheckedChanged;
             // 
