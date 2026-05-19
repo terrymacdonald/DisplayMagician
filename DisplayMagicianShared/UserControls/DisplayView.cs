@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using DisplayMagicianShared.Windows;
 
@@ -9,6 +11,7 @@ namespace DisplayMagicianShared.UserControls
     public partial class DisplayView : UserControl
     {
         private ProfileItem _profile;
+        private readonly Dictionary<string, Bitmap> _wallpaperCache = new Dictionary<string, Bitmap>();
 
         public DisplayView()
         {
@@ -30,7 +33,28 @@ namespace DisplayMagicianShared.UserControls
             get => _profile;
             set
             {
+                // Dispose previously cached wallpaper bitmaps
+                foreach (var bmp in _wallpaperCache.Values)
+                    bmp?.Dispose();
+                _wallpaperCache.Clear();
+
                 _profile = value;
+
+                // Pre-load wallpaper thumbnails when mode is Apply
+                if (_profile?.WallpaperConfiguration?.WallpaperMode == Wallpaper.Mode.Apply)
+                {
+                    foreach (var mon in _profile.WallpaperConfiguration.MonitorWallpapers)
+                    {
+                        if (!string.IsNullOrEmpty(mon.StoredFilename) &&
+                            File.Exists(mon.StoredFilename) &&
+                            !_wallpaperCache.ContainsKey(mon.StoredFilename))
+                        {
+                            try { _wallpaperCache[mon.StoredFilename] = new Bitmap(mon.StoredFilename); }
+                            catch { /* ignore – solid colour fallback will be used */ }
+                        }
+                    }
+                }
+
                 Invalidate();
             }
         }
@@ -114,6 +138,20 @@ namespace DisplayMagicianShared.UserControls
                 selectedWordFont = normalWordFont;
             }
 
+            // Build a bounds→bitmap lookup for wallpaper preview (Apply mode only;
+            // DoNothing and Clear keep the existing solid colour)
+            var wallpaperByBounds = new Dictionary<(int x, int y, int w, int h), Bitmap>();
+            if (_profile.WallpaperConfiguration?.WallpaperMode == Wallpaper.Mode.Apply)
+            {
+                foreach (var mon in _profile.WallpaperConfiguration.MonitorWallpapers)
+                {
+                    int bw = mon.MonitorBounds.right - mon.MonitorBounds.left;
+                    int bh = mon.MonitorBounds.bottom - mon.MonitorBounds.top;
+                    if (_wallpaperCache.TryGetValue(mon.StoredFilename ?? "", out Bitmap cached))
+                        wallpaperByBounds[(mon.MonitorBounds.left, mon.MonitorBounds.top, bw, bh)] = cached;
+                }
+            }
+
             foreach (ScreenPosition screen in _profile.Screens)
             {
 
@@ -128,10 +166,13 @@ namespace DisplayMagicianShared.UserControls
                     g.FillRectangle(outlineBrush, outlineRect);
                 g.DrawRectangle(Pens.Black, outlineRect);
 
-                // Draw the screen of the monitor
+                // Draw the screen of the monitor (wallpaper thumbnail when available, solid colour otherwise)
                 screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                using (var screenBrush = new SolidBrush(screen.Colour))
-                    g.FillRectangle(screenBrush, screenRect);
+                if (wallpaperByBounds.TryGetValue((screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight), out Bitmap wallpaperBmp))
+                    g.DrawImage(wallpaperBmp, screenRect);
+                else
+                    using (var screenBrush = new SolidBrush(screen.Colour))
+                        g.FillRectangle(screenBrush, screenRect);
                 g.DrawRectangle(Pens.Black, screenRect);
 
                 // Draw the location of the taskbar for this screen

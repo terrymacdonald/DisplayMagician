@@ -22,12 +22,19 @@ namespace DisplayMagicianShared
         /// </summary>
         public string StoredFilename { get; set; } = "";
 
+        /// <summary>
+        /// Monitor bounding rectangle in virtual-screen coordinates. Used to match
+        /// this entry to a ScreenPosition in DisplayView for the wallpaper preview.
+        /// </summary>
+        public RECT MonitorBounds { get; set; } = default;
+
         public WallpaperMonitorConfig() { }
 
-        public WallpaperMonitorConfig(string monitorDevicePath, string storedFilename)
+        public WallpaperMonitorConfig(string monitorDevicePath, string storedFilename, RECT monitorBounds)
         {
             MonitorDevicePath = monitorDevicePath;
             StoredFilename = storedFilename;
+            MonitorBounds = monitorBounds;
         }
 
         public override bool Equals(object obj) => obj is WallpaperMonitorConfig other && Equals(other);
@@ -35,9 +42,13 @@ namespace DisplayMagicianShared
         {
             if (other is null) return false;
             return MonitorDevicePath == other.MonitorDevicePath &&
-                   StoredFilename == other.StoredFilename;
+                   StoredFilename == other.StoredFilename &&
+                   MonitorBounds.left == other.MonitorBounds.left &&
+                   MonitorBounds.top == other.MonitorBounds.top &&
+                   MonitorBounds.right == other.MonitorBounds.right &&
+                   MonitorBounds.bottom == other.MonitorBounds.bottom;
         }
-        public override int GetHashCode() => (MonitorDevicePath, StoredFilename).GetHashCode();
+        public override int GetHashCode() => (MonitorDevicePath, StoredFilename, MonitorBounds.left, MonitorBounds.top).GetHashCode();
         public static bool operator ==(WallpaperMonitorConfig lhs, WallpaperMonitorConfig rhs)
             => lhs is null ? rhs is null : lhs.Equals(rhs);
         public static bool operator !=(WallpaperMonitorConfig lhs, WallpaperMonitorConfig rhs)
@@ -266,9 +277,13 @@ namespace DisplayMagicianShared
                         if (string.IsNullOrEmpty(ext)) ext = ".png";
                         string destFilename = Path.Combine(wallpaperStorePath, $"wallpaper-{Guid.NewGuid()}{ext}");
 
+                        // Capture the monitor bounding rect for DisplayView preview matching
+                        RECT monitorRect = default;
+                        idw.GetMonitorRECT(monitorPath, out monitorRect);
+
                         File.Copy(wallpaperPath, destFilename, overwrite: true);
 
-                        config.MonitorWallpapers.Add(new WallpaperMonitorConfig(monitorPath, destFilename));
+                        config.MonitorWallpapers.Add(new WallpaperMonitorConfig(monitorPath, destFilename, monitorRect));
                         SharedLogger.logger.Trace($"Wallpaper/GetCurrentWallpaperConfig: Captured wallpaper for monitor {monitorPath} -> {destFilename}");
                     }
                 }
