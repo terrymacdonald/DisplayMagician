@@ -33,7 +33,6 @@ namespace DisplayMagician.UIForms
         private ShortcutCategory _shortcutCategory = ShortcutCategory.Game;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
         private ProfileItem _profileToUse = null;
-        private ProfileItem _profileSkipDisplayChange = null;
         private ImageListViewItem _skipDisplayChangeILVItem;
 
         private string _gameLauncher = "";
