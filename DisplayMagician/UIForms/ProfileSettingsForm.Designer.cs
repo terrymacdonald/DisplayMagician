@@ -32,7 +32,8 @@ namespace DisplayMagician.UIForms
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProfileSettingsForm));
             btn_back = new System.Windows.Forms.Button();
             gb_general = new System.Windows.Forms.GroupBox();
-            cb_apply_wallpaper = new System.Windows.Forms.CheckBox();
+            lbl_wallpaper_mode = new System.Windows.Forms.Label();
+            cmb_wallpaper_mode = new System.Windows.Forms.ComboBox();
             gb_multiple_applies = new System.Windows.Forms.GroupBox();
             label2 = new System.Windows.Forms.Label();
             cb_force_restart_explorer = new System.Windows.Forms.CheckBox();
@@ -66,7 +67,8 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
-            gb_general.Controls.Add(cb_apply_wallpaper);
+            gb_general.Controls.Add(lbl_wallpaper_mode);
+            gb_general.Controls.Add(cmb_wallpaper_mode);
             gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_general.ForeColor = System.Drawing.Color.White;
             gb_general.Location = new System.Drawing.Point(30, 27);
@@ -78,21 +80,29 @@ namespace DisplayMagician.UIForms
             gb_general.TabStop = false;
             gb_general.Text = "Wallpaper Settings";
             // 
-            // cb_apply_wallpaper
+            // lbl_wallpaper_mode
             // 
-            cb_apply_wallpaper.AutoSize = true;
-            cb_apply_wallpaper.Checked = true;
-            cb_apply_wallpaper.CheckState = System.Windows.Forms.CheckState.Checked;
-            cb_apply_wallpaper.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            cb_apply_wallpaper.ForeColor = System.Drawing.Color.White;
-            cb_apply_wallpaper.Location = new System.Drawing.Point(33, 35);
-            cb_apply_wallpaper.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            cb_apply_wallpaper.Name = "cb_apply_wallpaper";
-            cb_apply_wallpaper.Size = new System.Drawing.Size(339, 20);
-            cb_apply_wallpaper.TabIndex = 0;
-            cb_apply_wallpaper.Text = "Apply stored wallpapers when switching to this profile";
-            cb_apply_wallpaper.UseVisualStyleBackColor = true;
-            cb_apply_wallpaper.CheckedChanged += cb_apply_wallpaper_CheckedChanged;
+            lbl_wallpaper_mode.AutoSize = true;
+            lbl_wallpaper_mode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_wallpaper_mode.ForeColor = System.Drawing.Color.White;
+            lbl_wallpaper_mode.Location = new System.Drawing.Point(14, 37);
+            lbl_wallpaper_mode.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_wallpaper_mode.Name = "lbl_wallpaper_mode";
+            lbl_wallpaper_mode.TabIndex = 0;
+            lbl_wallpaper_mode.Text = "When switching to this profile:";
+            // 
+            // cmb_wallpaper_mode
+            // 
+            cmb_wallpaper_mode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cmb_wallpaper_mode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cmb_wallpaper_mode.FormattingEnabled = true;
+            cmb_wallpaper_mode.Items.AddRange(new object[] { "Apply stored wallpapers", "Clear all wallpapers", "Do nothing" });
+            cmb_wallpaper_mode.Location = new System.Drawing.Point(228, 34);
+            cmb_wallpaper_mode.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cmb_wallpaper_mode.Name = "cmb_wallpaper_mode";
+            cmb_wallpaper_mode.Size = new System.Drawing.Size(360, 24);
+            cmb_wallpaper_mode.TabIndex = 1;
+            cmb_wallpaper_mode.SelectedIndexChanged += cmb_wallpaper_mode_SelectedIndexChanged;
             // 
             // gb_multiple_applies
             // 
@@ -215,7 +225,8 @@ namespace DisplayMagician.UIForms
         #endregion
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.GroupBox gb_general;
-        private System.Windows.Forms.CheckBox cb_apply_wallpaper;
+        private System.Windows.Forms.Label lbl_wallpaper_mode;
+        private System.Windows.Forms.ComboBox cmb_wallpaper_mode;
         private System.Windows.Forms.GroupBox gb_multiple_applies;
         private System.Windows.Forms.Label lbl_apply_profile_delay;
         private System.Windows.Forms.NumericUpDown nud_apply_profile_count;

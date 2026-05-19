@@ -41,9 +41,14 @@ namespace DisplayMagician.UIForms
 
         private void ProfileSettingsForm_Load(object sender, EventArgs e)
         {
-            // Wallpaper mode: checked = Apply, unchecked = DoNothing
-            cb_apply_wallpaper.Checked = Profile.WallpaperConfiguration.WallpaperMode == Wallpaper.Mode.Apply;
-            logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} loaded. Apply wallpapers: {cb_apply_wallpaper.Checked}.");
+            // Wallpaper mode: select matching item, defaulting to Apply
+            cmb_wallpaper_mode.SelectedIndex = Profile.WallpaperConfiguration.WallpaperMode switch
+            {
+                Wallpaper.Mode.Apply => 0,
+                Wallpaper.Mode.Clear => 1,
+                _ => 2
+            };
+            logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} loaded. Wallpaper mode: {Profile.WallpaperConfiguration.WallpaperMode}.");
 
             if (Profile.ApplyProfileCount >= 0 && Profile.ApplyProfileCount <= 10)
             {
@@ -88,9 +93,12 @@ namespace DisplayMagician.UIForms
 
         private void ProfileSettingsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Profile.WallpaperConfiguration.WallpaperMode = cb_apply_wallpaper.Checked
-                ? Wallpaper.Mode.Apply
-                : Wallpaper.Mode.DoNothing;
+            Profile.WallpaperConfiguration.WallpaperMode = cmb_wallpaper_mode.SelectedIndex switch
+            {
+                0 => Wallpaper.Mode.Apply,
+                1 => Wallpaper.Mode.Clear,
+                _ => Wallpaper.Mode.DoNothing
+            };
 
             Profile.ApplyProfileCount = (int)nud_apply_profile_count.Value;
 
@@ -105,7 +113,7 @@ namespace DisplayMagician.UIForms
             this.Close();
         }
 
-        private void cb_apply_wallpaper_CheckedChanged(object sender, EventArgs e)
+        private void cmb_wallpaper_mode_SelectedIndexChanged(object sender, EventArgs e)
         {
             _profileSettingChanged = true;
         }
