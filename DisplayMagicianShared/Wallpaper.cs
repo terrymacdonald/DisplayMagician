@@ -51,7 +51,7 @@ namespace DisplayMagicianShared
     public class WallpaperConfig : IEquatable<WallpaperConfig>
     {
         /// <summary>What to do with wallpapers when this profile is applied.</summary>
-        public Wallpaper.Mode WallpaperMode { get; set; } = Wallpaper.Mode.Apply;
+        public Wallpaper.Mode WallpaperMode { get; set; } = Wallpaper.Mode.DoNothing;
 
         /// <summary>Single global fit style applied to all monitors.</summary>
         public Wallpaper.Style WallpaperStyle { get; set; } = Wallpaper.Style.Fill;
