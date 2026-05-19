@@ -175,7 +175,7 @@ namespace DisplayMagicianShared
 
             // Create default filenames to avoid null exceptions
             SavedProfileIconCacheFilename = "";
-            WallpaperConfiguration = new WallpaperConfig { WallpaperMode = Wallpaper.Mode.Apply };
+            WallpaperConfiguration = new WallpaperConfig { WallpaperMode = Wallpaper.Mode.DoNothing };
 
 
             // Fill out a new NVIDIA and AMD object when a profile is being created

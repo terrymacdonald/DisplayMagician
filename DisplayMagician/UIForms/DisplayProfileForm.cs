@@ -792,6 +792,8 @@ namespace DisplayMagician.UIForms
             ProfileSettingsForm profileSettingsForm = new ProfileSettingsForm();
             profileSettingsForm.Profile = _selectedProfile;
             profileSettingsForm.ShowDialog(this);
+            // Refresh the DisplayView so it reflects the updated wallpaper mode immediately
+            dv_profile.Profile = _selectedProfile;
             // If the profile was previously saved and is now changed then save all the profiles
             // otherwise we'll save it only when the user wants to save this profile.
             if (_saveOrRenameMode == "rename" && profileSettingsForm.ProfileSettingChanged)
