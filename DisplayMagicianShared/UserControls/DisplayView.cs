@@ -12,6 +12,7 @@ namespace DisplayMagicianShared.UserControls
     {
         private ProfileItem _profile;
         private readonly Dictionary<string, Bitmap> _wallpaperCache = new Dictionary<string, Bitmap>();
+        private readonly Dictionary<string, Color> _wallpaperAvgColorCache = new Dictionary<string, Color>();
 
         public DisplayView()
         {
@@ -37,6 +38,7 @@ namespace DisplayMagicianShared.UserControls
                 foreach (var bmp in _wallpaperCache.Values)
                     bmp?.Dispose();
                 _wallpaperCache.Clear();
+                _wallpaperAvgColorCache.Clear();
 
                 _profile = value;
 
@@ -49,7 +51,12 @@ namespace DisplayMagicianShared.UserControls
                             File.Exists(mon.StoredFilename) &&
                             !_wallpaperCache.ContainsKey(mon.StoredFilename))
                         {
-                            try { _wallpaperCache[mon.StoredFilename] = new Bitmap(mon.StoredFilename); }
+                            try
+                            {
+                                var bmp = new Bitmap(mon.StoredFilename);
+                                _wallpaperCache[mon.StoredFilename] = bmp;
+                                _wallpaperAvgColorCache[mon.StoredFilename] = GetAverageBitmapColor(bmp);
+                            }
                             catch { /* ignore – solid colour fallback will be used */ }
                         }
                     }
@@ -138,17 +145,21 @@ namespace DisplayMagicianShared.UserControls
                 selectedWordFont = normalWordFont;
             }
 
-            // Build a bounds→bitmap lookup for wallpaper preview (Apply mode only;
+            // Build a bounds→bitmap and bounds→avgColor lookup for wallpaper preview (Apply mode only;
             // DoNothing and Clear keep the existing solid colour)
             var wallpaperByBounds = new Dictionary<(int x, int y, int w, int h), Bitmap>();
+            var wallpaperAvgColorByBounds = new Dictionary<(int x, int y, int w, int h), Color>();
             if (_profile.WallpaperConfiguration?.WallpaperMode == Wallpaper.Mode.Apply)
             {
                 foreach (var mon in _profile.WallpaperConfiguration.MonitorWallpapers)
                 {
                     int bw = mon.MonitorBounds.right - mon.MonitorBounds.left;
                     int bh = mon.MonitorBounds.bottom - mon.MonitorBounds.top;
+                    var key = (mon.MonitorBounds.left, mon.MonitorBounds.top, bw, bh);
                     if (_wallpaperCache.TryGetValue(mon.StoredFilename ?? "", out Bitmap cached))
-                        wallpaperByBounds[(mon.MonitorBounds.left, mon.MonitorBounds.top, bw, bh)] = cached;
+                        wallpaperByBounds[key] = cached;
+                    if (_wallpaperAvgColorCache.TryGetValue(mon.StoredFilename ?? "", out Color avgColor))
+                        wallpaperAvgColorByBounds[key] = avgColor;
                 }
             }
 
@@ -211,7 +222,11 @@ namespace DisplayMagicianShared.UserControls
                 //g.DrawRectangle(Pens.Black, outlineRect);
 
                 Rectangle wordRect = new Rectangle(screen.ScreenX + screenBezel + screenWordBuffer, screen.ScreenY + screenBezel + screenWordBuffer, screen.ScreenWidth - (screenBezel * 2) - (screenWordBuffer * 2), screen.ScreenHeight - (screenBezel * 2) - (screenWordBuffer * 2));
-                Color wordTextColour = pickTextColorBasedOnBgColour(screen.Colour, lightTextColour, darkTextColour);
+                Color bgForContrast = wallpaperAvgColorByBounds.TryGetValue(
+                    (screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight), out Color wallpaperAvg)
+                    ? wallpaperAvg
+                    : screen.Colour;
+                Color wordTextColour = pickTextColorBasedOnBgColour(bgForContrast, lightTextColour, darkTextColour);
                 // Draw the name of the screen and the size of it
                 string str = $"";
                 if (screen.IsPrimary)
@@ -272,6 +287,15 @@ namespace DisplayMagicianShared.UserControls
             {
                 return lightBitmap;
             }
+        }
+
+        private static Color GetAverageBitmapColor(Bitmap bmp)
+        {
+            using var small = new Bitmap(1, 1);
+            using var g = Graphics.FromImage(small);
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.DrawImage(bmp, 0, 0, 1, 1);
+            return small.GetPixel(0, 0);
         }
 
         private void DrawEmptyView(Graphics g)
