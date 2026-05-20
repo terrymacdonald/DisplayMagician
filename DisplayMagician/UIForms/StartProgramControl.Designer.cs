@@ -29,243 +29,244 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
-            this.cb_dont_start_if_running = new System.Windows.Forms.CheckBox();
-            this.txt_start_program = new System.Windows.Forms.TextBox();
-            this.cb_start_program_close = new System.Windows.Forms.CheckBox();
-            this.btn_start_program = new System.Windows.Forms.Button();
-            this.txt_start_program_args = new System.Windows.Forms.TextBox();
-            this.cb_start_program_pass_args = new System.Windows.Forms.CheckBox();
-            this.btn_delete = new System.Windows.Forms.Button();
-            this.cb_disable_start_program = new System.Windows.Forms.CheckBox();
-            this.lbl_start_program = new System.Windows.Forms.Label();
-            this.lbl_priority = new System.Windows.Forms.Label();
-            this.pb_up_arrow = new System.Windows.Forms.PictureBox();
-            this.pb_down_arrow = new System.Windows.Forms.PictureBox();
-            this.cbx_start_program_priority = new System.Windows.Forms.ComboBox();
-            this.lbl_start_program_priority = new System.Windows.Forms.Label();
-            this.cb_run_as_administrator = new System.Windows.Forms.CheckBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_up_arrow)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
-            this.SuspendLayout();
+            cb_dont_start_if_running = new System.Windows.Forms.CheckBox();
+            txt_start_program = new System.Windows.Forms.TextBox();
+            cb_start_program_close = new System.Windows.Forms.CheckBox();
+            btn_start_program = new System.Windows.Forms.Button();
+            txt_start_program_args = new System.Windows.Forms.TextBox();
+            cb_start_program_pass_args = new System.Windows.Forms.CheckBox();
+            btn_delete = new System.Windows.Forms.Button();
+            cb_disable_start_program = new System.Windows.Forms.CheckBox();
+            lbl_start_program = new System.Windows.Forms.Label();
+            lbl_priority = new System.Windows.Forms.Label();
+            pb_up_arrow = new System.Windows.Forms.PictureBox();
+            pb_down_arrow = new System.Windows.Forms.PictureBox();
+            cbx_start_program_priority = new System.Windows.Forms.ComboBox();
+            lbl_start_program_priority = new System.Windows.Forms.Label();
+            cb_run_as_administrator = new System.Windows.Forms.CheckBox();
+            ((System.ComponentModel.ISupportInitialize)pb_up_arrow).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pb_down_arrow).BeginInit();
+            SuspendLayout();
             // 
             // cb_dont_start_if_running
             // 
-            this.cb_dont_start_if_running.AutoSize = true;
-            this.cb_dont_start_if_running.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_dont_start_if_running.ForeColor = System.Drawing.Color.White;
-            this.cb_dont_start_if_running.Location = new System.Drawing.Point(160, 115);
-            this.cb_dont_start_if_running.Name = "cb_dont_start_if_running";
-            this.cb_dont_start_if_running.Size = new System.Drawing.Size(289, 24);
-            this.cb_dont_start_if_running.TabIndex = 26;
-            this.cb_dont_start_if_running.Text = "Don\'t start if program already running";
-            this.cb_dont_start_if_running.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_dont_start_if_running.UseVisualStyleBackColor = true;
-            this.cb_dont_start_if_running.CheckedChanged += new System.EventHandler(this.cb_dont_start_if_running_CheckedChanged);
+            cb_dont_start_if_running.AutoSize = true;
+            cb_dont_start_if_running.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_dont_start_if_running.ForeColor = System.Drawing.Color.White;
+            cb_dont_start_if_running.Location = new System.Drawing.Point(160, 112);
+            cb_dont_start_if_running.Name = "cb_dont_start_if_running";
+            cb_dont_start_if_running.Size = new System.Drawing.Size(289, 24);
+            cb_dont_start_if_running.TabIndex = 26;
+            cb_dont_start_if_running.Text = "Don't start if program already running";
+            cb_dont_start_if_running.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_dont_start_if_running.UseVisualStyleBackColor = true;
+            cb_dont_start_if_running.CheckedChanged += cb_dont_start_if_running_CheckedChanged;
             // 
             // txt_start_program
             // 
-            this.txt_start_program.BackColor = System.Drawing.Color.White;
-            this.txt_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_start_program.ForeColor = System.Drawing.Color.Black;
-            this.txt_start_program.Location = new System.Drawing.Point(275, 16);
-            this.txt_start_program.Name = "txt_start_program";
-            this.txt_start_program.Size = new System.Drawing.Size(538, 26);
-            this.txt_start_program.TabIndex = 25;
-            this.txt_start_program.TextChanged += new System.EventHandler(this.txt_start_program_TextChanged);
+            txt_start_program.BackColor = System.Drawing.Color.White;
+            txt_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            txt_start_program.ForeColor = System.Drawing.Color.Black;
+            txt_start_program.Location = new System.Drawing.Point(275, 16);
+            txt_start_program.Name = "txt_start_program";
+            txt_start_program.Size = new System.Drawing.Size(538, 26);
+            txt_start_program.TabIndex = 25;
+            txt_start_program.TextChanged += txt_start_program_TextChanged;
             // 
             // cb_start_program_close
             // 
-            this.cb_start_program_close.AutoSize = true;
-            this.cb_start_program_close.Checked = true;
-            this.cb_start_program_close.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cb_start_program_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_start_program_close.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_close.Location = new System.Drawing.Point(614, 126);
-            this.cb_start_program_close.Name = "cb_start_program_close";
-            this.cb_start_program_close.Size = new System.Drawing.Size(290, 44);
-            this.cb_start_program_close.TabIndex = 24;
-            this.cb_start_program_close.Text = "Close started program when finished \r\n(unless already running)";
-            this.cb_start_program_close.UseVisualStyleBackColor = true;
-            this.cb_start_program_close.CheckedChanged += new System.EventHandler(this.cb_start_program_close_CheckedChanged);
+            cb_start_program_close.AutoSize = true;
+            cb_start_program_close.Checked = true;
+            cb_start_program_close.CheckState = System.Windows.Forms.CheckState.Checked;
+            cb_start_program_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_start_program_close.ForeColor = System.Drawing.Color.White;
+            cb_start_program_close.Location = new System.Drawing.Point(614, 123);
+            cb_start_program_close.Name = "cb_start_program_close";
+            cb_start_program_close.Size = new System.Drawing.Size(290, 44);
+            cb_start_program_close.TabIndex = 24;
+            cb_start_program_close.Text = "Close started program when finished \r\n(unless already running)";
+            cb_start_program_close.UseVisualStyleBackColor = true;
+            cb_start_program_close.CheckedChanged += cb_start_program_close_CheckedChanged;
             // 
             // btn_start_program
             // 
-            this.btn_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_start_program.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program.Location = new System.Drawing.Point(819, 15);
-            this.btn_start_program.Name = "btn_start_program";
-            this.btn_start_program.Size = new System.Drawing.Size(85, 27);
-            this.btn_start_program.TabIndex = 23;
-            this.btn_start_program.Text = "Choose";
-            this.btn_start_program.UseVisualStyleBackColor = true;
-            this.btn_start_program.Click += new System.EventHandler(this.btn_start_program_Click);
+            btn_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_start_program.ForeColor = System.Drawing.Color.White;
+            btn_start_program.Location = new System.Drawing.Point(819, 15);
+            btn_start_program.Name = "btn_start_program";
+            btn_start_program.Size = new System.Drawing.Size(85, 27);
+            btn_start_program.TabIndex = 23;
+            btn_start_program.Text = "Choose";
+            btn_start_program.UseVisualStyleBackColor = true;
+            btn_start_program.Click += btn_start_program_Click;
             // 
             // txt_start_program_args
             // 
-            this.txt_start_program_args.BackColor = System.Drawing.Color.White;
-            this.txt_start_program_args.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_start_program_args.ForeColor = System.Drawing.Color.Black;
-            this.txt_start_program_args.Location = new System.Drawing.Point(398, 50);
-            this.txt_start_program_args.Name = "txt_start_program_args";
-            this.txt_start_program_args.Size = new System.Drawing.Size(506, 26);
-            this.txt_start_program_args.TabIndex = 22;
-            this.txt_start_program_args.TextChanged += new System.EventHandler(this.txt_start_program_args_TextChanged);
+            txt_start_program_args.BackColor = System.Drawing.Color.White;
+            txt_start_program_args.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            txt_start_program_args.ForeColor = System.Drawing.Color.Black;
+            txt_start_program_args.Location = new System.Drawing.Point(398, 50);
+            txt_start_program_args.Name = "txt_start_program_args";
+            txt_start_program_args.Size = new System.Drawing.Size(506, 26);
+            txt_start_program_args.TabIndex = 22;
+            txt_start_program_args.TextChanged += txt_start_program_args_TextChanged;
             // 
             // cb_start_program_pass_args
             // 
-            this.cb_start_program_pass_args.AutoSize = true;
-            this.cb_start_program_pass_args.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_start_program_pass_args.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_pass_args.Location = new System.Drawing.Point(160, 50);
-            this.cb_start_program_pass_args.Name = "cb_start_program_pass_args";
-            this.cb_start_program_pass_args.Size = new System.Drawing.Size(228, 24);
-            this.cb_start_program_pass_args.TabIndex = 21;
-            this.cb_start_program_pass_args.Text = "Pass arguments to program:";
-            this.cb_start_program_pass_args.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_start_program_pass_args.UseVisualStyleBackColor = true;
-            this.cb_start_program_pass_args.CheckedChanged += new System.EventHandler(this.cb_start_program_pass_args_CheckedChanged);
+            cb_start_program_pass_args.AutoSize = true;
+            cb_start_program_pass_args.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_start_program_pass_args.ForeColor = System.Drawing.Color.White;
+            cb_start_program_pass_args.Location = new System.Drawing.Point(160, 50);
+            cb_start_program_pass_args.Name = "cb_start_program_pass_args";
+            cb_start_program_pass_args.Size = new System.Drawing.Size(228, 24);
+            cb_start_program_pass_args.TabIndex = 21;
+            cb_start_program_pass_args.Text = "Pass arguments to program:";
+            cb_start_program_pass_args.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_start_program_pass_args.UseVisualStyleBackColor = true;
+            cb_start_program_pass_args.CheckedChanged += cb_start_program_pass_args_CheckedChanged;
             // 
             // btn_delete
             // 
-            this.btn_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(996, 7);
-            this.btn_delete.Name = "btn_delete";
-            this.btn_delete.Size = new System.Drawing.Size(29, 27);
-            this.btn_delete.TabIndex = 27;
-            this.btn_delete.Text = "X";
-            this.btn_delete.UseVisualStyleBackColor = true;
-            this.btn_delete.Click += new System.EventHandler(this.btn_delete_Click);
+            btn_delete.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_delete.ForeColor = System.Drawing.Color.White;
+            btn_delete.Location = new System.Drawing.Point(996, 7);
+            btn_delete.Name = "btn_delete";
+            btn_delete.Size = new System.Drawing.Size(29, 27);
+            btn_delete.TabIndex = 27;
+            btn_delete.Text = "X";
+            btn_delete.UseVisualStyleBackColor = true;
+            btn_delete.Click += btn_delete_Click;
             // 
             // cb_disable_start_program
             // 
-            this.cb_disable_start_program.AutoSize = true;
-            this.cb_disable_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_disable_start_program.ForeColor = System.Drawing.Color.White;
-            this.cb_disable_start_program.Location = new System.Drawing.Point(159, 146);
-            this.cb_disable_start_program.Name = "cb_disable_start_program";
-            this.cb_disable_start_program.Size = new System.Drawing.Size(312, 24);
-            this.cb_disable_start_program.TabIndex = 28;
-            this.cb_disable_start_program.Text = "Temporarily disable starting this program";
-            this.cb_disable_start_program.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_disable_start_program.UseVisualStyleBackColor = true;
-            this.cb_disable_start_program.CheckedChanged += new System.EventHandler(this.cb_start_program_CheckedChanged);
+            cb_disable_start_program.AutoSize = true;
+            cb_disable_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_disable_start_program.ForeColor = System.Drawing.Color.White;
+            cb_disable_start_program.Location = new System.Drawing.Point(159, 143);
+            cb_disable_start_program.Name = "cb_disable_start_program";
+            cb_disable_start_program.Size = new System.Drawing.Size(312, 24);
+            cb_disable_start_program.TabIndex = 28;
+            cb_disable_start_program.Text = "Temporarily disable starting this program";
+            cb_disable_start_program.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_disable_start_program.UseVisualStyleBackColor = true;
+            cb_disable_start_program.CheckedChanged += cb_start_program_CheckedChanged;
             // 
             // lbl_start_program
             // 
-            this.lbl_start_program.AutoSize = true;
-            this.lbl_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_start_program.Location = new System.Drawing.Point(129, 18);
-            this.lbl_start_program.Name = "lbl_start_program";
-            this.lbl_start_program.Size = new System.Drawing.Size(140, 20);
-            this.lbl_start_program.TabIndex = 29;
-            this.lbl_start_program.Text = "Start this program:";
+            lbl_start_program.AutoSize = true;
+            lbl_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_start_program.Location = new System.Drawing.Point(129, 18);
+            lbl_start_program.Name = "lbl_start_program";
+            lbl_start_program.Size = new System.Drawing.Size(140, 20);
+            lbl_start_program.TabIndex = 29;
+            lbl_start_program.Text = "Start this program:";
             // 
             // lbl_priority
             // 
-            this.lbl_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_priority.Location = new System.Drawing.Point(35, 59);
-            this.lbl_priority.Name = "lbl_priority";
-            this.lbl_priority.Size = new System.Drawing.Size(55, 23);
-            this.lbl_priority.TabIndex = 30;
-            this.lbl_priority.Text = "1";
-            this.lbl_priority.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            lbl_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_priority.Location = new System.Drawing.Point(35, 59);
+            lbl_priority.Name = "lbl_priority";
+            lbl_priority.Size = new System.Drawing.Size(55, 23);
+            lbl_priority.TabIndex = 30;
+            lbl_priority.Text = "1";
+            lbl_priority.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // pb_up_arrow
             // 
-            this.pb_up_arrow.Image = global::DisplayMagician.Properties.Resources.whitearrowsup;
-            this.pb_up_arrow.Location = new System.Drawing.Point(40, 38);
-            this.pb_up_arrow.Name = "pb_up_arrow";
-            this.pb_up_arrow.Size = new System.Drawing.Size(45, 24);
-            this.pb_up_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb_up_arrow.TabIndex = 32;
-            this.pb_up_arrow.TabStop = false;
-            this.pb_up_arrow.Click += new System.EventHandler(this.pb_up_arrow_Click);
-            this.pb_up_arrow.MouseEnter += new System.EventHandler(this.pb_up_arrow_MouseEnter);
-            this.pb_up_arrow.MouseLeave += new System.EventHandler(this.pb_up_arrow_MouseLeave);
+            pb_up_arrow.Image = Properties.Resources.whitearrowsup;
+            pb_up_arrow.Location = new System.Drawing.Point(40, 38);
+            pb_up_arrow.Name = "pb_up_arrow";
+            pb_up_arrow.Size = new System.Drawing.Size(45, 24);
+            pb_up_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_up_arrow.TabIndex = 32;
+            pb_up_arrow.TabStop = false;
+            pb_up_arrow.Click += pb_up_arrow_Click;
+            pb_up_arrow.MouseEnter += pb_up_arrow_MouseEnter;
+            pb_up_arrow.MouseLeave += pb_up_arrow_MouseLeave;
             // 
             // pb_down_arrow
             // 
-            this.pb_down_arrow.Image = global::DisplayMagician.Properties.Resources.whitearrows;
-            this.pb_down_arrow.Location = new System.Drawing.Point(40, 86);
-            this.pb_down_arrow.Name = "pb_down_arrow";
-            this.pb_down_arrow.Size = new System.Drawing.Size(45, 24);
-            this.pb_down_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb_down_arrow.TabIndex = 31;
-            this.pb_down_arrow.TabStop = false;
-            this.pb_down_arrow.Click += new System.EventHandler(this.pb_down_arrow_Click);
-            this.pb_down_arrow.MouseEnter += new System.EventHandler(this.pb_down_arrow_MouseEnter);
-            this.pb_down_arrow.MouseLeave += new System.EventHandler(this.pb_down_arrow_MouseLeave);
+            pb_down_arrow.Image = Properties.Resources.whitearrows;
+            pb_down_arrow.Location = new System.Drawing.Point(40, 86);
+            pb_down_arrow.Name = "pb_down_arrow";
+            pb_down_arrow.Size = new System.Drawing.Size(45, 24);
+            pb_down_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_down_arrow.TabIndex = 31;
+            pb_down_arrow.TabStop = false;
+            pb_down_arrow.Click += pb_down_arrow_Click;
+            pb_down_arrow.MouseEnter += pb_down_arrow_MouseEnter;
+            pb_down_arrow.MouseLeave += pb_down_arrow_MouseLeave;
             // 
             // cbx_start_program_priority
             // 
-            this.cbx_start_program_priority.AllowDrop = true;
-            this.cbx_start_program_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbx_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbx_start_program_priority.FormattingEnabled = true;
-            this.cbx_start_program_priority.Location = new System.Drawing.Point(725, 84);
-            this.cbx_start_program_priority.Name = "cbx_start_program_priority";
-            this.cbx_start_program_priority.Size = new System.Drawing.Size(179, 28);
-            this.cbx_start_program_priority.TabIndex = 34;
-            this.cbx_start_program_priority.SelectedIndexChanged += new System.EventHandler(this.cbx_start_program_priority_SelectedIndexChanged);
+            cbx_start_program_priority.AllowDrop = true;
+            cbx_start_program_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbx_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cbx_start_program_priority.FormattingEnabled = true;
+            cbx_start_program_priority.Location = new System.Drawing.Point(725, 84);
+            cbx_start_program_priority.Name = "cbx_start_program_priority";
+            cbx_start_program_priority.Size = new System.Drawing.Size(179, 28);
+            cbx_start_program_priority.TabIndex = 34;
+            cbx_start_program_priority.SelectedIndexChanged += cbx_start_program_priority_SelectedIndexChanged;
             // 
             // lbl_start_program_priority
             // 
-            this.lbl_start_program_priority.AutoSize = true;
-            this.lbl_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_start_program_priority.ForeColor = System.Drawing.Color.White;
-            this.lbl_start_program_priority.Location = new System.Drawing.Point(563, 87);
-            this.lbl_start_program_priority.Name = "lbl_start_program_priority";
-            this.lbl_start_program_priority.Size = new System.Drawing.Size(163, 20);
-            this.lbl_start_program_priority.TabIndex = 33;
-            this.lbl_start_program_priority.Text = "Start Program Priority:";
+            lbl_start_program_priority.AutoSize = true;
+            lbl_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_start_program_priority.ForeColor = System.Drawing.Color.White;
+            lbl_start_program_priority.Location = new System.Drawing.Point(563, 87);
+            lbl_start_program_priority.Name = "lbl_start_program_priority";
+            lbl_start_program_priority.Size = new System.Drawing.Size(163, 20);
+            lbl_start_program_priority.TabIndex = 33;
+            lbl_start_program_priority.Text = "Start Program Priority:";
             // 
             // cb_run_as_administrator
             // 
-            this.cb_run_as_administrator.AutoSize = true;
-            this.cb_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_run_as_administrator.ForeColor = System.Drawing.Color.White;
-            this.cb_run_as_administrator.Location = new System.Drawing.Point(160, 84);
-            this.cb_run_as_administrator.Name = "cb_run_as_administrator";
-            this.cb_run_as_administrator.Size = new System.Drawing.Size(238, 24);
-            this.cb_run_as_administrator.TabIndex = 35;
-            this.cb_run_as_administrator.Text = "Run program as administrator";
-            this.cb_run_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_as_administrator.UseVisualStyleBackColor = true;
-            this.cb_run_as_administrator.CheckedChanged += new System.EventHandler(this.cb_run_as_administrator_CheckedChanged);
+            cb_run_as_administrator.AutoSize = true;
+            cb_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cb_run_as_administrator.ForeColor = System.Drawing.Color.White;
+            cb_run_as_administrator.Location = new System.Drawing.Point(160, 82);
+            cb_run_as_administrator.Name = "cb_run_as_administrator";
+            cb_run_as_administrator.Size = new System.Drawing.Size(238, 24);
+            cb_run_as_administrator.TabIndex = 35;
+            cb_run_as_administrator.Text = "Run program as administrator";
+            cb_run_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            cb_run_as_administrator.UseVisualStyleBackColor = true;
+            cb_run_as_administrator.CheckedChanged += cb_run_as_administrator_CheckedChanged;
             // 
             // StartProgramControl
             // 
-            this.AllowDrop = true;
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
-            this.AutoSize = true;
-            this.BackColor = System.Drawing.Color.Black;
-            this.Controls.Add(this.cb_run_as_administrator);
-            this.Controls.Add(this.cbx_start_program_priority);
-            this.Controls.Add(this.lbl_start_program_priority);
-            this.Controls.Add(this.pb_up_arrow);
-            this.Controls.Add(this.pb_down_arrow);
-            this.Controls.Add(this.lbl_priority);
-            this.Controls.Add(this.lbl_start_program);
-            this.Controls.Add(this.cb_disable_start_program);
-            this.Controls.Add(this.btn_delete);
-            this.Controls.Add(this.cb_dont_start_if_running);
-            this.Controls.Add(this.txt_start_program);
-            this.Controls.Add(this.cb_start_program_close);
-            this.Controls.Add(this.btn_start_program);
-            this.Controls.Add(this.txt_start_program_args);
-            this.Controls.Add(this.cb_start_program_pass_args);
-            this.ForeColor = System.Drawing.Color.White;
-            this.Margin = new System.Windows.Forms.Padding(10);
-            this.Name = "StartProgramControl";
-            this.Size = new System.Drawing.Size(1036, 180);
-            ((System.ComponentModel.ISupportInitialize)(this.pb_up_arrow)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AllowDrop = true;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
+            AutoSize = true;
+            BackColor = System.Drawing.Color.Black;
+            Controls.Add(cb_run_as_administrator);
+            Controls.Add(cbx_start_program_priority);
+            Controls.Add(lbl_start_program_priority);
+            Controls.Add(pb_up_arrow);
+            Controls.Add(pb_down_arrow);
+            Controls.Add(lbl_priority);
+            Controls.Add(lbl_start_program);
+            Controls.Add(cb_disable_start_program);
+            Controls.Add(btn_delete);
+            Controls.Add(cb_dont_start_if_running);
+            Controls.Add(txt_start_program);
+            Controls.Add(cb_start_program_close);
+            Controls.Add(btn_start_program);
+            Controls.Add(txt_start_program_args);
+            Controls.Add(cb_start_program_pass_args);
+            ForeColor = System.Drawing.Color.White;
+            Margin = new System.Windows.Forms.Padding(10);
+            MinimumSize = new System.Drawing.Size(800, 185);
+            Name = "StartProgramControl";
+            Size = new System.Drawing.Size(1036, 185);
+            ((System.ComponentModel.ISupportInitialize)pb_up_arrow).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

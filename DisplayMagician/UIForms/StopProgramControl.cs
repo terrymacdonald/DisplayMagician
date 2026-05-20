@@ -1,8 +1,10 @@
+using DisplayMagician.Processes;
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Drawing;
 using System.Windows.Forms;
-using DisplayMagician.Processes;
+using System.Windows.Forms.VisualStyles;
 
 namespace DisplayMagician.UIForms
 {
@@ -195,6 +197,24 @@ namespace DisplayMagician.UIForms
                     return string.Empty;
                 MessageBox.Show("Selected file is not a valid file.", "Executable", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return string.Empty;
+            }
+        }
+
+        private void checkbox_Paint(object sender, PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            CheckBox checkbox = sender as CheckBox;
+
+            if (!checkbox.Enabled)
+            {
+                int x = ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
+                    e.Graphics, CheckBoxState.UncheckedNormal).Width;
+                int y = ClientRectangle.Y + 1;
+
+                TextRenderer.DrawText(e.Graphics, checkbox.Text,
+                    checkbox.Font, new Point(x, y), Color.Gray,
+                    TextFormatFlags.LeftAndRightPadding);
             }
         }
     }

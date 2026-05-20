@@ -1,4 +1,6 @@
 ﻿//using DisplayMagician.Resources;
+using DisplayMagician.Processes;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,8 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DisplayMagician.Processes;
-using Microsoft.Win32;
+using System.Windows.Forms.VisualStyles;
 
 namespace DisplayMagician.UIForms
 {
@@ -191,7 +192,7 @@ namespace DisplayMagician.UIForms
                 cb_dont_start_if_running.Enabled = true;
                 cbx_start_program_priority.Enabled = true;
                 cb_run_as_administrator.Enabled = true;
-            }            
+            }
         }
 
         private void cb_start_program_pass_args_CheckedChanged(object sender, EventArgs e)
@@ -300,7 +301,7 @@ namespace DisplayMagician.UIForms
 
         private void txt_start_program_TextChanged(object sender, EventArgs e)
         {
-            myStartProgram.Executable = txt_start_program.Text;            
+            myStartProgram.Executable = txt_start_program.Text;
         }
 
         private void txt_start_program_args_TextChanged(object sender, EventArgs e)
@@ -310,7 +311,7 @@ namespace DisplayMagician.UIForms
 
         private void cbx_start_program_priority_SelectedIndexChanged(object sender, EventArgs e)
         {
-                myStartProgram.ProcessPriority = ProcessUtils.TranslateNameToPriority(cbx_start_program_priority.SelectedValue.ToString());
+            myStartProgram.ProcessPriority = ProcessUtils.TranslateNameToPriority(cbx_start_program_priority.SelectedValue.ToString());
         }
 
         private void cb_run_as_administrator_CheckedChanged(object sender, EventArgs e)
@@ -324,5 +325,23 @@ namespace DisplayMagician.UIForms
                 myStartProgram.RunAsAdministrator = false;
             }
         }
-    }    
+
+        private void checkbox_Paint(object sender, PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            CheckBox checkbox = sender as CheckBox;
+
+            if (!checkbox.Enabled)
+            {
+                int x = ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
+                    e.Graphics, CheckBoxState.UncheckedNormal).Width;
+                int y = ClientRectangle.Y + 1;
+
+                TextRenderer.DrawText(e.Graphics, checkbox.Text,
+                    checkbox.Font, new Point(x, y), Color.Gray,
+                    TextFormatFlags.LeftAndRightPadding);
+            }
+        }
+    }
 }

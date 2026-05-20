@@ -16,199 +16,201 @@ namespace DisplayMagician.UIForms
 
         private void InitializeComponent()
         {
-            this.lbl_priority = new System.Windows.Forms.Label();
-            this.pb_up_arrow = new System.Windows.Forms.PictureBox();
-            this.pb_down_arrow = new System.Windows.Forms.PictureBox();
-            this.lbl_stop_program = new System.Windows.Forms.Label();
-            this.txt_stop_program = new System.Windows.Forms.TextBox();
-            this.btn_stop_program = new System.Windows.Forms.Button();
-            this.chk_disabled = new System.Windows.Forms.CheckBox();
-            this.chk_restart_afterwards = new System.Windows.Forms.CheckBox();
-            this.lbl_restart_priority = new System.Windows.Forms.Label();
-            this.cbx_restart_priority = new System.Windows.Forms.ComboBox();
-            this.chk_run_as_admin = new System.Windows.Forms.CheckBox();
-            this.btn_delete = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_up_arrow)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
-            this.SuspendLayout();
+            lbl_priority = new System.Windows.Forms.Label();
+            pb_up_arrow = new System.Windows.Forms.PictureBox();
+            pb_down_arrow = new System.Windows.Forms.PictureBox();
+            lbl_stop_program = new System.Windows.Forms.Label();
+            txt_stop_program = new System.Windows.Forms.TextBox();
+            btn_stop_program = new System.Windows.Forms.Button();
+            chk_disabled = new System.Windows.Forms.CheckBox();
+            chk_restart_afterwards = new System.Windows.Forms.CheckBox();
+            lbl_restart_priority = new System.Windows.Forms.Label();
+            cbx_restart_priority = new System.Windows.Forms.ComboBox();
+            chk_run_as_admin = new System.Windows.Forms.CheckBox();
+            btn_delete = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)pb_up_arrow).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pb_down_arrow).BeginInit();
+            SuspendLayout();
             // 
             // lbl_priority
             // 
-            this.lbl_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_priority.Location = new System.Drawing.Point(35, 46);
-            this.lbl_priority.Name = "lbl_priority";
-            this.lbl_priority.Size = new System.Drawing.Size(55, 23);
-            this.lbl_priority.TabIndex = 0;
-            this.lbl_priority.Text = "1";
-            this.lbl_priority.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            lbl_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_priority.Location = new System.Drawing.Point(35, 46);
+            lbl_priority.Name = "lbl_priority";
+            lbl_priority.Size = new System.Drawing.Size(55, 23);
+            lbl_priority.TabIndex = 0;
+            lbl_priority.Text = "1";
+            lbl_priority.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // pb_up_arrow
             // 
-            this.pb_up_arrow.Image = global::DisplayMagician.Properties.Resources.whitearrowsup;
-            this.pb_up_arrow.Location = new System.Drawing.Point(40, 25);
-            this.pb_up_arrow.Name = "pb_up_arrow";
-            this.pb_up_arrow.Size = new System.Drawing.Size(45, 24);
-            this.pb_up_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb_up_arrow.TabIndex = 1;
-            this.pb_up_arrow.TabStop = false;
-            this.pb_up_arrow.Click += new System.EventHandler(this.pb_up_arrow_Click);
-            this.pb_up_arrow.MouseEnter += new System.EventHandler(this.pb_up_arrow_MouseEnter);
-            this.pb_up_arrow.MouseLeave += new System.EventHandler(this.pb_up_arrow_MouseLeave);
+            pb_up_arrow.Image = Properties.Resources.whitearrowsup;
+            pb_up_arrow.Location = new System.Drawing.Point(40, 25);
+            pb_up_arrow.Name = "pb_up_arrow";
+            pb_up_arrow.Size = new System.Drawing.Size(45, 24);
+            pb_up_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_up_arrow.TabIndex = 1;
+            pb_up_arrow.TabStop = false;
+            pb_up_arrow.Click += pb_up_arrow_Click;
+            pb_up_arrow.MouseEnter += pb_up_arrow_MouseEnter;
+            pb_up_arrow.MouseLeave += pb_up_arrow_MouseLeave;
             // 
             // pb_down_arrow
             // 
-            this.pb_down_arrow.Image = global::DisplayMagician.Properties.Resources.whitearrows;
-            this.pb_down_arrow.Location = new System.Drawing.Point(40, 73);
-            this.pb_down_arrow.Name = "pb_down_arrow";
-            this.pb_down_arrow.Size = new System.Drawing.Size(45, 24);
-            this.pb_down_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb_down_arrow.TabIndex = 2;
-            this.pb_down_arrow.TabStop = false;
-            this.pb_down_arrow.Click += new System.EventHandler(this.pb_down_arrow_Click);
-            this.pb_down_arrow.MouseEnter += new System.EventHandler(this.pb_down_arrow_MouseEnter);
-            this.pb_down_arrow.MouseLeave += new System.EventHandler(this.pb_down_arrow_MouseLeave);
+            pb_down_arrow.Image = Properties.Resources.whitearrows;
+            pb_down_arrow.Location = new System.Drawing.Point(40, 73);
+            pb_down_arrow.Name = "pb_down_arrow";
+            pb_down_arrow.Size = new System.Drawing.Size(45, 24);
+            pb_down_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_down_arrow.TabIndex = 2;
+            pb_down_arrow.TabStop = false;
+            pb_down_arrow.Click += pb_down_arrow_Click;
+            pb_down_arrow.MouseEnter += pb_down_arrow_MouseEnter;
+            pb_down_arrow.MouseLeave += pb_down_arrow_MouseLeave;
             // 
             // lbl_stop_program
             // 
-            this.lbl_stop_program.AutoSize = true;
-            this.lbl_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_stop_program.Location = new System.Drawing.Point(129, 18);
-            this.lbl_stop_program.Name = "lbl_stop_program";
-            this.lbl_stop_program.Size = new System.Drawing.Size(140, 20);
-            this.lbl_stop_program.TabIndex = 3;
-            this.lbl_stop_program.Text = "Stop this program:";
+            lbl_stop_program.AutoSize = true;
+            lbl_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_stop_program.Location = new System.Drawing.Point(129, 18);
+            lbl_stop_program.Name = "lbl_stop_program";
+            lbl_stop_program.Size = new System.Drawing.Size(139, 20);
+            lbl_stop_program.TabIndex = 3;
+            lbl_stop_program.Text = "Stop this program:";
             // 
             // txt_stop_program
             // 
-            this.txt_stop_program.BackColor = System.Drawing.Color.White;
-            this.txt_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_stop_program.ForeColor = System.Drawing.Color.Black;
-            this.txt_stop_program.Location = new System.Drawing.Point(275, 16);
-            this.txt_stop_program.Name = "txt_stop_program";
-            this.txt_stop_program.Size = new System.Drawing.Size(538, 26);
-            this.txt_stop_program.TabIndex = 4;
-            this.txt_stop_program.TextChanged += new System.EventHandler(this.txt_stop_program_TextChanged);
+            txt_stop_program.BackColor = System.Drawing.Color.White;
+            txt_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            txt_stop_program.ForeColor = System.Drawing.Color.Black;
+            txt_stop_program.Location = new System.Drawing.Point(275, 16);
+            txt_stop_program.Name = "txt_stop_program";
+            txt_stop_program.Size = new System.Drawing.Size(538, 26);
+            txt_stop_program.TabIndex = 4;
+            txt_stop_program.TextChanged += txt_stop_program_TextChanged;
             // 
             // btn_stop_program
             // 
-            this.btn_stop_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_stop_program.ForeColor = System.Drawing.Color.White;
-            this.btn_stop_program.Location = new System.Drawing.Point(819, 15);
-            this.btn_stop_program.Name = "btn_stop_program";
-            this.btn_stop_program.Size = new System.Drawing.Size(85, 27);
-            this.btn_stop_program.TabIndex = 5;
-            this.btn_stop_program.Text = "Choose";
-            this.btn_stop_program.UseVisualStyleBackColor = true;
-            this.btn_stop_program.Click += new System.EventHandler(this.btn_stop_program_Click);
+            btn_stop_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_stop_program.ForeColor = System.Drawing.Color.White;
+            btn_stop_program.Location = new System.Drawing.Point(819, 15);
+            btn_stop_program.Name = "btn_stop_program";
+            btn_stop_program.Size = new System.Drawing.Size(85, 27);
+            btn_stop_program.TabIndex = 5;
+            btn_stop_program.Text = "Choose";
+            btn_stop_program.UseVisualStyleBackColor = true;
+            btn_stop_program.Click += btn_stop_program_Click;
             // 
             // chk_disabled
             // 
-            this.chk_disabled.AutoSize = true;
-            this.chk_disabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chk_disabled.ForeColor = System.Drawing.Color.White;
-            this.chk_disabled.Location = new System.Drawing.Point(159, 115);
-            this.chk_disabled.Name = "chk_disabled";
-            this.chk_disabled.Size = new System.Drawing.Size(312, 24);
-            this.chk_disabled.TabIndex = 6;
-            this.chk_disabled.Text = "Temporarily disable stopping this program";
-            this.chk_disabled.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.chk_disabled.UseVisualStyleBackColor = true;
-            this.chk_disabled.CheckedChanged += new System.EventHandler(this.chk_disabled_CheckedChanged);
+            chk_disabled.AutoSize = true;
+            chk_disabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            chk_disabled.ForeColor = System.Drawing.Color.White;
+            chk_disabled.Location = new System.Drawing.Point(159, 115);
+            chk_disabled.Name = "chk_disabled";
+            chk_disabled.Size = new System.Drawing.Size(320, 24);
+            chk_disabled.TabIndex = 6;
+            chk_disabled.Text = "Temporarily disable stopping this program";
+            chk_disabled.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            chk_disabled.UseVisualStyleBackColor = true;
+            chk_disabled.CheckedChanged += chk_disabled_CheckedChanged;
             // 
             // chk_restart_afterwards
             // 
-            this.chk_restart_afterwards.AutoSize = true;
-            this.chk_restart_afterwards.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chk_restart_afterwards.ForeColor = System.Drawing.Color.White;
-            this.chk_restart_afterwards.Location = new System.Drawing.Point(159, 50);
-            this.chk_restart_afterwards.Name = "chk_restart_afterwards";
-            this.chk_restart_afterwards.Size = new System.Drawing.Size(267, 24);
-            this.chk_restart_afterwards.TabIndex = 7;
-            this.chk_restart_afterwards.Text = "Restart program when game finishes";
-            this.chk_restart_afterwards.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.chk_restart_afterwards.UseVisualStyleBackColor = true;
-            this.chk_restart_afterwards.CheckedChanged += new System.EventHandler(this.chk_restart_afterwards_CheckedChanged);
+            chk_restart_afterwards.AutoSize = true;
+            chk_restart_afterwards.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            chk_restart_afterwards.ForeColor = System.Drawing.Color.White;
+            chk_restart_afterwards.Location = new System.Drawing.Point(159, 50);
+            chk_restart_afterwards.Name = "chk_restart_afterwards";
+            chk_restart_afterwards.Size = new System.Drawing.Size(288, 24);
+            chk_restart_afterwards.TabIndex = 7;
+            chk_restart_afterwards.Text = "Restart program when game finishes";
+            chk_restart_afterwards.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            chk_restart_afterwards.UseVisualStyleBackColor = true;
+            chk_restart_afterwards.CheckedChanged += chk_restart_afterwards_CheckedChanged;
             // 
             // lbl_restart_priority
             // 
-            this.lbl_restart_priority.AutoSize = true;
-            this.lbl_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_restart_priority.ForeColor = System.Drawing.Color.White;
-            this.lbl_restart_priority.Location = new System.Drawing.Point(563, 53);
-            this.lbl_restart_priority.Name = "lbl_restart_priority";
-            this.lbl_restart_priority.Size = new System.Drawing.Size(163, 20);
-            this.lbl_restart_priority.TabIndex = 8;
-            this.lbl_restart_priority.Text = "Restart Priority:";
+            lbl_restart_priority.AutoSize = true;
+            lbl_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_restart_priority.ForeColor = System.Drawing.Color.White;
+            lbl_restart_priority.Location = new System.Drawing.Point(563, 53);
+            lbl_restart_priority.Name = "lbl_restart_priority";
+            lbl_restart_priority.Size = new System.Drawing.Size(117, 20);
+            lbl_restart_priority.TabIndex = 8;
+            lbl_restart_priority.Text = "Restart Priority:";
             // 
             // cbx_restart_priority
             // 
-            this.cbx_restart_priority.AllowDrop = true;
-            this.cbx_restart_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbx_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbx_restart_priority.FormattingEnabled = true;
-            this.cbx_restart_priority.Location = new System.Drawing.Point(725, 50);
-            this.cbx_restart_priority.Name = "cbx_restart_priority";
-            this.cbx_restart_priority.Size = new System.Drawing.Size(179, 28);
-            this.cbx_restart_priority.TabIndex = 9;
-            this.cbx_restart_priority.Enabled = false;
-            this.cbx_restart_priority.SelectedIndexChanged += new System.EventHandler(this.cbx_restart_priority_SelectedIndexChanged);
+            cbx_restart_priority.AllowDrop = true;
+            cbx_restart_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbx_restart_priority.Enabled = false;
+            cbx_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            cbx_restart_priority.FormattingEnabled = true;
+            cbx_restart_priority.Location = new System.Drawing.Point(725, 50);
+            cbx_restart_priority.Name = "cbx_restart_priority";
+            cbx_restart_priority.Size = new System.Drawing.Size(179, 28);
+            cbx_restart_priority.TabIndex = 9;
+            cbx_restart_priority.SelectedIndexChanged += cbx_restart_priority_SelectedIndexChanged;
             // 
             // chk_run_as_admin
             // 
-            this.chk_run_as_admin.AutoSize = true;
-            this.chk_run_as_admin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chk_run_as_admin.ForeColor = System.Drawing.Color.White;
-            this.chk_run_as_admin.Location = new System.Drawing.Point(159, 83);
-            this.chk_run_as_admin.Name = "chk_run_as_admin";
-            this.chk_run_as_admin.Size = new System.Drawing.Size(267, 24);
-            this.chk_run_as_admin.TabIndex = 10;
-            this.chk_run_as_admin.Text = "Run as administrator when restarting";
-            this.chk_run_as_admin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.chk_run_as_admin.Enabled = false;
-            this.chk_run_as_admin.UseVisualStyleBackColor = true;
-            this.chk_run_as_admin.CheckedChanged += new System.EventHandler(this.chk_run_as_admin_CheckedChanged);
+            chk_run_as_admin.AutoSize = true;
+            chk_run_as_admin.Enabled = false;
+            chk_run_as_admin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            chk_run_as_admin.ForeColor = System.Drawing.Color.White;
+            chk_run_as_admin.Location = new System.Drawing.Point(159, 83);
+            chk_run_as_admin.Name = "chk_run_as_admin";
+            chk_run_as_admin.Size = new System.Drawing.Size(288, 24);
+            chk_run_as_admin.TabIndex = 10;
+            chk_run_as_admin.Text = "Run as administrator when restarting";
+            chk_run_as_admin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            chk_run_as_admin.UseVisualStyleBackColor = true;
+            chk_run_as_admin.CheckedChanged += chk_run_as_admin_CheckedChanged;
+            chk_run_as_admin.Paint += checkbox_Paint;
             // 
             // btn_delete
             // 
-            this.btn_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(996, 7);
-            this.btn_delete.Name = "btn_delete";
-            this.btn_delete.Size = new System.Drawing.Size(29, 27);
-            this.btn_delete.TabIndex = 11;
-            this.btn_delete.Text = "X";
-            this.btn_delete.UseVisualStyleBackColor = true;
-            this.btn_delete.Click += new System.EventHandler(this.btn_delete_Click);
+            btn_delete.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_delete.ForeColor = System.Drawing.Color.White;
+            btn_delete.Location = new System.Drawing.Point(996, 7);
+            btn_delete.Name = "btn_delete";
+            btn_delete.Size = new System.Drawing.Size(29, 27);
+            btn_delete.TabIndex = 11;
+            btn_delete.Text = "X";
+            btn_delete.UseVisualStyleBackColor = true;
+            btn_delete.Click += btn_delete_Click;
             // 
             // StopProgramControl
             // 
-            this.AllowDrop = true;
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
-            this.AutoSize = true;
-            this.BackColor = System.Drawing.Color.Black;
-            this.Controls.Add(this.btn_delete);
-            this.Controls.Add(this.chk_run_as_admin);
-            this.Controls.Add(this.cbx_restart_priority);
-            this.Controls.Add(this.lbl_restart_priority);
-            this.Controls.Add(this.chk_restart_afterwards);
-            this.Controls.Add(this.chk_disabled);
-            this.Controls.Add(this.btn_stop_program);
-            this.Controls.Add(this.txt_stop_program);
-            this.Controls.Add(this.lbl_stop_program);
-            this.Controls.Add(this.pb_down_arrow);
-            this.Controls.Add(this.pb_up_arrow);
-            this.Controls.Add(this.lbl_priority);
-            this.ForeColor = System.Drawing.Color.White;
-            this.Margin = new System.Windows.Forms.Padding(10);
-            this.Name = "StopProgramControl";
-            this.Size = new System.Drawing.Size(1036, 150);
-            ((System.ComponentModel.ISupportInitialize)(this.pb_up_arrow)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AllowDrop = true;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
+            AutoSize = true;
+            BackColor = System.Drawing.Color.Black;
+            Controls.Add(btn_delete);
+            Controls.Add(chk_run_as_admin);
+            Controls.Add(cbx_restart_priority);
+            Controls.Add(lbl_restart_priority);
+            Controls.Add(chk_restart_afterwards);
+            Controls.Add(chk_disabled);
+            Controls.Add(btn_stop_program);
+            Controls.Add(txt_stop_program);
+            Controls.Add(lbl_stop_program);
+            Controls.Add(pb_down_arrow);
+            Controls.Add(pb_up_arrow);
+            Controls.Add(lbl_priority);
+            ForeColor = System.Drawing.Color.White;
+            Margin = new System.Windows.Forms.Padding(10);
+            MinimumSize = new System.Drawing.Size(800, 155);
+            Name = "StopProgramControl";
+            Size = new System.Drawing.Size(1036, 155);
+            ((System.ComponentModel.ISupportInitialize)pb_up_arrow).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
