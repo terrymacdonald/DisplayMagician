@@ -299,9 +299,6 @@ namespace DisplayMagician.UIForms
             dv_profile.Location = new System.Drawing.Point(0, 0);
             dv_profile.Margin = new System.Windows.Forms.Padding(21);
             dv_profile.Name = "dv_profile";
-            dv_profile.PaddingX = 100;
-            dv_profile.PaddingY = 100;
-            dv_profile.Profile = null;
             dv_profile.Size = new System.Drawing.Size(1256, 548);
             dv_profile.TabIndex = 23;
             // 
@@ -773,23 +770,6 @@ namespace DisplayMagician.UIForms
             btn_find_examples_startprograms.UseVisualStyleBackColor = true;
             btn_find_examples_startprograms.Click += btn_find_examples_startprograms_Click;
             // 
-            // btn_add_new_start_program
-            // 
-            btn_add_new_start_program.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            btn_add_new_start_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_add_new_start_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
-            btn_add_new_start_program.Location = new System.Drawing.Point(485, 73);
-            btn_add_new_start_program.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_add_new_start_program.Name = "btn_add_new_start_program";
-            btn_add_new_start_program.Size = new System.Drawing.Size(287, 46);
-            btn_add_new_start_program.TabIndex = 41;
-            btn_add_new_start_program.Text = "&Add Start Program";
-            btn_add_new_start_program.UseVisualStyleBackColor = true;
-            btn_add_new_start_program.Click += btn_add_new_start_program_Click;
-            // 
             // btn_add_new_stop_program
             // 
             btn_add_new_stop_program.Anchor = System.Windows.Forms.AnchorStyles.Top;
@@ -798,7 +778,7 @@ namespace DisplayMagician.UIForms
             btn_add_new_stop_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_add_new_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_add_new_stop_program.ForeColor = System.Drawing.Color.White;
-            btn_add_new_stop_program.Location = new System.Drawing.Point(790, 73);
+            btn_add_new_stop_program.Location = new System.Drawing.Point(596, 73);
             btn_add_new_stop_program.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_add_new_stop_program.Name = "btn_add_new_stop_program";
             btn_add_new_stop_program.Size = new System.Drawing.Size(287, 46);
@@ -807,16 +787,33 @@ namespace DisplayMagician.UIForms
             btn_add_new_stop_program.UseVisualStyleBackColor = true;
             btn_add_new_stop_program.Click += btn_add_new_stop_program_Click;
             // 
+            // btn_add_new_start_program
+            // 
+            btn_add_new_start_program.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            btn_add_new_start_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_add_new_start_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
+            btn_add_new_start_program.Location = new System.Drawing.Point(291, 73);
+            btn_add_new_start_program.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_add_new_start_program.Name = "btn_add_new_start_program";
+            btn_add_new_start_program.Size = new System.Drawing.Size(287, 46);
+            btn_add_new_start_program.TabIndex = 41;
+            btn_add_new_start_program.Text = "&Add Start Program";
+            btn_add_new_start_program.UseVisualStyleBackColor = true;
+            btn_add_new_start_program.Click += btn_add_new_start_program_Click;
+            // 
             // label3
             // 
             label3.Anchor = System.Windows.Forms.AnchorStyles.Top;
             label3.AutoSize = true;
-            label3.Location = new System.Drawing.Point(177, 24);
+            label3.Location = new System.Drawing.Point(129, 23);
             label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label3.Name = "label3";
-            label3.Size = new System.Drawing.Size(807, 20);
+            label3.Size = new System.Drawing.Size(904, 20);
             label3.TabIndex = 42;
-            label3.Text = "Add one or more additional programs to start before the main Game starts. They will start in the order listed below.";
+            label3.Text = "Add one or more additional programs to start or stop before the main Game runs. They will start or stop in the order listed below.";
             // 
             // tabp_game
             // 

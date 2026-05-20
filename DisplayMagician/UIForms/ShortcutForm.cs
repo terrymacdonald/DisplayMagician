@@ -1426,8 +1426,8 @@ namespace DisplayMagician.UIForms
                 // Set the Hotkey text
                 //UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
 
-                    // *** 1. Choose Display Profile Tab ***
-                    // Find the profile
+                // *** 1. Choose Display Profile Tab ***
+                // Find the profile
                 if (_shortcutToEdit.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.InvariantCulture))
                 {
                     chosenProfile = ShortcutItem.SkipDisplayChangeProfile;
@@ -2684,23 +2684,23 @@ namespace DisplayMagician.UIForms
             //if (ProfileRepository.ProfileCount > 0)
             //{
 
-                // Temporarily stop updating the saved_profiles listview
-                ilv_saved_profiles.SuspendLayout();
+            // Temporarily stop updating the saved_profiles listview
+            ilv_saved_profiles.SuspendLayout();
 
-                // Clear the saved_profiles listview so we can refill it with all the profiles (including the new one if we just created a new shortcut)
-                ilv_saved_profiles.Items.Clear();
-               
-                ImageListViewItem newItem = null;
-                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            // Clear the saved_profiles listview so we can refill it with all the profiles (including the new one if we just created a new shortcut)
+            ilv_saved_profiles.Items.Clear();
+
+            ImageListViewItem newItem = null;
+            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            {
+                bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
+                if (!thisLoadedProfileIsAlreadyHere)
                 {
-                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
-                    if (!thisLoadedProfileIsAlreadyHere)
-                    {
-                        newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                        ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
-                    }
-
+                    newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                    ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
                 }
+
+            }
 
             // Add the Skip Display Change option last
             ilv_saved_profiles.Items.Add(_skipDisplayChangeILVItem, _profileAdaptor);
@@ -3535,11 +3535,11 @@ namespace DisplayMagician.UIForms
             _joystickHotkeys.AddRange(Program.AppDirectInputManager.GetJoystickHotkeysByUUID(_shortcutToEdit.UUID));*/
 
             string hotkeyHeading = $"Manage your '{_shortcutToEdit.Name}' Game Shortcut Hotkeys";
-            string hotkeyDescription = $"Choose one or more Hotkeys so that you can run this Game Shortcut using your keyboard, joystick or button box. "  +
-                "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. "  +
+            string hotkeyDescription = $"Choose one or more Hotkeys so that you can run this Game Shortcut using your keyboard, joystick or button box. " +
+                "This must be a Hotkey that is unique across all your applications otherwise DisplayMagician might not see it. " +
                 "Click Add to add it to the list or click the trashcan to remove it from the list. To see all your hotkeys " +
                 "go to the Main Window and click the Settings button. ";
-            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.RunGameShortcut, _shortcutToEdit.UUID,  hotkeyHeading, hotkeyDescription);
+            HotkeyForm displayHotkeyForm = new HotkeyForm(HotkeyTask.RunGameShortcut, _shortcutToEdit.UUID, hotkeyHeading, hotkeyDescription);
             //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.Changed)
@@ -3627,7 +3627,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey.PerformClick();
         }
 
-       
+
         private void StartProgramControl_MouseDown(object sender, MouseEventArgs e)
         {
             DoDragDrop(sender, DragDropEffects.Move);

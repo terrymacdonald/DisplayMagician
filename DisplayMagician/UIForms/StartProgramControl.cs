@@ -148,6 +148,15 @@ namespace DisplayMagician.UIForms
             lbl_priority.Text = priority.ToString();
         }
 
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            using (var pen = new System.Drawing.Pen(System.Drawing.Color.LimeGreen, 4))
+            {
+                e.Graphics.DrawRectangle(pen, 2, 2, Width - 5, Height - 5);
+            }
+        }
+
 
         private void btn_start_program_Click(object sender, EventArgs e)
         {

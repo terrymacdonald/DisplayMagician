@@ -195,6 +195,7 @@
     <EmbeddedResource Include="UIForms\ShortcutLibraryForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutLoadingForm.resx" />
     <EmbeddedResource Include="UIForms\StartMessageForm.resx" />
+    <EmbeddedResource Include="UIForms\StopProgramControl.resx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
