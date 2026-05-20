@@ -75,6 +75,7 @@ namespace DisplayMagician.UIForms
             flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             p_start_program_upper = new System.Windows.Forms.Panel();
             btn_find_examples_startprograms = new System.Windows.Forms.Button();
+            btn_add_new_stop_program = new System.Windows.Forms.Button();
             btn_add_new_start_program = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
             tabp_game = new System.Windows.Forms.TabPage();
@@ -745,6 +746,7 @@ namespace DisplayMagician.UIForms
             // p_start_program_upper
             // 
             p_start_program_upper.Controls.Add(btn_find_examples_startprograms);
+            p_start_program_upper.Controls.Add(btn_add_new_stop_program);
             p_start_program_upper.Controls.Add(btn_add_new_start_program);
             p_start_program_upper.Controls.Add(label3);
             p_start_program_upper.Dock = System.Windows.Forms.DockStyle.Top;
@@ -787,6 +789,23 @@ namespace DisplayMagician.UIForms
             btn_add_new_start_program.Text = "&Add Start Program";
             btn_add_new_start_program.UseVisualStyleBackColor = true;
             btn_add_new_start_program.Click += btn_add_new_start_program_Click;
+            // 
+            // btn_add_new_stop_program
+            // 
+            btn_add_new_stop_program.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            btn_add_new_stop_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_add_new_stop_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_add_new_stop_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_add_new_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_add_new_stop_program.ForeColor = System.Drawing.Color.White;
+            btn_add_new_stop_program.Location = new System.Drawing.Point(790, 73);
+            btn_add_new_stop_program.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_add_new_stop_program.Name = "btn_add_new_stop_program";
+            btn_add_new_stop_program.Size = new System.Drawing.Size(287, 46);
+            btn_add_new_stop_program.TabIndex = 44;
+            btn_add_new_stop_program.Text = "Add &Stop Program";
+            btn_add_new_stop_program.UseVisualStyleBackColor = true;
+            btn_add_new_stop_program.Click += btn_add_new_stop_program_Click;
             // 
             // label3
             // 
@@ -1877,6 +1896,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel p_start_program_upper;
         private System.Windows.Forms.Button btn_find_examples_startprograms;
         private System.Windows.Forms.Button btn_add_new_start_program;
+        private System.Windows.Forms.Button btn_add_new_stop_program;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.FlowLayoutPanel flp_start_programs;
         private System.Windows.Forms.Panel p_gametostart;

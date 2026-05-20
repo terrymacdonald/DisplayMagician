@@ -65,7 +65,7 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutFileVersion = "4";
+        private static string _shortcutFileVersion = "5";
         private static string _shortcutStorageJsonFileName = "Shortcuts.json";
         private static string _shortcutStorageJsonFullFileName = Path.Combine(AppShortcutStoragePath, _shortcutStorageJsonFileName);
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
@@ -1213,7 +1213,7 @@ namespace DisplayMagician
             }
 
             // Now run the pre-start applications
-            List<Process> startProgramsToStop = new List<Process>();
+            List<Process> startedProgramsForCleanup = new List<Process>();
             List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Disabled == false).Where(program => !String.IsNullOrWhiteSpace(program.Executable)).OrderBy(program => program.Priority).ToList();
             if (startProgramsToStart.Count > 0)
             {
@@ -1265,7 +1265,7 @@ namespace DisplayMagician
                                 {
                                     logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.StartInfo.FileName} after the main game or executable is closed.");
                                 }
-                                startProgramsToStop.AddRange(processesCreated);
+                                startedProgramsForCleanup.AddRange(processesCreated);
                             }
                             else
                             {
@@ -1315,6 +1315,46 @@ namespace DisplayMagician
             else
             {
                 logger.Info($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
+            }
+
+            // Stop any pre-configured stop programs before launching the main game/exe
+            List<StopProgram> stopProgramsToRestart = new List<StopProgram>();
+            List<StopProgram> stopProgramsToRun = shortcutToUse.StopPrograms
+                .Where(sp => sp.Disabled == false)
+                .Where(sp => !String.IsNullOrWhiteSpace(sp.Executable))
+                .OrderBy(sp => sp.Priority)
+                .ToList();
+            if (stopProgramsToRun.Count > 0)
+            {
+                logger.Info($"ShortcutRepository/RunShortcut: Stopping {stopProgramsToRun.Count} program(s) before the main game or executable");
+                foreach (StopProgram stopProgramEntry in stopProgramsToRun)
+                {
+                    try
+                    {
+                        string processName = Path.GetFileNameWithoutExtension(stopProgramEntry.Executable);
+                        Process[] runningProcesses = Process.GetProcessesByName(processName);
+                        if (runningProcesses.Length == 0)
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Stop Program '{stopProgramEntry.Executable}' is not currently running — skipping.");
+                            continue;
+                        }
+                        logger.Info($"ShortcutRepository/RunShortcut: Stopping {runningProcesses.Length} instance(s) of '{processName}'.");
+                        ProcessUtils.StopProcess(runningProcesses.ToList());
+                        WinLibrary.RefreshTrayArea();
+                        if (stopProgramEntry.RestartAfterwards)
+                        {
+                            stopProgramsToRestart.Add(stopProgramEntry);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping program '{stopProgramEntry.Executable}'.");
+                    }
+                }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: No stop programs configured before the main game or executable");
             }
 
             // Now start the main game/exe, and wait if we have to
@@ -2349,18 +2389,35 @@ namespace DisplayMagician
             
 
             // Stop the pre-started startPrograms that we'd started earlier
-            if (startProgramsToStop.Count > 0)
+            if (startedProgramsForCleanup.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: We started {startProgramsToStart.Count} programs before the main executable or game, and now we want to stop {startProgramsToStop.Count } of them");
+                logger.Debug($"ShortcutRepository/RunShortcut: We started {startProgramsToStart.Count} programs before the main executable or game, and now we want to stop {startedProgramsForCleanup.Count} of them");
 
                 // Shutdown the processes
-                ProcessUtils.StopProcess(startProgramsToStop);
+                ProcessUtils.StopProcess(startedProgramsForCleanup);
 
                 // Refresh the system tray / notification tray area to clean out any applications we stopped               
                 WinLibrary.RefreshTrayArea();
 
             }
 
+            // Restart any stop programs that requested it
+            if (stopProgramsToRestart.Count > 0)
+            {
+                logger.Info($"ShortcutRepository/RunShortcut: Restarting {stopProgramsToRestart.Count} program(s) that were stopped before the main game or executable");
+                foreach (StopProgram sp in stopProgramsToRestart)
+                {
+                    try
+                    {
+                        logger.Info($"ShortcutRepository/RunShortcut: Restarting '{sp.Executable}'.");
+                        ProcessUtils.StartProcess(sp.Executable, "", sp.RestartProcessPriority, 10, sp.RunAsAdministrator);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while restarting program '{sp.Executable}'.");
+                    }
+                }
+            }
 
             // Change Audio Device back (if one specified)
             if (activeAudioDevices.Count > 0)
@@ -2485,10 +2542,10 @@ namespace DisplayMagician
 
             
             // And finally run the stop program we have
-            if (shortcutToUse.StopPrograms.Count > 0)
+            if (shortcutToUse.AfterPrograms.Count > 0)
             {
                 // At the moment we only allow one stop program
-                StopProgram stopProg = shortcutToUse.StopPrograms[0];
+                AfterProgram stopProg = shortcutToUse.AfterPrograms[0];
                 try
                 {
                     // Only start if not disabled

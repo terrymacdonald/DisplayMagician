@@ -67,7 +67,7 @@ namespace DisplayMagician
         public bool RunAsAdministrator;
     }
 
-    public struct StopProgram
+    public struct AfterProgram
     {
         public int Priority;
         public bool Disabled;
@@ -76,6 +76,16 @@ namespace DisplayMagician
         public string Arguments;
         public bool ExecutableArgumentsRequired;
         public bool DontStartIfAlreadyRunning;
+        public bool RunAsAdministrator;
+    }
+
+    public struct StopProgram
+    {
+        public int Priority;
+        public bool Disabled;
+        public string Executable;
+        public bool RestartAfterwards;
+        public ProcessPriority RestartProcessPriority;
         public bool RunAsAdministrator;
     }
 
@@ -199,6 +209,7 @@ namespace DisplayMagician
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
         private List<StartProgram> _startPrograms = new List<StartProgram> ();
+        private List<AfterProgram> _afterPrograms = new List<AfterProgram>();
         private List<StopProgram> _stopPrograms = new List<StopProgram>();
         private Bitmap _shortcutBitmap, _originalBitmap;
 
@@ -862,6 +873,20 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<AfterProgram>))]
+        public List<AfterProgram> AfterPrograms
+        {
+            get
+            {
+                return _afterPrograms;
+            }
+
+            set
+            {
+                _afterPrograms = value;
+            }
+        }
+
         [DefaultValue(default(List<StopProgram>))]
         public List<StopProgram> StopPrograms
         {
@@ -1030,6 +1055,7 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
+            List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -1055,6 +1081,7 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _afterPrograms = afterPrograms;
             _stopPrograms = stopPrograms;
             _originalIconPath = "";
 
@@ -1113,6 +1140,7 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
+            List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true, 
             string uuid = ""
@@ -1149,6 +1177,7 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _afterPrograms = afterPrograms;
             _stopPrograms = stopPrograms;
             _originalIconPath = originalIconPath;
             _selectedImage = selectedImage; 
@@ -1202,6 +1231,7 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
+            List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -1235,7 +1265,8 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
-            _stopPrograms = stopPrograms; 
+            _afterPrograms = afterPrograms; 
+            _stopPrograms = stopPrograms;
             _originalIconPath = originalIconPath;
             _selectedImage = selectedImage;
             _availableImages = availableImages;
@@ -1289,6 +1320,7 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
+            List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
             string uuid = ""            
@@ -1326,6 +1358,7 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _afterPrograms = afterPrograms;
             _stopPrograms = stopPrograms;
             _selectedImage = selectedImage;
             _availableImages = availableImages;
@@ -1426,10 +1459,10 @@ namespace DisplayMagician
             }
 
             // Duplicate the stop programs
-            shortcut.StopPrograms = new List<StopProgram>();
-            foreach (StopProgram sp in StopPrograms)
+            shortcut.AfterPrograms = new List<AfterProgram>();
+            foreach (AfterProgram sp in AfterPrograms)
             {
-                StopProgram copiedStopProgram = new StopProgram();
+                AfterProgram copiedStopProgram = new AfterProgram();
                 copiedStopProgram.Arguments = sp.Arguments;
                 copiedStopProgram.Disabled = sp.Disabled;
                 copiedStopProgram.DontStartIfAlreadyRunning = sp.DontStartIfAlreadyRunning;
@@ -1437,7 +1470,21 @@ namespace DisplayMagician
                 copiedStopProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
                 copiedStopProgram.Priority = sp.Priority;
                 copiedStopProgram.ProcessPriority = sp.ProcessPriority;
-                shortcut.StopPrograms.Add(copiedStopProgram);
+                shortcut.AfterPrograms.Add(copiedStopProgram);
+            }
+
+            // Duplicate the stop-before programs
+            shortcut.StopPrograms = new List<StopProgram>();
+            foreach (StopProgram sp in StopPrograms)
+            {
+                StopProgram copiedEntry = new StopProgram();
+                copiedEntry.Disabled = sp.Disabled;
+                copiedEntry.Executable = sp.Executable;
+                copiedEntry.Priority = sp.Priority;
+                copiedEntry.RestartAfterwards = sp.RestartAfterwards;
+                copiedEntry.RestartProcessPriority = sp.RestartProcessPriority;
+                copiedEntry.RunAsAdministrator = sp.RunAsAdministrator;
+                shortcut.StopPrograms.Add(copiedEntry);
             }
 
             // Do the profiles last as AutoName will error if done earlier

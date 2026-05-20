@@ -14,10 +14,17 @@ using Microsoft.Win32;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class StartProgramControl : UserControl
+    public partial class StartProgramControl : UserControl, IProgramControl
     {
 
         private StartProgram myStartProgram = new StartProgram() { };
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int ProgramNumber
+        {
+            get => myStartProgram.Priority;
+            set => ChangePriority(value);
+        }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public StartProgram StartProgram

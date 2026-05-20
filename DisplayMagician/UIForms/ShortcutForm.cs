@@ -43,6 +43,7 @@ namespace DisplayMagician.UIForms
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
+        List<AfterProgram> _afterPrograms = new List<AfterProgram>();
         List<StopProgram> _stopPrograms = new List<StopProgram>();
         private string _audioDevice = "";
         private bool _useAsCommsAudioDevice = true;
@@ -378,19 +379,24 @@ namespace DisplayMagician.UIForms
 
             // Add the startprograms to the list
             List<StartProgram> newStartPrograms = new List<StartProgram>() { };
-            foreach (StartProgramControl myStartProgramControl in flp_start_programs.Controls)
+            List<StopProgram> newStopPrograms = new List<StopProgram>() { };
+            foreach (Control ctrl in flp_start_programs.Controls)
             {
-                newStartPrograms.Add(myStartProgramControl.StartProgram);
+                if (ctrl is StartProgramControl myStartProgramControl)
+                    newStartPrograms.Add(myStartProgramControl.StartProgram);
+                else if (ctrl is StopProgramControl myStopProgramControl)
+                    newStopPrograms.Add(myStopProgramControl.StopProgram);
             }
 
-            // Replace the old start programs with the ones we've created now
+            // Replace the old start programs and stop programs with the ones we've created now
             _startPrograms = newStartPrograms;
+            _stopPrograms = newStopPrograms;
 
             // Store the single stop program if it's set (but wth lots of defaults)
             if (!String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text) && File.Exists(txt_run_cmd_afterwards.Text))
             {
-                _stopPrograms = new List<StopProgram>();
-                StopProgram stopProgram = new StopProgram();
+                _afterPrograms = new List<AfterProgram>();
+                AfterProgram stopProgram = new AfterProgram();
                 stopProgram.Executable = txt_run_cmd_afterwards.Text;
                 stopProgram.Priority = 0;
                 stopProgram.DontStartIfAlreadyRunning = false;
@@ -430,7 +436,7 @@ namespace DisplayMagician.UIForms
                     stopProgram.RunAsAdministrator = false;
                 }
 
-                _stopPrograms.Add(stopProgram);
+                _afterPrograms.Add(stopProgram);
             }
 
             // Now we create the Shortcut Object ready to save
@@ -518,6 +524,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName,
                         _uuid
@@ -546,6 +553,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName,
                         _uuid
@@ -603,6 +611,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName
                     );
@@ -630,6 +639,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName
                     );
@@ -694,6 +704,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName
                     );
@@ -720,6 +731,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName
                     );
@@ -747,6 +759,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName
                     );
@@ -770,6 +783,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _afterPrograms,
                         _stopPrograms,
                         _autoName
                     );
@@ -997,14 +1011,26 @@ namespace DisplayMagician.UIForms
 
             }
 
-            // Look for any start programs without an exe
-            foreach (StartProgramControl spControl in flp_start_programs.Controls)
+            // Look for any start or stop programs without an exe
+            foreach (Control ctrl in flp_start_programs.Controls)
             {
-                if (String.IsNullOrWhiteSpace(spControl.StartProgram.Executable))
+                if (ctrl is StartProgramControl spControl)
                 {
-                    int priority = flp_start_programs.Controls.GetChildIndex(spControl) + 1;
-                    logger.Error($"ShortcutForm/AllowedToSave: The start program at position #{priority} doesn't have an executable listed");
-                    errors.Add($"The start program executable at position #{priority} doesn't have an executable listed. Please either add a valid path to an executable, or remove the start program from the list.");
+                    if (String.IsNullOrWhiteSpace(spControl.StartProgram.Executable))
+                    {
+                        int priority = flp_start_programs.Controls.GetChildIndex(spControl) + 1;
+                        logger.Error($"ShortcutForm/AllowedToSave: The start program at position #{priority} doesn't have an executable listed");
+                        errors.Add($"The start program executable at position #{priority} doesn't have an executable listed. Please either add a valid path to an executable, or remove the start program from the list.");
+                    }
+                }
+                else if (ctrl is StopProgramControl stpControl)
+                {
+                    if (String.IsNullOrWhiteSpace(stpControl.StopProgram.Executable))
+                    {
+                        int priority = flp_start_programs.Controls.GetChildIndex(stpControl) + 1;
+                        logger.Error($"ShortcutForm/AllowedToSave: The stop program at position #{priority} doesn't have an executable listed");
+                        errors.Add($"The stop program executable at position #{priority} doesn't have an executable listed. Please either add a valid path to an executable, or remove the stop program from the list.");
+                    }
                 }
             }
 
@@ -1110,6 +1136,7 @@ namespace DisplayMagician.UIForms
             _audioPermanence = ShortcutPermanence.Temporary;
             _capturePermanence = ShortcutPermanence.Temporary;
             _startPrograms = new List<StartProgram>();
+            _afterPrograms = new List<AfterProgram>();
             _stopPrograms = new List<StopProgram>();
             _audioDevice = "";
             _changeAudioDevice = false;
@@ -1641,7 +1668,7 @@ namespace DisplayMagician.UIForms
                     Padding firstStartProgramMargin = new Padding(10) { };
                     Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
 
-                    // Order the inital list in order of priority
+                    // Order the initial list in order of priority
                     int spOrder = 1;
                     foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
                     {
@@ -1668,6 +1695,27 @@ namespace DisplayMagician.UIForms
                         startProgramControl.AllowDrop = true;
                         flp_start_programs.Controls.Add(startProgramControl);
                         spOrder++;
+                    }
+
+                    // Load StopPrograms
+                    if (_shortcutToEdit.StopPrograms != null)
+                    {
+                        foreach (StopProgram myStopProgram in _shortcutToEdit.StopPrograms.OrderBy(sp => sp.Priority))
+                        {
+                            if (String.IsNullOrWhiteSpace(myStopProgram.Executable))
+                                continue;
+
+                            StopProgramControl stopProgramControl = new StopProgramControl(myStopProgram, spOrder);
+                            stopProgramControl.Dock = DockStyle.None;
+                            stopProgramControl.Margin = spOrder == 1 ? firstStartProgramMargin : otherStartProgramMargin;
+                            stopProgramControl.Width = flp_start_programs.Width - 40;
+                            stopProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
+                            stopProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
+                            stopProgramControl.DragDrop += new DragEventHandler(StartProgramControl_DragDrop);
+                            stopProgramControl.AllowDrop = true;
+                            flp_start_programs.Controls.Add(stopProgramControl);
+                            spOrder++;
+                        }
                     }
                 }
                 else
@@ -2168,9 +2216,9 @@ namespace DisplayMagician.UIForms
                 }
 
                 // Setup the single stop program we're beginning with
-                if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
+                if (_shortcutToEdit.AfterPrograms is List<AfterProgram> && _shortcutToEdit.AfterPrograms.Count > 0)
                 {
-                    if (_shortcutToEdit.StopPrograms[0].Disabled == false)
+                    if (_shortcutToEdit.AfterPrograms[0].Disabled == false)
                     {
                         txt_run_cmd_afterwards.Enabled = true;
                         btn_run_cmd_afterwards.Enabled = true;
@@ -2189,11 +2237,11 @@ namespace DisplayMagician.UIForms
                         cb_run_cmd_afterwards.Checked = false;
                     }
 
-                    txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
-                    if (_shortcutToEdit.StopPrograms[0].ExecutableArgumentsRequired)
+                    txt_run_cmd_afterwards.Text = _shortcutToEdit.AfterPrograms[0].Executable;
+                    if (_shortcutToEdit.AfterPrograms[0].ExecutableArgumentsRequired)
                     {
                         cb_run_cmd_afterwards_args.Checked = true;
-                        txt_run_cmd_afterwards_args.Text = _shortcutToEdit.StopPrograms[0].Arguments;
+                        txt_run_cmd_afterwards_args.Text = _shortcutToEdit.AfterPrograms[0].Arguments;
                     }
                     else
                     {
@@ -2202,7 +2250,7 @@ namespace DisplayMagician.UIForms
                         txt_run_cmd_afterwards_args.Text = "";
 
                     }
-                    if (_shortcutToEdit.StopPrograms[0].DontStartIfAlreadyRunning)
+                    if (_shortcutToEdit.AfterPrograms[0].DontStartIfAlreadyRunning)
                     {
                         cb_run_cmd_afterwards_dont_start.Checked = true;
                     }
@@ -2210,7 +2258,7 @@ namespace DisplayMagician.UIForms
                     {
                         cb_run_cmd_afterwards_dont_start.Checked = false;
                     }
-                    if (_shortcutToEdit.StopPrograms[0].RunAsAdministrator)
+                    if (_shortcutToEdit.AfterPrograms[0].RunAsAdministrator)
                     {
                         cb_run_cmd_afterwards_run_as_administrator.Checked = true;
                     }
@@ -3385,69 +3433,96 @@ namespace DisplayMagician.UIForms
 
         public void RedrawStartPrograms()
         {
+            RedrawProgramsList();
+        }
+
+        public void RedrawProgramsList()
+        {
             bool firstItem = true;
-            Padding firstStartProgramMargin = new Padding(10) { };
-            Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
-            foreach (StartProgramControl myStartProgramControl in flp_start_programs.Controls)
+            Padding firstMargin = new Padding(10) { };
+            Padding otherMargin = new Padding(10, 0, 10, 10) { };
+            foreach (Control ctrl in flp_start_programs.Controls)
             {
-                if (firstItem)
+                if (ctrl is IProgramControl programControl)
                 {
-                    myStartProgramControl.Margin = firstStartProgramMargin;
-                    firstItem = false;
+                    if (firstItem)
+                    {
+                        ctrl.Margin = firstMargin;
+                        firstItem = false;
+                    }
+                    else
+                    {
+                        ctrl.Margin = otherMargin;
+                    }
+                    int priority = flp_start_programs.Controls.GetChildIndex(ctrl) + 1;
+                    programControl.ChangePriority(priority);
                 }
-                else
-                {
-                    myStartProgramControl.Margin = otherStartProgramMargin;
-                }
-                int priority = flp_start_programs.Controls.GetChildIndex(myStartProgramControl) + 1;
-                myStartProgramControl.ChangePriority(priority);
             }
         }
 
 
         public void RemoveStartProgram(StartProgramControl startProgramControlToRemove)
         {
-            // If we find the start program then we need to remove it from the list (only if one was supplied)
             if (_shortcutToEdit.StartPrograms != null && _shortcutToEdit.StartPrograms.Count > 0)
                 _shortcutToEdit.StartPrograms.Remove(startProgramControlToRemove.StartProgram);
 
-            // And we remove the program control passed in to this function as well
             flp_start_programs.SuspendLayout();
             flp_start_programs.Controls.Remove(startProgramControlToRemove);
-            RedrawStartPrograms();
+            RedrawProgramsList();
             flp_start_programs.ResumeLayout();
             if (_loadedShortcut)
                 _isUnsaved = true;
         }
 
-        public void StartProgramEarlier(StartProgramControl startProgramControlToRemove)
+        public void RemoveStopProgram(StopProgramControl stopProgramControlToRemove)
         {
-            // And we move the program control passed in to this function earlier in the flow layout panel
+            if (_shortcutToEdit.StopPrograms != null && _shortcutToEdit.StopPrograms.Count > 0)
+                _shortcutToEdit.StopPrograms.Remove(stopProgramControlToRemove.StopProgram);
+
             flp_start_programs.SuspendLayout();
-            int currentIndex = flp_start_programs.Controls.GetChildIndex(startProgramControlToRemove);
-            int newIndex = currentIndex - 1;
-            if (newIndex <= 0)
-                newIndex = 0;
-            flp_start_programs.Controls.SetChildIndex(startProgramControlToRemove, newIndex);
-            RedrawStartPrograms();
+            flp_start_programs.Controls.Remove(stopProgramControlToRemove);
+            RedrawProgramsList();
             flp_start_programs.ResumeLayout();
             if (_loadedShortcut)
                 _isUnsaved = true;
         }
 
-        public void StartProgramLater(StartProgramControl startProgramControlToRemove)
+        public void ProgramEarlier(IProgramControl programControlToMove)
         {
-            // And we move the program control passed in to this function later in the flow layout panel
+            Control ctrl = programControlToMove as Control;
+            if (ctrl == null) return;
             flp_start_programs.SuspendLayout();
-            int currentIndex = flp_start_programs.Controls.GetChildIndex(startProgramControlToRemove);
-            int newIndex = currentIndex + 1;
-            if (newIndex > flp_start_programs.Controls.Count - 1)
-                newIndex = flp_start_programs.Controls.Count - 1;
-            flp_start_programs.Controls.SetChildIndex(startProgramControlToRemove, newIndex);
-            RedrawStartPrograms();
+            int currentIndex = flp_start_programs.Controls.GetChildIndex(ctrl);
+            int newIndex = Math.Max(0, currentIndex - 1);
+            flp_start_programs.Controls.SetChildIndex(ctrl, newIndex);
+            RedrawProgramsList();
             flp_start_programs.ResumeLayout();
             if (_loadedShortcut)
                 _isUnsaved = true;
+        }
+
+        public void ProgramLater(IProgramControl programControlToMove)
+        {
+            Control ctrl = programControlToMove as Control;
+            if (ctrl == null) return;
+            flp_start_programs.SuspendLayout();
+            int currentIndex = flp_start_programs.Controls.GetChildIndex(ctrl);
+            int newIndex = Math.Min(flp_start_programs.Controls.Count - 1, currentIndex + 1);
+            flp_start_programs.Controls.SetChildIndex(ctrl, newIndex);
+            RedrawProgramsList();
+            flp_start_programs.ResumeLayout();
+            if (_loadedShortcut)
+                _isUnsaved = true;
+        }
+
+        public void StartProgramEarlier(StartProgramControl startProgramControlToMove)
+        {
+            ProgramEarlier(startProgramControlToMove);
+        }
+
+        public void StartProgramLater(StartProgramControl startProgramControlToMove)
+        {
+            ProgramLater(startProgramControlToMove);
         }
 
         private void btn_hotkey_Click(object sender, EventArgs e)
@@ -3560,51 +3635,60 @@ namespace DisplayMagician.UIForms
 
         private void StartProgramControl_DragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl)
+            Control senderCtrl = sender as Control;
+            if (senderCtrl == null) return;
+
+            if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl draggedStart)
             {
-                // We make it show some effects while moving
                 e.Effect = DragDropEffects.Move;
-
-                // We figure out the position of the thing we're dragging
-                FlowLayoutPanel p = (FlowLayoutPanel)(sender as StartProgramControl).Parent;
-                int myIndex = p.Controls.GetChildIndex((sender as StartProgramControl));
-
-                // We figure out the position of the thing we're being dragged over
-                StartProgramControl spc = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
-                // We set the position of the thing we're dragging to the position of the thing we're over
-                p.Controls.SetChildIndex(spc, myIndex);
+                FlowLayoutPanel p = senderCtrl.Parent as FlowLayoutPanel;
+                if (p == null) return;
+                int myIndex = p.Controls.GetChildIndex(senderCtrl);
+                p.Controls.SetChildIndex(draggedStart, myIndex);
+            }
+            else if (e.Data.GetData(typeof(StopProgramControl)) is StopProgramControl draggedStop)
+            {
+                e.Effect = DragDropEffects.Move;
+                FlowLayoutPanel p = senderCtrl.Parent as FlowLayoutPanel;
+                if (p == null) return;
+                int myIndex = p.Controls.GetChildIndex(senderCtrl);
+                p.Controls.SetChildIndex(draggedStop, myIndex);
             }
         }
 
         private void StartProgramControl_DragDrop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl)
+            Control senderCtrl = sender as Control;
+            FlowLayoutPanel p = senderCtrl?.Parent as FlowLayoutPanel;
+            if (p == null) return;
+            int myIndex = p.Controls.GetChildIndex(senderCtrl);
+
+            if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl spc)
             {
-                // We figure out the position of the thing we're dragging
-                FlowLayoutPanel p = (FlowLayoutPanel)(sender as StartProgramControl).Parent;
-                int myIndex = p.Controls.GetChildIndex((sender as StartProgramControl));
-
-                // We figure out the position of the thing we're being dropped onto
-                StartProgramControl spc = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
-                // We set the position of the thing we're dragging to the position of the thing we've been dropped on
                 p.Controls.SetChildIndex(spc, myIndex);
-
-                // We then set the final startProgram position in the data we're storing
                 StartProgram startProgram = spc.StartProgram;
                 startProgram.Priority = myIndex + 1;
                 spc.StartProgram = startProgram;
-
-                // And now we also update all the UI for the items in the list
-                // To reorder all of them
-                flp_start_programs.SuspendLayout();
-                RedrawStartPrograms();
-                flp_start_programs.ResumeLayout();
-                flp_start_programs.Invalidate();
-
-                if (_loadedShortcut)
-                    _isUnsaved = true;
+            }
+            else if (e.Data.GetData(typeof(StopProgramControl)) is StopProgramControl stpc)
+            {
+                p.Controls.SetChildIndex(stpc, myIndex);
+                StopProgram stopProgram = stpc.StopProgram;
+                stopProgram.Priority = myIndex + 1;
+                stpc.StopProgram = stopProgram;
+            }
+            else
+            {
+                return;
             }
 
+            flp_start_programs.SuspendLayout();
+            RedrawProgramsList();
+            flp_start_programs.ResumeLayout();
+            flp_start_programs.Invalidate();
+
+            if (_loadedShortcut)
+                _isUnsaved = true;
         }
 
         private void btn_add_new_start_program_Click(object sender, EventArgs e)
@@ -3625,7 +3709,31 @@ namespace DisplayMagician.UIForms
             newStartProgramControl.AllowDrop = true;
             flp_start_programs.SuspendLayout();
             flp_start_programs.Controls.Add(newStartProgramControl);
-            RedrawStartPrograms();
+            RedrawProgramsList();
+            flp_start_programs.ResumeLayout();
+            flp_start_programs.Invalidate();
+            if (_loadedShortcut)
+                _isUnsaved = true;
+        }
+
+        private void btn_add_new_stop_program_Click(object sender, EventArgs e)
+        {
+            StopProgram newStopProgram = new StopProgram()
+            {
+                Executable = "",
+                RestartAfterwards = false,
+                RestartProcessPriority = ProcessPriority.Normal,
+            };
+            StopProgramControl newStopProgramControl = new StopProgramControl(newStopProgram, flp_start_programs.Controls.Count);
+            newStopProgramControl.Dock = DockStyle.None;
+            newStopProgramControl.Width = flp_start_programs.Width - 40;
+            newStopProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
+            newStopProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
+            newStopProgramControl.DragDrop += new DragEventHandler(StartProgramControl_DragDrop);
+            newStopProgramControl.AllowDrop = true;
+            flp_start_programs.SuspendLayout();
+            flp_start_programs.Controls.Add(newStopProgramControl);
+            RedrawProgramsList();
             flp_start_programs.ResumeLayout();
             flp_start_programs.Invalidate();
             if (_loadedShortcut)
