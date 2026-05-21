@@ -145,7 +145,7 @@ namespace DisplayMagician.Processes
                         }
                         catch (ArgumentException)
                         {
-                            logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
+                            logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo["ProcessID"]} exited before we could retrieve it — skipping.");
                         }
                     }
                 }
