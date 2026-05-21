@@ -41,6 +41,7 @@ namespace DisplayMagician.UIForms
             tabp_display = new System.Windows.Forms.TabPage();
             ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             p_profiles = new System.Windows.Forms.Panel();
+            dv_profile = new DisplayView();
             pbLogo = new System.Windows.Forms.PictureBox();
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
@@ -277,6 +278,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_profiles
             // 
+            p_profiles.Controls.Add(dv_profile);
             p_profiles.Controls.Add(pbLogo);
             p_profiles.Controls.Add(lbl_profile_shown_subtitle);
             p_profiles.Controls.Add(lbl_profile_shown);
@@ -286,6 +288,19 @@ namespace DisplayMagician.UIForms
             p_profiles.Name = "p_profiles";
             p_profiles.Size = new System.Drawing.Size(1256, 548);
             p_profiles.TabIndex = 39;
+            // 
+            // dv_profile
+            // 
+            dv_profile.BackColor = System.Drawing.Color.DimGray;
+            dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
+            dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            dv_profile.Location = new System.Drawing.Point(0, 0);
+            dv_profile.Margin = new System.Windows.Forms.Padding(21);
+            dv_profile.Name = "dv_profile";
+            dv_profile.Size = new System.Drawing.Size(1256, 548);
+            dv_profile.TabIndex = 23;
             // 
             // pbLogo
             // 
