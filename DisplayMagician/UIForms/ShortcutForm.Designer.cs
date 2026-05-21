@@ -41,7 +41,6 @@ namespace DisplayMagician.UIForms
             tabp_display = new System.Windows.Forms.TabPage();
             ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             p_profiles = new System.Windows.Forms.Panel();
-            dv_profile = new DisplayView();
             pbLogo = new System.Windows.Forms.PictureBox();
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
@@ -278,7 +277,6 @@ namespace DisplayMagician.UIForms
             // 
             // p_profiles
             // 
-            p_profiles.Controls.Add(dv_profile);
             p_profiles.Controls.Add(pbLogo);
             p_profiles.Controls.Add(lbl_profile_shown_subtitle);
             p_profiles.Controls.Add(lbl_profile_shown);
@@ -288,19 +286,6 @@ namespace DisplayMagician.UIForms
             p_profiles.Name = "p_profiles";
             p_profiles.Size = new System.Drawing.Size(1256, 548);
             p_profiles.TabIndex = 39;
-            // 
-            // dv_profile
-            // 
-            dv_profile.BackColor = System.Drawing.Color.DimGray;
-            dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
-            dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            dv_profile.Location = new System.Drawing.Point(0, 0);
-            dv_profile.Margin = new System.Windows.Forms.Padding(21);
-            dv_profile.Name = "dv_profile";
-            dv_profile.Size = new System.Drawing.Size(1256, 548);
-            dv_profile.TabIndex = 23;
             // 
             // pbLogo
             // 
@@ -1229,9 +1214,9 @@ namespace DisplayMagician.UIForms
             lbl_no_game_libraries.Location = new System.Drawing.Point(243, 170);
             lbl_no_game_libraries.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_no_game_libraries.Name = "lbl_no_game_libraries";
-            lbl_no_game_libraries.Size = new System.Drawing.Size(613, 22);
+            lbl_no_game_libraries.Size = new System.Drawing.Size(657, 22);
             lbl_no_game_libraries.TabIndex = 34;
-            lbl_no_game_libraries.Text = "No supported game libraries detected! (Steam, Origin, Uplay, Epic or GOG supported)";
+            lbl_no_game_libraries.Text = "No supported game libraries detected! (Steam, Origin, Uplay, Epic, GOG or Xbox supported)";
             lbl_no_game_libraries.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lbl_no_game_libraries.Visible = false;
             // 
@@ -1249,7 +1234,7 @@ namespace DisplayMagician.UIForms
             // cb_wait_alternative_game
             // 
             cb_wait_alternative_game.AutoSize = true;
-            cb_wait_alternative_game.Location = new System.Drawing.Point(192, 115);
+            cb_wait_alternative_game.Location = new System.Drawing.Point(193, 115);
             cb_wait_alternative_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_wait_alternative_game.Name = "cb_wait_alternative_game";
             cb_wait_alternative_game.Size = new System.Drawing.Size(229, 24);
@@ -1386,10 +1371,10 @@ namespace DisplayMagician.UIForms
             rb_launcher.Location = new System.Drawing.Point(18, 326);
             rb_launcher.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_launcher.Name = "rb_launcher";
-            rb_launcher.Size = new System.Drawing.Size(466, 24);
+            rb_launcher.Size = new System.Drawing.Size(574, 24);
             rb_launcher.TabIndex = 42;
             rb_launcher.TabStop = true;
-            rb_launcher.Text = "Launch a Game installed in Steam, Origin, Uplay, Epic or GOG";
+            rb_launcher.Text = "Launch a Game installed in Steam, Origin, Uplay, Epic, GOG or Xbox Libraries";
             rb_launcher.UseVisualStyleBackColor = true;
             rb_launcher.CheckedChanged += rb_launcher_CheckedChanged;
             rb_launcher.Paint += radiobutton_Paint;
