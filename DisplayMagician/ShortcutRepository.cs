@@ -1241,7 +1241,8 @@ namespace DisplayMagician
                                 continue;
                             }
                             logger.Info($"ShortcutRepository/RunShortcut: Stopping {runningProcesses.Length} instance(s) of '{processName}'.");
-                            ProcessUtils.StopProcess(runningProcesses.ToList());
+                            if (!ProcessUtils.StopProcess(runningProcesses.ToList()))
+                                logger.Warn($"ShortcutRepository/RunShortcut: One or more instances of '{processName}' could not be stopped.");
                             WinLibrary.RefreshTrayArea();
                             if (stopProgramEntry.RestartAfterwards)
                             {
@@ -1296,7 +1297,7 @@ namespace DisplayMagician
                                 {
                                     foreach (Process p in processesCreated)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.StartInfo.FileName} after the main game or executable is closed.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.ProcessName} (PID {p.Id}) after the main game or executable is closed.");
                                     }
                                     startedProgramsForCleanup.Add((processToStart.Priority, processesCreated));
                                 }
@@ -1304,7 +1305,7 @@ namespace DisplayMagician
                                 {
                                     foreach (Process p in processesCreated)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.StartInfo.FileName} after the main game or executable is closed, so we'll just leave it running");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.ProcessName} (PID {p.Id}) after the main game or executable is closed, so we'll just leave it running");
                                     }
                                 }
                             }
@@ -1630,7 +1631,7 @@ namespace DisplayMagician
                     // Record the program we started so we can close it later
                     foreach (Process p in processesCreated)
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: {p.StartInfo.FileName} was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: {p.ProcessName} (PID {p.Id}) was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
                     }
 
                 }
@@ -2400,7 +2401,9 @@ namespace DisplayMagician
                         try
                         {
                             logger.Info($"ShortcutRepository/RunShortcut: Restarting '{action.ToRestart.Executable}'.");
-                            ProcessUtils.StartProcess(action.ToRestart.Executable, "", action.ToRestart.RestartProcessPriority, 10, action.ToRestart.RunAsAdministrator);
+                            List<Process> restartedProcesses = ProcessUtils.StartProcess(action.ToRestart.Executable, "", action.ToRestart.RestartProcessPriority, 10, action.ToRestart.RunAsAdministrator);
+                            if (restartedProcesses.Count == 0)
+                                logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when restarting '{action.ToRestart.Executable}'.");
                         }
                         catch (Exception ex)
                         {
@@ -2410,7 +2413,15 @@ namespace DisplayMagician
                     else
                     {
                         // Shutdown the processes
-                        ProcessUtils.StopProcess(action.ToStop);
+                        try
+                        {
+                            if (!ProcessUtils.StopProcess(action.ToStop))
+                                logger.Warn($"ShortcutRepository/RunShortcut: One or more started programs could not be stopped during post-game cleanup.");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping started programs during post-game cleanup.");
+                        }
                     }
                 }
 
@@ -2565,14 +2576,16 @@ namespace DisplayMagician
                                 else
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable} as no other processes running");
-                                    ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator);
+                                    if (ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator).Count == 0)
+                                        logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when starting After Program '{stopProg.Executable}'.");
                                 }
 
                             }
                             else
                             {
                                 logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable}.");
-                                ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator);
+                                if (ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator).Count == 0)
+                                    logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when starting After Program '{stopProg.Executable}'.");
                             }
                         }    
                         else
