@@ -200,7 +200,7 @@ namespace DisplayMagician.Processes
             {
                 if (process == null || process.Id <= 0) 
                 {
-                    logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is not currently running.");
+                    logger.Trace($"ProcessUtils/ProcessExited: Null or invalid process supplied — treating as exited.");
                     return true;
                 }
                 else if (process.HasExited)
@@ -287,6 +287,7 @@ namespace DisplayMagician.Processes
 
         public static bool StopProcess(Process processToStop)
         {
+            string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
             try
             {
                 // Stop the process
@@ -294,38 +295,47 @@ namespace DisplayMagician.Processes
                 processToStop.WaitForExit(1000);
                 if (!ProcessExited(processToStop))
                 {
-                    logger.Trace($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
+                    logger.Trace($"ProcessUtils/StopProcess: Process {procId} wouldn't stop cleanly. Forcing program close.");
                     processToStop.Kill();
                     processToStop.WaitForExit(5000);
                     if (!ProcessExited(processToStop))
                     {
-                        logger.Error($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
+                        logger.Error($"ProcessUtils/StopProcess: Process {procId} couldn't be killed! It seems like something is actively preventing us from stopping the process");
                         return false;
                     }
-                    logger.Trace($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} was successfully killed.");
+                    logger.Trace($"ProcessUtils/StopProcess: Process {procId} was successfully killed.");
                 }
                 else
                 {
-                    logger.Trace($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} was successfully stopped.");
+                    logger.Trace($"ProcessUtils/StopProcess: Process {procId} was successfully stopped.");
                 }
                 return true;
             }
             catch (Win32Exception ex)
             {
-                logger.Warn(ex, $"ProcessUtils/StopProcess: Win32Exception! Couldn't access the wait status for a named process we're trying to stop. So now just killing the process.");
-                processToStop.Kill();
-                processToStop.WaitForExit(5000);
-                if (!ProcessExited(processToStop))
+                logger.Warn(ex, $"ProcessUtils/StopProcess: Win32Exception! Couldn't access the wait status for {procId} we're trying to stop. So now just killing the process.");
+                try
                 {
-                    logger.Error($"ProcessUtils/StopProcess: Win32Exception! Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
-                    return false;
+                    processToStop.Kill();
+                    processToStop.WaitForExit(5000);
+                    if (!ProcessExited(processToStop))
+                    {
+                        logger.Error($"ProcessUtils/StopProcess: Win32Exception! Process {procId} couldn't be killed! It seems like something is actively preventing us from stopping the process");
+                        return false;
+                    }
+                    logger.Trace($"ProcessUtils/StopProcess: Win32Exception! Process {procId} was successfully killed.");
+                    return true;
                 }
-                logger.Trace($"ProcessUtils/StopProcess: Win32Exception! Process {processToStop.StartInfo.FileName} was successfully killed.");
-                return true;
+                catch (InvalidOperationException)
+                {
+                    // Process exited on its own between the Win32Exception and the Kill() call — that's fine.
+                    logger.Trace($"ProcessUtils/StopProcess: Win32Exception! Process {procId} exited on its own before Kill() could be called.");
+                    return true;
+                }
             }
             catch (InvalidOperationException ex)
             {
-                logger.Error(ex, $"ProcessUtils/StopProcess: Couldn't kill the named process as the process appears to have closed already.");
+                logger.Error(ex, $"ProcessUtils/StopProcess: Couldn't kill {procId} as the process appears to have closed already.");
                 return true;
             }
             catch (SystemException ex)
@@ -354,20 +364,20 @@ namespace DisplayMagician.Processes
                 {
                     if (!ProcessExited(processToStop))
                     {
-                        string processFileName = processToStop.StartInfo.FileName;
-                        logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processFileName }");
+                        string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
+                        logger.Debug($"ProcessUtils/StopProcess: Stopping process {procId}");
                         if (ProcessUtils.StopProcess(processToStop))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Successfully stopped process {processFileName }");
+                            logger.Debug($"ProcessUtils/StopProcess: Successfully stopped process {procId}");
                         }
                         else
                         {
-                            logger.Warn($"ShortcutRepository/RunShortcut: Failed to stop process {processFileName } after main executable or game was exited by the user.");
+                            logger.Warn($"ProcessUtils/StopProcess: Failed to stop process {procId} after main executable or game was exited by the user.");
                         }
                     }
                     else
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Process {processToStop.ProcessName} already stopped.");
+                        logger.Debug($"ProcessUtils/StopProcess: Process {processToStop.ProcessName} (PID {processToStop.Id}) already stopped.");
                     }
                 }
                 catch (Exception ex)
@@ -489,7 +499,7 @@ namespace DisplayMagician.Processes
 
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
                     processCreated = TryExecute(executable, arguments, out processCreated, true, priorityClass, maxWaitMs);
-                    if (processCreated == null)
+                    if (processCreated != null)
                     {
                         logger.Trace($"ProcessUtils/TryExecute: Running the {executable} a second time with administrative rights worked!");
                         return processCreated;
