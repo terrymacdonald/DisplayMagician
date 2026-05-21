@@ -1,16 +1,11 @@
-﻿using Microsoft.Win32.SafeHandles;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DisplayMagician.Processes
@@ -32,7 +27,7 @@ namespace DisplayMagician.Processes
         CREATE_NO_WINDOW = 0x08000000,
         CREATE_PROTECTED_PROCESS = 0x00040000,
         CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
-        CREATE_SEPARATE_WOW_VDM = 0x00001000,
+        CREATE_SEPARATE_WOW_VDM = 0x00000800,
         CREATE_SHARED_WOW_VDM = 0x00001000,
         CREATE_UNICODE_ENVIRONMENT = 0x00000400,
         EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
@@ -104,7 +99,7 @@ namespace DisplayMagician.Processes
             // TODO: startTimeout (seconds) is intended to gate how long DM waits for the process to be
             // detected as running, but that detection loop is not yet implemented here. The 4-second
             // launcher-detection WaitForExit below is a separate, unrelated mechanism.
-            processCreated = TryExecute(executable, arguments, out processCreated, runAsAdministrator, TranslatePriorityToClass(processPriority));
+            processCreated = TryExecute(executable, arguments, runAsAdministrator, TranslatePriorityToClass(processPriority));
 
             if (processCreated != null)
             {
@@ -177,17 +172,27 @@ namespace DisplayMagician.Processes
 
         public static List<Process> GetChildProcesses(Process process)
         {
-            List<Process> children = new List<Process>();
-            ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={process.Id}");
-            foreach (ManagementObject mo in mos.Get())
+            if (process == null)
             {
-                try
+                logger.Warn("ProcessUtils/GetChildProcesses: Null process supplied — returning empty list.");
+                return new List<Process>();
+            }
+            List<Process> children = new List<Process>();
+            using (ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={process.Id}"))
+            {
+                foreach (ManagementObject mo in mos.Get())
                 {
-                    children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
-                }
-                catch (ArgumentException)
-                {
-                    logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
+                    using (mo)
+                    {
+                        try
+                        {
+                            children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+                        }
+                        catch (ArgumentException)
+                        {
+                            logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
+                        }
+                    }
                 }
             }
             return children;
@@ -196,16 +201,21 @@ namespace DisplayMagician.Processes
         public static List<Process> GetChildProcesses(int processId)
         {
             List<Process> children = new List<Process>();
-            ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={processId}");
-            foreach (ManagementObject mo in mos.Get())
+            using (ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={processId}"))
             {
-                try
+                foreach (ManagementObject mo in mos.Get())
                 {
-                    children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
-                }
-                catch (ArgumentException)
-                {
-                    logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
+                    using (mo)
+                    {
+                        try
+                        {
+                            children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+                        }
+                        catch (ArgumentException)
+                        {
+                            logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
+                        }
+                    }
                 }
             }
             return children;
@@ -291,6 +301,11 @@ namespace DisplayMagician.Processes
 
         public static bool ProcessExited(List<Process> processes)
         {
+            if (processes == null)
+            {
+                logger.Warn("ProcessUtils/ProcessExited: Null process list supplied — treating all as exited.");
+                return true;
+            }
             int processClosedCount = 0;
             foreach (Process p in processes)
             {
@@ -387,8 +402,14 @@ namespace DisplayMagician.Processes
 
         public static bool StopProcess(List<Process> processes)
         {
+            if (processes == null)
+            {
+                logger.Warn("ProcessUtils/StopProcess: Null process list supplied, nothing to stop.");
+                return false;
+            }
+            bool allStopped = true;
             // Stop the programs in the reverse order we started them
-            foreach (Process processToStop in processes)
+            foreach (Process processToStop in Enumerable.Reverse(processes))
             {
                 // Stop the process if it hasn't stopped already
                 try
@@ -404,6 +425,7 @@ namespace DisplayMagician.Processes
                         else
                         {
                             logger.Warn($"ProcessUtils/StopProcess: Failed to stop process {procId} after main executable or game was exited by the user.");
+                            allStopped = false;
                         }
                     }
                     else
@@ -414,10 +436,11 @@ namespace DisplayMagician.Processes
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ProcessUtils/StopProcess: Exception while checking if processToStop has already exited");
+                    allStopped = false;
                 }
 
             }
-            return true;
+            return allStopped;
         }
 
         /// <summary>
@@ -426,13 +449,13 @@ namespace DisplayMagician.Processes
         /// </summary>
         /// <param name="executable">Program to execute.</param>
         /// <param name="arguments">Program arguments.</param>
-        /// <param name="processCreated">Receives the same Process object as the return value.</param>
         /// <param name="runAsAdministrator">Launch with elevated rights.</param>
         /// <param name="priorityClass">Process priority class to request.</param>
         /// <returns>The started <see cref="Process"/>, or <c>null</c> on failure.</returns>
-        private static Process TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal)
+        private static Process TryExecute(string executable, string arguments, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal)
         {
             //StringBuilder outputBuilder = new StringBuilder();            
+            Process processCreated;
             ProcessStartInfo psi;
             if (File.Exists(executable) && IsExecutableFileType(executable))
             {
@@ -503,6 +526,7 @@ namespace DisplayMagician.Processes
             }
             catch (ObjectDisposedException ex)
             {
+                processCreated.Dispose();
                 logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process object has already been disposed.");
                 return null;
             }
@@ -516,20 +540,23 @@ namespace DisplayMagician.Processes
                 {
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. No file name was specified in the Process component's StartInfo.");
                 }
+                processCreated.Dispose();
                 return null;
             }
             catch (Win32Exception ex)
             {
-                if (ex.ErrorCode == -2147467259)
+                if (ex.NativeErrorCode == 740 || ex.NativeErrorCode == 5)
                 {
                     if (runAsAdministrator)
                     {
+                        processCreated.Dispose();
                         logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable} for a second time with administrative rights. Giving up.");
                         return null;
                     }
 
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
-                    processCreated = TryExecute(executable, arguments, out processCreated, true, priorityClass);
+                    processCreated.Dispose();
+                    processCreated = TryExecute(executable, arguments, true, priorityClass);
                     if (processCreated != null)
                     {
                         logger.Trace($"ProcessUtils/TryExecute: Running the {executable} a second time with administrative rights worked!");
@@ -545,16 +572,19 @@ namespace DisplayMagician.Processes
                 else
                 {
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. There was an error in opening the associated file.");
-                }                
+                }
+                processCreated.Dispose();
                 return null;
             }
             catch (PlatformNotSupportedException ex)
             {
+                processCreated.Dispose();
                 logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Method not supported on operating systems without shell support such as Nano Server (.NET Core only).");
                 return null;
             }
             catch (Exception ex)
             {
+                processCreated.Dispose();
                 logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Not sure what specific exception it is.");
                 return null;
             }
@@ -607,14 +637,9 @@ namespace DisplayMagician.Processes
 
         public static string GetProcessName(string executable)
         {
-            if (executable.Contains(Path.DirectorySeparatorChar) || executable.Contains(Path.AltDirectorySeparatorChar) || executable.Contains(Path.VolumeSeparatorChar))
-            {
-                return Path.GetFileNameWithoutExtension(executable);
-            }
-            else
-            {
-                return executable;
-            }
+            if (string.IsNullOrEmpty(executable))
+                return "";
+            return Path.GetFileNameWithoutExtension(executable);
         }
 
         public static ProcessPriority TranslateNameToPriority(string processPriorityName)
