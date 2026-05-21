@@ -707,32 +707,32 @@ namespace DisplayMagician.AppLibraries
                     if (specialVariable.Equals("ProgramFiles",StringComparison.CurrentCultureIgnoreCase))
                     {
                         replacement = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-                        indirectPath.Replace("%ProgramFiles%", replacement);
+                        indirectPath = indirectPath.Replace("%ProgramFiles%", replacement);
                     }
                     else if (specialVariable.Equals("ProgramFilesX86", StringComparison.CurrentCultureIgnoreCase))
                     {
                         replacement = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-                        indirectPath.Replace("%ProgramFilesX86%", replacement);
+                        indirectPath = indirectPath.Replace("%ProgramFilesX86%", replacement);
                     }
                     else if (specialVariable.Equals("ProgramFiles(x86)", StringComparison.CurrentCultureIgnoreCase))
                     {
                         replacement = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-                        indirectPath.Replace("%ProgramFiles(x86)%", replacement);
+                        indirectPath = indirectPath.Replace("%ProgramFiles(x86)%", replacement);
                     }
                     else if (specialVariable.Equals("CommonProgramFiles", StringComparison.CurrentCultureIgnoreCase))
                     {
                         replacement = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles);
-                        indirectPath.Replace("%CommonProgramFiles%", replacement);
+                        indirectPath = indirectPath.Replace("%CommonProgramFiles%", replacement);
                     }
                     else if (specialVariable.Equals("CommonProgramFilesX86", StringComparison.CurrentCultureIgnoreCase))
                     {
                         replacement = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86);
-                        indirectPath.Replace("%CommonProgramFilesX86%", replacement);
+                        indirectPath = indirectPath.Replace("%CommonProgramFilesX86%", replacement);
                     }
                     else if (specialVariable.Equals("CommonProgramFiles(x86)", StringComparison.CurrentCultureIgnoreCase))
                     {
                         replacement = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86);
-                        indirectPath.Replace("%CommonProgramFiles(x86)%", replacement);
+                        indirectPath = indirectPath.Replace("%CommonProgramFiles(x86)%", replacement);
                     }
                 }
             }

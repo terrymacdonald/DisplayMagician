@@ -158,17 +158,17 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public bool CopyTo(GogGame GogGame)
+        public bool CopyTo(GogGame gogGame)
         {
-            if (!(GogGame is GogGame))
+            if (!(gogGame is GogGame))
                 return false;
 
             // Copy all the game data over to the other game
-            GogGame.IconPath = IconPath;
-            GogGame.Id = Id;
-            GogGame.Name = Name;
-            GogGame.ExePath = ExePath;
-            GogGame.Directory = Directory;
+            gogGame.IconPath = IconPath;
+            gogGame.Id = Id;
+            gogGame.Name = Name;
+            gogGame.ExePath = ExePath;
+            gogGame.Directory = Directory;
             return true;
         }
 

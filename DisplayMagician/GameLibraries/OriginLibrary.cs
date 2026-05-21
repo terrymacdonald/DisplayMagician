@@ -60,7 +60,7 @@ namespace DisplayMagician.GameLibraries
                 }
 
                 _originExe = OriginInstallKey.GetValue("ClientPath", @"C:\Program Files (x86)\Origin\Origin.exe").ToString();
-                _originPath = Path.GetDirectoryName(_originPath);
+                _originPath = Path.GetDirectoryName(_originExe);
                 if (File.Exists(_originExe))
                 {
                     logger.Info($"OriginLibrary/OriginLibrary: Origin library is installed in {_originPath}. Found {_originExe}");

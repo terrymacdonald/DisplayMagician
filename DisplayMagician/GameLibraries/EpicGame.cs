@@ -123,17 +123,17 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public bool CopyTo(EpicGame EpicGame)
+        public bool CopyTo(EpicGame epicGame)
         {
-            if (!(EpicGame is EpicGame))
+            if (!(epicGame is EpicGame))
                 return false;
 
             // Copy all the game data over to the other game
-            EpicGame.IconPath = IconPath;
-            EpicGame.Id = Id;
-            EpicGame.Name = Name;
-            EpicGame.ExePath = ExePath;
-            EpicGame.Directory = Directory;
+            epicGame.IconPath = IconPath;
+            epicGame.Id = Id;
+            epicGame.Name = Name;
+            epicGame.ExePath = ExePath;
+            epicGame.Directory = Directory;
             return true;
         }
 

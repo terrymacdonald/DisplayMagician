@@ -49,7 +49,7 @@ namespace DisplayMagician.GameLibraries
         {
             try
             {
-                logger.Trace($"EpicLibrary/EpicLibrary: Epic Online Services registry key = HKLM\\{registryEpicOnlineServicesKey}");
+                logger.Trace($"EpicLibrary/EpicLibrary: Epic Online Services registry key = HKCU\\{registryEpicOnlineServicesKey}");
                 // Find the EpicExe location, and the EpicPath for later
                 RegistryKey EpicOnlineServicesKey = Registry.CurrentUser.OpenSubKey(registryEpicOnlineServicesKey, RegistryKeyPermissionCheck.ReadSubTree);
                 if (EpicOnlineServicesKey == null)

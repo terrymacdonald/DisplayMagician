@@ -157,17 +157,17 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public bool CopyTo(OriginGame OriginGame)
+        public bool CopyTo(OriginGame originGame)
         {
-            if (!(OriginGame is OriginGame))
+            if (!(originGame is OriginGame))
                 return false;
 
             // Copy all the game data over to the other game
-            OriginGame.IconPath = IconPath;
-            OriginGame.Id = Id;
-            OriginGame.Name = Name;
-            OriginGame.ExePath = ExePath;
-            OriginGame.Directory = Directory;
+            originGame.IconPath = IconPath;
+            originGame.Id = Id;
+            originGame.Name = Name;
+            originGame.ExePath = ExePath;
+            originGame.Directory = Directory;
             return true;
         }
 
