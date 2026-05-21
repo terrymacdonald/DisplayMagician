@@ -188,7 +188,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public bool CopyInto(SteamGame steamGame)
+        public bool CopyTo(SteamGame steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
