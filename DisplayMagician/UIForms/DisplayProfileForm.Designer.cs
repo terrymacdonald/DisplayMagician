@@ -297,10 +297,10 @@ namespace DisplayMagician.UIForms
             lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             lbl_save_profile.ForeColor = System.Drawing.Color.White;
             lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_save_profile.Location = new System.Drawing.Point(83, 88);
+            lbl_save_profile.Location = new System.Drawing.Point(24, 103);
             lbl_save_profile.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_save_profile.Name = "lbl_save_profile";
-            lbl_save_profile.Size = new System.Drawing.Size(729, 102);
+            lbl_save_profile.Size = new System.Drawing.Size(1062, 62);
             lbl_save_profile.TabIndex = 33;
             lbl_save_profile.Text = resources.GetString("lbl_save_profile.Text");
             lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
