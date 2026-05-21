@@ -60,7 +60,6 @@ namespace DisplayMagician.UIForms
             btn_donate = new System.Windows.Forms.Button();
             btn_help = new System.Windows.Forms.Button();
             btn_profile_settings = new System.Windows.Forms.Button();
-            dv_profile = new DisplayView();
             p_lower = new System.Windows.Forms.Panel();
             btn_update = new System.Windows.Forms.Button();
             p_fill = new System.Windows.Forms.Panel();
@@ -380,7 +379,6 @@ namespace DisplayMagician.UIForms
             p_upper.Controls.Add(label1);
             p_upper.Controls.Add(lbl_profile_shown);
             p_upper.Controls.Add(lbl_profile_shown_subtitle);
-            p_upper.Controls.Add(dv_profile);
             p_upper.Dock = System.Windows.Forms.DockStyle.Top;
             p_upper.Location = new System.Drawing.Point(0, 0);
             p_upper.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -441,21 +439,6 @@ namespace DisplayMagician.UIForms
             btn_profile_settings.Text = "&Profile Settings";
             btn_profile_settings.UseVisualStyleBackColor = false;
             btn_profile_settings.Click += btn_profile_settings_Click;
-            // 
-            // dv_profile
-            // 
-            dv_profile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            dv_profile.BackColor = System.Drawing.Color.DimGray;
-            dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            dv_profile.Location = new System.Drawing.Point(0, 110);
-            dv_profile.Margin = new System.Windows.Forms.Padding(21);
-            dv_profile.Name = "dv_profile";
-            dv_profile.PaddingX = 100;
-            dv_profile.PaddingY = 100;
-            dv_profile.Profile = null;
-            dv_profile.Size = new System.Drawing.Size(1098, 460);
-            dv_profile.TabIndex = 4;
             // 
             // p_lower
             // 

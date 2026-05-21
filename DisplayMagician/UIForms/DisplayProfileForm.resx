@@ -127,7 +127,7 @@
     <value>248, 17</value>
   </metadata>
   <data name="lbl_save_profile.Text" xml:space="preserve">
-    <value>Setup your display layout in NVIDIA Control Panel, AMD Radeon Adrenaline or Windows Display Settings, then return to DisplayMagician and click 'Save' to store this Display Profile for later use. It may take up to 20 seconds to save the Display Profile.</value>
+    <value>Setup your display layout in NVIDIA Control Panel, AMD Radeon Adrenaline, Intel Graphics Command Center or Windows Display Settings, then return to DisplayMagician and click 'Save' to store this Display Profile for later use. It may take up to 20 seconds to save the Display Profile.</value>
   </data>
   <metadata name="dialog_save.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>358, 17</value>
