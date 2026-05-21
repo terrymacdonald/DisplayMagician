@@ -101,7 +101,10 @@ namespace DisplayMagician.Processes
 
             processCreated.Start();*/
 
-            processCreated = TryExecute(executable, arguments, out processCreated, runAsAdministrator, TranslatePriorityToClass(processPriority), startTimeout);      
+            // TODO: startTimeout (seconds) is intended to gate how long DM waits for the process to be
+            // detected as running, but that detection loop is not yet implemented here. The 4-second
+            // launcher-detection WaitForExit below is a separate, unrelated mechanism.
+            processCreated = TryExecute(executable, arguments, out processCreated, runAsAdministrator, TranslatePriorityToClass(processPriority));
 
             if (processCreated != null)
             {
@@ -178,7 +181,14 @@ namespace DisplayMagician.Processes
             ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={process.Id}");
             foreach (ManagementObject mo in mos.Get())
             {
-                children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+                try
+                {
+                    children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+                }
+                catch (ArgumentException)
+                {
+                    logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
+                }
             }
             return children;
         }
@@ -189,7 +199,14 @@ namespace DisplayMagician.Processes
             ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={processId}");
             foreach (ManagementObject mo in mos.Get())
             {
-                children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+                try
+                {
+                    children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+                }
+                catch (ArgumentException)
+                {
+                    logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
+                }
             }
             return children;
         }
@@ -249,8 +266,17 @@ namespace DisplayMagician.Processes
 
         public static bool ProcessExited(int processId)
         {
-            Process process = Process.GetProcessById(processId);
-            
+            Process process;
+            try
+            {
+                process = Process.GetProcessById(processId);
+            }
+            catch (ArgumentException)
+            {
+                logger.Trace($"ProcessUtils/ProcessExited: Process with ID {processId} no longer exists — treating as exited.");
+                return true;
+            }
+
             if (ProcessExited(process))
             {
                 //logger.Trace($"ProcessUtils/ProcessExited3: Process with ID {processId} has exited, so no processes still running!");
@@ -287,6 +313,11 @@ namespace DisplayMagician.Processes
 
         public static bool StopProcess(Process processToStop)
         {
+            if (processToStop == null)
+            {
+                logger.Warn("ProcessUtils/StopProcess: Null process supplied, nothing to stop.");
+                return false;
+            }
             string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
             try
             {
@@ -382,7 +413,7 @@ namespace DisplayMagician.Processes
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while checking if processToStop has already exited");
+                    logger.Error(ex, $"ProcessUtils/StopProcess: Exception while checking if processToStop has already exited");
                 }
 
             }
@@ -390,17 +421,16 @@ namespace DisplayMagician.Processes
         }
 
         /// <summary>
-        /// Executes the <paramref name="executable"/> and waits a maximum time of <paramref name="maxWaitMs"/> for completion and returns the contents of
-        /// <see cref="Process.StandardOutput"/>. If the process doesn't end in this time, it gets aborted.
+        /// Launches <paramref name="executable"/> and returns the created <see cref="Process"/>.
+        /// Retries with elevated rights if the initial attempt fails with an access-denied error.
         /// </summary>
-        /// <param name="executable">Program to execute</param>
-        /// <param name="arguments">Program arguments</param>
-        /// <param name="redirectInputOutput"><c>true</c> to redirect standard streams.</param>
-        /// <param name="result">Returns the contents of standard output</param>
-        /// <param name="priorityClass">Process priority</param>
-        /// <param name="maxWaitMs">Maximum time to wait for completion</param>
-        /// <returns></returns>
-        private static Process TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        /// <param name="executable">Program to execute.</param>
+        /// <param name="arguments">Program arguments.</param>
+        /// <param name="processCreated">Receives the same Process object as the return value.</param>
+        /// <param name="runAsAdministrator">Launch with elevated rights.</param>
+        /// <param name="priorityClass">Process priority class to request.</param>
+        /// <returns>The started <see cref="Process"/>, or <c>null</c> on failure.</returns>
+        private static Process TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal)
         {
             //StringBuilder outputBuilder = new StringBuilder();            
             ProcessStartInfo psi;
@@ -432,14 +462,15 @@ namespace DisplayMagician.Processes
             }
             else
             {
-                // Isn't a file (somethign like a url), or is a file but isn't an executable
+                // Isn't a file (something like a URL) — do not derive WorkingDirectory from a
+                // non-filesystem path; an invalid directory can cause shell-execute to fail.
                 psi = new ProcessStartInfo(executable, arguments)
                 {
                     UseShellExecute = true,
                     Verb = "Open",
                     CreateNoWindow = false,
                     RedirectStandardOutput = false,
-                    WorkingDirectory = Path.GetDirectoryName(executable)
+                    WorkingDirectory = ""
                 };
             }
 
@@ -498,7 +529,7 @@ namespace DisplayMagician.Processes
                     }
 
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
-                    processCreated = TryExecute(executable, arguments, out processCreated, true, priorityClass, maxWaitMs);
+                    processCreated = TryExecute(executable, arguments, out processCreated, true, priorityClass);
                     if (processCreated != null)
                     {
                         logger.Trace($"ProcessUtils/TryExecute: Running the {executable} a second time with administrative rights worked!");
