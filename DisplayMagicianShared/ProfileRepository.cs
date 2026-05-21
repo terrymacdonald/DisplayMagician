@@ -694,7 +694,7 @@ namespace DisplayMagicianShared
             // Get the display settings
             try
             {
-                profile.CreateProfileFromCurrentDisplaySettings();
+                profile.CreateProfileFromCurrentDisplaySettings(captureWallpaper: false);
             }
             catch (Exception ex)
             {

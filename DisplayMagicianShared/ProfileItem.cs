@@ -615,7 +615,7 @@ namespace DisplayMagicianShared
         }
 
 
-        public bool CreateProfileFromCurrentDisplaySettings()
+        public bool CreateProfileFromCurrentDisplaySettings(bool captureWallpaper = true)
         {
             // Calling the 3 different libraries automatically gets the different configs from each of the 3 video libraries.
             // If the video library isn't in use then it also fills in the defaults so that the JSON file can save properly
@@ -652,8 +652,9 @@ namespace DisplayMagicianShared
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
                 _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers();
 
-                // Capture per-monitor wallpaper settings for this profile
-                _wallpaperConfiguration = Wallpaper.GetCurrentWallpaperConfig(AppWallpaperPath);
+                // Capture per-monitor wallpaper settings for this profile (only when explicitly saving/updating)
+                if (captureWallpaper)
+                    _wallpaperConfiguration = Wallpaper.GetCurrentWallpaperConfig(AppWallpaperPath);
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
