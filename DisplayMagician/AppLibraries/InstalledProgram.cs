@@ -696,7 +696,7 @@ namespace DisplayMagician.AppLibraries
 
         public static string DecodeIndirectFolders(string indirectPath)
         {
-            if (Regex.IsMatch(indirectPath, @"\%([^\\])\%"))
+            if (Regex.IsMatch(indirectPath, @"\%(.+?)\%"))
             {
                 // This is a special folder variable, so we need to decode it
                 Match myMatches = Regex.Match(indirectPath, @"\%(.+?)\%");

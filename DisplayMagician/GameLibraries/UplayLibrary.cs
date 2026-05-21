@@ -434,7 +434,7 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKCU reg key {regKeyPath}");
                 string regKeyText = regKeyPath.Replace(@"HKEY_CURRENT_USER\", "");
-                uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(regKeyText, RegistryKeyPermissionCheck.ReadSubTree);
+                uplayGameInstallKey = Registry.CurrentUser.OpenSubKey(regKeyText, RegistryKeyPermissionCheck.ReadSubTree);
             }
             else
             {

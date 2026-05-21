@@ -484,6 +484,7 @@ namespace DisplayMagician.GameLibraries
                     if (gogGameInfo.gameId != gogGameInfo.rootGameId)
                     {
                         logger.Trace($"GogLibrary/LoadInstalledGames: Game {gogGameInfo.name} is not a base game (probably DLC) so we're skipping it.");
+                        continue;
                     }
 
                     // Now we check the Gog game registry key too, to get some more information that we need

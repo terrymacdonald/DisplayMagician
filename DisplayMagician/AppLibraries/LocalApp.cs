@@ -446,7 +446,7 @@ namespace DisplayMagician.AppLibraries
                 }
 
                 // Create UWP watcher to watch this app starting
-                var _LocalAppUWPWatcher = Windows.System.AppDiagnosticInfo.CreateWatcher();
+                _LocalAppUWPWatcher = Windows.System.AppDiagnosticInfo.CreateWatcher();
                 _LocalAppUWPWatcher.Added += UWPWatcherAdded;
                 _LocalAppUWPWatcher.Removed += UWPWatcherRemoved;
                 _LocalAppUWPWatcher.Start();

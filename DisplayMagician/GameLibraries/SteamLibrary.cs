@@ -922,7 +922,7 @@ namespace DisplayMagician.GameLibraries
                             }
                         }
 
-                        if (steamAppIdsInstalled.Count == 0)
+                        if (steamAppIdsInstalled.Count == 0 && _allSteamGames.Count == 0)
                         {
                             // There aren't any game ids so return false
                             logger.Warn($"SteamLibrary/LoadInstalledGames: No Steam games installed in the Steam library");
