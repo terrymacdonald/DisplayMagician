@@ -1212,149 +1212,142 @@ namespace DisplayMagician
                 logger.Error($"ShortcutRepository/RunShortcut: CoreAudio Controller is null, so we can't set Audio or Capture Devices!");
             }
 
-            // Now run the pre-start applications
-            List<Process> startedProgramsForCleanup = new List<Process>();
-            List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Disabled == false).Where(program => !String.IsNullOrWhiteSpace(program.Executable)).OrderBy(program => program.Priority).ToList();
-            if (startProgramsToStart.Count > 0)
-            {
-                logger.Info($"ShortcutRepository/RunShortcut: Starting {startProgramsToStart.Count} programs before the main game or executable");
-                foreach (StartProgram processToStart in startProgramsToStart)
-                {
-                    // If required, check whether a process is started already
-                    if (processToStart.DontStartIfAlreadyRunning)
-                    {
-                        logger.Trace($"ShortcutRepository/RunShortcut: User wants us to only start {processToStart.Executable} if there are no other instances already running");
-                        logger.Trace($"ShortcutRepository/RunShortcut: Checking if process {processToStart.Executable} is already running");
-                        Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
-                        if (alreadyRunningProcesses.Length > 0)
-                        {
-                            logger.Info($"ShortcutRepository/RunShortcut: Process {processToStart.Executable} is already running, so we won't start a new one, and we won't stop it later");
-
-                            try
-                            {
-                                foreach (Process runningProcess in alreadyRunningProcesses)
-                                {
-                                    logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of already running process {processToStart.Executable} to {processToStart.ProcessPriority.ToString("G")}");
-                                    runningProcess.PriorityClass = TranslatePriorityClassToClass(processToStart.ProcessPriority);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting priority of already running process {processToStart.Executable} to {processToStart.ProcessPriority.ToString("G")}");
-                            }                            
-                            continue;
-                        }
-                            
-                    }
-
-                    // Start the executable
-                    logger.Info($"ShortcutRepository/RunShortcut: Starting Start Program process {processToStart.Executable}");
-                    //Process process = null;
-                    List<Process> processesCreated = new List<Process>();
-                    try
-                    {
-                        //processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority);
-                        processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
-
-                        // Record the program we started so we can close it later (if we have any!)
-                        if (processesCreated.Count > 0)
-                        {
-                            if (processToStart.CloseOnFinish)
-                            {
-                                foreach (Process p in processesCreated)
-                                {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.StartInfo.FileName} after the main game or executable is closed.");
-                                }
-                                startedProgramsForCleanup.AddRange(processesCreated);
-                            }
-                            else
-                            {
-                                foreach (Process p in processesCreated)
-                                {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.StartInfo.FileName} after the main game or executable is closed, so we'll just leave it running");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Find out if there are already other similarly named processes running
-                            Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
-                            if (alreadyRunningProcesses.Length == 0)
-                            {
-                                logger.Warn($"ShortcutRepository/RunShortcut: Couldn't start {processToStart.Executable}, and there were no other instances of it previously running either. It is possible that the program requires user interaction, or that there is a problem with it. Please try running '{processToStart.Executable}' yourself to see if it actually works.");
-                            }
-                            else if (alreadyRunningProcesses.Length == 1)
-                            {
-                                logger.Info($"ShortcutRepository/RunShortcut: There is already one other instance of {processToStart.Executable} running, and the additional instance we tried to start didn't start. It is likely that the application we tried to start is a 'single instance' application, meaning that any additional {processToStart.Executable} we try to start will simply pass their command line parameters to the single instance and then will shut themselves down. This is expected behaviour for these types of executables.");
-                            }
-                            else
-                            {
-                                logger.Info($"ShortcutRepository/RunShortcut: There are already {alreadyRunningProcesses.Length} instances of {processToStart.Executable} already running, and the latest instance we tried to start didn't start.");
-                            }
-                        }
-                    }
-                    catch (Win32Exception ex)
-                    {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting process {processToStart.Executable}. Windows complained about something while trying to create a new process.");
-                    }
-                    catch (ObjectDisposedException ex)
-                    {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting process {processToStart.Executable}. The object was disposed before we could start the process.");
-                    }
-                    catch (FileNotFoundException ex)
-                    {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting process {processToStart.Executable}. The file wasn't found by DisplayMagician and so we couldn't start it");
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting process {processToStart.Executable}. Method call is invalid for the current state.");
-                    }
-
-                }
-            }
-            else
-            {
-                logger.Info($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
-            }
-
-            // Stop any pre-configured stop programs before launching the main game/exe
+            // Run pre-game start/stop programs in UI Priority order (interleaved)
+            List<(int Priority, List<Process> Processes)> startedProgramsForCleanup = new List<(int Priority, List<Process> Processes)>();
             List<StopProgram> stopProgramsToRestart = new List<StopProgram>();
-            List<StopProgram> stopProgramsToRun = shortcutToUse.StopPrograms
-                .Where(sp => sp.Disabled == false)
-                .Where(sp => !String.IsNullOrWhiteSpace(sp.Executable))
-                .OrderBy(sp => sp.Priority)
-                .ToList();
-            if (stopProgramsToRun.Count > 0)
+
+            var programsInOrder = new List<(int Priority, bool IsStop, StartProgram StartProg, StopProgram StopProg)>();
+            foreach (StartProgram sp in shortcutToUse.StartPrograms.Where(p => !p.Disabled && !String.IsNullOrWhiteSpace(p.Executable)))
+                programsInOrder.Add((sp.Priority, false, sp, default));
+            foreach (StopProgram sp in shortcutToUse.StopPrograms.Where(p => !p.Disabled && !String.IsNullOrWhiteSpace(p.Executable)))
+                programsInOrder.Add((sp.Priority, true, default, sp));
+            programsInOrder.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+
+            if (programsInOrder.Count > 0)
             {
-                logger.Info($"ShortcutRepository/RunShortcut: Stopping {stopProgramsToRun.Count} program(s) before the main game or executable");
-                foreach (StopProgram stopProgramEntry in stopProgramsToRun)
+                logger.Info($"ShortcutRepository/RunShortcut: Processing {programsInOrder.Count} pre-game program action(s) in UI order");
+                foreach (var item in programsInOrder)
                 {
-                    try
+                    if (item.IsStop)
                     {
-                        string processName = Path.GetFileNameWithoutExtension(stopProgramEntry.Executable);
-                        Process[] runningProcesses = Process.GetProcessesByName(processName);
-                        if (runningProcesses.Length == 0)
+                        StopProgram stopProgramEntry = item.StopProg;
+                        try
                         {
-                            logger.Info($"ShortcutRepository/RunShortcut: Stop Program '{stopProgramEntry.Executable}' is not currently running — skipping.");
-                            continue;
+                            string processName = Path.GetFileNameWithoutExtension(stopProgramEntry.Executable);
+                            Process[] runningProcesses = Process.GetProcessesByName(processName);
+                            if (runningProcesses.Length == 0)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Stop Program '{stopProgramEntry.Executable}' is not currently running — skipping.");
+                                continue;
+                            }
+                            logger.Info($"ShortcutRepository/RunShortcut: Stopping {runningProcesses.Length} instance(s) of '{processName}'.");
+                            ProcessUtils.StopProcess(runningProcesses.ToList());
+                            WinLibrary.RefreshTrayArea();
+                            if (stopProgramEntry.RestartAfterwards)
+                            {
+                                stopProgramsToRestart.Add(stopProgramEntry);
+                            }
                         }
-                        logger.Info($"ShortcutRepository/RunShortcut: Stopping {runningProcesses.Length} instance(s) of '{processName}'.");
-                        ProcessUtils.StopProcess(runningProcesses.ToList());
-                        WinLibrary.RefreshTrayArea();
-                        if (stopProgramEntry.RestartAfterwards)
+                        catch (Exception ex)
                         {
-                            stopProgramsToRestart.Add(stopProgramEntry);
+                            logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping program '{stopProgramEntry.Executable}'.");
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping program '{stopProgramEntry.Executable}'.");
+                        StartProgram processToStart = item.StartProg;
+                        // If required, check whether a process is started already
+                        if (processToStart.DontStartIfAlreadyRunning)
+                        {
+                            logger.Trace($"ShortcutRepository/RunShortcut: User wants us to only start {processToStart.Executable} if there are no other instances already running");
+                            logger.Trace($"ShortcutRepository/RunShortcut: Checking if process {processToStart.Executable} is already running");
+                            Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
+                            if (alreadyRunningProcesses.Length > 0)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Process {processToStart.Executable} is already running, so we won't start a new one, and we won't stop it later");
+
+                                try
+                                {
+                                    foreach (Process runningProcess in alreadyRunningProcesses)
+                                    {
+                                        logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of already running process {processToStart.Executable} to {processToStart.ProcessPriority.ToString("G")}");
+                                        runningProcess.PriorityClass = TranslatePriorityClassToClass(processToStart.ProcessPriority);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting priority of already running process {processToStart.Executable} to {processToStart.ProcessPriority.ToString("G")}");
+                                }
+                                continue;
+                            }
+                        }
+
+                        // Start the executable
+                        logger.Info($"ShortcutRepository/RunShortcut: Starting Start Program process {processToStart.Executable}");
+                        List<Process> processesCreated = new List<Process>();
+                        try
+                        {
+                            processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+
+                            // Record the program we started so we can close it later (if we have any!)
+                            if (processesCreated.Count > 0)
+                            {
+                                if (processToStart.CloseOnFinish)
+                                {
+                                    foreach (Process p in processesCreated)
+                                    {
+                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.StartInfo.FileName} after the main game or executable is closed.");
+                                    }
+                                    startedProgramsForCleanup.Add((processToStart.Priority, processesCreated));
+                                }
+                                else
+                                {
+                                    foreach (Process p in processesCreated)
+                                    {
+                                        logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.StartInfo.FileName} after the main game or executable is closed, so we'll just leave it running");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Find out if there are already other similarly named processes running
+                                Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
+                                if (alreadyRunningProcesses.Length == 0)
+                                {
+                                    logger.Warn($"ShortcutRepository/RunShortcut: Couldn't start {processToStart.Executable}, and there were no other instances of it previously running either. It is possible that the program requires user interaction, or that there is a problem with it. Please try running '{processToStart.Executable}' yourself to see if it actually works.");
+                                }
+                                else if (alreadyRunningProcesses.Length == 1)
+                                {
+                                    logger.Info($"ShortcutRepository/RunShortcut: There is already one other instance of {processToStart.Executable} running, and the additional instance we tried to start didn't start. It is likely that the application we tried to start is a 'single instance' application, meaning that any additional {processToStart.Executable} we try to start will simply pass their command line parameters to the single instance and then will shut themselves down. This is expected behaviour for these types of executables.");
+                                }
+                                else
+                                {
+                                    logger.Info($"ShortcutRepository/RunShortcut: There are already {alreadyRunningProcesses.Length} instances of {processToStart.Executable} already running, and the latest instance we tried to start didn't start.");
+                                }
+                            }
+                        }
+                        catch (Win32Exception ex)
+                        {
+                            logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting process {processToStart.Executable}. Windows complained about something while trying to create a new process.");
+                        }
+                        catch (ObjectDisposedException ex)
+                        {
+                            logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting process {processToStart.Executable}. The object was disposed before we could start the process.");
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting process {processToStart.Executable}. The file wasn't found by DisplayMagician and so we couldn't start it");
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting process {processToStart.Executable}. Method call is invalid for the current state.");
+                        }
                     }
                 }
             }
             else
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: No stop programs configured before the main game or executable");
+                logger.Info($"ShortcutRepository/RunShortcut: No pre-game programs to start or stop");
             }
 
             // Now start the main game/exe, and wait if we have to
@@ -2388,35 +2381,41 @@ namespace DisplayMagician
             }
             
 
-            // Stop the pre-started startPrograms that we'd started earlier
-            if (startedProgramsForCleanup.Count > 0)
+            // Stop started programs and restart stopped programs in the same Priority order as pre-game
+            if (startedProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: We started {startProgramsToStart.Count} programs before the main executable or game, and now we want to stop {startedProgramsForCleanup.Count} of them");
+                logger.Debug($"ShortcutRepository/RunShortcut: We started {startedProgramsForCleanup.Count} program(s) and stopped {stopProgramsToRestart.Count} program(s) before the main executable or game — now performing post-game cleanup in the same order");
 
-                // Shutdown the processes
-                ProcessUtils.StopProcess(startedProgramsForCleanup);
-
-                // Refresh the system tray / notification tray area to clean out any applications we stopped               
-                WinLibrary.RefreshTrayArea();
-
-            }
-
-            // Restart any stop programs that requested it
-            if (stopProgramsToRestart.Count > 0)
-            {
-                logger.Info($"ShortcutRepository/RunShortcut: Restarting {stopProgramsToRestart.Count} program(s) that were stopped before the main game or executable");
+                var postGameActions = new List<(int Priority, bool IsRestart, List<Process> ToStop, StopProgram ToRestart)>();
+                foreach (var entry in startedProgramsForCleanup)
+                    postGameActions.Add((entry.Priority, false, entry.Processes, default));
                 foreach (StopProgram sp in stopProgramsToRestart)
+                    postGameActions.Add((sp.Priority, true, null, sp));
+                postGameActions.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+
+                foreach (var action in postGameActions)
                 {
-                    try
+                    if (action.IsRestart)
                     {
-                        logger.Info($"ShortcutRepository/RunShortcut: Restarting '{sp.Executable}'.");
-                        ProcessUtils.StartProcess(sp.Executable, "", sp.RestartProcessPriority, 10, sp.RunAsAdministrator);
+                        try
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Restarting '{action.ToRestart.Executable}'.");
+                            ProcessUtils.StartProcess(action.ToRestart.Executable, "", action.ToRestart.RestartProcessPriority, 10, action.ToRestart.RunAsAdministrator);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while restarting program '{action.ToRestart.Executable}'.");
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while restarting program '{sp.Executable}'.");
+                        // Shutdown the processes
+                        ProcessUtils.StopProcess(action.ToStop);
                     }
                 }
+
+                // Refresh the system tray / notification tray area to clean out any applications we stopped
+                WinLibrary.RefreshTrayArea();
             }
 
             // Change Audio Device back (if one specified)
