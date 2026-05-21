@@ -48,6 +48,16 @@ namespace DisplayMagician.UIForms
                 Wallpaper.Mode.Clear => 1,
                 _ => 2
             };
+
+            // Show the captured background type (read-only informational label)
+            lbl_wallpaper_bg_type.Text = Profile.WallpaperConfiguration.BackgroundType switch
+            {
+                Wallpaper.BackgroundType.SolidColour => "Solid Colour (same on all displays)",
+                Wallpaper.BackgroundType.Slideshow   => "Slideshow (same on all displays)",
+                Wallpaper.BackgroundType.Spotlight   => "Windows Spotlight (same on all displays)",
+                _                                    => "Saved Picture (unique per display)",
+            };
+
             logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} loaded. Wallpaper mode: {Profile.WallpaperConfiguration.WallpaperMode}.");
 
             if (Profile.ApplyProfileCount >= 0 && Profile.ApplyProfileCount <= 10)

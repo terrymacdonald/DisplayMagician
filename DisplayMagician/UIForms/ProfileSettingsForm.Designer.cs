@@ -34,6 +34,8 @@ namespace DisplayMagician.UIForms
             gb_general = new System.Windows.Forms.GroupBox();
             lbl_wallpaper_mode = new System.Windows.Forms.Label();
             cmb_wallpaper_mode = new System.Windows.Forms.ComboBox();
+            lbl_wallpaper_bg_type_label = new System.Windows.Forms.Label();
+            lbl_wallpaper_bg_type = new System.Windows.Forms.Label();
             gb_multiple_applies = new System.Windows.Forms.GroupBox();
             label2 = new System.Windows.Forms.Label();
             cb_force_restart_explorer = new System.Windows.Forms.CheckBox();
@@ -69,13 +71,15 @@ namespace DisplayMagician.UIForms
             // 
             gb_general.Controls.Add(lbl_wallpaper_mode);
             gb_general.Controls.Add(cmb_wallpaper_mode);
+            gb_general.Controls.Add(lbl_wallpaper_bg_type_label);
+            gb_general.Controls.Add(lbl_wallpaper_bg_type);
             gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_general.ForeColor = System.Drawing.Color.White;
             gb_general.Location = new System.Drawing.Point(30, 27);
             gb_general.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_general.Name = "gb_general";
             gb_general.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_general.Size = new System.Drawing.Size(612, 80);
+            gb_general.Size = new System.Drawing.Size(612, 108);
             gb_general.TabIndex = 11;
             gb_general.TabStop = false;
             gb_general.Text = "Wallpaper Settings";
@@ -88,6 +92,7 @@ namespace DisplayMagician.UIForms
             lbl_wallpaper_mode.Location = new System.Drawing.Point(14, 37);
             lbl_wallpaper_mode.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_wallpaper_mode.Name = "lbl_wallpaper_mode";
+            lbl_wallpaper_mode.Size = new System.Drawing.Size(179, 16);
             lbl_wallpaper_mode.TabIndex = 0;
             lbl_wallpaper_mode.Text = "When switching to this profile:";
             // 
@@ -103,6 +108,30 @@ namespace DisplayMagician.UIForms
             cmb_wallpaper_mode.Size = new System.Drawing.Size(360, 24);
             cmb_wallpaper_mode.TabIndex = 1;
             cmb_wallpaper_mode.SelectedIndexChanged += cmb_wallpaper_mode_SelectedIndexChanged;
+            // 
+            // lbl_wallpaper_bg_type_label
+            // 
+            lbl_wallpaper_bg_type_label.AutoSize = true;
+            lbl_wallpaper_bg_type_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_wallpaper_bg_type_label.ForeColor = System.Drawing.Color.White;
+            lbl_wallpaper_bg_type_label.Location = new System.Drawing.Point(14, 68);
+            lbl_wallpaper_bg_type_label.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_wallpaper_bg_type_label.Name = "lbl_wallpaper_bg_type_label";
+            lbl_wallpaper_bg_type_label.Size = new System.Drawing.Size(145, 16);
+            lbl_wallpaper_bg_type_label.TabIndex = 2;
+            lbl_wallpaper_bg_type_label.Text = "Stored Wallpaper type:";
+            // 
+            // lbl_wallpaper_bg_type
+            // 
+            lbl_wallpaper_bg_type.AutoSize = true;
+            lbl_wallpaper_bg_type.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_wallpaper_bg_type.ForeColor = System.Drawing.Color.LightGray;
+            lbl_wallpaper_bg_type.Location = new System.Drawing.Point(228, 68);
+            lbl_wallpaper_bg_type.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_wallpaper_bg_type.Name = "lbl_wallpaper_bg_type";
+            lbl_wallpaper_bg_type.Size = new System.Drawing.Size(16, 16);
+            lbl_wallpaper_bg_type.TabIndex = 3;
+            lbl_wallpaper_bg_type.Text = "—";
             // 
             // gb_multiple_applies
             // 
@@ -227,6 +256,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.GroupBox gb_general;
         private System.Windows.Forms.Label lbl_wallpaper_mode;
         private System.Windows.Forms.ComboBox cmb_wallpaper_mode;
+        private System.Windows.Forms.Label lbl_wallpaper_bg_type_label;
+        private System.Windows.Forms.Label lbl_wallpaper_bg_type;
         private System.Windows.Forms.GroupBox gb_multiple_applies;
         private System.Windows.Forms.Label lbl_apply_profile_delay;
         private System.Windows.Forms.NumericUpDown nud_apply_profile_count;
