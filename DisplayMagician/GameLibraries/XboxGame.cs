@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security;
-//using DisplayMagician.Resources;
-using Microsoft.Win32;
 using System.Diagnostics;
 using DisplayMagician.Processes;
 using Newtonsoft.Json;
@@ -14,7 +11,6 @@ namespace DisplayMagician.GameLibraries
 {
     public class XboxGame : Game
     {
-        private string _gameRegistryKey;
         private string _xboxGameId;
         private string _xboxGameName;
         private string _xboxGameExePath;
@@ -23,22 +19,23 @@ namespace DisplayMagician.GameLibraries
         private string _xboxGameProcessName;
         private List<Process> _xboxGameProcesses = new List<Process>();
         private string _xboxGameIconPath;
-        private static readonly SteamLibrary _xboxGameLibrary = SteamLibrary.GetLibrary();
+        private string _xboxGameAUMID;
+        private static readonly XboxLibrary _xboxGameLibrary = XboxLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public XboxGame() { }
 
-        public XboxGame(string xboxGameId, string xboxGameName, string xboxGameExePath, string xboxGameIconPath)
+        public XboxGame(string xboxGameId, string xboxGameName, string xboxGameExePath, string xboxGameIconPath, string xboxGameAUMID = "")
         {
 
-            _gameRegistryKey = $@"{_xboxGameLibrary.SteamAppsRegistryKey}\\{xboxGameId}";
             _xboxGameId = xboxGameId;
             _xboxGameName = xboxGameName;
             _xboxGameExePath = xboxGameExePath;
-            _xboxGameDir = Path.GetDirectoryName(xboxGameExePath);
-            _xboxGameExe = Path.GetFileName(_xboxGameExePath);
-            _xboxGameProcessName = Path.GetFileNameWithoutExtension(_xboxGameExePath);
+            _xboxGameDir = !String.IsNullOrWhiteSpace(xboxGameExePath) ? Path.GetDirectoryName(xboxGameExePath) : "";
+            _xboxGameExe = !String.IsNullOrWhiteSpace(xboxGameExePath) ? Path.GetFileName(xboxGameExePath) : "";
+            _xboxGameProcessName = !String.IsNullOrWhiteSpace(xboxGameExePath) ? Path.GetFileNameWithoutExtension(xboxGameExePath) : "";
             _xboxGameIconPath = xboxGameIconPath;
+            _xboxGameAUMID = xboxGameAUMID;
 
         }
 
@@ -54,7 +51,7 @@ namespace DisplayMagician.GameLibraries
         }
 
         public override SupportedGameLibraryType GameLibraryType { 
-            get => SupportedGameLibraryType.Steam; 
+            get => SupportedGameLibraryType.Xbox; 
         }
 
         [JsonIgnore]
@@ -66,6 +63,12 @@ namespace DisplayMagician.GameLibraries
         public override string IconPath { 
             get => _xboxGameIconPath; 
             set => _xboxGameIconPath = value;
+        }
+
+        public string AUMID
+        {
+            get => _xboxGameAUMID;
+            set => _xboxGameAUMID = value;
         }
 
         public override string ExePath
@@ -146,37 +149,11 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        // TODO: Implement Xbox Game Pass update detection
         public override bool IsUpdating
         {
             get
             {
-                try
-                {
-                    using (var key = Registry.CurrentUser.OpenSubKey(_gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
-                    {
-                        if (key != null)
-                        {
-                            int updateValue;
-                            int.TryParse(key.GetValue(@"Updating", 0).ToString(),out updateValue);
-                            if (updateValue == 1)
-                            {
-                                return true;
-                            }
-                        }                        
-                    }
-                }
-                catch (SecurityException ex)
-                {
-                    logger.Warn(ex, $"XboxGame/IsUpdating: SecurityException when trying to open {_gameRegistryKey} registry key");
-                }
-                catch (IOException ex)
-                {
-                    logger.Warn(ex, $"XboxGame/IsUpdating: IOException when trying to open {_gameRegistryKey} registry key");
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"XboxGame/IsUpdating: Exception when trying to open {_gameRegistryKey} registry key");
-                }
                 return false;
             }
         }
@@ -185,11 +162,14 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                return !string.IsNullOrWhiteSpace(_xboxGameExePath) && File.Exists(_xboxGameExePath);
+                if (!String.IsNullOrWhiteSpace(_xboxGameExePath))
+                    return File.Exists(_xboxGameExePath);
+                // For UWP-only Xbox games with no exe path, trust the AUMID presence
+                return !String.IsNullOrWhiteSpace(_xboxGameAUMID);
             }
         }
 
-        public bool CopyInto(XboxGame xboxGame)
+        public bool CopyTo(XboxGame xboxGame)
         {
             if (!(xboxGame is XboxGame))
                 return false;
@@ -200,6 +180,7 @@ namespace DisplayMagician.GameLibraries
             xboxGame.Name = Name;
             xboxGame.ExePath = ExePath;
             xboxGame.Directory = Directory;
+            xboxGame.AUMID = AUMID;
             return true;
         }
 
@@ -227,12 +208,17 @@ namespace DisplayMagician.GameLibraries
 
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
-            string address = $@"uplay://launch/{Id}";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            if (!String.IsNullOrWhiteSpace(_xboxGameAUMID))
             {
-                address += @"/" + gameArguments;
+                // Xbox Game Pass games are sandboxed packages; launch via AUMID through explorer.exe
+                string explorerExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+                processesStarted = ProcessUtils.StartProcess(explorerExe, $"shell:AppsFolder\\{_xboxGameAUMID}", priority);
             }
-            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+            else
+            {
+                // Fall back to direct exe launch if no AUMID is available
+                processesStarted = ProcessUtils.StartProcess(_xboxGameExePath, gameArguments, priority);
+            }
             return true;
         }
 

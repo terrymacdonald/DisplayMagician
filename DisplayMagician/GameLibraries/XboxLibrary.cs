@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Win32;
 using System.IO;
-using System.Security;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.XPath;
-using System.Web;
 using System.Diagnostics;
-using Newtonsoft.Json;
+using System.Security.Principal;
+using System.Xml.Linq;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Core;
+using Windows.Management.Deployment;
+using DisplayMagician;
 using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
@@ -26,18 +25,11 @@ namespace DisplayMagician.GameLibraries
 
         // Common items to the class
         private List<Game> _allXboxGames = new List<Game>();
-        private string GogAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string _xboxAppIdRegex = @"^[0-9A-F]{1,16}$";
         private string _xboxExe;
         private string _xboxPath;
-        private string _gogLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "GOG.com");
-        private string _gogProgramFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy");
         private bool _isXboxInstalled = false;
         private List<string> _xboxProcessList = new List<string>(){ "XboxAppServices" };
-
-        internal string registryGogGalaxyClientKey = @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient"; 
-        internal string registryGogGalaxyClientPathKey = @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient\paths";
-        internal string registryGogGalaxyGamesKey = @"SOFTWARE\WOW6432Node\GOG.com\Games\";     
-        //internal string registryGogLauncherKey = @"SOFTWARE\WOW6432Node\Gog";
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
 
@@ -51,46 +43,27 @@ namespace DisplayMagician.GameLibraries
         {
             try
             {
-                logger.Trace($"XboxLibrary/XboxLibrary: Gog Online Services registry key = HKLM\\{registryGogGalaxyClientKey}");
-                // Find the GogExe location, and the GogPath for later
-                RegistryKey GogGalaxyClientKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientKey, RegistryKeyPermissionCheck.ReadSubTree);
-                if (GogGalaxyClientKey == null)
-                {
-                    logger.Info($"XboxLibrary/XboxLibrary: GOG library is not installed!");
-                    return;
-                }
-                string gogClientExeFilename = GogGalaxyClientKey.GetValue("clientExecutable", @"GalaxyClient.exe").ToString();
-
-                RegistryKey GogGalaxyClientPathKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientPathKey, RegistryKeyPermissionCheck.ReadSubTree);
-                string gogClientPath = GogGalaxyClientKey.GetValue("client", @"C:\Program Files (x86)\GOG Galaxy").ToString();
-                _xboxPath = Path.GetDirectoryName(gogClientPath);
-                _xboxExe = Path.Combine(gogClientPath, gogClientExeFilename);                
+                // Xbox Game Pass relies on Windows Gaming Services (XboxAppServices.exe).
+                // Detect availability by checking for its presence in the Windows System32 folder.
+                _xboxExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "XboxAppServices.exe");
+                _xboxPath = Path.GetDirectoryName(_xboxExe);
                 if (File.Exists(_xboxExe))
                 {
-                    logger.Info($"XboxLibrary/XboxLibrary: GOG library is installed in {_xboxPath}. Found {_xboxExe}");
+                    logger.Info($"XboxLibrary/XboxLibrary: Xbox library is available. Found {_xboxExe}");
                     _isXboxInstalled = true;
                 }
                 else
                 {
-                    logger.Info($"XboxLibrary/XboxLibrary: GOG library is not installed!");
+                    logger.Info($"XboxLibrary/XboxLibrary: Xbox library is not available (XboxAppServices.exe not found).");
                 }
-                   
-            }
-            catch (SecurityException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/XboxLibrary: The user does not have the permissions required to read the Gog Online Services registry key.");
-            }
-            catch(ObjectDisposedException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/XboxLibrary: The Microsoft.Win32.RegistryKey is closed when trying to access the Gog Online Services registry key (closed keys cannot be accessed).");
             }
             catch (IOException ex)
             {
-                logger.Warn(ex, "XboxLibrary/XboxLibrary: The Gog Online Services registry key has been marked for deletion so we cannot access the value dueing the XboxLibrary check.");
+                logger.Warn(ex, "XboxLibrary/XboxLibrary: IOException when checking for Xbox installation.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.Warn(ex, "XboxLibrary/XboxLibrary: The user does not have the necessary registry rights to check whether Gog is installed.");
+                logger.Warn(ex, "XboxLibrary/XboxLibrary: UnauthorizedAccessException when checking for Xbox installation.");
             }
         }
         #endregion
@@ -121,7 +94,7 @@ namespace DisplayMagician.GameLibraries
         { 
             get 
             {
-                return "GOG";
+                return "Xbox";
             } 
         }
 
@@ -129,7 +102,7 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                return SupportedGameLibraryType.GOG;
+                return SupportedGameLibraryType.Xbox;
             }
         }
 
@@ -303,7 +276,7 @@ namespace DisplayMagician.GameLibraries
             logger.Debug($"XboxLibrary/RemoveXboxGame3: Removing Xbox game with Name or ID {xboxGameNameOrId} from the Xbox library");
 
             int numRemoved;
-            Match match = Regex.Match(xboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(xboxGameNameOrId, _xboxAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
                 numRemoved = _allXboxGames.RemoveAll(item => xboxGameNameOrId.Equals(item.Id));
             else
@@ -357,7 +330,7 @@ namespace DisplayMagician.GameLibraries
                 return false;
 
 
-            Match match = Regex.Match(xboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(xboxGameNameOrId, _xboxAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
@@ -387,7 +360,7 @@ namespace DisplayMagician.GameLibraries
             if (String.IsNullOrWhiteSpace(xboxGameNameOrId))
                 return null;
 
-            Match match = Regex.Match(xboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(xboxGameNameOrId, _xboxAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
@@ -425,135 +398,124 @@ namespace DisplayMagician.GameLibraries
 
         public override bool LoadInstalledGames()
         {
+            if (!_isXboxInstalled)
+            {
+                logger.Info($"XboxLibrary/LoadInstalledGames: Xbox library is not installed");
+                return false;
+            }
+
             try
             {
+                var manager = new PackageManager();
+                IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
 
-                if (!_isXboxInstalled)
+                foreach (var package in packages)
                 {
-                    // Gog isn't installed, so we return an empty list.
-                    logger.Info($"XboxLibrary/LoadInstalledGames: Xbox library is not installed");
-                    return false;
-                }
-
-                string gogSupportInstallerDir = Path.Combine(_gogLocalContent, "supportInstaller");
-
-                logger.Trace($"XboxLibrary/LoadInstalledGames: supportInstaller Directory {gogSupportInstallerDir} exists!");
-                string[] gogSupportInstallerGameDirs = Directory.GetDirectories(gogSupportInstallerDir, "*", SearchOption.AllDirectories);
-                logger.Trace($"XboxLibrary/LoadInstalledGames: Found game directories in supportInstaller Directory {gogSupportInstallerDir}: {gogSupportInstallerGameDirs.ToString()}");
-
-                // If there are no games installed then return false
-                if (gogSupportInstallerGameDirs.Length == 0)
-                {
-                    logger.Warn($"XboxLibrary/LoadInstalledGames: No GOG games installed in the GOG Galaxy library");
-                    return false;
-                }
-                foreach (string gogSupportInstallerGameDir in gogSupportInstallerGameDirs)
-                {
-                    logger.Trace($"XboxLibrary/LoadInstalledGames: Parsing {gogSupportInstallerGameDir} name to find GameID");
-                    Match match = Regex.Match(gogSupportInstallerGameDir, @"(\d{10})$");
-                    if (!match.Success)
+                    // Skip frameworks, resource packs, and non-Store packages (sideloaded, dev, system)
+                    if (package.IsFramework || package.IsResourcePackage ||
+                        package.SignatureKind != PackageSignatureKind.Store)
                     {
-                        logger.Warn($"XboxLibrary/LoadInstalledGames: Failed to match the 10 digit game id from directory name {gogSupportInstallerGameDir} so ignoring game");
                         continue;
                     }
 
-                    string gameID = match.Groups[1].Value;
-                    logger.Trace($"XboxLibrary/LoadInstalledGames: Found GameID {gameID} matching pattern in game directory name");
-                    string xboxGameInfoFilename = Path.Combine(gogSupportInstallerGameDir, $"XboxGame-{gameID}.info");
-                    logger.Trace($"XboxLibrary/LoadInstalledGames: Looking for games info file {xboxGameInfoFilename}");
-                    if (!File.Exists(xboxGameInfoFilename))
-                    {
-                        logger.Warn($"XboxLibrary/LoadInstalledGames: Couldn't find games info file {xboxGameInfoFilename}. There seems to be a problem with your GOG installation.");
-                        continue;
-                    }
-
-                    // Now we get the information from the Gog Info file to parse it
-                    XboxGameInfo xboxGameInfo;
+                    string installPath;
                     try
                     {
-                        xboxGameInfo = JsonConvert.DeserializeObject<XboxGameInfo>(File.ReadAllText(xboxGameInfoFilename));
+                        if (package.InstalledLocation == null)
+                            continue;
+                        installPath = package.InstalledLocation.Path;
+                    }
+                    catch
+                    {
+                        // InstalledLocation accessor can throw Win32Exception for some packages
+                        continue;
+                    }
+
+                    // Xbox Game Pass games always have a MicrosoftGame.Config in their install directory;
+                    // regular Store apps do not, so this is the definitive Xbox game filter.
+                    string gameConfigPath = Path.Combine(installPath, "MicrosoftGame.Config");
+                    if (!File.Exists(gameConfigPath))
+                        continue;
+
+                    try
+                    {
+                        var gameConfig = XDocument.Load(gameConfigPath);
+                        var gameElement = gameConfig.Root;
+                        if (gameElement == null)
+                        {
+                            logger.Warn($"XboxLibrary/LoadInstalledGames: MicrosoftGame.Config in {installPath} has no root element, skipping.");
+                            continue;
+                        }
+
+                        // Get AUMID and display name from the first AppListEntry
+                        string aumid = null;
+                        string entryDisplayName = null;
+                        try
+                        {
+                            IReadOnlyList<AppListEntry> appListEntries = (IReadOnlyList<AppListEntry>)package.GetAppListEntries();
+                            if (appListEntries.Count > 0)
+                            {
+                                aumid = appListEntries[0].AppUserModelId;
+                                entryDisplayName = appListEntries[0].DisplayInfo.DisplayName;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Debug(ex, $"XboxLibrary/LoadInstalledGames: Could not get AppListEntry for {package.Id.FamilyName}");
+                        }
+
+                        // Prefer ShellVisuals display name > AppListEntry name > package family name
+                        string gameName = gameElement.Element("ShellVisuals")?.Attribute("DefaultDisplayName")?.Value;
+                        if (String.IsNullOrWhiteSpace(gameName))
+                            gameName = entryDisplayName;
+                        if (String.IsNullOrWhiteSpace(gameName))
+                            gameName = package.Id.FamilyName;
+                        gameName = gameName.NormaliseGameName();
+
+                        // Use TitleId from config as the game's unique ID; fall back to package family name
+                        string titleId = gameElement.Element("TitleId")?.Value;
+                        if (String.IsNullOrWhiteSpace(titleId))
+                            titleId = package.Id.FamilyName;
+
+                        // Find the PC executable from ExecutableList
+                        string exePath = null;
+                        var executableList = gameElement.Element("ExecutableList");
+                        if (executableList != null)
+                        {
+                            // Prefer an executable explicitly targeting PC; fall back to the first entry
+                            var exeElement = executableList.Elements("Executable")
+                                .FirstOrDefault(e => e.Attribute("TargetDeviceFamily")?.Value == "PC")
+                                ?? executableList.Elements("Executable").FirstOrDefault();
+                            string exeName = exeElement?.Attribute("Name")?.Value;
+                            if (!String.IsNullOrWhiteSpace(exeName))
+                                exePath = Path.Combine(installPath, exeName);
+                        }
+
+                        // Skip if we have neither an exe nor an AUMID to launch with
+                        if (String.IsNullOrWhiteSpace(exePath) && String.IsNullOrWhiteSpace(aumid))
+                        {
+                            logger.Debug($"XboxLibrary/LoadInstalledGames: Skipping '{gameName}' — no executable or AUMID found.");
+                            continue;
+                        }
+
+                        string iconPath = !String.IsNullOrWhiteSpace(exePath) ? exePath : package.Logo.LocalPath;
+
+                        var xboxGame = new XboxGame(titleId, gameName, exePath ?? "", iconPath, aumid ?? "");
+                        _allXboxGames.Add(xboxGame);
+                        logger.Debug($"XboxLibrary/LoadInstalledGames: Found Xbox game '{gameName}' (TitleId={titleId}, AUMID={aumid})");
                     }
                     catch (Exception ex)
                     {
-                        logger.Warn(ex, $"XboxLibrary/LoadInstalledGames: Exception trying to convert the {xboxGameInfoFilename} to a JSON object to read the installed games. There seems to be a problem with your GOG installation.");
-                        continue;
+                        logger.Warn(ex, $"XboxLibrary/LoadInstalledGames: Exception processing package {package.Id.FamilyName}");
                     }
-
-                    // Now we check this is a 'Root Game' i.e. it is a  base game, not something else
-                    if (xboxGameInfo.gameId != xboxGameInfo.rootGameId)
-                    {
-                        logger.Trace($"XboxLibrary/LoadInstalledGames: Game {xboxGameInfo.name} is not a base game (probably DLC) so we're skipping it.");
-                    }
-
-                    // Now we check the Gog game registry key too, to get some more information that we need
-                    string registryGogGalaxyGameKey = registryGogGalaxyGamesKey + xboxGameInfo.gameId;
-                    logger.Trace($"XboxLibrary/XboxLibrary: GOG Galaxy Games registry key = HKLM\\{registryGogGalaxyGameKey}");
-                    RegistryKey GogGalaxyGameKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGameKey, RegistryKeyPermissionCheck.ReadSubTree);
-                    if (GogGalaxyGameKey == null)
-                    {
-                        logger.Info($"XboxLibrary/XboxLibrary: Could not find the GOG Galaxy Games registry key {registryGogGalaxyGamesKey} so can't get all the information about the game we need! There seems to be a problem with your GOG installation.");
-                        continue;
-                    }
-
-                    string gameDirectory = GogGalaxyGameKey.GetValue("path", "").ToString();
-                    string gameExePath = GogGalaxyGameKey.GetValue("exe", "").ToString();
-                    if (!File.Exists(gameExePath))
-                    {
-                        logger.Info($"XboxLibrary/XboxLibrary: Could not find the GOG Galaxy Game file {gameExePath} so can't run the game later! There seems to be a problem with your GOG installation.");
-                        continue;
-                    }
-                    /*string gameIconPath = Path.Combine(gameDirectory, $"XboxGame-{gameID}.ico");                    
-                    if (!File.Exists(gameIconPath))
-                    {
-                        gameIconPath = gameExePath;
-                    }*/
-
-                    // Extract the info into a game object                    
-                    XboxGame xboxGame = new XboxGame();
-                    xboxGame.Id = xboxGameInfo.gameId;
-                    xboxGame.Name = xboxGameInfo.name;
-                    xboxGame.Directory = gameDirectory;
-                    xboxGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "").ToString();
-                    xboxGame.ExePath = gameExePath;
-                    //XboxGame.IconPath = gameIconPath;
-                    xboxGame.IconPath = gameExePath;
-                    xboxGame.ProcessName = Path.GetFileNameWithoutExtension(xboxGame.ExePath);
-
-                    // Add the Gog Game to the list of Gog Games
-                    _allXboxGames.Add(xboxGame);
                 }
 
-                logger.Info($"XboxLibrary/LoadInstalledGames: Found {_allXboxGames.Count} installed GOG games");
-
+                logger.Info($"XboxLibrary/LoadInstalledGames: Found {_allXboxGames.Count} installed Xbox Game Pass games");
             }
-
-            catch (ArgumentNullException ex)
+            catch (Exception ex)
             {
-                logger.Warn(ex, "XboxLibrary/GetAllInstalledGames: An argument supplied to the function is null.");
-            }
-            catch (NotSupportedException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/GetAllInstalledGames: The invoked method is not supported or reading, seeking or writing to a stream that isn't supported.");
-            }
-            catch (PathTooLongException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/GetAllInstalledGames: The path is longer than the maximum allowed by the operating system.");
-            }
-            catch (SecurityException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/GetAllInstalledGames: The user does not have the permissions required to read the GOG InstallDir registry key.");
-            }
-            catch (ObjectDisposedException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/GetAllInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the GOG InstallDir registry key (closed keys cannot be accessed).");
-            }
-            catch (IOException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/GetAllInstalledGames: The GOG InstallDir registry key has been marked for deletion so we cannot access the value dueing the XboxLibrary check.");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.Warn(ex, "XboxLibrary/GetAllInstalledGames: The user does not have the necessary registry rights to check whether Gog is installed.");
+                logger.Warn(ex, "XboxLibrary/LoadInstalledGames: Exception enumerating installed packages");
+                return false;
             }
 
             return true;

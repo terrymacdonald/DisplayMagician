@@ -14,7 +14,8 @@ namespace DisplayMagician.GameLibraries
         Uplay = 2,
         Origin = 3,
         Epic = 4,
-        GOG = 5
+        GOG = 5,
+        Xbox = 6
     }
 
     public class GameLibrary
