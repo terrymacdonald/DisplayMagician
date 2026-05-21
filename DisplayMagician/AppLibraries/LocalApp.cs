@@ -189,13 +189,21 @@ namespace DisplayMagician.AppLibraries
                         }
                         catch (Exception ex)
                         {
-                            logger.Debug(ex, $"LocalApp/IsRunning: Accessing Process.ProcessName caused exception. Trying AppUtils.GetMainModuleFilepath instead");
+                            logger.Debug(ex, $"LocalApp/IsRunning: Accessing Process.ProcessName caused exception. Trying AppProcess.MainModule.FileName instead");
                             // If there is a race condition where MainModule isn't available, then we 
-                            // instead try the much slower GetMainModuleFilepath (which does the same thing)
-                            string filePath = AppProcess.MainModule.FileName;
+                            // instead try the much slower MainModule.FileName (which does the same thing)
+                            string filePath = null;
+                            try
+                            {
+                                filePath = AppProcess.MainModule.FileName;
+                            }
+                            catch (Exception ex2)
+                            {
+                                logger.Debug(ex2, $"LocalApp/IsRunning: Accessing AppProcess.MainModule.FileName also caused exception. Assuming it is a matching App process.");
+                            }
                             if (filePath == null)
                             {
-                                // if we hit this bit then AppUtils.GetMainModuleFilepath failed,
+                                // if we hit this bit then MainModule.FileName failed,
                                 // so we just assume that the process is a App process
                                 // as it matched the process search
                                 numAppProcesses++;
@@ -203,7 +211,7 @@ namespace DisplayMagician.AppLibraries
                             }
                             else
                             {
-                                if (filePath.StartsWith(_LocalAppExe))
+                                if (filePath.StartsWith(_LocalAppExePath))
                                     numAppProcesses++;
                             }
                         }

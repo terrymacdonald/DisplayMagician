@@ -199,7 +199,7 @@ namespace DisplayMagician.GameLibraries
             string args = $@"/command=runGame /gameId={Id} /path=""{Directory}""";
             if (!String.IsNullOrWhiteSpace(gameArguments))
             {
-                args += gameArguments;
+                args += " " + gameArguments;
             }
             processesStarted = ProcessUtils.StartProcess(GogLibrary.GetLibrary().GameLibraryExe, args, priority);
             return true;
