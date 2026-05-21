@@ -197,7 +197,7 @@ namespace DisplayMagician.GameLibraries
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
             string args = $@"/command=runGame /gameId={Id} /path=""{Directory}""";
-            if (String.IsNullOrWhiteSpace(gameArguments))
+            if (!String.IsNullOrWhiteSpace(gameArguments))
             {
                 args += gameArguments;
             }
