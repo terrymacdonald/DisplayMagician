@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace DisplayMagician.Processes
 {
@@ -55,117 +53,69 @@ namespace DisplayMagician.Processes
         public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
         {
             List<Process> returnedProcesses = new List<Process>();
-            Process processCreated;
-            //SafeAccessTokenHandle safeAccessTokenHandle;
-            //bool returnValue = LogonUser(user, domain, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, out safeAccessTokenHandle);
-
-            /*ProcessStartInfo psi = new ProcessStartInfo(executable, arguments)
-            {
-                CreateNoWindow = false,
-                RedirectStandardOutput = false,
-                WorkingDirectory = Path.GetDirectoryName(executable),
-                LoadUserProfile = true
-            };
-
-            if (runAsAdministrator)
-            {
-                psi.Verb = "runas";
-            }
-            else
-            {
-                psi.Verb = "open";
-            }
-
-            if ( executable.StartsWith("steam://", StringComparison.OrdinalIgnoreCase))
-            {
-                psi.UseShellExecute = true;
-            }
-            else
-            {
-                psi.UseShellExecute = false;
-            }
-
-            processCreated = new Process()
-            {
-                StartInfo = psi,
-                EnableRaisingEvents = true
-            };
-
-            //var output = processCreated.StandardOutput.ReadToEnd();
-            //var exitCode = processCreated.ExitCode;
-
-            processCreated.Start();*/
 
             // TODO: startTimeout (seconds) is intended to gate how long DM waits for the process to be
             // detected as running, but that detection loop is not yet implemented here. The 4-second
             // launcher-detection WaitForExit below is a separate, unrelated mechanism.
-            processCreated = TryExecute(executable, arguments, runAsAdministrator, TranslatePriorityToClass(processPriority));
+            ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
+            Process processCreated = TryExecute(executable, arguments, runAsAdministrator, wantedPriority);
 
             if (processCreated != null)
             {
                 logger.Info($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by Process.Start (Process ID: {processCreated.Id})");
-                if (processCreated.Id > 0)
+                try
                 {
-                    try
+                    processCreated.WaitForExit(4000);
+
+                    if (processCreated.HasExited)
                     {
+                        logger.Info($"ProcessUtils/StartProcess: {executable} {arguments} has exited within 4 seconds. It is probable that it is a game or app launcher, so we'll try to see if process ID {processCreated.Id} launched any child processes, and monitor them instead!");
 
-                        processCreated.WaitForExit(4000);
-
-                        if (processCreated.HasExited)
+                        // If the process has exited, then it's likely to be a launcher, so we try to find the children processes
+                        List<Process> childProcesses = GetChildProcesses(processCreated);
+                        if (childProcesses.Count > 0)
                         {
-
-                            logger.Info($"ProcessUtils/StartProcess: {executable} {arguments} has exited within 4 seconds. It is probable that it is a game or app launcher, so we'll try to see if process ID {processCreated.Id} launched any child processes, and monitor them instead!");
-
-                            // If the process has exited, then it's likely to be a launcher, so we try to find the children processes
-                            List<Process> childProcesses = GetChildProcesses(processCreated);
-                            if (childProcesses.Count > 0)
-                            {
-                                logger.Trace($"ProcessUtils/StartProcess: Yay! We found {childProcesses.Count} child processes were launched when we started {executable} {arguments}, so we'll monitor them instead!");
-                                returnedProcesses.AddRange(childProcesses);
-                            }
-                            else
-                            {
-                                logger.Trace($"ProcessUtils/StartProcess: Oh no! We couldn't find any child processes after we started {executable} {arguments} and it closed itself. Nothing to monitor! It's possible that there is a problem with the {executable} program. Try running it yourself manually to see if you can see a problem with it.");
-                                // We need to try and find if there were any child processes another way
-                                // For example, this is where we land when Explorer launches a UWP program using ShellAppsFolder 
-                                // Explorer runs the UWP program, and then closes the application process, as it seems to communicate with 
-                                // svchost.exe thorough the backend.
-                            }
+                            logger.Trace($"ProcessUtils/StartProcess: Yay! We found {childProcesses.Count} child processes were launched when we started {executable} {arguments}, so we'll monitor them instead!");
+                            returnedProcesses.AddRange(childProcesses);
                         }
                         else
                         {
-                            ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
-                            // If we're here then the process was created and hasn't exited!
-                            try
-                            {
-
-                                if (processCreated.PriorityClass != wantedPriority)
-                                {
-                                    processCreated.PriorityClass = wantedPriority;
-                                    logger.Trace($"ProcessUtils/StartProcess: Successfully set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Warn(ex, $"ProcessUtils/StartProcess: Exception while trying to set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
-                            }
-                            returnedProcesses.Add(processCreated);
+                            logger.Trace($"ProcessUtils/StartProcess: Oh no! We couldn't find any child processes after we started {executable} {arguments} and it closed itself. Nothing to monitor! It's possible that there is a problem with the {executable} program. Try running it yourself manually to see if you can see a problem with it.");
+                            // We need to try and find if there were any child processes another way
+                            // For example, this is where we land when Explorer launches a UWP program using ShellAppsFolder 
+                            // Explorer runs the UWP program, and then closes the application process, as it seems to communicate with 
+                            // svchost.exe thorough the backend.
                         }
-
+                        // The launcher process has already exited; release its handle.
+                        processCreated.Dispose();
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        // Oops - something went wrong. We'll log it and have to move on :(
-                        //process = null;
-                        logger.Error(ex, $"ProcessUtils/StartProcess: Exception while trying to get the process information from {executable} after we started it. It is possible there was a problem with the executable.");
+                        // If we're here then the process was created and hasn't exited!
+                        try
+                        {
+                            if (processCreated.PriorityClass != wantedPriority)
+                            {
+                                processCreated.PriorityClass = wantedPriority;
+                                logger.Trace($"ProcessUtils/StartProcess: Successfully set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ProcessUtils/StartProcess: Exception while trying to set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
+                        }
+                        returnedProcesses.Add(processCreated);
                     }
-
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ProcessUtils/StartProcess: Exception while trying to get the process information from {executable} after we started it. It is possible there was a problem with the executable.");
                 }
             }
             else
             {
                 logger.Warn($"ProcessUtils/StartProcess: DisplayMagician was unable to start {executable} {arguments}.");
-            }    
+            }
 
             return returnedProcesses;
         }        
@@ -177,25 +127,7 @@ namespace DisplayMagician.Processes
                 logger.Warn("ProcessUtils/GetChildProcesses: Null process supplied — returning empty list.");
                 return new List<Process>();
             }
-            List<Process> children = new List<Process>();
-            using (ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={process.Id}"))
-            {
-                foreach (ManagementObject mo in mos.Get())
-                {
-                    using (mo)
-                    {
-                        try
-                        {
-                            children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
-                        }
-                        catch (ArgumentException)
-                        {
-                            logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo[\"ProcessID\"]} exited before we could retrieve it — skipping.");
-                        }
-                    }
-                }
-            }
-            return children;
+            return GetChildProcesses(process.Id);
         }
 
         public static List<Process> GetChildProcesses(int processId)
@@ -223,55 +155,56 @@ namespace DisplayMagician.Processes
 
         public static bool ProcessExited(Process process)
         {
+            if (process == null)
+            {
+                logger.Trace("ProcessUtils/ProcessExited: Null process supplied — treating as exited.");
+                return true;
+            }
+            int pid;
             try
             {
-                if (process == null || process.Id <= 0) 
+                pid = process.Id;
+            }
+            catch (InvalidOperationException)
+            {
+                logger.Trace("ProcessUtils/ProcessExited: Unstarted/unassociated process supplied — treating as exited.");
+                return true;
+            }
+            if (pid <= 0)
+            {
+                logger.Trace("ProcessUtils/ProcessExited: Invalid process ID — treating as exited.");
+                return true;
+            }
+            try
+            {
+                if (process.HasExited)
                 {
-                    logger.Trace($"ProcessUtils/ProcessExited: Null or invalid process supplied — treating as exited.");
+                    logger.Trace($"ProcessUtils/ProcessExited: {pid} has exited and is not running. This means the process has finished!");
                     return true;
                 }
-                else if (process.HasExited)
-                {
-                    logger.Trace($"ProcessUtils/ProcessExited: {process.Id} has exited and is not running. This means the process has finished!");
-                    return true;
-                }
-                else
-                {
-                    //logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is still running as is has not exited yet.");
-                    return false;
-                }
+                //logger.Trace($"ProcessUtils/ProcessExited: {pid} is still running as it has not exited yet.");
+                return false;
             }
             catch (ArgumentException ex)
             {
-                logger.Trace(ex, $"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: {pid} is not running, and the process ID has expired. This means the process has finished!");
                 return true;
             }
             catch (InvalidOperationException ex)
             {
-                logger.Warn(ex, $"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
+                logger.Warn(ex, $"ProcessUtils/ProcessExited: {pid} was not started by this process object. This likely means the process has finished!");
                 return true;
             }
             catch (Exception ex)
             {
-                logger.Trace(ex, $"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: Exception when checking if {pid} is still running, so assuming the process has finished!");
                 return true;
             }
         }
 
         public static bool ProcessExited(string executable)
-        {            
-            List<Process> wantedProcesses = Process.GetProcessesByName(GetProcessName(executable)).ToList();
-
-            if (ProcessExited(wantedProcesses))
-            {
-                //logger.Trace($"ProcessUtils/ProcessExited4: All processes being monitored have exited, so no processes still running!");
-                return true;
-            }
-            else
-            {
-                //logger.Trace($"ProcessUtils/ProcessExited4: At least one process is still running!");
-                return false;
-            }
+        {
+            return ProcessExited(Process.GetProcessesByName(GetProcessName(executable)).ToList());
         }
 
         public static bool ProcessExited(int processId)
@@ -287,16 +220,7 @@ namespace DisplayMagician.Processes
                 return true;
             }
 
-            if (ProcessExited(process))
-            {
-                //logger.Trace($"ProcessUtils/ProcessExited3: Process with ID {processId} has exited, so no processes still running!");
-                return true;
-            }
-            else
-            {
-                //logger.Trace($"ProcessUtils/ProcessExited3: Process with ID {processId} is still running!");
-                return false;
-            }
+            return ProcessExited(process);
         }
 
         public static bool ProcessExited(List<Process> processes)
@@ -306,24 +230,7 @@ namespace DisplayMagician.Processes
                 logger.Warn("ProcessUtils/ProcessExited: Null process list supplied — treating all as exited.");
                 return true;
             }
-            int processClosedCount = 0;
-            foreach (Process p in processes)
-            {
-                if (ProcessExited(p))
-                {
-                    processClosedCount++;
-                }
-            }
-            if (processClosedCount == processes.Count)
-            {
-                //logger.Trace($"ProcessUtils/ProcessExited2: All processes being monitored have exited, so no processes still running!");
-                return true;
-            }
-            else
-            {
-                //logger.Trace($"ProcessUtils/ProcessExited2: {processClosedCount} processes out of {processes.Count} processes have exited. At least one process is still running!");
-                return false;
-            }
+            return processes.All(p => ProcessExited(p));
         }
 
         public static bool StopProcess(Process processToStop)
@@ -389,10 +296,6 @@ namespace DisplayMagician.Processes
                 logger.Error(ex, $"ProcessUtils/StopProcess: Couldn't WaitForExit the named process as there is no process associated with the Process object (or cannot get the ID from the named process handle).");
             }
 
-            catch (AggregateException ae)
-            {
-                logger.Error(ae, $"ProcessUtils/StopProcess: Got an AggregateException.");
-            }
             finally
             {
                 processToStop.Close();
@@ -418,7 +321,7 @@ namespace DisplayMagician.Processes
                     {
                         string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
                         logger.Debug($"ProcessUtils/StopProcess: Stopping process {procId}");
-                        if (ProcessUtils.StopProcess(processToStop))
+                        if (StopProcess(processToStop))
                         {
                             logger.Debug($"ProcessUtils/StopProcess: Successfully stopped process {procId}");
                         }
@@ -454,8 +357,6 @@ namespace DisplayMagician.Processes
         /// <returns>The started <see cref="Process"/>, or <c>null</c> on failure.</returns>
         private static Process TryExecute(string executable, string arguments, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal)
         {
-            //StringBuilder outputBuilder = new StringBuilder();            
-            Process processCreated;
             ProcessStartInfo psi;
             if (File.Exists(executable) && IsExecutableFileType(executable))
             {
@@ -466,8 +367,6 @@ namespace DisplayMagician.Processes
                     {
                         UseShellExecute = true,
                         Verb = "Runas",
-                        CreateNoWindow = false,
-                        RedirectStandardOutput = false,
                         WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
@@ -476,12 +375,9 @@ namespace DisplayMagician.Processes
                     psi = new ProcessStartInfo(executable, arguments)
                     {
                         UseShellExecute = false,
-                        CreateNoWindow = false,
-                        RedirectStandardOutput = false,
                         WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
-                
             }
             else
             {
@@ -491,26 +387,14 @@ namespace DisplayMagician.Processes
                 {
                     UseShellExecute = true,
                     Verb = "Open",
-                    CreateNoWindow = false,
-                    RedirectStandardOutput = false,
                     WorkingDirectory = ""
                 };
             }
 
-            processCreated = new Process { 
+            Process processCreated = new Process {
                 StartInfo = psi,
                 EnableRaisingEvents = true
             };
-            
-            /*if (redirectInputOutput)
-            {
-                // Set UTF-8 encoding for standard output.
-                process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
-                // Enable raising events because Process does not raise events by default.
-                process.EnableRaisingEvents = true;
-                // Attach the event handler for OutputDataReceived before starting the process.
-                process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
-            }*/             
 
             try
             {
@@ -588,14 +472,6 @@ namespace DisplayMagician.Processes
                 logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Not sure what specific exception it is.");
                 return null;
             }
-
-            /*if (redirectInputOutput)
-                process.BeginOutputReadLine();*/
-
-            //result = RemoveEncodingPreamble(outputBuilder.ToString());            
-
-            //process = null;
-            //return false;
         }
        
         /// <summary>
@@ -604,6 +480,7 @@ namespace DisplayMagician.Processes
         /// </summary>
         public static bool IsPEExecutable(string executable)
         {
+            if (string.IsNullOrEmpty(executable)) return false;
             string ext = Path.GetExtension(executable);
             return ext.Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
                    ext.Equals(".com", StringComparison.OrdinalIgnoreCase) ||
@@ -618,6 +495,7 @@ namespace DisplayMagician.Processes
         /// </summary>
         public static bool IsShellLaunchable(string executable)
         {
+            if (string.IsNullOrEmpty(executable)) return false;
             string ext = Path.GetExtension(executable);
             return ext.Equals(".bat", StringComparison.OrdinalIgnoreCase) ||
                    ext.Equals(".cmd", StringComparison.OrdinalIgnoreCase) ||
@@ -644,27 +522,15 @@ namespace DisplayMagician.Processes
 
         public static ProcessPriority TranslateNameToPriority(string processPriorityName)
         {
+            if (string.IsNullOrEmpty(processPriorityName)) return ProcessPriority.Normal;
             ProcessPriority wantedPriority = ProcessPriority.Normal;
             switch (processPriorityName.ToLowerInvariant())
             {
-                case "high":
-                    wantedPriority = ProcessPriority.High;
-                    break;
-                case "abovenormal":
-                    wantedPriority = ProcessPriority.AboveNormal;
-                    break;
-                case "normal":
-                    wantedPriority = ProcessPriority.Normal;
-                    break;
-                case "belownormal":
-                    wantedPriority = ProcessPriority.BelowNormal;
-                    break;
-                case "idle":
-                    wantedPriority = ProcessPriority.Idle;
-                    break;
-                default:
-                    wantedPriority = ProcessPriority.Normal;
-                    break;
+                case "high":        wantedPriority = ProcessPriority.High;        break;
+                case "abovenormal": wantedPriority = ProcessPriority.AboveNormal; break;
+                case "normal":      wantedPriority = ProcessPriority.Normal;      break;
+                case "belownormal": wantedPriority = ProcessPriority.BelowNormal; break;
+                case "idle":        wantedPriority = ProcessPriority.Idle;        break;
             }
             return wantedPriority;
         }
@@ -674,24 +540,11 @@ namespace DisplayMagician.Processes
             ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
             switch (processPriorityClass)
             {
-                case ProcessPriority.High:
-                    wantedPriorityClass = ProcessPriorityClass.High;
-                    break;
-                case ProcessPriority.AboveNormal:
-                    wantedPriorityClass = ProcessPriorityClass.AboveNormal;
-                    break;
-                case ProcessPriority.Normal:
-                    wantedPriorityClass = ProcessPriorityClass.Normal;
-                    break;
-                case ProcessPriority.BelowNormal:
-                    wantedPriorityClass = ProcessPriorityClass.BelowNormal;
-                    break;
-                case ProcessPriority.Idle:
-                    wantedPriorityClass = ProcessPriorityClass.Idle;
-                    break;
-                default:
-                    wantedPriorityClass = ProcessPriorityClass.Normal;
-                    break;
+                case ProcessPriority.High:        wantedPriorityClass = ProcessPriorityClass.High;        break;
+                case ProcessPriority.AboveNormal: wantedPriorityClass = ProcessPriorityClass.AboveNormal; break;
+                case ProcessPriority.Normal:      wantedPriorityClass = ProcessPriorityClass.Normal;      break;
+                case ProcessPriority.BelowNormal: wantedPriorityClass = ProcessPriorityClass.BelowNormal; break;
+                case ProcessPriority.Idle:        wantedPriorityClass = ProcessPriorityClass.Idle;        break;
             }
             return wantedPriorityClass;
         }
@@ -701,25 +554,11 @@ namespace DisplayMagician.Processes
             PROCESS_CREATION_FLAGS wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
             switch (processPriorityClass)
             {
-                case ProcessPriorityClass.High:
-                    wantedPriorityClass = PROCESS_CREATION_FLAGS.HIGH_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.AboveNormal:
-  
-                    wantedPriorityClass = PROCESS_CREATION_FLAGS.ABOVE_NORMAL_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.Normal:
-                    wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.BelowNormal:
-                    wantedPriorityClass = PROCESS_CREATION_FLAGS.BELOW_NORMAL_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.Idle:
-                    wantedPriorityClass = PROCESS_CREATION_FLAGS.IDLE_PRIORITY_CLASS;
-                    break;
-                default:
-                    wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
-                    break;
+                case ProcessPriorityClass.High:        wantedPriorityClass = PROCESS_CREATION_FLAGS.HIGH_PRIORITY_CLASS;         break;
+                case ProcessPriorityClass.AboveNormal: wantedPriorityClass = PROCESS_CREATION_FLAGS.ABOVE_NORMAL_PRIORITY_CLASS; break;
+                case ProcessPriorityClass.Normal:      wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;       break;
+                case ProcessPriorityClass.BelowNormal: wantedPriorityClass = PROCESS_CREATION_FLAGS.BELOW_NORMAL_PRIORITY_CLASS; break;
+                case ProcessPriorityClass.Idle:        wantedPriorityClass = PROCESS_CREATION_FLAGS.IDLE_PRIORITY_CLASS;         break;
             }
             return wantedPriorityClass;
         }
