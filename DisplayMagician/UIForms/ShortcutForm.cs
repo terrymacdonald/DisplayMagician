@@ -96,6 +96,9 @@ namespace DisplayMagician.UIForms
             _exePathDebounceTimer.Tick += (s, e) =>
             {
                 _exePathDebounceTimer.Stop();
+                // Don't override the app's bitmap when the exe path was set by the app picker
+                if (_shortcutCategory == ShortcutCategory.Application)
+                    return;
                 string path = txt_executable.Text.Trim();
                 if (File.Exists(path) && ProcessUtils.IsExecutableFileType(path))
                 {
