@@ -282,18 +282,43 @@ namespace DisplayMagicianShared
         }
 
         // -----------------------------------------------------------------------
+        // Private helpers
+        // -----------------------------------------------------------------------
+
+        /// <summary>
+        /// FNV-1a hash of a monitor's position and size. Deterministic across
+        /// process runs (no runtime seed), filename-safe 8-hex-char output.
+        /// Using width/height rather than raw right/bottom makes the hash stable
+        /// independent of where the monitor sits in the virtual desktop.
+        /// </summary>
+        private static string MonitorBoundsHash(RECT r)
+        {
+            unchecked
+            {
+                uint h = 2166136261u;
+                h = (h ^ (uint)r.left)              * 16777619u;
+                h = (h ^ (uint)r.top)               * 16777619u;
+                h = (h ^ (uint)(r.right  - r.left)) * 16777619u;
+                h = (h ^ (uint)(r.bottom - r.top))  * 16777619u;
+                return h.ToString("x8");
+            }
+        }
+
+        // -----------------------------------------------------------------------
         // Public API
         // -----------------------------------------------------------------------
 
         /// <summary>
         /// Snapshots the current per-monitor wallpaper configuration. For each
         /// connected monitor the current wallpaper image is copied into
-        /// <paramref name="wallpaperStorePath"/> under a unique GUID-based
-        /// filename so there are no clashes between profiles.
+        /// <paramref name="wallpaperStorePath"/> under a deterministic filename
+        /// derived from <paramref name="profileUUID"/> and the monitor bounds
+        /// hash, so that re-capturing the same profile overwrites the same file
+        /// cleanly with no orphan accumulation.
         /// Returns a <see cref="WallpaperConfig"/> ready to be stored on a
         /// <see cref="ProfileItem"/>.
         /// </summary>
-        public static WallpaperConfig GetCurrentWallpaperConfig(string wallpaperStorePath)
+        public static WallpaperConfig GetCurrentWallpaperConfig(string wallpaperStorePath, string profileUUID)
         {
             var config = new WallpaperConfig
             {
@@ -370,13 +395,14 @@ namespace DisplayMagicianShared
                                 continue;
                             }
 
-                            // Build a unique destination filename preserving the original extension
+                            // Capture the monitor bounding rect first so we can use it in the filename.
+                            idw.GetMonitorRECT(monitorPath, out RECT monitorRect);
+
+                            // Build a deterministic destination filename: wallpaper-{profileUUID}-{monitorBoundsHash}{ext}.
+                            // Re-capturing the same profile overwrites the same file; profile deletion cleans it up via StoredFilename.
                             string ext = Path.GetExtension(wallpaperPath);
                             if (string.IsNullOrEmpty(ext)) ext = ".png";
-                            string destFilename = Path.Combine(wallpaperStorePath, $"wallpaper-{Guid.NewGuid()}{ext}");
-
-                            // Capture the monitor bounding rect for DisplayView preview matching
-                            idw.GetMonitorRECT(monitorPath, out RECT monitorRect);
+                            string destFilename = Path.Combine(wallpaperStorePath, $"wallpaper-{profileUUID}-{MonitorBoundsHash(monitorRect)}{ext}");
 
                             File.Copy(wallpaperPath, destFilename, overwrite: true);
 
