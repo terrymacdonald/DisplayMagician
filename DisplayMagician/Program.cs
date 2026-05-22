@@ -289,7 +289,7 @@ namespace DisplayMagician {
                 if (DMKey != null)
                 {
                     AppInstalled = true;
-                    string newInstallKey = DMKey.GetValue("NewInstall").ToString() ?? "0";
+                    string newInstallKey = DMKey.GetValue("NewInstall")?.ToString() ?? "0";
                     if (newInstallKey.Equals("1"))
                     {
                         AppNewInstall = true;
@@ -505,8 +505,8 @@ namespace DisplayMagician {
                     try
                     {
                         // Set the registry key to turn off the first run setting.
-                        RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
-                        DMKey.SetValue("FirstRun", "0");
+                        using (RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician", writable: true))
+                            DMKey?.SetValue("FirstRun", "0");
                     }
                     catch (UnauthorizedAccessException ex)
                     {
@@ -1199,8 +1199,11 @@ namespace DisplayMagician {
             try
             {
                 Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                taskToRun.Wait(TimeSpan.FromSeconds(120));
-                result = taskToRun.Result;
+                bool completed = taskToRun.Wait(TimeSpan.FromSeconds(120));
+                if (completed)
+                    result = taskToRun.Result;
+                else
+                    logger.Warn($"Program/ApplyProfileTask: Profile apply task timed out after 120 seconds.");
             }   
             catch (OperationCanceledException ex)
             {

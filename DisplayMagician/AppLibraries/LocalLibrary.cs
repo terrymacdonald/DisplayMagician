@@ -29,7 +29,7 @@ namespace DisplayMagician.AppLibraries
         private List<App> _allLocalApps = new List<App>();
         private bool _isLocalInstalled = false;
         private List<string> _LocalProcessList = new List<string>(){ "LocalAppServices" };
-        private string LocalAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string LocalAppIdRegex = @"^[0-9A-F]{1,10}$";
 
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -296,7 +296,7 @@ namespace DisplayMagician.AppLibraries
             {
                 foreach (LocalApp testLocalApp in _allLocalApps)
                 {
-                    if (LocalAppNameOrId.Equals(Convert.ToInt32(testLocalApp.Id)))
+                    if (LocalAppNameOrId.Equals(testLocalApp.Id))
                         return true;
                 }
 
@@ -326,7 +326,7 @@ namespace DisplayMagician.AppLibraries
             {
                 foreach (LocalApp testLocalApp in _allLocalApps)
                 {
-                    if (LocalAppNameOrId.Equals(Convert.ToInt32(testLocalApp.Id)))
+                    if (LocalAppNameOrId.Equals(testLocalApp.Id))
                         return testLocalApp;
                 }
 

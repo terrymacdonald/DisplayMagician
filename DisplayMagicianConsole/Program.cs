@@ -417,11 +417,6 @@ namespace DisplayMagicianConsole
         public static ApplyProfileResult ApplyProfileTask(ProfileItem profile)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
-            {
-                Console.WriteLine($"Program/ApplyProfileTask: ERROR - Cannot apply the display profile {profile.Name} as another task is running!");
-                return ApplyProfileResult.Error;
-            }
             //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
             bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
             if (gotGreenLightToProceed)
@@ -442,8 +437,11 @@ namespace DisplayMagicianConsole
             try
             {
                 Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                taskToRun.Wait(120);
-                result = taskToRun.Result;
+                bool completed = taskToRun.Wait(TimeSpan.FromSeconds(120));
+                if (completed)
+                    result = taskToRun.Result;
+                else
+                    Console.WriteLine($"Program/ApplyProfileTask: ERROR - Profile apply task timed out after 120 seconds.");
             }
             catch (OperationCanceledException)
             {

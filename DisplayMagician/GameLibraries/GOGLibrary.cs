@@ -26,7 +26,7 @@ namespace DisplayMagician.GameLibraries
 
         // Common items to the class
         private List<Game> _allGogGames = new List<Game>();
-        private string GogAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string GogAppIdRegex = @"^[0-9A-F]{1,10}$";
         private string _gogExe;
         private string _gogPath;
         private string _gogLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "GOG.com");
@@ -363,7 +363,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (GogGame testGogGame in _allGogGames)
                 {
-                    if (gogGameNameOrId.Equals(Convert.ToInt32(testGogGame.Id)))
+                    if (gogGameNameOrId.Equals(testGogGame.Id))
                         return true;
                 }
 
@@ -393,7 +393,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (GogGame testGogGame in _allGogGames)
                 {
-                    if (gogGameNameOrId.Equals(Convert.ToInt32(testGogGame.Id)))
+                    if (gogGameNameOrId.Equals(testGogGame.Id))
                         return testGogGame;
                 }
 

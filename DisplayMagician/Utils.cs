@@ -131,11 +131,8 @@ namespace DisplayMagician
         public static bool IsWindows11()
         {
             var reg = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
-
-            var currentBuildStr = (string)reg.GetValue("CurrentBuild");
-            var currentBuild = int.Parse(currentBuildStr);
-
-            return currentBuild >= 22000;
+            var currentBuildStr = reg?.GetValue("CurrentBuild") as string;
+            return int.TryParse(currentBuildStr, out int currentBuild) && currentBuild >= 22000;
         }
 
         public static string NormaliseGameName(this string name)

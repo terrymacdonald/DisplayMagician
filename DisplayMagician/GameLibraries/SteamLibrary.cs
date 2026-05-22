@@ -35,7 +35,7 @@ namespace DisplayMagician.GameLibraries
 
         // Common items to the class
         private List<Game> _allSteamGames = new List<Game>();
-        private string steamAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string steamAppIdRegex = @"^[0-9A-F]{1,10}$";
         private string _steamExe;
         private string _steamPath;
         private string _steamConfigVdfFile;
@@ -368,7 +368,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToInt32(testSteamGame.Id)))
+                    if (steamGameNameOrUuid.Equals(testSteamGame.Id))
                         return true;
                 }
 
@@ -411,7 +411,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToInt32(testSteamGame.Id)))
+                    if (steamGameNameOrUuid.Equals(testSteamGame.Id))
                         return testSteamGame;
                 }
 

@@ -335,7 +335,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
                 {
-                    if (xboxGameNameOrId.Equals(Convert.ToInt32(testXboxGame.Id)))
+                    if (xboxGameNameOrId.Equals(testXboxGame.Id))
                         return true;
                 }
 
@@ -365,7 +365,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
                 {
-                    if (xboxGameNameOrId.Equals(Convert.ToInt32(testXboxGame.Id)))
+                    if (xboxGameNameOrId.Equals(testXboxGame.Id))
                         return testXboxGame;
                 }
 

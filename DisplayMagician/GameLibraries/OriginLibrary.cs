@@ -26,7 +26,7 @@ namespace DisplayMagician.GameLibraries
 
         // Common items to the class
         private List<Game> _allOriginGames = new List<Game>();
-        private string OriginAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string OriginAppIdRegex = @"^[0-9A-F]{1,10}$";
         private string _originExe;
         private string _originPath;
         private string _originLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Origin");
@@ -360,7 +360,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (OriginGame testOriginGame in _allOriginGames)
                 {
-                    if (originGameNameOrId.Equals(Convert.ToInt32(testOriginGame.Id)))
+                    if (originGameNameOrId.Equals(testOriginGame.Id))
                         return true;
                 }
 
@@ -390,7 +390,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (OriginGame testOriginGame in _allOriginGames)
                 {
-                    if (originGameNameOrId.Equals(Convert.ToInt32(testOriginGame.Id)))
+                    if (originGameNameOrId.Equals(testOriginGame.Id))
                         return testOriginGame;
                 }
 
@@ -824,7 +824,7 @@ namespace DisplayMagician.GameLibraries
                             logger.Warn($"OriginLibrary/GetActualFilePath: Origin game path {gameFilePath} has a install reg key we cannot find! originGameInstallKey is {gameFilePath} and originGameInstallKeyValue is {originGameInstallKeyValue}.");
                             return null;
                         }
-                        originGameInstallLocation = Path.Combine(originGameInstallKey.GetValue(originGameInstallKeyValue).ToString(), originGameRestOfFile);
+                        originGameInstallLocation = Path.Combine(originGameInstallKey.GetValue(originGameInstallKeyValue)?.ToString() ?? string.Empty, originGameRestOfFile);
                         if (!File.Exists(originGameInstallLocation))
                         {
                             // then we have a problem as we cannot locate the game exe file to start!
@@ -889,7 +889,7 @@ namespace DisplayMagician.GameLibraries
                             logger.Warn($"OriginLibrary/GetActualFilePath: Origin game path {gameFilePath} has a install reg key we cannot find! originGameInstallKey is {gameFilePath} and originGameInstallKeyValue is {originGameInstallKeyValue}.");
                             return null;
                         }
-                        originGameInstallLocation = Path.Combine(originGameInstallKey.GetValue(originGameInstallKeyValue).ToString(), originGameRestOfFile);
+                        originGameInstallLocation = Path.Combine(originGameInstallKey.GetValue(originGameInstallKeyValue)?.ToString() ?? string.Empty, originGameRestOfFile);
                         if (!File.Exists(originGameInstallLocation))
                         {
                             // then we have a problem as we cannot locate the game exe file to start!

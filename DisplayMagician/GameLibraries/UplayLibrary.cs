@@ -26,7 +26,7 @@ namespace DisplayMagician.GameLibraries
        
         // Common items to the class
         private List<Game> _allGames = new List<Game>();
-        private string uplayAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string uplayAppIdRegex = @"^[0-9A-F]{1,10}$";
         private bool _isUplayInstalled = false;
         private string _uplayExe;
         private string _uplayPath;
@@ -358,7 +358,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (UplayGame testGame in _allGames)
                 {
-                    if (uplayGameNameOrId.Equals(Convert.ToInt32(testGame.Id)))
+                    if (uplayGameNameOrId.Equals(testGame.Id))
                         return true;
                 }
 
@@ -388,7 +388,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (UplayGame testGame in _allGames)
                 {
-                    if (uplayGameNameOrId.Equals(Convert.ToInt32(testGame.Id)))
+                    if (uplayGameNameOrId.Equals(testGame.Id))
                         return testGame;
                 }
 

@@ -26,7 +26,7 @@ namespace DisplayMagician.GameLibraries
 
         // Common items to the class
         private List<Game> _allEpicGames = new List<Game>();
-        private string EpicAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string EpicAppIdRegex = @"^[0-9A-F]{1,10}$";
         private string _epicExe;
         private string _epicPath;
         private string _epicLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic");
@@ -359,7 +359,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (EpicGame testEpicGame in _allEpicGames)
                 {
-                    if (epicGameNameOrId.Equals(Convert.ToInt32(testEpicGame.Id)))
+                    if (epicGameNameOrId.Equals(testEpicGame.Id))
                         return true;
                 }
 
@@ -389,7 +389,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (EpicGame testEpicGame in _allEpicGames)
                 {
-                    if (epicGameNameOrId.Equals(Convert.ToInt32(testEpicGame.Id)))
+                    if (epicGameNameOrId.Equals(testEpicGame.Id))
                         return testEpicGame;
                 }
 
