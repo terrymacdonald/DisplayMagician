@@ -18,7 +18,7 @@ using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Win32;
-using NETWORKLIST;
+using System.Net.NetworkInformation;
 using DisplayMagician.AppLibraries;
 using System.ComponentModel;
 using System.Text;
@@ -29,7 +29,6 @@ using System.Diagnostics;
 
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
-//using static System.Net.Mime.MediaTypeNames;
 
 
 namespace DisplayMagician {
@@ -1460,10 +1459,7 @@ namespace DisplayMagician {
             try
             {              
 
-                INetworkListManager networkListManager = new NetworkListManager();
-                //dynamic networkListManager = Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("{DCB00C01-570F-4A9B-8D69-199FDBA5723B}")));
-                bool isConnected = networkListManager.IsConnectedToInternet;
-                if (!isConnected)
+                if (!NetworkInterface.GetIsNetworkAvailable())
                 {
                     logger.Warn($"Program/CheckForUpdates: No internet detected. Skipping the auto update.");
                     return;
