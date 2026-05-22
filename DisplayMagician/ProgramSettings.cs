@@ -2,14 +2,12 @@
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
-using Windows.Data.Json;
 
 
 namespace DisplayMagician
@@ -134,7 +132,8 @@ namespace DisplayMagician
                     // Lookup Install Date from Registry
                     // else just set it to the current date
                     string nowAsString = DateTime.UtcNow.ToString();
-                    DateTime.TryParse((string)Registry.CurrentUser.GetValue("InstallDate", nowAsString),out _installDate);
+                    using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician"))
+                        DateTime.TryParse(dmKey?.GetValue("InstallDate", nowAsString) as string ?? nowAsString, out _installDate);
                 }
                 return _installDate;
             }
@@ -640,7 +639,7 @@ namespace DisplayMagician
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
 {
-                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                                 args.ErrorContext.Handled = true;
                             },
                         };
@@ -680,7 +679,7 @@ namespace DisplayMagician
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
-                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                                     args.ErrorContext.Handled = true;
                                 },
                             };
@@ -722,7 +721,7 @@ namespace DisplayMagician
                     {
                         foreach (string jsonError in jsonErrors)
                         {
-                            SharedLogger.logger.Error($"ProgramSettings/LoadSettings: {jsonErrors}");
+                            SharedLogger.logger.Error($"ProgramSettings/LoadSettings: {jsonError}");
                         }
                     }
                 }
@@ -764,7 +763,7 @@ namespace DisplayMagician
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                     {
-                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                         args.ErrorContext.Handled = true;
                     },
                 };
@@ -795,7 +794,7 @@ namespace DisplayMagician
             {
                 foreach (string jsonError in jsonErrors)
                 {
-                    logger.Error($"ProgramSettings/SaveSettings: {jsonErrors}");
+                    logger.Error($"ProgramSettings/SaveSettings: {jsonError}");
                 }
             }
 

@@ -63,6 +63,7 @@ namespace DisplayMagician.UIForms
             p_lower = new System.Windows.Forms.Panel();
             btn_update = new System.Windows.Forms.Button();
             p_fill = new System.Windows.Forms.Panel();
+            dv_profile = new DisplayView();
             cms_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).BeginInit();
             p_upper.SuspendLayout();
@@ -368,6 +369,7 @@ namespace DisplayMagician.UIForms
             // 
             p_upper.BackColor = System.Drawing.Color.DimGray;
             p_upper.BackgroundImage = (System.Drawing.Image)resources.GetObject("p_upper.BackgroundImage");
+            p_upper.Controls.Add(dv_profile);
             p_upper.Controls.Add(btn_donate);
             p_upper.Controls.Add(btn_help);
             p_upper.Controls.Add(txt_profile_save_name);
@@ -385,6 +387,19 @@ namespace DisplayMagician.UIForms
             p_upper.Name = "p_upper";
             p_upper.Size = new System.Drawing.Size(1098, 597);
             p_upper.TabIndex = 37;
+            // 
+            // dv_profile
+            // 
+            dv_profile.BackColor = System.Drawing.Color.DimGray;
+            dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            dv_profile.Dock = System.Windows.Forms.DockStyle.Fill;
+            dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            dv_profile.Location = new System.Drawing.Point(0, 0);
+            dv_profile.Margin = new System.Windows.Forms.Padding(21);
+            dv_profile.Name = "dv_profile";
+            dv_profile.Size = new System.Drawing.Size(1098, 597);
+            dv_profile.TabIndex = 0;
             // 
             // btn_donate
             // 

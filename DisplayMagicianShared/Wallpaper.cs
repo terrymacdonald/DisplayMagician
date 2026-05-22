@@ -396,7 +396,11 @@ namespace DisplayMagicianShared
                             }
 
                             // Capture the monitor bounding rect first so we can use it in the filename.
-                            idw.GetMonitorRECT(monitorPath, out RECT monitorRect);
+                            if (idw.GetMonitorRECT(monitorPath, out RECT monitorRect) != 0)
+                            {
+                                SharedLogger.logger.Warn($"Wallpaper/GetCurrentWallpaperConfig: Could not get bounds for monitor {monitorPath}, skipping.");
+                                continue;
+                            }
 
                             // Build a deterministic destination filename: wallpaper-{profileUUID}-{monitorBoundsHash}{ext}.
                             // Re-capturing the same profile overwrites the same file; profile deletion cleans it up via StoredFilename.

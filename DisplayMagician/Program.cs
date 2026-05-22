@@ -25,15 +25,10 @@ using System.Text;
 using System.Globalization;
 using System.Web;
 using Vortice.DirectInput;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
-using System.Windows.Documents;
 using System.Diagnostics;
 
 using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.ApplicationModel.DataTransfer.ShareTarget;
 using Windows.Management.Deployment;
-using System.IO.Packaging;
 //using static System.Net.Mime.MediaTypeNames;
 
 
@@ -324,7 +319,10 @@ namespace DisplayMagician {
             {
                 // Figure out if this is version is the same as the last version
                 // get the last version from the registry (or this version as fallback)
-                string lastVersionString = (string)Registry.CurrentUser.GetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                string fallbackVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                string lastVersionString;
+                using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician"))
+                    lastVersionString = dmKey?.GetValue("LastVersion", fallbackVersion) as string ?? fallbackVersion;
                 Version lastVersion = new Version(lastVersionString);
 
 
@@ -354,7 +352,8 @@ namespace DisplayMagician {
             try
             {
                 // Try to store this version as the last version run (replacing the previous last run version with this one)
-                Registry.CurrentUser.SetValue("Software\\DisplayMagician\\LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician", writable: true))
+                    dmKey?.SetValue("LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             }
             catch (Exception ex)
             {
@@ -391,10 +390,9 @@ namespace DisplayMagician {
             // If app settings is new, then set the initial settings we need
             if (AppNewInstall)
             {
-                Guid guid = new Guid();
                 if (AppProgramSettings.InstallId == "")
                 {
-                    AppProgramSettings.InstallId = guid.ToString();
+                    AppProgramSettings.InstallId = Guid.NewGuid().ToString();
                 }
                 AppProgramSettings.InstallDate = DateTime.UtcNow;
                 // AppProgramSettings.LastDonationDate = new DateTime(1980,1,1);
@@ -1129,11 +1127,6 @@ namespace DisplayMagician {
         public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
-            {
-                logger.Error($"Program/RunShortcutTask: Cannot run the shortcut {shortcutToUse.Name} as another task is running!");
-                return RunShortcutResult.Error;
-            }
             //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
             bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
             if (gotGreenLightToProceed)
@@ -1142,7 +1135,7 @@ namespace DisplayMagician {
             }
             else
             {
-                logger.Error($"Program/RunShortcutTask: Failed to get control of the RunShortcutTask, so unable to continue. Returning an Error.");
+                logger.Error($"Program/RunShortcutTask: Cannot run the shortcut {shortcutToUse.Name} as another task is running!");
                 return RunShortcutResult.Error;
             }
 
@@ -1186,11 +1179,6 @@ namespace DisplayMagician {
         public static ApplyProfileResult ApplyProfileTask(ProfileItem profile)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
-            {
-                logger.Error($"Program/ApplyProfileTask: Cannot apply the display profile {profile.Name} as another task is running!");
-                return ApplyProfileResult.Error;
-            }
             //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
             bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
             if (gotGreenLightToProceed)
@@ -1199,7 +1187,7 @@ namespace DisplayMagician {
             }
             else
             {
-                logger.Error($"Program/ApplyProfileTask: Failed to get control of the ApplyProfileTask, so unable to continue. Returning an Error.");
+                logger.Error($"Program/ApplyProfileTask: Cannot apply the display profile {profile.Name} as another task is running!");
                 return ApplyProfileResult.Error;
             }
             ApplyProfileResult result = ApplyProfileResult.Error;            
@@ -1211,7 +1199,7 @@ namespace DisplayMagician {
             try
             {
                 Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                taskToRun.Wait(120);
+                taskToRun.Wait(TimeSpan.FromSeconds(120));
                 result = taskToRun.Result;
             }   
             catch (OperationCanceledException ex)
@@ -1321,15 +1309,6 @@ namespace DisplayMagician {
             }
 
             return registration;
-        }
-
-        private static async void RemovePackageWithExternalLocationAsync() //example of how to uninstall an identity package
-        {
-            var packageManager = new PackageManager();
-
-            Debug.WriteLine("Uninstalling package..");
-            // TODO remove the package identity name on uninstall.
-            await packageManager.RemovePackageAsync("PhotoStoreDemo_0.0.0.1_x86__rg009sv5qtcca");
         }
 
         public static void ShowMessages()
