@@ -494,6 +494,8 @@ namespace DisplayMagician.GameLibraries
                                 string uplayGameKeyFullName = $"{registryUplayInstallsKey}\\{uplayGameKeyName}";
                                 using (RegistryKey uplayGameKey = Registry.LocalMachine.OpenSubKey(uplayGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
+                                    if (uplayGameKey == null)
+                                        continue;
                                     // If the Installed Value is set to 1, then the game is installed
                                     // We want to keep track of that for later
                                     if (!uplayGameKey.GetValue(@"InstallDir", "").ToString().Equals(""))

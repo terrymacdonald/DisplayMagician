@@ -62,8 +62,14 @@ namespace DisplayMagician.GameLibraries
                 string gogClientExeFilename = GogGalaxyClientKey.GetValue("clientExecutable", @"GalaxyClient.exe").ToString();
 
                 RegistryKey GogGalaxyClientPathKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientPathKey, RegistryKeyPermissionCheck.ReadSubTree);
-                string gogClientPath = GogGalaxyClientKey.GetValue("client", @"C:\Program Files (x86)\GOG Galaxy").ToString();
-                _gogPath = Path.GetDirectoryName(gogClientPath);
+                if (GogGalaxyClientPathKey == null)
+                {
+                    logger.Info($"GogLibrary/GogLibrary: GOG library paths registry key not found!");
+                    return;
+                }
+                string gogClientPath = GogGalaxyClientPathKey.GetValue("client", @"C:\Program Files (x86)\GOG Galaxy")?.ToString()
+                    ?? @"C:\Program Files (x86)\GOG Galaxy";
+                _gogPath = gogClientPath;
                 _gogExe = Path.Combine(gogClientPath, gogClientExeFilename);                
                 if (File.Exists(_gogExe))
                 {
@@ -477,6 +483,12 @@ namespace DisplayMagician.GameLibraries
                     catch (Exception ex)
                     {
                         logger.Warn(ex, $"GogLibrary/LoadInstalledGames: Exception trying to convert the {gogGameInfoFilename} to a JSON object to read the installed games. There seems to be a problem with your GOG installation.");
+                        continue;
+                    }
+
+                    if (gogGameInfo == null)
+                    {
+                        logger.Warn($"GogLibrary/LoadInstalledGames: The {gogGameInfoFilename} file could not be deserialized. There seems to be a problem with your GOG installation.");
                         continue;
                     }
 

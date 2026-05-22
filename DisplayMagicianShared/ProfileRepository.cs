@@ -818,6 +818,8 @@ namespace DisplayMagicianShared
                                 };
 
                                 ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
+                                if (profileFile == null)
+                                    throw new Exception("ProfileRepository/LoadProfiles: The Profiles file could not be deserialized.");
 
                         if (profileFile.Profiles == null)
                         {

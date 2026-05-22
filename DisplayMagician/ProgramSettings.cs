@@ -645,6 +645,8 @@ namespace DisplayMagician
                         };
 
                         SettingsFile settingsFile = JsonConvert.DeserializeObject<SettingsFile>(json, mySerializerSettings);
+                        if (settingsFile == null)
+                            throw new Exception("ProgramSettings/LoadSettings: The Program Settings file could not be deserialized.");
                         programSettings = settingsFile.Settings;
 
                         if (settingsFile.Settings == null)

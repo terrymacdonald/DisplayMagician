@@ -460,6 +460,12 @@ namespace DisplayMagician.GameLibraries
                     return false;
                 }
 
+                if (epicLauncherInstalledDat == null)
+                {
+                    logger.Error($"EpicLibrary/LoadInstalledGames: The {localInstalledGameListFile} file could not be deserialized. There seems to be a problem with your Epic installation.");
+                    return false;
+                }
+
                 List<InstalledManifiest> allManifests = new List<InstalledManifiest>();
                 var installListPath = Path.Combine(_epicLocalContent, "EpicGamesLauncher", "Data", "Manifests");
                 if (!Directory.Exists(installListPath))
@@ -502,6 +508,9 @@ namespace DisplayMagician.GameLibraries
                     }
 
                     InstalledManifiest installedAppManifest = allManifests.FirstOrDefault(a => a.AppName == installedApp.AppName);
+
+                    if (installedAppManifest == null)
+                        continue;
 
                     // DLC
                     if (installedAppManifest.AppName != installedAppManifest.MainGameAppName)

@@ -474,6 +474,8 @@ namespace DisplayMagician.GameLibraries
                                 string steamGameKeyFullName = $"{_registryAppsKey}\\{steamAppId}";
                                 using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
+                                    if (steamGameKey == null)
+                                        continue;
                                     // If the Installed Value is set to 1, then the game is installed
                                     // We want to keep track of that for later
                                     if ((int)steamGameKey.GetValue(@"Installed", 0) == 1)

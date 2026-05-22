@@ -570,6 +570,8 @@ namespace DisplayMagician
                         };
 
                         ShortcutFile shortcutFile = JsonConvert.DeserializeObject<ShortcutFile>(json, mySerializerSettings);
+                        if (shortcutFile == null)
+                            throw new Exception("ShortcutRepository/LoadShortcuts: The Shortcuts file could not be deserialized.");
 
                         if (shortcutFile.Shortcuts == null)
                         {
