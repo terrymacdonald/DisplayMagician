@@ -316,12 +316,12 @@ namespace DisplayMagicianShared
                 {
                     try
                     {
-                        if (!string.IsNullOrEmpty(mon.StoredFilename) && File.Exists(mon.StoredFilename))
-                            File.Delete(mon.StoredFilename);
+                        if (!string.IsNullOrEmpty(mon.WallpaperFilePath) && File.Exists(mon.WallpaperFilePath))
+                            File.Delete(mon.WallpaperFilePath);
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.StoredFilename}: {ex.Message}");
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.WallpaperFilePath}: {ex.Message}");
                     }
                 }
 
@@ -388,12 +388,12 @@ namespace DisplayMagicianShared
                 {
                     try
                     {
-                        if (!string.IsNullOrEmpty(mon.StoredFilename) && File.Exists(mon.StoredFilename))
-                            File.Delete(mon.StoredFilename);
+                        if (!string.IsNullOrEmpty(mon.WallpaperFilePath) && File.Exists(mon.WallpaperFilePath))
+                            File.Delete(mon.WallpaperFilePath);
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.StoredFilename}: {ex.Message}");
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.WallpaperFilePath}: {ex.Message}");
                     }
                 }
 
@@ -461,14 +461,14 @@ namespace DisplayMagicianShared
                 {
                     try
                     {
-                        if (!string.IsNullOrEmpty(mon.StoredFilename) && File.Exists(mon.StoredFilename))
+                        if (!string.IsNullOrEmpty(mon.WallpaperFilePath) && File.Exists(mon.WallpaperFilePath))
                         {
-                            File.Delete(mon.StoredFilename);
+                            File.Delete(mon.WallpaperFilePath);
                         }
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Exception while deleting wallpaper file {mon.StoredFilename} for profile {ProfileToRemove.Name}.");
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Exception while deleting wallpaper file {mon.WallpaperFilePath} for profile {ProfileToRemove.Name}.");
                     }
                 }
 
@@ -944,6 +944,7 @@ namespace DisplayMagicianShared
 
             // Actually do the updating of the display settings
             profile.CreateProfileFromCurrentDisplaySettings();
+            profile.PreSave();
 
         }
 
@@ -1582,17 +1583,6 @@ namespace DisplayMagicianShared
                     else
                     {
                         SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to apply the desktop wallpaper configuration for profile {profile.Name}, and it failed :(");
-                    }
-                }
-                else if (profile.WallpaperConfiguration.WallpaperMode.Equals(Wallpaper.Mode.Clear))
-                {
-                    if (Wallpaper.Clear())
-                    {
-                        SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to clear the desktop wallpaper and it worked!");
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to clear the desktop wallpaper and it failed :(");
                     }
                 }
                 // We stop the stop watch

@@ -31,9 +31,6 @@
     <WarningLevel>3</WarningLevel>
     <WarningsAsErrors />
   </PropertyGroup>
-  <!-- Import shared native/wrapper DLL references (NVAPIWrapper, ADLXWrapper, IGCLWrapper, etc.) -->
-  <Import Project="..\SharedWrapperDLLs.props" />
-
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
   </ItemGroup>

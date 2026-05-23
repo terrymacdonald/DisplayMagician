@@ -101,7 +101,7 @@ namespace DisplayMagician.UIForms
             cmb_wallpaper_mode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cmb_wallpaper_mode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_wallpaper_mode.FormattingEnabled = true;
-            cmb_wallpaper_mode.Items.AddRange(new object[] { "Apply stored wallpapers", "Clear all wallpapers", "Do nothing" });
+            cmb_wallpaper_mode.Items.AddRange(new object[] { "Apply saved wallpapers", "Do not apply saved wallpaper settings" });
             cmb_wallpaper_mode.Location = new System.Drawing.Point(228, 34);
             cmb_wallpaper_mode.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_wallpaper_mode.Name = "cmb_wallpaper_mode";
@@ -119,7 +119,7 @@ namespace DisplayMagician.UIForms
             lbl_wallpaper_bg_type_label.Name = "lbl_wallpaper_bg_type_label";
             lbl_wallpaper_bg_type_label.Size = new System.Drawing.Size(145, 16);
             lbl_wallpaper_bg_type_label.TabIndex = 2;
-            lbl_wallpaper_bg_type_label.Text = "Stored Wallpaper type:";
+            lbl_wallpaper_bg_type_label.Text = "Saved Wallpaper type:";
             // 
             // lbl_wallpaper_bg_type
             // 

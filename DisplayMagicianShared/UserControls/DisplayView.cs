@@ -47,15 +47,15 @@ namespace DisplayMagicianShared.UserControls
                 {
                     foreach (var mon in _profile.WallpaperConfiguration.MonitorWallpapers)
                     {
-                        if (!string.IsNullOrEmpty(mon.StoredFilename) &&
-                            File.Exists(mon.StoredFilename) &&
-                            !_wallpaperCache.ContainsKey(mon.StoredFilename))
+                        if (!string.IsNullOrEmpty(mon.WallpaperFilePath) &&
+                            File.Exists(mon.WallpaperFilePath) &&
+                            !_wallpaperCache.ContainsKey(mon.WallpaperFilePath))
                         {
                             try
                             {
-                                var bmp = new Bitmap(mon.StoredFilename);
-                                _wallpaperCache[mon.StoredFilename] = bmp;
-                                _wallpaperAvgColorCache[mon.StoredFilename] = GetAverageBitmapColor(bmp);
+                                var bmp = new Bitmap(mon.WallpaperFilePath);
+                                _wallpaperCache[mon.WallpaperFilePath] = bmp;
+                                _wallpaperAvgColorCache[mon.WallpaperFilePath] = GetAverageBitmapColor(bmp);
                             }
                             catch { /* ignore – solid colour fallback will be used */ }
                         }
@@ -156,9 +156,9 @@ namespace DisplayMagicianShared.UserControls
                     int bw = mon.MonitorBounds.right - mon.MonitorBounds.left;
                     int bh = mon.MonitorBounds.bottom - mon.MonitorBounds.top;
                     var key = (mon.MonitorBounds.left, mon.MonitorBounds.top, bw, bh);
-                    if (_wallpaperCache.TryGetValue(mon.StoredFilename ?? "", out Bitmap cached))
+                    if (_wallpaperCache.TryGetValue(mon.WallpaperFilePath ?? "", out Bitmap cached))
                         wallpaperByBounds[key] = cached;
-                    if (_wallpaperAvgColorCache.TryGetValue(mon.StoredFilename ?? "", out Color avgColor))
+                    if (_wallpaperAvgColorCache.TryGetValue(mon.WallpaperFilePath ?? "", out Color avgColor))
                         wallpaperAvgColorByBounds[key] = avgColor;
                 }
             }

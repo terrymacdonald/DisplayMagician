@@ -41,13 +41,17 @@ namespace DisplayMagician.UIForms
 
         private void ProfileSettingsForm_Load(object sender, EventArgs e)
         {
-            // Wallpaper mode: select matching item, defaulting to Apply
+            // Wallpaper mode: select matching item, defaulting to DoNothing
             cmb_wallpaper_mode.SelectedIndex = Profile.WallpaperConfiguration.WallpaperMode switch
             {
                 Wallpaper.Mode.Apply => 0,
-                Wallpaper.Mode.Clear => 1,
-                _ => 2
+                _                   => 1
             };
+
+            // Show the captured background type only when wallpapers will actually be applied
+            bool showBgType = Profile.WallpaperConfiguration.WallpaperMode == Wallpaper.Mode.Apply;
+            lbl_wallpaper_bg_type_label.Visible = showBgType;
+            lbl_wallpaper_bg_type.Visible = showBgType;
 
             // Show the captured background type (read-only informational label)
             lbl_wallpaper_bg_type.Text = Profile.WallpaperConfiguration.BackgroundType switch
@@ -55,7 +59,7 @@ namespace DisplayMagician.UIForms
                 Wallpaper.BackgroundType.SolidColour => "Solid Colour (same on all displays)",
                 Wallpaper.BackgroundType.Slideshow   => "Slideshow (same on all displays)",
                 Wallpaper.BackgroundType.Spotlight   => "Windows Spotlight (same on all displays)",
-                _                                    => "Saved Picture (unique per display)",
+                _                                    => "Saved Pictures (unique per display)",
             };
 
             logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} loaded. Wallpaper mode: {Profile.WallpaperConfiguration.WallpaperMode}.");
@@ -106,7 +110,6 @@ namespace DisplayMagician.UIForms
             Profile.WallpaperConfiguration.WallpaperMode = cmb_wallpaper_mode.SelectedIndex switch
             {
                 0 => Wallpaper.Mode.Apply,
-                1 => Wallpaper.Mode.Clear,
                 _ => Wallpaper.Mode.DoNothing
             };
 
@@ -126,6 +129,9 @@ namespace DisplayMagician.UIForms
         private void cmb_wallpaper_mode_SelectedIndexChanged(object sender, EventArgs e)
         {
             _profileSettingChanged = true;
+            bool showBgType = cmb_wallpaper_mode.SelectedIndex == 0;
+            lbl_wallpaper_bg_type_label.Visible = showBgType;
+            lbl_wallpaper_bg_type.Visible = showBgType;
         }
 
         private void nud_apply_profile_count_ValueChanged(object sender, EventArgs e)

@@ -373,7 +373,7 @@ namespace DisplayMagicianShared
         public WallpaperConfig WallpaperConfiguration
         {
             get => _wallpaperConfiguration;
-            set => _wallpaperConfiguration = value ?? new WallpaperConfig { WallpaperMode = Wallpaper.Mode.Apply };
+            set => _wallpaperConfiguration = value ?? new WallpaperConfig { WallpaperMode = Wallpaper.Mode.DoNothing };
         }
 
         [DefaultValue(default(List<string>))]
@@ -603,12 +603,9 @@ namespace DisplayMagicianShared
 
         public virtual bool PreSave()
         {
-            // Prepare our profile data for saving
-            // Disabling as this should never happen now
-            /*if (_profileDisplayIdentifiers.Count == 0)
-            {
-                _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers();
-            }*/
+            // Persist captured wallpaper images to the app store (deferred from capture time)
+            if (WallpaperConfiguration.WallpaperMode == Wallpaper.Mode.Apply)
+                Wallpaper.SaveWallpaperFiles(WallpaperConfiguration, AppWallpaperPath, UUID);
 
             // Return if it is valid and we should continue
             return IsValid();
@@ -654,7 +651,7 @@ namespace DisplayMagicianShared
 
                 // Capture per-monitor wallpaper settings for this profile (only when explicitly saving/updating)
                 if (captureWallpaper)
-                    _wallpaperConfiguration = Wallpaper.GetCurrentWallpaperConfig(AppWallpaperPath, UUID);
+                    _wallpaperConfiguration = Wallpaper.CaptureCurrentWallpaperConfig(_windowsDisplayConfig);
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();

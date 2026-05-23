@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared
 {
@@ -17,10 +18,12 @@ namespace DisplayMagicianShared
         public string MonitorDevicePath { get; set; } = "";
 
         /// <summary>
-        /// Full path to the wallpaper image copy stored under the app wallpaper
-        /// folder, named with a GUID to avoid clashes.
+        /// Full path to the wallpaper image. Initially set to the live OS path
+        /// captured by <see cref="Wallpaper.CaptureCurrentWallpaperConfig"/>; updated
+        /// to the permanent app-storage path after
+        /// <see cref="Wallpaper.SaveWallpaperFiles"/> has been called.
         /// </summary>
-        public string StoredFilename { get; set; } = "";
+        public string WallpaperFilePath { get; set; } = "";
 
         /// <summary>
         /// Monitor bounding rectangle in virtual-screen coordinates. Used to match
@@ -30,10 +33,10 @@ namespace DisplayMagicianShared
 
         public WallpaperMonitorConfig() { }
 
-        public WallpaperMonitorConfig(string monitorDevicePath, string storedFilename, RECT monitorBounds)
+        public WallpaperMonitorConfig(string monitorDevicePath, string wallpaperFilePath, RECT monitorBounds)
         {
             MonitorDevicePath = monitorDevicePath;
-            StoredFilename = storedFilename;
+            WallpaperFilePath = wallpaperFilePath;
             MonitorBounds = monitorBounds;
         }
 
@@ -42,13 +45,13 @@ namespace DisplayMagicianShared
         {
             if (other is null) return false;
             return MonitorDevicePath == other.MonitorDevicePath &&
-                   StoredFilename == other.StoredFilename &&
+                   WallpaperFilePath == other.WallpaperFilePath &&
                    MonitorBounds.left == other.MonitorBounds.left &&
                    MonitorBounds.top == other.MonitorBounds.top &&
                    MonitorBounds.right == other.MonitorBounds.right &&
                    MonitorBounds.bottom == other.MonitorBounds.bottom;
         }
-        public override int GetHashCode() => (MonitorDevicePath, StoredFilename, MonitorBounds.left, MonitorBounds.top).GetHashCode();
+        public override int GetHashCode() => (MonitorDevicePath, WallpaperFilePath, MonitorBounds.left, MonitorBounds.top).GetHashCode();
         public static bool operator ==(WallpaperMonitorConfig lhs, WallpaperMonitorConfig rhs)
             => lhs is null ? rhs is null : lhs.Equals(rhs);
         public static bool operator !=(WallpaperMonitorConfig lhs, WallpaperMonitorConfig rhs)
@@ -99,8 +102,14 @@ namespace DisplayMagicianShared
             if (SlideshowIntervalSeconds != other.SlideshowIntervalSeconds) return false;
             if (SlideshowShuffle != other.SlideshowShuffle) return false;
             if (MonitorWallpapers.Count != other.MonitorWallpapers.Count) return false;
-            for (int i = 0; i < MonitorWallpapers.Count; i++)
-                if (!MonitorWallpapers[i].Equals(other.MonitorWallpapers[i])) return false;
+            var otherByPath = new Dictionary<string, WallpaperMonitorConfig>(StringComparer.Ordinal);
+            foreach (var m in other.MonitorWallpapers)
+                otherByPath[m.MonitorDevicePath] = m;
+            foreach (var m in MonitorWallpapers)
+            {
+                if (!otherByPath.TryGetValue(m.MonitorDevicePath, out var om)) return false;
+                if (!m.Equals(om)) return false;
+            }
             return true;
         }
         public override int GetHashCode() => (WallpaperMode, WallpaperStyle, BackgroundColor, BackgroundType, SlideshowDirectoryPath, MonitorWallpapers.Count).GetHashCode();
@@ -132,9 +141,8 @@ namespace DisplayMagicianShared
 
         public enum Mode : int
         {
-            DoNothing = 0,
-            Clear     = 1,
-            Apply     = 2
+            Apply     = 0,
+            DoNothing = 1,
         }
 
         /// <summary>
@@ -309,25 +317,24 @@ namespace DisplayMagicianShared
         // -----------------------------------------------------------------------
 
         /// <summary>
-        /// Snapshots the current per-monitor wallpaper configuration. For each
-        /// connected monitor the current wallpaper image is copied into
-        /// <paramref name="wallpaperStorePath"/> under a deterministic filename
-        /// derived from <paramref name="profileUUID"/> and the monitor bounds
-        /// hash, so that re-capturing the same profile overwrites the same file
-        /// cleanly with no orphan accumulation.
+        /// Snapshots the current per-monitor wallpaper configuration. Captures
+        /// metadata and live image paths only — no files are copied at this stage.
+        /// Call <see cref="SaveWallpaperFiles"/> (e.g. from <c>PreSave</c>) to
+        /// copy the images into permanent storage.
         /// Returns a <see cref="WallpaperConfig"/> ready to be stored on a
         /// <see cref="ProfileItem"/>.
         /// </summary>
-        public static WallpaperConfig GetCurrentWallpaperConfig(string wallpaperStorePath, string profileUUID)
+        public static WallpaperConfig CaptureCurrentWallpaperConfig(WINDOWS_DISPLAY_CONFIG windowsDisplayConfig)
         {
             var config = new WallpaperConfig
             {
-                WallpaperMode  = Mode.Apply,
-                WallpaperStyle = Style.Fill,
+                WallpaperMode   = Mode.Apply,
+                WallpaperStyle  = Style.Fill,
                 BackgroundColor = 0,
                 MonitorWallpapers = new List<WallpaperMonitorConfig>()
             };
 
+            IDesktopWallpaper idw = null;
             try
             {
                 // Detect which background type Windows has active
@@ -346,7 +353,7 @@ namespace DisplayMagicianShared
                         config.SlideshowDirectoryPath = regKey?.GetValue("SlideshowDirectoryPath") as string ?? "";
                 }
 
-                IDesktopWallpaper idw = (IDesktopWallpaper)new DesktopWallpaperClass();
+                idw = (IDesktopWallpaper)new DesktopWallpaperClass();
 
                 // Capture global style and background colour
                 if (idw.GetPosition(out DESKTOP_WALLPAPER_POSITION pos) == 0)
@@ -365,12 +372,29 @@ namespace DisplayMagicianShared
                     }
                 }
 
-                // Capture per-monitor wallpaper images (Picture mode only)
+                // Capture per-monitor wallpaper live paths (Picture mode only)
                 if (config.BackgroundType == BackgroundType.Picture)
                 {
-                    // Ensure the storage folder exists
-                    if (!Directory.Exists(wallpaperStorePath))
-                        Directory.CreateDirectory(wallpaperStorePath);
+                    // Build device-path → bounds lookup from WinLibrary data.
+                    // IDesktopWallpaper.GetMonitorRECT fails for most monitors in practice;
+                    // the GdiDisplaySettings data captured by WinLibrary is more reliable.
+                    var devicePathToBounds = new Dictionary<string, RECT>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var kvp in windowsDisplayConfig.DisplaySources)
+                    {
+                        if (!windowsDisplayConfig.GdiDisplaySettings.TryGetValue(kvp.Key, out var gdi))
+                            continue;
+                        var dm = gdi.DeviceMode;
+                        var r = new RECT
+                        {
+                            left   = dm.Position.X,
+                            top    = dm.Position.Y,
+                            right  = dm.Position.X + (int)dm.PixelsWidth,
+                            bottom = dm.Position.Y + (int)dm.PixelsHeight
+                        };
+                        foreach (var src in kvp.Value)
+                            if (!string.IsNullOrEmpty(src.DevicePath))
+                                devicePathToBounds[src.DevicePath] = r;
+                    }
 
                     if (idw.GetMonitorDevicePathCount(out uint monitorCount) == 0)
                     {
@@ -378,52 +402,103 @@ namespace DisplayMagicianShared
                         {
                             if (idw.GetMonitorDevicePathAt(i, out string monitorPath) != 0)
                             {
-                                SharedLogger.logger.Warn($"Wallpaper/GetCurrentWallpaperConfig: Could not get device path for monitor index {i}, skipping.");
+                                SharedLogger.logger.Warn($"Wallpaper/CaptureCurrentWallpaperConfig: Could not get device path for monitor index {i}, skipping.");
                                 continue;
                             }
 
                             if (idw.GetWallpaper(monitorPath, out string wallpaperPath) != 0 ||
                                 string.IsNullOrEmpty(wallpaperPath))
                             {
-                                SharedLogger.logger.Trace($"Wallpaper/GetCurrentWallpaperConfig: Monitor {monitorPath} has no wallpaper set, skipping.");
+                                SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Monitor {monitorPath} has no wallpaper set, skipping.");
                                 continue;
                             }
 
                             if (!File.Exists(wallpaperPath))
                             {
-                                SharedLogger.logger.Warn($"Wallpaper/GetCurrentWallpaperConfig: Wallpaper file '{wallpaperPath}' for monitor {monitorPath} does not exist on disk, skipping.");
+                                SharedLogger.logger.Warn($"Wallpaper/CaptureCurrentWallpaperConfig: Wallpaper file '{wallpaperPath}' for monitor {monitorPath} does not exist on disk, skipping.");
                                 continue;
                             }
 
-                            // Capture the monitor bounding rect first so we can use it in the filename.
-                            if (idw.GetMonitorRECT(monitorPath, out RECT monitorRect) != 0)
+                            if (!devicePathToBounds.TryGetValue(monitorPath, out RECT monitorRect))
                             {
-                                SharedLogger.logger.Warn($"Wallpaper/GetCurrentWallpaperConfig: Could not get bounds for monitor {monitorPath}, skipping.");
-                                continue;
+                                SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: No bounds found in display config for monitor {monitorPath}, using default RECT.");
+                                monitorRect = default;
                             }
 
-                            // Build a deterministic destination filename: wallpaper-{profileUUID}-{monitorBoundsHash}{ext}.
-                            // Re-capturing the same profile overwrites the same file; profile deletion cleans it up via StoredFilename.
-                            string ext = Path.GetExtension(wallpaperPath);
-                            if (string.IsNullOrEmpty(ext)) ext = ".png";
-                            string destFilename = Path.Combine(wallpaperStorePath, $"wallpaper-{profileUUID}-{MonitorBoundsHash(monitorRect)}{ext}");
-
-                            File.Copy(wallpaperPath, destFilename, overwrite: true);
-
-                            config.MonitorWallpapers.Add(new WallpaperMonitorConfig(monitorPath, destFilename, monitorRect));
-                            SharedLogger.logger.Trace($"Wallpaper/GetCurrentWallpaperConfig: Captured wallpaper for monitor {monitorPath} -> {destFilename}");
+                            // Store the live path; SaveWallpaperFiles will copy it to permanent storage later.
+                            config.MonitorWallpapers.Add(new WallpaperMonitorConfig(monitorPath, wallpaperPath, monitorRect));
+                            SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Captured live wallpaper path for monitor {monitorPath} -> {wallpaperPath}");
                         }
                     }
                 }
-
-                Marshal.ReleaseComObject(idw);
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, $"Wallpaper/GetCurrentWallpaperConfig: Exception capturing wallpaper configuration: {ex.Message}");
+                SharedLogger.logger.Error(ex, $"Wallpaper/CaptureCurrentWallpaperConfig: Exception capturing wallpaper configuration: {ex.Message}");
+            }
+            finally
+            {
+                if (idw != null) Marshal.ReleaseComObject(idw);
             }
 
             return config;
+        }
+
+        /// <summary>
+        /// Copies each monitor's wallpaper image into <paramref name="storePath"/> using
+        /// a deterministic filename derived from <paramref name="profileUUID"/> and the
+        /// monitor bounds hash, then updates <see cref="WallpaperMonitorConfig.WallpaperFilePath"/>
+        /// in-place to the new destination. Safe to call multiple times (idempotent).
+        /// </summary>
+        public static void SaveWallpaperFiles(WallpaperConfig config, string storePath, string profileUUID)
+        {
+            if (config == null || config.BackgroundType != BackgroundType.Picture)
+                return;
+
+            if (!Directory.Exists(storePath))
+                Directory.CreateDirectory(storePath);
+
+            foreach (var mon in config.MonitorWallpapers)
+            {
+                if (string.IsNullOrEmpty(mon.WallpaperFilePath))
+                    continue;
+
+                string ext = Path.GetExtension(mon.WallpaperFilePath);
+                if (string.IsNullOrEmpty(ext)) ext = ".png";
+                string dest = Path.Combine(storePath, $"wallpaper-{profileUUID}-{MonitorBoundsHash(mon.MonitorBounds)}{ext}");
+
+                // Idempotent: if the source is already the intended destination, skip the copy.
+                // This also avoids a Windows CopyFile ERROR_SHARING_VIOLATION when the active
+                // wallpaper file is locked (source == dest).
+                try
+                {
+                    if (string.Equals(Path.GetFullPath(mon.WallpaperFilePath), Path.GetFullPath(dest),
+                                      StringComparison.OrdinalIgnoreCase))
+                    {
+                        mon.WallpaperFilePath = dest;
+                        SharedLogger.logger.Trace($"Wallpaper/SaveWallpaperFiles: Wallpaper for monitor {mon.MonitorDevicePath} already at destination, skipping copy.");
+                        continue;
+                    }
+                }
+                catch { /* invalid path (e.g. \\?\ prefix) — fall through */ }
+
+                if (!File.Exists(mon.WallpaperFilePath))
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/SaveWallpaperFiles: Source file '{mon.WallpaperFilePath}' does not exist for monitor {mon.MonitorDevicePath}, skipping.");
+                    continue;
+                }
+
+                try
+                {
+                    File.Copy(mon.WallpaperFilePath, dest, overwrite: true);
+                    mon.WallpaperFilePath = dest;
+                    SharedLogger.logger.Trace($"Wallpaper/SaveWallpaperFiles: Saved wallpaper for monitor {mon.MonitorDevicePath} -> {dest}");
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Error(ex, $"Wallpaper/SaveWallpaperFiles: Exception copying wallpaper for monitor {mon.MonitorDevicePath}: {ex.Message}");
+                }
+            }
         }
 
         /// <summary>
@@ -439,9 +514,10 @@ namespace DisplayMagicianShared
                 return false;
             }
 
+            IDesktopWallpaper idw = null;
             try
             {
-                IDesktopWallpaper idw = (IDesktopWallpaper)new DesktopWallpaperClass();
+                idw = (IDesktopWallpaper)new DesktopWallpaperClass();
 
                 switch (config.BackgroundType)
                 {
@@ -502,14 +578,18 @@ namespace DisplayMagicianShared
                         }
                         using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
                             key?.SetValue("BackgroundType", 3, RegistryValueKind.DWord);
-                        using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\ContentDeliveryManager", true))
-                            key?.SetValue("SubscribedContent-338388Enabled", 1, RegistryValueKind.DWord);
                         SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight re-enabled. Note: the specific image shown cannot be restored — Windows will select its own image on its own schedule.");
                         break;
                     }
 
                     default: // BackgroundType.Picture
                     {
+                        if (config.MonitorWallpapers.Count == 0)
+                        {
+                            SharedLogger.logger.Trace("Wallpaper/Apply: Picture mode with no stored wallpapers, skipping.");
+                            break;
+                        }
+
                         // Apply global style and background colour first
                         idw.SetPosition(StyleToPosition(config.WallpaperStyle));
                         idw.SetBackgroundColor(config.BackgroundColor);
@@ -517,17 +597,17 @@ namespace DisplayMagicianShared
                         // Apply per-monitor wallpaper images
                         foreach (WallpaperMonitorConfig mon in config.MonitorWallpapers)
                         {
-                            if (string.IsNullOrEmpty(mon.StoredFilename) || !File.Exists(mon.StoredFilename))
+                            if (string.IsNullOrEmpty(mon.WallpaperFilePath) || !File.Exists(mon.WallpaperFilePath))
                             {
-                                SharedLogger.logger.Warn($"Wallpaper/Apply: Stored wallpaper file '{mon.StoredFilename}' for monitor {mon.MonitorDevicePath} not found, skipping.");
+                                SharedLogger.logger.Warn($"Wallpaper/Apply: Wallpaper file '{mon.WallpaperFilePath}' for monitor {mon.MonitorDevicePath} not found, skipping.");
                                 continue;
                             }
 
-                            int hr = idw.SetWallpaper(mon.MonitorDevicePath, mon.StoredFilename);
+                            int hr = idw.SetWallpaper(mon.MonitorDevicePath, mon.WallpaperFilePath);
                             if (hr != 0)
                                 SharedLogger.logger.Warn($"Wallpaper/Apply: SetWallpaper returned HRESULT 0x{hr:X8} for monitor {mon.MonitorDevicePath}.");
                             else
-                                SharedLogger.logger.Trace($"Wallpaper/Apply: Set wallpaper for monitor {mon.MonitorDevicePath} to {mon.StoredFilename}.");
+                                SharedLogger.logger.Trace($"Wallpaper/Apply: Set wallpaper for monitor {mon.MonitorDevicePath} to {mon.WallpaperFilePath}.");
                         }
 
                         using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
@@ -536,7 +616,6 @@ namespace DisplayMagicianShared
                     }
                 }
 
-                Marshal.ReleaseComObject(idw);
                 return true;
             }
             catch (Exception ex)
@@ -544,35 +623,9 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error(ex, $"Wallpaper/Apply: Exception applying wallpaper configuration: {ex.Message}");
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Clears the desktop wallpaper on all monitors.
-        /// </summary>
-        public static bool Clear()
-        {
-            try
+            finally
             {
-                IDesktopWallpaper idw = (IDesktopWallpaper)new DesktopWallpaperClass();
-
-                if (idw.GetMonitorDevicePathCount(out uint monitorCount) == 0)
-                {
-                    for (uint i = 0; i < monitorCount; i++)
-                    {
-                        if (idw.GetMonitorDevicePathAt(i, out string monitorPath) == 0)
-                        {
-                            idw.SetWallpaper(monitorPath, "");
-                        }
-                    }
-                }
-
-                Marshal.ReleaseComObject(idw);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, $"Wallpaper/Clear: Exception clearing wallpapers: {ex.Message}");
-                return false;
+                if (idw != null) Marshal.ReleaseComObject(idw);
             }
         }
     }
