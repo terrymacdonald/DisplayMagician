@@ -916,6 +916,16 @@ namespace DisplayMagicianShared
 
                 if (applyNVIDIASettings)
                 {
+                    // If a Surround/Mosaic Display is required, all source monitors must be active
+                    // before NvAPI can create it.
+                    // A previous profile may have disabled one of the required monitors, so
+                    // we enable all connected displays in Windows first just to be sure.
+                    if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
+                    {
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: NVIDIA Surround/Mosaic Display required – enabling all connected displays so NvAPI can see them as active outputs.");
+                        WinLibrary.EnableAllConnectedDisplays();
+                        Thread.Sleep(delayInMs);
+                    }
                     itWorkedforNVIDIA = nvidiaLibrary.SetActiveConfig(_nvidiaDisplayConfig, delayInMs);
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforNVIDIA)
@@ -936,6 +946,16 @@ namespace DisplayMagicianShared
 
                 if (applyAMDSettings)
                 {
+                    // If an Eyefinity Display is required, all source monitors must be active
+                    // before ADLX can create it.
+                    // A previous profile may have disabled one of the required monitors, so
+                    // we enable all connected displays in Windows first just to be sure.
+                    if (_amdDisplayConfig.IsEyefinity)
+                    {
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: AMD Eyefinity Display required – enabling all connected displays so ADLX can see them as active outputs.");
+                        WinLibrary.EnableAllConnectedDisplays();
+                        Thread.Sleep(delayInMs);
+                    }
                     itWorkedforAMD = amdLibrary.SetActiveConfig(_amdDisplayConfig, useADLEyefinity, delayInMs);
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforAMD)
@@ -955,6 +975,17 @@ namespace DisplayMagicianShared
 
                 if (applyIntelSettings)
                 {
+                    // If a Combined Display is required, all source monitors must be active
+                    // (CTL_DISPLAY_CONFIG_FLAG_DISPLAY_ACTIVE) before IGCL can create it.
+                    // A previous profile may have disabled one of the required monitors, so
+                    // we enable all connected displays in Windows first just to be sure.
+                    if (_intelDisplayConfig.CombinedDisplayIsInUse)
+                    {
+                        SharedLogger.logger.Trace($"ProfileItem/SetActive: Intel Combined Display required – enabling all connected displays so IGCL can see them as active outputs.");
+                        WinLibrary.EnableAllConnectedDisplays();
+                        Thread.Sleep(delayInMs);
+                    }
+
                     SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply Intel display config from {Name}...");
                     itWorkedforIntel = intelLibrary.SetActiveConfig(_intelDisplayConfig, delayInMs);
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
