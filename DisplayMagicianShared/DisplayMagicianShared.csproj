@@ -91,6 +91,29 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <!--
+    Managed wrapper DLL files (.dll) are handled by the <Reference> items above —
+    MSBuild copies them automatically (Private=true is the default).
+    Only supplementary files (.deps.json) and native DLLs need explicit copy entries.
+  -->
+  <ItemGroup>
+    <Content Include="DLL\NVAPIWrapper.deps.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DLL\ADLXWrapper.deps.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DLL\IGCLWrapper.deps.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- Native (unmanaged) DLLs — must be copied explicitly as they are not managed references -->
+    <Content Include="DLL\NVIDIAExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DLL\AMDExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <ItemGroup>
     <Folder Include="DLL\" />
     <Folder Include="Intel\" />

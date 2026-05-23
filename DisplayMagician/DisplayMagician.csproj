@@ -75,6 +75,9 @@
   <PropertyGroup>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
+  <!-- Import shared native/wrapper DLL references (NVAPIWrapper, ADLXWrapper, IGCLWrapper, etc.) -->
+  <Import Project="..\SharedWrapperDLLs.props" />
+
   <ItemGroup>
     <Compile Remove="Resources\**" />
     <None Remove="Resources\**" />

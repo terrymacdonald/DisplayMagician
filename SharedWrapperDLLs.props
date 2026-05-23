@@ -1,0 +1,37 @@
+<Project>
+  <!--
+	Managed wrapper assemblies stored in DisplayMagicianShared\DLL\.
+	Each consuming project imports this file to ensure these DLLs are
+	properly referenced and copied to the output directory.
+
+	Usage: Add the following line near the top of any consuming .csproj,
+	before the <ItemGroup> blocks:
+	  <Import Project="..\SharedWrapperDLLs.props" />
+  -->
+  <ItemGroup>
+	<Reference Include="NVAPIWrapper">
+	  <HintPath>$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\NVAPIWrapper.dll</HintPath>
+	  <Private>true</Private>
+	</Reference>
+	<Reference Include="ADLXWrapper">
+	  <HintPath>$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\ADLXWrapper.dll</HintPath>
+	  <Private>true</Private>
+	</Reference>
+	<Reference Include="IGCLWrapper">
+	  <HintPath>$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\IGCLWrapper.dll</HintPath>
+	  <Private>true</Private>
+	</Reference>
+  </ItemGroup>
+
+  <!-- Native (unmanaged) DLLs required at runtime — cannot be <Reference> items -->
+  <ItemGroup>
+	<Content Include="$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\NVIDIAExportsDll.dll">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <Link>NVIDIAExportsDll.dll</Link>
+	</Content>
+	<Content Include="$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\AMDExportsDll.dll">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <Link>AMDExportsDll.dll</Link>
+	</Content>
+  </ItemGroup>
+</Project>
