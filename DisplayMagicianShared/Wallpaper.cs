@@ -85,6 +85,9 @@ namespace DisplayMagicianShared
         /// <summary>Whether the slideshow plays in random order (Slideshow mode only).</summary>
         public bool SlideshowShuffle { get; set; } = false;
 
+        /// <summary>Whether the slideshow continues running on battery power (Slideshow mode only).</summary>
+        public bool SlideshowBatteryPower { get; set; } = false;
+
         /// <summary>One entry per connected monitor at capture time (Picture mode only).</summary>
         public List<WallpaperMonitorConfig> MonitorWallpapers { get; set; } = new List<WallpaperMonitorConfig>();
 
@@ -101,6 +104,7 @@ namespace DisplayMagicianShared
             if (SlideshowDirectoryPath != other.SlideshowDirectoryPath) return false;
             if (SlideshowIntervalSeconds != other.SlideshowIntervalSeconds) return false;
             if (SlideshowShuffle != other.SlideshowShuffle) return false;
+            if (SlideshowBatteryPower != other.SlideshowBatteryPower) return false;
             if (MonitorWallpapers.Count != other.MonitorWallpapers.Count) return false;
             var otherByPath = new Dictionary<string, WallpaperMonitorConfig>(StringComparer.Ordinal);
             foreach (var m in other.MonitorWallpapers)
@@ -112,7 +116,7 @@ namespace DisplayMagicianShared
             }
             return true;
         }
-        public override int GetHashCode() => (WallpaperMode, WallpaperStyle, BackgroundColor, BackgroundType, SlideshowDirectoryPath, MonitorWallpapers.Count).GetHashCode();
+        public override int GetHashCode() => (WallpaperMode, WallpaperStyle, BackgroundColor, BackgroundType, SlideshowDirectoryPath, SlideshowShuffle, SlideshowBatteryPower, MonitorWallpapers.Count).GetHashCode();
         public static bool operator ==(WallpaperConfig lhs, WallpaperConfig rhs)
             => lhs is null ? rhs is null : lhs.Equals(rhs);
         public static bool operator !=(WallpaperConfig lhs, WallpaperConfig rhs)
@@ -368,7 +372,8 @@ namespace DisplayMagicianShared
                     if (idw.GetSlideshowOptions(out uint slideshowOpts, out uint slideshowTick) == 0)
                     {
                         config.SlideshowIntervalSeconds = slideshowTick / 1000;
-                        config.SlideshowShuffle = (slideshowOpts & 1) != 0;
+                        config.SlideshowShuffle      = (slideshowOpts & 0x01) != 0;
+                        config.SlideshowBatteryPower = (slideshowOpts & 0x02) != 0;
                     }
                 }
 
@@ -548,16 +553,20 @@ namespace DisplayMagicianShared
                             break;
                         }
 
+                        idw.SetPosition(StyleToPosition(config.WallpaperStyle));
+                        idw.SetBackgroundColor(config.BackgroundColor);
+
                         Guid iShellItemGuid      = typeof(IShellItem).GUID;
                         Guid iShellItemArrayGuid = typeof(IShellItemArray).GUID;
                         SHCreateItemFromParsingName(config.SlideshowDirectoryPath, IntPtr.Zero, iShellItemGuid, out IShellItem folderItem);
                         SHCreateShellItemArrayFromShellItem(folderItem, iShellItemArrayGuid, out IShellItemArray itemArray);
                         idw.SetSlideshow(itemArray);
 
-                        uint shuffleFlag = config.SlideshowShuffle ? 1u : 0u;
-                        uint intervalMs  = config.SlideshowIntervalSeconds * 1000u;
+                        uint slideshowOpts = (config.SlideshowShuffle      ? 0x01u : 0u)
+                                           | (config.SlideshowBatteryPower ? 0x02u : 0u);
+                        uint intervalMs    = config.SlideshowIntervalSeconds * 1000u;
                         if (intervalMs < 10000u) intervalMs = 10000u;   // Windows minimum is 10 seconds
-                        idw.SetSlideshowOptions(shuffleFlag, intervalMs);
+                        idw.SetSlideshowOptions(slideshowOpts, intervalMs);
 
                         using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
                         {
