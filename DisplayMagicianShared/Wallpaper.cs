@@ -537,6 +537,15 @@ namespace DisplayMagicianShared
                 return false;
             }
 
+            // Determine whether a desktop slideshow is currently running so it can be
+            // stopped when switching to Picture or Solid Colour mode.  We must NOT call
+            // SetSlideshow(null) when Spotlight is active — Spotlight is also managed
+            // through IDesktopWallpaper and the call would destroy its COM state, making
+            // a subsequent Spotlight restore impossible via a registry-only write.
+            bool slideshowCurrentlyActive;
+            using (var regKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers"))
+                slideshowCurrentlyActive = regKey?.GetValue("BackgroundType") is int bt && bt == 2;
+
             IDesktopWallpaper idw = null;
             try
             {
@@ -546,7 +555,7 @@ namespace DisplayMagicianShared
                 {
                     case BackgroundType.SolidColour:
                     {
-                        idw.SetSlideshow(null); // stop any running slideshow
+                        if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
                         // Clear all wallpaper images and apply background colour only
                         if (idw.GetMonitorDevicePathCount(out uint monCount) == 0)
                         {
@@ -617,7 +626,7 @@ namespace DisplayMagicianShared
                             break;
                         }
 
-                        idw.SetSlideshow(null); // stop any running slideshow
+                        if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
                         // Apply global style and background colour first
                         idw.SetPosition(StyleToPosition(config.WallpaperStyle));
                         idw.SetBackgroundColor(config.BackgroundColor);

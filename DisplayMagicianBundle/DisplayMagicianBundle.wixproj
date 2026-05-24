@@ -4,10 +4,6 @@
     <OutputName>DisplayMagicianSetup</OutputName>
     <AcceptEula>wix7</AcceptEula>
   </PropertyGroup>
-  <PropertyGroup>
-    <!-- Pass the current build configuration to WiX preprocessor so Bundle.wxs can reference the correct MSI path -->
-    <DefineConstants>$(DefineConstants);Configuration=$(Configuration)</DefineConstants>
-  </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
     <Content Include="DisplayMagicianTheme.xml" />
