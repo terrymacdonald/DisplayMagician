@@ -85,9 +85,6 @@ namespace DisplayMagicianShared
         /// <summary>Whether the slideshow plays in random order (Slideshow mode only).</summary>
         public bool SlideshowShuffle { get; set; } = false;
 
-        /// <summary>Whether the slideshow continues running on battery power (Slideshow mode only).</summary>
-        public bool SlideshowBatteryPower { get; set; } = false;
-
         /// <summary>One entry per connected monitor at capture time (Picture mode only).</summary>
         public List<WallpaperMonitorConfig> MonitorWallpapers { get; set; } = new List<WallpaperMonitorConfig>();
 
@@ -104,7 +101,6 @@ namespace DisplayMagicianShared
             if (SlideshowDirectoryPath != other.SlideshowDirectoryPath) return false;
             if (SlideshowIntervalSeconds != other.SlideshowIntervalSeconds) return false;
             if (SlideshowShuffle != other.SlideshowShuffle) return false;
-            if (SlideshowBatteryPower != other.SlideshowBatteryPower) return false;
             if (MonitorWallpapers.Count != other.MonitorWallpapers.Count) return false;
             var otherByPath = new Dictionary<string, WallpaperMonitorConfig>(StringComparer.Ordinal);
             foreach (var m in other.MonitorWallpapers)
@@ -116,7 +112,7 @@ namespace DisplayMagicianShared
             }
             return true;
         }
-        public override int GetHashCode() => (WallpaperMode, WallpaperStyle, BackgroundColor, BackgroundType, SlideshowDirectoryPath, SlideshowShuffle, SlideshowBatteryPower, MonitorWallpapers.Count).GetHashCode();
+        public override int GetHashCode() => (WallpaperMode, WallpaperStyle, BackgroundColor, BackgroundType, SlideshowDirectoryPath, SlideshowShuffle, MonitorWallpapers.Count).GetHashCode();
         public static bool operator ==(WallpaperConfig lhs, WallpaperConfig rhs)
             => lhs is null ? rhs is null : lhs.Equals(rhs);
         public static bool operator !=(WallpaperConfig lhs, WallpaperConfig rhs)
@@ -353,8 +349,6 @@ namespace DisplayMagicianShared
                         _ => BackgroundType.Picture,
                     };
 
-                    if (config.BackgroundType == BackgroundType.Slideshow)
-                        config.SlideshowDirectoryPath = regKey?.GetValue("SlideshowDirectoryPath") as string ?? "";
                 }
 
                 idw = (IDesktopWallpaper)new DesktopWallpaperClass();
@@ -366,14 +360,38 @@ namespace DisplayMagicianShared
                 if (idw.GetBackgroundColor(out uint bgColor) == 0)
                     config.BackgroundColor = bgColor;
 
-                // For Slideshow, also capture interval and shuffle settings
+                // For Slideshow, capture interval, shuffle, and source folder via COM
                 if (config.BackgroundType == BackgroundType.Slideshow)
                 {
                     if (idw.GetSlideshowOptions(out uint slideshowOpts, out uint slideshowTick) == 0)
                     {
                         config.SlideshowIntervalSeconds = slideshowTick / 1000;
-                        config.SlideshowShuffle      = (slideshowOpts & 0x01) != 0;
-                        config.SlideshowBatteryPower = (slideshowOpts & 0x02) != 0;
+                        config.SlideshowShuffle = (slideshowOpts & 0x01) != 0;
+                    }
+
+                    // GetSlideshow returns the IShellItemArray passed to SetSlideshow.
+                    // The first item is either the folder itself or one of its images;
+                    // walking up to the parent directory gives a reliable folder path.
+                    if (idw.GetSlideshow(out IShellItemArray slideshowArray) == 0 && slideshowArray != null)
+                    {
+                        try
+                        {
+                            if (slideshowArray.GetItemAt(0, out IShellItem firstItem) == 0 && firstItem != null)
+                            {
+                                try
+                                {
+                                    if (firstItem.GetDisplayName(0x80058000u /* SIGDN_FILESYSPATH */, out string itemPath) == 0
+                                        && !string.IsNullOrEmpty(itemPath))
+                                    {
+                                        config.SlideshowDirectoryPath = Directory.Exists(itemPath)
+                                            ? itemPath
+                                            : Path.GetDirectoryName(itemPath) ?? itemPath;
+                                    }
+                                }
+                                finally { Marshal.ReleaseComObject(firstItem); }
+                            }
+                        }
+                        finally { Marshal.ReleaseComObject(slideshowArray); }
                     }
                 }
 
@@ -528,6 +546,7 @@ namespace DisplayMagicianShared
                 {
                     case BackgroundType.SolidColour:
                     {
+                        idw.SetSlideshow(null); // stop any running slideshow
                         // Clear all wallpaper images and apply background colour only
                         if (idw.GetMonitorDevicePathCount(out uint monCount) == 0)
                         {
@@ -562,8 +581,7 @@ namespace DisplayMagicianShared
                         SHCreateShellItemArrayFromShellItem(folderItem, iShellItemArrayGuid, out IShellItemArray itemArray);
                         idw.SetSlideshow(itemArray);
 
-                        uint slideshowOpts = (config.SlideshowShuffle      ? 0x01u : 0u)
-                                           | (config.SlideshowBatteryPower ? 0x02u : 0u);
+                        uint slideshowOpts = config.SlideshowShuffle ? 0x01u : 0u;
                         uint intervalMs    = config.SlideshowIntervalSeconds * 1000u;
                         if (intervalMs < 10000u) intervalMs = 10000u;   // Windows minimum is 10 seconds
                         idw.SetSlideshowOptions(slideshowOpts, intervalMs);
@@ -599,6 +617,7 @@ namespace DisplayMagicianShared
                             break;
                         }
 
+                        idw.SetSlideshow(null); // stop any running slideshow
                         // Apply global style and background colour first
                         idw.SetPosition(StyleToPosition(config.WallpaperStyle));
                         idw.SetBackgroundColor(config.BackgroundColor);
