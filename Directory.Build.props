@@ -3,4 +3,31 @@
   <PropertyGroup>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
+
+  <!--
+    Copy native/wrapper DLLs from DisplayMagicianShared\DLL\ to the output directory
+    of executable projects so they can be found at runtime (e.g. NVAPIWrapper.dll).
+  -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'DisplayMagician' OR '$(MSBuildProjectName)' == 'DisplayMagicianConsole'">
+    <None Include="$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\NVAPIWrapper.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>NVAPIWrapper.dll</Link>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\NVIDIAExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>NVIDIAExportsDll.dll</Link>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\ADLXWrapper.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>ADLXWrapper.dll</Link>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\AMDExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>AMDExportsDll.dll</Link>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)DisplayMagicianShared\DLL\IGCLWrapper.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>IGCLWrapper.dll</Link>
+    </None>
+  </ItemGroup>
 </Project>
