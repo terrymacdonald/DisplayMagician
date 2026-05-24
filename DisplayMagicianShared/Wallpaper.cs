@@ -398,25 +398,61 @@ namespace DisplayMagicianShared
                 // Capture per-monitor wallpaper live paths (Picture mode only)
                 if (config.BackgroundType == BackgroundType.Picture)
                 {
-                    // Build device-path → bounds lookup from WinLibrary data.
-                    // IDesktopWallpaper.GetMonitorRECT fails for most monitors in practice;
-                    // the GdiDisplaySettings data captured by WinLibrary is more reliable.
+                    // Build device-path → bounds using DisplayConfigPaths + DisplayConfigModes —
+                    // the same data sources used by FindAllWindowsScreens / ScreenPosition, so
+                    // the coordinates are guaranteed to match the DisplayView rendering.
                     var devicePathToBounds = new Dictionary<string, RECT>(StringComparer.OrdinalIgnoreCase);
                     foreach (var kvp in windowsDisplayConfig.DisplaySources)
                     {
-                        if (!windowsDisplayConfig.GdiDisplaySettings.TryGetValue(kvp.Key, out var gdi))
-                            continue;
-                        var dm = gdi.DeviceMode;
-                        var r = new RECT
-                        {
-                            left   = dm.Position.X,
-                            top    = dm.Position.Y,
-                            right  = dm.Position.X + (int)dm.PixelsWidth,
-                            bottom = dm.Position.Y + (int)dm.PixelsHeight
-                        };
                         foreach (var src in kvp.Value)
-                            if (!string.IsNullOrEmpty(src.DevicePath))
-                                devicePathToBounds[src.DevicePath] = r;
+                        {
+                            if (string.IsNullOrEmpty(src.DevicePath))
+                                continue;
+
+                            // Find the rotation for this source from DisplayConfigPaths
+                            var rotation = DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY;
+                            foreach (var path in windowsDisplayConfig.DisplayConfigPaths)
+                            {
+                                if (path.SourceInfo.Id == src.SourceId &&
+                                    path.SourceInfo.AdapterId.Value == src.AdapterId.Value)
+                                {
+                                    rotation = path.TargetInfo.Rotation;
+                                    break;
+                                }
+                            }
+
+                            // Find the source mode (position + dimensions) from DisplayConfigModes
+                            foreach (var mode in windowsDisplayConfig.DisplayConfigModes)
+                            {
+                                if (mode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
+                                    mode.Id == src.SourceId &&
+                                    mode.AdapterId.Value == src.AdapterId.Value)
+                                {
+                                    int x = mode.SourceMode.Position.X;
+                                    int y = mode.SourceMode.Position.Y;
+                                    int w, h;
+                                    if (rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE90 ||
+                                        rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
+                                    {
+                                        w = (int)mode.SourceMode.Height;
+                                        h = (int)mode.SourceMode.Width;
+                                    }
+                                    else
+                                    {
+                                        w = (int)mode.SourceMode.Width;
+                                        h = (int)mode.SourceMode.Height;
+                                    }
+                                    devicePathToBounds[src.DevicePath] = new RECT
+                                    {
+                                        left   = x,
+                                        top    = y,
+                                        right  = x + w,
+                                        bottom = y + h
+                                    };
+                                    break;
+                                }
+                            }
+                        }
                     }
 
                     if (idw.GetMonitorDevicePathCount(out uint monitorCount) == 0)
@@ -537,19 +573,18 @@ namespace DisplayMagicianShared
                 return false;
             }
 
-            // Determine whether a desktop slideshow is currently running so it can be
-            // stopped when switching to Picture or Solid Colour mode.  We must NOT call
-            // SetSlideshow(null) when Spotlight is active — Spotlight is also managed
-            // through IDesktopWallpaper and the call would destroy its COM state, making
-            // a subsequent Spotlight restore impossible via a registry-only write.
-            bool slideshowCurrentlyActive;
-            using (var regKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers"))
-                slideshowCurrentlyActive = regKey?.GetValue("BackgroundType") is int bt && bt == 2;
-
             IDesktopWallpaper idw = null;
             try
             {
                 idw = (IDesktopWallpaper)new DesktopWallpaperClass();
+
+                // DSS_SLIDESHOW (0x02): a slideshow is currently configured via IDesktopWallpaper.
+                // Using GetStatus() is more reliable than reading the registry BackgroundType value,
+                // which can lag behind the actual COM state.
+                // Spotlight does NOT set DSS_SLIDESHOW (it is managed by ContentDeliveryManager),
+                // so this check is inherently Spotlight-safe without a separate registry guard.
+                bool slideshowCurrentlyActive = idw.GetStatus(out uint slideshowState) == 0
+                                                && (slideshowState & 0x02u) != 0;
 
                 switch (config.BackgroundType)
                 {
@@ -588,7 +623,15 @@ namespace DisplayMagicianShared
                         Guid iShellItemArrayGuid = typeof(IShellItemArray).GUID;
                         SHCreateItemFromParsingName(config.SlideshowDirectoryPath, IntPtr.Zero, iShellItemGuid, out IShellItem folderItem);
                         SHCreateShellItemArrayFromShellItem(folderItem, iShellItemArrayGuid, out IShellItemArray itemArray);
-                        idw.SetSlideshow(itemArray);
+                        try
+                        {
+                            idw.SetSlideshow(itemArray);
+                        }
+                        finally
+                        {
+                            if (itemArray != null) Marshal.ReleaseComObject(itemArray);
+                            if (folderItem != null) Marshal.ReleaseComObject(folderItem);
+                        }
 
                         uint slideshowOpts = config.SlideshowShuffle ? 0x01u : 0u;
                         uint intervalMs    = config.SlideshowIntervalSeconds * 1000u;
@@ -612,6 +655,7 @@ namespace DisplayMagicianShared
                             SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight for the desktop is only available on Windows 11. Skipping Spotlight restore on this OS.");
                             break;
                         }
+                        if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
                         using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
                             key?.SetValue("BackgroundType", 3, RegistryValueKind.DWord);
                         SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight re-enabled. Note: the specific image shown cannot be restored — Windows will select its own image on its own schedule.");
