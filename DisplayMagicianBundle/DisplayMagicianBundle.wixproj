@@ -3,6 +3,8 @@
     <OutputType>Bundle</OutputType>
     <OutputName>DisplayMagicianSetup</OutputName>
     <AcceptEula>wix7</AcceptEula>
+    <!-- Suppress ICE validation to avoid WIX1105 warning when not running as admin -->
+    <SuppressValidation>true</SuppressValidation>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />

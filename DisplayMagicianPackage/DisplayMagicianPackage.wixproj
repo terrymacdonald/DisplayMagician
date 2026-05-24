@@ -4,14 +4,15 @@
   <Import Project="..\SigningConfig.props" Condition="Exists('..\SigningConfig.props')" />
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <BindFiles>false</BindFiles>
-    <OutputPath>bin\Debug\</OutputPath>
-    <SuppressValidation>true</SuppressValidation>
+	<BindFiles>false</BindFiles>
+	<OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
-	
+
   <PropertyGroup>
 	<OutputName>DisplayMagicianPackage</OutputName>
 	<AcceptEula>wix7</AcceptEula>
+	<!-- Suppress ICE validation to avoid WIX1105 warning when not running as admin -->
+	<SuppressValidation>true</SuppressValidation>
 	<!-- Publish output dirs passed to WiX as preprocessor variables via DefineConstants -->
 	<DmPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician\</DmPublishDir>
 	<DmConsolePublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagicianConsole\</DmConsolePublishDir>
