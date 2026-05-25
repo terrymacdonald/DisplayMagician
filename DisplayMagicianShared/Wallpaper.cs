@@ -601,8 +601,8 @@ namespace DisplayMagicianShared
                             }
                         }
                         idw.SetBackgroundColor(config.BackgroundColor);
-                        using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
-                            key?.SetValue("BackgroundType", 1, RegistryValueKind.DWord);
+                        //using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
+                        //    key?.SetValue("BackgroundType", 1, RegistryValueKind.DWord);
                         SharedLogger.logger.Trace("Wallpaper/Apply: Applied Solid Colour background.");
                         break;
                     }
@@ -638,11 +638,11 @@ namespace DisplayMagicianShared
                         if (intervalMs < 10000u) intervalMs = 10000u;   // Windows minimum is 10 seconds
                         idw.SetSlideshowOptions(slideshowOpts, intervalMs);
 
-                        using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
-                        {
-                            key?.SetValue("BackgroundType", 2, RegistryValueKind.DWord);
-                            key?.SetValue("SlideshowDirectoryPath", config.SlideshowDirectoryPath, RegistryValueKind.String);
-                        }
+                        // using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
+                        // {
+                        //     key?.SetValue("BackgroundType", 2, RegistryValueKind.DWord);
+                        //     key?.SetValue("SlideshowDirectoryPath", config.SlideshowDirectoryPath, RegistryValueKind.String);
+                        // }
                         SharedLogger.logger.Trace($"Wallpaper/Apply: Applied Slideshow from '{config.SlideshowDirectoryPath}'.");
                         break;
                     }
@@ -655,9 +655,18 @@ namespace DisplayMagicianShared
                             SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight for the desktop is only available on Windows 11. Skipping Spotlight restore on this OS.");
                             break;
                         }
-                        if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
+
+                        //if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow 
+
+                        // ContentDeliveryManager reads BackgroundType=3 from the registry to activate
+                        // Windows Spotlight. There is no COM method on IDesktopWallpaper to switch to
+                        // Spotlight mode directly — the registry write is the only available signal.
                         using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
                             key?.SetValue("BackgroundType", 3, RegistryValueKind.DWord);
+
+                        // Broadcast WM_SETTINGCHANGE so ContentDeliveryManager picks up the registry
+                        // change promptly rather than waiting for its next polling interval.
+                        Utils.SendMessage((IntPtr)Utils.HWND_BROADCAST, (uint)Utils.WM_SETTINGCHANGE, IntPtr.Zero, IntPtr.Zero);
                         SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight re-enabled. Note: the specific image shown cannot be restored — Windows will select its own image on its own schedule.");
                         break;
                     }
@@ -691,8 +700,8 @@ namespace DisplayMagicianShared
                                 SharedLogger.logger.Trace($"Wallpaper/Apply: Set wallpaper for monitor {mon.MonitorDevicePath} to {mon.WallpaperFilePath}.");
                         }
 
-                        using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
-                            key?.SetValue("BackgroundType", 0, RegistryValueKind.DWord);
+                        //using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
+                        //    key?.SetValue("BackgroundType", 0, RegistryValueKind.DWord);
                         break;
                     }
                 }
