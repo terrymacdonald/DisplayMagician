@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using DisplayMagicianShared.Windows;
@@ -156,6 +157,23 @@ namespace DisplayMagicianShared
             Slideshow   = 2,
             Spotlight   = 3,
         }
+
+        // Native methods to force Windows Explorer to refresh its settings layout
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern int SendMessageTimeout(
+            IntPtr hWnd, uint Msg, IntPtr wParam, string lParam, 
+            uint fuFlags, uint uTimeout, out IntPtr lpdwResult
+        );
+
+        private const uint WM_SETTINGCHANGE = 0x001A;
+        private const uint SMTO_ABORTIFHUNG = 0x0002;
+        private static readonly IntPtr HWND_BROADCAST = (IntPtr)0xffff;
+        private const string ControlPanelDesktopKeyPath = @"Control Panel\Desktop";
+        private const string ExplorerWallpapersKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers";
+        private const string DesktopSpotlightKeyPath = @"Software\Microsoft\Windows\CurrentVersion\DesktopSpotlight";
+        private const string DesktopSpotlightSettingsKeyPath = @"Software\Microsoft\Windows\CurrentVersion\DesktopSpotlight\Settings";
+        private const string CloudContentPolicyKeyPath = @"Software\Policies\Microsoft\Windows\CloudContent";
+        private const string BackgroundAccessApplicationsKeyPath = @"Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications";
 
         // -----------------------------------------------------------------------
         // IDesktopWallpaper COM interface
@@ -312,6 +330,109 @@ namespace DisplayMagicianShared
             }
         }
 
+        private static void SetExplorerBackgroundType(BackgroundType backgroundType)
+        {
+            using (var key = Registry.CurrentUser.CreateSubKey(ExplorerWallpapersKeyPath))
+            {
+                if (key == null)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/SetExplorerBackgroundType: Could not open or create HKCU\\{ExplorerWallpapersKeyPath}.");
+                    return;
+                }
+
+                key.SetValue("BackgroundType", (int)backgroundType, RegistryValueKind.DWord);
+            }
+        }
+
+        private static void SetDesktopSpotlightEnabled(bool enabled)
+        {
+            using (var key = Registry.CurrentUser.CreateSubKey(DesktopSpotlightSettingsKeyPath))
+            {
+                if (key == null)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/SetDesktopSpotlightEnabled: Could not open or create HKCU\\{DesktopSpotlightSettingsKeyPath}.");
+                    return;
+                }
+
+                key.SetValue("SpotlightDisabledReason", 100, RegistryValueKind.DWord);
+                key.SetValue("EnabledState", enabled ? 1 : 0, RegistryValueKind.DWord);
+            }
+            
+            SetDesktopLastUpdated();
+        }
+
+        private static void SetDesktopLastUpdated()
+        {
+            using (var key = Registry.CurrentUser.CreateSubKey(ControlPanelDesktopKeyPath))
+            {
+                if (key == null)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/SetDesktopLastUpdated: Could not open or create HKCU\\{ControlPanelDesktopKeyPath}.");
+                    return;
+                }
+
+                key.SetValue("LastUpdated", unchecked((int)0xFFFFFFFFu), RegistryValueKind.DWord); //0xFFFFFFFFu
+            }
+        }
+
+        private static void SetDesktopSpotlightRefreshTime()
+        {
+            using (var key = Registry.CurrentUser.CreateSubKey(DesktopSpotlightKeyPath))
+            {
+                if (key == null)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/SetDesktopSpotlightRefreshTime: Could not open or create HKCU\\{DesktopSpotlightKeyPath}.");
+                    return;
+                }
+
+                string refreshTime = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
+                key.SetValue("WallpaperRefresh", refreshTime, RegistryValueKind.String);
+            }
+        }
+
+        private static bool IsRegistryDwordEnabled(RegistryKey rootKey, string subKeyPath, string valueName)
+        {
+            try
+            {
+                using (var key = rootKey.OpenSubKey(subKeyPath))
+                    return key?.GetValue(valueName) is int value && value != 0;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Trace($"Wallpaper/IsRegistryDwordEnabled: Could not read {rootKey.Name}\\{subKeyPath}\\{valueName}: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static void LogDesktopSpotlightBlockers()
+        {
+            if (IsRegistryDwordEnabled(Registry.CurrentUser, CloudContentPolicyKeyPath, "DisableWindowsSpotlightFeatures") ||
+                IsRegistryDwordEnabled(Registry.LocalMachine, CloudContentPolicyKeyPath, "DisableWindowsSpotlightFeatures"))
+            {
+                SharedLogger.logger.Warn("Wallpaper/LogDesktopSpotlightBlockers: Windows Spotlight is disabled by the DisableWindowsSpotlightFeatures policy.");
+            }
+
+            if (IsRegistryDwordEnabled(Registry.CurrentUser, CloudContentPolicyKeyPath, "DisableSpotlightCollectionOnDesktop") ||
+                IsRegistryDwordEnabled(Registry.LocalMachine, CloudContentPolicyKeyPath, "DisableSpotlightCollectionOnDesktop"))
+            {
+                SharedLogger.logger.Warn("Wallpaper/LogDesktopSpotlightBlockers: Desktop Spotlight collection is disabled by policy.");
+            }
+
+            if (IsRegistryDwordEnabled(Registry.CurrentUser, BackgroundAccessApplicationsKeyPath, "GlobalUserDisabled"))
+            {
+                SharedLogger.logger.Warn("Wallpaper/LogDesktopSpotlightBlockers: Background apps are globally disabled for this user; Windows may reject Desktop Spotlight.");
+            }
+        }
+
+        private static void BroadcastWallpaperSettingsChanged()
+        {
+            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Desktop", SMTO_ABORTIFHUNG, 2000, out _);
+            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Control Panel\\Desktop", SMTO_ABORTIFHUNG, 2000, out _);
+            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Wallpapers", SMTO_ABORTIFHUNG, 2000, out _);
+            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, ExplorerWallpapersKeyPath, SMTO_ABORTIFHUNG, 2000, out _);
+            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, null, SMTO_ABORTIFHUNG, 2000, out _);
+        }
+
         // -----------------------------------------------------------------------
         // Public API
         // -----------------------------------------------------------------------
@@ -338,7 +459,7 @@ namespace DisplayMagicianShared
             try
             {
                 // Detect which background type Windows has active
-                using (var regKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers"))
+                using (var regKey = Registry.CurrentUser.OpenSubKey(ExplorerWallpapersKeyPath))
                 {
                     int bgType = regKey?.GetValue("BackgroundType") is int v ? v : 0;
                     config.BackgroundType = bgType switch
@@ -585,12 +706,15 @@ namespace DisplayMagicianShared
                 // so this check is inherently Spotlight-safe without a separate registry guard.
                 bool slideshowCurrentlyActive = idw.GetStatus(out uint slideshowState) == 0
                                                 && (slideshowState & 0x02u) != 0;
+                                            
 
                 switch (config.BackgroundType)
                 {
                     case BackgroundType.SolidColour:
                     {
                         if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
+                        SetDesktopSpotlightEnabled(false);
+
                         // Clear all wallpaper images and apply background colour only
                         if (idw.GetMonitorDevicePathCount(out uint monCount) == 0)
                         {
@@ -601,8 +725,8 @@ namespace DisplayMagicianShared
                             }
                         }
                         idw.SetBackgroundColor(config.BackgroundColor);
-                        //using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
-                        //    key?.SetValue("BackgroundType", 1, RegistryValueKind.DWord);
+                        SetExplorerBackgroundType(BackgroundType.SolidColour);
+                        BroadcastWallpaperSettingsChanged();
                         SharedLogger.logger.Trace("Wallpaper/Apply: Applied Solid Colour background.");
                         break;
                     }
@@ -616,6 +740,7 @@ namespace DisplayMagicianShared
                             break;
                         }
 
+                        SetDesktopSpotlightEnabled(false);
                         idw.SetPosition(StyleToPosition(config.WallpaperStyle));
                         idw.SetBackgroundColor(config.BackgroundColor);
 
@@ -638,11 +763,8 @@ namespace DisplayMagicianShared
                         if (intervalMs < 10000u) intervalMs = 10000u;   // Windows minimum is 10 seconds
                         idw.SetSlideshowOptions(slideshowOpts, intervalMs);
 
-                        // using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
-                        // {
-                        //     key?.SetValue("BackgroundType", 2, RegistryValueKind.DWord);
-                        //     key?.SetValue("SlideshowDirectoryPath", config.SlideshowDirectoryPath, RegistryValueKind.String);
-                        // }
+                        SetExplorerBackgroundType(BackgroundType.Slideshow);
+                        BroadcastWallpaperSettingsChanged();
                         SharedLogger.logger.Trace($"Wallpaper/Apply: Applied Slideshow from '{config.SlideshowDirectoryPath}'.");
                         break;
                     }
@@ -656,17 +778,15 @@ namespace DisplayMagicianShared
                             break;
                         }
 
-                        //if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow 
+                        LogDesktopSpotlightBlockers();
 
-                        // ContentDeliveryManager reads BackgroundType=3 from the registry to activate
-                        // Windows Spotlight. There is no COM method on IDesktopWallpaper to switch to
-                        // Spotlight mode directly — the registry write is the only available signal.
-                        using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
-                            key?.SetValue("BackgroundType", 3, RegistryValueKind.DWord);
-
-                        // Broadcast WM_SETTINGCHANGE so ContentDeliveryManager picks up the registry
-                        // change promptly rather than waiting for its next polling interval.
-                        Utils.SendMessage((IntPtr)Utils.HWND_BROADCAST, (uint)Utils.WM_SETTINGCHANGE, IntPtr.Zero, IntPtr.Zero);
+                        // These are the user-selection values written by Windows Settings.
+                        // Spotlight image choice and cadence remain owned by Windows.
+                        SetExplorerBackgroundType(BackgroundType.Spotlight);
+                        SetDesktopSpotlightEnabled(true);
+                        SetDesktopSpotlightRefreshTime();
+                        BroadcastWallpaperSettingsChanged();
+                        
                         SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight re-enabled. Note: the specific image shown cannot be restored — Windows will select its own image on its own schedule.");
                         break;
                     }
@@ -678,6 +798,9 @@ namespace DisplayMagicianShared
                             SharedLogger.logger.Trace("Wallpaper/Apply: Picture mode with no stored wallpapers, skipping.");
                             break;
                         }
+
+                        SetDesktopSpotlightEnabled(false);
+                        SetExplorerBackgroundType(BackgroundType.Picture);
 
                         if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
                         // Apply global style and background colour first
@@ -700,8 +823,7 @@ namespace DisplayMagicianShared
                                 SharedLogger.logger.Trace($"Wallpaper/Apply: Set wallpaper for monitor {mon.MonitorDevicePath} to {mon.WallpaperFilePath}.");
                         }
 
-                        //using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true))
-                        //    key?.SetValue("BackgroundType", 0, RegistryValueKind.DWord);
+                        BroadcastWallpaperSettingsChanged();
                         break;
                     }
                 }
