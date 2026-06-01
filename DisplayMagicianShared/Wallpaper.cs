@@ -1151,39 +1151,59 @@ namespace DisplayMagicianShared
         {
             var config = new WallpaperConfig
             {
+                // Always capture the wallpaper state as something that should be applied.
+                // The UI can still allow the user to opt out later by changing this to DoNothing.
                 WallpaperMode = Mode.Apply,
                 WallpaperStyle = Style.Fill,
                 BackgroundColor = 0,
+                BackgroundType = BackgroundType.Picture,
                 MonitorWallpapers = new List<WallpaperMonitorConfig>()
             };
 
             IDesktopWallpaper idw = null;
             try
             {
-                // Detect which background type Windows has active
-                using (var regKey = Registry.CurrentUser.OpenSubKey(ExplorerWallpapersKeyPath))
-                {
-                    int bgType = regKey?.GetValue("BackgroundType") is int v ? v : 0;
-                    config.BackgroundType = bgType switch
-                    {
-                        1 => BackgroundType.SolidColour,
-                        2 => BackgroundType.Slideshow,
-                        3 => BackgroundType.Spotlight,
-                        _ => BackgroundType.Picture,
-                    };
-
-                }
-
                 idw = (IDesktopWallpaper)new DesktopWallpaperClass();
 
-                // Capture global style and background colour
+                // Capture global style and background colour first. These are useful for
+                // Picture, Slideshow, and Solid Colour captures.
                 if (idw.GetPosition(out DESKTOP_WALLPAPER_POSITION pos) == 0)
                     config.WallpaperStyle = PositionToStyle(pos);
 
                 if (idw.GetBackgroundColor(out uint bgColor) == 0)
                     config.BackgroundColor = bgColor;
 
-                // For Slideshow, capture interval, shuffle, and source folder via COM
+                // Detect the active background mode from the most reliable source available.
+                // IDesktopWallpaper.GetStatus() is more reliable for Slideshow than the
+                // Explorer\Wallpapers\BackgroundType registry value, which can lag or be stale.
+                int registryBackgroundType = 0;
+                using (var regKey = Registry.CurrentUser.OpenSubKey(ExplorerWallpapersKeyPath))
+                {
+                    registryBackgroundType = regKey?.GetValue("BackgroundType") is int v ? v : 0;
+                }
+
+                bool slideshowCurrentlyActive = idw.GetStatus(out uint slideshowState) == 0
+                                                && (slideshowState & 0x02u) != 0;
+
+                if (slideshowCurrentlyActive)
+                {
+                    config.BackgroundType = BackgroundType.Slideshow;
+                }
+                else
+                {
+                    config.BackgroundType = registryBackgroundType switch
+                    {
+                        1 => BackgroundType.SolidColour,
+                        2 => BackgroundType.Slideshow,
+                        3 => BackgroundType.Spotlight,
+                        _ => BackgroundType.Picture,
+                    };
+                }
+
+                SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Detected BackgroundType={config.BackgroundType}, RegistryBackgroundType={registryBackgroundType}, SlideshowStatus=0x{slideshowState:X8}.");
+
+                // For Slideshow, capture interval, shuffle, and source folder via COM.
+                // Empty MonitorWallpapers is expected and valid for Slideshow.
                 if (config.BackgroundType == BackgroundType.Slideshow)
                 {
                     if (idw.GetSlideshowOptions(out uint slideshowOpts, out uint slideshowTick) == 0)
@@ -1216,68 +1236,70 @@ namespace DisplayMagicianShared
                         }
                         finally { Marshal.ReleaseComObject(slideshowArray); }
                     }
+
+                    SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Captured Slideshow folder='{config.SlideshowDirectoryPath}', interval={config.SlideshowIntervalSeconds}s, shuffle={config.SlideshowShuffle}.");
                 }
 
-                // Capture per-monitor wallpaper live paths (Picture mode only)
-                if (config.BackgroundType == BackgroundType.Picture)
+                // Build device-path -> bounds using DisplayConfigPaths + DisplayConfigModes.
+                // This is only stored for Picture captures, but we build it here so the
+                // Picture probing code stays self-contained.
+                var devicePathToBounds = new Dictionary<string, RECT>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in windowsDisplayConfig.DisplaySources)
                 {
-                    // Build device-path → bounds using DisplayConfigPaths + DisplayConfigModes —
-                    // the same data sources used by FindAllWindowsScreens / ScreenPosition, so
-                    // the coordinates are guaranteed to match the DisplayView rendering.
-                    var devicePathToBounds = new Dictionary<string, RECT>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var kvp in windowsDisplayConfig.DisplaySources)
+                    foreach (var src in kvp.Value)
                     {
-                        foreach (var src in kvp.Value)
+                        if (string.IsNullOrEmpty(src.DevicePath))
+                            continue;
+
+                        var rotation = DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY;
+                        foreach (var path in windowsDisplayConfig.DisplayConfigPaths)
                         {
-                            if (string.IsNullOrEmpty(src.DevicePath))
-                                continue;
-
-                            // Find the rotation for this source from DisplayConfigPaths
-                            var rotation = DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_IDENTITY;
-                            foreach (var path in windowsDisplayConfig.DisplayConfigPaths)
+                            if (path.SourceInfo.Id == src.SourceId &&
+                                path.SourceInfo.AdapterId.Value == src.AdapterId.Value)
                             {
-                                if (path.SourceInfo.Id == src.SourceId &&
-                                    path.SourceInfo.AdapterId.Value == src.AdapterId.Value)
-                                {
-                                    rotation = path.TargetInfo.Rotation;
-                                    break;
-                                }
+                                rotation = path.TargetInfo.Rotation;
+                                break;
                             }
+                        }
 
-                            // Find the source mode (position + dimensions) from DisplayConfigModes
-                            foreach (var mode in windowsDisplayConfig.DisplayConfigModes)
+                        foreach (var mode in windowsDisplayConfig.DisplayConfigModes)
+                        {
+                            if (mode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
+                                mode.Id == src.SourceId &&
+                                mode.AdapterId.Value == src.AdapterId.Value)
                             {
-                                if (mode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
-                                    mode.Id == src.SourceId &&
-                                    mode.AdapterId.Value == src.AdapterId.Value)
+                                int x = mode.SourceMode.Position.X;
+                                int y = mode.SourceMode.Position.Y;
+                                int w, h;
+                                if (rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE90 ||
+                                    rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
                                 {
-                                    int x = mode.SourceMode.Position.X;
-                                    int y = mode.SourceMode.Position.Y;
-                                    int w, h;
-                                    if (rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE90 ||
-                                        rotation == DISPLAYCONFIG_ROTATION.DISPLAYCONFIG_ROTATION_ROTATE270)
-                                    {
-                                        w = (int)mode.SourceMode.Height;
-                                        h = (int)mode.SourceMode.Width;
-                                    }
-                                    else
-                                    {
-                                        w = (int)mode.SourceMode.Width;
-                                        h = (int)mode.SourceMode.Height;
-                                    }
-                                    devicePathToBounds[src.DevicePath] = new RECT
-                                    {
-                                        left = x,
-                                        top = y,
-                                        right = x + w,
-                                        bottom = y + h
-                                    };
-                                    break;
+                                    w = (int)mode.SourceMode.Height;
+                                    h = (int)mode.SourceMode.Width;
                                 }
+                                else
+                                {
+                                    w = (int)mode.SourceMode.Width;
+                                    h = (int)mode.SourceMode.Height;
+                                }
+                                devicePathToBounds[src.DevicePath] = new RECT
+                                {
+                                    left = x,
+                                    top = y,
+                                    right = x + w,
+                                    bottom = y + h
+                                };
+                                break;
                             }
                         }
                     }
+                }
 
+                // For Picture mode, capture per-monitor wallpaper live paths.
+                // If Windows reports Picture but every monitor has an empty wallpaper path,
+                // treat it as Solid Colour rather than saving a broken Picture profile.
+                if (config.BackgroundType == BackgroundType.Picture)
+                {
                     if (idw.GetMonitorDevicePathCount(out uint monitorCount) == 0)
                     {
                         for (uint i = 0; i < monitorCount; i++)
@@ -1291,7 +1313,7 @@ namespace DisplayMagicianShared
                             if (idw.GetWallpaper(monitorPath, out string wallpaperPath) != 0 ||
                                 string.IsNullOrEmpty(wallpaperPath))
                             {
-                                SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Monitor {monitorPath} has no wallpaper set, skipping.");
+                                SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Monitor {monitorPath} has no wallpaper set.");
                                 continue;
                             }
 
@@ -1307,16 +1329,36 @@ namespace DisplayMagicianShared
                                 monitorRect = default;
                             }
 
-                            // Store the live path; SaveWallpaperFiles will copy it to permanent storage later.
                             config.MonitorWallpapers.Add(new WallpaperMonitorConfig(monitorPath, wallpaperPath, monitorRect));
                             SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Captured live wallpaper path for monitor {monitorPath} -> {wallpaperPath}");
                         }
                     }
+
+                    if (config.MonitorWallpapers.Count == 0)
+                    {
+                        config.BackgroundType = BackgroundType.SolidColour;
+                        SharedLogger.logger.Trace("Wallpaper/CaptureCurrentWallpaperConfig: Registry indicated Picture, but no monitor wallpaper paths were available; capturing as SolidColour.");
+                    }
                 }
+
+                // These modes intentionally do not populate MonitorWallpapers.
+                // That is not a failure and must not imply DoNothing.
+                if (config.BackgroundType == BackgroundType.SolidColour ||
+                    config.BackgroundType == BackgroundType.Slideshow ||
+                    config.BackgroundType == BackgroundType.Spotlight)
+                {
+                    config.MonitorWallpapers.Clear();
+                }
+
+                // Always capture as Apply. The user can opt out later in the UI.
+                config.WallpaperMode = Mode.Apply;
+
+                SharedLogger.logger.Trace($"Wallpaper/CaptureCurrentWallpaperConfig: Final capture BackgroundType={config.BackgroundType}, WallpaperMode={config.WallpaperMode}, MonitorWallpapers={config.MonitorWallpapers.Count}.");
             }
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"Wallpaper/CaptureCurrentWallpaperConfig: Exception capturing wallpaper configuration: {ex.Message}");
+                config.WallpaperMode = Mode.Apply;
             }
             finally
             {
