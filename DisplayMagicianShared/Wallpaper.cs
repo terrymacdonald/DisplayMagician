@@ -1,11 +1,14 @@
-﻿using Microsoft.Win32;
+﻿using DisplayMagicianShared.Windows;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
-using DisplayMagicianShared.Windows;
+using System.Xml.Linq;
 
 namespace DisplayMagicianShared
 {
@@ -132,17 +135,17 @@ namespace DisplayMagicianShared
 
         public enum Style : int
         {
-            Fill    = 0,
-            Fit     = 1,
+            Fill = 0,
+            Fit = 1,
             Stretch = 2,
-            Tile    = 3,
-            Center  = 4,
-            Span    = 5
+            Tile = 3,
+            Center = 4,
+            Span = 5
         }
 
         public enum Mode : int
         {
-            Apply     = 0,
+            Apply = 0,
             DoNothing = 1,
         }
 
@@ -152,16 +155,16 @@ namespace DisplayMagicianShared
         /// </summary>
         public enum BackgroundType : int
         {
-            Picture     = 0,
+            Picture = 0,
             SolidColour = 1,
-            Slideshow   = 2,
-            Spotlight   = 3,
+            Slideshow = 2,
+            Spotlight = 3,
         }
 
         // Native methods to force Windows Explorer to refresh its settings layout
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern int SendMessageTimeout(
-            IntPtr hWnd, uint Msg, IntPtr wParam, string lParam, 
+            IntPtr hWnd, uint Msg, IntPtr wParam, string lParam,
             uint fuFlags, uint uTimeout, out IntPtr lpdwResult
         );
 
@@ -174,6 +177,14 @@ namespace DisplayMagicianShared
         private const string DesktopSpotlightSettingsKeyPath = @"Software\Microsoft\Windows\CurrentVersion\DesktopSpotlight\Settings";
         private const string CloudContentPolicyKeyPath = @"Software\Policies\Microsoft\Windows\CloudContent";
         private const string BackgroundAccessApplicationsKeyPath = @"Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications";
+        private const string DesktopSpotlightCreativesKeyPath = @"Software\Microsoft\Windows\CurrentVersion\DesktopSpotlight\Creatives";
+        private const string DesktopSpotlightExtensionContract = "WindowsUdk.UI.Shell.DesktopSpotlight.DesktopSpotlightExtension";
+
+        // WinRT Desktop Spotlight private interface IDs discovered from DesktopSpotlight.dll symbols.
+        private static readonly Guid IID_IDesktopSpotlightExtensionStatics = new Guid("151a5f2b-906b-5417-bc0b-2d84fb193a15");
+
+        private static readonly object DesktopSpotlightProviderLock = new object();
+        private static DesktopSpotlightProviderCandidate _desktopSpotlightProvider;
 
         // -----------------------------------------------------------------------
         // IDesktopWallpaper COM interface
@@ -187,21 +198,25 @@ namespace DisplayMagicianShared
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         private interface IDesktopWallpaper
         {
-            [PreserveSig] int SetWallpaper(
+            [PreserveSig]
+            int SetWallpaper(
                 [MarshalAs(UnmanagedType.LPWStr)] string monitorID,
                 [MarshalAs(UnmanagedType.LPWStr)] string wallpaper);
 
-            [PreserveSig] int GetWallpaper(
+            [PreserveSig]
+            int GetWallpaper(
                 [MarshalAs(UnmanagedType.LPWStr)] string monitorID,
                 [MarshalAs(UnmanagedType.LPWStr)] out string wallpaper);
 
-            [PreserveSig] int GetMonitorDevicePathAt(
+            [PreserveSig]
+            int GetMonitorDevicePathAt(
                 uint monitorIndex,
                 [MarshalAs(UnmanagedType.LPWStr)] out string monitorID);
 
             [PreserveSig] int GetMonitorDevicePathCount(out uint count);
 
-            [PreserveSig] int GetMonitorRECT(
+            [PreserveSig]
+            int GetMonitorRECT(
                 [MarshalAs(UnmanagedType.LPWStr)] string monitorID,
                 out RECT displayRect);
 
@@ -268,28 +283,78 @@ namespace DisplayMagicianShared
             [MarshalAs(UnmanagedType.LPStruct)] Guid riid,
             [MarshalAs(UnmanagedType.Interface)] out IShellItemArray ppv);
 
+        [DllImport("combase.dll")]
+        private static extern int RoInitialize(RO_INIT_TYPE initType);
+
+        [DllImport("combase.dll")]
+        private static extern void RoUninitialize();
+
+        [DllImport("combase.dll", CharSet = CharSet.Unicode)]
+        private static extern int WindowsCreateString(
+            string sourceString,
+            int length,
+            out IntPtr hstring);
+
+        [DllImport("combase.dll")]
+        private static extern int WindowsDeleteString(IntPtr hstring);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr LoadLibraryExW(
+            string lpLibFileName,
+            IntPtr hFile,
+            LoadLibraryFlags dwFlags);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate int DllGetActivationFactoryDelegate(IntPtr activatableClassId, out IntPtr factory);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate int WinRtGetDefaultDelegate(IntPtr thisPtr, out IntPtr extension);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate int WinRtGetUInt32Delegate(IntPtr thisPtr, out uint value);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate int WinRtSetUInt32Delegate(IntPtr thisPtr, uint value);
+
+        private enum RO_INIT_TYPE
+        {
+            RO_INIT_SINGLETHREADED = 0,
+            RO_INIT_MULTITHREADED = 1
+        }
+
+        [Flags]
+        private enum LoadLibraryFlags : uint
+        {
+            None = 0,
+            LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR = 0x00000100,
+            LOAD_LIBRARY_SEARCH_DEFAULT_DIRS = 0x00001000
+        }
+
         // Maps Wallpaper.Style to the DESKTOP_WALLPAPER_POSITION COM enum value
         private enum DESKTOP_WALLPAPER_POSITION : int
         {
-            DWPOS_CENTER  = 0,
-            DWPOS_TILE    = 1,
+            DWPOS_CENTER = 0,
+            DWPOS_TILE = 1,
             DWPOS_STRETCH = 2,
-            DWPOS_FIT     = 3,
-            DWPOS_FILL    = 4,
-            DWPOS_SPAN    = 5,
+            DWPOS_FIT = 3,
+            DWPOS_FILL = 4,
+            DWPOS_SPAN = 5,
         }
 
         private static DESKTOP_WALLPAPER_POSITION StyleToPosition(Style style)
         {
             return style switch
             {
-                Style.Center  => DESKTOP_WALLPAPER_POSITION.DWPOS_CENTER,
-                Style.Tile    => DESKTOP_WALLPAPER_POSITION.DWPOS_TILE,
+                Style.Center => DESKTOP_WALLPAPER_POSITION.DWPOS_CENTER,
+                Style.Tile => DESKTOP_WALLPAPER_POSITION.DWPOS_TILE,
                 Style.Stretch => DESKTOP_WALLPAPER_POSITION.DWPOS_STRETCH,
-                Style.Fit     => DESKTOP_WALLPAPER_POSITION.DWPOS_FIT,
-                Style.Fill    => DESKTOP_WALLPAPER_POSITION.DWPOS_FILL,
-                Style.Span    => DESKTOP_WALLPAPER_POSITION.DWPOS_SPAN,
-                _             => DESKTOP_WALLPAPER_POSITION.DWPOS_FILL,
+                Style.Fit => DESKTOP_WALLPAPER_POSITION.DWPOS_FIT,
+                Style.Fill => DESKTOP_WALLPAPER_POSITION.DWPOS_FILL,
+                Style.Span => DESKTOP_WALLPAPER_POSITION.DWPOS_SPAN,
+                _ => DESKTOP_WALLPAPER_POSITION.DWPOS_FILL,
             };
         }
 
@@ -297,13 +362,13 @@ namespace DisplayMagicianShared
         {
             return pos switch
             {
-                DESKTOP_WALLPAPER_POSITION.DWPOS_CENTER  => Style.Center,
-                DESKTOP_WALLPAPER_POSITION.DWPOS_TILE    => Style.Tile,
+                DESKTOP_WALLPAPER_POSITION.DWPOS_CENTER => Style.Center,
+                DESKTOP_WALLPAPER_POSITION.DWPOS_TILE => Style.Tile,
                 DESKTOP_WALLPAPER_POSITION.DWPOS_STRETCH => Style.Stretch,
-                DESKTOP_WALLPAPER_POSITION.DWPOS_FIT     => Style.Fit,
-                DESKTOP_WALLPAPER_POSITION.DWPOS_FILL    => Style.Fill,
-                DESKTOP_WALLPAPER_POSITION.DWPOS_SPAN    => Style.Span,
-                _                                        => Style.Fill,
+                DESKTOP_WALLPAPER_POSITION.DWPOS_FIT => Style.Fit,
+                DESKTOP_WALLPAPER_POSITION.DWPOS_FILL => Style.Fill,
+                DESKTOP_WALLPAPER_POSITION.DWPOS_SPAN => Style.Span,
+                _ => Style.Fill,
             };
         }
 
@@ -322,10 +387,10 @@ namespace DisplayMagicianShared
             unchecked
             {
                 uint h = 2166136261u;
-                h = (h ^ (uint)r.left)              * 16777619u;
-                h = (h ^ (uint)r.top)               * 16777619u;
-                h = (h ^ (uint)(r.right  - r.left)) * 16777619u;
-                h = (h ^ (uint)(r.bottom - r.top))  * 16777619u;
+                h = (h ^ (uint)r.left) * 16777619u;
+                h = (h ^ (uint)r.top) * 16777619u;
+                h = (h ^ (uint)(r.right - r.left)) * 16777619u;
+                h = (h ^ (uint)(r.bottom - r.top)) * 16777619u;
                 return h.ToString("x8");
             }
         }
@@ -357,7 +422,7 @@ namespace DisplayMagicianShared
                 key.SetValue("SpotlightDisabledReason", 100, RegistryValueKind.DWord);
                 key.SetValue("EnabledState", enabled ? 1 : 0, RegistryValueKind.DWord);
             }
-            
+
             SetDesktopLastUpdated();
         }
 
@@ -433,6 +498,643 @@ namespace DisplayMagicianShared
             SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, null, SMTO_ABORTIFHUNG, 2000, out _);
         }
 
+        /// <summary>
+        /// Discovers and validates the AppX/SystemApp provider that implements Desktop Spotlight.
+        /// This intentionally avoids hard-coding MicrosoftWindows.Client.CBS_cw5n1h2txyewy so that
+        /// future package/version changes can still be handled.
+        /// </summary>
+        private static bool EnsureDesktopSpotlightProviderInitialised()
+        {
+            lock (DesktopSpotlightProviderLock)
+            {
+                if (_desktopSpotlightProvider != null)
+                    return true;
+
+                DesktopSpotlightProviderCandidate provider = SelectDesktopSpotlightProviderCandidate();
+                if (provider == null)
+                    return false;
+
+                _desktopSpotlightProvider = provider;
+                SharedLogger.logger.Info($"Wallpaper/EnsureDesktopSpotlightProviderInitialised: Selected provider '{provider.RuntimeClassName}' from '{provider.DllFullPath}'.");
+                return true;
+            }
+        }
+
+        private static DesktopSpotlightProviderCandidate SelectDesktopSpotlightProviderCandidate()
+        {
+            List<DesktopSpotlightProviderCandidate> candidates = DiscoverDesktopSpotlightProviderCandidates();
+
+            if (candidates.Count == 0)
+            {
+                SharedLogger.logger.Warn($"Wallpaper/SelectDesktopSpotlightProviderCandidate: No AppX manifest was found declaring '{DesktopSpotlightExtensionContract}'.");
+                return null;
+            }
+
+            SharedLogger.logger.Trace($"Wallpaper/SelectDesktopSpotlightProviderCandidate: Found {candidates.Count} manifest candidate(s).");
+
+            List<DesktopSpotlightProviderCandidate> validCandidates = new List<DesktopSpotlightProviderCandidate>();
+
+            foreach (DesktopSpotlightProviderCandidate candidate in candidates)
+            {
+                if (ValidateDesktopSpotlightProviderCandidate(candidate, out string validationMessage))
+                {
+                    candidate.ValidationMessage = validationMessage;
+                    validCandidates.Add(candidate);
+
+                    SharedLogger.logger.Trace(
+                        $"Wallpaper/SelectDesktopSpotlightProviderCandidate: Valid candidate: package='{candidate.PackageName}', version='{candidate.PackageVersion}', dll='{candidate.DllFullPath}', {validationMessage}");
+                }
+                else
+                {
+                    SharedLogger.logger.Trace(
+                        $"Wallpaper/SelectDesktopSpotlightProviderCandidate: Rejected candidate: package='{candidate.PackageName}', version='{candidate.PackageVersion}', dll='{candidate.DllFullPath}', reason='{validationMessage}'");
+                }
+            }
+
+            if (validCandidates.Count == 0)
+            {
+                SharedLogger.logger.Warn("Wallpaper/SelectDesktopSpotlightProviderCandidate: No candidate passed validation.");
+                return null;
+            }
+
+            // Select the newest working candidate, with a preference for Windows SystemApps over
+            // WindowsApps packages. Validation is the key gate; version/modified time are tiebreakers.
+            DesktopSpotlightProviderCandidate selected = validCandidates
+                .OrderByDescending(c => c.IsSystemApp ? 1 : 0)
+                .ThenByDescending(c => c.PackageVersion ?? new Version(0, 0, 0, 0))
+                .ThenByDescending(c => GetSafeLastWriteTimeUtc(c.ManifestPath))
+                .First();
+
+            SharedLogger.logger.Info(
+                $"Wallpaper/SelectDesktopSpotlightProviderCandidate: Selected package='{selected.PackageName}', version='{selected.PackageVersion}', dll='{selected.DllFullPath}'.");
+
+            return selected;
+        }
+
+        private static List<DesktopSpotlightProviderCandidate> DiscoverDesktopSpotlightProviderCandidates()
+        {
+            List<DesktopSpotlightProviderCandidate> candidates = new List<DesktopSpotlightProviderCandidate>();
+
+            foreach (string manifestPath in EnumeratePotentialAppxManifests())
+            {
+                try
+                {
+                    DesktopSpotlightProviderCandidate candidate = TryReadDesktopSpotlightProviderFromManifest(manifestPath);
+                    if (candidate != null)
+                        candidates.Add(candidate);
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Trace($"Wallpaper/DiscoverDesktopSpotlightProviderCandidates: Skipping manifest '{manifestPath}': {ex.Message}");
+                }
+            }
+
+            return candidates;
+        }
+
+        private static IEnumerable<string> EnumeratePotentialAppxManifests()
+        {
+            string windowsDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            string systemAppsDir = Path.Combine(windowsDir, "SystemApps");
+
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string windowsAppsDir = Path.Combine(programFiles, "WindowsApps");
+
+            foreach (string path in EnumerateManifestsUnder(systemAppsDir))
+                yield return path;
+
+            foreach (string path in EnumerateManifestsUnder(windowsAppsDir))
+                yield return path;
+        }
+
+        private static IEnumerable<string> EnumerateManifestsUnder(string root)
+        {
+            if (!Directory.Exists(root))
+                yield break;
+
+            IEnumerable<string> directories;
+
+            try
+            {
+                directories = Directory.EnumerateDirectories(root);
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Trace($"Wallpaper/EnumerateManifestsUnder: Could not enumerate '{root}': {ex.Message}");
+                yield break;
+            }
+
+            foreach (string directory in directories)
+            {
+                string manifest1 = Path.Combine(directory, "AppxManifest.xml");
+                string manifest2 = Path.Combine(directory, "appxmanifest.xml");
+
+                if (File.Exists(manifest1))
+                    yield return manifest1;
+
+                if (File.Exists(manifest2) && !string.Equals(manifest1, manifest2, StringComparison.OrdinalIgnoreCase))
+                    yield return manifest2;
+            }
+        }
+
+        private static DesktopSpotlightProviderCandidate TryReadDesktopSpotlightProviderFromManifest(string manifestPath)
+        {
+            string manifestText = File.ReadAllText(manifestPath);
+
+            if (!manifestText.Contains(DesktopSpotlightExtensionContract, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            XDocument doc = XDocument.Parse(manifestText, LoadOptions.PreserveWhitespace);
+
+            string packageDirectory = Path.GetDirectoryName(manifestPath);
+            if (string.IsNullOrEmpty(packageDirectory))
+                return null;
+
+            XElement identity = doc
+                .Descendants()
+                .FirstOrDefault(e => string.Equals(e.Name.LocalName, "Identity", StringComparison.OrdinalIgnoreCase));
+
+            string packageName = identity?.Attribute("Name")?.Value ?? Path.GetFileName(packageDirectory);
+            string publisher = identity?.Attribute("Publisher")?.Value ?? "";
+            Version packageVersion = TryParseVersion(identity?.Attribute("Version")?.Value);
+
+            List<string> runtimeClassesFromContract = doc
+                .Descendants()
+                .Where(e => string.Equals(e.Name.LocalName, DesktopSpotlightExtensionContract, StringComparison.OrdinalIgnoreCase))
+                .Select(e => (e.Value ?? string.Empty).Trim())
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            List<InProcessServerInfo> inProcessServers = doc
+                .Descendants()
+                .Where(e => string.Equals(e.Name.LocalName, "InProcessServer", StringComparison.OrdinalIgnoreCase))
+                .Select(e => ReadInProcessServer(e, packageDirectory))
+                .Where(s => s != null)
+                .ToList();
+
+            foreach (string runtimeClass in runtimeClassesFromContract)
+            {
+                InProcessServerInfo matchingServer = inProcessServers
+                    .FirstOrDefault(s => s.ActivatableClasses.Contains(runtimeClass, StringComparer.OrdinalIgnoreCase));
+
+                if (matchingServer != null)
+                {
+                    return new DesktopSpotlightProviderCandidate
+                    {
+                        PackageDirectory = packageDirectory,
+                        ManifestPath = manifestPath,
+                        PackageName = packageName,
+                        Publisher = publisher,
+                        PackageVersion = packageVersion,
+                        RuntimeClassName = runtimeClass,
+                        DllRelativePath = matchingServer.RelativePath,
+                        DllFullPath = matchingServer.FullPath,
+                        IsSystemApp = packageDirectory.StartsWith(
+                            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SystemApps"),
+                            StringComparison.OrdinalIgnoreCase)
+                    };
+                }
+            }
+
+            InProcessServerInfo fallbackServer = inProcessServers
+                .FirstOrDefault(s =>
+                    s.ActivatableClasses.Any(c => c.Contains("DesktopSpotlightProvider", StringComparison.OrdinalIgnoreCase)) ||
+                    s.RelativePath.Contains("DesktopSpotlight", StringComparison.OrdinalIgnoreCase));
+
+            if (fallbackServer == null)
+                return null;
+
+            string fallbackRuntimeClass =
+                runtimeClassesFromContract.FirstOrDefault()
+                ?? fallbackServer.ActivatableClasses.FirstOrDefault(c => c.Contains("DesktopSpotlightProvider", StringComparison.OrdinalIgnoreCase))
+                ?? fallbackServer.ActivatableClasses.FirstOrDefault()
+                ?? "DesktopSpotlight.DesktopSpotlightProvider";
+
+            return new DesktopSpotlightProviderCandidate
+            {
+                PackageDirectory = packageDirectory,
+                ManifestPath = manifestPath,
+                PackageName = packageName,
+                Publisher = publisher,
+                PackageVersion = packageVersion,
+                RuntimeClassName = fallbackRuntimeClass,
+                DllRelativePath = fallbackServer.RelativePath,
+                DllFullPath = fallbackServer.FullPath,
+                IsSystemApp = packageDirectory.StartsWith(
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SystemApps"),
+                    StringComparison.OrdinalIgnoreCase)
+            };
+        }
+
+        private static InProcessServerInfo ReadInProcessServer(XElement inProcessServer, string packageDirectory)
+        {
+            string pathValue = inProcessServer
+                .Elements()
+                .FirstOrDefault(e => string.Equals(e.Name.LocalName, "Path", StringComparison.OrdinalIgnoreCase))
+                ?.Value
+                ?.Trim();
+
+            if (string.IsNullOrWhiteSpace(pathValue))
+                return null;
+
+            List<string> activatableClasses = inProcessServer
+                .Descendants()
+                .Where(e => string.Equals(e.Name.LocalName, "ActivatableClass", StringComparison.OrdinalIgnoreCase))
+                .Select(e => e.Attribute("ActivatableClassId")?.Value?.Trim())
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            string fullPath = Path.IsPathRooted(pathValue)
+                ? pathValue
+                : Path.Combine(packageDirectory, pathValue);
+
+            return new InProcessServerInfo
+            {
+                RelativePath = pathValue,
+                FullPath = fullPath,
+                ActivatableClasses = activatableClasses
+            };
+        }
+
+        private static bool ValidateDesktopSpotlightProviderCandidate(DesktopSpotlightProviderCandidate candidate, out string validationMessage)
+        {
+            validationMessage = "";
+
+            if (candidate == null)
+            {
+                validationMessage = "Candidate was null.";
+                return false;
+            }
+
+            if (!File.Exists(candidate.DllFullPath))
+            {
+                validationMessage = "DesktopSpotlight DLL does not exist.";
+                return false;
+            }
+
+            IntPtr factory = IntPtr.Zero;
+            IntPtr statics = IntPtr.Zero;
+            IntPtr extension = IntPtr.Zero;
+            bool roInitialised = false;
+
+            try
+            {
+                int hr = RoInitialize(RO_INIT_TYPE.RO_INIT_MULTITHREADED);
+                roInitialised = hr >= 0;
+                if (hr < 0)
+                {
+                    validationMessage = $"RoInitialize failed with HRESULT 0x{hr:X8}.";
+                    return false;
+                }
+
+                factory = GetActivationFactoryViaDll(candidate.DllFullPath, candidate.RuntimeClassName);
+
+                hr = QueryInterface(factory, IID_IDesktopSpotlightExtensionStatics, out statics);
+                if (hr < 0 || statics == IntPtr.Zero)
+                {
+                    validationMessage = $"QI IDesktopSpotlightExtensionStatics failed with HRESULT 0x{hr:X8}.";
+                    return false;
+                }
+
+                hr = GetDefaultFromStatics(statics, out extension);
+                if (hr < 0 || extension == IntPtr.Zero)
+                {
+                    validationMessage = $"IDesktopSpotlightExtensionStatics.GetDefault failed with HRESULT 0x{hr:X8}.";
+                    return false;
+                }
+
+                hr = GetWallpaperCount(extension, out uint wallpaperCount);
+                if (hr < 0 || wallpaperCount == 0)
+                {
+                    validationMessage = $"get_WallpaperCount failed or returned zero. HRESULT 0x{hr:X8}, count {wallpaperCount}.";
+                    return false;
+                }
+
+                hr = GetActiveWallpaperIndex(extension, out uint activeIndex);
+                if (hr < 0)
+                {
+                    validationMessage = $"get_ActiveWallpaperIndex failed with HRESULT 0x{hr:X8}.";
+                    return false;
+                }
+
+                int? registryImageIndex = ReadRegistryDword(DesktopSpotlightCreativesKeyPath, "ImageIndex");
+                uint selectedIndex = SelectDesktopSpotlightWallpaperIndex(wallpaperCount, activeIndex, registryImageIndex);
+
+                candidate.WallpaperCount = wallpaperCount;
+                candidate.ActiveWallpaperIndex = activeIndex;
+                candidate.RegistryImageIndex = registryImageIndex;
+                candidate.SelectedWallpaperIndex = selectedIndex;
+
+                validationMessage = $"wallpaperCount={wallpaperCount}, activeIndex={activeIndex}, registryImageIndex={(registryImageIndex.HasValue ? registryImageIndex.Value.ToString() : "<missing>")}, selectedIndex={selectedIndex}";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                validationMessage = ex.Message;
+                return false;
+            }
+            finally
+            {
+                if (extension != IntPtr.Zero) Marshal.Release(extension);
+                if (statics != IntPtr.Zero) Marshal.Release(statics);
+                if (factory != IntPtr.Zero) Marshal.Release(factory);
+
+                if (roInitialised)
+                    RoUninitialize();
+            }
+        }
+
+        private static bool ApplyDesktopSpotlight()
+        {
+            if (!EnsureDesktopSpotlightProviderInitialised())
+            {
+                SharedLogger.logger.Warn("Wallpaper/ApplyDesktopSpotlight: Could not initialise a usable Desktop Spotlight provider.");
+                return false;
+            }
+
+            IntPtr factory = IntPtr.Zero;
+            IntPtr statics = IntPtr.Zero;
+            IntPtr extension = IntPtr.Zero;
+            bool roInitialised = false;
+
+            try
+            {
+                int hr = RoInitialize(RO_INIT_TYPE.RO_INIT_MULTITHREADED);
+                roInitialised = hr >= 0;
+                if (hr < 0)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/ApplyDesktopSpotlight: RoInitialize failed with HRESULT 0x{hr:X8}.");
+                    return false;
+                }
+
+                factory = GetActivationFactoryViaDll(_desktopSpotlightProvider.DllFullPath, _desktopSpotlightProvider.RuntimeClassName);
+
+                hr = QueryInterface(factory, IID_IDesktopSpotlightExtensionStatics, out statics);
+                if (hr < 0 || statics == IntPtr.Zero)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/ApplyDesktopSpotlight: QI IDesktopSpotlightExtensionStatics failed with HRESULT 0x{hr:X8}.");
+                    return false;
+                }
+
+                hr = GetDefaultFromStatics(statics, out extension);
+                if (hr < 0 || extension == IntPtr.Zero)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/ApplyDesktopSpotlight: GetDefault failed with HRESULT 0x{hr:X8}.");
+                    return false;
+                }
+
+                hr = GetWallpaperCount(extension, out uint wallpaperCount);
+                if (hr < 0 || wallpaperCount == 0)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/ApplyDesktopSpotlight: get_WallpaperCount failed or returned zero. HRESULT 0x{hr:X8}, count {wallpaperCount}.");
+                    return false;
+                }
+
+                hr = GetActiveWallpaperIndex(extension, out uint activeIndex);
+                if (hr < 0)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/ApplyDesktopSpotlight: get_ActiveWallpaperIndex failed with HRESULT 0x{hr:X8}.");
+                    return false;
+                }
+
+                int? registryImageIndex = ReadRegistryDword(DesktopSpotlightCreativesKeyPath, "ImageIndex");
+                uint selectedIndex = SelectDesktopSpotlightWallpaperIndex(wallpaperCount, activeIndex, registryImageIndex);
+
+                SharedLogger.logger.Info(
+                    $"Wallpaper/ApplyDesktopSpotlight: Using provider '{_desktopSpotlightProvider.PackageName}' v{_desktopSpotlightProvider.PackageVersion}; wallpaperCount={wallpaperCount}, activeIndex={activeIndex}, registryImageIndex={(registryImageIndex.HasValue ? registryImageIndex.Value.ToString() : "<missing>")}, selectedIndex={selectedIndex}.");
+
+                // Order matters. Windows Settings accepts the Spotlight mode when the supporting
+                // DesktopSpotlight settings are in place before BackgroundType is switched to 3.
+                WriteRegistryDword(DesktopSpotlightSettingsKeyPath, "EnabledState", 1);
+                WriteRegistryDword(DesktopSpotlightSettingsKeyPath, "SpotlightDisabledReason", 100);
+                WriteRegistryDword(ExplorerWallpapersKeyPath, "BackgroundType", (int)BackgroundType.Spotlight);
+
+                hr = SetActiveWallpaperIndex(extension, selectedIndex);
+                if (hr < 0)
+                {
+                    SharedLogger.logger.Warn($"Wallpaper/ApplyDesktopSpotlight: SetActiveWallpaperIndex({selectedIndex}) failed with HRESULT 0x{hr:X8}.");
+                    return false;
+                }
+
+                int? finalBackgroundType = ReadRegistryDword(ExplorerWallpapersKeyPath, "BackgroundType");
+                int? finalEnabledState = ReadRegistryDword(DesktopSpotlightSettingsKeyPath, "EnabledState");
+
+                SharedLogger.logger.Info(
+                    $"Wallpaper/ApplyDesktopSpotlight: Applied Desktop Spotlight. Final BackgroundType={finalBackgroundType?.ToString() ?? "<missing>"}, EnabledState={finalEnabledState?.ToString() ?? "<missing>"}.");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"Wallpaper/ApplyDesktopSpotlight: Exception applying Desktop Spotlight: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                if (extension != IntPtr.Zero) Marshal.Release(extension);
+                if (statics != IntPtr.Zero) Marshal.Release(statics);
+                if (factory != IntPtr.Zero) Marshal.Release(factory);
+
+                if (roInitialised)
+                    RoUninitialize();
+            }
+        }
+
+        private static uint SelectDesktopSpotlightWallpaperIndex(uint wallpaperCount, uint activeIndex, int? registryImageIndex)
+        {
+            if (wallpaperCount == 0)
+                return 0;
+
+            if (activeIndex < wallpaperCount)
+                return activeIndex;
+
+            if (registryImageIndex.HasValue &&
+                registryImageIndex.Value >= 0 &&
+                registryImageIndex.Value < wallpaperCount)
+            {
+                return (uint)registryImageIndex.Value;
+            }
+
+            return 0;
+        }
+
+        private static int? ReadRegistryDword(string subKeyPath, string valueName)
+        {
+            try
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(subKeyPath))
+                {
+                    if (key?.GetValue(valueName) is int value)
+                        return value;
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Trace($"Wallpaper/ReadRegistryDword: Could not read HKCU\\{subKeyPath}\\{valueName}: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private static void WriteRegistryDword(string subKeyPath, string valueName, int value)
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(subKeyPath))
+            {
+                if (key == null)
+                    throw new InvalidOperationException($"Could not open or create HKCU\\{subKeyPath}.");
+
+                key.SetValue(valueName, value, RegistryValueKind.DWord);
+                key.Flush();
+            }
+        }
+
+        private static IntPtr GetActivationFactoryViaDll(string dllFullPath, string runtimeClassName)
+        {
+            IntPtr module = LoadLibraryExW(
+                dllFullPath,
+                IntPtr.Zero,
+                LoadLibraryFlags.LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR |
+                LoadLibraryFlags.LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+
+            if (module == IntPtr.Zero)
+            {
+                int error = Marshal.GetLastWin32Error();
+                throw new InvalidOperationException($"LoadLibraryExW failed for '{dllFullPath}'. Win32 error {error}: {new Win32Exception(error).Message}");
+            }
+
+            IntPtr proc = GetProcAddress(module, "DllGetActivationFactory");
+            if (proc == IntPtr.Zero)
+            {
+                int error = Marshal.GetLastWin32Error();
+                throw new InvalidOperationException($"GetProcAddress(DllGetActivationFactory) failed for '{dllFullPath}'. Win32 error {error}: {new Win32Exception(error).Message}");
+            }
+
+            IntPtr classHstring = CreateHString(runtimeClassName);
+
+            try
+            {
+                DllGetActivationFactoryDelegate dllGetActivationFactory =
+                    (DllGetActivationFactoryDelegate)Marshal.GetDelegateForFunctionPointer(proc, typeof(DllGetActivationFactoryDelegate));
+
+                int hr = dllGetActivationFactory(classHstring, out IntPtr factory);
+                if (hr < 0 || factory == IntPtr.Zero)
+                    throw new COMException($"DllGetActivationFactory failed for '{runtimeClassName}'.", hr);
+
+                return factory;
+            }
+            finally
+            {
+                WindowsDeleteString(classHstring);
+            }
+        }
+
+        private static int QueryInterface(IntPtr unknown, Guid iid, out IntPtr iface)
+        {
+            return Marshal.QueryInterface(unknown, ref iid, out iface);
+        }
+
+        private static int GetDefaultFromStatics(IntPtr statics, out IntPtr extension)
+        {
+            IntPtr vtbl = Marshal.ReadIntPtr(statics);
+            IntPtr getDefaultPtr = Marshal.ReadIntPtr(vtbl, 0x30);
+
+            WinRtGetDefaultDelegate getDefault =
+                (WinRtGetDefaultDelegate)Marshal.GetDelegateForFunctionPointer(getDefaultPtr, typeof(WinRtGetDefaultDelegate));
+
+            return getDefault(statics, out extension);
+        }
+
+        private static int GetWallpaperCount(IntPtr extension, out uint count)
+        {
+            IntPtr vtbl = Marshal.ReadIntPtr(extension);
+            IntPtr fn = Marshal.ReadIntPtr(vtbl, 0x30);
+
+            WinRtGetUInt32Delegate getWallpaperCount =
+                (WinRtGetUInt32Delegate)Marshal.GetDelegateForFunctionPointer(fn, typeof(WinRtGetUInt32Delegate));
+
+            return getWallpaperCount(extension, out count);
+        }
+
+        private static int GetActiveWallpaperIndex(IntPtr extension, out uint index)
+        {
+            IntPtr vtbl = Marshal.ReadIntPtr(extension);
+            IntPtr fn = Marshal.ReadIntPtr(vtbl, 0x38);
+
+            WinRtGetUInt32Delegate getActiveWallpaperIndex =
+                (WinRtGetUInt32Delegate)Marshal.GetDelegateForFunctionPointer(fn, typeof(WinRtGetUInt32Delegate));
+
+            return getActiveWallpaperIndex(extension, out index);
+        }
+
+        private static int SetActiveWallpaperIndex(IntPtr extension, uint index)
+        {
+            IntPtr vtbl = Marshal.ReadIntPtr(extension);
+            IntPtr fn = Marshal.ReadIntPtr(vtbl, 0x40);
+
+            WinRtSetUInt32Delegate setActiveWallpaperIndex =
+                (WinRtSetUInt32Delegate)Marshal.GetDelegateForFunctionPointer(fn, typeof(WinRtSetUInt32Delegate));
+
+            return setActiveWallpaperIndex(extension, index);
+        }
+
+        private static IntPtr CreateHString(string value)
+        {
+            int hr = WindowsCreateString(value, value.Length, out IntPtr hstring);
+            if (hr < 0)
+                throw new COMException("WindowsCreateString failed.", hr);
+
+            return hstring;
+        }
+
+        private static Version TryParseVersion(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            return Version.TryParse(value, out Version version)
+                ? version
+                : null;
+        }
+
+        private static DateTime GetSafeLastWriteTimeUtc(string path)
+        {
+            try
+            {
+                return File.GetLastWriteTimeUtc(path);
+            }
+            catch
+            {
+                return DateTime.MinValue;
+            }
+        }
+
+        private sealed class DesktopSpotlightProviderCandidate
+        {
+            public string PackageDirectory { get; set; } = "";
+            public string ManifestPath { get; set; } = "";
+            public string PackageName { get; set; } = "";
+            public string Publisher { get; set; } = "";
+            public Version PackageVersion { get; set; }
+            public string RuntimeClassName { get; set; } = "";
+            public string DllRelativePath { get; set; } = "";
+            public string DllFullPath { get; set; } = "";
+            public bool IsSystemApp { get; set; }
+            public uint WallpaperCount { get; set; }
+            public uint ActiveWallpaperIndex { get; set; }
+            public int? RegistryImageIndex { get; set; }
+            public uint SelectedWallpaperIndex { get; set; }
+            public string ValidationMessage { get; set; } = "";
+        }
+
+        private sealed class InProcessServerInfo
+        {
+            public string RelativePath { get; set; } = "";
+            public string FullPath { get; set; } = "";
+            public List<string> ActivatableClasses { get; set; } = new List<string>();
+        }
+
         // -----------------------------------------------------------------------
         // Public API
         // -----------------------------------------------------------------------
@@ -449,8 +1151,8 @@ namespace DisplayMagicianShared
         {
             var config = new WallpaperConfig
             {
-                WallpaperMode   = Mode.Apply,
-                WallpaperStyle  = Style.Fill,
+                WallpaperMode = Mode.Apply,
+                WallpaperStyle = Style.Fill,
                 BackgroundColor = 0,
                 MonitorWallpapers = new List<WallpaperMonitorConfig>()
             };
@@ -565,9 +1267,9 @@ namespace DisplayMagicianShared
                                     }
                                     devicePathToBounds[src.DevicePath] = new RECT
                                     {
-                                        left   = x,
-                                        top    = y,
-                                        right  = x + w,
+                                        left = x,
+                                        top = y,
+                                        right = x + w,
                                         bottom = y + h
                                     };
                                     break;
@@ -706,126 +1408,125 @@ namespace DisplayMagicianShared
                 // so this check is inherently Spotlight-safe without a separate registry guard.
                 bool slideshowCurrentlyActive = idw.GetStatus(out uint slideshowState) == 0
                                                 && (slideshowState & 0x02u) != 0;
-                                            
+
 
                 switch (config.BackgroundType)
                 {
                     case BackgroundType.SolidColour:
-                    {
-                        if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
-                        SetDesktopSpotlightEnabled(false);
-
-                        // Clear all wallpaper images and apply background colour only
-                        if (idw.GetMonitorDevicePathCount(out uint monCount) == 0)
                         {
-                            for (uint i = 0; i < monCount; i++)
+                            if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
+                            SetDesktopSpotlightEnabled(false);
+
+                            // Clear all wallpaper images and apply background colour only
+                            if (idw.GetMonitorDevicePathCount(out uint monCount) == 0)
                             {
-                                if (idw.GetMonitorDevicePathAt(i, out string monPath) == 0)
-                                    idw.SetWallpaper(monPath, "");
+                                for (uint i = 0; i < monCount; i++)
+                                {
+                                    if (idw.GetMonitorDevicePathAt(i, out string monPath) == 0)
+                                        idw.SetWallpaper(monPath, "");
+                                }
                             }
+                            idw.SetBackgroundColor(config.BackgroundColor);
+                            SetExplorerBackgroundType(BackgroundType.SolidColour);
+                            BroadcastWallpaperSettingsChanged();
+                            SharedLogger.logger.Trace("Wallpaper/Apply: Applied Solid Colour background.");
+                            break;
                         }
-                        idw.SetBackgroundColor(config.BackgroundColor);
-                        SetExplorerBackgroundType(BackgroundType.SolidColour);
-                        BroadcastWallpaperSettingsChanged();
-                        SharedLogger.logger.Trace("Wallpaper/Apply: Applied Solid Colour background.");
-                        break;
-                    }
 
                     case BackgroundType.Slideshow:
-                    {
-                        if (string.IsNullOrEmpty(config.SlideshowDirectoryPath) ||
-                            !Directory.Exists(config.SlideshowDirectoryPath))
                         {
-                            SharedLogger.logger.Warn($"Wallpaper/Apply: Slideshow source folder '{config.SlideshowDirectoryPath}' not found, skipping slideshow restore.");
-                            break;
-                        }
-
-                        SetDesktopSpotlightEnabled(false);
-                        idw.SetPosition(StyleToPosition(config.WallpaperStyle));
-                        idw.SetBackgroundColor(config.BackgroundColor);
-
-                        Guid iShellItemGuid      = typeof(IShellItem).GUID;
-                        Guid iShellItemArrayGuid = typeof(IShellItemArray).GUID;
-                        SHCreateItemFromParsingName(config.SlideshowDirectoryPath, IntPtr.Zero, iShellItemGuid, out IShellItem folderItem);
-                        SHCreateShellItemArrayFromShellItem(folderItem, iShellItemArrayGuid, out IShellItemArray itemArray);
-                        try
-                        {
-                            idw.SetSlideshow(itemArray);
-                        }
-                        finally
-                        {
-                            if (itemArray != null) Marshal.ReleaseComObject(itemArray);
-                            if (folderItem != null) Marshal.ReleaseComObject(folderItem);
-                        }
-
-                        uint slideshowOpts = config.SlideshowShuffle ? 0x01u : 0u;
-                        uint intervalMs    = config.SlideshowIntervalSeconds * 1000u;
-                        if (intervalMs < 10000u) intervalMs = 10000u;   // Windows minimum is 10 seconds
-                        idw.SetSlideshowOptions(slideshowOpts, intervalMs);
-
-                        SetExplorerBackgroundType(BackgroundType.Slideshow);
-                        BroadcastWallpaperSettingsChanged();
-                        SharedLogger.logger.Trace($"Wallpaper/Apply: Applied Slideshow from '{config.SlideshowDirectoryPath}'.");
-                        break;
-                    }
-
-                    case BackgroundType.Spotlight:
-                    {
-                        // Spotlight for desktop is only available on Windows 11 (build >= 22000)
-                        if (Environment.OSVersion.Version.Build < 22000)
-                        {
-                            SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight for the desktop is only available on Windows 11. Skipping Spotlight restore on this OS.");
-                            break;
-                        }
-
-                        LogDesktopSpotlightBlockers();
-
-                        // These are the user-selection values written by Windows Settings.
-                        // Spotlight image choice and cadence remain owned by Windows.
-                        SetExplorerBackgroundType(BackgroundType.Spotlight);
-                        SetDesktopSpotlightEnabled(true);
-                        SetDesktopSpotlightRefreshTime();
-                        BroadcastWallpaperSettingsChanged();
-                        
-                        SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight re-enabled. Note: the specific image shown cannot be restored — Windows will select its own image on its own schedule.");
-                        break;
-                    }
-
-                    default: // BackgroundType.Picture
-                    {
-                        if (config.MonitorWallpapers.Count == 0)
-                        {
-                            SharedLogger.logger.Trace("Wallpaper/Apply: Picture mode with no stored wallpapers, skipping.");
-                            break;
-                        }
-
-                        SetDesktopSpotlightEnabled(false);
-                        SetExplorerBackgroundType(BackgroundType.Picture);
-
-                        if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
-                        // Apply global style and background colour first
-                        idw.SetPosition(StyleToPosition(config.WallpaperStyle));
-                        idw.SetBackgroundColor(config.BackgroundColor);
-
-                        // Apply per-monitor wallpaper images
-                        foreach (WallpaperMonitorConfig mon in config.MonitorWallpapers)
-                        {
-                            if (string.IsNullOrEmpty(mon.WallpaperFilePath) || !File.Exists(mon.WallpaperFilePath))
+                            if (string.IsNullOrEmpty(config.SlideshowDirectoryPath) ||
+                                !Directory.Exists(config.SlideshowDirectoryPath))
                             {
-                                SharedLogger.logger.Warn($"Wallpaper/Apply: Wallpaper file '{mon.WallpaperFilePath}' for monitor {mon.MonitorDevicePath} not found, skipping.");
-                                continue;
+                                SharedLogger.logger.Warn($"Wallpaper/Apply: Slideshow source folder '{config.SlideshowDirectoryPath}' not found, skipping slideshow restore.");
+                                break;
                             }
 
-                            int hr = idw.SetWallpaper(mon.MonitorDevicePath, mon.WallpaperFilePath);
-                            if (hr != 0)
-                                SharedLogger.logger.Warn($"Wallpaper/Apply: SetWallpaper returned HRESULT 0x{hr:X8} for monitor {mon.MonitorDevicePath}.");
-                            else
-                                SharedLogger.logger.Trace($"Wallpaper/Apply: Set wallpaper for monitor {mon.MonitorDevicePath} to {mon.WallpaperFilePath}.");
+                            SetDesktopSpotlightEnabled(false);
+                            idw.SetPosition(StyleToPosition(config.WallpaperStyle));
+                            idw.SetBackgroundColor(config.BackgroundColor);
+
+                            Guid iShellItemGuid = typeof(IShellItem).GUID;
+                            Guid iShellItemArrayGuid = typeof(IShellItemArray).GUID;
+                            SHCreateItemFromParsingName(config.SlideshowDirectoryPath, IntPtr.Zero, iShellItemGuid, out IShellItem folderItem);
+                            SHCreateShellItemArrayFromShellItem(folderItem, iShellItemArrayGuid, out IShellItemArray itemArray);
+                            try
+                            {
+                                idw.SetSlideshow(itemArray);
+                            }
+                            finally
+                            {
+                                if (itemArray != null) Marshal.ReleaseComObject(itemArray);
+                                if (folderItem != null) Marshal.ReleaseComObject(folderItem);
+                            }
+
+                            uint slideshowOpts = config.SlideshowShuffle ? 0x01u : 0u;
+                            uint intervalMs = config.SlideshowIntervalSeconds * 1000u;
+                            if (intervalMs < 10000u) intervalMs = 10000u;   // Windows minimum is 10 seconds
+                            idw.SetSlideshowOptions(slideshowOpts, intervalMs);
+
+                            SetExplorerBackgroundType(BackgroundType.Slideshow);
+                            BroadcastWallpaperSettingsChanged();
+                            SharedLogger.logger.Trace($"Wallpaper/Apply: Applied Slideshow from '{config.SlideshowDirectoryPath}'.");
+                            break;
                         }
 
-                        BroadcastWallpaperSettingsChanged();
-                        break;
-                    }
+                    case BackgroundType.Spotlight:
+                        {
+                            // Spotlight for desktop is only available on Windows 11 (build >= 22000)
+                            if (Environment.OSVersion.Version.Build < 22000)
+                            {
+                                SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight for the desktop is only available on Windows 11. Skipping Spotlight restore on this OS.");
+                                break;
+                            }
+
+                            LogDesktopSpotlightBlockers();
+
+                            if (!ApplyDesktopSpotlight())
+                            {
+                                SharedLogger.logger.Warn("Wallpaper/Apply: Failed to apply Windows Spotlight using the DesktopSpotlight provider.");
+                                break;
+                            }
+
+                            SharedLogger.logger.Info("Wallpaper/Apply: Windows Spotlight re-enabled using the DesktopSpotlight provider.");
+                            break;
+                        }
+
+                    default: // BackgroundType.Picture
+                        {
+                            if (config.MonitorWallpapers.Count == 0)
+                            {
+                                SharedLogger.logger.Trace("Wallpaper/Apply: Picture mode with no stored wallpapers, skipping.");
+                                break;
+                            }
+
+                            SetDesktopSpotlightEnabled(false);
+                            SetExplorerBackgroundType(BackgroundType.Picture);
+
+                            if (slideshowCurrentlyActive) idw.SetSlideshow(null); // stop running slideshow
+                                                                                  // Apply global style and background colour first
+                            idw.SetPosition(StyleToPosition(config.WallpaperStyle));
+                            idw.SetBackgroundColor(config.BackgroundColor);
+
+                            // Apply per-monitor wallpaper images
+                            foreach (WallpaperMonitorConfig mon in config.MonitorWallpapers)
+                            {
+                                if (string.IsNullOrEmpty(mon.WallpaperFilePath) || !File.Exists(mon.WallpaperFilePath))
+                                {
+                                    SharedLogger.logger.Warn($"Wallpaper/Apply: Wallpaper file '{mon.WallpaperFilePath}' for monitor {mon.MonitorDevicePath} not found, skipping.");
+                                    continue;
+                                }
+
+                                int hr = idw.SetWallpaper(mon.MonitorDevicePath, mon.WallpaperFilePath);
+                                if (hr != 0)
+                                    SharedLogger.logger.Warn($"Wallpaper/Apply: SetWallpaper returned HRESULT 0x{hr:X8} for monitor {mon.MonitorDevicePath}.");
+                                else
+                                    SharedLogger.logger.Trace($"Wallpaper/Apply: Set wallpaper for monitor {mon.MonitorDevicePath} to {mon.WallpaperFilePath}.");
+                            }
+
+                            BroadcastWallpaperSettingsChanged();
+                            break;
+                        }
                 }
 
                 return true;
