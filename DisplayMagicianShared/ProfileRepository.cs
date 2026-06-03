@@ -13,6 +13,7 @@ using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
+using WindowsWallpaperWrapper;
 using System.Windows.Forms;
 using System.Threading;
 using System.Threading.Tasks;
@@ -312,7 +313,7 @@ namespace DisplayMagicianShared
                 }
 
                 // attempt to delete all stored per-monitor wallpaper images
-                foreach (WallpaperMonitorConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
+                foreach (MonitorWallpaperConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
                 {
                     try
                     {
@@ -384,7 +385,7 @@ namespace DisplayMagicianShared
                 }
 
                 // attempt to delete all stored per-monitor wallpaper images
-                foreach (WallpaperMonitorConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
+                foreach (MonitorWallpaperConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
                 {
                     try
                     {
@@ -457,7 +458,7 @@ namespace DisplayMagicianShared
                 }
 
                 // attempt to delete the wallpaper files
-                foreach (WallpaperMonitorConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
+                foreach (MonitorWallpaperConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
                 {
                     try
                     {

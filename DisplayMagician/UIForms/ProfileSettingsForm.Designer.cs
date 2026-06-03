@@ -101,7 +101,7 @@ namespace DisplayMagician.UIForms
             cmb_wallpaper_mode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cmb_wallpaper_mode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_wallpaper_mode.FormattingEnabled = true;
-            cmb_wallpaper_mode.Items.AddRange(new object[] { "Apply saved wallpapers", "Do not apply saved wallpaper settings" });
+            cmb_wallpaper_mode.Items.AddRange(new object[] { "Apply saved wallpaper settings", "Do not apply saved wallpaper settings" });
             cmb_wallpaper_mode.Location = new System.Drawing.Point(228, 34);
             cmb_wallpaper_mode.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_wallpaper_mode.Name = "cmb_wallpaper_mode";

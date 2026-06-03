@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+using WindowsWallpaperWrapper;
 
 namespace DisplayMagician.UIForms
 {
@@ -54,12 +55,12 @@ namespace DisplayMagician.UIForms
             lbl_wallpaper_bg_type.Visible = showBgType;
 
             // Show the captured background type (read-only informational label)
-            lbl_wallpaper_bg_type.Text = Profile.WallpaperConfiguration.BackgroundType switch
+            lbl_wallpaper_bg_type.Text = Profile.WallpaperConfiguration.WallpaperSettings?.BackgroundType switch
             {
-                Wallpaper.BackgroundType.SolidColour => "Solid Colour (same on all displays)",
-                Wallpaper.BackgroundType.Slideshow   => "Slideshow (same on all displays)",
-                Wallpaper.BackgroundType.Spotlight   => "Windows Spotlight (same on all displays)",
-                _                                    => "Saved Pictures (unique per display)",
+                WindowsWallpaperBackgroundType.SolidColor => "Solid Colour (same on all displays)",
+                WindowsWallpaperBackgroundType.Slideshow  => "Slideshow (same on all displays)",
+                WindowsWallpaperBackgroundType.Spotlight  => "Windows Spotlight (same on all displays)",
+                _                                         => "Saved Pictures (unique per display)",
             };
 
             logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} loaded. Wallpaper mode: {Profile.WallpaperConfiguration.WallpaperMode}.");

@@ -217,6 +217,9 @@
     <Reference Include="ImageListViewCore">
       <HintPath>DLL\ImageListViewCore.dll</HintPath>
     </Reference>
+    <Reference Include="WindowsWallpaperWrapper">
+      <HintPath>..\DisplayMagicianShared\DLL\WindowsWallpaperWrapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <PropertyGroup>
     <PackageLicenseFile>EULA_en-us.rtf</PackageLicenseFile>

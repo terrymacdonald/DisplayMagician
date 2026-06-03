@@ -651,7 +651,7 @@ namespace DisplayMagicianShared
 
                 // Capture per-monitor wallpaper settings for this profile (only when explicitly saving/updating)
                 if (captureWallpaper)
-                    _wallpaperConfiguration = Wallpaper.CaptureCurrentWallpaperConfig(_windowsDisplayConfig);
+                    _wallpaperConfiguration = Wallpaper.CaptureCurrentWallpaperConfig();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();

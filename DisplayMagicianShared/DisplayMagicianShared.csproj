@@ -84,6 +84,9 @@
     <Reference Include="NVAPIWrapper">
       <HintPath>DLL\NVAPIWrapper.dll</HintPath>
     </Reference>
+    <Reference Include="WindowsWallpaperWrapper">
+      <HintPath>DLL\WindowsWallpaperWrapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources.resx">

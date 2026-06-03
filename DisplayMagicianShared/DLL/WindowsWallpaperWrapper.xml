@@ -1,0 +1,234 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WindowsWallpaperWrapper</name>
+    </assembly>
+    <members>
+        <member name="T:WindowsWallpaperWrapper.WindowsWallpaperBackgroundType">
+            <summary>
+            The four Windows desktop background types available in
+            Settings > Personalisation > Background.
+            Values match HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers\BackgroundType.
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.WallpaperStyle">
+            <summary>
+            How the wallpaper image is positioned on the monitor.
+            Maps to DESKTOP_WALLPAPER_POSITION in the IDesktopWallpaper COM API.
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.MonitorWallpaperConfig">
+             <summary>
+             Per-monitor wallpaper assignment used by <see cref="T:WindowsWallpaperWrapper.PictureWallpaperConfig"/>.
+            
+             Matching strategy (applied at wallpaper-restore time):
+               1. Primary:  <see cref="P:WindowsWallpaperWrapper.MonitorWallpaperConfig.MonitorHardwareId"/> + <see cref="P:WindowsWallpaperWrapper.MonitorWallpaperConfig.MonitorConnectorId"/> —
+                            stable across reboots, driver updates, and monitor repositioning in
+                            Display Settings. Only changes if the monitor is physically moved to
+                            a different GPU port or replaced with a different model.
+               2. Fallback: index order — used when no identifier match is found (e.g. first
+                            time loading a config on a different machine).
+            
+             <see cref="P:WindowsWallpaperWrapper.MonitorWallpaperConfig.MonitorBounds"/> is NOT used by this library for matching. It is
+             captured purely as a convenience value for callers such as DisplayMagician that
+             perform their own layout-based matching across display profiles.
+             </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.MonitorWallpaperConfig.MonitorHardwareId">
+            <summary>
+            Monitor model identifier extracted from the Windows PnP device path
+            (e.g. "DELA0D6"). Stable as long as the same physical monitor is connected.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.MonitorWallpaperConfig.MonitorConnectorId">
+            <summary>
+            GPU connector identifier extracted from the Windows PnP device path
+            (e.g. "UID257"). Identifies the physical port on the GPU; stable unless
+            the monitor cable is moved to a different port.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.MonitorWallpaperConfig.MonitorBounds">
+            <summary>
+            Bounding rectangle of this monitor in virtual-screen coordinates at the time
+            the configuration was captured. Not used by this library for monitor matching —
+            provided for callers that need layout-based matching (e.g. DisplayMagician).
+            Changes whenever the user rearranges monitors or changes resolution.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.MonitorWallpaperConfig.WallpaperFilePath">
+            <summary>Full path to the wallpaper image file.</summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.PictureWallpaperConfig">
+            <summary>
+            Wallpaper configuration for Picture mode.
+            Supports a different image per monitor via <see cref="P:WindowsWallpaperWrapper.PictureWallpaperConfig.MonitorWallpapers"/>.
+            An empty list is valid — callers should populate it before applying,
+            or use <see cref="!:WindowsWallpaperWrapper.CreatePictureWallpaperConfig"/>
+            which attempts to detect the default Windows wallpaper automatically.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.PictureWallpaperConfig.MonitorWallpapers">
+            <summary>
+            Per-monitor wallpaper assignments.
+            Each entry maps a monitor device path to an image file path.
+            If an entry has an empty <see cref="!:MonitorWallpaperConfig.MonitorDevicePath"/>,
+            the image is applied to all monitors.
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.SlideshowWallpaperConfig">
+            <summary>
+            Wallpaper configuration for Slideshow mode.
+            Windows cycles through images in <see cref="P:WindowsWallpaperWrapper.SlideshowWallpaperConfig.FolderPath"/> at <see cref="P:WindowsWallpaperWrapper.SlideshowWallpaperConfig.IntervalSeconds"/> intervals.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.SlideshowWallpaperConfig.FolderPath">
+            <summary>
+            Full path to the folder containing the slideshow images.
+            Must not be empty when applying. Default is the user's Pictures folder.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.SlideshowWallpaperConfig.IntervalSeconds">
+            <summary>
+            Interval between image transitions in seconds.
+            Windows enforces a minimum of 10 seconds; values below that are clamped on apply.
+            Default is 300 seconds (5 minutes).
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.SlideshowWallpaperConfig.Shuffle">
+            <summary>
+            Whether images are shown in a random order.
+            Default is false (sequential).
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.SolidColorWallpaperConfig">
+            <summary>
+            Wallpaper configuration for Solid Colour mode.
+            <see cref="P:WindowsWallpaperWrapper.SolidColorWallpaperConfig.Color"/> is the fill colour shown across the entire desktop.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.SolidColorWallpaperConfig.Color">
+            <summary>
+            The solid desktop fill colour in COLORREF format (0x00BBGGRR).
+            Default is black (0x000000).
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.SpotlightWallpaperConfig">
+            <summary>
+            Wallpaper configuration for Windows Spotlight mode.
+            Windows Spotlight manages its own image downloads and selection;
+            this config only controls which of the currently available images to activate.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.SpotlightWallpaperConfig.SpotlightWallpaperIndex">
+            <summary>
+            Zero-based index of the Spotlight image to activate.
+            -1 (default) means use the current active Spotlight index automatically.
+            0 or greater selects that specific image, clamped to the last available index
+            if the requested value exceeds the number of available images.
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.WindowsWallpaperConfig">
+            <summary>
+            Base class for all Windows desktop wallpaper configurations.
+            Concrete subtypes: <see cref="T:WindowsWallpaperWrapper.SolidColorWallpaperConfig"/>,
+            <see cref="T:WindowsWallpaperWrapper.PictureWallpaperConfig"/>, <see cref="T:WindowsWallpaperWrapper.SlideshowWallpaperConfig"/>,
+            <see cref="T:WindowsWallpaperWrapper.SpotlightWallpaperConfig"/>.
+            No nullable public properties — use safe defaults so JSON serialisation
+            round-trips cleanly.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.WindowsWallpaperConfig.BackgroundType">
+            <summary>Which of the four Windows background modes this config represents.</summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.WindowsWallpaperConfig.Style">
+            <summary>
+            How the wallpaper image is fitted to the monitor.
+            Applies to Picture and Slideshow modes. Ignored by Windows for Spotlight.
+            </summary>
+        </member>
+        <member name="P:WindowsWallpaperWrapper.WindowsWallpaperConfig.BackgroundColor">
+            <summary>
+            Desktop background fill colour in COLORREF format (0x00BBGGRR).
+            Visible as a border when the image does not fill the screen,
+            and as the full background for Solid Colour mode.
+            Default is black (0x000000).
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.Spotlight.SpotlightApplier">
+            <summary>
+            Applies Windows Desktop Spotlight using the private WinRT vtable sequence discovered
+            through WinDbg reverse engineering. DO NOT change the vtable offsets or registry write
+            order — they are load-bearing.
+            </summary>
+        </member>
+        <member name="M:WindowsWallpaperWrapper.Spotlight.SpotlightApplier.Apply(System.Int32)">
+            <summary>
+            Enables Desktop Spotlight and activates the chosen wallpaper index.
+            <paramref name="requestedIndex"/> -1 means "use whatever is current";
+            any other value is clamped to the available range.
+            Returns true on success.
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.Spotlight.DesktopSpotlightProviderCandidate">
+            <summary>
+            Data class that describes a located and validated Desktop Spotlight provider package.
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.Spotlight.SpotlightProviderDiscovery">
+            <summary>
+            Discovers AppX/SystemApp manifests that declare the Desktop Spotlight extension contract,
+            validates that the backing DLL is present and functional, and selects the best candidate.
+            This intentionally avoids hard-coding MicrosoftWindows.Client.CBS_cw5n1h2txyewy so that
+            future package/version changes can still be handled.
+            </summary>
+        </member>
+        <member name="M:WindowsWallpaperWrapper.Spotlight.SpotlightProviderDiscovery.GetProvider">
+            <summary>
+            Returns a validated provider candidate, discovering and caching it on first call.
+            Returns null if no working provider can be found.
+            </summary>
+        </member>
+        <member name="M:WindowsWallpaperWrapper.Spotlight.SpotlightProviderDiscovery.InvalidateCache">
+            <summary>Clears the cached provider so it will be re-discovered on the next call.</summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.Spotlight.SpotlightProviderValidator">
+            <summary>
+            Validates that a <see cref="T:WindowsWallpaperWrapper.Spotlight.DesktopSpotlightProviderCandidate"/> is functional by
+            loading its DLL, calling through the private WinRT vtable, and confirming that
+            <c>get_WallpaperCount</c> returns at least one image.
+            </summary>
+        </member>
+        <member name="T:WindowsWallpaperWrapper.WallpaperWrapper">
+            <summary>
+            Public entry point for capturing and applying Windows desktop wallpaper state.
+            Supports Picture, Solid Colour, Slideshow, and Windows Spotlight modes.
+            All methods are static and thread-safe with respect to their own state.
+            </summary>
+        </member>
+        <member name="M:WindowsWallpaperWrapper.WallpaperWrapper.GetCurrentWallpaperConfig">
+            <summary>
+            Snapshots the current desktop wallpaper configuration and returns the
+            appropriate <see cref="T:WindowsWallpaperWrapper.WindowsWallpaperConfig"/> subclass for the active mode.
+            </summary>
+        </member>
+        <member name="M:WindowsWallpaperWrapper.WallpaperWrapper.SetCurrentWallpaperConfig(WindowsWallpaperWrapper.WindowsWallpaperConfig)">
+            <summary>
+            Applies a previously captured (or manually constructed) wallpaper configuration.
+            Returns true on success, false if the config could not be fully applied.
+            </summary>
+        </member>
+        <member name="M:WindowsWallpaperWrapper.WallpaperWrapper.ParseDevicePath(System.String,System.String@,System.String@)">
+             <summary>
+             Extracts the stable <paramref name="hardwareId"/> and <paramref name="connectorId"/>
+             from a Windows PnP monitor device path.
+            
+             Example path:  \\?\DISPLAY#DELA0D6#5&amp;2a50fee&amp;0&amp;UID257#{e6f07b5f-...}
+             Segments (split on '#'):  [0] \\?\DISPLAY  [1] DELA0D6  [2] 5&amp;2a50fee&amp;0&amp;UID257  [3] {GUID}
+            
+             hardwareId   = segment[1]  e.g. "DELA0D6"  — monitor model; stable unless monitor is swapped.
+             connectorId  = the token in segment[2] that starts with "UID"  e.g. "UID257" — GPU port;
+                            stable unless the cable is physically moved to a different port.
+             </summary>
+        </member>
+    </members>
+</doc>
