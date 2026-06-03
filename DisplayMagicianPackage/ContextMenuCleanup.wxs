@@ -1,0 +1,48 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+	 xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+	<Fragment>
+		<ComponentGroup Id="ContextMenuCleanupComponents" Directory="INSTALLFOLDER">
+
+			<!--
+				Remove the desktop context menu registry keys on uninstall.
+				These keys are written under HKCU by ContextMenu.InstallContextMenu()
+				and must be cleaned up when the user uninstalls DisplayMagician.
+				util:RemoveRegistryKey with On="uninstall" deletes the key tree
+				regardless of whether it was installed by WiX itself.
+			-->
+			<Component Id="ContextMenuAnchorCleanup" Guid="*">
+				<util:RemoveRegistryKey
+					Id="RemoveContextMenuAnchor"
+					Root="HKCU"
+					Key="SOFTWARE\Classes\DesktopBackground\Shell\DisplayMagician.ContextMenu.Anchor"
+					On="uninstall" />
+
+				<!-- Dummy registry value required so WiX has a key-path for this component -->
+				<RegistryValue Root="HKCU"
+					Key="SOFTWARE\Classes\DesktopBackground\Shell\DisplayMagician.ContextMenu.Anchor"
+					Name="WiXKeyPath"
+					Type="integer"
+					Value="1"
+					KeyPath="yes" />
+			</Component>
+
+			<Component Id="ContextMenusCleanup" Guid="*">
+				<util:RemoveRegistryKey
+					Id="RemoveContextMenus"
+					Root="HKCU"
+					Key="SOFTWARE\Classes\DisplayMagician.ContextMenus"
+					On="uninstall" />
+
+				<!-- Dummy registry value required so WiX has a key-path for this component -->
+				<RegistryValue Root="HKCU"
+					Key="SOFTWARE\Classes\DisplayMagician.ContextMenus"
+					Name="WiXKeyPath"
+					Type="integer"
+					Value="1"
+					KeyPath="yes" />
+			</Component>
+
+		</ComponentGroup>
+	</Fragment>
+</Wix>

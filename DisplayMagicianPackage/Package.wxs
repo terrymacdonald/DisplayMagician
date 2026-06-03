@@ -83,6 +83,7 @@
 			<ComponentGroupRef Id="DisplayMagicianComponents" />
 			<ComponentGroupRef Id="DisplayMagicianConsoleComponents" />
 			<ComponentRef Id="IdentityMsixComponent" />
+			<ComponentGroupRef Id="ContextMenuCleanupComponents" />
 		</Feature>
 	</Package>
 </Wix>
