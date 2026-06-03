@@ -126,21 +126,6 @@ if (Test-Path $vswhere) {
     $vsInstalls = & "$vswhere" -all -prerelease -format json 2>&1 | ConvertFrom-Json
 }
 
-# Fail fast if any VS instance is open - VSIXInstaller cannot run while VS is running.
-# The user must run this script from a standalone PowerShell window, not from within VS.
-$runningDevenv = Get-Process -Name 'devenv' -ErrorAction SilentlyContinue
-if ($runningDevenv) {
-    Write-Host ""
-    Write-Warning "Visual Studio is currently running."
-    Write-Warning "The HeatWave extension cannot be installed while Visual Studio is open."
-    Write-Warning "Please:"
-    Write-Warning "  1. Close Visual Studio completely."
-    Write-Warning "  2. Re-run this script from a standalone PowerShell window"
-    Write-Warning "     (not the VS integrated terminal or Developer PowerShell)."
-    Write-Host ""
-    exit 1
-}
-
 if ($vsInstalls.Count -eq 0) {
     Write-Host "  No Visual Studio installations found - skipping HeatWave install." -ForegroundColor Yellow
     Write-Host "  If you install Visual Studio later, re-run this script."
@@ -236,6 +221,21 @@ if ($vsInstalls.Count -eq 0) {
             continue
         }
 
+        # HeatWave is missing - VSIXInstaller cannot run while VS is open.
+        # Only check/warn at this point, not before we know installation is needed.
+        $runningDevenv = Get-Process -Name 'devenv' -ErrorAction SilentlyContinue
+        if ($runningDevenv) {
+            Write-Host ""
+            Write-Warning "    Visual Studio is currently running."
+            Write-Warning "    HeatWave cannot be installed while Visual Studio is open."
+            Write-Warning "    Please:"
+            Write-Warning "      1. Close Visual Studio completely."
+            Write-Warning "      2. Re-run this script from a standalone PowerShell window"
+            Write-Warning "         (not the VS integrated terminal or Developer PowerShell)."
+            Write-Host ""
+            exit 1
+        }
+
         $vsixUrl = $extensionMap[$extName]
         if (-not $vsixUrl) {
             Write-Warning "    No download URL found for $extName - install manually: https://www.firegiant.com/heatwave/"
@@ -274,25 +274,27 @@ if ($vsInstalls.Count -eq 0) {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 4. Choose where to save the PFX
+# 4. Determine PFX path and whether to reuse an existing file
 # ---------------------------------------------------------------------------
-$defaultPfxDir  = "$env:USERPROFILE\Documents\Certs"
+$defaultPfxDir  = "$env:LOCALAPPDATA\DisplayMagician\Certs"
 $defaultPfxPath = "$defaultPfxDir\DisplayMagicianCodeSigning.pfx"
-Write-Host "Where do you want to save the PFX certificate file?"
-Write-Host "  Press Enter to accept the default: $defaultPfxPath"
-$pfxInput = Read-Host "PFX path"
-if ([string]::IsNullOrWhiteSpace($pfxInput)) {
-    $pfxPath = $defaultPfxPath
-} else {
-    $pfxPath = $pfxInput.Trim('"').Trim("'")
-}
+$pfxPath = $defaultPfxPath
+
+Write-Host "PFX certificate location: $pfxPath"
 
 $pfxExists = Test-Path $pfxPath
 if ($pfxExists) {
-    Write-Host "  Existing PFX found at: $pfxPath" -ForegroundColor Green
-    Write-Host "  The existing PFX will NOT be overwritten." -ForegroundColor Yellow
+    Write-Host "  An existing PFX was found at that location." -ForegroundColor Yellow
+    $reuseInput = Read-Host "  Use the existing PFX? [Y/n]"
+    if ([string]::IsNullOrWhiteSpace($reuseInput) -or $reuseInput.Trim() -match '^[Yy]') {
+        Write-Host "  Using existing PFX." -ForegroundColor Green
+        # $pfxExists stays $true - later steps will skip cert creation and export
+    } else {
+        Write-Host "  A new certificate and PFX will be created, overwriting the existing file." -ForegroundColor Yellow
+        $pfxExists = $false
+    }
 } else {
-    Write-Host "  PFX will be created at: $pfxPath" -ForegroundColor Green
+    Write-Host "  No existing PFX found - a new certificate and PFX will be created." -ForegroundColor Green
 }
 Write-Host ""
 
@@ -374,7 +376,16 @@ if ($pfxExists) {
 } else {
     $pfxDir = Split-Path $pfxPath -Parent
     if (-not (Test-Path $pfxDir)) {
-        New-Item $pfxDir -ItemType Directory -Force | Out-Null
+        try {
+            New-Item -Path $pfxDir -ItemType Directory -Force -ErrorAction Stop | Out-Null
+        } catch {
+            Write-Host ""
+            Write-Host "ERROR: Could not create directory '$pfxDir'." -ForegroundColor Red
+            Write-Host "  This is often caused by OneDrive redirecting your Documents folder." -ForegroundColor Yellow
+            Write-Host "  Please re-run the script and enter a path outside of Documents," -ForegroundColor Yellow
+            Write-Host "  for example: $env:LOCALAPPDATA\DisplayMagician\Certs\DisplayMagicianCodeSigning.pfx" -ForegroundColor Yellow
+            exit 1
+        }
     }
 
     Write-Host "Exporting PFX to $pfxPath ..."
@@ -484,9 +495,6 @@ Write-Host ""
 Write-Host "Files created/updated:" -ForegroundColor White
 Write-Host "  $pfxPath"
 Write-Host "  $signingProps"
-Write-Host ""
-Write-Host "REMINDER: Keep your PFX file safe. If you lose it you will need to re-run" -ForegroundColor Yellow
-Write-Host "this script and reinstall your application on all test machines." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "REMINDER: Keep your PFX file safe. If you lose it you will need to re-run" -ForegroundColor Yellow
 Write-Host "this script and reinstall your application on all test machines." -ForegroundColor Yellow
