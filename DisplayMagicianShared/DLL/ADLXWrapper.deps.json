@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v10.0": {
-      "ADLXWrapper/1.1.13": {
+      "ADLXWrapper/1.1.11": {
         "dependencies": {
           "ClangSharp": "20.1.2.4",
           "ClangSharp.Interop": "20.1.2.4",
@@ -86,7 +86,7 @@
     }
   },
   "libraries": {
-    "ADLXWrapper/1.1.13": {
+    "ADLXWrapper/1.1.11": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

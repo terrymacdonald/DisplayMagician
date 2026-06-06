@@ -13,20 +13,27 @@
             <summary>
             Get supported 3D feature capabilities for the adapter.
             </summary>
-            <returns>3D feature capabilities DTO.</returns>
+            <returns>3D feature capabilities DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCL3DHelper.Get3DFeature(IGCLWrapper.ThreeDFeatureGetSetDto)">
             <summary>
             Get a 3D feature using a DTO request.
             </summary>
             <param name="feature">3D feature DTO.</param>
-            <returns>Updated 3D feature DTO.</returns>
+            <returns>Updated 3D feature DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCL3DHelper.Set3DFeature(IGCLWrapper.ThreeDFeatureGetSetDto)">
             <summary>
             Set a 3D feature using a DTO request.
             </summary>
             <param name="feature">3D feature DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCL3DHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCL3DHelper.Create3DFeatureGetSet">
             <summary>
@@ -721,13 +728,14 @@
             <summary>
             Get combined display settings using the provided DTO.
             </summary>
-            <returns>Updated combined display args DTO.</returns>
+            <returns>Updated combined display args DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.SetCombinedDisplay(IGCLWrapper.CombinedDisplayArgsDto)">
             <summary>
             Set combined display settings using the provided DTO.
             </summary>
             <param name="args">Combined display args DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.GetSetDisplayGenlockNative(System.IntPtr[],IGCLWrapper.ctl_genlock_args_t,System.IntPtr@)">
             <summary>
@@ -746,7 +754,7 @@
             <param name="operation">Genlock operation.</param>
             <param name="args">Genlock args DTO.</param>
             <param name="failureAdapter">Adapter handle that failed, if any.</param>
-            <returns>Updated genlock args DTO.</returns>
+            <returns>Updated genlock args DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.SetDisplayGenlock(System.IntPtr[],IGCLWrapper.ctl_genlock_operation_t,IGCLWrapper.GenlockArgsDto,System.IntPtr@)">
             <summary>
@@ -756,12 +764,14 @@
             <param name="operation">Genlock operation.</param>
             <param name="args">Genlock args DTO.</param>
             <param name="failureAdapter">Adapter handle that failed, if any.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.LinkDisplayAdapters(IGCLWrapper.ctl_lda_args_t)">
             <summary>
             Link display adapters using the provided args.
             </summary>
             <param name="args">Linked display adapters args.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.LinkDisplayAdapters(IGCLWrapper.LinkedDisplayAdaptersArgsDto,System.Collections.Generic.IReadOnlyList{System.IntPtr})">
             <summary>
@@ -769,23 +779,25 @@
             </summary>
             <param name="args">Linked display adapters args DTO.</param>
             <param name="linkedAdapters">Linked adapter handles to submit.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.UnlinkDisplayAdapters">
             <summary>
             Unlink previously linked display adapters.
             </summary>
+            <returns><c>true</c> if the operation succeeded; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.GetLinkedDisplayAdapters">
             <summary>
             Get linked display adapter information.
             </summary>
-            <returns>Tuple containing args and adapter handles.</returns>
+            <returns>Tuple containing args and adapter handles, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.GetLinkedDisplayAdaptersDto">
             <summary>
             Get linked display adapter information as a DTO.
             </summary>
-            <returns>Linked display adapters result DTO.</returns>
+            <returns>Linked display adapters result DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.CreateWaitPropertyChangeRequest(System.UInt32,System.UInt32)">
             <summary>
@@ -800,7 +812,13 @@
             Wait for a property change event.
             </summary>
             <param name="args">Wait request DTO.</param>
-            <returns>Updated wait request DTO.</returns>
+            <returns>Updated wait request DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLAdapterHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.ThrowIfDisposed">
             <summary>
@@ -1793,32 +1811,33 @@
             <summary>
             Get adapter display encoder properties as a DTO.
             </summary>
-            <returns>Adapter display encoder properties DTO.</returns>
+            <returns>Adapter display encoder properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetSharpnessCaps">
             <summary>
             Get sharpness capabilities and filter properties as a DTO.
             </summary>
-            <returns>Sharpness capabilities DTO.</returns>
+            <returns>Sharpness capabilities DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetCurrentSharpness">
             <summary>
             Get current sharpness settings as a DTO.
             </summary>
-            <returns>Sharpness settings DTO.</returns>
+            <returns>Sharpness settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetCurrentSharpness(IGCLWrapper.SharpnessSettingsDto)">
             <summary>
             Set sharpness settings using a DTO.
             </summary>
             <param name="settings">Sharpness settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.I2CAccess(IGCLWrapper.I2CAccessArgsDto)">
             <summary>
             Perform I2C access using a DTO.
             </summary>
             <param name="args">I2C access arguments DTO.</param>
-            <returns>Updated I2C access arguments DTO.</returns>
+            <returns>Updated I2C access arguments DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.I2CAccessOnPinPair(System.IntPtr,IGCLWrapper.I2CAccessPinPairArgsDto)">
             <summary>
@@ -1826,52 +1845,54 @@
             </summary>
             <param name="pinPair">I2C pin pair handle.</param>
             <param name="args">I2C access arguments DTO.</param>
-            <returns>Updated I2C access pin pair arguments DTO.</returns>
+            <returns>Updated I2C access pin pair arguments DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.AUXAccess(IGCLWrapper.AuxAccessArgsDto)">
             <summary>
             Perform AUX channel access using a DTO.
             </summary>
             <param name="args">AUX access arguments DTO.</param>
-            <returns>Updated AUX access arguments DTO.</returns>
+            <returns>Updated AUX access arguments DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetPowerOptimizationCaps">
             <summary>
             Get power optimization capabilities as a DTO.
             </summary>
-            <returns>Power optimization capabilities DTO.</returns>
+            <returns>Power optimization capabilities DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetPowerOptimizationSetting(IGCLWrapper.PowerOptimizationSettingsDto)">
             <summary>
             Get power optimization settings using a DTO.
             </summary>
             <param name="settings">Settings request DTO.</param>
-            <returns>Updated settings DTO.</returns>
+            <returns>Updated settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetPowerOptimizationSetting(IGCLWrapper.PowerOptimizationSettingsDto)">
             <summary>
             Set power optimization settings using a DTO.
             </summary>
             <param name="settings">Settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetBrightnessSetting(IGCLWrapper.BrightnessSetDto)">
             <summary>
             Set display brightness using a DTO.
             </summary>
             <param name="brightness">Brightness settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetBrightnessSetting">
             <summary>
             Get display brightness as a DTO.
             </summary>
-            <returns>Brightness settings DTO.</returns>
+            <returns>Brightness settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PixelTransformationGetConfigNative(IGCLWrapper.ctl_pixtx_pipe_get_config_t)">
             <summary>
             Get pixel transformation configuration using native structs.
             </summary>
             <param name="args">Pipe get config arguments.</param>
-            <returns>Tuple containing config and block array.</returns>
+            <returns>Tuple containing config and block array, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PixelTransformationGetConfigNative(IGCLWrapper.ctl_pixtx_pipe_get_config_t,IGCLWrapper.ctl_pixtx_block_config_t[])">
             <summary>
@@ -1879,26 +1900,28 @@
             </summary>
             <param name="args">Pipe get config arguments.</param>
             <param name="blocks">Block configs to query.</param>
-            <returns>Tuple containing config and block array.</returns>
+            <returns>Tuple containing config and block array, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PixelTransformationGetConfig(IGCLWrapper.PixtxPipeGetConfigDto)">
             <summary>
             Get pixel transformation configuration as DTOs (metadata only; LUT sample values require native methods).
             </summary>
             <param name="args">Pipe get config DTO.</param>
-            <returns>Pixel transformation get result DTO.</returns>
+            <returns>Pixel transformation get result DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PixelTransformationSetConfig(IGCLWrapper.PixtxPipeSetConfigDto)">
             <summary>
             Set pixel transformation configuration using a DTO (metadata only; LUT sample values require native methods).
             </summary>
             <param name="args">Pipe set config DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PixelTransformationSetConfigNative(IGCLWrapper.ctl_pixtx_pipe_set_config_t)">
             <summary>
             Set pixel transformation configuration using a native struct (for advanced use cases with raw pointer fields).
             </summary>
             <param name="args">Pipe set config native struct.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PanelDescriptorAccessNative(IGCLWrapper.ctl_panel_descriptor_access_args_t)">
             <summary>
@@ -1912,19 +1935,19 @@
             Access the panel descriptor using a DTO.
             </summary>
             <param name="args">Panel descriptor access arguments DTO.</param>
-            <returns>Updated panel descriptor access arguments DTO.</returns>
+            <returns>Updated panel descriptor access arguments DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetPanelEdidData">
             <summary>
             Read EDID via panel descriptor access as a single concatenated byte array.
             </summary>
-            <returns>Concatenated panel descriptor bytes.</returns>
+            <returns>Concatenated panel descriptor bytes, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetSupportedRetroScalingCapability">
             <summary>
             Get supported retro scaling capabilities as a DTO.
             </summary>
-            <returns>Retro scaling capabilities DTO.</returns>
+            <returns>Retro scaling capabilities DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetSetRetroScalingNative(IGCLWrapper.ctl_retro_scaling_settings_t)">
             <summary>
@@ -1937,7 +1960,7 @@
             <summary>
             Get retro scaling settings as a DTO.
             </summary>
-            <returns>Retro scaling settings DTO.</returns>
+            <returns>Retro scaling settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetSupportedRetroScalingCapabilityDto">
             <summary>
@@ -1949,62 +1972,65 @@
             Set retro scaling settings using a DTO.
             </summary>
             <param name="settings">Retro scaling settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetSupportedScalingCapability">
             <summary>
             Get supported scaling capabilities as a DTO.
             </summary>
-            <returns>Scaling capabilities DTO.</returns>
+            <returns>Scaling capabilities DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetCurrentScaling">
             <summary>
             Get current scaling settings as a DTO.
             </summary>
-            <returns>Scaling settings DTO.</returns>
+            <returns>Scaling settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetCurrentScaling(IGCLWrapper.ScalingSettingsDto)">
             <summary>
             Set scaling settings using a DTO.
             </summary>
             <param name="settings">Scaling settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetLACEConfig">
             <summary>
             Get LACE configuration as a DTO.
             </summary>
-            <returns>LACE config DTO.</returns>
+            <returns>LACE config DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetLACEConfig(IGCLWrapper.LaceConfigDto)">
             <summary>
             Set LACE configuration using a DTO.
             </summary>
             <param name="config">LACE config DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SoftwarePSR(IGCLWrapper.SwPsrSettingsDto)">
             <summary>
             Call the software PSR API using a DTO.
             </summary>
             <param name="settings">Software PSR settings DTO.</param>
-            <returns>Updated software PSR settings DTO.</returns>
+            <returns>Updated software PSR settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetIntelArcSyncInfoForMonitor">
             <summary>
             Get Intel Arc Sync info for a monitor as a DTO.
             </summary>
-            <returns>Monitor params DTO.</returns>
+            <returns>Monitor params DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.EnumerateMuxDevices">
             <summary>
             Enumerate mux device handles.
             </summary>
-            <returns>Array of mux handles.</returns>
+            <returns>Array of mux handles, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetMuxProperties(System.IntPtr)">
             <summary>
             Get mux properties and display outputs as a DTO.
             </summary>
             <param name="muxHandle">Mux handle.</param>
-            <returns>Mux properties DTO.</returns>
+            <returns>Mux properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SwitchMux(System.IntPtr,System.IntPtr)">
             <summary>
@@ -2012,18 +2038,20 @@
             </summary>
             <param name="muxHandle">Mux handle.</param>
             <param name="inactiveDisplayOutput">Inactive display output handle.</param>
+            <returns><c>true</c> if the operation succeeded; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetIntelArcSyncProfile">
             <summary>
             Get Intel Arc Sync profile parameters as a DTO.
             </summary>
-            <returns>Arc Sync profile parameters DTO.</returns>
+            <returns>Arc Sync profile parameters DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetIntelArcSyncProfile(IGCLWrapper.IntelArcSyncProfileParamsDto)">
             <summary>
             Set Intel Arc Sync profile parameters using a DTO.
             </summary>
             <param name="parameters">Arc Sync profile parameters DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.EdidManagementNative(IGCLWrapper.ctl_edid_management_args_t)">
             <summary>
@@ -2037,21 +2065,21 @@
             Perform EDID management using a DTO.
             </summary>
             <param name="args">EDID management arguments DTO.</param>
-            <returns>Updated EDID management arguments DTO.</returns>
+            <returns>Updated EDID management arguments DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetEdidManagement(IGCLWrapper.ctl_edid_type_t)">
             <summary>
             Read EDID bytes via the EDID management API.
             </summary>
             <param name="edidType">EDID type to read.</param>
-            <returns>EDID bytes.</returns>
+            <returns>EDID bytes, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetEdidManagementWithFlags(IGCLWrapper.ctl_edid_type_t)">
             <summary>
             Read EDID bytes via the EDID management API and return output flags.
             </summary>
             <param name="edidType">EDID type to read.</param>
-            <returns>Tuple containing EDID bytes and output flags.</returns>
+            <returns>Tuple containing EDID bytes and output flags, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetCustomModesNative(IGCLWrapper.ctl_get_set_custom_mode_args_t)">
             <summary>
@@ -2064,7 +2092,7 @@
             <summary>
             Get custom display modes as DTOs.
             </summary>
-            <returns>Custom mode result DTO.</returns>
+            <returns>Custom mode result DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetCustomModes(IGCLWrapper.ctl_get_set_custom_mode_args_t,IGCLWrapper.ctl_custom_src_mode_t[])">
             <summary>
@@ -2072,6 +2100,7 @@
             </summary>
             <param name="args">Custom mode args.</param>
             <param name="modes">Custom modes array.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetCustomModes(IGCLWrapper.CustomModeArgsDto,System.Collections.Generic.IReadOnlyList{IGCLWrapper.CustomSourceModeDto})">
             <summary>
@@ -2079,12 +2108,13 @@
             </summary>
             <param name="args">Custom mode args DTO.</param>
             <param name="modes">Custom mode DTOs.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetVblankTimestamp">
             <summary>
             Get vblank timestamp information as a DTO.
             </summary>
-            <returns>Vblank timestamp DTO.</returns>
+            <returns>Vblank timestamp DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetSetDynamicContrastEnhancementNative(IGCLWrapper.ctl_dce_args_t,System.UInt32[])">
             <summary>
@@ -2098,7 +2128,7 @@
             <summary>
             Get dynamic contrast enhancement settings as a DTO.
             </summary>
-            <returns>Tuple containing args DTO and histogram.</returns>
+            <returns>Tuple containing args DTO and histogram, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetDynamicContrastEnhancement(IGCLWrapper.DceArgsDto,System.UInt32[])">
             <summary>
@@ -2106,18 +2136,20 @@
             </summary>
             <param name="args">DCE args DTO.</param>
             <param name="histogram">Histogram buffer.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetWireFormat">
             <summary>
             Get wire format settings as a DTO.
             </summary>
-            <returns>Wire format settings DTO.</returns>
+            <returns>Wire format settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetWireFormat(IGCLWrapper.WireFormatConfigDto)">
             <summary>
             Set wire format settings using a DTO.
             </summary>
             <param name="args">Wire format settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetSetDisplaySettingsNative(IGCLWrapper.ctl_display_settings_t)">
             <summary>
@@ -2130,13 +2162,14 @@
             <summary>
             Get display settings as a DTO.
             </summary>
-            <returns>Display settings DTO.</returns>
+            <returns>Display settings DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.SetDisplaySettings(IGCLWrapper.DisplaySettingsDto)">
             <summary>
             Set display settings using a DTO.
             </summary>
             <param name="settings">Display settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.CreateDisplaySettingsGetRequest">
             <summary>
@@ -2178,6 +2211,12 @@
             </summary>
             <param name="settings">Settings DTO.</param>
             <exception cref="T:System.ArgumentException">Thrown when no optimization feature flags are provided.</exception>
+        </member>
+        <member name="M:IGCLWrapper.IGCLDisplayHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.Dispose">
             <summary>
@@ -3609,19 +3648,26 @@
             <summary>
             Get ECC properties as a DTO.
             </summary>
-            <returns>ECC properties DTO.</returns>
+            <returns>ECC properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLEccHelper.EccGetState">
             <summary>
             Get ECC state description as a DTO.
             </summary>
-            <returns>ECC state description DTO.</returns>
+            <returns>ECC state description DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLEccHelper.EccSetState(IGCLWrapper.ctl_ecc_state_t)">
             <summary>
             Set ECC state.
             </summary>
             <param name="desiredState">Desired ECC state.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLEccHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLEccHelper.AreEccPropertiesEqual(IGCLWrapper.ctl_ecc_properties_t,IGCLWrapper.ctl_ecc_properties_t)">
             <summary>
@@ -3718,14 +3764,20 @@
             Get engine properties as a DTO.
             </summary>
             <param name="engineHandle">Engine handle.</param>
-            <returns>Engine properties DTO.</returns>
+            <returns>Engine properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLEngineHelper.EngineGetActivity(System.IntPtr)">
             <summary>
             Get engine activity stats as a DTO.
             </summary>
             <param name="engineHandle">Engine handle.</param>
-            <returns>Engine stats DTO.</returns>
+            <returns>Engine stats DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLEngineHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLEngineHelper.AreEnginePropertiesEqual(IGCLWrapper.ctl_engine_properties_t,IGCLWrapper.ctl_engine_properties_t)">
             <summary>
@@ -3764,20 +3816,21 @@
             Get fan properties as a DTO.
             </summary>
             <param name="fanHandle">Fan handle.</param>
-            <returns>Fan properties DTO.</returns>
+            <returns>Fan properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFanHelper.FanGetConfig(System.IntPtr)">
             <summary>
             Get fan configuration as a DTO.
             </summary>
             <param name="fanHandle">Fan handle.</param>
-            <returns>Fan config DTO.</returns>
+            <returns>Fan config DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFanHelper.FanSetDefaultMode(System.IntPtr)">
             <summary>
             Set the fan to default control mode.
             </summary>
             <param name="fanHandle">Fan handle.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFanHelper.FanSetFixedSpeedMode(System.IntPtr,IGCLWrapper.FanSpeedDto)">
             <summary>
@@ -3785,6 +3838,7 @@
             </summary>
             <param name="fanHandle">Fan handle.</param>
             <param name="speed">Fan speed settings DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFanHelper.FanSetSpeedTableMode(System.IntPtr,IGCLWrapper.FanSpeedTableDto)">
             <summary>
@@ -3792,6 +3846,7 @@
             </summary>
             <param name="fanHandle">Fan handle.</param>
             <param name="table">Fan speed table DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFanHelper.FanGetState(System.IntPtr,IGCLWrapper.ctl_fan_speed_units_t)">
             <summary>
@@ -3799,7 +3854,13 @@
             </summary>
             <param name="fanHandle">Fan handle.</param>
             <param name="units">Speed units.</param>
-            <returns>Fan speed value.</returns>
+            <returns>Fan speed value, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLFanHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLFanHelper.CreateFanSpeed">
             <summary>
@@ -4164,7 +4225,7 @@
             <summary>
             Get firmware properties for the adapter as a DTO.
             </summary>
-            <returns>Firmware properties DTO.</returns>
+            <returns>Firmware properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFirmwareHelper.EnumerateFirmwareComponents">
             <summary>
@@ -4177,13 +4238,20 @@
             Get firmware component properties as a DTO.
             </summary>
             <param name="firmwareHandle">Firmware component handle.</param>
-            <returns>Firmware component properties DTO.</returns>
+            <returns>Firmware component properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFirmwareHelper.AllowPCIeLinkSpeedUpdate(System.Boolean)">
             <summary>
             Allow or disallow PCIe link speed updates.
             </summary>
             <param name="allow">True to allow updates; otherwise false.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLFirmwareHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLFirmwareHelper.AreFirmwarePropertiesEqual(IGCLWrapper.ctl_firmware_properties_t,IGCLWrapper.ctl_firmware_properties_t)">
             <summary>
@@ -4353,21 +4421,21 @@
             Get frequency domain properties as a DTO.
             </summary>
             <param name="freqHandle">Frequency domain handle.</param>
-            <returns>Frequency properties DTO.</returns>
+            <returns>Frequency properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFrequencyHelper.FrequencyGetAvailableClocks(System.IntPtr)">
             <summary>
             Get available clocks for a frequency domain.
             </summary>
             <param name="freqHandle">Frequency domain handle.</param>
-            <returns>Array of available clock values.</returns>
+            <returns>Array of available clock values, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFrequencyHelper.FrequencyGetRange(System.IntPtr)">
             <summary>
             Get the frequency range for a domain as a DTO.
             </summary>
             <param name="freqHandle">Frequency domain handle.</param>
-            <returns>Frequency range DTO.</returns>
+            <returns>Frequency range DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFrequencyHelper.FrequencySetRange(System.IntPtr,IGCLWrapper.FrequencyRangeDto)">
             <summary>
@@ -4375,20 +4443,27 @@
             </summary>
             <param name="freqHandle">Frequency domain handle.</param>
             <param name="range">Frequency range DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFrequencyHelper.FrequencyGetState(System.IntPtr)">
             <summary>
             Get the current frequency state as a DTO.
             </summary>
             <param name="freqHandle">Frequency domain handle.</param>
-            <returns>Frequency state DTO.</returns>
+            <returns>Frequency state DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLFrequencyHelper.FrequencyGetThrottleTime(System.IntPtr)">
             <summary>
             Get the throttle time for a frequency domain as a DTO.
             </summary>
             <param name="freqHandle">Frequency domain handle.</param>
-            <returns>Throttle time DTO.</returns>
+            <returns>Throttle time DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLFrequencyHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLFrequencyHelper.CreateFrequencyRangeStruct">
             <summary>
@@ -4729,14 +4804,14 @@
             Get LED properties as a DTO.
             </summary>
             <param name="ledHandle">LED handle.</param>
-            <returns>LED properties DTO.</returns>
+            <returns>LED properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLLedHelper.LedGetState(System.IntPtr)">
             <summary>
             Get LED state as a DTO.
             </summary>
             <param name="ledHandle">LED handle.</param>
-            <returns>LED state DTO.</returns>
+            <returns>LED state DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLLedHelper.LedSetState(System.IntPtr,IGCLWrapper.LedStateDto)">
             <summary>
@@ -4744,6 +4819,13 @@
             </summary>
             <param name="ledHandle">LED handle.</param>
             <param name="state">LED state DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLLedHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLLedHelper.CreateLedStateStruct">
             <summary>
@@ -4942,20 +5024,27 @@
             <summary>
             Get supported video processing feature capabilities for the adapter.
             </summary>
-            <returns>Video processing feature capabilities DTO.</returns>
+            <returns>Video processing feature capabilities DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLMediaHelper.GetVideoProcessingFeature(IGCLWrapper.VideoProcessingFeatureGetSetDto)">
             <summary>
             Get a video processing feature using a DTO request.
             </summary>
             <param name="featureGetSet">Video processing feature DTO.</param>
-            <returns>Updated video processing feature DTO.</returns>
+            <returns>Updated video processing feature DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLMediaHelper.SetVideoProcessingFeature(IGCLWrapper.VideoProcessingFeatureGetSetDto)">
             <summary>
             Set a video processing feature using a DTO request.
             </summary>
             <param name="featureGetSet">Video processing feature DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLMediaHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLMediaHelper.CreateVideoProcessingFeatureGetSet">
             <summary>
@@ -5134,21 +5223,27 @@
             Get memory module properties as a DTO.
             </summary>
             <param name="memoryHandle">Memory module handle.</param>
-            <returns>Memory properties DTO.</returns>
+            <returns>Memory properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLMemoryHelper.MemoryGetState(System.IntPtr)">
             <summary>
             Get current memory module state as a DTO.
             </summary>
             <param name="memoryHandle">Memory module handle.</param>
-            <returns>Memory state DTO.</returns>
+            <returns>Memory state DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLMemoryHelper.MemoryGetBandwidth(System.IntPtr)">
             <summary>
             Get memory bandwidth information as a DTO.
             </summary>
             <param name="memoryHandle">Memory module handle.</param>
-            <returns>Memory bandwidth DTO.</returns>
+            <returns>Memory bandwidth DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLMemoryHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLMemoryHelper.AreMemoryPropertiesEqual(IGCLWrapper.ctl_mem_properties_t,IGCLWrapper.ctl_mem_properties_t)">
             <summary>
@@ -5194,167 +5289,181 @@
             <summary>
             Get overclock properties as a DTO.
             </summary>
-            <returns>Overclock properties DTO.</returns>
+            <returns>Overclock properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.SetWaiver">
             <summary>
             Set the overclocking waiver for this adapter.
             </summary>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuFrequencyOffsetGet">
             <summary>
             Get the GPU frequency offset.
             </summary>
-            <returns>GPU frequency offset.</returns>
+            <returns>GPU frequency offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuFrequencyOffsetSet(System.Double)">
             <summary>
             Set the GPU frequency offset.
             </summary>
             <param name="offset">Frequency offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuFrequencyOffsetGetV2">
             <summary>
             Get the GPU frequency offset (V2).
             </summary>
-            <returns>GPU frequency offset.</returns>
+            <returns>GPU frequency offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuFrequencyOffsetSetV2(System.Double)">
             <summary>
             Set the GPU frequency offset (V2).
             </summary>
             <param name="offset">Frequency offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuVoltageOffsetGet">
             <summary>
             Get the GPU voltage offset.
             </summary>
-            <returns>GPU voltage offset.</returns>
+            <returns>GPU voltage offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuVoltageOffsetSet(System.Double)">
             <summary>
             Set the GPU voltage offset.
             </summary>
             <param name="offset">Voltage offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuMaxVoltageOffsetGetV2">
             <summary>
             Get the GPU max voltage offset (V2).
             </summary>
-            <returns>GPU max voltage offset.</returns>
+            <returns>GPU max voltage offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuMaxVoltageOffsetSetV2(System.Double)">
             <summary>
             Set the GPU max voltage offset (V2).
             </summary>
             <param name="offset">Voltage offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuLockGet">
             <summary>
             Get the GPU lock voltage/frequency pair.
             </summary>
-            <returns>Voltage/frequency pair DTO.</returns>
+            <returns>Voltage/frequency pair DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockGpuLockSet(IGCLWrapper.OcVfPairDto)">
             <summary>
             Set the GPU lock voltage/frequency pair.
             </summary>
             <param name="pair">Voltage/frequency pair DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockVramFrequencyOffsetGet">
             <summary>
             Get the VRAM frequency offset.
             </summary>
-            <returns>VRAM frequency offset.</returns>
+            <returns>VRAM frequency offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockVramFrequencyOffsetSet(System.Double)">
             <summary>
             Set the VRAM frequency offset.
             </summary>
             <param name="offset">Frequency offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockVramVoltageOffsetGet">
             <summary>
             Get the VRAM voltage offset.
             </summary>
-            <returns>VRAM voltage offset.</returns>
+            <returns>VRAM voltage offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockVramVoltageOffsetSet(System.Double)">
             <summary>
             Set the VRAM voltage offset.
             </summary>
             <param name="voltage">Voltage offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockVramMemSpeedLimitGetV2">
             <summary>
             Get the VRAM memory speed limit (V2).
             </summary>
-            <returns>VRAM memory speed limit.</returns>
+            <returns>VRAM memory speed limit, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockVramMemSpeedLimitSetV2(System.Double)">
             <summary>
             Set the VRAM memory speed limit (V2).
             </summary>
             <param name="speed">Speed limit value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockPowerLimitGet">
             <summary>
             Get the overclock power limit.
             </summary>
-            <returns>Power limit value.</returns>
+            <returns>Power limit value, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockPowerLimitSet(System.Double)">
             <summary>
             Set the overclock power limit.
             </summary>
             <param name="limit">Power limit value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockPowerLimitGetV2">
             <summary>
             Get the overclock power limit (V2).
             </summary>
-            <returns>Power limit value.</returns>
+            <returns>Power limit value, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockPowerLimitSetV2(System.Double)">
             <summary>
             Set the overclock power limit (V2).
             </summary>
             <param name="limit">Power limit value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockTemperatureLimitGet">
             <summary>
             Get the overclock temperature limit.
             </summary>
-            <returns>Temperature limit value.</returns>
+            <returns>Temperature limit value, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockTemperatureLimitSet(System.Double)">
             <summary>
             Set the overclock temperature limit.
             </summary>
             <param name="value">Temperature limit value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockTemperatureLimitGetV2">
             <summary>
             Get the overclock temperature limit (V2).
             </summary>
-            <returns>Temperature limit value.</returns>
+            <returns>Temperature limit value, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockTemperatureLimitSetV2(System.Double)">
             <summary>
             Set the overclock temperature limit (V2).
             </summary>
             <param name="value">Temperature limit value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.GetPowerTelemetry">
             <summary>
             Get power telemetry as a DTO.
             </summary>
-            <returns>Power telemetry DTO.</returns>
+            <returns>Power telemetry DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.ResetToDefault">
             <summary>
             Reset overclock settings to default.
             </summary>
+            <returns><c>true</c> if the settings were reset successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockReadVFCurve(IGCLWrapper.ctl_vf_curve_type_t,IGCLWrapper.ctl_vf_curve_details_t)">
             <summary>
@@ -5362,73 +5471,85 @@
             </summary>
             <param name="curveType">Curve type.</param>
             <param name="detail">Curve detail flags.</param>
-            <returns>Array of voltage/frequency points.</returns>
+            <returns>Array of voltage/frequency points, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.OverclockWriteCustomVFCurve(IGCLWrapper.ctl_voltage_frequency_point_t[])">
             <summary>
             Write a custom voltage/frequency curve.
             </summary>
             <param name="points">Voltage/frequency points.</param>
+            <returns><c>true</c> if the curve was written successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.GetGpuFrequencyOffset">
             <summary>
             Get the GPU frequency offset (V2 wrapper).
             </summary>
-            <returns>GPU frequency offset.</returns>
+            <returns>GPU frequency offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.SetGpuFrequencyOffset(System.Double)">
             <summary>
             Set the GPU frequency offset (V2 wrapper).
             </summary>
             <param name="offset">Frequency offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.GetGpuVoltageOffset">
             <summary>
             Get the GPU voltage offset (V2 wrapper).
             </summary>
-            <returns>GPU voltage offset.</returns>
+            <returns>GPU voltage offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.SetGpuVoltageOffset(System.Double)">
             <summary>
             Set the GPU voltage offset (V2 wrapper).
             </summary>
             <param name="offset">Voltage offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.GetVramFrequencyOffset">
             <summary>
             Get the VRAM frequency offset.
             </summary>
-            <returns>VRAM frequency offset.</returns>
+            <returns>VRAM frequency offset, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.SetVramFrequencyOffset(System.Double)">
             <summary>
             Set the VRAM frequency offset.
             </summary>
             <param name="offset">Frequency offset value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.GetPowerLimit">
             <summary>
             Get the power limit (V2 wrapper).
             </summary>
-            <returns>Power limit value.</returns>
+            <returns>Power limit value, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.SetPowerLimit(System.Double)">
             <summary>
             Set the power limit (V2 wrapper).
             </summary>
             <param name="limit">Power limit value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.GetTemperatureLimit">
             <summary>
             Get the temperature limit (V2 wrapper).
             </summary>
-            <returns>Temperature limit value.</returns>
+            <returns>Temperature limit value, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.SetTemperatureLimit(System.Double)">
             <summary>
             Set the temperature limit (V2 wrapper).
             </summary>
             <param name="value">Temperature limit value.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLOverclockHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.CreateVfPair">
             <summary>
@@ -6092,13 +6213,19 @@
             <summary>
             Get PCI properties as a DTO.
             </summary>
-            <returns>PCI properties DTO.</returns>
+            <returns>PCI properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLPciHelper.PciGetState">
             <summary>
             Get PCI state as a DTO.
             </summary>
-            <returns>PCI state DTO.</returns>
+            <returns>PCI state DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLPciHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLPciHelper.ArePciPropertiesEqual(IGCLWrapper.ctl_pci_properties_t,IGCLWrapper.ctl_pci_properties_t)">
             <summary>
@@ -6270,21 +6397,21 @@
             Get power domain properties as a DTO.
             </summary>
             <param name="powerHandle">Power domain handle.</param>
-            <returns>Power properties DTO.</returns>
+            <returns>Power properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLPowerHelper.PowerGetEnergyCounter(System.IntPtr)">
             <summary>
             Get the power energy counter as a DTO.
             </summary>
             <param name="powerHandle">Power domain handle.</param>
-            <returns>Power energy counter DTO.</returns>
+            <returns>Power energy counter DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLPowerHelper.PowerGetLimits(System.IntPtr)">
             <summary>
             Get power limits as a DTO.
             </summary>
             <param name="powerHandle">Power domain handle.</param>
-            <returns>Power limits DTO.</returns>
+            <returns>Power limits DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLPowerHelper.PowerSetLimits(System.IntPtr,IGCLWrapper.PowerLimitsDto)">
             <summary>
@@ -6292,6 +6419,13 @@
             </summary>
             <param name="powerHandle">Power domain handle.</param>
             <param name="limits">Power limits DTO.</param>
+            <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLPowerHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLPowerHelper.CreatePowerLimitsStruct">
             <summary>
@@ -6682,14 +6816,20 @@
             Get temperature sensor properties as a DTO.
             </summary>
             <param name="sensorHandle">Temperature sensor handle.</param>
-            <returns>Temperature properties DTO.</returns>
+            <returns>Temperature properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLTemperatureHelper.TemperatureGetState(System.IntPtr)">
             <summary>
             Get current temperature for a sensor.
             </summary>
             <param name="sensorHandle">Temperature sensor handle.</param>
-            <returns>Temperature value in degrees C.</returns>
+            <returns>Temperature value in degrees C, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLTemperatureHelper.IsUnsupportedResult(IGCLWrapper.ctl_result_t)">
+            <summary>
+            Returns true when the result code indicates a feature is not available
+            on the current hardware or driver, rather than a genuine API failure.
+            </summary>
         </member>
         <member name="M:IGCLWrapper.IGCLTemperatureHelper.AreTemperaturePropertiesEqual(IGCLWrapper.ctl_temp_properties_t,IGCLWrapper.ctl_temp_properties_t)">
             <summary>

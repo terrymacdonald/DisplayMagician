@@ -15,7 +15,7 @@
             </summary>
             <param name="services">Native 3D settings services pointer.</param>
             <param name="addRef">True to AddRef the pointer for this helper.</param>
-            <param name="system">Optional system pointer for GPU lookup by unique id. Not ref-counted.</param>
+            <param name="system">Optional native system pointer used to upgrade to v1/v2 interfaces.</param>
         </member>
         <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.Get3DSettingsServicesHandle">
             <summary>
@@ -76,42 +76,6 @@
         </member>
         <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryApplyAll3DSettings(System.Int32,ADLXWrapper.All3DSettingsDto)">
             <summary>Tries to apply all 3D settings to the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetChill(System.Int32)">
-            <summary>Gets Chill state for the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetChill(System.Int32,ADLXWrapper.ChillDto@)">
-            <summary>Tries to get Chill state for the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.ApplyChill(System.Int32,ADLXWrapper.ChillDto)">
-            <summary>Applies Chill settings to the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryApplyChill(System.Int32,ADLXWrapper.ChillDto)">
-            <summary>Tries to apply Chill settings to the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetMorphologicalAntiAliasing(System.Int32)">
-            <summary>Gets MorphologicalAntiAliasing state for the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetMorphologicalAntiAliasing(System.Int32,ADLXWrapper.MorphologicalAntiAliasingDto@)">
-            <summary>Tries to get MorphologicalAntiAliasing state for the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.ApplyMorphologicalAntiAliasing(System.Int32,ADLXWrapper.MorphologicalAntiAliasingDto)">
-            <summary>Applies MorphologicalAntiAliasing settings to the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryApplyMorphologicalAntiAliasing(System.Int32,ADLXWrapper.MorphologicalAntiAliasingDto)">
-            <summary>Tries to apply MorphologicalAntiAliasing settings to the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetImageSharpenDesktop(System.Int32)">
-            <summary>Gets ImageSharpenDesktop state for the GPU with the specified unique id. Requires driver support for IADLX3DSettingsServices2.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetImageSharpenDesktop(System.Int32,ADLXWrapper.ImageSharpenDesktopDto@)">
-            <summary>Tries to get ImageSharpenDesktop state for the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.ApplyImageSharpenDesktop(System.Int32,ADLXWrapper.ImageSharpenDesktopDto)">
-            <summary>Applies ImageSharpenDesktop settings to the GPU with the specified unique id. Requires driver support for IADLX3DSettingsServices2.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryApplyImageSharpenDesktop(System.Int32,ADLXWrapper.ImageSharpenDesktopDto)">
-            <summary>Tries to apply ImageSharpenDesktop settings to the GPU with the specified unique id.</summary>
         </member>
         <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetFluidMotionFrames(System.Int32)">
             <summary>Gets Fluid Motion Frames state for the GPU with the specified unique id.</summary>
@@ -946,7 +910,7 @@
             </summary>
             <param name="services">Native GPU tuning services pointer.</param>
             <param name="addRef">True to AddRef the pointer for this helper.</param>
-            <param name="system">Optional system pointer for GPU lookup by unique id. Not ref-counted.</param>
+            <param name="system">Optional native system pointer used to upgrade to extended interfaces.</param>
         </member>
         <member name="M:ADLXWrapper.ADLXGPUTuningServicesHelper.GetGPUTuningServicesHandle">
             <summary>
@@ -1046,12 +1010,6 @@
         <member name="M:ADLXWrapper.ADLXGPUTuningServicesHelper.TryGetPresetTuning(System.Int32,ADLXWrapper.PresetTuningDto@)">
             <summary>Tries to get preset tuning info for the GPU with the specified unique id.</summary>
         </member>
-        <member name="M:ADLXWrapper.ADLXGPUTuningServicesHelper.GetSmartAccessMemory(System.Int32)">
-            <summary>Gets AMD SmartAccess Memory info for the GPU with the specified unique id.</summary>
-        </member>
-        <member name="M:ADLXWrapper.ADLXGPUTuningServicesHelper.TryGetSmartAccessMemory(System.Int32,ADLXWrapper.SmartAccessMemoryDto@)">
-            <summary>Tries to get AMD SmartAccess Memory info for the GPU with the specified unique id.</summary>
-        </member>
         <member name="M:ADLXWrapper.ADLXGPUTuningServicesHelper.ExecuteWithGpuByUniqueId``1(System.Int32,System.Func{System.IntPtr,``0})">
             <summary>
             Executes an action with the GPU matching the specified unique id.
@@ -1117,7 +1075,7 @@
             </summary>
             <param name="services">Native multimedia services pointer.</param>
             <param name="addRef">True to AddRef the pointer for this helper.</param>
-            <param name="system">Optional system pointer for GPU lookup by unique id. Not ref-counted.</param>
+            <param name="system">Optional native system pointer used to upgrade to extended interfaces.</param>
         </member>
         <member name="M:ADLXWrapper.ADLXMultimediaServicesHelper.GetMultimediaServicesNative">
             <summary>
@@ -1175,9 +1133,7 @@
             </summary>
         </member>
         <member name="M:ADLXWrapper.ADLXMultimediaServicesHelper.TrySetVideoSuperResolutionEnabled(ADLXWrapper.IADLXVideoSuperResolution*,System.Boolean)">
-            <summary>
-            Tries to set video super resolution enabled; returns false when the feature is unsupported.
-            </summary>
+            <summary>Tries to set video super resolution enabled; returns false when the feature is unsupported.</summary>
         </member>
         <member name="M:ADLXWrapper.ADLXMultimediaServicesHelper.GetVideoUpscale(System.Int32)">
             <summary>Gets video upscale info for the GPU with the specified unique id.</summary>
@@ -1226,7 +1182,7 @@
             </summary>
             <param name="services">Native performance monitoring services pointer.</param>
             <param name="addRef">True to AddRef the pointer for this helper.</param>
-            <param name="system">Optional system pointer for GPU lookup by unique id. Not ref-counted.</param>
+            <param name="system">Optional native system pointer used to upgrade to extended interfaces.</param>
         </member>
         <member name="M:ADLXWrapper.ADLXPerformanceMonitoringServicesHelper.GetPerformanceMonitoringServicesNative">
             <summary>
@@ -1520,8 +1476,7 @@
             <summary>
             Returns an AddRef'd handle to the display services interface for external ownership.
             </summary>
-            <returns>Managed handle to the native display services interface.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If display services are unsupported or retrieval fails.</exception>
+            <returns>Managed handle to the native display services interface, or a default invalid handle if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.TryGetDisplayServicesNative(ADLXWrapper.IADLXDisplayServices*@)">
@@ -1534,8 +1489,7 @@
             <summary>
             Creates a managed display-services helper with shared system lifetime.
             </summary>
-            <returns>Display services helper wrapping native interfaces.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If display/desktop services are unsupported or retrieval fails.</exception>
+            <returns>Display services helper wrapping native interfaces, or <c>null</c> if display services are not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetDesktopServicesNative">
@@ -1550,8 +1504,7 @@
             <summary>
             Returns an AddRef'd handle to the desktop services interface for external ownership.
             </summary>
-            <returns>Managed handle to the native desktop services interface.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If desktop services are unsupported or retrieval fails.</exception>
+            <returns>Managed handle to the native desktop services interface, or a default invalid handle if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.TryGetDesktopServicesNative(ADLXWrapper.IADLXDesktopServices*@)">
@@ -1564,8 +1517,7 @@
             <summary>
             Creates a managed desktop-services helper with shared system lifetime.
             </summary>
-            <returns>Desktop services helper wrapping native interfaces.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If desktop/display services are unsupported or retrieval fails.</exception>
+            <returns>Desktop services helper wrapping native interfaces, or <c>null</c> if desktop services are not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.Get3DSettingsServicesNative">
@@ -1580,8 +1532,7 @@
             <summary>
             Returns an AddRef'd handle to the 3D settings services interface for external ownership.
             </summary>
-            <returns>Managed handle to the native 3D settings services interface.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If 3D settings services are unsupported or retrieval fails.</exception>
+            <returns>Managed handle to the native 3D settings services interface, or a default invalid handle if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.TryGet3DSettingsServicesNative(ADLXWrapper.IADLX3DSettingsServices*@)">
@@ -1594,8 +1545,7 @@
             <summary>
             Creates a managed 3D settings helper with shared system lifetime.
             </summary>
-            <returns>3D settings services helper wrapping native interfaces.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If 3D settings services are unsupported or retrieval fails.</exception>
+            <returns>3D settings services helper wrapping native interfaces, or <c>null</c> if 3D settings services are not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetGPUTuningServicesNative">
@@ -1610,8 +1560,7 @@
             <summary>
             Returns an AddRef'd handle to the GPU tuning services interface for external ownership.
             </summary>
-            <returns>Managed handle to the native GPU tuning services interface.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If GPU tuning services are unsupported or retrieval fails.</exception>
+            <returns>Managed handle to the native GPU tuning services interface, or a default invalid handle if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.TryGetGPUTuningServicesNative(ADLXWrapper.IADLXGPUTuningServices*@)">
@@ -1624,8 +1573,7 @@
             <summary>
             Creates a managed GPU tuning helper with shared system lifetime.
             </summary>
-            <returns>GPU tuning services helper wrapping native interfaces.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If GPU tuning services are unsupported or retrieval fails.</exception>
+            <returns>GPU tuning services helper wrapping native interfaces, or <c>null</c> if GPU tuning services are not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetPerformanceMonitoringServicesNative">
@@ -1640,8 +1588,7 @@
             <summary>
             Returns an AddRef'd handle to the performance monitoring services interface for external ownership.
             </summary>
-            <returns>Managed handle to the native performance monitoring services interface.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If performance monitoring services are unsupported or retrieval fails.</exception>
+            <returns>Managed handle to the native performance monitoring services interface, or a default invalid handle if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.TryGetPerformanceMonitoringServicesNative(ADLXWrapper.IADLXPerformanceMonitoringServices*@)">
@@ -1654,8 +1601,7 @@
             <summary>
             Creates a managed performance monitoring helper with shared system lifetime.
             </summary>
-            <returns>Performance monitoring services helper wrapping native interfaces.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If performance monitoring services are unsupported or retrieval fails.</exception>
+            <returns>Performance monitoring services helper wrapping native interfaces, or <c>null</c> if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetPowerTuningServicesNative">
@@ -1684,8 +1630,7 @@
             <summary>
             Creates a managed power tuning helper with shared system lifetime.
             </summary>
-            <returns>Power tuning services helper wrapping native interfaces.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If power tuning services are unsupported or retrieval fails.</exception>
+            <returns>Power tuning services helper wrapping native interfaces, or <c>null</c> if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetMultimediaServicesNative">
@@ -1714,8 +1659,7 @@
             <summary>
             Creates a managed multimedia services helper with shared system lifetime.
             </summary>
-            <returns>Multimedia services helper wrapping native interfaces.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If multimedia services are unsupported or retrieval fails.</exception>
+            <returns>Multimedia services helper wrapping native interfaces, or <c>null</c> if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetGPUsChangedHandlingNative">
@@ -1730,8 +1674,7 @@
             <summary>
             Returns an AddRef'd handle to the GPU change handling interface for external ownership.
             </summary>
-            <returns>Managed handle to the native GPU change handling interface.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If change handling is unsupported or retrieval fails.</exception>
+            <returns>Managed handle to the native GPU change handling interface, or a default invalid handle if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetGPUAppsListChangedHandlingNative">
@@ -1746,40 +1689,41 @@
             <summary>
             Returns an AddRef'd handle to the GPU applications list change handling interface for external ownership.
             </summary>
-            <returns>Managed handle to the native GPU apps list change handling interface.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If the extended interface is unsupported or retrieval fails.</exception>
+            <returns>Managed handle to the native GPU apps list change handling interface, or a default invalid handle if not supported.</returns>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.EnumerateADLXGPUs">
             <summary>
             Enumerates GPU facades with display/desktop helpers wired in.
             </summary>
-            <returns>List of managed GPU facades. Callers must Dispose each GPU when finished.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If enumeration is unsupported or fails.</exception>
+            <returns>List of managed GPU facades. Callers must Dispose each GPU when finished.
+            Returns an empty list if GPU enumeration is not supported by this ADLX system.</returns>
+            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails with an unexpected error.</exception>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.EnumerateDisplays">
             <summary>
             Enumerates display facades via the display services helper.
             </summary>
-            <returns>List of managed displays.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails.</exception>
+            <returns>List of managed displays. Returns an empty list if display services are not
+            supported or no displays are connected.</returns>
+            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails with an unexpected error.</exception>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.EnumerateDisplaysInUse">
             <summary>
             Enumerates displays that are part of an active desktop (in use) via the display services helper.
             </summary>
-            <returns>List of managed displays in use.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails.</exception>
+            <returns>List of managed displays in use. Returns an empty list if services are not supported.</returns>
+            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails with an unexpected error.</exception>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.EnumerateDesktops">
             <summary>
             Enumerates desktop facades via the desktop services helper.
             </summary>
-            <returns>List of managed desktops.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails.</exception>
+            <returns>List of managed desktops. Returns an empty list if desktop services are not supported.</returns>
+            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails with an unexpected error.</exception>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.EnumerateGPUsHandle">
@@ -1811,8 +1755,8 @@
             <summary>
             Enumerates native GPU interfaces. Caller must dispose the returned list/entries.
             </summary>
-            <returns>Native GPU list pointer.</returns>
-            <exception cref="T:ADLXWrapper.ADLXException">If enumeration is unsupported or fails.</exception>
+            <returns>Native GPU list pointer, or <c>null</c> if GPU enumeration is not supported.</returns>
+            <exception cref="T:ADLXWrapper.ADLXException">If enumeration fails with an unexpected error.</exception>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.Dispose">
