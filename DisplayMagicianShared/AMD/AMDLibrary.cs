@@ -3017,22 +3017,29 @@ namespace DisplayMagicianShared.AMD
             try
             {
                 var threeDServices = _adlxSystem.Get3DSettingsServices();
-                var gpusFor3D = _adlxSystem.EnumerateADLXGPUs();
-                foreach (var gpu in gpusFor3D)
+                if (threeDServices == null)
                 {
-                    string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
-                    if (!myDisplayConfig.GPUs.TryGetValue(gpuKey, out var gpuSettings))
-                        gpuSettings = new AMD_GPU_WITH_SETTINGS();
-                    if (threeDServices.TryGetAll3DSettings(gpu.UniqueId, out var settings3D))
+                    SharedLogger.logger.Trace("AMDLibrary/GetAMDDisplayConfig: ADLX 3D settings services are not supported, skipping per-GPU 3D settings.");
+                }
+                else
+                {
+                    var gpusFor3D = _adlxSystem.EnumerateADLXGPUs();
+                    foreach (var gpu in gpusFor3D)
                     {
-                        gpuSettings.ThreeDSettings = settings3D;
-                        SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Read 3D settings for GPU {gpuKey}.");
+                        string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
+                        if (!myDisplayConfig.GPUs.TryGetValue(gpuKey, out var gpuSettings))
+                            gpuSettings = new AMD_GPU_WITH_SETTINGS();
+                        if (threeDServices.TryGetAll3DSettings(gpu.UniqueId, out var settings3D))
+                        {
+                            gpuSettings.ThreeDSettings = settings3D;
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Read 3D settings for GPU {gpuKey}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Could not read 3D settings for GPU {gpuKey}, skipping.");
+                        }
+                        myDisplayConfig.GPUs[gpuKey] = gpuSettings;
                     }
-                    else
-                    {
-                        SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Could not read 3D settings for GPU {gpuKey}, skipping.");
-                    }
-                    myDisplayConfig.GPUs[gpuKey] = gpuSettings;
                 }
             }
             catch (Exception ex)
@@ -3044,31 +3051,38 @@ namespace DisplayMagicianShared.AMD
             try
             {
                 var mmServices = _adlxSystem.GetMultimediaServices();
-                var gpusForMm = _adlxSystem.EnumerateADLXGPUs();
-                foreach (var gpu in gpusForMm)
+                if (mmServices == null)
                 {
-                    string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
-                    if (!myDisplayConfig.GPUs.TryGetValue(gpuKey, out var gpuSettings))
-                        gpuSettings = new AMD_GPU_WITH_SETTINGS();
-                    if (mmServices.TryGetVideoUpscale(gpu.UniqueId, out var videoUpscale))
+                    SharedLogger.logger.Trace("AMDLibrary/GetAMDDisplayConfig: ADLX multimedia services are not supported, skipping per-GPU multimedia settings.");
+                }
+                else
+                {
+                    var gpusForMm = _adlxSystem.EnumerateADLXGPUs();
+                    foreach (var gpu in gpusForMm)
                     {
-                        gpuSettings.VideoUpscale = videoUpscale;
-                        SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Read VideoUpscale for GPU {gpuKey}.");
+                        string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
+                        if (!myDisplayConfig.GPUs.TryGetValue(gpuKey, out var gpuSettings))
+                            gpuSettings = new AMD_GPU_WITH_SETTINGS();
+                        if (mmServices.TryGetVideoUpscale(gpu.UniqueId, out var videoUpscale))
+                        {
+                            gpuSettings.VideoUpscale = videoUpscale;
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Read VideoUpscale for GPU {gpuKey}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Could not read VideoUpscale for GPU {gpuKey}, skipping.");
+                        }
+                        if (mmServices.TryGetVideoSuperResolution(gpu.UniqueId, out var videoSuperResolution))
+                        {
+                            gpuSettings.VideoSuperResolution = videoSuperResolution;
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Read VideoSuperResolution for GPU {gpuKey}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Could not read VideoSuperResolution for GPU {gpuKey}, skipping.");
+                        }
+                        myDisplayConfig.GPUs[gpuKey] = gpuSettings;
                     }
-                    else
-                    {
-                        SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Could not read VideoUpscale for GPU {gpuKey}, skipping.");
-                    }
-                    if (mmServices.TryGetVideoSuperResolution(gpu.UniqueId, out var videoSuperResolution))
-                    {
-                        gpuSettings.VideoSuperResolution = videoSuperResolution;
-                        SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Read VideoSuperResolution for GPU {gpuKey}.");
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Could not read VideoSuperResolution for GPU {gpuKey}, skipping.");
-                    }
-                    myDisplayConfig.GPUs[gpuKey] = gpuSettings;
                 }
             }
             catch (Exception ex)
@@ -3440,8 +3454,20 @@ namespace DisplayMagicianShared.AMD
                             {
                                 // Get the Desktop Services                            
                                 var desktopService = _adlxSystem.GetDesktopServices();
+                                if (desktopService == null)
+                                {
+                                    SharedLogger.logger.Error("AMDLibrary/SetActiveConfig: ADLX desktop services are not supported, cannot create the Eyefinity Desktop.");
+                                    return false;
+                                }
+
                                 // Create the Eyefinity Desktop
-                                desktopService.CreateEyefinityDesktop();
+                                object eyefinityDesktop = desktopService.CreateEyefinityDesktop();
+                                if (eyefinityDesktop == null)
+                                {
+                                    SharedLogger.logger.Error("AMDLibrary/SetActiveConfig: ADLX simple Eyefinity is not supported, cannot create the Eyefinity Desktop.");
+                                    return false;
+                                }
+
                                 // Check if it matches what we want
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: Successfully created the ADLX Eyefinity Desktop");
                                 if (displayConfig.EyefinityDesktop.Equals(ActiveDisplayConfig.EyefinityDesktop))
@@ -3518,6 +3544,12 @@ namespace DisplayMagicianShared.AMD
                             {
                                 // Get the Desktop Services                            
                                 var desktopService = _adlxSystem.GetDesktopServices();
+                                if (desktopService == null)
+                                {
+                                    SharedLogger.logger.Error("AMDLibrary/SetActiveConfig: ADLX desktop services are not supported, cannot destroy the Eyefinity Desktop.");
+                                    return false;
+                                }
+
                                 // Destroy All Eyefinity Desktops
                                 desktopService.DestroyAllEyefinityDesktops();
                                 // Check if it matches what we want
@@ -3590,7 +3622,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentColorDepth.current != stored.ColorDepth)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: ColorDepth is currently {currentColorDepth.current} for display {display.UniqueId} and needs to be {stored.ColorDepth}.");
-                                display.SetColorDepth(stored.ColorDepth);
+                                if (!display.TrySetColorDepth(stored.ColorDepth))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: ColorDepth is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3607,7 +3642,10 @@ namespace DisplayMagicianShared.AMD
                         if (!currentCustomColor.Equals(stored.CustomColorInfo))
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: CustomColor differs for display {display.UniqueId}, applying stored values.");
-                            display.ApplyCustomColor(stored.CustomColorInfo.ToCustomColorDto());
+                            if (!display.TryApplyCustomColor(stored.CustomColorInfo.ToCustomColorDto()))
+                            {
+                                SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: CustomColor is no longer supported for display {display.UniqueId}, skipping.");
+                            }
                         }
                         else
                         {
@@ -3622,7 +3660,10 @@ namespace DisplayMagicianShared.AMD
                             if (!currentGamma.Equals(stored.GammaInfo))
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma differs for display {display.UniqueId}, reapplying.");
-                                display.ReapplyGamma();
+                                if (!display.TryReapplyGamma())
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamma is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3642,7 +3683,10 @@ namespace DisplayMagicianShared.AMD
                             if (!currentGamut.Equals(stored.GamutInfo))
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut differs for display {display.UniqueId}, reapplying.");
-                                display.ReapplyGamut();
+                                if (!display.TryReapplyGamut())
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamut is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3659,7 +3703,10 @@ namespace DisplayMagicianShared.AMD
                         if (!currentConn.Equals(stored.ConnectivityExperience))
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Connectivity experience differs for display {display.UniqueId}, applying.");
-                            display.ApplyConnectivityExperience(stored.ConnectivityExperience.ToConnectivityExperienceDto());
+                            if (!display.TryApplyConnectivityExperience(stored.ConnectivityExperience.ToConnectivityExperienceDto()))
+                            {
+                                SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Connectivity experience is no longer supported for display {display.UniqueId}, skipping.");
+                            }
                         }
                         else
                         {
@@ -3671,7 +3718,10 @@ namespace DisplayMagicianShared.AMD
                         if (!current3dLut.Equals(stored.ThreeDLUTSettings))
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: 3DLUT differs for display {display.UniqueId}, reapplying.");
-                            display.ReapplyThreeDLut();
+                            if (!display.TryReapplyThreeDLut())
+                            {
+                                SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT is no longer supported for display {display.UniqueId}, skipping.");
+                            }
                         }
                         else
                         {
@@ -3686,7 +3736,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentFreeSync.enabled != stored.IsEnabledFreeSync)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: FreeSync is {currentFreeSync.enabled} for display {display.UniqueId}, setting to {stored.IsEnabledFreeSync}.");
-                                display.SetFreeSync(stored.IsEnabledFreeSync);
+                                if (!display.TrySetFreeSync(stored.IsEnabledFreeSync))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: FreeSync is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3706,7 +3759,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentFsColorAcc.enabled != stored.IsEnabledFreeSyncColorAccuracy)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: FreeSync Color Accuracy is {currentFsColorAcc.enabled} for display {display.UniqueId}, setting to {stored.IsEnabledFreeSyncColorAccuracy}.");
-                                display.SetFreeSyncColorAccuracy(stored.IsEnabledFreeSyncColorAccuracy);
+                                if (!display.TrySetFreeSyncColorAccuracy(stored.IsEnabledFreeSyncColorAccuracy))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: FreeSync Color Accuracy is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3726,7 +3782,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentDrrc.enabled != stored.IsEnabledDynamicRefreshRateControl)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: DRRC is {currentDrrc.enabled} for display {display.UniqueId}, setting to {stored.IsEnabledDynamicRefreshRateControl}.");
-                                display.SetDynamicRefreshRateControl(stored.IsEnabledDynamicRefreshRateControl);
+                                if (!display.TrySetDynamicRefreshRateControl(stored.IsEnabledDynamicRefreshRateControl))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: DRRC is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3746,7 +3805,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentBlanking.blanked != stored.IsEnabledDisplayBlanking)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Blanking is {currentBlanking.blanked} for display {display.UniqueId}, setting to {stored.IsEnabledDisplayBlanking}.");
-                                display.SetDisplayBlanked(stored.IsEnabledDisplayBlanking);
+                                if (!display.TrySetDisplayBlanked(stored.IsEnabledDisplayBlanking))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Display blanking is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3766,7 +3828,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentGpuScaling.enabled != stored.IsEnabledGPUScaling)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: GPU scaling is {currentGpuScaling.enabled} for display {display.UniqueId}, setting to {stored.IsEnabledGPUScaling}.");
-                                display.SetGpuScaling(stored.IsEnabledGPUScaling);
+                                if (!display.TrySetGpuScaling(stored.IsEnabledGPUScaling))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: GPU scaling is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3786,7 +3851,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentIntScaling.enabled != stored.IsEnabledIntegerScaling)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Integer scaling is {currentIntScaling.enabled} for display {display.UniqueId}, setting to {stored.IsEnabledIntegerScaling}.");
-                                display.SetIntegerScaling(stored.IsEnabledIntegerScaling);
+                                if (!display.TrySetIntegerScaling(stored.IsEnabledIntegerScaling))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Integer scaling is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3806,7 +3874,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentPixelFormat.current != stored.CurrentPixelFormat)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Pixel format is {currentPixelFormat.current} for display {display.UniqueId}, setting to {stored.CurrentPixelFormat}.");
-                                display.SetPixelFormat(stored.CurrentPixelFormat);
+                                if (!display.TrySetPixelFormat(stored.CurrentPixelFormat))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Pixel format is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3826,7 +3897,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentScalingMode.mode != stored.CurrentScalingMode)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Scaling mode is {currentScalingMode.mode} for display {display.UniqueId}, setting to {stored.CurrentScalingMode}.");
-                                display.SetScalingMode(stored.CurrentScalingMode);
+                                if (!display.TrySetScalingMode(stored.CurrentScalingMode))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Scaling mode is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3846,7 +3920,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentVsr.enabled != stored.IsEnabledVSR)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VSR is {currentVsr.enabled} for display {display.UniqueId}, setting to {stored.IsEnabledVSR}.");
-                                display.SetVirtualSuperResolution(stored.IsEnabledVSR);
+                                if (!display.TrySetVirtualSuperResolution(stored.IsEnabledVSR))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: VSR is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3866,7 +3943,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentHdcp.enabled != stored.IsEnabledHDCP)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: HDCP is {currentHdcp.enabled} for display {display.UniqueId}, setting to {stored.IsEnabledHDCP}.");
-                                display.SetHdcp(stored.IsEnabledHDCP);
+                                if (!display.TrySetHdcp(stored.IsEnabledHDCP))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: HDCP is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3886,7 +3966,10 @@ namespace DisplayMagicianShared.AMD
                             if (currentVariBright.enabled != stored.IsEnabledVariBright || currentVariBright.mode != stored.VariBrightMode)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VariBright is Enabled={currentVariBright.enabled} Mode={currentVariBright.mode} for display {display.UniqueId}, setting to Enabled={stored.IsEnabledVariBright} Mode={stored.VariBrightMode}.");
-                                display.SetVariBright(stored.IsEnabledVariBright, stored.VariBrightMode);
+                                if (!display.TrySetVariBright(stored.IsEnabledVariBright, stored.VariBrightMode))
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: VariBright is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
                             else
                             {
@@ -3917,29 +4000,36 @@ namespace DisplayMagicianShared.AMD
                 try
                 {
                     var threeDServices = _adlxSystem.Get3DSettingsServices();
-                    var gpusFor3D = _adlxSystem.EnumerateADLXGPUs();
-                    foreach (var gpu in gpusFor3D)
+                    if (threeDServices == null)
                     {
-                        string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
-                        if (!displayConfig.GPUs.TryGetValue(gpuKey, out var storedGpu))
+                        SharedLogger.logger.Trace("AMDLibrary/SetActiveConfigOverride: ADLX 3D settings services are not supported, skipping per-GPU 3D settings.");
+                    }
+                    else
+                    {
+                        var gpusFor3D = _adlxSystem.EnumerateADLXGPUs();
+                        foreach (var gpu in gpusFor3D)
                         {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: No stored GPU settings for GPU {gpuKey}, skipping.");
-                            continue;
-                        }
-                        if (storedGpu.ThreeDSettings.HasValue)
-                        {
-                            if (threeDServices.TryApplyAll3DSettings(gpu.UniqueId, storedGpu.ThreeDSettings.Value))
+                            string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
+                            if (!displayConfig.GPUs.TryGetValue(gpuKey, out var storedGpu))
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Applied 3D settings for GPU {gpuKey}.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: No stored GPU settings for GPU {gpuKey}, skipping.");
+                                continue;
+                            }
+                            if (storedGpu.ThreeDSettings.HasValue)
+                            {
+                                if (threeDServices.TryApplyAll3DSettings(gpu.UniqueId, storedGpu.ThreeDSettings.Value))
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Applied 3D settings for GPU {gpuKey}.");
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to apply 3D settings for GPU {gpuKey}.");
+                                }
                             }
                             else
                             {
-                                SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to apply 3D settings for GPU {gpuKey}.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: No stored 3D settings for GPU {gpuKey}, skipping.");
                             }
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: No stored 3D settings for GPU {gpuKey}, skipping.");
                         }
                     }
                 }
@@ -3952,55 +4042,62 @@ namespace DisplayMagicianShared.AMD
                 try
                 {
                     var mmServices = _adlxSystem.GetMultimediaServices();
-                    var gpusForMm = _adlxSystem.EnumerateADLXGPUs();
-                    foreach (var gpu in gpusForMm)
+                    if (mmServices == null)
                     {
-                        string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
-                        if (!displayConfig.GPUs.TryGetValue(gpuKey, out var storedGpu))
+                        SharedLogger.logger.Trace("AMDLibrary/SetActiveConfigOverride: ADLX multimedia services are not supported, skipping per-GPU multimedia settings.");
+                    }
+                    else
+                    {
+                        var gpusForMm = _adlxSystem.EnumerateADLXGPUs();
+                        foreach (var gpu in gpusForMm)
                         {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: No stored GPU settings for GPU {gpuKey}, skipping multimedia.");
-                            continue;
-                        }
-                        if (storedGpu.VideoUpscale.HasValue && storedGpu.VideoUpscale.Value.IsSupported)
-                        {
-                            if (mmServices.TrySetVideoUpscaleEnabled(gpu.UniqueId, storedGpu.VideoUpscale.Value.IsEnabled))
+                            string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
+                            if (!displayConfig.GPUs.TryGetValue(gpuKey, out var storedGpu))
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Set VideoUpscale enabled={storedGpu.VideoUpscale.Value.IsEnabled} for GPU {gpuKey}.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: No stored GPU settings for GPU {gpuKey}, skipping multimedia.");
+                                continue;
                             }
-                            else
+                            if (storedGpu.VideoUpscale.HasValue && storedGpu.VideoUpscale.Value.IsSupported)
                             {
-                                SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale enabled for GPU {gpuKey}.");
-                            }
-                            if (storedGpu.VideoUpscale.Value.IsEnabled)
-                            {
-                                if (mmServices.TrySetVideoUpscaleSharpness(gpu.UniqueId, storedGpu.VideoUpscale.Value.Sharpness))
+                                if (mmServices.TrySetVideoUpscaleEnabled(gpu.UniqueId, storedGpu.VideoUpscale.Value.IsEnabled))
                                 {
-                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Set VideoUpscale sharpness={storedGpu.VideoUpscale.Value.Sharpness} for GPU {gpuKey}.");
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Set VideoUpscale enabled={storedGpu.VideoUpscale.Value.IsEnabled} for GPU {gpuKey}.");
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale sharpness for GPU {gpuKey}.");
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale enabled for GPU {gpuKey}.");
                                 }
-                            }
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VideoUpscale not supported or not stored for GPU {gpuKey}, skipping.");
-                        }
-                        if (storedGpu.VideoSuperResolution.HasValue && storedGpu.VideoSuperResolution.Value.IsSupported)
-                        {
-                            if (mmServices.TrySetVideoSuperResolutionEnabled(gpu.UniqueId, storedGpu.VideoSuperResolution.Value.IsEnabled))
-                            {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Set VideoSuperResolution enabled={storedGpu.VideoSuperResolution.Value.IsEnabled} for GPU {gpuKey}.");
+                                if (storedGpu.VideoUpscale.Value.IsEnabled)
+                                {
+                                    if (mmServices.TrySetVideoUpscaleSharpness(gpu.UniqueId, storedGpu.VideoUpscale.Value.Sharpness))
+                                    {
+                                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Set VideoUpscale sharpness={storedGpu.VideoUpscale.Value.Sharpness} for GPU {gpuKey}.");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale sharpness for GPU {gpuKey}.");
+                                    }
+                                }
                             }
                             else
                             {
-                                SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoSuperResolution enabled for GPU {gpuKey}.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VideoUpscale not supported or not stored for GPU {gpuKey}, skipping.");
                             }
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VideoSuperResolution not supported or not stored for GPU {gpuKey}, skipping.");
+                            if (storedGpu.VideoSuperResolution.HasValue && storedGpu.VideoSuperResolution.Value.IsSupported)
+                            {
+                                if (mmServices.TrySetVideoSuperResolutionEnabled(gpu.UniqueId, storedGpu.VideoSuperResolution.Value.IsEnabled))
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Set VideoSuperResolution enabled={storedGpu.VideoSuperResolution.Value.IsEnabled} for GPU {gpuKey}.");
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoSuperResolution enabled for GPU {gpuKey}.");
+                                }
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VideoSuperResolution not supported or not stored for GPU {gpuKey}, skipping.");
+                            }
                         }
                     }
                 }

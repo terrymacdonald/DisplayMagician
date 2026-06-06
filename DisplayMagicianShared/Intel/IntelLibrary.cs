@@ -935,34 +935,31 @@ namespace DisplayMagicianShared.Intel
                         var combinedDisplay = adapter.GetCombinedDisplay();
                         SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got Combined Display settings for adapter {adapterNum}");
 
-                        if (combinedDisplay.NumOutputs > 1)
+                        if (combinedDisplay.HasValue)
                         {
-                            newAdapter.IsCombinedDisplay = true;
-                            myDisplayConfig.CombinedDisplayIsInUse = true;
-                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Adapter {adapterNum} has a Combined Display with {combinedDisplay.NumOutputs} outputs, {combinedDisplay.CombinedDesktopWidth}x{combinedDisplay.CombinedDesktopHeight}");
+                            if (combinedDisplay.Value.NumOutputs > 1)
+                            {
+                                newAdapter.IsCombinedDisplay = true;
+                                myDisplayConfig.CombinedDisplayIsInUse = true;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Adapter {adapterNum} has a Combined Display with {combinedDisplay.Value.NumOutputs} outputs, {combinedDisplay.Value.CombinedDesktopWidth}x{combinedDisplay.Value.CombinedDesktopHeight}");
+                            }
+                            else
+                            {
+                                newAdapter.IsCombinedDisplay = false;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Adapter {adapterNum} does not currently have a Combined Display.");
+                            }                            
+                            newAdapter.CombinedDisplay= combinedDisplay.Value;   
+                            newAdapter.CombinedDisplayIsSupported = true;
                         }
                         else
                         {
-                            newAdapter.IsCombinedDisplay = false;
-                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Adapter {adapterNum} does not currently have a Combined Display.");
-                        }                            
-                        newAdapter.CombinedDisplay= combinedDisplay;   
-                        newAdapter.CombinedDisplayIsSupported = true;                    
+                            newAdapter.CombinedDisplayIsSupported = false;
+                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Combined Display not supported for adapter {adapterNum}.");
+                        }
                     }
                     catch (IGCLException ex)
                     {
-                         if (ex.Result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_FEATURE ||
-                                               ex.Result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_VERSION ||
-                                               ex.Result == ctl_result_t.CTL_RESULT_ERROR_INVALID_OPERATION_TYPE ||
-                                               ex.Result == ctl_result_t.CTL_RESULT_ERROR_INVALID_ARGUMENT)
-                        {
-                            SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: IGCLException: Combined Display not supported for adapter {adapterNum}. Skipping adapter.");
-                            newAdapter.CombinedDisplayIsSupported = false;                            
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: IGCLException getting Combined Display settings for adapter {adapterNum}.");                        
-                        }
+                        SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: IGCLException getting Combined Display settings for adapter {adapterNum}.");
                     }
                     catch (Exception ex)
                     {
@@ -976,12 +973,12 @@ namespace DisplayMagicianShared.Intel
                     {
                         var threeDHelper = _igclApiHelper.Get3DHelper(adapter);
                         var threeDCaps = threeDHelper.GetSupported3DCapabilities();
-                        if (threeDCaps.NumSupportedFeatures > 0)
+                        if (threeDCaps.HasValue && threeDCaps.Value.NumSupportedFeatures > 0)
                         {
                             newAdapter.IsSupportedThreeDSettings = true;
                             // Attempt to read each known settable 3D feature. Value types are based on the Intel
                             // IGCL specification for each feature. If a feature is not supported by the current
-                            // adapter, the IGCLException is caught and the feature is skipped gracefully.
+                            // adapter, null is returned and the feature is skipped gracefully.
                             (ctl_3d_feature_t feature, ctl_property_value_type_t valueType)[] features3D = new[]
                             {
                                 (ctl_3d_feature_t.CTL_3D_FEATURE_FRAME_PACING,              ctl_property_value_type_t.CTL_PROPERTY_VALUE_TYPE_BOOL),
@@ -1004,16 +1001,15 @@ namespace DisplayMagicianShared.Intel
                                 {
                                     var getRequest = IGCL3DHelper.Create3DFeatureGetRequest(featureType, valueType);
                                     var result = threeDHelper.Get3DFeature(getRequest);
-                                    newAdapter.ThreeDSettings.Add(result);
-                                    SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got 3D feature {featureType} for adapter {adapterNum}");
-                                }
-                                catch (IGCLException ex) when (
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_FEATURE ||
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_VERSION ||
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_INVALID_OPERATION_TYPE ||
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_INVALID_ARGUMENT)
-                                {
-                                    SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: 3D feature {featureType} not supported for adapter {adapterNum}, skipping.");
+                                    if (result.HasValue)
+                                    {
+                                        newAdapter.ThreeDSettings.Add(result.Value);
+                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got 3D feature {featureType} for adapter {adapterNum}");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: 3D feature {featureType} not supported for adapter {adapterNum}, skipping.");
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -1043,12 +1039,12 @@ namespace DisplayMagicianShared.Intel
                     {
                         var mediaHelper = _igclApiHelper.GetMediaHelper(adapter);
                         var mediaCaps = mediaHelper.GetSupportedVideoProcessingCapabilities();
-                        if (mediaCaps.NumSupportedFeatures > 0)
+                        if (mediaCaps.HasValue && mediaCaps.Value.NumSupportedFeatures > 0)
                         {
                             newAdapter.IsSupportedVideoProcessing = true;
                             // Attempt to read each known video processing feature. Most video processing features
                             // are simple boolean enable/disable flags. Features that are not supported are
-                            // skipped gracefully via exception handling.
+                            // skipped gracefully via null return.
                             ctl_video_processing_feature_t[] mediaFeatures = new[]
                             {
                                 ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_FILM_MODE_DETECTION,
@@ -1066,16 +1062,15 @@ namespace DisplayMagicianShared.Intel
                                 {
                                     var getRequest = IGCLMediaHelper.CreateVideoProcessingFeatureGetRequest(featureType, ctl_property_value_type_t.CTL_PROPERTY_VALUE_TYPE_BOOL);
                                     var result = mediaHelper.GetVideoProcessingFeature(getRequest);
-                                    newAdapter.VideoProcessingSettings.Add(result);
-                                    SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got video processing feature {featureType} for adapter {adapterNum}");
-                                }
-                                catch (IGCLException ex) when (
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_FEATURE ||
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_VERSION ||
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_INVALID_OPERATION_TYPE ||
-                                    ex.Result == ctl_result_t.CTL_RESULT_ERROR_INVALID_ARGUMENT)
-                                {
-                                    SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Video processing feature {featureType} not supported for adapter {adapterNum}, skipping.");
+                                    if (result.HasValue)
+                                    {
+                                        newAdapter.VideoProcessingSettings.Add(result.Value);
+                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got video processing feature {featureType} for adapter {adapterNum}");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Video processing feature {featureType} not supported for adapter {adapterNum}, skipping.");
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -1161,9 +1156,13 @@ namespace DisplayMagicianShared.Intel
                         // Get display settings
                         try
                         {
-                            newDisplay.DisplaySettings = display.GetDisplaySettings();
-                            newDisplay.IsSupportedDisplaySettings = Convert.ToUInt64((object)newDisplay.DisplaySettings.ValidFlags) != 0 ||
-                                Convert.ToUInt64((object)newDisplay.DisplaySettings.ControllableFlags) != 0;
+                            var displaySettings = display.GetDisplaySettings();
+                            if (displaySettings.HasValue)
+                            {
+                                newDisplay.DisplaySettings = displaySettings.Value;
+                                newDisplay.IsSupportedDisplaySettings = Convert.ToUInt64((object)newDisplay.DisplaySettings.ValidFlags) != 0 ||
+                                    Convert.ToUInt64((object)newDisplay.DisplaySettings.ControllableFlags) != 0;
+                            }
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got display settings for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
                         catch (Exception ex)
@@ -1179,11 +1178,14 @@ namespace DisplayMagicianShared.Intel
                             var productCode = "";
                             try {
                                 var edidBytes = display.GetPanelEdidData();
-                                var edid = new EDID(edidBytes);
-                                newDisplay.Edid = edidBytes;
-                                manufacturerCode = edid.ManufacturerCode.ToString();
-                                productCode = edid.ProductCode.ToString();
-                                SharedLogger.logger.Trace($"IntelLibrary/GetAllConnectedDisplayIdentifiers: Successfully got EDID for display Index {displayCount} on Adapter {adapterNum}");                            
+                                if (edidBytes != null)
+                                {
+                                    var edid = new EDID(edidBytes);
+                                    newDisplay.Edid = edidBytes;
+                                    manufacturerCode = edid.ManufacturerCode.ToString();
+                                    productCode = edid.ProductCode.ToString();
+                                    SharedLogger.logger.Trace($"IntelLibrary/GetAllConnectedDisplayIdentifiers: Successfully got EDID for display Index {displayCount} on Adapter {adapterNum}");
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -1220,7 +1222,9 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.AdapterDisplayEncoderProperties = display.GetAdapterDisplayEncoderProperties();
+                            var encoderProperties = display.GetAdapterDisplayEncoderProperties();
+                            if (encoderProperties.HasValue)
+                                newDisplay.AdapterDisplayEncoderProperties = encoderProperties.Value;
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got adapter display encoder properties for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
                         catch (Exception ex)
@@ -1233,15 +1237,20 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.RetroScalingCaps = display.GetSupportedRetroScalingCapability();
-                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got retro scaling caps for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
-                            newDisplay.RetroScalingSettings = display.GetRetroScalingSettings();
-                            uint retroScalingMask =
-                                (uint)(ctl_retro_scaling_type_flag_t.CTL_RETRO_SCALING_TYPE_FLAG_INTEGER |
-                                    ctl_retro_scaling_type_flag_t.CTL_RETRO_SCALING_TYPE_FLAG_NEAREST_NEIGHBOUR);
-
-                            newDisplay.IsSupportedIntegerScaling = (newDisplay.RetroScalingCaps.SupportedRetroScaling & retroScalingMask) != 0;
-                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Integer scaling settings for display {logDisplayId}: Supported={newDisplay.RetroScalingCaps.SupportedRetroScaling}, Enabled={newDisplay.RetroScalingSettings.Enable}, Type={newDisplay.RetroScalingSettings.RetroScalingType}");
+                            var retroScalingCaps = display.GetSupportedRetroScalingCapability();
+                            if (retroScalingCaps.HasValue)
+                            {
+                                newDisplay.RetroScalingCaps = retroScalingCaps.Value;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got retro scaling caps for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
+                                var retroScalingSettings = display.GetRetroScalingSettings();
+                                if (retroScalingSettings.HasValue)
+                                    newDisplay.RetroScalingSettings = retroScalingSettings.Value;
+                                uint retroScalingMask =
+                                    (uint)(ctl_retro_scaling_type_flag_t.CTL_RETRO_SCALING_TYPE_FLAG_INTEGER |
+                                        ctl_retro_scaling_type_flag_t.CTL_RETRO_SCALING_TYPE_FLAG_NEAREST_NEIGHBOUR);
+                                newDisplay.IsSupportedIntegerScaling = (newDisplay.RetroScalingCaps.SupportedRetroScaling & retroScalingMask) != 0;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Integer scaling settings for display {logDisplayId}: Supported={newDisplay.RetroScalingCaps.SupportedRetroScaling}, Enabled={newDisplay.RetroScalingSettings.Enable}, Type={newDisplay.RetroScalingSettings.RetroScalingType}");
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -1253,17 +1262,22 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.ScalingCaps = display.GetSupportedScalingCapability();
-                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got scaling caps for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
-                            newDisplay.ScalingSettings = display.GetCurrentScaling();
-                            uint gpuScalingMask =
-                                (uint)(ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_CENTERED |
-                                    ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_STRETCHED |
-                                    ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_ASPECT_RATIO_CENTERED_MAX |
-                                    ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_CUSTOM);
-
-                            newDisplay.IsSupportedGPUScaling = (newDisplay.ScalingCaps.SupportedScaling & gpuScalingMask) != 0;
-                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: GPU scaling settings for display {logDisplayId}: Supported={newDisplay.ScalingCaps.SupportedScaling}, Enabled={newDisplay.ScalingSettings.Enable}, Type={newDisplay.ScalingSettings.ScalingType}");
+                            var scalingCaps = display.GetSupportedScalingCapability();
+                            if (scalingCaps.HasValue)
+                            {
+                                newDisplay.ScalingCaps = scalingCaps.Value;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got scaling caps for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
+                                var currentScaling = display.GetCurrentScaling();
+                                if (currentScaling.HasValue)
+                                    newDisplay.ScalingSettings = currentScaling.Value;
+                                uint gpuScalingMask =
+                                    (uint)(ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_CENTERED |
+                                        ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_STRETCHED |
+                                        ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_ASPECT_RATIO_CENTERED_MAX |
+                                        ctl_scaling_type_flag_t.CTL_SCALING_TYPE_FLAG_CUSTOM);
+                                newDisplay.IsSupportedGPUScaling = (newDisplay.ScalingCaps.SupportedScaling & gpuScalingMask) != 0;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: GPU scaling settings for display {logDisplayId}: Supported={newDisplay.ScalingCaps.SupportedScaling}, Enabled={newDisplay.ScalingSettings.Enable}, Type={newDisplay.ScalingSettings.ScalingType}");
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -1277,11 +1291,17 @@ namespace DisplayMagicianShared.Intel
                         {
                             try
                             {
-                                newDisplay.SharpnessCaps = display.GetSharpnessCaps();
-                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got sharpness caps for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
-                                newDisplay.SharpnessSettings = display.GetCurrentSharpness();
-                                newDisplay.IsSupportedImageSharpening = newDisplay.SharpnessCaps.SupportedFilterFlags != 0;
-                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Image sharpening settings for display {logDisplayId}: Enabled={newDisplay.SharpnessSettings.Enable}, FilterType={newDisplay.SharpnessSettings.FilterType}, Intensity={newDisplay.SharpnessSettings.Intensity}");
+                                var sharpnessCaps = display.GetSharpnessCaps();
+                                if (sharpnessCaps.HasValue)
+                                {
+                                    newDisplay.SharpnessCaps = sharpnessCaps.Value;
+                                    SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got sharpness caps for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
+                                    var currentSharpness = display.GetCurrentSharpness();
+                                    if (currentSharpness.HasValue)
+                                        newDisplay.SharpnessSettings = currentSharpness.Value;
+                                    newDisplay.IsSupportedImageSharpening = newDisplay.SharpnessCaps.SupportedFilterFlags != 0;
+                                    SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Image sharpening settings for display {logDisplayId}: Enabled={newDisplay.SharpnessSettings.Enable}, FilterType={newDisplay.SharpnessSettings.FilterType}, Intensity={newDisplay.SharpnessSettings.Intensity}");
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -1294,12 +1314,20 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.PowerOptimizationCaps = display.GetPowerOptimizationCaps();
-                            newDisplay.IsSupportedPowerOptimization = newDisplay.PowerOptimizationCaps.SupportedFeatures != 0;
-                            if (newDisplay.IsSupportedPowerOptimization)
+                            var powerOptCaps = display.GetPowerOptimizationCaps();
+                            if (powerOptCaps.HasValue)
                             {
-                                newDisplay.PowerOptimizationSettings = display.GetPowerOptimizationSetting(newDisplay.PowerOptimizationSettings);
-                                newDisplay.IsEnabledPowerOptimization = newDisplay.PowerOptimizationSettings.Enable;
+                                newDisplay.PowerOptimizationCaps = powerOptCaps.Value;
+                                newDisplay.IsSupportedPowerOptimization = newDisplay.PowerOptimizationCaps.SupportedFeatures != 0;
+                                if (newDisplay.IsSupportedPowerOptimization)
+                                {
+                                    var powerOptSettings = display.GetPowerOptimizationSetting(newDisplay.PowerOptimizationSettings);
+                                    if (powerOptSettings.HasValue)
+                                    {
+                                        newDisplay.PowerOptimizationSettings = powerOptSettings.Value;
+                                        newDisplay.IsEnabledPowerOptimization = newDisplay.PowerOptimizationSettings.Enable;
+                                    }
+                                }
                             }
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got power optimization settings for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
@@ -1313,7 +1341,9 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.Brightness = display.GetBrightnessSetting();
+                            var brightness = display.GetBrightnessSetting();
+                            if (brightness.HasValue)
+                                newDisplay.Brightness = brightness.Value;
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got brightness settings for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
                         catch (Exception ex)
@@ -1326,8 +1356,12 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.LaceConfig = display.GetLACEConfig();
-                            newDisplay.IsEnabledLaceConfig = newDisplay.LaceConfig.Enabled;
+                            var laceConfig = display.GetLACEConfig();
+                            if (laceConfig.HasValue)
+                            {
+                                newDisplay.LaceConfig = laceConfig.Value;
+                                newDisplay.IsEnabledLaceConfig = newDisplay.LaceConfig.Enabled;
+                            }
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got LACE config for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
                         catch (Exception ex)
@@ -1340,8 +1374,12 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.SoftwarePsrSettings = display.SoftwarePSR(newDisplay.SoftwarePsrSettings);
-                            newDisplay.IsEnabledSoftwarePsrSettings = newDisplay.SoftwarePsrSettings.Enable;
+                            var softwarePsr = display.SoftwarePSR(newDisplay.SoftwarePsrSettings);
+                            if (softwarePsr.HasValue)
+                            {
+                                newDisplay.SoftwarePsrSettings = softwarePsr.Value;
+                                newDisplay.IsEnabledSoftwarePsrSettings = newDisplay.SoftwarePsrSettings.Enable;
+                            }
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got Software PSR settings for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
                         catch (Exception ex)
@@ -1356,11 +1394,17 @@ namespace DisplayMagicianShared.Intel
                         {
                             try
                             {
-                                newDisplay.IntelArcSyncMonitorParams = display.GetIntelArcSyncInfoForMonitor();
-                                newDisplay.IsSupportedIntelArcSync = newDisplay.IntelArcSyncMonitorParams.IsIntelArcSyncSupported;
-                                if (newDisplay.IsSupportedIntelArcSync)
+                                var arcSyncParams = display.GetIntelArcSyncInfoForMonitor();
+                                if (arcSyncParams.HasValue)
                                 {
-                                    newDisplay.IntelArcSyncProfile = display.GetIntelArcSyncProfile();
+                                    newDisplay.IntelArcSyncMonitorParams = arcSyncParams.Value;
+                                    newDisplay.IsSupportedIntelArcSync = newDisplay.IntelArcSyncMonitorParams.IsIntelArcSyncSupported;
+                                    if (newDisplay.IsSupportedIntelArcSync)
+                                    {
+                                        var arcSyncProfile = display.GetIntelArcSyncProfile();
+                                        if (arcSyncProfile.HasValue)
+                                            newDisplay.IntelArcSyncProfile = arcSyncProfile.Value;
+                                    }
                                 }
                                 SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got Intel Arc Sync settings for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                             }
@@ -1377,24 +1421,27 @@ namespace DisplayMagicianShared.Intel
                         {
                             try
                             {
-                                newDisplay.WireFormat = display.GetWireFormat();
-                                bool wireFormatSupported = false;
-                                var supportedWireFormats = newDisplay.WireFormat.SupportedWireFormat;
-
-                                if (supportedWireFormats != null)
+                                var wireFormat = display.GetWireFormat();
+                                if (wireFormat.HasValue)
                                 {
-                                    foreach (var supportedWireFormat in supportedWireFormats)
+                                    newDisplay.WireFormat = wireFormat.Value;
+                                    bool wireFormatSupported = false;
+                                    var supportedWireFormats = newDisplay.WireFormat.SupportedWireFormat;
+
+                                    if (supportedWireFormats != null)
                                     {
-                                        if (supportedWireFormat.ColorDepth != 0)
+                                        foreach (var supportedWireFormat in supportedWireFormats)
                                         {
-                                            wireFormatSupported = true;
-                                            break;
+                                            if (supportedWireFormat.ColorDepth != 0)
+                                            {
+                                                wireFormatSupported = true;
+                                                break;
+                                            }
                                         }
                                     }
+
+                                    newDisplay.IsSupportedWireFormat = wireFormatSupported;
                                 }
-
-                                newDisplay.IsSupportedWireFormat = wireFormatSupported;
-
                                 SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got wire format settings for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                             }
                             catch (Exception ex)
@@ -1410,8 +1457,12 @@ namespace DisplayMagicianShared.Intel
                         {
                             try
                             {
-                                (newDisplay.DynamicContrastEnhancement, newDisplay.DynamicContrastEnhancementHistogram) = display.GetDynamicContrastEnhancement();
-                                newDisplay.IsSupportedDynamicContrastEnhancement = newDisplay.DynamicContrastEnhancement.IsSupported;
+                                var dce = display.GetDynamicContrastEnhancement();
+                                if (dce.HasValue)
+                                {
+                                    (newDisplay.DynamicContrastEnhancement, newDisplay.DynamicContrastEnhancementHistogram) = dce.Value;
+                                    newDisplay.IsSupportedDynamicContrastEnhancement = newDisplay.DynamicContrastEnhancement.IsSupported;
+                                }
                                 SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got dynamic contrast enhancement settings for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                             }
                             catch (Exception ex)
@@ -1426,8 +1477,11 @@ namespace DisplayMagicianShared.Intel
                         try
                         {
                             var customModesResult = display.GetCustomModes();
-                            newDisplay.CustomModeArgs = customModesResult.Args;
-                            newDisplay.CustomModes = customModesResult.Modes ?? new List<CustomSourceModeDto>();
+                            if (customModesResult.HasValue)
+                            {
+                                newDisplay.CustomModeArgs = customModesResult.Value.Args;
+                                newDisplay.CustomModes = customModesResult.Value.Modes ?? new List<CustomSourceModeDto>();
+                            }
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got custom modes for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
                         catch (Exception ex)
@@ -1440,7 +1494,9 @@ namespace DisplayMagicianShared.Intel
                         //------------------------------------
                         try
                         {
-                            newDisplay.VblankTimestamp = display.GetVblankTimestamp();
+                            var vblankTimestamp = display.GetVblankTimestamp();
+                            if (vblankTimestamp.HasValue)
+                                newDisplay.VblankTimestamp = vblankTimestamp.Value;
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got vblank timestamp for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
                         }
                         catch (Exception ex)
@@ -1456,7 +1512,9 @@ namespace DisplayMagicianShared.Intel
                             var muxHandles = display.EnumerateMuxDevices();
                             if (muxHandles != null && muxHandles.Length > 0)
                             {
-                                newDisplay.MuxProperties = display.GetMuxProperties(muxHandles[0]);
+                                var muxProperties = display.GetMuxProperties(muxHandles[0]);
+                                if (muxProperties.HasValue)
+                                    newDisplay.MuxProperties = muxProperties.Value;
                                 if (muxHandles.Length > 1)
                                 {
                                     SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Multiple mux devices detected ({muxHandles.Length}); storing properties for the first one only.");
@@ -1668,7 +1726,7 @@ namespace DisplayMagicianShared.Intel
                         continue;
                     }
 
-                    CombinedDisplayArgsDto currentCombinedDisplay;
+                    CombinedDisplayArgsDto? currentCombinedDisplay;
                     try
                     {
                         currentCombinedDisplay = adapter.GetCombinedDisplay();
@@ -1680,14 +1738,14 @@ namespace DisplayMagicianShared.Intel
                     }
 
 
-                    bool currentCombinedDisplayInUse = currentCombinedDisplay.NumOutputs > 1;
+                    bool currentCombinedDisplayInUse = currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.NumOutputs > 1;
                     bool desiredCombinedDisplayInUse = desiredAdapter.IsCombinedDisplay;
 
                     if (desiredCombinedDisplayInUse)
                     {
                         SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: New display layout requires a Combined Display on adapter {adapterNum}");
 
-                        if (currentCombinedDisplay.Equals(desiredAdapter.CombinedDisplay))
+                        if (currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.Equals(desiredAdapter.CombinedDisplay))
                         {
                             SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Combined Display layout matches desired configuration, skipping");
                             continue;
@@ -1697,7 +1755,7 @@ namespace DisplayMagicianShared.Intel
 
                         if (currentCombinedDisplayInUse)
                         {
-                            CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay;
+                            CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay.Value;
                             disableCombinedDisplayArgs.OpType = ctl_combined_display_optype_t.CTL_COMBINED_DISPLAY_OPTYPE_DISABLE;
 
                             try
@@ -1736,9 +1794,10 @@ namespace DisplayMagicianShared.Intel
                         try
                         {
                             var updatedCombinedDisplay = adapter.GetCombinedDisplay();
-                            if (updatedCombinedDisplay.NumOutputs == desiredAdapter.CombinedDisplay.NumOutputs &&
-                                updatedCombinedDisplay.CombinedDesktopWidth == desiredAdapter.CombinedDisplay.CombinedDesktopWidth &&
-                                updatedCombinedDisplay.CombinedDesktopHeight == desiredAdapter.CombinedDisplay.CombinedDesktopHeight)
+                            if (updatedCombinedDisplay.HasValue &&
+                                updatedCombinedDisplay.Value.NumOutputs == desiredAdapter.CombinedDisplay.NumOutputs &&
+                                updatedCombinedDisplay.Value.CombinedDesktopWidth == desiredAdapter.CombinedDisplay.CombinedDesktopWidth &&
+                                updatedCombinedDisplay.Value.CombinedDesktopHeight == desiredAdapter.CombinedDisplay.CombinedDesktopHeight)
                             {
                                 SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: This new Combined Display layout matches the desired configuration.");
                             }
@@ -1758,7 +1817,7 @@ namespace DisplayMagicianShared.Intel
 
                         if (currentCombinedDisplayInUse)
                         {
-                            CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay;
+                            CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay.Value;
                             disableCombinedDisplayArgs.OpType = ctl_combined_display_optype_t.CTL_COMBINED_DISPLAY_OPTYPE_DISABLE;
 
                             try
@@ -1805,13 +1864,6 @@ namespace DisplayMagicianShared.Intel
 
                 bool success = true;
                 int adapterNum = 0;
-                bool IsUnsupportedResult(ctl_result_t result)
-                {
-                    return result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_FEATURE ||
-                        result == ctl_result_t.CTL_RESULT_ERROR_UNSUPPORTED_VERSION ||
-                        result == ctl_result_t.CTL_RESULT_ERROR_INVALID_OPERATION_TYPE ||
-                        result == ctl_result_t.CTL_RESULT_ERROR_INVALID_ARGUMENT;
-                }
 
                 foreach (var adapter in adapters)
                 {
@@ -2015,15 +2067,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: DisplaySettings not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying DisplaySettings for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying DisplaySettings for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2058,15 +2103,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: WireFormat not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying WireFormat for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying WireFormat for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2087,8 +2125,10 @@ namespace DisplayMagicianShared.Intel
                                     TargetBrightness = storedSettings.Brightness.TargetBrightness,
                                     SmoothTransitionTimeInMs = 0
                                 };
-                                display.SetBrightnessSetting(brightnessToSet);
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Brightness to {storedSettings.Brightness.TargetBrightness} for display {logDisplayId}");
+                                if (!display.SetBrightnessSetting(brightnessToSet))
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Brightness not supported by current hardware, skipping");
+                                else
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Brightness to {storedSettings.Brightness.TargetBrightness} for display {logDisplayId}");
                             }
                             else
                             {
@@ -2097,15 +2137,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Brightness not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Brightness for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Brightness for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2138,15 +2171,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: PowerOptimization not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying PowerOptimization settings for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying PowerOptimization settings for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2162,8 +2188,10 @@ namespace DisplayMagicianShared.Intel
                             var currentLaceConfig = currentSettings.LaceConfig;
                             if (!currentLaceConfig.Equals(storedSettings.LaceConfig))
                             {
-                                display.SetLACEConfig(storedSettings.LaceConfig);
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set LACE config for display {logDisplayId}");
+                                if (!display.SetLACEConfig(storedSettings.LaceConfig))
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: LACE not supported by current hardware, skipping");
+                                else
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set LACE config for display {logDisplayId}");
                             }
                             else
                             {
@@ -2172,15 +2200,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: LACE not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying LACE config for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying LACE config for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2200,8 +2221,11 @@ namespace DisplayMagicianShared.Intel
                                 {
                                     var desiredPsrSettings = storedSettings.SoftwarePsrSettings;
                                     desiredPsrSettings.Set = true;
-                                    display.SoftwarePSR(desiredPsrSettings);
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Software PSR settings for display {logDisplayId}");
+                                    var psrResult = display.SoftwarePSR(desiredPsrSettings);
+                                    if (!psrResult.HasValue)
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Software PSR not supported by current hardware, skipping");
+                                    else
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Software PSR settings for display {logDisplayId}");
                                 }
                                 else
                                 {
@@ -2215,15 +2239,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Software PSR not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Software PSR settings for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Software PSR settings for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2265,15 +2282,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Dynamic Contrast Enhancement not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Dynamic Contrast Enhancement for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Dynamic Contrast Enhancement for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2306,15 +2316,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Intel Arc Sync not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Intel Arc Sync profile for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Intel Arc Sync profile for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2355,15 +2358,8 @@ namespace DisplayMagicianShared.Intel
                         }
                         catch (IGCLException ex)
                         {
-                            if (IsUnsupportedResult(ex.Result))
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Custom Modes not supported by current hardware, skipping");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Custom Modes for display {logDisplayId}");
-                                success = false;
-                            }
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Custom Modes for display {logDisplayId}");
+                            success = false;
                         }
                         catch (Exception ex)
                         {
@@ -2396,7 +2392,12 @@ namespace DisplayMagicianShared.Intel
                                 {
                                     var currentRequest = IGCL3DHelper.Create3DFeatureGetRequest(stored3DFeature.FeatureType, stored3DFeature.ValueType);
                                     var currentFeature = threeDHelper.Get3DFeature(currentRequest);
-                                    if (!currentFeature.Equals(stored3DFeature))
+                                    if (!currentFeature.HasValue)
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: 3D feature {stored3DFeature.FeatureType} not supported by current hardware for adapter {adapterNum}, skipping");
+                                        continue;
+                                    }
+                                    if (!currentFeature.Value.Equals(stored3DFeature))
                                     {
                                         var setRequest = stored3DFeature;
                                         setRequest.Set = true;
@@ -2407,10 +2408,6 @@ namespace DisplayMagicianShared.Intel
                                     {
                                         SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: 3D feature {stored3DFeature.FeatureType} already at desired value for adapter {adapterNum}, skipping");
                                     }
-                                }
-                                catch (IGCLException ex) when (IsUnsupportedResult(ex.Result))
-                                {
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: 3D feature {stored3DFeature.FeatureType} not supported by current hardware for adapter {adapterNum}, skipping");
                                 }
                                 catch (Exception ex)
                                 {
@@ -2440,7 +2437,12 @@ namespace DisplayMagicianShared.Intel
                                 {
                                     var currentRequest = IGCLMediaHelper.CreateVideoProcessingFeatureGetRequest(storedMediaFeature.FeatureType, storedMediaFeature.ValueType);
                                     var currentFeature = mediaHelper.GetVideoProcessingFeature(currentRequest);
-                                    if (!currentFeature.Equals(storedMediaFeature))
+                                    if (!currentFeature.HasValue)
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Video processing feature {storedMediaFeature.FeatureType} not supported by current hardware for adapter {adapterNum}, skipping");
+                                        continue;
+                                    }
+                                    if (!currentFeature.Value.Equals(storedMediaFeature))
                                     {
                                         var setRequest = storedMediaFeature;
                                         setRequest.Set = true;
@@ -2451,10 +2453,6 @@ namespace DisplayMagicianShared.Intel
                                     {
                                         SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Video processing feature {storedMediaFeature.FeatureType} already at desired value for adapter {adapterNum}, skipping");
                                     }
-                                }
-                                catch (IGCLException ex) when (IsUnsupportedResult(ex.Result))
-                                {
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Video processing feature {storedMediaFeature.FeatureType} not supported by current hardware for adapter {adapterNum}, skipping");
                                 }
                                 catch (Exception ex)
                                 {
