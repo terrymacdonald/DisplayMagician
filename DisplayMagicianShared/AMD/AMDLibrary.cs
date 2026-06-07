@@ -1577,12 +1577,14 @@ namespace DisplayMagicianShared.AMD
         public All3DSettingsDto? ThreeDSettings;
         public VideoUpscaleDto? VideoUpscale;
         public VideoSuperResolutionDto? VideoSuperResolution;
+        public ManualPowerTuningDto? ManualPowerTuning;
 
         public AMD_GPU_WITH_SETTINGS()
         {
             ThreeDSettings = null;
             VideoUpscale = null;
             VideoSuperResolution = null;
+            ManualPowerTuning = null;
         }
 
         public override bool Equals(object obj) => obj is AMD_GPU_WITH_SETTINGS other && this.Equals(other);
@@ -1604,12 +1606,17 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Trace($"AMD_GPU_WITH_SETTINGS/Equals: The VideoSuperResolution values don't equal each other");
                 return false;
             }
+            if (!Nullable.Equals(ManualPowerTuning, other.ManualPowerTuning))
+            {
+                SharedLogger.logger.Trace($"AMD_GPU_WITH_SETTINGS/Equals: The ManualPowerTuning values don't equal each other");
+                return false;
+            }
             return true;
         }
 
         public override int GetHashCode()
         {
-            return (ThreeDSettings, VideoUpscale, VideoSuperResolution).GetHashCode();
+            return (ThreeDSettings, VideoUpscale, VideoSuperResolution, ManualPowerTuning).GetHashCode();
         }
 
         public static bool operator ==(AMD_GPU_WITH_SETTINGS lhs, AMD_GPU_WITH_SETTINGS rhs) => lhs.Equals(rhs);
@@ -3090,6 +3097,41 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Warn(ex, "AMDLibrary/GetAMDDisplayConfig: Failed to read per-GPU multimedia settings via ADLX.");
             }
 
+            // Read per-GPU power tuning settings
+            try
+            {
+                var gpuTuningServices = _adlxSystem.GetGPUTuningServices();
+                var powerTuningServices = _adlxSystem.GetPowerTuningServices();
+                if (gpuTuningServices == null || powerTuningServices == null)
+                {
+                    SharedLogger.logger.Trace("AMDLibrary/GetAMDDisplayConfig: ADLX power tuning services are not supported, skipping per-GPU power tuning settings.");
+                }
+                else
+                {
+                    var gpusForPower = _adlxSystem.EnumerateADLXGPUs();
+                    foreach (var gpu in gpusForPower)
+                    {
+                        string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
+                        if (!myDisplayConfig.GPUs.TryGetValue(gpuKey, out var gpuSettings))
+                            gpuSettings = new AMD_GPU_WITH_SETTINGS();
+                        if (powerTuningServices.TryGetManualPowerTuning(gpu.UniqueId, gpuTuningServices, out var manualPowerTuning))
+                        {
+                            gpuSettings.ManualPowerTuning = manualPowerTuning;
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Read ManualPowerTuning for GPU {gpuKey}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Could not read ManualPowerTuning for GPU {gpuKey}, skipping.");
+                        }
+                        myDisplayConfig.GPUs[gpuKey] = gpuSettings;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, "AMDLibrary/GetAMDDisplayConfig: Failed to read per-GPU power tuning settings via ADLX.");
+            }
+
             // Return the configuration
             return myDisplayConfig;
         }
@@ -3142,7 +3184,7 @@ namespace DisplayMagicianShared.AMD
                         if (gpuSettings.ThreeDSettings.HasValue)
                         {
                             var s3d = gpuSettings.ThreeDSettings.Value;
-                            sb.AppendLine($"3D AntiLag: Supported={s3d.AntiLag?.IsSupported} Enabled={s3d.AntiLag?.IsEnabled}");
+                            sb.AppendLine($"3D AntiLag: Supported={s3d.AntiLag?.IsSupported} Enabled={s3d.AntiLag?.IsEnabled} Level={s3d.AntiLag?.Level}");
                             sb.AppendLine($"3D Boost: Supported={s3d.Boost?.IsSupported} Enabled={s3d.Boost?.IsEnabled} MinRes={s3d.Boost?.MinResolution}");
                             sb.AppendLine($"3D RadeonImageSharpening: Supported={s3d.ImageSharpening?.IsSupported} Enabled={s3d.ImageSharpening?.IsEnabled} Sharpness={s3d.ImageSharpening?.Sharpness}");
                             sb.AppendLine($"3D EnhancedSync: Supported={s3d.EnhancedSync?.IsSupported} Enabled={s3d.EnhancedSync?.IsEnabled}");
@@ -3175,6 +3217,16 @@ namespace DisplayMagicianShared.AMD
                         else
                         {
                             sb.AppendLine("MM VideoSuperResolution: not available");
+                        }
+                        if (gpuSettings.ManualPowerTuning.HasValue)
+                        {
+                            var mpt = gpuSettings.ManualPowerTuning.Value;
+                            sb.AppendLine($"Power PowerLimit: Supported={mpt.PowerLimitSupported} Value={mpt.PowerLimitValue} Default={mpt.PowerLimitDefaultValue} Range=({mpt.PowerLimitRange.MinValue},{mpt.PowerLimitRange.MaxValue},{mpt.PowerLimitRange.Step})");
+                            sb.AppendLine($"Power TdcLimit: Supported={mpt.TdcLimitSupported} Value={mpt.TdcLimitValue} Default={mpt.TdcLimitDefaultValue} Range=({mpt.TdcLimitRange.MinValue},{mpt.TdcLimitRange.MaxValue},{mpt.TdcLimitRange.Step})");
+                        }
+                        else
+                        {
+                            sb.AppendLine("Power ManualPowerTuning: not available");
                         }
                     }
                     else
@@ -4101,6 +4153,49 @@ namespace DisplayMagicianShared.AMD
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Warn(ex, "AMDLibrary/SetActiveConfigOverride: Failed to apply per-GPU multimedia settings via ADLX.");
+                }
+
+                // Apply per-GPU power tuning settings
+                try
+                {
+                    var gpuTuningServices = _adlxSystem.GetGPUTuningServices();
+                    var powerTuningServices = _adlxSystem.GetPowerTuningServices();
+                    if (gpuTuningServices == null || powerTuningServices == null)
+                    {
+                        SharedLogger.logger.Trace("AMDLibrary/SetActiveConfigOverride: ADLX power tuning services are not supported, skipping per-GPU power tuning settings.");
+                    }
+                    else
+                    {
+                        var gpusForPower = _adlxSystem.EnumerateADLXGPUs();
+                        foreach (var gpu in gpusForPower)
+                        {
+                            string gpuKey = $"{gpu.DeviceId}_{gpu.SubSystemId}_{gpu.SubSystemVendorId}_{gpu.RevisionId}";
+                            if (!displayConfig.GPUs.TryGetValue(gpuKey, out var storedGpu))
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: No stored GPU settings for GPU {gpuKey}, skipping power tuning.");
+                                continue;
+                            }
+                            if (storedGpu.ManualPowerTuning.HasValue && storedGpu.ManualPowerTuning.Value.PowerLimitSupported)
+                            {
+                                if (powerTuningServices.TryApplyManualPowerTuning(gpu.UniqueId, gpuTuningServices, storedGpu.ManualPowerTuning.Value))
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Applied ManualPowerTuning for GPU {gpuKey}.");
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to apply ManualPowerTuning for GPU {gpuKey}.");
+                                }
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: ManualPowerTuning not supported or not stored for GPU {gpuKey}, skipping.");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, "AMDLibrary/SetActiveConfigOverride: Failed to apply per-GPU power tuning settings via ADLX.");
                 }
             }
             else
