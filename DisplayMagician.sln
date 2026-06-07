@@ -14,6 +14,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianConsole", "DisplayMagicianConsole\DisplayMagicianConsole.csproj", "{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianIdentityPkg", "DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+	ProjectSection(ProjectDependencies) = postProject
+		{608D941A-B431-400C-A91D-C6F971C29577} = {608D941A-B431-400C-A91D-C6F971C29577}
+	EndProjectSection
 EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "DisplayMagicianPackage", "DisplayMagicianPackage\DisplayMagicianPackage.wixproj", "{E43CF746-F46B-4889-95AA-16DB13AB7B9E}"
 	ProjectSection(ProjectDependencies) = postProject

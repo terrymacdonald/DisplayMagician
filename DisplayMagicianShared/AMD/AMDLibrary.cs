@@ -3142,20 +3142,17 @@ namespace DisplayMagicianShared.AMD
                         if (gpuSettings.ThreeDSettings.HasValue)
                         {
                             var s3d = gpuSettings.ThreeDSettings.Value;
-                            sb.AppendLine($"3D AntiLag: Supported={s3d.AntiLag?.IsSupported} Enabled={s3d.AntiLag?.IsEnabled} Level={s3d.AntiLag?.Level}");
-                            sb.AppendLine($"3D Chill: Supported={s3d.Chill?.IsSupported} Enabled={s3d.Chill?.IsEnabled} MinFPS={s3d.Chill?.MinFPS} MaxFPS={s3d.Chill?.MaxFPS}");
+                            sb.AppendLine($"3D AntiLag: Supported={s3d.AntiLag?.IsSupported} Enabled={s3d.AntiLag?.IsEnabled}");
                             sb.AppendLine($"3D Boost: Supported={s3d.Boost?.IsSupported} Enabled={s3d.Boost?.IsEnabled} MinRes={s3d.Boost?.MinResolution}");
                             sb.AppendLine($"3D RadeonImageSharpening: Supported={s3d.ImageSharpening?.IsSupported} Enabled={s3d.ImageSharpening?.IsEnabled} Sharpness={s3d.ImageSharpening?.Sharpness}");
                             sb.AppendLine($"3D EnhancedSync: Supported={s3d.EnhancedSync?.IsSupported} Enabled={s3d.EnhancedSync?.IsEnabled}");
                             sb.AppendLine($"3D WaitForVerticalRefresh: Supported={s3d.WaitForVerticalRefresh?.IsSupported} Mode={s3d.WaitForVerticalRefresh?.Mode}");
                             sb.AppendLine($"3D FrameRateTargetControl: Supported={s3d.FrameRateTargetControl?.IsSupported} Enabled={s3d.FrameRateTargetControl?.IsEnabled} FPS={s3d.FrameRateTargetControl?.Fps}");
                             sb.AppendLine($"3D AntiAliasing: Supported={s3d.AntiAliasing?.IsSupported} Mode={s3d.AntiAliasing?.Mode}");
-                            sb.AppendLine($"3D MorphologicalAntiAliasing: Supported={s3d.MorphologicalAntiAliasing?.IsSupported} Enabled={s3d.MorphologicalAntiAliasing?.IsEnabled}");
                             sb.AppendLine($"3D AnisotropicFiltering: Supported={s3d.AnisotropicFiltering?.IsSupported} Level={s3d.AnisotropicFiltering?.Level}");
                             sb.AppendLine($"3D Tessellation: Supported={s3d.Tessellation?.IsSupported} Mode={s3d.Tessellation?.Mode} Level={s3d.Tessellation?.Level}");
                             sb.AppendLine($"3D FluidMotionFrames: Supported={s3d.FluidMotionFrames?.IsSupported} Enabled={s3d.FluidMotionFrames?.IsEnabled}");
                             sb.AppendLine($"3D RadeonSuperResolution: Supported={s3d.RadeonSuperResolution?.IsSupported} Enabled={s3d.RadeonSuperResolution?.IsEnabled}");
-                            sb.AppendLine($"3D ImageSharpenDesktop: Supported={s3d.ImageSharpenDesktop?.IsSupported} Enabled={s3d.ImageSharpenDesktop?.IsEnabled}");
                         }
                         else
                         {
