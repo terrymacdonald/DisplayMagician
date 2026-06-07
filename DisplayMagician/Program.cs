@@ -69,6 +69,7 @@ namespace DisplayMagician {
         public static List<App> AppAppList = new List<App>();
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
+        public static DonationSettings AppDonationSettings;
         public static MainForm AppMainForm;
         public static LoadingForm AppSplashScreen;
         public static ShortcutLoadingForm AppShortcutLoadingSplashScreen;
@@ -279,39 +280,17 @@ namespace DisplayMagician {
             AppNewInstall = false;
             AppLastVersionRun = "0.0";
             AppVersionUpgrade = false;
+            bool settingsFileExistedBeforeLoad = File.Exists(ProgramSettings.ProgramSettingsStorageJsonFullFileName);
+            AppNewInstall = !settingsFileExistedBeforeLoad;
 
-            try
+            AppInstalled = IsInstalledVersion();
+            if (AppNewInstall)
             {
-                logger.Trace($"Program/Main: Checking if this is the first run of DisplayMagician");
-                // Figure out if this is First Run of this version since installed
-                RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician");
-                if (DMKey != null)
-                {
-                    AppInstalled = true;
-                    string newInstallKey = DMKey.GetValue("NewInstall")?.ToString() ?? "0";
-                    if (newInstallKey.Equals("1"))
-                    {
-                        AppNewInstall = true;
-                        logger.Info($"Program/Main: This is the first time this version has run since it was installed! We may have upgrade tasks to do!");
-                    }
-                    else
-                    {
-                        logger.Trace($"Program/Main: This is NOT the first time this version has run since it was installed. We've run this version before since it was installed.");
-                    }
-
-                }
-                else
-                {
-                    logger.Trace($"Program/Main: DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio).");
-                }
+                logger.Info($"Program/Main: No existing Settings.json was found. DisplayMagician will create a new install identity.");
             }
-            catch (NullReferenceException ex)
+            else
             {
-                logger.Trace(ex, $"Program/Main: Exception whilst trying to find the NewInstall registry key. It means DisplayMagician hasn't been installed on this host and is running from somewhere else (e.g. via visual studio). Problem accessing registry!");
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this version has run since it was installed. Problem accessing registry!");
+                logger.Trace($"Program/Main: Existing Settings.json was found. DisplayMagician will keep the existing install identity if one is present.");
             }
 
             try
@@ -347,24 +326,34 @@ namespace DisplayMagician {
                 AppVersionUpgrade = false;
             }
 
+            if (!ConfigMigrationRunner.RunMigrations())
+            {
+                MessageBox.Show($"DisplayMagician could not upgrade the configuration file {ProgramSettings.ProgramSettingsStorageJsonFullFileName}. Please check the log file for details.", "Error upgrading DisplayMagician settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+
+            AppProgramSettings = ProgramSettings.LoadSettings();
+            if (AppProgramSettings.EnsureInstallIdentity(AppNewInstall))
+            {
+                AppProgramSettings.SaveSettings();
+            }
+
+            AppDonationSettings = DonationSettings.LoadSettings();
+            AppDonationSettings.NumberOfStartsSinceLastDonationForm++;
+            AppDonationSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
+            AppDonationSettings.NumberOfTimesRun++;
+            AppDonationSettings.SaveSettings();
 
             try
             {
                 // Try to store this version as the last version run (replacing the previous last run version with this one)
-                using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician", writable: true))
+                using (RegistryKey dmKey = Registry.CurrentUser.CreateSubKey(@"Software\DisplayMagician"))
                     dmKey?.SetValue("LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, $"Program/Main: Exception whilst trying to set the last version registry key to {Application.ProductVersion}.");
             }
-            
-            // Load the program settings
-            AppProgramSettings = ProgramSettings.LoadSettings();
-            // Update the program settings for number times run
-            AppProgramSettings.NumberOfStartsSinceLastDonationForm++;
-            AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
-            AppProgramSettings.NumberOfTimesRun++;
 
             // Now we are at the point that the user settings are loaded, we can set the logging level based on the stored user settings
             // but only if the user hasn't already overridden the log level via command line options
@@ -384,21 +373,6 @@ namespace DisplayMagician {
                     NLog.LogManager.ReconfigExistingLoggers();
 
                 }
-            }
-
-            // If app settings is new, then set the initial settings we need
-            if (AppNewInstall)
-            {
-                if (AppProgramSettings.InstallId == "")
-                {
-                    AppProgramSettings.InstallId = Guid.NewGuid().ToString();
-                }
-                AppProgramSettings.InstallDate = DateTime.UtcNow;
-                // AppProgramSettings.LastDonationDate = new DateTime(1980,1,1);
-                // AppProgramSettings.LastDonateButtonAnimationDate = new DateTime(1980, 1, 1);
-
-                // Store the updated settings
-                AppProgramSettings.SaveSettings();
             }
 
             logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");

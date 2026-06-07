@@ -44,4 +44,9 @@ This file contains the declaration of all the localizable strings.
 	<String Id="MaintenanceWelcomeDlgDescription" Value="{\White_Normal}The Setup Wizard allows you to change the way [ProductName] features are installed on your computer or to remove it from your computer. Click Next to continue or Cancel to exit the Setup Wizard." />
 	<String Id="MaintenanceTypeDlgTitle" Value="{\White_Title}Change, repair, or remove installation" />
 	<String Id="MaintenanceTypeDlgDescription" Value="{\White_Normal}Select the operation you wish to perform." />
+	<String Id="RemoveUserDataDlg_Title" Value="[ProductName] Setup" />
+	<String Id="RemoveUserDataDlgTitle" Value="{\White_Title}Remove user data" />
+	<String Id="RemoveUserDataDlgDescription" Value="DisplayMagician can leave your settings and saved configuration in place for a later reinstall, or remove them now." />
+	<String Id="RemoveUserDataDlgCheckBox" Value="Delete DisplayMagician settings, profiles, shortcuts, logs, icons, wallpapers, and user registry data" />
+	<String Id="RemoveUserDataDlgWarning" Value="Leave this unchecked if you are uninstalling only so you can reinstall DisplayMagician again shortly." />
 </WixLocalization>

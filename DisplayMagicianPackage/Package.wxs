@@ -1,6 +1,5 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
 	 xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util" 
-	 xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" 
 	 xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
 	<Package Name="DisplayMagician" Manufacturer="LittleBitBig" Version="!(bind.fileVersion.DisplayMagicianExe)" UpgradeCode="33E22B4C-982F-4B02-A3DE-085693742DB5">
 		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" AllowSameVersionUpgrades="yes" />
@@ -10,6 +9,7 @@
 		
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
 		<Property Id="ARPPRODUCTICON" Value="DisplayMagician.ico" />
+		<Property Id="REMOVE_USER_DATA" Secure="yes" Value="0" />
 		
 		<!-- Installer UI custom pictures. File names are made up. Add path to your pics -->
 		<WixVariable Id="WixUIBannerBmp" Value="WixUIBannerBmp.png" />
@@ -19,8 +19,9 @@
 		<!-- This will ask the user to close the DisplayMagician app if it's running while upgrading -->
 		<util:CloseApplication Id="CloseDisplayMagician" CloseMessage="no" Description="!(loc.MustCloseDisplayMagician)" ElevatedCloseMessage="no" RebootPrompt="no" Target="DisplayMagician.exe" />		
 		
-		<!-- Use the built in WixUI_InstallDir GUI -->
-		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER"/>
+		<!-- Use DisplayMagician's WixUI_InstallDir variant so uninstall can optionally clean user data -->
+		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+		<UIRef Id="WixUI_DisplayMagicianInstallDir" />
 		
 		<UI>
 			<!-- Add in some text styles to make the text white -->
@@ -43,6 +44,7 @@
 			<!-- Unregister sparse MSIX before files are removed (uninstall only) -->
 			<Custom Action="UnregisterIdentityPkgData" Before="RemoveFiles" Condition='REMOVE~="ALL"' />
 			<Custom Action="UnregisterIdentityPkg" After="UnregisterIdentityPkgData" Condition='REMOVE~="ALL"' />
+			<Custom Action="CleanUserData" After="RemoveFiles" Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
 		</InstallExecuteSequence>
 
 		<!-- Set our executable (its ID) as custom action target -->
@@ -76,6 +78,18 @@
 			DllEntry="WixQuietExec64"
 			Execute="deferred"
 			Impersonate="no"
+			Return="ignore" />
+
+		<SetProperty Id="CleanUserData"
+			Value="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$appDataPath = Join-Path $env:LOCALAPPDATA 'DisplayMagician'; if (Test-Path -LiteralPath $appDataPath) { Remove-Item -LiteralPath $appDataPath -Recurse -Force -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { Remove-Item -LiteralPath 'HKCU:\Software\DisplayMagician' -Recurse -Force -ErrorAction SilentlyContinue }&quot;"
+			Before="CleanUserData"
+			Sequence="execute"
+			Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
+		<CustomAction Id="CleanUserData"
+			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+			DllEntry="WixQuietExec"
+			Execute="deferred"
+			Impersonate="yes"
 			Return="ignore" />
 					
 		<!-- Set application components that will be installed -->

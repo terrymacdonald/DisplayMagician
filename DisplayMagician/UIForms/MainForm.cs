@@ -192,11 +192,11 @@ namespace DisplayMagician.UIForms
             if (Utils.TimeToShowDonationForm())
             {
                 DonationForm donationForm = new DonationForm();
-                donationForm.NumberofStarts = Program.AppProgramSettings.NumberOfTimesRun;
+                donationForm.NumberofStarts = Program.AppDonationSettings.NumberOfTimesRun;
                 donationForm.ShowDialog(Program.AppMainForm);
                 // Update the settings to record the donation has been shown
-                Program.AppProgramSettings.LastDonationFormDate = DateTime.UtcNow;
-                Program.AppProgramSettings.SaveSettings();
+                Program.AppDonationSettings.LastDonationFormDate = DateTime.UtcNow;
+                Program.AppDonationSettings.SaveSettings();
             }
         }
 
@@ -344,27 +344,27 @@ namespace DisplayMagician.UIForms
 
             EnableShortcutButtonIfProfiles();
 
-            logger.Trace($"MainForm/MainForm_Load: User has run DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times.");
-            if (Program.AppProgramSettings.NumberOfTimesRun == 1)
+            logger.Trace($"MainForm/MainForm_Load: User has run DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times.");
+            if (Program.AppDonationSettings.NumberOfTimesRun == 1)
             {
                 lbl_donate.Text = $"You've used DisplayMagician 1 time.";
             }
             else
             {
-                lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times.";
+                lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times.";
             }
 
-            if (Program.AppProgramSettings.NumberOfDonations > 0 && Program.AppProgramSettings.LastDonationDate > DateTime.Parse("2024-01-01"))
+            if (Program.AppDonationSettings.NumberOfDonations > 0 && Program.AppDonationSettings.LastDonationDate > DateTime.Parse("2024-01-01"))
             {
-                logger.Trace($"MainForm/MainForm_Load: User has donated {Program.AppProgramSettings.NumberOfDonations} times.");
-                lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times and donated - thank you!";
+                logger.Trace($"MainForm/MainForm_Load: User has donated {Program.AppDonationSettings.NumberOfDonations} times.");
+                lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times and donated - thank you!";
             }
             else
             {
-                if (Program.AppProgramSettings.NumberOfTimesRun > 100)
+                if (Program.AppDonationSettings.NumberOfTimesRun > 100)
                 {
                     lbl_donate.BackColor = Color.Brown;
-                    lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times without donating.";
+                    lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times without donating.";
                 }
             }
             
@@ -728,7 +728,7 @@ namespace DisplayMagician.UIForms
             Utils.UserHasDonated();
             // revert the button back to a nice donated message
             lbl_donate.BackColor = Color.Black;
-            lbl_donate.Text = $"You've used DisplayMagician {Program.AppProgramSettings.NumberOfTimesRun} times and donated - Thank you!";
+            lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times and donated - Thank you!";
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)

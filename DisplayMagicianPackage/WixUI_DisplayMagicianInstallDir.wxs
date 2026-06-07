@@ -1,0 +1,74 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Fragment>
+		<UI Id="WixUI_DisplayMagicianInstallDir">
+			<Dialog Id="RemoveUserDataDlg" Width="370" Height="270" Title="!(loc.RemoveUserDataDlg_Title)" NoMinimize="yes">
+				<Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="yes" Text="!(loc.VerifyReadyDlgBannerBitmap)" />
+				<Control Id="BannerLine" Type="Line" X="0" Y="44" Width="373" Height="0" />
+				<Control Id="Title" Type="Text" X="15" Y="6" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.RemoveUserDataDlgTitle)" />
+				<Control Id="Description" Type="Text" X="25" Y="56" Width="320" Height="42" Text="!(loc.RemoveUserDataDlgDescription)" />
+				<Control Id="RemoveUserDataCheckBox" Type="CheckBox" X="25" Y="112" Width="320" Height="34" Property="REMOVE_USER_DATA" CheckBoxValue="1" Text="!(loc.RemoveUserDataDlgCheckBox)" />
+				<Control Id="Warning" Type="Text" X="25" Y="156" Width="320" Height="42" Text="!(loc.RemoveUserDataDlgWarning)" />
+				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="373" Height="0" />
+				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+				<Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" />
+				<Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)" />
+			</Dialog>
+
+			<TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+			<TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+			<TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+
+			<Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+
+			<DialogRef Id="BrowseDlg" />
+			<DialogRef Id="DiskCostDlg" />
+			<DialogRef Id="ErrorDlg" />
+			<DialogRef Id="FatalError" />
+			<DialogRef Id="FilesInUse" />
+			<DialogRef Id="MsiRMFilesInUse" />
+			<DialogRef Id="PrepareDlg" />
+			<DialogRef Id="ProgressDlg" />
+			<DialogRef Id="ResumeDlg" />
+			<DialogRef Id="UserExit" />
+			<DialogRef Id="RemoveUserDataDlg" />
+
+			<Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999" />
+
+			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LicenseAgreementDlg" Condition="NOT Installed" Order="1" />
+			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="Installed AND PATCH" Order="1" />
+
+			<Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1" />
+			<Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Condition="LicenseAccepted = &quot;1&quot;" Order="1" />
+
+			<Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg" Order="1" />
+			<Publish Dialog="InstallDirDlg" Control="Next" Event="CheckTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1" />
+			<Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="3" />
+			<Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4" />
+			<Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1" />
+			<Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2" />
+
+			<Publish Dialog="BrowseDlg" Control="OK" Event="CheckTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1" />
+			<Publish Dialog="BrowseDlg" Control="OK" Event="SetTargetPath" Value="[_BrowseProperty]" Order="3" />
+			<Publish Dialog="BrowseDlg" Control="OK" Event="EndDialog" Value="Return" Order="4" />
+
+			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Condition="NOT Installed" Order="1" />
+			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="RemoveUserDataDlg" Condition="Installed AND NOT PATCH AND WixUI_InstallMode = &quot;Remove&quot;" Order="2" />
+			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Condition="Installed AND NOT PATCH AND WixUI_InstallMode &lt;&gt; &quot;Remove&quot;" Order="3" />
+			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Condition="Installed AND PATCH" Order="4" />
+
+			<Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1" />
+
+			<Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg" Order="1" />
+			<Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="RemoveUserDataDlg" Order="1" />
+			<Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg" Order="1" />
+
+			<Publish Dialog="RemoveUserDataDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1" />
+			<Publish Dialog="RemoveUserDataDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1" />
+			<Publish Dialog="RemoveUserDataDlg" Control="Cancel" Event="SpawnDialog" Value="CancelDlg" Order="1" />
+
+			<Property Id="ARPNOMODIFY" Value="1" />
+
+			<UIRef Id="WixUI_Common" />
+		</UI>
+	</Fragment>
+</Wix>

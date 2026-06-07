@@ -631,6 +631,7 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppDataPath,"Settings_2.5.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.6.json"),
                             Path.Combine(Program.AppDataPath,"Settings.json"),
+                            Path.Combine(Program.AppDataPath,"DonationSettings.json"),
                             // Also try to copy the old configs if they exist
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.6.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json.old"),

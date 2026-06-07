@@ -1,5 +1,4 @@
 ﻿using DisplayMagicianShared;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -46,9 +45,10 @@ namespace DisplayMagician
     {
         #region Class Variables
         // Other constants that are useful
-        private static string _programSettingsFileVersion = "4";
-        private static readonly string _programSettingsStorageJsonFileName = "Settings.json";
-        public static string _programSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, _programSettingsStorageJsonFileName);
+        public const string CurrentProgramSettingsFileVersion = "5";
+        public const string ProgramSettingsStorageJsonFileName = "Settings.json";
+        public static string ProgramSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, ProgramSettingsStorageJsonFileName);
+        public static string _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
@@ -68,13 +68,6 @@ namespace DisplayMagician
         private string _displayMagicianVersion = null;
         private string _installId = "";
         private DateTime _installDate = DateTime.UtcNow;
-        private DateTime _lastDonationDate = new DateTime(1980,1,1,0,0,0,DateTimeKind.Utc);
-        private DateTime _lastDonateButtonAnimationDate = DateTime.UtcNow;
-        private DateTime _lastDonationFormDate = DateTime.UtcNow;
-        private int _numberOfDonations = 0;
-        private int _numberOfStartsSinceLastDonationButtonAnimation = 0;
-        private int _numberOfStartsSinceLastDonationForm = 0;
-        private int _numberOfTimesRun = 0;
         private List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
         private List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
         private ScreenLayout _fovCalcScreenLayout = ScreenLayout.TripleScreen;
@@ -112,9 +105,6 @@ namespace DisplayMagician
         {
             get
             {
-                if (_installId == "") {
-                    _installId = Guid.NewGuid().ToString();
-                }
                 return _installId;
             }
             set
@@ -127,107 +117,11 @@ namespace DisplayMagician
         {
             get
             {
-                if (_installDate == DateTime.MinValue)
-                {
-                    // Lookup Install Date from Registry
-                    // else just set it to the current date
-                    string nowAsString = DateTime.UtcNow.ToString();
-                    using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician"))
-                        DateTime.TryParse(dmKey?.GetValue("InstallDate", nowAsString) as string ?? nowAsString, out _installDate);
-                }
                 return _installDate;
             }
             set
             {
                 _installDate = value;
-            }
-        }
-
-        public DateTime LastDonationDate
-        {
-            get
-            {
-                return _lastDonationDate;
-            }
-            set
-            {
-                _lastDonationDate = value;
-            }
-        }
-
-        public DateTime LastDonateButtonAnimationDate
-        {
-            get
-            {
-                return _lastDonateButtonAnimationDate;
-            }
-            set
-            {
-                _lastDonateButtonAnimationDate = value;
-            }
-        }
-
-        [DefaultValue(0)]
-        public int NumberOfStartsSinceLastDonationButtonAnimation
-        {
-            get
-            {
-                return _numberOfStartsSinceLastDonationButtonAnimation;
-            }
-            set
-            {
-                _numberOfStartsSinceLastDonationButtonAnimation = value;
-            }
-        }
-
-        public DateTime LastDonationFormDate
-        {
-            get
-            {
-                return _lastDonationFormDate;
-            }
-            set
-            {
-                _lastDonationFormDate = value;
-            }
-        }
-
-        [DefaultValue(0)]
-        public int NumberOfStartsSinceLastDonationForm
-        {
-            get
-            {
-                return _numberOfStartsSinceLastDonationForm;
-            }
-            set
-            {
-                _numberOfStartsSinceLastDonationForm = value;
-            }
-        }
-
-        [DefaultValue(0)]
-        public int NumberOfTimesRun
-        {
-            get
-            {
-                return _numberOfTimesRun;
-            }
-            set
-            {
-                _numberOfTimesRun = value;
-            }
-        }
-
-        [DefaultValue(0)]
-        public int NumberOfDonations
-        {
-            get
-            {
-                return _numberOfDonations;
-            }
-            set
-            {
-                _numberOfDonations = value;
             }
         }
 
@@ -588,6 +482,25 @@ namespace DisplayMagician
             SaveSettings();
         }
 
+        public bool EnsureInstallIdentity(bool resetInstallDate)
+        {
+            bool changed = false;
+
+            if (string.IsNullOrWhiteSpace(_installId))
+            {
+                _installId = Guid.NewGuid().ToString();
+                changed = true;
+            }
+
+            if (resetInstallDate || _installDate == DateTime.MinValue)
+            {
+                _installDate = DateTime.UtcNow;
+                changed = true;
+            }
+
+            return changed;
+        }
+
         public static ProgramSettings LoadSettings()
         {
             // NOTE: This function gets called before NLog has setup the logger, meaning
@@ -595,24 +508,6 @@ namespace DisplayMagician
             // loglevel settings so we know what level to configure the logger to write!
             // This means we have to only use console.write in this function....
             ProgramSettings programSettings = null;
-
-            // Figure out if we need to upgrade the shortcuts file
-            if (Utils.OldFileVersionsExist(Program.AppDataPath, "Settings_*.json"))
-            {
-                logger.Debug($"ProgramSettings/LoadSettings: Upgrading the older settings file to the latest version.");
-                if (!Utils.UpgradeOldFileVersions(Program.AppDataPath, "Settings_*.json", _programSettingsStorageJsonFileName))
-                {
-                    logger.Error($"ProgramSettings/LoadSettings: Error upgrading the older settings file to the latest version.");
-                }
-                else
-                {
-                    logger.Trace($"ProgramSettings/LoadSettings: Upgraded the older settings file to the latest version.");
-                }
-            }
-            else
-            {
-                logger.Debug($"ProgramSettings/LoadSettings: No need to upgrade the older settings file to the latest version.");
-            }
 
             if (File.Exists(_programSettingsStorageJsonFullFileName))
             {
@@ -770,7 +665,7 @@ namespace DisplayMagician
 
                 SettingsFile settingsFile = new SettingsFile
                 {
-                    SettingsFileVersion = _programSettingsFileVersion,
+                    SettingsFileVersion = CurrentProgramSettingsFileVersion,
                     LastUpdated = DateTime.UtcNow,
                     Settings = this
                 };

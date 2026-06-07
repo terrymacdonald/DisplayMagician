@@ -336,9 +336,9 @@ namespace DisplayMagician
             pauseTimer.Start();
 
             // Update the number of times the donation button animation has been run to zero, and record when it was run last
-            Program.AppProgramSettings.LastDonateButtonAnimationDate = DateTime.UtcNow; 
-            Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation = 0;
-            Program.AppProgramSettings.SaveSettings();
+            Program.AppDonationSettings.LastDonateButtonAnimationDate = DateTime.UtcNow;
+            Program.AppDonationSettings.NumberOfStartsSinceLastDonationButtonAnimation = 0;
+            Program.AppDonationSettings.SaveSettings();
         }
 
         public static bool TimeToRunDonationAnimation()
@@ -347,15 +347,15 @@ namespace DisplayMagician
             // - the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
             // - the user has donated, but it was more than a year ago
 
-            if (Program.AppProgramSettings.NumberOfTimesRun > 50)
+            if (Program.AppDonationSettings.NumberOfTimesRun > 50)
             {
 
                 //Check if the user has donated
-                if (Program.AppProgramSettings.NumberOfDonations == 0)
+                if (Program.AppDonationSettings.NumberOfDonations == 0)
                 {
                     // User has not donated yet
                     // If the user has used DisplayMagician 5 times with no donations, or its longer than 5 days since the last donation animation
-                    if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
+                    if (Program.AppDonationSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 5 || Program.AppDonationSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
                     {
                         return true;
                     }
@@ -363,10 +363,10 @@ namespace DisplayMagician
                 else
                 {
                     // User has donated, but it's been a year since the last donation
-                    if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow)
+                    if (Program.AppDonationSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow)
                     {
                         // If the user has used DisplayMagician 20 times with no donations, or its longer than 20 days since the last donation animation
-                        if (Program.AppProgramSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppProgramSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
+                        if (Program.AppDonationSettings.NumberOfStartsSinceLastDonationButtonAnimation >= 20 || Program.AppDonationSettings.LastDonateButtonAnimationDate.AddMonths(2) >= DateTime.UtcNow)
                         {
                             return true;
                         }
@@ -381,14 +381,14 @@ namespace DisplayMagician
         {
             // Show the donation form if it's been a year since last donation, or an anniversary of the first use of DisplayMagician
 
-            if (Program.AppProgramSettings.NumberOfTimesRun > 50)
+            if (Program.AppDonationSettings.NumberOfTimesRun > 50)
             {
                 //Check if the user has donated
-                if (Program.AppProgramSettings.NumberOfDonations == 0)
+                if (Program.AppDonationSettings.NumberOfDonations == 0)
                 {
                     // User has not donated yet
                     // If the user form has not been shown in a year, then show it!
-                    if (Program.AppProgramSettings.LastDonationFormDate.AddYears(1) <= DateTime.UtcNow)
+                    if (Program.AppDonationSettings.LastDonationFormDate.AddYears(1) <= DateTime.UtcNow)
                     {
                         return true;
                     }
@@ -396,7 +396,7 @@ namespace DisplayMagician
                 else
                 {
                     // User has donated, but it's been two years since the last donation, then show the form
-                    if (Program.AppProgramSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow && Program.AppProgramSettings.LastDonationFormDate.AddYears(2) <= DateTime.UtcNow)
+                    if (Program.AppDonationSettings.LastDonationDate.AddYears(1) <= DateTime.UtcNow && Program.AppDonationSettings.LastDonationFormDate.AddYears(2) <= DateTime.UtcNow)
                     {
                         return true;
                     }
@@ -409,9 +409,9 @@ namespace DisplayMagician
 
         public static void UserHasDonated()
         {
-            Program.AppProgramSettings.LastDonationDate = DateTime.UtcNow;
-            Program.AppProgramSettings.NumberOfDonations++;
-            Program.AppProgramSettings.SaveSettings();
+            Program.AppDonationSettings.LastDonationDate = DateTime.UtcNow;
+            Program.AppDonationSettings.NumberOfDonations++;
+            Program.AppDonationSettings.SaveSettings();
         }
 
         public static bool OldFileVersionsExist(string path, string searchPattern = "", string skipFilename = "")
