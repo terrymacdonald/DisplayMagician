@@ -19,7 +19,7 @@ namespace DisplayMagician
     public class DonationSettings
     {
         public const string CurrentDonationSettingsFileVersion = "1";
-        public const string DonationSettingsStorageJsonFileName = "DonationSettings.json";
+        public const string DonationSettingsStorageJsonFileName = "Donation.json";
         public static string DonationSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, DonationSettingsStorageJsonFileName);
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();

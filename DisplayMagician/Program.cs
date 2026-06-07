@@ -128,7 +128,7 @@ namespace DisplayMagician {
                 if (RegisterPackageWithExternalLocationAsync(AppStartupPath, AppIdentityPkgPath).Result)
                 {
                     //Registration succeeded, restart the app to run with identity
-                    Console.WriteLine($"Program/Main: PackageManager Registration succeeded. The application now has package identity so can track UWP applications. THis will allow the user to use UWP applications in Game Shortcuts.");
+                    Console.WriteLine($"Program/Main: PackageManager Registration succeeded. The application now has package identity so can track UWP applications. This will allow the user to use UWP applications in Game Shortcuts.");
                     //Application.Restart();
                     //Process.Start(Application.ResourceAssembly.Location, arguments: cmdArgs?.ToString());
                 }
@@ -276,6 +276,7 @@ namespace DisplayMagician {
             AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
 
             // Process the version tracking logic
+            logger.Trace($"Program/Main: Running version tracking logic.");
             AppInstalled = false; 
             AppNewInstall = false;
             AppLastVersionRun = "0.0";
@@ -303,7 +304,7 @@ namespace DisplayMagician {
                     lastVersionString = dmKey?.GetValue("LastVersion", fallbackVersion) as string ?? fallbackVersion;
                 Version lastVersion = new Version(lastVersionString);
 
-
+                logger.Trace($"Program/Main: Checking if this is a version upgrade.");
                 if (lastVersion < Assembly.GetExecutingAssembly().GetName().Version)
                 {
                     AppVersionUpgrade = true;
@@ -326,24 +327,37 @@ namespace DisplayMagician {
                 AppVersionUpgrade = false;
             }
 
+            // Upgrade the settings file if needed
+            logger.Trace($"Program/Main: Running migration logic.");
             if (!ConfigMigrationRunner.RunMigrations())
             {
+                logger.Error($"Program/Main: ERROR - DisplayMagician could not upgrade the configuration file {ProgramSettings.ProgramSettingsStorageJsonFullFileName} so has exited to prevent file corruption.");
                 MessageBox.Show($"DisplayMagician could not upgrade the configuration file {ProgramSettings.ProgramSettingsStorageJsonFullFileName}. Please check the log file for details.", "Error upgrading DisplayMagician settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return (int)ERRORLEVEL.ERROR_EXCEPTION;
             }
 
+            // Load the settings from the settings file properly now that we've done the version upgrade if needed. 
+            logger.Trace($"Program/Main: Loading Program Settings.");
             AppProgramSettings = ProgramSettings.LoadSettings();
+            logger.Trace($"Program/Main: Ensuring Install Identity by setting install id and install date");
             if (AppProgramSettings.EnsureInstallIdentity(AppNewInstall))
             {
+                logger.Trace($"Program/Main: Saving Program Settings to write new install identity.");
                 AppProgramSettings.SaveSettings();
             }
 
+            // Load the Donation Settings and update the number of times run and number of starts since last donation form and button animation, and save the settings back to the file
+            logger.Trace($"Program/Main: Loading Donation Settings.");
             AppDonationSettings = DonationSettings.LoadSettings();
+            logger.Trace($"Program/Main: Updating Donation Settings counters.");
             AppDonationSettings.NumberOfStartsSinceLastDonationForm++;
             AppDonationSettings.NumberOfStartsSinceLastDonationButtonAnimation++;
             AppDonationSettings.NumberOfTimesRun++;
+            logger.Trace($"Program/Main: Saving Donation Settings.");
             AppDonationSettings.SaveSettings();
 
+            // Update the registry with the version we are running now so that we can compare it next time to see if this is an upgrade or not
+            logger.Trace($"Program/Main: Updating the registry with the current version.");
             try
             {
                 // Try to store this version as the last version run (replacing the previous last run version with this one)
@@ -357,6 +371,7 @@ namespace DisplayMagician {
 
             // Now we are at the point that the user settings are loaded, we can set the logging level based on the stored user settings
             // but only if the user hasn't already overridden the log level via command line options
+
             if (!_userOverrodeLogLevel)
             {
                 // If the user has set a log level in the settings, then use that, otherwise use the default of Info
@@ -373,6 +388,10 @@ namespace DisplayMagician {
                     NLog.LogManager.ReconfigExistingLoggers();
 
                 }
+            }
+            else
+            {
+                logger.Trace($"Program/Main: User has set the log level to {_userWantedLogLevel} via command line options so no need to use the log level from program settings.");
             }
 
             logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");
