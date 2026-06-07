@@ -77,6 +77,33 @@
         <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryApplyAll3DSettings(System.Int32,ADLXWrapper.All3DSettingsDto)">
             <summary>Tries to apply all 3D settings to the GPU with the specified unique id.</summary>
         </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetChill(System.Int32)">
+            <summary>Gets Chill state for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetChill(System.Int32,ADLXWrapper.ChillDto@)">
+            <summary>Tries to get Chill state for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetMorphologicalAntiAliasing(System.Int32)">
+            <summary>Gets Morphological Anti-Aliasing state for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetMorphologicalAntiAliasing(System.Int32,ADLXWrapper.MorphologicalAntiAliasingDto@)">
+            <summary>Tries to get Morphological Anti-Aliasing state for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetImageSharpenDesktop(System.Int32)">
+            <summary>Gets Image Sharpen Desktop state for the GPU with the specified unique id. Returns unsupported when IADLX3DSettingsServices2 is not available.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetImageSharpenDesktop(System.Int32,ADLXWrapper.ImageSharpenDesktopDto@)">
+            <summary>Tries to get Image Sharpen Desktop state for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.IsResetShaderCacheSupported(System.Int32)">
+            <summary>Returns true when Reset Shader Cache is supported for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.ResetShaderCache(System.Int32)">
+            <summary>Resets the shader cache for the GPU with the specified unique id. Does nothing if not supported.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryResetShaderCache(System.Int32)">
+            <summary>Tries to reset the shader cache for the GPU with the specified unique id. Returns false if not supported.</summary>
+        </member>
         <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetFluidMotionFrames(System.Int32)">
             <summary>Gets Fluid Motion Frames state for the GPU with the specified unique id.</summary>
         </member>
@@ -86,6 +113,13 @@
         <member name="T:ADLXWrapper.All3DSettingsDto">
             <summary>
             Represents a complete snapshot of all 3D settings for a GPU.
+            </summary>
+        </member>
+        <member name="P:ADLXWrapper.AntiLagDto.Level">
+            <summary>
+            Anti-Lag mode: <see cref="F:ADLXWrapper.ADLX_ANTILAG_STATE.ANTILAG"/> (classic) or
+            <see cref="F:ADLXWrapper.ADLX_ANTILAG_STATE.ANTILAGNEXT"/> (Anti-Lag+).
+            Null when <see cref="T:ADLXWrapper.IADLX3DAntiLag1"/> is not available.
             </summary>
         </member>
         <member name="T:ADLXWrapper.ThreeDSettingsListenerHandle">
@@ -1015,6 +1049,12 @@
             Executes an action with the GPU matching the specified unique id.
             Internal bridge allowing other helpers (e.g. ADLXPowerTuningServicesHelper) to delegate GPU lookup.
             </summary>
+        </member>
+        <member name="P:ADLXWrapper.ManualFanTuningDto.SpeedRange">
+            <summary>Valid speed range for fan curve points (percent).</summary>
+        </member>
+        <member name="P:ADLXWrapper.ManualFanTuningDto.TemperatureRange">
+            <summary>Valid temperature range for fan curve points (degrees Celsius).</summary>
         </member>
         <member name="T:ADLXWrapper.GpuTuningListenerHandle">
             <summary>
