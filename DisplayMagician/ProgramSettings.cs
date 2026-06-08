@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 
@@ -642,8 +641,8 @@ namespace DisplayMagician
 
             logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {_programSettingsStorageJsonFullFileName}.");
 
-            // Force the PreviousDisplayMagicianVersion to this version just before we save the settings.
-            DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            // Store the running DisplayMagician file version just before saving settings.
+            DisplayMagicianVersion = Program.AppVersion;
 
             List<string> jsonErrors = new List<string>();
             try

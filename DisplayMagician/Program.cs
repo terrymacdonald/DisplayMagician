@@ -298,21 +298,27 @@ namespace DisplayMagician {
             {
                 // Figure out if this is version is the same as the last version
                 // get the last version from the registry (or this version as fallback)
-                string fallbackVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                string fallbackVersion = Program.AppVersion;
                 string lastVersionString;
                 using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician"))
                     lastVersionString = dmKey?.GetValue("LastVersion", fallbackVersion) as string ?? fallbackVersion;
-                Version lastVersion = new Version(lastVersionString);
+                if (!Version.TryParse(lastVersionString, out Version lastVersion))
+                {
+                    logger.Warn($"Program/Main: LastVersion registry value '{lastVersionString}' is not a valid version. Treating it as 0.0.0.0.");
+                    lastVersion = new Version("0.0.0.0");
+                }
+
+                Version currentVersion = new Version(Program.AppVersion);
 
                 logger.Trace($"Program/Main: Checking if this is a version upgrade.");
-                if (lastVersion < Assembly.GetExecutingAssembly().GetName().Version)
+                if (lastVersion < currentVersion)
                 {
                     AppVersionUpgrade = true;
-                    logger.Info($"Program/Main: This is an upgrade from version {lastVersion} to version {Assembly.GetExecutingAssembly().GetName().Version}!");
+                    logger.Info($"Program/Main: This is an upgrade from version {lastVersion} to version {currentVersion}!");
                 }
                 else
                 {
-                    logger.Trace($"Program/Main: This is NOT an upgrade from version {lastVersion} to version {Assembly.GetExecutingAssembly().GetName().Version}.");
+                    logger.Trace($"Program/Main: This is NOT an upgrade from version {lastVersion} to version {currentVersion}.");
                 }
 
             }
@@ -362,7 +368,7 @@ namespace DisplayMagician {
             {
                 // Try to store this version as the last version run (replacing the previous last run version with this one)
                 using (RegistryKey dmKey = Registry.CurrentUser.CreateSubKey(@"Software\DisplayMagician"))
-                    dmKey?.SetValue("LastVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                    dmKey?.SetValue("LastVersion", Program.AppVersion);
             }
             catch (Exception ex)
             {
@@ -556,7 +562,7 @@ namespace DisplayMagician {
 
             app.VersionOption("-v|--version", () => {
                 DeRegisterDisplayMagicianWithWindows();
-                return string.Format("Version {0}", Assembly.GetExecutingAssembly().GetName().Version);
+                return string.Format("Version {0}", Program.AppVersion);
             });
 
             CommandOption appDebug = app.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
