@@ -126,7 +126,7 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                return _isXboxInstalled;
+                return Program.AppHasPackageIdentity && _isXboxInstalled;
             }
 
         }
@@ -398,6 +398,12 @@ namespace DisplayMagician.GameLibraries
 
         public override bool LoadInstalledGames()
         {
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Warn($"XboxLibrary/LoadInstalledGames: Skipping Xbox game enumeration because DisplayMagician is not running with package identity.");
+                return false;
+            }
+
             if (!_isXboxInstalled)
             {
                 logger.Info($"XboxLibrary/LoadInstalledGames: Xbox library is not installed");

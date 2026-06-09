@@ -12,9 +12,23 @@ namespace DisplayMagician
 
         internal static bool IsRunningWithIdentity()
         {
+            return TryGetPackageFullName(out _, out _);
+        }
+
+        internal static bool TryGetPackageFullName(out string packageFullName, out int errorCode)
+        {
             StringBuilder sb = new StringBuilder(1024);
-            int length = 0;
-            int result = GetCurrentPackageFullName(ref length, ref sb);
+            int length = sb.Capacity;
+            int result = GetCurrentPackageFullName(ref length, sb);
+
+            if (result == 122 && length > 0)
+            {
+                sb = new StringBuilder(length);
+                result = GetCurrentPackageFullName(ref length, sb);
+            }
+
+            errorCode = result;
+            packageFullName = result == 0 ? sb.ToString() : string.Empty;
 
             return result == 0;
         }

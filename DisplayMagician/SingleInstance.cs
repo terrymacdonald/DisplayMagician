@@ -1,7 +1,9 @@
 ﻿using DisplayMagician.UIForms;
+using DisplayMagicianShared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -34,6 +36,9 @@ namespace DisplayMagician
         private static SynchronizationContext _syncContext;
         private static Action<string[]> _otherInstanceCallback;
         private static readonly object _namedPiperServerThreadLock = new object();
+        private static readonly Queue<string[]> _pendingCommandLineArguments = new Queue<string[]>();
+        private static readonly object _pendingCommandLock = new object();
+        private static bool _readyForCommands = false;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -42,45 +47,53 @@ namespace DisplayMagician
 
         public static void executeAnActionCallback(string[] args)
         {
+            if (args == null)
+            {
+                logger.Warn($"SingleInstance/executeAnActionCallback: Received a null commandline from another DisplayMagician instance.");
+                return;
+            }
+
             logger.Trace($"SingleInstance/executeAnActionCallback: Received data from another DisplayMagician instance: {String.Join(" ",args)}");
-            // Now we want to figure out if it's an actionable command
-            // The command is in an array, and the first item is the full path to the displaymagician instance that ran. 
-            // We only want to see if we should action this command if it has more args than just the single file path
-            if (args.Length > 1)
+            int commandIndex = FindCommandIndex(args);
+
+            if (commandIndex >= 0)
             {
                 // Setup a regex to match the UUID format we use
                 Regex uuid = new Regex("[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}");
+                string command = args[commandIndex];
+                string commandArgument = args.Length > commandIndex + 1 ? args[commandIndex + 1] : string.Empty;
+
                 // Now we check for the three commandline parameters that we support
-                switch (args[1])
+                switch (command)
                 {
                     case "RunShortcut":
-                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the RunShortcut command: '{args[1]} {args[2]}'");
-                        if (uuid.IsMatch(args[2])) 
+                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the RunShortcut command: '{command} {commandArgument}'");
+                        if (uuid.IsMatch(commandArgument)) 
                         {
-                            Program.RunShortcut(args[2]);
+                            Program.RunShortcut(commandArgument);
                         }
                         else
                         {
-                            logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an invalid shortcut UUID to the RunShortcut command: '{args[2]}'");
+                            logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an invalid shortcut UUID to the RunShortcut command: '{commandArgument}'");
                         }
                         break;
                     case "ChangeProfile":
-                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the ChangeProfile command: '{args[1]} {args[2]}'");
-                        if (uuid.IsMatch(args[2]))
+                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the ChangeProfile command: '{command} {commandArgument}'");
+                        if (uuid.IsMatch(commandArgument))
                         {
-                            Program.RunProfile(args[2]);
+                            Program.RunProfile(commandArgument);
                         }
                         else
                         {
-                            logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an invalid profile UUID to the ChangeProfile command: '{args[2]}'");
+                            logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an invalid profile UUID to the ChangeProfile command: '{commandArgument}'");
                         }
                         break;
                     case "CreateProfile":
-                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the CreateProfile command: '{args[1]} {args[2]}'");
+                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the CreateProfile command.");
                         Program.CreateProfile();
                         break;
                     default:
-                        logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an unsupported command: '{args[1]}'");
+                        logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an unsupported command: '{command}'");
                         break;
                 }
             }
@@ -88,7 +101,7 @@ namespace DisplayMagician
             {
                 // If we only have the path, we assume they just want to bring the topmost window to the foreground
                 // Replace the selected code with the following to ensure UI thread safety using Invoke
-                logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments, only the path '{args[0]}'. Opening the Main Display Window.");
+                logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any supported commandline arguments. Opening the Main Display Window.");
                 MainForm myMainForm = Program.AppMainForm;
                 if (myMainForm != null)
                 {
@@ -106,6 +119,75 @@ namespace DisplayMagician
                 }
             }
         }           
+
+        private static int FindCommandIndex(string[] args)
+        {
+            if (args == null)
+                return -1;
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (Enum.TryParse(args[i], ignoreCase: true, out DisplayMagicianStartupAction action))
+                {
+                    if (action == DisplayMagicianStartupAction.RunShortcut ||
+                        action == DisplayMagicianStartupAction.ChangeProfile ||
+                        action == DisplayMagicianStartupAction.CreateProfile)
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        public static void MarkReadyForCommands()
+        {
+            List<string[]> queuedCommands = new List<string[]>();
+
+            lock (_pendingCommandLock)
+            {
+                _readyForCommands = true;
+                while (_pendingCommandLineArguments.Count > 0)
+                {
+                    queuedCommands.Add(_pendingCommandLineArguments.Dequeue());
+                }
+            }
+
+            foreach (string[] queuedCommand in queuedCommands)
+            {
+                DispatchCommandLineArguments(queuedCommand);
+            }
+        }
+
+        private static void DispatchCommandLineArguments(string[] args)
+        {
+            lock (_pendingCommandLock)
+            {
+                if (!_readyForCommands)
+                {
+                    _pendingCommandLineArguments.Enqueue(args);
+                    logger.Trace($"SingleInstance/DispatchCommandLineArguments: DisplayMagician is not ready to process commands yet. Queued forwarded commandline.");
+                    return;
+                }
+            }
+
+            MainForm mainForm = Program.AppMainForm;
+            if (mainForm != null && mainForm.IsHandleCreated)
+            {
+                mainForm.BeginInvoke(new Action(() => _otherInstanceCallback(args)));
+                return;
+            }
+
+            if (_syncContext != null)
+            {
+                _syncContext.Post(_ => _otherInstanceCallback(args), null);
+            }
+            else
+            {
+                _otherInstanceCallback(args);
+            }
+        }
 
 
         /// <summary>
@@ -185,12 +267,18 @@ namespace DisplayMagician
             {
                 logger.Trace($"SingleInstance/NamedPipeClientSendOptions: Sending the primary DisplayMagician the message through the NamedPipe.");
 
-                using (var namedPipeClientStream = new NamedPipeClientStream(".", GetPipeName(), PipeDirection.Out))
+                using (var namedPipeClientStream = new NamedPipeClientStream(".", GetPipeName(), PipeDirection.InOut))
                 {
                     namedPipeClientStream.Connect(3000); // Maximum wait 3 seconds
 
                     var ser = new DataContractJsonSerializer(typeof(Payload));
                     ser.WriteObject(namedPipeClientStream, namedPipePayload);
+                    namedPipeClientStream.Flush();
+
+                    using (var reader = new StreamReader(namedPipeClientStream, Encoding.UTF8, false, 1024, leaveOpen: true))
+                    {
+                        reader.ReadLine();
+                    }
                 }
             }
             catch (Exception)
@@ -231,14 +319,16 @@ namespace DisplayMagician
             try
             {
                 // Create pipe and start the async connection wait
-                _namedPipeServerStream = new NamedPipeServerStream(
+                _namedPipeServerStream = NamedPipeServerStreamAcl.Create(
                     GetPipeName(),
-                    PipeDirection.In,
+                    PipeDirection.InOut,
                     1,
                     PipeTransmissionMode.Byte,
                     PipeOptions.Asynchronous,
                     0,
-                    0);
+                    0,
+                    pipeSecurity,
+                    HandleInheritability.None);
 
             }
             catch (PlatformNotSupportedException ex)
@@ -252,7 +342,10 @@ namespace DisplayMagician
                 logger.Warn(ex, $"SingleInstance/NamedPipeServerCreateServer: Exception - Source: {ex.Source} {ex.TargetSite} - {ex.Message} - {ex.StackTrace}");
             }
             // Begin async wait for connections
-            _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);
+            if (_namedPipeServerStream != null)
+            {
+                _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);
+            }
         }
 
         /// <summary>
@@ -280,13 +373,12 @@ namespace DisplayMagician
                     logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: The other DisplayMagician sent us the following commandline: {payload.CommandLineArguments.ToString()}");
 
                     // payload contains the data sent from the other instance
-                    if (_syncContext != null)
+                    DispatchCommandLineArguments(payload.CommandLineArguments.ToArray());
+
+                    using (var writer = new StreamWriter(_namedPipeServerStream, Encoding.UTF8, 1024, leaveOpen: true))
                     {
-                        _syncContext.Post(_ => _otherInstanceCallback(payload.CommandLineArguments.ToArray()), null);
-                    }
-                    else
-                    {
-                        _otherInstanceCallback(payload.CommandLineArguments.ToArray());
+                        writer.AutoFlush = true;
+                        writer.WriteLine("OK");
                     }
                 }
             }

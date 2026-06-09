@@ -31,6 +31,6 @@ exit /b 0
 
 :UNINSTALL
 echo Removing DisplayMagician identity package...
-powershell -NonInteractive -ExecutionPolicy Bypass -Command "Get-AppxPackage -Name '4f6354a7-065d-432a-bb6b-b65acc257555' | Remove-AppxPackage -ErrorAction SilentlyContinue"
+powershell -NonInteractive -ExecutionPolicy Bypass -Command "Get-AppxPackage -Name '50566LittleBitBig.DisplayMagician' | Remove-AppxPackage -ErrorAction SilentlyContinue"
 echo Identity package removed.
 exit /b 0

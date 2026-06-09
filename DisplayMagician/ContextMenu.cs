@@ -88,12 +88,19 @@ namespace DisplayMagician
         // Remove the DesktopBackground context menu from Windows Registry.
         public static bool UninstallContextMenu()
         {
-            // Delete the ContextMenu Anchor Registry Key
-            Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DesktopBackground\\Shell\\DisplayMagician.ContextMenu.Anchor");
+            try
+            {
+                // Delete the ContextMenu Anchor Registry Key
+                Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DesktopBackground\\Shell\\DisplayMagician.ContextMenu.Anchor", false);
 
-            // Delete the MainMenu (Level 1) Registry Key and all subkeys
-            Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus");
-            return true;
+                // Delete the MainMenu (Level 1) Registry Key and all subkeys
+                Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus", false);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         // Update the list of Display Profiles in the DesktopBackground context menu

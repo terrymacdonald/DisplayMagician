@@ -450,6 +450,11 @@ namespace DisplayMagician.AppLibraries
         public static List<InstalledProgram> GetUWPApps()
         {
             var apps = new List<InstalledProgram>();
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Warn("InstalledProgram/GetUWPApps: Skipping UWP app enumeration because DisplayMagician is not running with package identity.");
+                return apps;
+            }
 
             try
             {
@@ -562,6 +567,12 @@ namespace DisplayMagician.AppLibraries
 
         public static AppListEntry GetUWPAppListEntryByAUMID(string aumid)
         {
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Warn("InstalledProgram/GetUWPAppListEntryByAUMID: Skipping UWP app lookup because DisplayMagician is not running with package identity.");
+                return null;
+            }
+
             try
             {
                 var manager = new PackageManager();
@@ -622,6 +633,12 @@ namespace DisplayMagician.AppLibraries
 
         public static Package GetUWPAppPackageByAUMID(string aumid)
         {
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Warn("InstalledProgram/GetUWPAppPackageByAUMID: Skipping UWP package lookup because DisplayMagician is not running with package identity.");
+                return null;
+            }
+
             try
             {
                 var manager = new PackageManager();
@@ -680,6 +697,12 @@ namespace DisplayMagician.AppLibraries
 
         public static bool IsUWPAppRunning(string aumid)
         {
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Warn("InstalledProgram/IsUWPAppRunning: Skipping UWP running-state check because DisplayMagician is not running with package identity.");
+                return false;
+            }
+
             try
             {
                 Package package = GetUWPAppPackageByAUMID(aumid);

@@ -320,6 +320,12 @@ namespace DisplayMagician.AppLibraries
 
         private async Task<bool> UWPIsRunning(string aumid)
         {
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Debug($"LocalApp/UWPIsRunning: DisplayMagician is not running with package identity. UWP running-state checks are disabled for {aumid}.");
+                return false;
+            }
+
             // First check whether we actually have permission to use the AppDiagnosticInfo APIs.
             // Without a package identity (i.e. running as an unpackaged Win32 app), this will
             // return Limited or Denied, and calling RequestInfoForAppAsync will throw a
@@ -373,6 +379,12 @@ namespace DisplayMagician.AppLibraries
 
         private async Task<bool> UWPIsInstalled(string aumid)
         {
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Debug($"LocalApp/UWPIsInstalled: DisplayMagician is not running with package identity. UWP install checks are disabled for {aumid}.");
+                return false;
+            }
+
             // Request access to app diagnostics
             var accessStatus = await AppDiagnosticInfo.RequestAccessAsync();
             if (accessStatus != DiagnosticAccessStatus.Allowed)
@@ -438,6 +450,12 @@ namespace DisplayMagician.AppLibraries
             }
             else if (LocalAppType == InstalledAppType.UWP)
             {
+                if (!Program.AppHasPackageIdentity)
+                {
+                    logger.Warn($"LocalApp/Start: Cannot start UWP app {Name} because DisplayMagician is not running with package identity.");
+                    return false;
+                }
+
                 var accessStatus = AppDiagnosticInfo.RequestAccessAsync().GetResults();
                 if (accessStatus != DiagnosticAccessStatus.Allowed)
                 {

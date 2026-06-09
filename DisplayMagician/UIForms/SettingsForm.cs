@@ -714,6 +714,7 @@ namespace DisplayMagician.UIForms
         private void btn_context_menu_remove_Click(object sender, EventArgs e)
         {
             Program.AppProgramSettings.InstallDesktopContextMenu = false;
+            Program.AppProgramSettings.SaveSettings();
 
             if (DisplayMagician.ContextMenu.UninstallContextMenu())
             {
@@ -730,6 +731,7 @@ namespace DisplayMagician.UIForms
         private void btn_context_menu_add_Click(object sender, EventArgs e)
         {
             Program.AppProgramSettings.InstallDesktopContextMenu = true;
+            Program.AppProgramSettings.SaveSettings();
 
             if (DisplayMagician.ContextMenu.InstallContextMenu())
             {

@@ -60,6 +60,7 @@ namespace DisplayMagician {
         public static bool AppInstalled = false;
         public static bool AppNewInstall = false;
         public static bool AppVersionUpgrade = false;
+        public static bool AppHasPackageIdentity = false;
         public static string AppLastVersionRun = "0.0";
         public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
@@ -83,6 +84,11 @@ namespace DisplayMagician {
         private static NLog.LogLevel _userWantedLogLevel = NLog.LogLevel.Info; // Default log level is Info, but can be changed later based on user settings
         private static bool _userOverrodeLogLevel = false; // Used to track if the user has overridden the log level via command line options
         private static readonly System.Net.Http.HttpClient AppHttpClient = new System.Net.Http.HttpClient();
+        private static bool _packageIdentityWarningNeeded = false;
+        private static bool _autoUpdaterEventsRegistered = false;
+        private static bool _lastUpdateCheckWasAutomatic = true;
+        private static bool _startupBackgroundTasksQueued = false;
+        private static SynchronizationContext _mainSynchronizationContext;
 
         public enum ERRORLEVEL: int
         {
@@ -119,22 +125,6 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
-
-
-            //if app isn't running with identity, register its identity package
-            if (!ExecutionMode.IsRunningWithIdentity())
-            {
-                //Attempt registration
-                if (RegisterPackageWithExternalLocationAsync(AppStartupPath, AppIdentityPkgPath).Result)
-                {
-                    //Registration succeeded, restart the app to run with identity
-                    Console.WriteLine($"Program/Main: PackageManager Registration succeeded. The application now has package identity so can track UWP applications. This will allow the user to use UWP applications in Game Shortcuts.");
-                    //Application.Restart();
-                    //Process.Start(Application.ResourceAssembly.Location, arguments: cmdArgs?.ToString());
-                }
-            }
-
-
             // Create the Logging Dir if it doesn't exist so that it's avilable for all
             // parts of the program to use
             if (!Directory.Exists(AppDataPath))
@@ -217,6 +207,8 @@ namespace DisplayMagician {
             // Start the Log file
             logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
 
+            EnsurePackageIdentity();
+
 
             // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
             // then skip the single instance mode tests. This is important for commands used in powershell
@@ -283,6 +275,7 @@ namespace DisplayMagician {
             AppVersionUpgrade = false;
             bool settingsFileExistedBeforeLoad = File.Exists(ProgramSettings.ProgramSettingsStorageJsonFullFileName);
             AppNewInstall = !settingsFileExistedBeforeLoad;
+            string legacyLastVersionString = null;
 
             AppInstalled = IsInstalledVersion();
             if (AppNewInstall)
@@ -296,55 +289,57 @@ namespace DisplayMagician {
 
             try
             {
-                // Figure out if this is version is the same as the last version
-                // get the last version from the registry (or this version as fallback)
-                string fallbackVersion = Program.AppVersion;
-                string lastVersionString;
+                // Read the old per-user version value as a legacy fallback. Settings.json is the
+                // source of truth once it has loaded successfully.
                 using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician"))
-                    lastVersionString = dmKey?.GetValue("LastVersion", fallbackVersion) as string ?? fallbackVersion;
-                if (!Version.TryParse(lastVersionString, out Version lastVersion))
-                {
-                    logger.Warn($"Program/Main: LastVersion registry value '{lastVersionString}' is not a valid version. Treating it as 0.0.0.0.");
-                    lastVersion = new Version("0.0.0.0");
-                }
-
-                Version currentVersion = new Version(Program.AppVersion);
-
-                logger.Trace($"Program/Main: Checking if this is a version upgrade.");
-                if (lastVersion < currentVersion)
-                {
-                    AppVersionUpgrade = true;
-                    logger.Info($"Program/Main: This is an upgrade from version {lastVersion} to version {currentVersion}!");
-                }
-                else
-                {
-                    logger.Trace($"Program/Main: This is NOT an upgrade from version {lastVersion} to version {currentVersion}.");
-                }
+                    legacyLastVersionString = dmKey?.GetValue("LastVersion") as string;
 
             }
             catch (NullReferenceException ex)
             {
                 logger.Trace(ex, $"Program/Main: Exception whilst trying to see what the last version of DM was. It means DisplayMagician hasn't been run before anywhere");
-                AppVersionUpgrade = true;
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"Program/Main: Exception whilst trying to see if this version has run previously at all. It most likely hasnt been installed and is running from somewhere (e.g. via visual studio). Problem accessing registry!");
-                AppVersionUpgrade = false;
+                logger.Warn(ex, $"Program/Main: Exception whilst trying to read the legacy LastVersion registry value. Settings.json will be used instead.");
             }
 
             // Upgrade the settings file if needed
             logger.Trace($"Program/Main: Running migration logic.");
-            if (!ConfigMigrationRunner.RunMigrations())
+            ConfigMigrationRunner.MigrationResult migrationResult = ConfigMigrationRunner.RunMigrationsDetailed();
+            if (!migrationResult.Success)
             {
-                logger.Error($"Program/Main: ERROR - DisplayMagician could not upgrade the configuration file {ProgramSettings.ProgramSettingsStorageJsonFullFileName} so has exited to prevent file corruption.");
-                MessageBox.Show($"DisplayMagician could not upgrade the configuration file {ProgramSettings.ProgramSettingsStorageJsonFullFileName}. Please check the log file for details.", "Error upgrading DisplayMagician settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                logger.Error($"Program/Main: ERROR - DisplayMagician could not load or migrate the configuration file {ProgramSettings.ProgramSettingsStorageJsonFullFileName}: {migrationResult.Message}");
+                if (!RecoverProgramSettingsFile(migrationResult.Message))
+                {
+                    return (int)ERRORLEVEL.CANCELED_BY_USER;
+                }
+
+                AppNewInstall = true;
             }
 
             // Load the settings from the settings file properly now that we've done the version upgrade if needed. 
             logger.Trace($"Program/Main: Loading Program Settings.");
             AppProgramSettings = ProgramSettings.LoadSettings();
+            if (AppProgramSettings == null)
+            {
+                logger.Error($"Program/Main: ERROR - DisplayMagician could not load the configuration file {ProgramSettings.ProgramSettingsStorageJsonFullFileName}.");
+                if (!RecoverProgramSettingsFile("DisplayMagician could not load the settings file."))
+                {
+                    return (int)ERRORLEVEL.CANCELED_BY_USER;
+                }
+
+                AppNewInstall = true;
+                AppProgramSettings = ProgramSettings.LoadSettings();
+                if (AppProgramSettings == null)
+                {
+                    logger.Error($"Program/Main: ERROR - DisplayMagician could not load a newly created configuration file.");
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+            }
+
+            UpdateStartupModeFromSettings(legacyLastVersionString);
+
             logger.Trace($"Program/Main: Ensuring Install Identity by setting install id and install date");
             if (AppProgramSettings.EnsureInstallIdentity(AppNewInstall))
             {
@@ -362,18 +357,8 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Saving Donation Settings.");
             AppDonationSettings.SaveSettings();
 
-            // Update the registry with the version we are running now so that we can compare it next time to see if this is an upgrade or not
-            logger.Trace($"Program/Main: Updating the registry with the current version.");
-            try
-            {
-                // Try to store this version as the last version run (replacing the previous last run version with this one)
-                using (RegistryKey dmKey = Registry.CurrentUser.CreateSubKey(@"Software\DisplayMagician"))
-                    dmKey?.SetValue("LastVersion", Program.AppVersion);
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"Program/Main: Exception whilst trying to set the last version registry key to {Application.ProductVersion}.");
-            }
+            CleanupLegacyUserRegistryValues();
+            ReconcilePerUserRegistryState();
 
             // Now we are at the point that the user settings are loaded, we can set the logging level based on the stored user settings
             // but only if the user hasn't already overridden the log level via command line options
@@ -498,24 +483,6 @@ namespace DisplayMagician {
                 myMessageWindow.ShowDialog();
                 */
 
-                if (AppInstalled)
-                { 
-                    try
-                    {
-                        // Set the registry key to turn off the first run setting.
-                        using (RegistryKey DMKey = Registry.CurrentUser.OpenSubKey("Software\\DisplayMagician", writable: true))
-                            DMKey?.SetValue("FirstRun", "0");
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        logger.Error(ex, $"Program/Main: UnauthorizedAccessException: Unable to set the FirstRun registry key to 0 as no permission to write to registry key.");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"Program/Main: Exception whilst trying to set the FirstRun registry key to 0.");
-                    }
-                }
-
             }
 
 
@@ -531,19 +498,8 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Creating the MainForm object");
             AppMainForm = new MainForm();
 
-            // Next we set up the hotkeys if we have any
-            logger.Trace($"Program/Main: Creating DirectInput Device Manager");
-            AppDirectInputManager = new DirectInputManager();
-            logger.Trace($"Program/Main: Initilising DirectInput Device Manager with the MainForm window handle");
-            AppDirectInputManager.Initialize(AppMainForm.Handle);
-            logger.Trace($"Program/Main: Registering keys and buttons with the DirectInput Device Manager");
-
-            // Load the stored hotkeys from the settings file
-            logger.Trace($"Program/Main: Registering stored keys and buttons with the DirectInput Device Manager");
-            AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);
-          
-            // Start the background polling thread
-            AppDirectInputManager.Start(pollIntervalMs: 50);
+            StartDirectInputManager();
+            SingleInstance.MarkReadyForCommands();
 
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
@@ -866,6 +822,10 @@ namespace DisplayMagician {
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
 
+            logger.Trace($"Program/Main: Disposing the DirectInput manager.");
+            AppDirectInputManager?.Dispose();
+            AppDirectInputManager = null;
+
             // Shutdown NLog
             logger.Trace($"Program/Main: Stopping logging processes");
             NLog.LogManager.Shutdown();
@@ -950,11 +910,11 @@ namespace DisplayMagician {
                     logger.Error(ex, $"Program/StartUpApplication exception create Icon files for future use in {AppIconPath}");
                 }
 
-                // Check for updates
-                CheckForUpdates();
+                Application.Idle += QueueStartupBackgroundTasks;
 
-                 // Show any messages we need to show
-                ShowMessages();
+                // Future announcements center work: the old startup message check is intentionally
+                // disabled for now. Keep ShowMessages() below as reference code for that project.
+                // ShowMessages();
 
                 // Close the splash screen
                 if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
@@ -1028,7 +988,11 @@ namespace DisplayMagician {
                     // Now refresh the shortcut validity
                     shortcutToRun.RefreshValidity();
                     //ShortcutRepository.RunShortcut(shortcutToRun);
-                    Program.RunShortcutTask(shortcutToRun);
+                    RunShortcutResult shortcutResult = Program.RunShortcutTask(shortcutToRun);
+                    if (shortcutResult == RunShortcutResult.Cancelled)
+                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
+                    else if (shortcutResult == RunShortcutResult.Error)
+                        errLevel = ERRORLEVEL.ERROR_EXCEPTION;
                 }
             }
             else
@@ -1152,6 +1116,7 @@ namespace DisplayMagician {
                 Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, cancelToken), cancelToken);
                 // Wait for the task to complete (RunShortcut runs on a background thread)
                 output.Wait(cancelToken);
+                result = output.Result;
             }
             catch (OperationCanceledException ex)
             {
@@ -1251,30 +1216,297 @@ namespace DisplayMagician {
             // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
             //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
             return result;
-        }        
+        }
+
+        private static void EnsurePackageIdentity()
+        {
+            if (ExecutionMode.TryGetPackageFullName(out string packageFullName, out int errorCode))
+            {
+                AppHasPackageIdentity = true;
+                logger.Info($"Program/EnsurePackageIdentity: DisplayMagician is running with package identity {packageFullName}.");
+                return;
+            }
+
+            AppHasPackageIdentity = false;
+            logger.Warn($"Program/EnsurePackageIdentity: DisplayMagician is not running with package identity. GetCurrentPackageFullName returned {errorCode}.");
+
+            if (!File.Exists(AppIdentityPkgPath))
+            {
+                logger.Warn($"Program/EnsurePackageIdentity: Cannot register package identity because {AppIdentityPkgPath} does not exist.");
+                _packageIdentityWarningNeeded = true;
+                return;
+            }
+
+            bool registrationSucceeded = RegisterPackageWithExternalLocationAsync(AppStartupPath, AppIdentityPkgPath).GetAwaiter().GetResult();
+            if (registrationSucceeded)
+            {
+                logger.Info($"Program/EnsurePackageIdentity: Package identity registration completed. Re-checking current process identity.");
+            }
+            else
+            {
+                logger.Warn($"Program/EnsurePackageIdentity: Package identity registration did not complete successfully.");
+            }
+
+            if (ExecutionMode.TryGetPackageFullName(out packageFullName, out errorCode))
+            {
+                AppHasPackageIdentity = true;
+                logger.Info($"Program/EnsurePackageIdentity: DisplayMagician is now running with package identity {packageFullName}.");
+            }
+            else
+            {
+                AppHasPackageIdentity = false;
+                _packageIdentityWarningNeeded = true;
+                logger.Warn($"Program/EnsurePackageIdentity: DisplayMagician still does not have package identity after registration attempt. GetCurrentPackageFullName returned {errorCode}. UWP and Xbox app monitoring will be disabled for this run.");
+            }
+        }
+
+        private static void QueueStartupBackgroundTasks(object sender, EventArgs e)
+        {
+            if (_startupBackgroundTasksQueued)
+                return;
+
+            _startupBackgroundTasksQueued = true;
+            Application.Idle -= QueueStartupBackgroundTasks;
+            _mainSynchronizationContext = SynchronizationContext.Current;
+
+            if (_packageIdentityWarningNeeded)
+            {
+                ShowPackageIdentityWarningToast();
+            }
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    CheckForUpdates(true);
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic update check failed. DisplayMagician will continue running.");
+                }
+            });
+        }
+
+        private static void ShowPackageIdentityWarningToast()
+        {
+            try
+            {
+                new ToastContentBuilder()
+                    .AddText("DisplayMagician UWP/Xbox monitoring disabled", hintMaxLines: 1)
+                    .AddText("Windows failed to give DisplayMagician permission to monitor UWP and Xbox apps. Please restart DisplayMagician if that functionality is needed.")
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                    .SetToastDuration(ToastDuration.Short)
+                    .Show();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/ShowPackageIdentityWarningToast: Could not show package identity warning toast.");
+            }
+        }
+
+        private static void StartDirectInputManager()
+        {
+            try
+            {
+                logger.Trace($"Program/StartDirectInputManager: Creating DirectInput Device Manager.");
+                AppDirectInputManager = new DirectInputManager();
+                logger.Trace($"Program/StartDirectInputManager: Initialising DirectInput Device Manager with the MainForm window handle.");
+                AppDirectInputManager.Initialize(AppMainForm.Handle);
+                logger.Trace($"Program/StartDirectInputManager: Registering stored keys and buttons with the DirectInput Device Manager.");
+                AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);
+                AppDirectInputManager.Start(pollIntervalMs: 50);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/StartDirectInputManager: DirectInput hotkeys could not be started. DisplayMagician will continue without keyboard/joystick hotkeys.");
+                AppDirectInputManager?.Dispose();
+                AppDirectInputManager = null;
+            }
+        }
+
+        private static bool RecoverProgramSettingsFile(string reason)
+        {
+            string settingsFileName = ProgramSettings.ProgramSettingsStorageJsonFullFileName;
+            string message = $"DisplayMagician could not load your settings file:\n\n{settingsFileName}\n\n{reason}\n\nSelect Yes to move the problem file aside and create a new blank settings file. Select No to exit DisplayMagician without changing the file.";
+            DialogResult recoveryChoice = MessageBox.Show(message, "DisplayMagician settings problem", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+            if (recoveryChoice != DialogResult.Yes)
+            {
+                logger.Warn($"Program/RecoverProgramSettingsFile: User chose to exit rather than create a blank settings file.");
+                return false;
+            }
+
+            try
+            {
+                if (File.Exists(settingsFileName))
+                {
+                    string backupFileName = CreateRecoveryBackupFileName(settingsFileName);
+                    File.Move(settingsFileName, backupFileName);
+                    logger.Info($"Program/RecoverProgramSettingsFile: Moved invalid settings file to {backupFileName}.");
+                }
+
+                ProgramSettings blankSettings = new ProgramSettings();
+                blankSettings.EnsureInstallIdentity(true);
+                blankSettings.SaveSettings();
+                logger.Info($"Program/RecoverProgramSettingsFile: Created a new blank settings file at {settingsFileName}.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/RecoverProgramSettingsFile: Failed to create a blank settings file.");
+                MessageBox.Show($"DisplayMagician could not create a new blank settings file. Please check the log file for details.", "DisplayMagician settings problem", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        private static string CreateRecoveryBackupFileName(string settingsFileName)
+        {
+            string backupFileName = $"{settingsFileName}.invalid-{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
+            int suffix = 1;
+            while (File.Exists(backupFileName))
+            {
+                backupFileName = $"{settingsFileName}.invalid-{DateTime.UtcNow:yyyyMMddHHmmss}-{suffix}.bak";
+                suffix++;
+            }
+
+            return backupFileName;
+        }
+
+        private static void UpdateStartupModeFromSettings(string legacyLastVersionString)
+        {
+            Version currentVersion = ParseVersionOrDefault(Program.AppVersion, new Version("0.0.0.0"));
+            Version lastVersion = currentVersion;
+
+            if (!AppNewInstall)
+            {
+                string lastVersionString = AppProgramSettings.HasStoredDisplayMagicianVersion
+                    ? AppProgramSettings.DisplayMagicianVersion
+                    : legacyLastVersionString;
+
+                lastVersion = ParseVersionOrDefault(lastVersionString, currentVersion);
+            }
+
+            AppLastVersionRun = lastVersion.ToString();
+            AppVersionUpgrade = !AppNewInstall && lastVersion < currentVersion;
+
+            if (AppNewInstall)
+            {
+                logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is starting with a new settings file.");
+            }
+            else if (AppVersionUpgrade)
+            {
+                logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is upgrading from version {lastVersion} to version {currentVersion}.");
+            }
+            else
+            {
+                logger.Trace($"Program/UpdateStartupModeFromSettings: DisplayMagician is running as a standard startup. Last version was {lastVersion}; current version is {currentVersion}.");
+            }
+
+            if (!AppInstalled)
+            {
+                logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is running from a folder that does not match the installer registry state. This is valid for portable, dev, or copied-folder runs.");
+            }
+        }
+
+        private static Version ParseVersionOrDefault(string versionText, Version fallback)
+        {
+            if (!string.IsNullOrWhiteSpace(versionText) && Version.TryParse(versionText, out Version parsedVersion))
+            {
+                return parsedVersion;
+            }
+
+            return fallback;
+        }
+
+        private static void CleanupLegacyUserRegistryValues()
+        {
+            try
+            {
+                using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician", writable: true))
+                {
+                    if (dmKey == null)
+                        return;
+
+                    if (dmKey.GetValue("LastVersion") != null)
+                    {
+                        dmKey.DeleteValue("LastVersion", false);
+                        logger.Info($"Program/CleanupLegacyUserRegistryValues: Removed legacy HKCU Software\\DisplayMagician LastVersion value.");
+                    }
+
+                    if (dmKey.GetValue("FirstRun") != null)
+                    {
+                        dmKey.DeleteValue("FirstRun", false);
+                        logger.Info($"Program/CleanupLegacyUserRegistryValues: Removed legacy HKCU Software\\DisplayMagician FirstRun value.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/CleanupLegacyUserRegistryValues: Could not remove legacy HKCU DisplayMagician registry values.");
+            }
+        }
+
+        private static void ReconcilePerUserRegistryState()
+        {
+            try
+            {
+                if (AppProgramSettings.StartOnBootUp)
+                {
+                    if (!StartupManager.IsStartupEnabled())
+                    {
+                        logger.Info($"Program/ReconcilePerUserRegistryState: Startup registry value is missing or stale. Recreating it from settings.");
+                        StartupManager.EnableStartup();
+                    }
+                }
+                else
+                {
+                    StartupManager.DisableStartup();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/ReconcilePerUserRegistryState: Could not reconcile per-user startup registry state.");
+            }
+
+            try
+            {
+                if (!AppProgramSettings.InstallDesktopContextMenu)
+                {
+                    ContextMenu.UninstallContextMenu();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/ReconcilePerUserRegistryState: Could not remove stale per-user DisplayMagician desktop context menu registry state.");
+            }
+        }
 
         private static async Task<bool> RegisterPackageWithExternalLocationAsync(string externalLocation, string packagePath)
         {
             bool registration = false;
             try
             {
+                if (!Directory.Exists(externalLocation))
+                {
+                    logger.Warn($"Program/RegisterPackageWithExternalLocationAsync: External package location {externalLocation} does not exist.");
+                    return false;
+                }
+
+                if (!File.Exists(packagePath))
+                {
+                    logger.Warn($"Program/RegisterPackageWithExternalLocationAsync: Package file {packagePath} does not exist.");
+                    return false;
+                }
+
                 var externalUri = new Uri(externalLocation);
                 var packageUri = new Uri(packagePath);
 
-                Console.WriteLine("exe Location {0}", externalLocation);
-                Console.WriteLine("msix Address {0}", packagePath);
-
-                Console.WriteLine("  exe Uri {0}", externalUri);
-                Console.WriteLine("  msix Uri {0}", packageUri);
+                logger.Info($"Program/RegisterPackageWithExternalLocationAsync: Registering package {packageUri} with external location {externalUri}.");
 
                 var packageManager = new PackageManager();
 
                 //Declare use of an external location
                 var options = new AddPackageOptions();
                 options.ExternalLocationUri = externalUri;
-
-                Console.WriteLine("Installing package {0}", packagePath);
-                Debug.WriteLine("Waiting for package registration to complete...");
 
                 var deploymentOperation = packageManager.AddPackageByUriAsync(packageUri, options);
 
@@ -1283,28 +1515,26 @@ namespace DisplayMagician {
                 if (deploymentOperation.Status == Windows.Foundation.AsyncStatus.Error)
                 {
                     Windows.Management.Deployment.DeploymentResult deploymentResult = deploymentOperation.GetResults();
-                    Debug.WriteLine("Installation Error: {0}", deploymentOperation.ErrorCode);
-                    Debug.WriteLine("Detailed Error Text: {0}", deploymentResult.ErrorText);
+                    logger.Warn($"Program/RegisterPackageWithExternalLocationAsync: Package registration failed. ErrorCode={deploymentOperation.ErrorCode}; ExtendedErrorCode={deploymentResult.ExtendedErrorCode}; ErrorText={deploymentResult.ErrorText}");
 
                 }
                 else if (deploymentOperation.Status == Windows.Foundation.AsyncStatus.Canceled)
                 {
-                    Debug.WriteLine("Package Registration Canceled");
+                    logger.Warn($"Program/RegisterPackageWithExternalLocationAsync: Package registration was cancelled.");
                 }
                 else if (deploymentOperation.Status == Windows.Foundation.AsyncStatus.Completed)
                 {
                     registration = true;
-                    Debug.WriteLine("Package Registration succeeded!");
+                    logger.Info($"Program/RegisterPackageWithExternalLocationAsync: Package registration succeeded.");
                 }
                 else
                 {
-                    Debug.WriteLine("Installation status unknown");
+                    logger.Warn($"Program/RegisterPackageWithExternalLocationAsync: Package registration ended with unknown status {deploymentOperation.Status}.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("AddPackageSample failed, error message: {0}", ex.Message);
-                Console.WriteLine("Full Stacktrace: {0}", ex.ToString());
+                logger.Warn(ex, $"Program/RegisterPackageWithExternalLocationAsync: Package registration failed.");
 
                 return registration;
             }
@@ -1314,6 +1544,9 @@ namespace DisplayMagician {
 
         public static void ShowMessages()
         {
+#if false
+            // Legacy startup message loader retained for future announcements-center work.
+            // It is intentionally disabled so startup no longer fetches or shows ad hoc messages.
             // Get the message index
             string json;
             List<MessageItem> messageIndex;
@@ -1441,10 +1674,13 @@ namespace DisplayMagician {
                 
             }
             
+#endif
         }
 
-        public static void CheckForUpdates()
+        public static void CheckForUpdates(bool automatic = true)
         {
+            _lastUpdateCheckWasAutomatic = automatic;
+
             // Firstly check if the user wants to upgrade at all
             // If not, just return
             if (!Program.AppProgramSettings.UpgradeEnabled)
@@ -1473,18 +1709,28 @@ namespace DisplayMagician {
             //Run the AutoUpdater to see if there are any updates available.
             //FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(Application.ExecutablePath);
             //AutoUpdater.InstalledVersion = new Version(fvi.FileVersion);
-            AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
-            AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
+            RegisterAutoUpdaterEvents();
             AutoUpdater.RunUpdateAsAdmin = true;
             AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
             AutoUpdater.RemindLaterTimeSpan = RemindLaterFormat.Days;
             AutoUpdater.RemindLaterAt = 7;
             AutoUpdater.InstalledVersion = new Version(AppVersion);
 
-            string connectionUrl = "http://displaymagician.littlebitbig.com/update/update.json";
+            string connectionUrl = "https://displaymagician.littlebitbig.com/update/update.json";
             connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppVersion)}");
+            connectionUrl += ($"&install_id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
             connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
             AutoUpdater.Start(connectionUrl);
+        }
+
+        private static void RegisterAutoUpdaterEvents()
+        {
+            if (_autoUpdaterEventsRegistered)
+                return;
+
+            AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
+            AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
+            _autoUpdaterEventsRegistered = true;
         }
 
         private static void AutoUpdaterOnParseUpdateInfoEvent(ParseUpdateInfoEventArgs args)
@@ -1563,6 +1809,12 @@ namespace DisplayMagician {
 
         private static void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
         {
+            if (args.Error == null && args.IsUpdateAvailable && _mainSynchronizationContext != null && SynchronizationContext.Current != _mainSynchronizationContext)
+            {
+                _mainSynchronizationContext.Post(_ => AutoUpdaterOnCheckForUpdateEvent(args), null);
+                return;
+            }
+
             if (args.Error == null)
             {
                 if (args.IsUpdateAvailable)
@@ -1770,6 +2022,11 @@ namespace DisplayMagician {
                 if (args.Error is WebException)
                 {
                     logger.Warn(args.Error, $"Program/AutoUpdaterOnCheckForUpdateEvent - WebException - There was a problem reaching the update server.");
+                    if (_lastUpdateCheckWasAutomatic)
+                    {
+                        return;
+                    }
+
                     MessageBox.Show(
                         @"There is a problem reaching update server. Please check your internet connection and try again later.",
                         @"Update Check Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1777,6 +2034,11 @@ namespace DisplayMagician {
                 else
                 {
                     logger.Warn(args.Error, $"Program/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
+                    if (_lastUpdateCheckWasAutomatic)
+                    {
+                        return;
+                    }
+
                     MessageBox.Show($"Program/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}",
                         args.Error.GetType().ToString(), MessageBoxButtons.OK,
                         MessageBoxIcon.Error);

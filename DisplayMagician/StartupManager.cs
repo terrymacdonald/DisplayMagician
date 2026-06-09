@@ -32,7 +32,7 @@ namespace DisplayMagician
                     command += $" {arguments}";
                 }
 
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryRunKey, true))
+                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RegistryRunKey, true))
                 {
                     logger.Trace($"StartupManager/EnableStartup: Creating the {AppName} registry value in the HKCU{RegistryRunKey} registry key and setting it to {command}.");
                     key.SetValue(AppName, command);
@@ -57,6 +57,9 @@ namespace DisplayMagician
                 logger.Trace($"StartupManager/DisableStartup: Attempting to stop DisplayMagician from automatically starting when the computer first boots up.");
                 using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryRunKey, true))
                 {
+                    if (key == null)
+                        return true;
+
                     if (key.GetValue(AppName) != null)
                     {
                         logger.Trace($"StartupManager/DisableStartup: Deleting the {AppName} registry value in the HKCU{RegistryRunKey} registry key.");
@@ -83,12 +86,19 @@ namespace DisplayMagician
             {
                 using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryRunKey, false))
                 {
+                    if (key == null)
+                        return false;
+
                     var value = key.GetValue(AppName) as string;
                     if (string.IsNullOrEmpty(value))
                         return false;
 
                     // Extract the executable path from the registry value
-                    string exePath = value.Split('\"')[1];
+                    string[] quotedParts = value.Split('\"');
+                    if (quotedParts.Length < 2)
+                        return false;
+
+                    string exePath = quotedParts[1];
                     return exePath.Equals(ExecutablePath, StringComparison.OrdinalIgnoreCase);
                 }
             }

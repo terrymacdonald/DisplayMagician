@@ -100,6 +100,15 @@ namespace DisplayMagician
             }
         }
 
+        [JsonIgnore]
+        public bool HasStoredDisplayMagicianVersion
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_displayMagicianVersion);
+            }
+        }
+
         public string InstallId
         {
             get
@@ -475,12 +484,6 @@ namespace DisplayMagician
 
         #region Class Methods
 
-        ~ProgramSettings()
-        {
-            // Save the program settings on program exit
-            SaveSettings();
-        }
-
         public bool EnsureInstallIdentity(bool resetInstallDate)
         {
             bool changed = false;
@@ -580,11 +583,11 @@ namespace DisplayMagician
 
                             programSettings = JsonConvert.DeserializeObject<ProgramSettings>(json, mySerializerSettings);
 
-                            // If we get here and the program settings are still null, then we need to create a new one to keep the program working
+                            // If we get here and the program settings are still null, then the settings file
+                            // is not usable and startup recovery needs to ask the user what to do.
                             if (programSettings == null)
                             {
-                                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFullFileName}");
-                                programSettings = new ProgramSettings();                                
+                                throw new Exception("ProgramSettings/LoadSettings: The Program Settings file did not contain usable settings.");
                             }
 
                             programSettings.SaveSettings();
@@ -628,10 +631,6 @@ namespace DisplayMagician
                 programSettings = new ProgramSettings();
                 programSettings.SaveSettings();
             }
-
-            // If there isn't any settings in the file then create a new ProgramSettings object
-            if (programSettings == null)
-                programSettings = new ProgramSettings();
 
             return programSettings ;
         }

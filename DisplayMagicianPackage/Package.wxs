@@ -72,7 +72,7 @@
 		<!-- Unregister the sparse MSIX identity package before files are removed -->
 		<CustomAction Id="UnregisterIdentityPkgData"
 			Property="WixQuietExec64CmdLine"
-			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Get-AppxPackage -Name '4f6354a7-065d-432a-bb6b-b65acc257555' | Remove-AppxPackage -ErrorAction SilentlyContinue&quot;" />
+			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Get-AppxPackage -Name '50566LittleBitBig.DisplayMagician' | Remove-AppxPackage -ErrorAction SilentlyContinue&quot;" />
 		<CustomAction Id="UnregisterIdentityPkg"
 			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
 			DllEntry="WixQuietExec64"

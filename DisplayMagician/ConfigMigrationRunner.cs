@@ -15,14 +15,43 @@ namespace DisplayMagician
             new SettingsV4ToV5DonationSplitMigration()
         };
 
+        public enum MigrationStatus
+        {
+            Success,
+            NoSettingsFile,
+            InvalidJson,
+            UnsupportedVersion,
+            MissingSettingsObject,
+            MigrationFailed,
+            UnexpectedError
+        }
+
+        public sealed class MigrationResult
+        {
+            public MigrationResult(MigrationStatus status, string message = "")
+            {
+                Status = status;
+                Message = message;
+            }
+
+            public MigrationStatus Status { get; }
+            public string Message { get; }
+            public bool Success => Status == MigrationStatus.Success || Status == MigrationStatus.NoSettingsFile;
+        }
+
         public static bool RunMigrations()
+        {
+            return RunMigrationsDetailed().Success;
+        }
+
+        public static MigrationResult RunMigrationsDetailed()
         {
             string settingsFileName = ProgramSettings.ProgramSettingsStorageJsonFullFileName;
 
             if (!File.Exists(settingsFileName))
             {
                 logger.Trace($"ConfigMigrationRunner/RunMigrations: No {settingsFileName} file exists, so no settings migration is needed.");
-                return true;
+                return new MigrationResult(MigrationStatus.NoSettingsFile);
             }
 
             try
@@ -42,7 +71,7 @@ namespace DisplayMagician
                             if (!rule.Apply(context))
                             {
                                 logger.Error($"ConfigMigrationRunner/RunMigrations: Config migration rule {rule.Name} failed.");
-                                return false;
+                                return new MigrationResult(MigrationStatus.MigrationFailed, $"Config migration rule {rule.Name} failed.");
                             }
 
                             ranRule = true;
@@ -55,14 +84,20 @@ namespace DisplayMagician
                 string currentVersion = context.GetSettingsFileVersion();
                 if (!string.Equals(currentVersion, ProgramSettings.CurrentProgramSettingsFileVersion, StringComparison.OrdinalIgnoreCase))
                 {
+                    if (string.IsNullOrWhiteSpace(currentVersion) && context.GetSettingsObject() == null)
+                    {
+                        logger.Info($"ConfigMigrationRunner/RunMigrations: Settings.json appears to use the legacy unwrapped settings format. ProgramSettings.LoadSettings will convert it.");
+                        return new MigrationResult(MigrationStatus.Success);
+                    }
+
                     logger.Error($"ConfigMigrationRunner/RunMigrations: Unsupported Settings.json file version '{currentVersion}'. Expected '{ProgramSettings.CurrentProgramSettingsFileVersion}'.");
-                    return false;
+                    return new MigrationResult(MigrationStatus.UnsupportedVersion, $"Unsupported Settings.json file version '{currentVersion}'. Expected '{ProgramSettings.CurrentProgramSettingsFileVersion}'.");
                 }
 
                 if (context.GetSettingsObject() == null)
                 {
                     logger.Error($"ConfigMigrationRunner/RunMigrations: Settings.json file version '{currentVersion}' did not contain a Settings object.");
-                    return false;
+                    return new MigrationResult(MigrationStatus.MissingSettingsObject, $"Settings.json file version '{currentVersion}' did not contain a Settings object.");
                 }
 
                 if (context.SettingsFileChanged)
@@ -70,17 +105,17 @@ namespace DisplayMagician
                     WriteJsonObject(context.SettingsFileName, context.SettingsFile);
                 }
 
-                return true;
+                return new MigrationResult(MigrationStatus.Success);
             }
             catch (JsonReaderException ex)
             {
                 logger.Error(ex, $"ConfigMigrationRunner/RunMigrations: Settings migration failed because {settingsFileName} contains invalid JSON.");
-                return false;
+                return new MigrationResult(MigrationStatus.InvalidJson, $"{settingsFileName} contains invalid JSON.");
             }
             catch (Exception ex)
             {
                 logger.Error(ex, $"ConfigMigrationRunner/RunMigrations: Settings migration failed unexpectedly while processing {settingsFileName}.");
-                return false;
+                return new MigrationResult(MigrationStatus.UnexpectedError, $"Settings migration failed unexpectedly while processing {settingsFileName}.");
             }
         }
 

@@ -145,7 +145,9 @@ namespace DisplayMagician
         private readonly Dictionary<Guid, IDirectInputDevice8> _keyboardDevices;
         private readonly Dictionary<Guid, IDirectInputDevice8> _joystickDevices;
         private readonly Dictionary<List<Key>, Action> _keyBindings = new Dictionary<List<Key>, Action>(new KeyCombinationComparer());
-        private readonly Dictionary<List<JoystickButton>, Action> _buttonBindings = new();
+        private readonly Dictionary<List<JoystickButton>, Action> _buttonBindings = new(new JoystickButtonCombinationComparer());
+        private readonly HashSet<string> _activeKeyboardBindings = new HashSet<string>();
+        private readonly HashSet<string> _activeJoystickBindings = new HashSet<string>();
         private Thread _pollThread;
         private CancellationTokenSource _cts;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -239,7 +241,10 @@ namespace DisplayMagician
         {
             if (_cts == null) return;
             _cts.Cancel();
-            _pollThread.Join();
+            if (_pollThread != null && !_pollThread.Join(TimeSpan.FromSeconds(2)))
+            {
+                logger.Warn($"DirectInputManager/Stop: DirectInput polling thread did not stop within 2 seconds.");
+            }
             _cts.Dispose();
             _cts = null;
             _pollThread = null;
@@ -286,6 +291,9 @@ namespace DisplayMagician
         {
             while (!token.IsCancellationRequested)
             {
+                HashSet<string> keyboardBindingsDownThisPoll = new HashSet<string>();
+                HashSet<string> joystickBindingsDownThisPoll = new HashSet<string>();
+
                 // Keyboards
                 foreach (var kv in _keyboardDevices)
                 {
@@ -308,16 +316,11 @@ namespace DisplayMagician
                         {
                             if (state.PressedKeys.Count > 0 && binding.Key.Count > 0 && binding.Key.All(k => state.IsPressed(k)))
                             {
-                                // Invoke the associated action
-                                if (Program.AppMainForm.InvokeRequired)
+                                string bindingSignature = CreateKeyboardBindingSignature(binding.Key);
+                                keyboardBindingsDownThisPoll.Add(bindingSignature);
+                                if (_activeKeyboardBindings.Add(bindingSignature))
                                 {
-                                    Program.AppMainForm.BeginInvoke((MethodInvoker)delegate {
-                                        binding.Value();
-                                    });
-                                }
-                                else
-                                {
-                                    binding.Value();
+                                    DispatchHotkeyAction(binding.Value);
                                 }
                             }
                         }
@@ -353,18 +356,13 @@ namespace DisplayMagician
                         {
 
                             // If there is a button pressed and it is in the list of buttons for the binding
-                            if (state.Buttons.Length > 0 && binding.Key.Count > 0 && binding.Key.All(k => state.Buttons.Equals(k) ))
+                            if (pressedButtons.Count > 0 && binding.Key.Count > 0 && binding.Key.All(k => pressedButtons.Any(p => JoystickButtonsMatch(p, k))))
                             {
-                                // Invoke the associated action
-                                if (Program.AppMainForm.InvokeRequired)
+                                string bindingSignature = CreateJoystickBindingSignature(binding.Key);
+                                joystickBindingsDownThisPoll.Add(bindingSignature);
+                                if (_activeJoystickBindings.Add(bindingSignature))
                                 {
-                                    Program.AppMainForm.BeginInvoke((MethodInvoker)delegate {
-                                        binding.Value();
-                                    });
-                                }
-                                else
-                                {
-                                    binding.Value();
+                                    DispatchHotkeyAction(binding.Value);
                                 }
                             }
 
@@ -402,8 +400,48 @@ namespace DisplayMagician
                     }
                 }
 
+                _activeKeyboardBindings.RemoveWhere(binding => !keyboardBindingsDownThisPoll.Contains(binding));
+                _activeJoystickBindings.RemoveWhere(binding => !joystickBindingsDownThisPoll.Contains(binding));
+
                 Thread.Sleep(intervalMs);
             }
+        }
+
+        private void DispatchHotkeyAction(Action action)
+        {
+            if (Program.AppMainForm == null || Program.AppMainForm.IsDisposed)
+                return;
+
+            if (Program.AppMainForm.InvokeRequired)
+            {
+                Program.AppMainForm.BeginInvoke((MethodInvoker)delegate
+                {
+                    action();
+                });
+            }
+            else
+            {
+                action();
+            }
+        }
+
+        private static string CreateKeyboardBindingSignature(IEnumerable<Key> keys)
+        {
+            return string.Join("+", keys.OrderBy(k => k).Select(k => k.ToString("G")));
+        }
+
+        private static string CreateJoystickBindingSignature(IEnumerable<JoystickButton> buttons)
+        {
+            return string.Join("+", buttons
+                .OrderBy(b => b.DeviceTargetId)
+                .ThenBy(b => b.DeviceButtonIndex)
+                .Select(b => $"{b.DeviceTargetId:N}:{b.DeviceButtonIndex}"));
+        }
+
+        private static bool JoystickButtonsMatch(JoystickButton pressedButton, JoystickButton requiredButton)
+        {
+            return pressedButton.DeviceTargetId == requiredButton.DeviceTargetId &&
+                   pressedButton.DeviceButtonIndex == requiredButton.DeviceButtonIndex;
         }
 
         /// <summary>
@@ -447,7 +485,7 @@ namespace DisplayMagician
             {
                 if (joystickButtons[i])
                 {
-                    buttons.Add(new JoystickButton(DeviceType.Joystick, _joystickDevices.First().Value.DeviceInfo.InstanceName, _joystickDevices.First().Key, i));
+                    buttons.Add(new JoystickButton(deviceType, deviceName, deviceGuid, i));
                 }
             }
             return buttons;
@@ -488,8 +526,8 @@ namespace DisplayMagician
             {
                 if (programSettings.KeyboardHotkeys != null && programSettings.KeyboardHotkeys is List<HotkeyKeyboard> && programSettings.KeyboardHotkeys.Count > 0)
                 {
-                    logger.Trace($"DirectInputManager/RegisterStoredHotkeys: We have {Program.AppProgramSettings.KeyboardHotkeys.Count} keyboard hotkeys to set up and register.");
-                    foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
+                    logger.Trace($"DirectInputManager/RegisterStoredHotkeys: We have {programSettings.KeyboardHotkeys.Count} keyboard hotkeys to set up and register.");
+                    foreach (var hotkey in programSettings.KeyboardHotkeys)
                     {
 
                         // Check to make sure that the hotkey has at least one key assigned to it, and skip it as faulty if it doesn't
@@ -560,8 +598,8 @@ namespace DisplayMagician
             {
                 if (programSettings.JoystickHotkeys != null && programSettings.JoystickHotkeys is List<HotkeyJoystick> && programSettings.JoystickHotkeys.Count > 0)
                 {
-                    logger.Trace($"DirectInputManager/RegisterStoredHotkeys: We have {Program.AppProgramSettings.JoystickHotkeys.Count} joystick and gamepad hotkeys to set up.");
-                    foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
+                    logger.Trace($"DirectInputManager/RegisterStoredHotkeys: We have {programSettings.JoystickHotkeys.Count} joystick and gamepad hotkeys to set up.");
+                    foreach (var hotkey in programSettings.JoystickHotkeys)
                     {
                         // Check to make sure that the hotkey has at least one button assigned to it, and skip it as faulty if it doesn't
                         if (hotkey.Buttons.Count == 0)
@@ -1044,6 +1082,29 @@ namespace DisplayMagician
                 foreach (var key in obj.OrderBy(k => k))
                 {
                     hash = hash * 31 + key.GetHashCode();
+                }
+                return hash;
+            }
+        }
+    }
+
+    public class JoystickButtonCombinationComparer : IEqualityComparer<List<JoystickButton>>
+    {
+        public bool Equals(List<JoystickButton> x, List<JoystickButton> y)
+        {
+            if (x == null || y == null) return false;
+            return x.Count == y.Count && !x.Except(y).Any();
+        }
+
+        public int GetHashCode(List<JoystickButton> obj)
+        {
+            unchecked
+            {
+                int hash = 17;
+                foreach (var button in obj.OrderBy(b => b.DeviceTargetId).ThenBy(b => b.DeviceButtonIndex))
+                {
+                    hash = hash * 31 + button.DeviceTargetId.GetHashCode();
+                    hash = hash * 31 + button.DeviceButtonIndex.GetHashCode();
                 }
                 return hash;
             }
