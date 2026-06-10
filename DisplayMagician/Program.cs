@@ -125,6 +125,8 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
+            // BOOTSTRAP AND INITIALIZATION LOGIC
+
             // Create the Logging Dir if it doesn't exist so that it's avilable for all
             // parts of the program to use
             if (!Directory.Exists(AppDataPath))
@@ -207,9 +209,11 @@ namespace DisplayMagician {
             // Start the Log file
             logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
 
+
+            // PACKAGE IDENTITY INITIALIZATION AND CHECKS
             EnsurePackageIdentity();
 
-
+            // SINGLE INSTANCE MODE CHECKS
             // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
             // then skip the single instance mode tests. This is important for commands used in powershell
             logger.Trace($"Program/Main: Checking if the user has provided a command that bypasses single instance mode.");
@@ -219,12 +223,11 @@ namespace DisplayMagician {
                 _bypassSingleInstanceMode = true;
             }
 
-
             // If we're not bypassing single instance mode, then we need to check if we're the single instance, and if we're the second instance then
             // we need to pass the command to the single instance and shutdown.
             if (!_bypassSingleInstanceMode)
             {
-                logger.Trace($"Program/Main: We're not bypassing single instance mode so we need to check if we're the only instance, otherwise we have to shuitdown aand send that first instance our command.");
+                logger.Trace($"Program/Main: We're not bypassing single instance mode so we need to check if we're the only instance, otherwise we have to shutdown and send that first instance our command.");
 
                 // Create the remote server if we're first instance, or
                 // If we're a subsequent instance, pass the command line parameters to the first instance and then 
@@ -239,7 +242,7 @@ namespace DisplayMagician {
 
                     // if we're the second instance of DisplayMagician, then                   
                     // lets close down as the first instance will continue with what we wanted to do.
-                    logger.Trace($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
+                    logger.Trace($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of DisplayMagician.");
                     if (Application.MessageLoop)
                     {
                         // WinForms have loaded
@@ -257,7 +260,7 @@ namespace DisplayMagician {
 
             // If we get here, then we're the first instance!
             // Explicitly register DisplayMagician with Windows so that it can be found by other programs
-            logger.Trace($"Program/Main: Registering DisplayMagicain with Windows.");
+            logger.Trace($"Program/Main: Registering DisplayMagician with Windows.");
             RegisterDisplayMagicianWithWindows();
 
             logger.Trace($"Program/Main: Setting visual styles and rendering mode");
@@ -267,6 +270,8 @@ namespace DisplayMagician {
             // Set up some defaults for the shared HttpClient
             AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
 
+
+            // CLASSIFY RUNNING MODE - INSTALL, UPGRADE, NORMAL etc. AND DO THE RELEVANT BOOTSTRAP STEPS FOR EACH MODE
             // Process the version tracking logic
             logger.Trace($"Program/Main: Running version tracking logic.");
             AppInstalled = false; 
@@ -304,7 +309,8 @@ namespace DisplayMagician {
                 logger.Warn(ex, $"Program/Main: Exception whilst trying to read the legacy LastVersion registry value. Settings.json will be used instead.");
             }
 
-            // Upgrade the settings file if needed
+            // MIGRATE ANY CONFIG CHANGES IF NEEDED, THEN LOAD THE SETTINGS
+            // Upgrade the configuration files if needed
             logger.Trace($"Program/Main: Running migration logic.");
             ConfigMigrationRunner.MigrationResult migrationResult = ConfigMigrationRunner.RunMigrationsDetailed();
             if (!migrationResult.Success)
@@ -360,6 +366,7 @@ namespace DisplayMagician {
             CleanupLegacyUserRegistryValues();
             ReconcilePerUserRegistryState();
 
+            // UPDATE LOGGING LEVEL BASED ON USER SETTINGS
             // Now we are at the point that the user settings are loaded, we can set the logging level based on the stored user settings
             // but only if the user hasn't already overridden the log level via command line options
 
@@ -371,7 +378,7 @@ namespace DisplayMagician {
                     // Set the log level to the user wanted log level
                     _userWantedLogLevel = NLog.LogLevel.FromString(AppProgramSettings.LogLevel);
                     logger.Info($"Program/Main: User has set the log level to {_userWantedLogLevel} in the settings file.");
-                    // ALso update the logging level in logger
+                    // Also  update the logging level in logger
                     logger.Trace($"Program/Main: Setting the log level to {_userWantedLogLevel} as it was loaded from the settings file.");
                     config.FindRuleByName("LogToFile").SetLoggingLevels(_userWantedLogLevel, NLog.LogLevel.Fatal);
                     // apply the new logging configuration
@@ -385,6 +392,8 @@ namespace DisplayMagician {
                 logger.Trace($"Program/Main: User has set the log level to {_userWantedLogLevel} via command line options so no need to use the log level from program settings.");
             }
 
+
+            // STARTUP UI AND OTHER INITIALIZATION
             logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");
             if (AppProgramSettings.ShowSplashScreen)
             {
@@ -485,7 +494,6 @@ namespace DisplayMagician {
 
             }
 
-
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
             if (AppProgramSettings.InstallDesktopContextMenu)
@@ -501,6 +509,7 @@ namespace DisplayMagician {
             StartDirectInputManager();
             SingleInstance.MarkReadyForCommands();
 
+            // PARSE THE COMMAND LINE AND EXECUTE THE RELEVANT ACTIONS
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {
