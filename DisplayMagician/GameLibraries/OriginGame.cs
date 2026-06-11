@@ -159,15 +159,17 @@ namespace DisplayMagician.GameLibraries
 
         public bool CopyTo(OriginGame originGame)
         {
-            if (!(originGame is OriginGame))
+            if (originGame == null)
                 return false;
 
-            // Copy all the game data over to the other game
+            // Copy ALL structural parameters to keep tracking contexts synchronized across clones
             originGame.IconPath = IconPath;
             originGame.Id = Id;
             originGame.Name = Name;
             originGame.ExePath = ExePath;
             originGame.Directory = Directory;
+            originGame.Executable = Executable;
+            originGame.ProcessName = ProcessName;
             return true;
         }
 
@@ -195,18 +197,75 @@ namespace DisplayMagician.GameLibraries
 
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
+            processesStarted = new List<Process>();
+
+            // Construct the base launch URL
             string address = $"origin2://game/launch?offerIds={Id}";
+            
+            // Fix: Pass parameters properly via the standard URI query wrapper format
             if (!String.IsNullOrWhiteSpace(gameArguments))
             {
-                address += @"/" + gameArguments;
+                address += "&cmdParams=" + Uri.EscapeDataString(gameArguments);
+                logger.Info($"OriginGame/Start: Custom arguments detected for {Name}. Appending via URI parameter query payload.");
             }
-            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+            
+            logger.Info($"OriginGame/Start: Launching via Launcher URI Protocol: {address}");
+
+            // Fire the launcher command 
+            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            if (launcherProcesses != null && launcherProcesses.Count > 0)
+            {
+                processesStarted.AddRange(launcherProcesses);
+            }
+
+            // SAFEGUARD: If the launcher instance was already active, the process call exits instantly.
+            // Query the active OS pool by name right away to let DisplayMagician capture tracking authority.
+            if (processesStarted.Count == 0 && !string.IsNullOrWhiteSpace(_originGameProcessName))
+            {
+                var activeGameProcesses = Process.GetProcessesByName(_originGameProcessName).ToList();
+                if (activeGameProcesses.Count > 0)
+                {
+                    logger.Debug($"OriginGame/Start: Successfully matched active process target for {Name} ('{_originGameProcessName}'). Resuming tracking state.");
+                    processesStarted.AddRange(activeGameProcesses);
+                }
+            }
+
             return true;
         }
 
         public override bool Stop()
         {
-            return true;
+            logger.Info($"OriginGame/Stop: Request received to stop {Name} (Process Name: {_originGameProcessName})");
+            bool allStopped = true;
+
+            try
+            {
+                // Step 1: Drain explicitly tracked execution tokens via ProcessUtils
+                if (Processes != null && Processes.Count > 0)
+                {
+                    allStopped = ProcessUtils.StopProcess(Processes);
+                    Processes.Clear();
+                }
+
+                // Step 2: System-wide background fallback sweep by string key identification
+                if (!string.IsNullOrWhiteSpace(_originGameProcessName))
+                {
+                    var runningInstances = Process.GetProcessesByName(_originGameProcessName).ToList();
+                    if (runningInstances.Count > 0)
+                    {
+                        logger.Debug($"OriginGame/Stop: Clearing {runningInstances.Count} remaining untracked background engine threads matching '{_originGameProcessName}'.");
+                        bool backupStopped = ProcessUtils.StopProcess(runningInstances);
+                        allStopped = allStopped && backupStopped;
+                    }
+                }
+
+                return allStopped;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"OriginGame/Stop: Exception encountered while shutting down {Name}");
+                return false;
+            }
         }
     }
 }
