@@ -190,15 +190,17 @@ namespace DisplayMagician.GameLibraries
 
         public bool CopyTo(SteamGame steamGame)
         {
-            if (!(steamGame is SteamGame))
+            if (steamGame == null)
                 return false;
 
-            // Copy all the game data over to the other game
+            // Copy ALL structural data variables to preserve runtime identity
             steamGame.IconPath = IconPath;
             steamGame.Id = Id;
             steamGame.Name = Name;
             steamGame.ExePath = ExePath;
             steamGame.Directory = Directory;
+            steamGame.Executable = Executable;
+            steamGame.ProcessName = ProcessName;
             return true;
         }
 
@@ -226,18 +228,82 @@ namespace DisplayMagician.GameLibraries
 
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
-            string address = $@"steam://rungameid/{Id}";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            processesStarted = new List<Process>();
+
+            // CASE 1: Custom arguments provided -> Use steam.exe command-line launch sequence
+            if (!string.IsNullOrWhiteSpace(gameArguments))
             {
-                address += @"/" + gameArguments;
+                string steamExePath = _steamGameLibrary.GameLibraryExe;
+                string launchArgs = $"-applaunch {Id} {gameArguments}";
+                
+                logger.Info($"SteamGame/Start: Arguments detected. Launching via Steam CLI: {steamExePath} {launchArgs}");
+                
+                var directProcesses = ProcessUtils.StartProcess(steamExePath, launchArgs, priority, timeout, runExeAsAdmin);
+                if (directProcesses != null && directProcesses.Count > 0)
+                {
+                    processesStarted.AddRange(directProcesses);
+                }
+                return processesStarted.Count > 0;
             }
-            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+
+            // CASE 2: No arguments -> Use standard Windows shell URI Protocol handler
+            string address = $@"steam://rungameid/{Id}";
+            logger.Info($"SteamGame/Start: No arguments. Requesting standard URI Protocol: {address}");
+
+            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            if (launcherProcesses != null && launcherProcesses.Count > 0)
+            {
+                processesStarted.AddRange(launcherProcesses);
+            }
+
+            // SAFEGUARD: Because tracking asynchronous launchers through Steam often drops the initial handle,
+            // look up the process instantly by its engine executable name so DisplayMagician captures it.
+            if (processesStarted.Count == 0 && !string.IsNullOrWhiteSpace(_steamGameProcessName))
+            {
+                var activeGameProcesses = Process.GetProcessesByName(_steamGameProcessName).ToList();
+                if (activeGameProcesses.Count > 0)
+                {
+                    logger.Debug($"SteamGame/Start: Captured active background engine process '{_steamGameProcessName}' for tracking.");
+                    processesStarted.AddRange(activeGameProcesses);
+                }
+            }
+
             return true;
         }
 
         public override bool Stop()
         {
-            return true;
+            logger.Info($"SteamGame/Stop: Request received to stop {Name} (Process Name: {_steamGameProcessName})");
+            bool allStopped = true;
+
+            try
+            {
+                // Step 1: Kill tracked tracking list items via ProcessUtils
+                if (Processes != null && Processes.Count > 0)
+                {
+                    allStopped = ProcessUtils.StopProcess(Processes);
+                    Processes.Clear();
+                }
+
+                // Step 2: System-wide name query fallback sweep
+                if (!string.IsNullOrWhiteSpace(_steamGameProcessName))
+                {
+                    var runningInstances = Process.GetProcessesByName(_steamGameProcessName).ToList();
+                    if (runningInstances.Count > 0)
+                    {
+                        logger.Debug($"SteamGame/Stop: Clearing {runningInstances.Count} remaining untracked instances of '{_steamGameProcessName}'.");
+                        bool backupStopped = ProcessUtils.StopProcess(runningInstances);
+                        allStopped = allStopped && backupStopped;
+                    }
+                }
+
+                return allStopped;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"SteamGame/Stop: Exception encountered while shutting down {Name}");
+                return false;
+            }
         }
 
     }
