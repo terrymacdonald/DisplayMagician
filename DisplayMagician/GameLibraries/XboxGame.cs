@@ -171,15 +171,17 @@ namespace DisplayMagician.GameLibraries
 
         public bool CopyTo(XboxGame xboxGame)
         {
-            if (!(xboxGame is XboxGame))
+            if (xboxGame == null)
                 return false;
 
-            // Copy all the game data over to the other game
+            // Copy ALL identity data components to preserve tracking validity across references
             xboxGame.IconPath = IconPath;
             xboxGame.Id = Id;
             xboxGame.Name = Name;
             xboxGame.ExePath = ExePath;
             xboxGame.Directory = Directory;
+            xboxGame.Executable = Executable;
+            xboxGame.ProcessName = ProcessName;
             xboxGame.AUMID = AUMID;
             return true;
         }
@@ -208,23 +210,86 @@ namespace DisplayMagician.GameLibraries
 
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
+            processesStarted = new List<Process>();
+
+            // CASE 1: Launch modern sandboxed MSIX/UWP package via AUMID
             if (!String.IsNullOrWhiteSpace(_xboxGameAUMID))
             {
-                // Xbox Game Pass games are sandboxed packages; launch via AUMID through explorer.exe
+                if (!string.IsNullOrWhiteSpace(gameArguments))
+                {
+                    logger.Warn($"XboxGame/Start: Arguments '{gameArguments}' were defined for {Name}. Sandboxed UWP/AppX applications launched via shell AUMID parameters do not support custom runtime command forwarding. Arguments will be bypassed.");
+                }
+
                 string explorerExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
-                processesStarted = ProcessUtils.StartProcess(explorerExe, $"shell:AppsFolder\\{_xboxGameAUMID}", priority);
+                string launchArgs = $"shell:AppsFolder\\{_xboxGameAUMID}";
+                
+                logger.Info($"XboxGame/Start: Launching sandboxed application container via Shell AUMID wrapper: {launchArgs}");
+                
+                // This fires the call to the shell environment
+                ProcessUtils.StartProcess(explorerExe, launchArgs, priority, timeout, runExeAsAdmin);
             }
+            // CASE 2: Fall back to unsealed Win32 runtime executable pathway if no AUMID is resolved
             else
             {
-                // Fall back to direct exe launch if no AUMID is available
-                processesStarted = ProcessUtils.StartProcess(_xboxGameExePath, gameArguments, priority);
+                logger.Info($"XboxGame/Start: No AUMID discovered. Attemping direct fallback execution sequence for target path: {ExePath}");
+                var directProcesses = ProcessUtils.StartProcess(ExePath, gameArguments, priority, timeout, runExeAsAdmin);
+                if (directProcesses != null && directProcesses.Count > 0)
+                {
+                    processesStarted.AddRange(directProcesses);
+                }
             }
+
+            // MANDATORY SAFEGUARD: Shell execution returns instantly without generating a direct process handle token.
+            // Query the active OS process tree by name immediately so DisplayMagician captures tracking control.
+            if (processesStarted.Count == 0 && !string.IsNullOrWhiteSpace(_xboxGameProcessName))
+            {
+                // Allow a brief moment for the sandboxed package thread to deploy into the active window tree
+                System.Threading.Thread.Sleep(500);
+                
+                var activeGameProcesses = Process.GetProcessesByName(_xboxGameProcessName).ToList();
+                if (activeGameProcesses.Count > 0)
+                {
+                    logger.Debug($"XboxGame/Start: Successfully bound active background application process hook context for '{_xboxGameProcessName}'.");
+                    processesStarted.AddRange(activeGameProcesses);
+                }
+            }
+
             return true;
         }
 
         public override bool Stop()
         {
-            return true;
+            logger.Info($"XboxGame/Stop: Request received to stop {Name} (Process Name: {_xboxGameProcessName})");
+            bool allStopped = true;
+
+            try
+            {
+                // Step 1: Drain explicitly tracked tracking list items via ProcessUtils
+                if (Processes != null && Processes.Count > 0)
+                {
+                    allStopped = ProcessUtils.StopProcess(Processes);
+                    Processes.Clear();
+                }
+
+                // Step 2: System-wide background name query sweep fallback (Critical for UWP app hooks)
+                if (!string.IsNullOrWhiteSpace(_xboxGameProcessName))
+                {
+                    var runningInstances = Process.GetProcessesByName(_xboxGameProcessName).ToList();
+                    if (runningInstances.Count > 0)
+                    {
+                        logger.Debug($"XboxGame/Stop: Clearing {runningInstances.Count} remaining untracked sandboxed instances of '{_xboxGameProcessName}'.");
+                        bool backupStopped = ProcessUtils.StopProcess(runningInstances);
+                        allStopped = allStopped && backupStopped;
+                    }
+                }
+
+                return allStopped;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"XboxGame/Stop: Exception encountered while terminating sandboxed package execution for {Name}");
+                return false;
+            }
         }
 
     }

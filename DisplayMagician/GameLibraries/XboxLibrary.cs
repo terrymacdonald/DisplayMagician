@@ -246,7 +246,8 @@ namespace DisplayMagician.GameLibraries
 
         public override bool RemoveGameById(string xboxGameId)
         {
-            if (xboxGameId.Equals(0))
+            // Fix: Cast your numeric condition rule validation safely using an explicit string comparison block
+            if (string.IsNullOrWhiteSpace(xboxGameId) || xboxGameId == "0")
                 return false;
 
             logger.Debug($"XboxLibrary/RemoveXboxGame2: Removing Xbox game with ID {xboxGameId} from the Xbox library");
@@ -412,14 +413,16 @@ namespace DisplayMagician.GameLibraries
 
             try
             {
+                // Fix: Flush the primary catalog tracker cache prior to scanning to completely avoid catalog duplication leaks on re-scans!
+                _allXboxGames.Clear();
+
                 var manager = new PackageManager();
                 IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
 
                 foreach (var package in packages)
                 {
                     // Skip frameworks, resource packs, and non-Store packages (sideloaded, dev, system)
-                    if (package.IsFramework || package.IsResourcePackage ||
-                        package.SignatureKind != PackageSignatureKind.Store)
+                    if (package.IsFramework || package.IsResourcePackage || package.SignatureKind != PackageSignatureKind.Store)
                     {
                         continue;
                     }
@@ -453,7 +456,6 @@ namespace DisplayMagician.GameLibraries
                             continue;
                         }
 
-                        // Get AUMID and display name from the first AppListEntry
                         string aumid = null;
                         string entryDisplayName = null;
                         try
@@ -470,7 +472,6 @@ namespace DisplayMagician.GameLibraries
                             logger.Debug(ex, $"XboxLibrary/LoadInstalledGames: Could not get AppListEntry for {package.Id.FamilyName}");
                         }
 
-                        // Prefer ShellVisuals display name > AppListEntry name > package family name
                         string gameName = gameElement.Element("ShellVisuals")?.Attribute("DefaultDisplayName")?.Value;
                         if (String.IsNullOrWhiteSpace(gameName))
                             gameName = entryDisplayName;
@@ -478,17 +479,14 @@ namespace DisplayMagician.GameLibraries
                             gameName = package.Id.FamilyName;
                         gameName = gameName.NormaliseGameName();
 
-                        // Use TitleId from config as the game's unique ID; fall back to package family name
                         string titleId = gameElement.Element("TitleId")?.Value;
                         if (String.IsNullOrWhiteSpace(titleId))
                             titleId = package.Id.FamilyName;
 
-                        // Find the PC executable from ExecutableList
                         string exePath = null;
                         var executableList = gameElement.Element("ExecutableList");
                         if (executableList != null)
                         {
-                            // Prefer an executable explicitly targeting PC; fall back to the first entry
                             var exeElement = executableList.Elements("Executable")
                                 .FirstOrDefault(e => e.Attribute("TargetDeviceFamily")?.Value == "PC")
                                 ?? executableList.Elements("Executable").FirstOrDefault();
@@ -497,7 +495,6 @@ namespace DisplayMagician.GameLibraries
                                 exePath = Path.Combine(installPath, exeName);
                         }
 
-                        // Skip if we have neither an exe nor an AUMID to launch with
                         if (String.IsNullOrWhiteSpace(exePath) && String.IsNullOrWhiteSpace(aumid))
                         {
                             logger.Debug($"XboxLibrary/LoadInstalledGames: Skipping '{gameName}' — no executable or AUMID found.");
