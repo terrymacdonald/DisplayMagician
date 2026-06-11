@@ -57,11 +57,12 @@ namespace DisplayMagician {
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
-        public static bool AppInstalled = false;
-        public static bool AppNewInstall = false;
-        public static bool AppVersionUpgrade = false;
+        public static bool AppNotInstalled = false;
+        //public static bool AppInstalled = false;
+        //public static bool AppNewInstall = false;
+        //public static bool AppVersionUpgrade = false;
         public static bool AppHasPackageIdentity = false;
-        public static string AppLastVersionRun = "0.0";
+        //public static string AppLastVersionRun = "0.0";
         public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
@@ -270,44 +271,23 @@ namespace DisplayMagician {
             // Set up some defaults for the shared HttpClient
             AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
 
+            // Check if DisplayMagician is not installed (and is portable) by looking for the installer registry key for this executable path.
+            // We need to know this so that we can handle certain things differently for installed vs portable users, such as where we store the settings file, and whether we show the "you need to install DisplayMagician" message when certain errors occur that we can detect are due to the fact the user is running in portable mode without realising it.
+            AppNotInstalled = DMIsNotInstalled();          
 
-            // CLASSIFY RUNNING MODE - INSTALL, UPGRADE, NORMAL etc. AND DO THE RELEVANT BOOTSTRAP STEPS FOR EACH MODE
-            // Process the version tracking logic
-            logger.Trace($"Program/Main: Running version tracking logic.");
-            AppInstalled = false; 
-            AppNewInstall = false;
-            AppLastVersionRun = "0.0";
-            AppVersionUpgrade = false;
-            bool settingsFileExistedBeforeLoad = File.Exists(ProgramSettings.ProgramSettingsStorageJsonFullFileName);
-            AppNewInstall = !settingsFileExistedBeforeLoad;
-            string legacyLastVersionString = null;
-
-            AppInstalled = IsInstalledVersion();
-            if (AppNewInstall)
+            // Just log some info to the log file so that the users can understand it.
+            if (File.Exists(ProgramSettings.ProgramSettingsStorageJsonFullFileName))
             {
-                logger.Info($"Program/Main: No existing Settings.json was found. DisplayMagician will create a new install identity.");
+                logger.Info($"Program/Main: Existing settings file found. This programme has been run before.");
             }
             else
             {
-                logger.Trace($"Program/Main: Existing Settings.json was found. DisplayMagician will keep the existing install identity if one is present.");
+                logger.Info($"Program/Main: No settings file found. Treating this as a new installation.");
             }
 
-            try
-            {
-                // Read the old per-user version value as a legacy fallback. Settings.json is the
-                // source of truth once it has loaded successfully.
-                using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician"))
-                    legacyLastVersionString = dmKey?.GetValue("LastVersion") as string;
-
-            }
-            catch (NullReferenceException ex)
-            {
-                logger.Trace(ex, $"Program/Main: Exception whilst trying to see what the last version of DM was. It means DisplayMagician hasn't been run before anywhere");
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"Program/Main: Exception whilst trying to read the legacy LastVersion registry value. Settings.json will be used instead.");
-            }
+            // AppVersionUpgrade is determined in UpdateStartupModeFromSettings once the settings file has been loaded,
+            // by comparing the version stored in settings against the currently running version.
+            
 
             // MIGRATE ANY CONFIG CHANGES IF NEEDED, THEN LOAD THE SETTINGS
             // Upgrade the configuration files if needed
@@ -320,8 +300,6 @@ namespace DisplayMagician {
                 {
                     return (int)ERRORLEVEL.CANCELED_BY_USER;
                 }
-
-                AppNewInstall = true;
             }
 
             // Load the settings from the settings file properly now that we've done the version upgrade if needed. 
@@ -335,23 +313,23 @@ namespace DisplayMagician {
                     return (int)ERRORLEVEL.CANCELED_BY_USER;
                 }
 
-                AppNewInstall = true;
+                //AppNewInstall = true;
                 AppProgramSettings = ProgramSettings.LoadSettings();
                 if (AppProgramSettings == null)
                 {
-                    logger.Error($"Program/Main: ERROR - DisplayMagician could not load a newly created configuration file.");
+                    logger.Error($"Program/Main: ERROR - DisplayMagician could not load a brand new configuration file after the original one was faulty and couldn't be loaded.");
                     return (int)ERRORLEVEL.ERROR_EXCEPTION;
                 }
             }
 
-            UpdateStartupModeFromSettings(legacyLastVersionString);
+            //UpdateStartupModeFromSettings(legacyLastVersionString);
 
-            logger.Trace($"Program/Main: Ensuring Install Identity by setting install id and install date");
-            if (AppProgramSettings.EnsureInstallIdentity(AppNewInstall))
-            {
-                logger.Trace($"Program/Main: Saving Program Settings to write new install identity.");
-                AppProgramSettings.SaveSettings();
-            }
+            //logger.Trace($"Program/Main: Ensuring Install Identity by setting install id and install date");
+            //if (AppProgramSettings.EnsureInstallIdentity(AppNewInstall))
+            //{
+            //    logger.Trace($"Program/Main: Saving Program Settings to write new install identity.");
+            //    AppProgramSettings.SaveSettings();
+            //}
 
             // Load the Donation Settings and update the number of times run and number of starts since last donation form and button animation, and save the settings back to the file
             logger.Trace($"Program/Main: Loading Donation Settings.");
@@ -363,8 +341,43 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Saving Donation Settings.");
             AppDonationSettings.SaveSettings();
 
+            // Remove old unneeded user registry keys
             CleanupLegacyUserRegistryValues();
-            ReconcilePerUserRegistryState();
+
+            // Set up the start on bookup if the user wants it, and remove it if they don't want it, but
+            try
+            {
+                if (AppProgramSettings.StartOnBootUp)
+                {
+                    if (!StartupManager.IsStartupEnabled())
+                    {
+                        logger.Info($"Program/ReconcilePerUserRegistryState: Startup registry value is missing or stale. Recreating it from settings.");
+                        StartupManager.EnableStartup();
+                    }
+                }
+                else
+                {
+                    StartupManager.DisableStartup();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/ReconcilePerUserRegistryState: Could not reconcile per-user startup registry state.");
+            }
+
+            // Remove the context menu if the user wanted it removed earlier
+            try
+            {
+                if (!AppProgramSettings.InstallDesktopContextMenu)
+                {
+                    ContextMenu.UninstallContextMenu();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/ReconcilePerUserRegistryState: Could not remove stale per-user DisplayMagician desktop context menu registry state.");
+            }
+
 
             // UPDATE LOGGING LEVEL BASED ON USER SETTINGS
             // Now we are at the point that the user settings are loaded, we can set the logging level based on the stored user settings
@@ -478,21 +491,21 @@ namespace DisplayMagician {
                 logger.Trace($"Program/Main: Application Wallpaper Folder {AppWallpaperPath} already exists so skipping creating it");
             }
 
-            if (AppVersionUpgrade)
-            {
-                // Do all the upgrade things
-                logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
+            //if (AppVersionUpgrade)
+            //{
+            //    // Do all the upgrade things
+            //    logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
 
-                /* // Warn the user about the fact we need them to recreate their Display Profiles again!
-                StartMessageForm myMessageWindow = new StartMessageForm();
-                myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                myMessageWindow.ButtonText = "&Close";
-                myMessageWindow.ShowDialog();
-                */
+            //    /* // Warn the user about the fact we need them to recreate their Display Profiles again!
+            //    StartMessageForm myMessageWindow = new StartMessageForm();
+            //    myMessageWindow.MessageMode = "rtf";
+            //    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+            //    myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
+            //    myMessageWindow.ButtonText = "&Close";
+            //    myMessageWindow.ShowDialog();
+            //    */
 
-            }
+            //}
 
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
@@ -1380,41 +1393,41 @@ namespace DisplayMagician {
             return backupFileName;
         }
 
-        private static void UpdateStartupModeFromSettings(string legacyLastVersionString)
-        {
-            Version currentVersion = ParseVersionOrDefault(Program.AppVersion, new Version("0.0.0.0"));
-            Version lastVersion = currentVersion;
+        //private static void UpdateStartupModeFromSettings()
+        //{
+        //    Version currentVersion = ParseVersionOrDefault(Program.AppVersion, new Version("0.0.0.0"));
+        //    Version lastVersion = currentVersion;
 
-            if (!AppNewInstall)
-            {
-                string lastVersionString = AppProgramSettings.HasStoredDisplayMagicianVersion
-                    ? AppProgramSettings.DisplayMagicianVersion
-                    : legacyLastVersionString;
+        //    if (!AppNewInstall)
+        //    {
+        //        string lastVersionString = AppProgramSettings.HasStoredDisplayMagicianVersion
+        //            ? AppProgramSettings.DisplayMagicianVersion
+        //            : "2.7.2.0";
 
-                lastVersion = ParseVersionOrDefault(lastVersionString, currentVersion);
-            }
+        //        lastVersion = ParseVersionOrDefault(lastVersionString, currentVersion);
+        //    }
 
-            AppLastVersionRun = lastVersion.ToString();
-            AppVersionUpgrade = !AppNewInstall && lastVersion < currentVersion;
+        //    AppLastVersionRun = lastVersion.ToString();
+        //    AppVersionUpgrade = !AppNewInstall && lastVersion < currentVersion;
 
-            if (AppNewInstall)
-            {
-                logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is starting with a new settings file.");
-            }
-            else if (AppVersionUpgrade)
-            {
-                logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is upgrading from version {lastVersion} to version {currentVersion}.");
-            }
-            else
-            {
-                logger.Trace($"Program/UpdateStartupModeFromSettings: DisplayMagician is running as a standard startup. Last version was {lastVersion}; current version is {currentVersion}.");
-            }
+        //    if (AppNewInstall)
+        //    {
+        //        logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is starting with a new settings file.");
+        //    }
+        //    else if (AppVersionUpgrade)
+        //    {
+        //        logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is upgrading from version {lastVersion} to version {currentVersion}.");
+        //    }
+        //    else
+        //    {
+        //        logger.Trace($"Program/UpdateStartupModeFromSettings: DisplayMagician is running as a standard startup. Last version was {lastVersion}; current version is {currentVersion}.");
+        //    }
 
-            if (!AppInstalled)
-            {
-                logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is running from a folder that does not match the installer registry state. This is valid for portable, dev, or copied-folder runs.");
-            }
-        }
+        //    if (!AppInstalled)
+        //    {
+        //        logger.Info($"Program/UpdateStartupModeFromSettings: DisplayMagician is running from a folder that does not match the installer registry state. This is valid for portable, dev, or copied-folder runs.");
+        //    }
+        //}
 
         private static Version ParseVersionOrDefault(string versionText, Version fallback)
         {
@@ -1428,6 +1441,8 @@ namespace DisplayMagician {
 
         private static void CleanupLegacyUserRegistryValues()
         {
+            // We don't want any of these, so lets clean things up if they are there. They aren't used anymore but they might be left over from old versions of the program.
+
             try
             {
                 using (RegistryKey dmKey = Registry.CurrentUser.OpenSubKey(@"Software\DisplayMagician", writable: true))
@@ -1451,41 +1466,6 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 logger.Warn(ex, $"Program/CleanupLegacyUserRegistryValues: Could not remove legacy HKCU DisplayMagician registry values.");
-            }
-        }
-
-        private static void ReconcilePerUserRegistryState()
-        {
-            try
-            {
-                if (AppProgramSettings.StartOnBootUp)
-                {
-                    if (!StartupManager.IsStartupEnabled())
-                    {
-                        logger.Info($"Program/ReconcilePerUserRegistryState: Startup registry value is missing or stale. Recreating it from settings.");
-                        StartupManager.EnableStartup();
-                    }
-                }
-                else
-                {
-                    StartupManager.DisableStartup();
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"Program/ReconcilePerUserRegistryState: Could not reconcile per-user startup registry state.");
-            }
-
-            try
-            {
-                if (!AppProgramSettings.InstallDesktopContextMenu)
-                {
-                    ContextMenu.UninstallContextMenu();
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"Program/ReconcilePerUserRegistryState: Could not remove stale per-user DisplayMagician desktop context menu registry state.");
             }
         }
 
@@ -2130,7 +2110,7 @@ namespace DisplayMagician {
 
             try
             {
-                if (!IsInstalledVersion())
+                if (Program.AppNotInstalled)
                 {
                     // Force toasts to work if we're not 'installed' per se by creating a temp DisplayMagician start menu icon
                     // Allows running from a ZIP file rather than forcing the app to be installed. If we don't do this then Toasts just wouldn't work.
@@ -2164,7 +2144,7 @@ namespace DisplayMagician {
             }
         }
 
-        public static bool IsInstalledVersion()
+        public static bool DMIsNotInstalled()
 
         {
             string installKey = @"SOFTWARE\DisplayMagician";
@@ -2176,19 +2156,19 @@ namespace DisplayMagician {
                 {
                     if (rk == null) 
                     {
-                        return false;
+                        return true;
                     }
                     if (rk.GetValue("InstallDir") != null && rk.GetValue("InstallDir").ToString() == thisInstallDir)
                     {
-                        return true; //exists
+                        return false; //exists
                     }
                 }
-                return false;
+                return true;
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, $"Program/IsInstalledVersion: DisplayMagician InstallDir isn't in registry! This DisplayMagician isn't installed.");
-                return false;
+                return true;
             }
         }
 

@@ -640,17 +640,21 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json.old"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles.json.bak"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json.old"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json.old"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json.old"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json.old"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.6.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts.json.bak"),
                             Path.Combine(Program.AppDataPath,"Settings_1.0.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.4.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.5.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.6.json.old")
+                            Path.Combine(Program.AppDataPath,"Settings_2.6.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings.json.bak"),
+                            Path.Combine(Program.AppDataPath,"DonationSettings.json.bak")
                         };
                         // Also add the log files found (including the new date style formatted ones).
                         listOfFilesToArchive.AddRange(listOfLogFiles);
