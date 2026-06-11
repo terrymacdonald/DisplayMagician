@@ -125,7 +125,7 @@ namespace DisplayMagician.GameLibraries
 
         public bool CopyTo(EpicGame epicGame)
         {
-            if (!(epicGame is EpicGame))
+            if (epicGame == null)
                 return false;
 
             // Copy all the game data over to the other game
@@ -134,6 +134,8 @@ namespace DisplayMagician.GameLibraries
             epicGame.Name = Name;
             epicGame.ExePath = ExePath;
             epicGame.Directory = Directory;
+            epicGame.ProcessName = ProcessName;
+            epicGame.IconPath = IconPath;
             return true;
         }
 
@@ -161,18 +163,106 @@ namespace DisplayMagician.GameLibraries
 
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
-            string address = $@"com.epicgames.launcher://apps/{Id}?action=launch&silent=true";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            processesStarted = new List<Process>();
+
+            // CASE 1: Custom arguments are provided -> Bypass protocol to launch executable directly
+            if (!string.IsNullOrWhiteSpace(gameArguments))
             {
-                address += @"/" + gameArguments;
+                logger.Info($"EpicGame/Start: Custom arguments detected for {Name}. Bypassing launcher protocol.");
+
+                // -EpicPortal skips the launcher DRM step so the executable accepts custom CLI arguments
+                string directArgs = $"-EpicPortal {gameArguments}";
+
+                // Run direct process using all your DisplayMagician structural rules
+                var directProcesses = ProcessUtils.StartProcess(ExePath, directArgs, priority, timeout, runExeAsAdmin);
+                if (directProcesses != null && directProcesses.Count > 0)
+                {
+                    processesStarted.AddRange(directProcesses);
+                }
+                
+                return processesStarted.Count > 0;
             }
-            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+
+            // CASE 2: No custom arguments -> Use standard Launcher URI Protocol
+            // (Requires composite structure: SandboxID%3ACatalogID%3AArtifactID)
+            string address = $@"com.epicgames.launcher://apps/{Id}?action=launch&silent=true";
+            logger.Info($"EpicGame/Start: No custom arguments. Requesting URI Protocol: {address}");
+
+            // Trigger URL Protocol Handler via ProcessUtils
+            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            if (launcherProcesses != null && launcherProcesses.Count > 0)
+            {
+                processesStarted.AddRange(launcherProcesses);
+            }
+
+            // SAFEGUARD: Because URI protocol calls return instantly (or return null if handled by an
+            // already-open Epic Launcher background process), let's perform an immediate snapshot look 
+            // to find the game engine process by name so DisplayMagician doesn't lose tracking state.
+            if (processesStarted.Count == 0 && !string.IsNullOrWhiteSpace(_epicGameProcessName))
+            {
+                logger.Trace($"EpicGame/Start: URI handler returned no process token. Searching active system processes for '{_epicGameProcessName}'...");
+                var discoveredProcesses = Process.GetProcessesByName(_epicGameProcessName).ToList();
+                if (discoveredProcesses.Count > 0)
+                {
+                    logger.Debug($"EpicGame/Start: Successfully matched active process target for {Name}. Resuming tracking framework.");
+                    processesStarted.AddRange(discoveredProcesses);
+                }
+            }
+
             return true;
         }
 
         public override bool Stop()
         {
-            return true;
+            logger.Info($"EpicGame/Stop: Request received to stop {Name} (Process Name: {_epicGameProcessName})");
+            bool allStopped = true;
+
+            try
+            {
+                // Stage 1: Stop processes that are explicitly captured in the DisplayMagician tracking list
+                if (Processes != null && Processes.Count > 0)
+                {
+                    logger.Debug($"EpicGame/Stop: Terminating explicitly tracked processes for {Name}.");
+                    
+                    // This utilizes your existing ProcessUtils method which loops through backward,
+                    // tries CloseMainWindow() first, and then falls back to Kill() if it hangs.
+                    allStopped = ProcessUtils.StopProcess(Processes);
+                    
+                    // Clear out the tracking tokens once closed
+                    Processes.Clear();
+                }
+
+                // Stage 2: Backup check. If the game was launched via URI protocol, the tracking list 
+                // might be empty, or a launcher child process might still be running. Look it up by name.
+                if (!string.IsNullOrWhiteSpace(_epicGameProcessName))
+                {
+                    var activeInstances = Process.GetProcessesByName(_epicGameProcessName).ToList();
+                    if (activeInstances.Count > 0)
+                    {
+                        logger.Debug($"EpicGame/Stop: Found {activeInstances.Count} untracked active processes matching '{_epicGameProcessName}'. Stopping them now.");
+                        
+                        // Pass the newly discovered runtime processes into your existing handler
+                        bool backupStopped = ProcessUtils.StopProcess(activeInstances);
+                        allStopped = allStopped && backupStopped;
+                    }
+                }
+
+                if (allStopped)
+                {
+                    logger.Info($"EpicGame/Stop: Successfully stopped all process instances for {Name}.");
+                }
+                else
+                {
+                    logger.Warn($"EpicGame/Stop: One or more process instances for {Name} failed to close cleanly.");
+                }
+
+                return allStopped;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"EpicGame/Stop: Unexpected exception encountered while trying to stop {Name}");
+                return false;
+            }
         }
 
     }

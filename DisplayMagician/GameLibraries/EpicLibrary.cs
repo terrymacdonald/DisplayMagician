@@ -432,15 +432,13 @@ namespace DisplayMagician.GameLibraries
         {
             try
             {
-
                 if (!_isEpicInstalled)
                 {
-                    // Epic isn't installed, so we return an empty list.
                     logger.Info($"EpicLibrary/LoadInstalledGames: Epic library is not installed");
                     return false;
                 }
 
-                var localInstalledGameListFile = Path.Combine(_epicLocalContent, "UnrealEngineLauncher","LauncherInstalled.dat");
+                var localInstalledGameListFile = Path.Combine(_epicLocalContent, "UnrealEngineLauncher", "LauncherInstalled.dat");
                 logger.Trace($"EpicLibrary/LoadInstalledGames: Looking for locally installed games file {localInstalledGameListFile}");
                 if (!File.Exists(localInstalledGameListFile))
                 {
@@ -483,12 +481,11 @@ namespace DisplayMagician.GameLibraries
                     }
                     catch (Exception ex)
                     {
-                        logger.Error(ex, $"EpicLibrary/LoadInstalledGames: Exception trying to convert the {localInstalledGameListFile} to a JSON object to read the installed games. There seems to be a problem with your Epic installation.");
-                        return false;
+                        logger.Error(ex, $"EpicLibrary/LoadInstalledGames: Exception trying to convert manifest to a JSON object. Skipping file: {localInstalledGameManifestFile}");
+                        continue;
                     }
 
                     if (epicManifest != null)
-                    // Some weird issue causes manifest to be created empty by Epic client
                     {
                         allManifests.Add(epicManifest);
                     }
@@ -499,6 +496,9 @@ namespace DisplayMagician.GameLibraries
                     logger.Warn($"EpicLibrary/LoadInstalledGames: No Epic games installed in the Epic library");
                     return false;
                 }
+
+                // Clear existing collection to avoid duplication if re-scanned
+                _allEpicGames.Clear();
 
                 foreach (LauncherInstalled.InstalledApp installedApp in epicLauncherInstalledDat.InstallationList)
                 {
@@ -512,64 +512,56 @@ namespace DisplayMagician.GameLibraries
                     if (installedAppManifest == null)
                         continue;
 
-                    // DLC
+                    // DLC Filtering
                     if (installedAppManifest.AppName != installedAppManifest.MainGameAppName)
                     {
                         continue;
                     }
 
-                    // UE plugins
+                    // UE plugins Filtering
                     if (installedAppManifest.AppCategories?.Any(a => a == "plugins" || a == "plugins/engine") == true)
                     {
                         continue;
                     }
 
-                    // Extract the info into a game object                    
+                    // Extract the info into an EpicGame object                    
                     EpicGame epicGame = new EpicGame();
                     epicGame.Name = installedAppManifest?.DisplayName ?? Path.GetFileName(installedApp.InstallLocation);
-                    epicGame.Directory  = installedAppManifest?.InstallLocation ?? installedApp.InstallLocation;
+                    epicGame.Directory = installedAppManifest?.InstallLocation ?? installedApp.InstallLocation;
                     epicGame.Executable = installedAppManifest.LaunchExecutable;
                     epicGame.ExePath = Path.Combine(epicGame.Directory, installedAppManifest.LaunchExecutable);
                     epicGame.IconPath = epicGame.ExePath;
-                    epicGame.Id = installedAppManifest?.MainGameAppName?? installedApp.AppName;
                     epicGame.ProcessName = Path.GetFileNameWithoutExtension(epicGame.ExePath);
 
-                    // Add the Epic Game to the list of Epic Games
-                    _allEpicGames.Add(epicGame);
+                    // =========================================================================
+                    // NEW FORMAT FIX: Assemble the URL-encoded composite ID format
+                    // Structure: SandboxID%3ACatalogID%3AArtifactID
+                    // =========================================================================
+                    string sandboxId = installedAppManifest.CatalogNamespace;
+                    string catalogItemId = installedAppManifest.CatalogItemId;
+                    string artifactId = installedAppManifest?.MainGameAppName ?? installedApp.AppName;
 
+                    if (!string.IsNullOrWhiteSpace(sandboxId) && !string.IsNullOrWhiteSpace(catalogItemId))
+                    {
+                        epicGame.Id = $"{sandboxId}%3A{catalogItemId}%3A{artifactId}";
+                    }
+                    else
+                    {
+                        // Fallback context in case an old/incomplete manifest file misses catalog properties
+                        epicGame.Id = artifactId;
+                    }
+                    // =========================================================================
+
+                    // Add the Epic Game to the list of tracked Epic Games
+                    _allEpicGames.Add(epicGame);
                 }
 
                 logger.Info($"EpicLibrary/LoadInstalledGames: Found {_allEpicGames.Count} installed Epic games");
-
             }
-
-            catch (ArgumentNullException ex)
+            catch (Exception ex)
             {
-                logger.Warn(ex, "EpicLibrary/GetAllInstalledGames: An argument supplied to the function is null.");
-            }
-            catch (NotSupportedException ex)
-            {
-                logger.Warn(ex, "EpicLibrary/GetAllInstalledGames: The invoked method is not supported or reading, seeking or writing tp a stream that isn't supported.");
-            }
-            catch (PathTooLongException ex)
-            {
-                logger.Warn(ex, "EpicLibrary/GetAllInstalledGames: The path is longer than the maximum allowed by the operating system.");
-            }
-            catch (SecurityException ex)
-            {
-                logger.Warn(ex, "EpicLibrary/GetAllInstalledGames: The user does not have the permissions required to read the Epic InstallDir registry key.");
-            }
-            catch (ObjectDisposedException ex)
-            {
-                logger.Warn(ex, "EpicLibrary/GetAllInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Epic InstallDir registry key (closed keys cannot be accessed).");
-            }
-            catch (IOException ex)
-            {
-                logger.Warn(ex, "EpicLibrary/GetAllInstalledGames: The Epic InstallDir registry key has been marked for deletion so we cannot access the value dueing the EpicLibrary check.");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.Warn(ex, "EpicLibrary/GetAllInstalledGames: The user does not have the necessary registry rights to check whether Epic is installed.");
+                logger.Error(ex, "EpicLibrary/LoadInstalledGames: Unexpected core exception occurred while loading installed games.");
+                return false;
             }
 
             return true;
