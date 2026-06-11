@@ -160,15 +160,17 @@ namespace DisplayMagician.GameLibraries
 
         public bool CopyTo(GogGame gogGame)
         {
-            if (!(gogGame is GogGame))
+            if (gogGame == null)
                 return false;
 
-            // Copy all the game data over to the other game
+            // Copy ALL identity data components to preserve tracking validity across references
             gogGame.IconPath = IconPath;
             gogGame.Id = Id;
             gogGame.Name = Name;
             gogGame.ExePath = ExePath;
             gogGame.Directory = Directory;
+            gogGame.Executable = Executable;
+            gogGame.ProcessName = ProcessName;
             return true;
         }
 
@@ -196,18 +198,81 @@ namespace DisplayMagician.GameLibraries
 
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
-            string args = $@"/command=runGame /gameId={Id} /path=""{Directory}""";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            processesStarted = new List<Process>();
+
+            // CASE 1: Custom arguments provided -> Bypass launcher and run DRM-free executable directly
+            if (!string.IsNullOrWhiteSpace(gameArguments))
             {
-                args += " " + gameArguments;
+                logger.Info($"GogGame/Start: Arguments detected for {Name}. Bypassing GOG Galaxy to execute DRM-free binary directly.");
+
+                var directProcesses = ProcessUtils.StartProcess(ExePath, gameArguments, priority, timeout, runExeAsAdmin);
+                if (directProcesses != null && directProcesses.Count > 0)
+                {
+                    processesStarted.AddRange(directProcesses);
+                }
+                return processesStarted.Count > 0;
             }
-            processesStarted = ProcessUtils.StartProcess(GogLibrary.GetLibrary().GameLibraryExe, args, priority);
+
+            // CASE 2: No arguments -> Request GOG Galaxy Client launcher execution
+            string launcherExe = GogLibrary.GetLibrary().GameLibraryExe;
+            string args = $@"/command=runGame /gameId={Id} /path=""{Directory}""";
+            
+            logger.Info($"GogGame/Start: No arguments. Launching {Name} via GOG Galaxy Client: {launcherExe} {args}");
+
+            var launcherProcesses = ProcessUtils.StartProcess(launcherExe, args, priority, timeout, runExeAsAdmin);
+            if (launcherProcesses != null && launcherProcesses.Count > 0)
+            {
+                processesStarted.AddRange(launcherProcesses);
+            }
+
+            // SAFEGUARD: If the Galaxy Client was already open in the tray, StartProcess may return instantly.
+            // Query the active OS process tree by name immediately so DisplayMagician captures tracking control.
+            if (processesStarted.Count == 0 && !string.IsNullOrWhiteSpace(_gogGameProcessName))
+            {
+                var activeGameProcesses = Process.GetProcessesByName(_gogGameProcessName).ToList();
+                if (activeGameProcesses.Count > 0)
+                {
+                    logger.Debug($"GogGame/Start: Re-associated untracked background engine process '{_gogGameProcessName}' for {Name}.");
+                    processesStarted.AddRange(activeGameProcesses);
+                }
+            }
+
             return true;
         }
 
         public override bool Stop()
         {
-            return true;
+            logger.Info($"GogGame/Stop: Request received to stop {Name} (Process Name: {_gogGameProcessName})");
+            bool allStopped = true;
+
+            try
+            {
+                // Step 1: Kill tracked tracking list tokens via ProcessUtils
+                if (Processes != null && Processes.Count > 0)
+                {
+                    allStopped = ProcessUtils.StopProcess(Processes);
+                    Processes.Clear();
+                }
+
+                // Step 2: System-wide background name query sweep fallback
+                if (!string.IsNullOrWhiteSpace(_gogGameProcessName))
+                {
+                    var runningInstances = Process.GetProcessesByName(_gogGameProcessName).ToList();
+                    if (runningInstances.Count > 0)
+                    {
+                        logger.Debug($"GogGame/Stop: Found {runningInstances.Count} untracked active instances of '{_gogGameProcessName}'. Closing them now.");
+                        bool backupStopped = ProcessUtils.StopProcess(runningInstances);
+                        allStopped = allStopped && backupStopped;
+                    }
+                }
+
+                return allStopped;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"GogGame/Stop: Exception encountered while terminating {Name}");
+                return false;
+            }
         }
 
     }

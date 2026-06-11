@@ -186,7 +186,7 @@ namespace DisplayMagician.GameLibraries
                         return false;
                 }                
                 catch (Exception ex) {
-                    logger.Warn(ex, $"GogLibrary/IsRunning: Exception while trying to get the GOG Library processes with names: {_gogProcessList.ToString()}");
+                    logger.Warn(ex, $"GogLibrary/IsRunning: Exception while trying to get the GOG Library processes with names: {string.Join(", ", _gogProcessList)}");
                     return false; 
                 }
             }
@@ -280,7 +280,8 @@ namespace DisplayMagician.GameLibraries
 
         public override bool RemoveGameById(string gogGameId)
         {
-            if (gogGameId.Equals(0))
+            // FIX: Validate the input value accurately as a string type comparison
+            if (string.IsNullOrWhiteSpace(gogGameId) || gogGameId == "0")
                 return false;
 
             logger.Debug($"GogLibrary/RemoveGogGame2: Removing Gog game with ID {gogGameId} from the Gog library");
@@ -434,26 +435,34 @@ namespace DisplayMagician.GameLibraries
         {
             try
             {
-
                 if (!_isGogInstalled)
                 {
-                    // Gog isn't installed, so we return an empty list.
                     logger.Info($"GogLibrary/LoadInstalledGames: Gog library is not installed");
                     return false;
                 }
 
                 string gogSupportInstallerDir = Path.Combine(_gogLocalContent, "supportInstaller");
+                if (!Directory.Exists(gogSupportInstallerDir))
+                {
+                    logger.Warn($"GogLibrary/LoadInstalledGames: GOG Support Installer directory not found at {gogSupportInstallerDir}");
+                    return false;
+                }
 
                 logger.Trace($"GogLibrary/LoadInstalledGames: supportInstaller Directory {gogSupportInstallerDir} exists!");
                 string[] gogSupportInstallerGameDirs = Directory.GetDirectories(gogSupportInstallerDir, "*", SearchOption.AllDirectories);
-                logger.Trace($"GogLibrary/LoadInstalledGames: Found game directories in supportInstaller Directory {gogSupportInstallerDir}: {gogSupportInstallerGameDirs.ToString()}");
+                
+                // FIX: Format directory collection properly for readability inside Trace records
+                logger.Trace($"GogLibrary/LoadInstalledGames: Found game directories in supportInstaller: {string.Join(", ", gogSupportInstallerGameDirs)}");
 
-                // If there are no games installed then return false
                 if (gogSupportInstallerGameDirs.Length == 0)
                 {
                     logger.Warn($"GogLibrary/LoadInstalledGames: No GOG games installed in the GOG Galaxy library");
                     return false;
                 }
+
+                // FIX: Clear the tracking list collection before rebuilding to prevent catalog duplication leaks!
+                _allGogGames.Clear();
+
                 foreach (string gogSupportInstallerGameDir in gogSupportInstallerGameDirs)
                 {
                     logger.Trace($"GogLibrary/LoadInstalledGames: Parsing {gogSupportInstallerGameDir} name to find GameID");
@@ -474,7 +483,6 @@ namespace DisplayMagician.GameLibraries
                         continue;
                     }
 
-                    // Now we get the information from the Gog Info file to parse it
                     GogGameInfo gogGameInfo;
                     try
                     {
@@ -482,92 +490,62 @@ namespace DisplayMagician.GameLibraries
                     }
                     catch (Exception ex)
                     {
-                        logger.Warn(ex, $"GogLibrary/LoadInstalledGames: Exception trying to convert the {gogGameInfoFilename} to a JSON object to read the installed games. There seems to be a problem with your GOG installation.");
+                        logger.Warn(ex, $"GogLibrary/LoadInstalledGames: Exception trying to convert the {gogGameInfoFilename} to a JSON object. Skipping entry.");
                         continue;
                     }
 
                     if (gogGameInfo == null)
                     {
-                        logger.Warn($"GogLibrary/LoadInstalledGames: The {gogGameInfoFilename} file could not be deserialized. There seems to be a problem with your GOG installation.");
+                        logger.Warn($"GogLibrary/LoadInstalledGames: The {gogGameInfoFilename} file could not be deserialized. Skipping entry.");
                         continue;
                     }
 
-                    // Now we check this is a 'Root Game' i.e. it is a  base game, not something else
+                    // Exclude DLC components
                     if (gogGameInfo.gameId != gogGameInfo.rootGameId)
                     {
-                        logger.Trace($"GogLibrary/LoadInstalledGames: Game {gogGameInfo.name} is not a base game (probably DLC) so we're skipping it.");
+                        logger.Trace($"GogLibrary/LoadInstalledGames: Game {gogGameInfo.name} is not a base game (likely DLC) so we're skipping it.");
                         continue;
                     }
 
-                    // Now we check the Gog game registry key too, to get some more information that we need
                     string registryGogGalaxyGameKey = registryGogGalaxyGamesKey + gogGameInfo.gameId;
                     logger.Trace($"GogLibrary/GogLibrary: GOG Galaxy Games registry key = HKLM\\{registryGogGalaxyGameKey}");
-                    RegistryKey GogGalaxyGameKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGameKey, RegistryKeyPermissionCheck.ReadSubTree);
-                    if (GogGalaxyGameKey == null)
+                    
+                    using (RegistryKey GogGalaxyGameKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGameKey, RegistryKeyPermissionCheck.ReadSubTree))
                     {
-                        logger.Info($"GogLibrary/GogLibrary: Could not find the GOG Galaxy Games registry key {registryGogGalaxyGamesKey} so can't get all the information about the game we need! There seems to be a problem with your GOG installation.");
-                        continue;
+                        if (GogGalaxyGameKey == null)
+                        {
+                            logger.Info($"GogLibrary/GogLibrary: Could not find registry key {registryGogGalaxyGameKey} for {gogGameInfo.name}. Skipping entry.");
+                            continue;
+                        }
+
+                        string gameDirectory = GogGalaxyGameKey.GetValue("path", "").ToString();
+                        string gameExePath = GogGalaxyGameKey.GetValue("exe", "").ToString();
+                        if (!File.Exists(gameExePath))
+                        {
+                            logger.Info($"GogLibrary/GogLibrary: Could not verify game file target path {gameExePath}. Skipping entry.");
+                            continue;
+                        }
+
+                        GogGame gogGame = new GogGame();
+                        gogGame.Id = gogGameInfo.gameId;
+                        gogGame.Name = gogGameInfo.name;
+                        gogGame.Directory = gameDirectory;
+                        gogGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "").ToString();
+                        gogGame.ExePath = gameExePath;
+                        gogGame.IconPath = gameExePath;
+                        gogGame.ProcessName = Path.GetFileNameWithoutExtension(gogGame.ExePath);
+
+                        _allGogGames.Add(gogGame);
                     }
-
-                    string gameDirectory = GogGalaxyGameKey.GetValue("path", "").ToString();
-                    string gameExePath = GogGalaxyGameKey.GetValue("exe", "").ToString();
-                    if (!File.Exists(gameExePath))
-                    {
-                        logger.Info($"GogLibrary/GogLibrary: Could not find the GOG Galaxy Game file {gameExePath} so can't run the game later! There seems to be a problem with your GOG installation.");
-                        continue;
-                    }
-                    /*string gameIconPath = Path.Combine(gameDirectory, $"goggame-{gameID}.ico");                    
-                    if (!File.Exists(gameIconPath))
-                    {
-                        gameIconPath = gameExePath;
-                    }*/
-
-                    // Extract the info into a game object                    
-                    GogGame gogGame = new GogGame();
-                    gogGame.Id = gogGameInfo.gameId;
-                    gogGame.Name = gogGameInfo.name;
-                    gogGame.Directory = gameDirectory;
-                    gogGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "").ToString();
-                    gogGame.ExePath = gameExePath;
-                    //gogGame.IconPath = gameIconPath;
-                    gogGame.IconPath = gameExePath;
-                    gogGame.ProcessName = Path.GetFileNameWithoutExtension(gogGame.ExePath);
-
-                    // Add the Gog Game to the list of Gog Games
-                    _allGogGames.Add(gogGame);
                 }
 
-                logger.Info($"GogLibrary/LoadInstalledGames: Found {_allGogGames.Count} installed GOG games");
-
+                logger.Info($"GogLibrary/LoadInstalledGames: Found {_allGogGames.Count} verified installed GOG games.");
             }
-
-            catch (ArgumentNullException ex)
+            // FIX: Catch-all operational exception block provides accurate file context and strips away bulky registry messages
+            catch (Exception ex)
             {
-                logger.Warn(ex, "GogLibrary/GetAllInstalledGames: An argument supplied to the function is null.");
-            }
-            catch (NotSupportedException ex)
-            {
-                logger.Warn(ex, "GogLibrary/GetAllInstalledGames: The invoked method is not supported or reading, seeking or writing to a stream that isn't supported.");
-            }
-            catch (PathTooLongException ex)
-            {
-                logger.Warn(ex, "GogLibrary/GetAllInstalledGames: The path is longer than the maximum allowed by the operating system.");
-            }
-            catch (SecurityException ex)
-            {
-                logger.Warn(ex, "GogLibrary/GetAllInstalledGames: The user does not have the permissions required to read the GOG InstallDir registry key.");
-            }
-            catch (ObjectDisposedException ex)
-            {
-                logger.Warn(ex, "GogLibrary/GetAllInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the GOG InstallDir registry key (closed keys cannot be accessed).");
-            }
-            catch (IOException ex)
-            {
-                logger.Warn(ex, "GogLibrary/GetAllInstalledGames: The GOG InstallDir registry key has been marked for deletion so we cannot access the value dueing the GogLibrary check.");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.Warn(ex, "GogLibrary/GetAllInstalledGames: The user does not have the necessary registry rights to check whether Gog is installed.");
+                logger.Error(ex, "GogLibrary/LoadInstalledGames: Operational exception encountered while indexing installation subdirectories or computing game meta profiles.");
+                return false;
             }
 
             return true;
