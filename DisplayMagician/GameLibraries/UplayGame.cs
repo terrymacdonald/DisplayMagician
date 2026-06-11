@@ -158,15 +158,17 @@ namespace DisplayMagician.GameLibraries
 
         public bool CopyTo(UplayGame uplayGame)
         {
-            if (!(uplayGame is UplayGame))
+            if (uplayGame == null)
                 return false;
 
-            // Copy all the game data over to the other game
+            // Copy ALL structural data to ensure process state tracking persists cleanly across instances
             uplayGame.IconPath = IconPath;
             uplayGame.Id = Id;
             uplayGame.Name = Name;
             uplayGame.ExePath = ExePath;
             uplayGame.Directory = Directory;
+            uplayGame.Executable = Executable;
+            uplayGame.ProcessName = ProcessName;
             return true;
         }
 
@@ -194,18 +196,79 @@ namespace DisplayMagician.GameLibraries
 
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
-            string address = $@"uplay://launch/{Id}";
-            if (!String.IsNullOrWhiteSpace(gameArguments))
+            processesStarted = new List<Process>();
+
+            // CASE 1: Custom arguments provided -> Bypass protocol and execute game binary directly
+            if (!string.IsNullOrWhiteSpace(gameArguments))
             {
-                address += @"/" + gameArguments;
+                logger.Info($"UplayGame/Start: Arguments detected for {Name}. Launching game executable directly to pass parameters.");
+
+                var directProcesses = ProcessUtils.StartProcess(ExePath, gameArguments, priority, timeout, runExeAsAdmin);
+                if (directProcesses != null && directProcesses.Count > 0)
+                {
+                    processesStarted.AddRange(directProcesses);
+                }
+                return processesStarted.Count > 0;
             }
-            processesStarted = ProcessUtils.StartProcess(address, null, priority);
+
+            // CASE 2: No arguments -> Request standard Ubisoft Connect URI Protocol Handler
+            string address = $@"uplay://launch/{Id}";
+            logger.Info($"UplayGame/Start: No arguments. Requesting standard URI Protocol: {address}");
+
+            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            if (launcherProcesses != null && launcherProcesses.Count > 0)
+            {
+                processesStarted.AddRange(launcherProcesses);
+            }
+
+            // SAFEGUARD: If Ubisoft Connect was already open in the tray, deep-link triggers exit instantly.
+            // Perform an immediate name-based system process query so DisplayMagician captures tracking control.
+            if (processesStarted.Count == 0 && !string.IsNullOrWhiteSpace(_uplayGameProcessName))
+            {
+                var activeGameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
+                if (activeGameProcesses.Count > 0)
+                {
+                    logger.Debug($"UplayGame/Start: Re-associated untracked background engine process '{_uplayGameProcessName}' for {Name}.");
+                    processesStarted.AddRange(activeGameProcesses);
+                }
+            }
+
             return true;
         }
 
         public override bool Stop()
         {
-            return true;
+            logger.Info($"UplayGame/Stop: Request received to stop {Name} (Process Name: {_uplayGameProcessName})");
+            bool allStopped = true;
+
+            try
+            {
+                // Step 1: Drain explicitly tracked tracking list tokens via ProcessUtils
+                if (Processes != null && Processes.Count > 0)
+                {
+                    allStopped = ProcessUtils.StopProcess(Processes);
+                    Processes.Clear();
+                }
+
+                // Step 2: System-wide background name query fallback sweep
+                if (!string.IsNullOrWhiteSpace(_uplayGameProcessName))
+                {
+                    var runningInstances = Process.GetProcessesByName(_uplayGameProcessName).ToList();
+                    if (runningInstances.Count > 0)
+                    {
+                        logger.Debug($"UplayGame/Stop: Clearing {runningInstances.Count} remaining untracked instances of '{_uplayGameProcessName}'.");
+                        bool backupStopped = ProcessUtils.StopProcess(runningInstances);
+                        allStopped = allStopped && backupStopped;
+                    }
+                }
+
+                return allStopped;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"UplayGame/Stop: Exception encountered while terminating {Name}");
+                return false;
+            }
         }
 
     }
