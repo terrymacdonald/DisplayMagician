@@ -873,6 +873,21 @@
             Physical GPU handle data from NvAPI_SYS_GetPhysicalGPUs.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPISystemPhysicalGpuHandleDto.HasPhysicalGpu">
+            <summary>
+            Gets whether this DTO references a physical GPU handle.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPISystemPhysicalGpuHandleDto.PhysicalGpuHandleValue">
+            <summary>
+            Gets the physical GPU handle value, or 0 when no physical GPU handle is present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPISystemPhysicalGpuHandleDto.PhysicalGpu">
+            <summary>
+            Gets the physical GPU helper for in-process callers. Ignored during JSON serialization.
+            </summary>
+        </member>
         <member name="M:NVAPIWrapper.NVAPISystemPhysicalGpuHandleDto.FromNative(NVAPIWrapper.NVAPIApiHelper,NVAPIWrapper._NV_PHYSICAL_GPU_HANDLE_DATA)">
             <summary>
             Create a system physical GPU handle DTO from native handle data.
@@ -920,6 +935,21 @@
         <member name="T:NVAPIWrapper.NVAPISystemLogicalGpuHandleDto">
             <summary>
             Logical GPU handle data from NvAPI_SYS_GetLogicalGPUs.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPISystemLogicalGpuHandleDto.HasLogicalGpu">
+            <summary>
+            Gets whether this DTO references a logical GPU handle.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPISystemLogicalGpuHandleDto.LogicalGpuHandleValue">
+            <summary>
+            Gets the logical GPU handle value, or 0 when no logical GPU handle is present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPISystemLogicalGpuHandleDto.LogicalGpu">
+            <summary>
+            Gets the logical GPU helper for in-process callers. Ignored during JSON serialization.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPISystemLogicalGpuHandleDto.FromNative(NVAPIWrapper.NVAPIApiHelper,NVAPIWrapper._NV_LOGICAL_GPU_HANDLE_DATA)">
@@ -2647,13 +2677,14 @@
         </member>
         <member name="P:NVAPIWrapper.NVAPIDisplayConfigDto.Paths">
             <summary>
-            Display paths in the configuration.
+            Display paths in the configuration. Empty when no paths are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIDisplayConfigDto.#ctor(NVAPIWrapper.NVAPIDisplayConfigPathDto[])">
             <summary>
             Create a display configuration snapshot.
             </summary>
+            <param name="paths">Display paths in the configuration.</param>
         </member>
         <member name="M:NVAPIWrapper.NVAPIDisplayConfigDto.FromNative(System.UInt32,NVAPIWrapper._NV_DISPLAYCONFIG_PATH_INFO*)">
             <summary>
@@ -2680,12 +2711,12 @@
         </member>
         <member name="M:NVAPIWrapper.NVAPIDisplayConfigDto.op_Equality(NVAPIWrapper.NVAPIDisplayConfigDto,NVAPIWrapper.NVAPIDisplayConfigDto)">
             <summary>
-            Compare two display configuration snapshots.
+            Compare display configuration snapshots.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIDisplayConfigDto.op_Inequality(NVAPIWrapper.NVAPIDisplayConfigDto,NVAPIWrapper.NVAPIDisplayConfigDto)">
             <summary>
-            Compare two display configuration snapshots.
+            Compare display configuration snapshots.
             </summary>
         </member>
         <member name="T:NVAPIWrapper.NVAPIDisplayConfigPathDto">
@@ -2713,20 +2744,32 @@
             OS adapter LUID value for non-NVIDIA adapters, or 0 if not present.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIDisplayConfigPathDto.HasSourceModeInfo">
+            <summary>
+            True when <see cref="P:NVAPIWrapper.NVAPIDisplayConfigPathDto.SourceModeInfo"/> contains source mode information from NVAPI.
+            </summary>
+        </member>
         <member name="P:NVAPIWrapper.NVAPIDisplayConfigPathDto.SourceModeInfo">
             <summary>
-            Source mode info, or null if not present.
+            Source mode information. When <see cref="P:NVAPIWrapper.NVAPIDisplayConfigPathDto.HasSourceModeInfo"/> is false, this contains a default value.
             </summary>
         </member>
         <member name="P:NVAPIWrapper.NVAPIDisplayConfigPathDto.Targets">
             <summary>
-            Target configurations for this path.
+            Target configurations for this path. Empty when no targets are present.
             </summary>
         </member>
-        <member name="M:NVAPIWrapper.NVAPIDisplayConfigPathDto.#ctor(System.UInt32,System.UInt32,System.Boolean,System.Int64,System.Nullable{NVAPIWrapper.NVAPIDisplayConfigSourceModeDto},NVAPIWrapper.NVAPIDisplayConfigTargetDto[])">
+        <member name="M:NVAPIWrapper.NVAPIDisplayConfigPathDto.#ctor(System.UInt32,System.UInt32,System.Boolean,System.Int64,System.Boolean,NVAPIWrapper.NVAPIDisplayConfigSourceModeDto,NVAPIWrapper.NVAPIDisplayConfigTargetDto[])">
             <summary>
             Create a display path configuration.
             </summary>
+            <param name="version">NVAPI structure version.</param>
+            <param name="sourceId">Windows source ID.</param>
+            <param name="isNonNvidiaAdapter">True when the path represents a non-NVIDIA adapter.</param>
+            <param name="osAdapterLuid">OS adapter LUID, or 0 if not present.</param>
+            <param name="hasSourceModeInfo">True when source mode information is present.</param>
+            <param name="sourceModeInfo">Source mode information, or a default value when not present.</param>
+            <param name="targets">Target configurations.</param>
         </member>
         <member name="M:NVAPIWrapper.NVAPIDisplayConfigPathDto.FromNative(NVAPIWrapper._NV_DISPLAYCONFIG_PATH_INFO)">
             <summary>
@@ -2828,16 +2871,33 @@
             </summary>
         </member>
         <member name="P:NVAPIWrapper.NVAPIDisplayConfigTargetDto.DisplayId">
-            <summary>Display ID.</summary>
+            <summary>
+            Display ID.
+            </summary>
         </member>
         <member name="P:NVAPIWrapper.NVAPIDisplayConfigTargetDto.TargetId">
-            <summary>Windows CCD target ID (for non-NVIDIA adapters).</summary>
+            <summary>
+            Windows CCD target ID for non-NVIDIA adapters.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIDisplayConfigTargetDto.HasDetails">
+            <summary>
+            True when <see cref="P:NVAPIWrapper.NVAPIDisplayConfigTargetDto.Details"/> contains advanced target information from NVAPI.
+            </summary>
         </member>
         <member name="P:NVAPIWrapper.NVAPIDisplayConfigTargetDto.Details">
-            <summary>Advanced target info, or null if not present.</summary>
+            <summary>
+            Advanced target information. When <see cref="P:NVAPIWrapper.NVAPIDisplayConfigTargetDto.HasDetails"/> is false, this contains a default value.
+            </summary>
         </member>
-        <member name="M:NVAPIWrapper.NVAPIDisplayConfigTargetDto.#ctor(System.UInt32,System.UInt32,System.Nullable{NVAPIWrapper.NVAPIDisplayConfigAdvancedTargetDto})">
-            <summary>Create target info.</summary>
+        <member name="M:NVAPIWrapper.NVAPIDisplayConfigTargetDto.#ctor(System.UInt32,System.UInt32,System.Boolean,NVAPIWrapper.NVAPIDisplayConfigAdvancedTargetDto)">
+            <summary>
+            Create target info.
+            </summary>
+            <param name="displayId">Display ID.</param>
+            <param name="targetId">Windows CCD target ID.</param>
+            <param name="hasDetails">True when advanced target details are present.</param>
+            <param name="details">Advanced target details, or a default value when not present.</param>
         </member>
         <member name="M:NVAPIWrapper.NVAPIDisplayConfigTargetDto.FromNative(NVAPIWrapper._NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)">
             <summary>
@@ -4270,6 +4330,66 @@
             Scanout warping data DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.Vertices">
+            <summary>
+            Warping vertices. Empty when no vertices are present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.VertexFormat">
+            <summary>
+            Vertex format for the warping data.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.NumVertices">
+            <summary>
+            Number of vertices to pass to NVAPI.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.HasTextureRect">
+            <summary>
+            True when <see cref="P:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.TextureRect"/> contains a texture rectangle.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.TextureRect">
+            <summary>
+            Texture rectangle. When <see cref="P:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.HasTextureRect"/> is false, this contains a default value.
+            </summary>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.#ctor(System.Single[],NVAPIWrapper.NV_GPU_WARPING_VERTICE_FORMAT,System.Int32,System.Boolean,NVAPIWrapper.NVAPISBoxDto)">
+            <summary>
+            Create scanout warping data.
+            </summary>
+            <param name="vertices">Warping vertices.</param>
+            <param name="vertexFormat">Vertex format.</param>
+            <param name="numVertices">Number of vertices.</param>
+            <param name="hasTextureRect">True when texture rectangle data is present.</param>
+            <param name="textureRect">Texture rectangle, or default when not present.</param>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.ToNative">
+            <summary>
+            Convert this DTO to a native scanout warping data struct.
+            </summary>
+            <returns>Native scanout warping data.</returns>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.Equals(NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto)">
+            <inheritdoc />
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.op_Equality(NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto,NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto)">
+            <summary>
+            Determine whether two scanout warping DTOs are equal.
+            </summary>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto.op_Inequality(NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto,NVAPIWrapper.NVAPIGpuScanoutWarpingDataDto)">
+            <summary>
+            Determine whether two scanout warping DTOs are not equal.
+            </summary>
+        </member>
         <member name="T:NVAPIWrapper.NVAPIGpuScanoutWarpingResultDto">
             <summary>
             Scanout warping result DTO.
@@ -5143,6 +5263,20 @@
             </summary>
             <returns>Grid topologies, or null if unavailable.</returns>
         </member>
+        <member name="M:NVAPIWrapper.NVAPIMosaicHelper.GetLogicalGpus(NVAPIWrapper.NVAPIMosaicTopoDetailsDto)">
+            <summary>
+            Resolve the logical GPU referenced by a Mosaic topology details DTO.
+            </summary>
+            <param name="topoDetails">Mosaic topology details DTO.</param>
+            <returns>A single logical GPU helper when the DTO references a valid logical GPU; otherwise an empty array.</returns>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPIMosaicHelper.GetPhysicalGpus(NVAPIWrapper.NVAPIMosaicGpuLayoutCellDto)">
+            <summary>
+            Resolve the physical GPU referenced by a Mosaic GPU layout cell DTO.
+            </summary>
+            <param name="layoutCell">Mosaic GPU layout cell DTO.</param>
+            <returns>A single physical GPU helper when the DTO references a valid physical GPU; otherwise an empty array.</returns>
+        </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicHelper.Dispose">
             <summary>
             Dispose the helper.
@@ -5151,6 +5285,16 @@
         <member name="T:NVAPIWrapper.NVAPIMosaicSupportedTopoInfoDto">
             <summary>
             Snapshot of supported Mosaic topology data.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicSupportedTopoInfoDto.TopoBriefs">
+            <summary>
+            Gets or sets TopoBriefs. Empty when no values are present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicSupportedTopoInfoDto.DisplaySettings">
+            <summary>
+            Gets or sets DisplaySettings. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicSupportedTopoInfoDto.#ctor(NVAPIWrapper.NVAPIMosaicTopoBriefDto[],NVAPIWrapper.NVAPIMosaicDisplaySettingDto[])">
@@ -5447,6 +5591,11 @@
             Mosaic topology group DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicTopoGroupDto.Topos">
+            <summary>
+            Gets or sets Topos. Empty when no values are present.
+            </summary>
+        </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicTopoGroupDto.#ctor(NVAPIWrapper.NVAPIMosaicTopoBriefDto,NVAPIWrapper.NVAPIMosaicTopoDetailsDto[])">
             <summary>
             Create a Mosaic topology group DTO.
@@ -5501,6 +5650,21 @@
         <member name="T:NVAPIWrapper.NVAPIMosaicTopoDetailsDto">
             <summary>
             Mosaic topology details DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicTopoDetailsDto.HasLogicalGpu">
+            <summary>
+            Gets whether this DTO references a logical GPU handle.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicTopoDetailsDto.LogicalGpuHandleValue">
+            <summary>
+            Gets the logical GPU handle value, or 0 when no logical GPU handle is present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicTopoDetailsDto.GpuLayout">
+            <summary>
+            Gets or sets GpuLayout. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicTopoDetailsDto.#ctor(System.IntPtr,System.UInt32,System.UInt32,System.UInt32,NVAPIWrapper.NVAPIMosaicGpuLayoutCellDto[])">
@@ -5566,6 +5730,16 @@
         <member name="T:NVAPIWrapper.NVAPIMosaicGpuLayoutCellDto">
             <summary>
             Mosaic GPU layout cell DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicGpuLayoutCellDto.HasPhysicalGpu">
+            <summary>
+            Gets whether this DTO references a physical GPU handle.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicGpuLayoutCellDto.PhysicalGpuHandleValue">
+            <summary>
+            Gets the physical GPU handle value, or 0 when no physical GPU handle is present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicGpuLayoutCellDto.#ctor(System.IntPtr,System.UInt32,System.Int32,System.Int32)">
@@ -5697,6 +5871,11 @@
             Mosaic grid topology DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicGridTopoDto.Displays">
+            <summary>
+            Gets or sets Displays. Empty when no values are present.
+            </summary>
+        </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicGridTopoDto.#ctor(System.UInt32,System.UInt32,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean,NVAPIWrapper.NVAPIMosaicGridTopoDisplayDto[],NVAPIWrapper.NVAPIMosaicDisplaySettingDto)">
             <summary>
             Create a Mosaic grid topology DTO.
@@ -5761,64 +5940,14 @@
             <param name="right">Right DTO.</param>
             <returns>True if the DTOs are not equal; otherwise false.</returns>
         </member>
-        <member name="T:NVAPIWrapper.NVAPIMosaicGridTopologiesDto">
-            <summary>
-            Mosaic grid topology collection DTO.
-            </summary>
-        </member>
-        <member name="M:NVAPIWrapper.NVAPIMosaicGridTopologiesDto.#ctor(NVAPIWrapper.NVAPIMosaicGridTopoDto[])">
-            <summary>
-            Create a Mosaic grid topologies DTO.
-            </summary>
-            <param name="grids">Grid topologies.</param>
-        </member>
-        <member name="M:NVAPIWrapper.NVAPIMosaicGridTopologiesDto.FromNative(System.UInt32,NVAPIWrapper._NV_MOSAIC_GRID_TOPO_V2[])">
-            <summary>
-            Create a Mosaic grid topologies DTO from native data.
-            </summary>
-            <param name="count">Number of grids.</param>
-            <param name="native">Native grid topology data.</param>
-            <returns>Mosaic grid topologies DTO.</returns>
-        </member>
-        <member name="M:NVAPIWrapper.NVAPIMosaicGridTopologiesDto.Equals(NVAPIWrapper.NVAPIMosaicGridTopologiesDto)">
-            <summary>
-            Determine whether this instance equals another Mosaic grid topologies DTO.
-            </summary>
-            <param name="other">The other DTO to compare.</param>
-            <returns>True if the DTOs are equal; otherwise false.</returns>
-        </member>
-        <member name="M:NVAPIWrapper.NVAPIMosaicGridTopologiesDto.Equals(System.Object)">
-            <summary>
-            Determine whether this instance equals another object.
-            </summary>
-            <param name="obj">The object to compare.</param>
-            <returns>True if the object is an equivalent DTO; otherwise false.</returns>
-        </member>
-        <member name="M:NVAPIWrapper.NVAPIMosaicGridTopologiesDto.GetHashCode">
-            <summary>
-            Get a hash code for this instance.
-            </summary>
-            <returns>Hash code for this instance.</returns>
-        </member>
-        <member name="M:NVAPIWrapper.NVAPIMosaicGridTopologiesDto.op_Equality(NVAPIWrapper.NVAPIMosaicGridTopologiesDto,NVAPIWrapper.NVAPIMosaicGridTopologiesDto)">
-            <summary>
-            Determine whether two Mosaic grid topologies DTOs are equal.
-            </summary>
-            <param name="left">Left DTO.</param>
-            <param name="right">Right DTO.</param>
-            <returns>True if the DTOs are equal; otherwise false.</returns>
-        </member>
-        <member name="M:NVAPIWrapper.NVAPIMosaicGridTopologiesDto.op_Inequality(NVAPIWrapper.NVAPIMosaicGridTopologiesDto,NVAPIWrapper.NVAPIMosaicGridTopologiesDto)">
-            <summary>
-            Determine whether two Mosaic grid topologies DTOs are not equal.
-            </summary>
-            <param name="left">Left DTO.</param>
-            <param name="right">Right DTO.</param>
-            <returns>True if the DTOs are not equal; otherwise false.</returns>
-        </member>
         <member name="T:NVAPIWrapper.NVAPIMosaicDisplaySettingsDto">
             <summary>
             Mosaic display modes DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicDisplaySettingsDto.Settings">
+            <summary>
+            Gets or sets Settings. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicDisplaySettingsDto.#ctor(NVAPIWrapper.NVAPIMosaicDisplaySettingDto[])">
@@ -5925,6 +6054,11 @@
             Mosaic display topology status DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicDisplayTopoStatusDto.Displays">
+            <summary>
+            Gets or sets Displays. Empty when no values are present.
+            </summary>
+        </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicDisplayTopoStatusDto.#ctor(System.UInt32,System.UInt32,NVAPIWrapper.NVAPIMosaicDisplayStatusEntryDto[])">
             <summary>
             Create a Mosaic display topology status DTO.
@@ -5979,6 +6113,11 @@
         <member name="T:NVAPIWrapper.NVAPIMosaicDisplayTopoStatusesDto">
             <summary>
             Mosaic display topology status collection DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicDisplayTopoStatusesDto.Statuses">
+            <summary>
+            Gets or sets Statuses. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicDisplayTopoStatusesDto.#ctor(NVAPIWrapper.NVAPIMosaicDisplayTopoStatusDto[])">
@@ -6089,6 +6228,11 @@
         <member name="T:NVAPIWrapper.NVAPIMosaicViewportsDto">
             <summary>
             Mosaic viewport list DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIMosaicViewportsDto.Viewports">
+            <summary>
+            Gets or sets Viewports. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIMosaicViewportsDto.#ctor(NVAPIWrapper.NVAPIRectDto[],System.Boolean)">
@@ -6776,6 +6920,16 @@
             I2C request/response DTO for NVAPI I2C operations.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPII2CInfoDto.RegisterAddress">
+            <summary>
+            Gets or sets RegisterAddress. Empty when no values are present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPII2CInfoDto.Data">
+            <summary>
+            Gets or sets Data. Empty when no values are present.
+            </summary>
+        </member>
         <member name="M:NVAPIWrapper.NVAPII2CInfoDto.FromNative(NVAPIWrapper.NV_I2C_INFO_V3)">
             <summary>
             Create a DTO from a native struct. Note: pointer-backed buffers are not copied.
@@ -6806,6 +6960,11 @@
             Dynamic P-state info DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuDynamicPstatesInfoExDto.Utilization">
+            <summary>
+            Gets or sets Utilization. Empty when no values are present.
+            </summary>
+        </member>
         <member name="T:NVAPIWrapper.NVAPIGpuThermalSensorDto">
             <summary>
             Thermal sensor DTO.
@@ -6816,6 +6975,11 @@
             Thermal settings DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuThermalSettingsDto.Sensors">
+            <summary>
+            Gets or sets Sensors. Empty when no values are present.
+            </summary>
+        </member>
         <member name="T:NVAPIWrapper.NVAPIGpuClockDomainDto">
             <summary>
             Clock domain DTO.
@@ -6824,6 +6988,11 @@
         <member name="T:NVAPIWrapper.NVAPIGpuClockFrequenciesDto">
             <summary>
             Clock frequencies DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuClockFrequenciesDto.Domains">
+            <summary>
+            Gets or sets Domains. Empty when no values are present.
             </summary>
         </member>
         <member name="T:NVAPIWrapper.NVAPIGpuIlluminationSupportDto">
@@ -6847,10 +7016,15 @@
         <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceInfoDto.CtrlModeMask">
             <summary>Bitmask of supported control modes.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceInfoDto.DataRawBytes">
+        <member name="F:NVAPIWrapper.NVAPIGpuIllumDeviceInfoDto._dataRawBytes">
             <summary>
             Raw bytes for the type-discriminated union <c>data</c> field (64 bytes).
             Interpret using <see cref="P:NVAPIWrapper.NVAPIGpuIllumDeviceInfoDto.Type"/> to select the appropriate union member.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceInfoDto.DataRawBytes">
+            <summary>
+            Gets or sets DataRawBytes. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuIllumDeviceInfoDto.#ctor(NVAPIWrapper.NV_GPU_CLIENT_ILLUM_DEVICE_TYPE,System.UInt32,System.Byte[])">
@@ -6885,8 +7059,13 @@
         <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceInfoParamsDto.NumIllumDevices">
             <summary>Number of illumination devices reported.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceInfoParamsDto.Devices">
+        <member name="F:NVAPIWrapper.NVAPIGpuIllumDeviceInfoParamsDto._devices">
             <summary>Per-device illumination info array (up to 32 entries).</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceInfoParamsDto.Devices">
+            <summary>
+            Gets or sets Devices. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuIllumDeviceInfoParamsDto.#ctor(System.UInt32,NVAPIWrapper.NVAPIGpuIllumDeviceInfoDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPIGpuIllumDeviceInfoParamsDto"/>.</summary>
@@ -6961,8 +7140,13 @@
         <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceControlParamsDto.NumIllumDevices">
             <summary>Number of illumination devices for control.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceControlParamsDto.Devices">
+        <member name="F:NVAPIWrapper.NVAPIGpuIllumDeviceControlParamsDto._devices">
             <summary>Per-device illumination control array (up to 32 entries).</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuIllumDeviceControlParamsDto.Devices">
+            <summary>
+            Gets or sets Devices. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuIllumDeviceControlParamsDto.#ctor(System.UInt32,NVAPIWrapper.NVAPIGpuIllumDeviceControlDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPIGpuIllumDeviceControlParamsDto"/>.</summary>
@@ -7008,10 +7192,15 @@
         <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneInfoDto.ZoneLocation">
             <summary>Physical location of the zone on the GPU or card.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneInfoDto.DataRawBytes">
+        <member name="F:NVAPIWrapper.NVAPIGpuIllumZoneInfoDto._dataRawBytes">
             <summary>
             Raw bytes for the type-discriminated union <c>data</c> field (64 bytes).
             Interpret using <see cref="P:NVAPIWrapper.NVAPIGpuIllumZoneInfoDto.Type"/> to select the appropriate union member.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneInfoDto.DataRawBytes">
+            <summary>
+            Gets or sets DataRawBytes. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuIllumZoneInfoDto.#ctor(NVAPIWrapper.NV_GPU_CLIENT_ILLUM_ZONE_TYPE,System.Byte,System.Byte,NVAPIWrapper.NV_GPU_CLIENT_ILLUM_ZONE_LOCATION,System.Byte[])">
@@ -7046,8 +7235,13 @@
         <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneInfoParamsDto.NumIllumZones">
             <summary>Number of illumination zones reported.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneInfoParamsDto.Zones">
+        <member name="F:NVAPIWrapper.NVAPIGpuIllumZoneInfoParamsDto._zones">
             <summary>Per-zone illumination info array (up to 32 entries).</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneInfoParamsDto.Zones">
+            <summary>
+            Gets or sets Zones. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuIllumZoneInfoParamsDto.#ctor(System.UInt32,NVAPIWrapper.NVAPIGpuIllumZoneInfoDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPIGpuIllumZoneInfoParamsDto"/>.</summary>
@@ -7087,10 +7281,15 @@
         <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneControlDto.CtrlMode">
             <summary>Control mode for this illumination zone.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneControlDto.DataRawBytes">
+        <member name="F:NVAPIWrapper.NVAPIGpuIllumZoneControlDto._dataRawBytes">
             <summary>
             Raw bytes for the type-discriminated union <c>data</c> field (64 bytes).
             Interpret using <see cref="P:NVAPIWrapper.NVAPIGpuIllumZoneControlDto.Type"/> to select the appropriate union member.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneControlDto.DataRawBytes">
+            <summary>
+            Gets or sets DataRawBytes. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuIllumZoneControlDto.#ctor(NVAPIWrapper.NV_GPU_CLIENT_ILLUM_ZONE_TYPE,NVAPIWrapper.NV_GPU_CLIENT_ILLUM_CTRL_MODE,System.Byte[])">
@@ -7128,8 +7327,13 @@
         <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneControlParamsDto.NumIllumZonesControl">
             <summary>Number of illumination zones for control.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneControlParamsDto.Zones">
+        <member name="F:NVAPIWrapper.NVAPIGpuIllumZoneControlParamsDto._zones">
             <summary>Per-zone illumination control array (up to 32 entries).</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuIllumZoneControlParamsDto.Zones">
+            <summary>
+            Gets or sets Zones. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuIllumZoneControlParamsDto.#ctor(System.Boolean,System.UInt32,NVAPIWrapper.NVAPIGpuIllumZoneControlDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPIGpuIllumZoneControlParamsDto"/>.</summary>
@@ -7281,11 +7485,21 @@
         <member name="P:NVAPIWrapper.NVAPIPstateInfoDto.IsEditable">
             <summary>True if this P-state is editable.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIPstateInfoDto.Clocks">
+        <member name="F:NVAPIWrapper.NVAPIPstateInfoDto._clocks">
             <summary>Clock entries for this P-state (up to 8).</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIPstateInfoDto.BaseVoltages">
+        <member name="P:NVAPIWrapper.NVAPIPstateInfoDto.Clocks">
+            <summary>
+            Gets or sets Clocks. Empty when no values are present.
+            </summary>
+        </member>
+        <member name="F:NVAPIWrapper.NVAPIPstateInfoDto._baseVoltages">
             <summary>Base voltage entries for this P-state (up to 4).</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIPstateInfoDto.BaseVoltages">
+            <summary>
+            Gets or sets BaseVoltages. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIPstateInfoDto.#ctor(NVAPIWrapper._NV_GPU_PERF_PSTATE_ID,System.Boolean,NVAPIWrapper.NVAPIPstateClockEntryDto[],NVAPIWrapper.NVAPIPstateBaseVoltageEntryDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPIPstateInfoDto"/>.</summary>
@@ -7328,14 +7542,24 @@
         <member name="P:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto.NumBaseVoltages">
             <summary>Number of base voltages per P-state.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto.Pstates">
+        <member name="F:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto._pstates">
             <summary>P-state info array (up to 16 entries).</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto.Pstates">
+            <summary>
+            Gets or sets Pstates. Empty when no values are present.
+            </summary>
         </member>
         <member name="P:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto.OvNumVoltages">
             <summary>Number of over-voltage entries.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto.OvVoltages">
+        <member name="F:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto._ovVoltages">
             <summary>Over-voltage entries (up to 4).</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto.OvVoltages">
+            <summary>
+            Gets or sets OvVoltages. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto.#ctor(System.Boolean,System.UInt32,System.UInt32,System.UInt32,NVAPIWrapper.NVAPIPstateInfoDto[],System.UInt32,NVAPIWrapper.NVAPIPstateBaseVoltageEntryDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPIGpuPerfPstates20InfoDto"/>.</summary>
@@ -7463,8 +7687,13 @@
         <member name="P:NVAPIWrapper.NVAPILicensableFeaturesDto.Signature">
             <summary>License signature string (up to 128 characters).</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPILicensableFeaturesDto.LicenseDetails">
+        <member name="F:NVAPIWrapper.NVAPILicensableFeaturesDto._licenseDetails">
             <summary>Array of up to 3 per-feature license details.</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPILicensableFeaturesDto.LicenseDetails">
+            <summary>
+            Gets or sets LicenseDetails. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPILicensableFeaturesDto.#ctor(System.Boolean,System.UInt32,System.String,NVAPIWrapper.NVAPILicenseFeatureDetailsDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPILicensableFeaturesDto"/>.</summary>
@@ -7592,8 +7821,13 @@
         <member name="P:NVAPIWrapper.NVAPIEncoderSessionsInfoDto.SessionsCount">
             <summary>Number of active encoder sessions.</summary>
         </member>
-        <member name="P:NVAPIWrapper.NVAPIEncoderSessionsInfoDto.Sessions">
+        <member name="F:NVAPIWrapper.NVAPIEncoderSessionsInfoDto._sessions">
             <summary>Per-session encoder info array; may be empty if no sessions are active.</summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIEncoderSessionsInfoDto.Sessions">
+            <summary>
+            Gets or sets Sessions. Empty when no values are present.
+            </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIEncoderSessionsInfoDto.#ctor(System.UInt32,NVAPIWrapper.NVAPIEncoderPerSessionInfoDto[])">
             <summary>Initializes a new instance of <see cref="T:NVAPIWrapper.NVAPIEncoderSessionsInfoDto"/>.</summary>
@@ -7800,14 +8034,29 @@
             NVLINK_LINK_STATUS_INFO_V2 DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPINvLinkStatusInfoDto.ReservedEx">
+            <summary>
+            Gets or sets ReservedEx. Empty when no values are present.
+            </summary>
+        </member>
         <member name="T:NVAPIWrapper.NVAPINvLinkDeviceInfoDto">
             <summary>
             NVLINK_DEVICE_INFO_V1 DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPINvLinkDeviceInfoDto.DeviceUUID">
+            <summary>
+            Gets or sets DeviceUUID. Empty when no values are present.
+            </summary>
+        </member>
         <member name="T:NVAPIWrapper.NVAPIGpuInfoDto">
             <summary>
             GPU info DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuInfoDto.Reserved2">
+            <summary>
+            Gets or sets Reserved2. Empty when no values are present.
             </summary>
         </member>
         <member name="T:NVAPIWrapper.NVAPIGpuArchInfoDto">
@@ -7846,9 +8095,81 @@
             GPU EDID data DTO.
             </summary>
         </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuEdidDto.Data">
+            <summary>
+            Gets or sets Data. Empty when no values are present.
+            </summary>
+        </member>
         <member name="T:NVAPIWrapper.NVAPILogicalGpuInfoDto">
             <summary>
             Logical GPU info DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.PhysicalGpuHandles">
+            <summary>
+            Native physical GPU handles included in this logical GPU.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.PhysicalGpus">
+            <summary>
+            Physical GPU helpers included in this logical GPU.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.PhysicalGpuCount">
+            <summary>
+            Number of physical GPUs included in this logical GPU.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.HasOsAdapterId">
+            <summary>
+            True when <see cref="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.OsAdapterId"/> contains an OS adapter LUID.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.OsAdapterId">
+            <summary>
+            OS adapter LUID. When <see cref="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.HasOsAdapterId"/> is false, this contains a default value.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPILogicalGpuInfoDto.Reserved">
+            <summary>
+            Reserved native fields.
+            </summary>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPILogicalGpuInfoDto.#ctor(System.Boolean,NVAPIWrapper._LUID,System.IntPtr[],NVAPIWrapper.NVAPIPhysicalGpuHelper[],System.UInt32[])">
+            <summary>
+            Create logical GPU information.
+            </summary>
+            <param name="hasOsAdapterId">True when OS adapter LUID is present.</param>
+            <param name="osAdapterId">OS adapter LUID, or default when not present.</param>
+            <param name="handles">Physical GPU handles.</param>
+            <param name="gpus">Physical GPU helpers.</param>
+            <param name="reserved">Reserved native fields.</param>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPILogicalGpuInfoDto.FromNative(NVAPIWrapper.NVAPIApiHelper,NVAPIWrapper._NV_LOGICAL_GPU_DATA_V1)">
+            <summary>
+            Create logical GPU information from native data.
+            </summary>
+            <param name="apiHelper">API helper used to create physical GPU helpers.</param>
+            <param name="native">Native logical GPU data.</param>
+            <returns>Logical GPU information DTO.</returns>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPILogicalGpuInfoDto.Equals(NVAPIWrapper.NVAPILogicalGpuInfoDto)">
+            <inheritdoc />
+        </member>
+        <member name="M:NVAPIWrapper.NVAPILogicalGpuInfoDto.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:NVAPIWrapper.NVAPILogicalGpuInfoDto.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:NVAPIWrapper.NVAPILogicalGpuInfoDto.op_Equality(NVAPIWrapper.NVAPILogicalGpuInfoDto,NVAPIWrapper.NVAPILogicalGpuInfoDto)">
+            <summary>
+            Determine whether two logical GPU information DTOs are equal.
+            </summary>
+        </member>
+        <member name="M:NVAPIWrapper.NVAPILogicalGpuInfoDto.op_Inequality(NVAPIWrapper.NVAPILogicalGpuInfoDto,NVAPIWrapper.NVAPILogicalGpuInfoDto)">
+            <summary>
+            Determine whether two logical GPU information DTOs are not equal.
             </summary>
         </member>
         <member name="T:NVAPIWrapper.NVAPISBoxDto">
@@ -7864,6 +8185,21 @@
         <member name="T:NVAPIWrapper.NVAPIGpuUtilizationSampleCallbackSettingsDto">
             <summary>
             Utilization sample callback settings DTO.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuUtilizationSampleCallbackSettingsDto.SuperReserved">
+            <summary>
+            Gets or sets SuperReserved. Empty when no values are present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuUtilizationSampleCallbackSettingsDto.PeriodicReserved">
+            <summary>
+            Gets or sets PeriodicReserved. Empty when no values are present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGpuUtilizationSampleCallbackSettingsDto.Reserved">
+            <summary>
+            Gets or sets Reserved. Empty when no values are present.
             </summary>
         </member>
         <member name="T:NVAPIWrapper.NVAPIQuadroGSyncHelper">
@@ -7960,6 +8296,13 @@
             <param name="flags">Flags for the operation.</param>
             <returns>True if applied, null if unsupported.</returns>
         </member>
+        <member name="M:NVAPIWrapper.NVAPIQuadroGSyncHelper.GetProxyPhysicalGpus(NVAPIWrapper.NVAPIGSyncGpuDto)">
+            <summary>
+            Resolve the proxy physical GPU referenced by a G-Sync GPU DTO.
+            </summary>
+            <param name="gpu">G-Sync GPU DTO.</param>
+            <returns>A single physical GPU helper when the DTO references a valid proxy physical GPU; otherwise an empty array.</returns>
+        </member>
         <member name="M:NVAPIWrapper.NVAPIQuadroGSyncHelper.Dispose">
             <summary>
             Dispose the helper.
@@ -8033,6 +8376,31 @@
         <member name="T:NVAPIWrapper.NVAPIGSyncGpuDto">
             <summary>
             DTO for a G-Sync GPU entry in topology.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncGpuDto.HasPhysicalGpu">
+            <summary>
+            Gets whether this DTO references a physical GPU handle.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncGpuDto.PhysicalGpuHandleValue">
+            <summary>
+            Gets the physical GPU handle value, or 0 when no physical GPU handle is present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncGpuDto.PhysicalGpu">
+            <summary>
+            Gets the physical GPU helper for in-process callers. Ignored during JSON serialization.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncGpuDto.HasProxyPhysicalGpu">
+            <summary>
+            Gets whether this DTO references a proxy physical GPU handle.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncGpuDto.ProxyPhysicalGpuHandleValue">
+            <summary>
+            Gets the proxy physical GPU handle value, or 0 when no proxy physical GPU handle is present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGSyncGpuDto.#ctor(NVAPIWrapper.NVAPIPhysicalGpuHelper,NVAPIWrapper._NVAPI_GSYNC_GPU_TOPOLOGY_CONNECTOR,NVAPIWrapper.NVAPIPhysicalGpuHelper,System.Boolean)">
@@ -8176,6 +8544,16 @@
         <member name="T:NVAPIWrapper.NVAPIGSyncTopologyDto">
             <summary>
             DTO for G-Sync topology results.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncTopologyDto.Gpus">
+            <summary>
+            Gets or sets Gpus. Empty when no values are present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncTopologyDto.Displays">
+            <summary>
+            Gets or sets Displays. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGSyncTopologyDto.#ctor(NVAPIWrapper.NVAPIGSyncGpuDto[],NVAPIWrapper.NVAPIGSyncDisplayDto[])">
@@ -8466,6 +8844,16 @@
         <member name="T:NVAPIWrapper.NVAPIGSyncStatusParametersDto">
             <summary>
             DTO for G-Sync status parameters.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncStatusParametersDto.Rj45Io">
+            <summary>
+            Gets or sets Rj45Io. Empty when no values are present.
+            </summary>
+        </member>
+        <member name="P:NVAPIWrapper.NVAPIGSyncStatusParametersDto.Rj45Ethernet">
+            <summary>
+            Gets or sets Rj45Ethernet. Empty when no values are present.
             </summary>
         </member>
         <member name="M:NVAPIWrapper.NVAPIGSyncStatusParametersDto.#ctor(System.UInt32,NVAPIWrapper._NVAPI_GSYNC_RJ45_IO[],System.UInt32[],System.UInt32,System.Boolean,System.Boolean)">
