@@ -483,20 +483,13 @@ namespace DisplayMagicianShared.Windows
                         }
                         else
                         {
-                            newAdapterValue = currentAdapterMap.First().Key;
-                            SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Target adapter {savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value} for path #{i} didn't have a current match! Attempting to use adapter {newAdapterValue} instead.");
-                            savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                            SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Target adapter {savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value} for path #{i} did not have a current adapter-map match. Leaving the saved target adapter ID unchanged so SetDisplayConfig can validate the original cross-adapter path instead of replacing it with the wrong adapter.");
                         }
                         SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated DisplayConfig Path #{i} from adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} to adapter {newAdapterValue} instead.");
                     }
                     else
                     {
-                        // if there isn't a matching adapter, then we just pick the first current one and hope that works!
-                        // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                        newAdapterValue = currentAdapterMap.First().Key;
-                        SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                        savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
-                        savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                        SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Source adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} for path #{i} did not have a current adapter-map match. Leaving the saved source and target adapter IDs unchanged; replacing them with the first current adapter can corrupt cross-adapter clone/extend profiles.");
                     }
                 }
             }
@@ -522,11 +515,7 @@ namespace DisplayMagicianShared.Windows
                     }
                     else
                     {
-                        // if there isn't a matching adapter, then we just pick the first current one and hope that works!
-                        // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                        newAdapterValue = currentAdapterMap.First().Key;
-                        SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                        savedDisplayConfig.DisplayConfigModes[i].AdapterId = AdapterValueToLUID(newAdapterValue);
+                        SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Mode adapter {savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value} for mode #{i} did not have a current adapter-map match. Leaving the saved adapter ID unchanged so Windows can validate the original mode relationship.");
                     }
                 }
             }
@@ -545,28 +534,38 @@ namespace DisplayMagicianShared.Windows
                     for (int i = 0; i < savedDisplayConfig.DisplayHDRStates.Count; i++)
                     {
                         ADVANCED_HDR_INFO_PER_PATH hdrInfo = savedDisplayConfig.DisplayHDRStates[i];
-                        // Change the Mode AdapterID
-                        if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value))
+                        // Change the HDR adapter IDs, but only where we have a confident old-to-new mapping.
+                        // In hybrid clone states Windows can expose a cross-adapter target without returning
+                        // the dGPU adapter in GetAllAdapterIDs(). Replacing an unmatched NVIDIA adapter with
+                        // the first current adapter corrupts the saved topology, so unmatched IDs are left alone.
+                        if (adapterOldToNewMap.TryGetValue(hdrInfo.AdapterId.Value, out newAdapterValue))
                         {
-                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: adapterOldToNewMap contains adapter {hdrInfo.AdapterId.Value} so using the new adapter ID of {newAdapterValue} instead.");
-                            // We get here if there is a matching adapter
-                            newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value];
                             hdrInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
-                            newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdvancedColorInfo.Header.AdapterId.Value];
-                            hdrInfo.AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
-                            newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId.Value];
-                            hdrInfo.SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
-                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated Display HDR state #{i} from adapter {hdrInfo.AdapterId.Value} to adapter {newAdapterValue} instead.");
+                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated Display HDR state #{i} adapter to {newAdapterValue}.");
                         }
                         else
                         {
-                            // if there isn't a matching adapter, then we just pick the first current one and hope that works!
-                            // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                            newAdapterValue = currentAdapterMap.First().Key;
-                            SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                            hdrInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                            SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: HDR adapter {hdrInfo.AdapterId.Value} for HDR state #{i} did not have a current adapter-map match. Leaving it unchanged.");
+                        }
+
+                        if (adapterOldToNewMap.TryGetValue(hdrInfo.AdvancedColorInfo.Header.AdapterId.Value, out newAdapterValue))
+                        {
                             hdrInfo.AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated AdvancedColorInfo HDR adapter for state #{i} to {newAdapterValue}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: AdvancedColorInfo HDR adapter {hdrInfo.AdvancedColorInfo.Header.AdapterId.Value} for HDR state #{i} did not have a current adapter-map match. Leaving it unchanged.");
+                        }
+
+                        if (adapterOldToNewMap.TryGetValue(hdrInfo.SDRWhiteLevel.Header.AdapterId.Value, out newAdapterValue))
+                        {
                             hdrInfo.SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                            SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated SDRWhiteLevel HDR adapter for state #{i} to {newAdapterValue}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: SDRWhiteLevel HDR adapter {hdrInfo.SDRWhiteLevel.Header.AdapterId.Value} for HDR state #{i} did not have a current adapter-map match. Leaving it unchanged.");
                         }
                         savedDisplayConfig.DisplayHDRStates[i] = hdrInfo;
                     }
@@ -604,11 +603,7 @@ namespace DisplayMagicianShared.Windows
                             }
                             else
                             {
-                                // if there isn't a matching adapter, then we just pick the first current one and hope that works!
-                                // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                                newAdapterValue = currentAdapterMap.First().Key;
-                                SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {ds.AdapterId.Value} didn't have a current match in Display Sources! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                                ds.AdapterId = AdapterValueToLUID(newAdapterValue);
+                                SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Display source adapter {ds.AdapterId.Value} did not have a current adapter-map match. Leaving the saved adapter ID unchanged.");
                             }
                             dsList[j] = ds;
                         }
@@ -1712,6 +1707,374 @@ namespace DisplayMagicianShared.Windows
             }
         }
 
+
+        private struct WindowsDisplayIdentity
+        {
+            public string AdapterDevicePath;
+            public string OutputTechnology;
+            public uint StableTargetId;
+            public string MonitorDevicePath;
+            public string FriendlyName;
+        }
+
+        private static string NormalizeDisplayDevicePath(string devicePath)
+        {
+            if (string.IsNullOrWhiteSpace(devicePath))
+                return string.Empty;
+
+            // Device paths often contain an instance component that changes across reboots
+            // and across topology transitions. Ignore that component when matching.
+            var parts = devicePath.Split('#');
+            if (parts.Length <= 1)
+                return devicePath.Trim().ToUpperInvariant();
+
+            var normalizedParts = new List<string>();
+            for (var i = 0; i < parts.Length; i++)
+            {
+                if (i == 1)
+                    continue;
+
+                normalizedParts.Add(parts[i]);
+            }
+
+            return string.Join("#", normalizedParts).Trim().ToUpperInvariant();
+        }
+
+        private static bool TryParseWindowsDisplayIdentifier(string displayIdentifier, out WindowsDisplayIdentity identity)
+        {
+            identity = new WindowsDisplayIdentity
+            {
+                AdapterDevicePath = string.Empty,
+                OutputTechnology = string.Empty,
+                StableTargetId = 0,
+                MonitorDevicePath = string.Empty,
+                FriendlyName = string.Empty
+            };
+
+            if (string.IsNullOrWhiteSpace(displayIdentifier))
+                return false;
+
+            var parts = displayIdentifier.Split('|');
+            if (parts.Length < 5 || !string.Equals(parts[0], "WINAPI", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (!uint.TryParse(parts[3], out var targetId))
+                targetId = 0;
+
+            identity.AdapterDevicePath = parts[1] ?? string.Empty;
+            identity.OutputTechnology = parts[2] ?? string.Empty;
+            identity.StableTargetId = targetId;
+            identity.MonitorDevicePath = parts[4] ?? string.Empty;
+            identity.FriendlyName = parts.Length > 5 ? parts[5] ?? string.Empty : string.Empty;
+            return true;
+        }
+
+        private static List<WindowsDisplayIdentity> GetDesiredWindowsDisplayIdentities(WINDOWS_DISPLAY_CONFIG displayConfig)
+        {
+            var identities = new List<WindowsDisplayIdentity>();
+            if (displayConfig.DisplayIdentifiers == null)
+                return identities;
+
+            foreach (var displayIdentifier in displayConfig.DisplayIdentifiers)
+            {
+                if (TryParseWindowsDisplayIdentifier(displayIdentifier, out var identity))
+                    identities.Add(identity);
+            }
+
+            return identities;
+        }
+
+        private static bool TryGetAdapterDevicePath(DISPLAYCONFIG_PATH_INFO path, WINDOWS_DISPLAY_CONFIG currentDisplayConfig, out string adapterDevicePath)
+        {
+            adapterDevicePath = string.Empty;
+
+            if (currentDisplayConfig.DisplayAdapters != null &&
+                currentDisplayConfig.DisplayAdapters.TryGetValue(path.TargetInfo.AdapterId.Value, out var existingAdapterPath) &&
+                !string.IsNullOrWhiteSpace(existingAdapterPath))
+            {
+                adapterDevicePath = existingAdapterPath;
+                return true;
+            }
+
+            var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
+            adapterInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+            adapterInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_ADAPTER_NAME>();
+            adapterInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+            adapterInfo.Header.Id = path.TargetInfo.Id;
+
+            var err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
+            if (err == WIN32STATUS.ERROR_SUCCESS)
+            {
+                adapterDevicePath = adapterInfo.AdapterDevicePath;
+                return true;
+            }
+
+            SharedLogger.logger.Warn($"WinLibrary/TryGetAdapterDevicePath: DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get adapter path for target {path.TargetInfo.Id}.");
+            return false;
+        }
+
+        private static bool TryGetTargetDevicePath(DISPLAYCONFIG_PATH_INFO path, out string monitorDevicePath)
+        {
+            monitorDevicePath = string.Empty;
+
+            var targetInfo = new DISPLAYCONFIG_TARGET_DEVICE_NAME();
+            targetInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+            targetInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_TARGET_DEVICE_NAME>();
+            targetInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+            targetInfo.Header.Id = path.TargetInfo.Id;
+
+            var err = CCDImport.DisplayConfigGetDeviceInfo(ref targetInfo);
+            if (err == WIN32STATUS.ERROR_SUCCESS)
+            {
+                monitorDevicePath = targetInfo.MonitorDevicePath;
+                return true;
+            }
+
+            SharedLogger.logger.Warn($"WinLibrary/TryGetTargetDevicePath: DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get monitor path for target {path.TargetInfo.Id}.");
+            return false;
+        }
+
+        private static bool PathMatchesDesiredDisplay(DISPLAYCONFIG_PATH_INFO currentPath, WINDOWS_DISPLAY_CONFIG currentDisplayConfig, WindowsDisplayIdentity desiredIdentity)
+        {
+            if (!currentPath.TargetInfo.TargetAvailable && !currentPath.TargetInfo.TargetInUse)
+                return false;
+
+            var currentOutputTechnology = currentPath.TargetInfo.OutputTechnology.ToString("G");
+            if (!string.Equals(currentOutputTechnology, desiredIdentity.OutputTechnology, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (TryGetAdapterDevicePath(currentPath, currentDisplayConfig, out var currentAdapterPath) &&
+                !string.IsNullOrWhiteSpace(desiredIdentity.AdapterDevicePath) &&
+                !string.Equals(NormalizeDisplayDevicePath(currentAdapterPath), NormalizeDisplayDevicePath(desiredIdentity.AdapterDevicePath), StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (TryGetTargetDevicePath(currentPath, out var currentMonitorPath) &&
+                !string.IsNullOrWhiteSpace(desiredIdentity.MonitorDevicePath) &&
+                string.Equals(NormalizeDisplayDevicePath(currentMonitorPath), NormalizeDisplayDevicePath(desiredIdentity.MonitorDevicePath), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Fallback: in non-cloned layouts the runtime CCD target id often matches the stable UID-derived id.
+            // In cloned layouts it may not, so this is deliberately only a fallback after adapter/output checks.
+            return desiredIdentity.StableTargetId != 0 && currentPath.TargetInfo.Id == desiredIdentity.StableTargetId;
+        }
+
+        private static bool TryFindCurrentPathForDesiredDisplay(WINDOWS_DISPLAY_CONFIG currentDisplayConfig, WindowsDisplayIdentity desiredIdentity, out DISPLAYCONFIG_PATH_INFO matchedPath)
+        {
+            matchedPath = default;
+
+            if (currentDisplayConfig.DisplayConfigPaths == null)
+                return false;
+
+            foreach (var path in currentDisplayConfig.DisplayConfigPaths)
+            {
+                if (PathMatchesDesiredDisplay(path, currentDisplayConfig, desiredIdentity))
+                {
+                    matchedPath = path;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static WindowsDisplayIdentity? GetPrimaryDesiredCloneIdentity(WINDOWS_DISPLAY_CONFIG displayConfig, List<WindowsDisplayIdentity> desiredIdentities)
+        {
+            if (desiredIdentities.Count == 0)
+                return null;
+
+            var primaryTargetId = displayConfig.DisplayConfigPaths != null && displayConfig.DisplayConfigPaths.Length > 0
+                ? displayConfig.DisplayConfigPaths[0].TargetInfo.Id
+                : 0;
+
+            if (displayConfig.DisplaySources != null && displayConfig.DisplaySources.Count > 0)
+            {
+                var firstSource = displayConfig.DisplaySources.First().Value;
+                if (firstSource != null && firstSource.Count > 0)
+                    primaryTargetId = firstSource[0].TargetId;
+            }
+
+            var primaryIdentity = desiredIdentities.FirstOrDefault(identity => identity.StableTargetId == primaryTargetId);
+            if (primaryIdentity.StableTargetId != 0)
+                return primaryIdentity;
+
+            return desiredIdentities[0];
+        }
+
+        private static bool IsValidDisplayConfigModeIndex(uint modeInfoIdx, WINDOWS_DISPLAY_CONFIG displayConfig)
+        {
+            return modeInfoIdx != CCDImport.DISPLAYCONFIG_PATH_MODE_IDX_INVALID &&
+                   displayConfig.DisplayConfigModes != null &&
+                   modeInfoIdx < displayConfig.DisplayConfigModes.Length;
+        }
+
+        private static bool TryFindCurrentTargetModeIndex(
+            WINDOWS_DISPLAY_CONFIG currentDisplayConfig,
+            DISPLAYCONFIG_PATH_INFO currentTargetPath,
+            out uint modeIndex)
+        {
+            modeIndex = CCDImport.DISPLAYCONFIG_PATH_MODE_IDX_INVALID;
+
+            if (IsValidDisplayConfigModeIndex(currentTargetPath.TargetInfo.ModeInfoIdx, currentDisplayConfig))
+            {
+                modeIndex = currentTargetPath.TargetInfo.ModeInfoIdx;
+                return true;
+            }
+
+            if (currentDisplayConfig.DisplayConfigModes == null)
+                return false;
+
+            for (uint i = 0; i < currentDisplayConfig.DisplayConfigModes.Length; i++)
+            {
+                var mode = currentDisplayConfig.DisplayConfigModes[i];
+                if (mode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET &&
+                    mode.AdapterId.Value == currentTargetPath.TargetInfo.AdapterId.Value &&
+                    mode.Id == currentTargetPath.TargetInfo.Id)
+                {
+                    modeIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryBuildCloneTopologyFromCurrentTargets(
+            WINDOWS_DISPLAY_CONFIG savedDisplayConfig,
+            WINDOWS_DISPLAY_CONFIG currentDisplayConfig,
+            out DISPLAYCONFIG_PATH_INFO[] clonedPaths,
+            out DISPLAYCONFIG_MODE_INFO[] clonedModes)
+        {
+            clonedPaths = Array.Empty<DISPLAYCONFIG_PATH_INFO>();
+            clonedModes = Array.Empty<DISPLAYCONFIG_MODE_INFO>();
+
+            if (!savedDisplayConfig.IsCloned)
+                return false;
+
+            var desiredIdentities = GetDesiredWindowsDisplayIdentities(savedDisplayConfig);
+            if (desiredIdentities.Count < 2)
+            {
+                SharedLogger.logger.Warn("WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Cloned profile did not contain at least two Windows display identifiers. Cannot build a specific clone topology.");
+                return false;
+            }
+
+            var primaryIdentity = GetPrimaryDesiredCloneIdentity(savedDisplayConfig, desiredIdentities);
+            if (!primaryIdentity.HasValue)
+            {
+                SharedLogger.logger.Warn("WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Could not determine the primary display for the cloned profile.");
+                return false;
+            }
+
+            if (!TryFindCurrentPathForDesiredDisplay(currentDisplayConfig, primaryIdentity.Value, out var primaryCurrentPath))
+            {
+                SharedLogger.logger.Warn("WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Could not find a current runtime CCD path matching the cloned profile primary display.");
+                return false;
+            }
+
+            if (!IsValidDisplayConfigModeIndex(primaryCurrentPath.SourceInfo.ModeInfoIdx, currentDisplayConfig))
+            {
+                SharedLogger.logger.Warn($"WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Primary runtime path source mode index {primaryCurrentPath.SourceInfo.ModeInfoIdx} is invalid. Cannot build a specific clone topology with supplied modes.");
+                return false;
+            }
+
+            var newPaths = new List<DISPLAYCONFIG_PATH_INFO>();
+            var newModes = new List<DISPLAYCONFIG_MODE_INFO>();
+
+            var sourceModeIndex = (uint)newModes.Count;
+            var sourceMode = currentDisplayConfig.DisplayConfigModes[primaryCurrentPath.SourceInfo.ModeInfoIdx];
+            newModes.Add(sourceMode);
+            SharedLogger.logger.Trace($"WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Added shared clone source mode #{sourceModeIndex} from current mode index {primaryCurrentPath.SourceInfo.ModeInfoIdx} for source {primaryCurrentPath.SourceInfo.Id} on adapter {primaryCurrentPath.SourceInfo.AdapterId.Value}.");
+
+            foreach (var desiredIdentity in desiredIdentities)
+            {
+                if (!TryFindCurrentPathForDesiredDisplay(currentDisplayConfig, desiredIdentity, out var currentTargetPath))
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Could not find a current runtime CCD path matching display identifier '{desiredIdentity.MonitorDevicePath}'.");
+                    return false;
+                }
+
+                if (!TryFindCurrentTargetModeIndex(currentDisplayConfig, currentTargetPath, out var currentTargetModeIndex))
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Could not find a current target mode for target {currentTargetPath.TargetInfo.Id} on adapter {currentTargetPath.TargetInfo.AdapterId.Value}. Cannot build a specific clone topology with supplied modes.");
+                    return false;
+                }
+
+                var clonedPath = currentTargetPath;
+
+                // Build the clone using the primary source but keep the current runtime target adapter/id
+                // for each desired display. The raw saved cloned paths are not replayed because hybrid
+                // AMD/NVIDIA clone mode can expose transient target ids that are not valid later.
+                clonedPath.SourceInfo.AdapterId = primaryCurrentPath.SourceInfo.AdapterId;
+                clonedPath.SourceInfo.Id = primaryCurrentPath.SourceInfo.Id;
+                clonedPath.SourceInfo.ModeInfoIdx = sourceModeIndex;
+
+                var targetModeIndex = (uint)newModes.Count;
+                var targetMode = currentDisplayConfig.DisplayConfigModes[currentTargetModeIndex];
+                newModes.Add(targetMode);
+                clonedPath.TargetInfo.ModeInfoIdx = targetModeIndex;
+                clonedPath.Flags |= DISPLAYCONFIG_PATH_FLAGS.DISPLAYCONFIG_PATH_ACTIVE;
+
+                newPaths.Add(clonedPath);
+                SharedLogger.logger.Trace($"WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Added clone path for target {clonedPath.TargetInfo.Id} on adapter {clonedPath.TargetInfo.AdapterId.Value} using source {clonedPath.SourceInfo.Id} on adapter {clonedPath.SourceInfo.AdapterId.Value}. SourceModeIdx={clonedPath.SourceInfo.ModeInfoIdx}, TargetModeIdx={clonedPath.TargetInfo.ModeInfoIdx}, CurrentTargetModeIdx={currentTargetModeIndex}.");
+            }
+
+            clonedPaths = newPaths.ToArray();
+            clonedModes = newModes.ToArray();
+            SharedLogger.logger.Trace($"WinLibrary/TryBuildCloneTopologyFromCurrentTargets: Built a specific cloned topology with {clonedPaths.Length} current runtime path(s) and {clonedModes.Length} supplied mode(s).");
+            return true;
+        }
+
+        private static bool TryApplySpecificCloneTopology(WINDOWS_DISPLAY_CONFIG savedDisplayConfig, WINDOWS_DISPLAY_CONFIG currentDisplayConfig, int delayInMs)
+        {
+            const int SDC_SAVE_TO_DATABASE = 0x00000200;
+            const int SDC_ALLOW_PATH_ORDER_CHANGES = 0x00002000;
+
+            if (!TryBuildCloneTopologyFromCurrentTargets(savedDisplayConfig, currentDisplayConfig, out var clonedPaths, out var clonedModes))
+                return false;
+
+            var pathCount = (uint)clonedPaths.Length;
+            var modeCount = (uint)clonedModes.Length;
+            var flags = SDC.SDC_APPLY |
+                        SDC.SDC_USE_SUPPLIED_DISPLAY_CONFIG |
+                        SDC.SDC_ALLOW_CHANGES |
+                        (SDC)SDC_SAVE_TO_DATABASE |
+                        (SDC)SDC_ALLOW_PATH_ORDER_CHANGES;
+
+            SharedLogger.logger.Trace($"WinLibrary/TryApplySpecificCloneTopology: Attempting to apply specific cloned topology using {pathCount} current runtime path(s) and {modeCount} supplied mode(s).");
+            var err = CCDImport.SetDisplayConfig(pathCount, clonedPaths, modeCount, clonedModes, flags);
+            if (err == WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Trace("WinLibrary/TryApplySpecificCloneTopology: Successfully applied specific cloned topology built from current runtime CCD targets and modes.");
+                Thread.Sleep(delayInMs);
+                return true;
+            }
+
+            SharedLogger.logger.Warn($"WinLibrary/TryApplySpecificCloneTopology: Specific cloned topology apply with supplied modes failed with WIN32STATUS {err}.");
+            return false;
+        }
+
+        private static bool TryApplyCloneTopologyFromDatabase(int delayInMs)
+        {
+            const int SDC_TOPOLOGY_CLONE = 0x00000002;
+
+            var cloneFlags = SDC.SDC_APPLY | (SDC)SDC_TOPOLOGY_CLONE;
+            SharedLogger.logger.Trace("WinLibrary/TryApplyCloneTopologyFromDatabase: Attempting last-resort clone apply using Windows database topology rather than a specific supplied clone layout.");
+
+            var err = CCDImport.SetDisplayConfig(0, null, 0, null, cloneFlags);
+            if (err == WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Trace("WinLibrary/TryApplyCloneTopologyFromDatabase: Successfully applied clone topology using Windows database topology fallback.");
+                Thread.Sleep(delayInMs);
+                return true;
+            }
+
+            SharedLogger.logger.Warn($"WinLibrary/TryApplyCloneTopologyFromDatabase: Windows database clone topology fallback failed with WIN32STATUS {err}.");
+            return false;
+        }
+
         public bool SetActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig, int delayInMs)
         {
 
@@ -1736,6 +2099,13 @@ namespace DisplayMagicianShared.Windows
             //SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
             //PatchWindowsDisplayConfig(ref displayConfig);
 
+            if (displayConfig.IsCloned && TryBuildCloneTopologyFromCurrentTargets(displayConfig, allWindowsDisplayConfig, out var rebuiltClonePaths, out var rebuiltCloneModes))
+            {
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Replacing saved cloned path/mode arrays with {rebuiltClonePaths.Length} current runtime CCD clone path(s) and {rebuiltCloneModes.Length} current runtime mode(s) before validation.");
+                displayConfig.DisplayConfigPaths = rebuiltClonePaths;
+                displayConfig.DisplayConfigModes = rebuiltCloneModes;
+            }
+
             uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
             uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
 
@@ -1751,6 +2121,18 @@ namespace DisplayMagicianShared.Windows
             else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
             {
                 SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: The combination of parameters and flags specified is invalid. Display configuration not valid.");
+                if (displayConfig.IsCloned && TryApplySpecificCloneTopology(displayConfig, allWindowsDisplayConfig, delayInMs))
+                {
+                    displayConfigPassedValidation = true;
+                    displayConfigAppliedSuccessfully = true;
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Supplied cloned display path/mode arrays were invalid, but a specific cloned topology rebuilt from current runtime CCD targets was applied successfully.");
+                }
+                else if (displayConfig.IsCloned && TryApplyCloneTopologyFromDatabase(delayInMs))
+                {
+                    displayConfigPassedValidation = true;
+                    displayConfigAppliedSuccessfully = true;
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Supplied cloned display path/mode arrays were invalid, and the specific clone rebuild failed, but Windows database clone topology fallback was applied successfully.");
+                }
             }
             else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
             {
@@ -1778,8 +2160,10 @@ namespace DisplayMagicianShared.Windows
                 return false;
             }
 
-            // If the display config passed validation, then we can try and apply it
-            if (displayConfigPassedValidation)
+            // If the display config passed validation, then we can try and apply it.
+            // If a clone fallback already applied the topology successfully, skip replaying the
+            // stale supplied clone arrays afterwards.
+            if (displayConfigPassedValidation && !displayConfigAppliedSuccessfully)
             {
                 // Try and apply the validated display config
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration with {myPathsCount} display config paths and {myModesCount} modes.");
@@ -2217,6 +2601,12 @@ namespace DisplayMagicianShared.Windows
             //PatchWindowsDisplayConfig(ref displayConfig);
 
             SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Testing whether the display configuration is valid ");
+            if (displayConfig.IsCloned && TryBuildCloneTopologyFromCurrentTargets(displayConfig, allWindowsDisplayConfig, out var rebuiltClonePaths, out var rebuiltCloneModes))
+            {
+                SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Replacing saved cloned path/mode arrays with {rebuiltClonePaths.Length} current runtime CCD clone path(s) and {rebuiltCloneModes.Length} current runtime mode(s) before validation.");
+                displayConfig.DisplayConfigPaths = rebuiltClonePaths;
+                displayConfig.DisplayConfigModes = rebuiltCloneModes;
+            }
             // Test whether a specified display configuration is supported on the computer                    
             uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
             uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
