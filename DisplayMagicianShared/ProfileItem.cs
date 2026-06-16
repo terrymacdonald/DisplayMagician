@@ -1326,16 +1326,16 @@ namespace DisplayMagicianShared
                                     if (found) break;
                                     foreach (var path in adapterKvp.Value.DisplayConfig.Paths ?? Array.Empty<NVAPIDisplayConfigPathDto>())
                                     {
-                                        if (path.SourceModeInfo == null) continue;
+                                        if (!path.HasSourceModeInfo) continue;
                                         foreach (var target in path.Targets ?? Array.Empty<NVAPIDisplayConfigTargetDto>())
                                         {
                                             if (target.DisplayId == displayId)
                                             {
                                                 screen.Name = displayId.ToString();
-                                                screen.ScreenX = path.SourceModeInfo.Value.Position.x;
-                                                screen.ScreenY = path.SourceModeInfo.Value.Position.y;
-                                                screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
-                                                screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                screen.ScreenX = path.SourceModeInfo.Position.x;
+                                                screen.ScreenY = path.SourceModeInfo.Position.y;
+                                                screen.ScreenWidth = (int)path.SourceModeInfo.Resolution.width;
+                                                screen.ScreenHeight = (int)path.SourceModeInfo.Resolution.height;
                                                 found = true;
                                                 break;
                                             }
@@ -1380,52 +1380,52 @@ namespace DisplayMagicianShared
                                     if (found) break;
                                     foreach (var path in adapterKvp.Value.DisplayConfig.Paths ?? Array.Empty<NVAPIDisplayConfigPathDto>())
                                     {
-                                        if (path.SourceModeInfo == null) continue;
+                                        if (!path.HasSourceModeInfo) continue;
                                         foreach (var targetInfo in path.Targets ?? Array.Empty<NVAPIDisplayConfigTargetDto>())
                                         {
                                             if (targetInfo.DisplayId == displayId)
                                             {
                                                 screen.Name = displayId.ToString();
-                                                screen.ScreenX = path.SourceModeInfo.Value.Position.x;
-                                                screen.ScreenY = path.SourceModeInfo.Value.Position.y;
+                                                screen.ScreenX = path.SourceModeInfo.Position.x;
+                                                screen.ScreenY = path.SourceModeInfo.Position.y;
 
-                                                if (targetInfo.Details.HasValue)
+                                                if (targetInfo.HasDetails)
                                                 {
-                                                    if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_0)
+                                                    if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_0)
                                                     {
-                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
-                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Resolution.width;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Resolution.height;
                                                         screen.Rotation = ScreenRotation.ROTATE_0;
                                                     }
-                                                    else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_90)
+                                                    else if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_90)
                                                     {
-                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.height;
-                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Resolution.height;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Resolution.width;
                                                         screen.Rotation = ScreenRotation.ROTATE_90;
                                                     }
-                                                    else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_180)
+                                                    else if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_180)
                                                     {
-                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
-                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Resolution.width;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Resolution.height;
                                                         screen.Rotation = ScreenRotation.ROTATE_180;
                                                     }
-                                                    else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_270)
+                                                    else if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_270)
                                                     {
-                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.height;
-                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.width;
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Resolution.height;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Resolution.width;
                                                         screen.Rotation = ScreenRotation.ROTATE_270;
                                                     }
                                                     else
                                                     {
-                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
-                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                        screen.ScreenWidth = (int)path.SourceModeInfo.Resolution.width;
+                                                        screen.ScreenHeight = (int)path.SourceModeInfo.Resolution.height;
                                                         screen.Rotation = ScreenRotation.ROTATE_0;
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    screen.ScreenWidth = (int)path.SourceModeInfo.Value.Resolution.width;
-                                                    screen.ScreenHeight = (int)path.SourceModeInfo.Value.Resolution.height;
+                                                    screen.ScreenWidth = (int)path.SourceModeInfo.Resolution.width;
+                                                    screen.ScreenHeight = (int)path.SourceModeInfo.Resolution.height;
                                                     screen.Rotation = ScreenRotation.ROTATE_0;
                                                 }
 
@@ -1493,7 +1493,7 @@ namespace DisplayMagicianShared
                         {
                             foreach (var displaySource in adapterKvp.Value.DisplayConfig.Paths ?? Array.Empty<NVAPIDisplayConfigPathDto>())
                             {
-                                if (displaySource.SourceModeInfo == null) continue;
+                                if (!displaySource.HasSourceModeInfo) continue;
                                 int targetInfoIndex = 0;
                                 SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing screen source index #{targetInfoIndex}.");
 
@@ -1508,8 +1508,8 @@ namespace DisplayMagicianShared
                                     screen.Rotation = ScreenRotation.ROTATE_0;
                                     // Set the initial taskbar location for this screen at the bottom
                                     screen.TaskbarPosition = TaskbarPosition.Bottom;
-                                    screen.ScreenX = displaySource.SourceModeInfo.Value.Position.x;
-                                    screen.ScreenY = displaySource.SourceModeInfo.Value.Position.y;
+                                    screen.ScreenX = displaySource.SourceModeInfo.Position.x;
+                                    screen.ScreenY = displaySource.SourceModeInfo.Position.y;
 
                                     // Find out if we're a cloned screen
                                     if (_nvidiaDisplayConfig.IsCloned && displaySource.Targets.Length > 1)
@@ -1533,43 +1533,43 @@ namespace DisplayMagicianShared
                                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is NOT part of a cloned group.");
                                     }
 
-                                    if (targetInfo.Details.HasValue)
+                                    if (targetInfo.HasDetails)
                                     {
-                                        if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_0)
+                                        if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_0)
                                         {
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.height;
                                             screen.Rotation = ScreenRotation.ROTATE_0;
                                         }
-                                        else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_90)
+                                        else if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_90)
                                         {
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.height;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.height;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.width;
                                             screen.Rotation = ScreenRotation.ROTATE_90;
                                         }
-                                        else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_180)
+                                        else if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_180)
                                         {
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.height;
                                             screen.Rotation = ScreenRotation.ROTATE_180;
                                         }
-                                        else if (targetInfo.Details.Value.Rotation == _NV_ROTATE.NV_ROTATE_270)
+                                        else if (targetInfo.Details.Rotation == _NV_ROTATE.NV_ROTATE_270)
                                         {
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.height;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.width;
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.height;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.width;
                                             screen.Rotation = ScreenRotation.ROTATE_270;
                                         }
                                         else
                                         {
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.width;
+                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.height;
                                             screen.Rotation = ScreenRotation.ROTATE_0;
                                         }
                                     }
                                     else
                                     {
-                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Value.Resolution.width;
-                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Value.Resolution.height;
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.width;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.height;
                                         screen.Rotation = ScreenRotation.ROTATE_0;
                                     }
 
