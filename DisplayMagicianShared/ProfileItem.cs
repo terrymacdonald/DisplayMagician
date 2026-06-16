@@ -1212,12 +1212,41 @@ namespace DisplayMagicianShared
                 List<ScreenPosition> winScreens = new List<ScreenPosition>() { };
                 winScreens.AddRange(GetWindowsScreenPositions());
 
-                // Ignore any windows screens that already exist from AMD and NVIDIA
-                // IMPORTANT: This logic depends on allScreens only containing NVIDIA and AMD screens, and also that AMD and NVIDIA don't each add the same screen
-                // If you change any code above this, then you need to make suyre this is still true!
+                // Now we need to merge the windows screens with the Intel, AMD and NVIDIA screens,
+                // but we also need to ensure that the cloned screen data is copied across if it matches one of the 
+                // earlier screens provided by the other video libraries.
                 foreach (var screen in winScreens)
                 {
-                    if (!allScreens.Contains(screen))
+                    int existingIndex = allScreens.FindIndex(s =>
+                        s.ScreenX == screen.ScreenX &&
+                        s.ScreenY == screen.ScreenY &&
+                        s.ScreenWidth == screen.ScreenWidth &&
+                        s.ScreenHeight == screen.ScreenHeight);
+
+                    if (existingIndex >= 0)
+                    {
+                        ScreenPosition existingScreen = allScreens[existingIndex];
+
+                        // Preserve the vendor/library label, but merge Windows clone metadata.
+                        if (screen.IsClone)
+                        {
+                            existingScreen.IsClone = true;
+                            existingScreen.ClonedCopies = screen.ClonedCopies;
+                        }
+
+                        // Also merge useful Windows metadata if the vendor screen did not already have it.
+                        if (existingScreen.RefreshRateHz <= 0 && screen.RefreshRateHz > 0)
+                            existingScreen.RefreshRateHz = screen.RefreshRateHz;
+
+                        if (string.IsNullOrEmpty(existingScreen.ColorEncoding) && !string.IsNullOrEmpty(screen.ColorEncoding))
+                            existingScreen.ColorEncoding = screen.ColorEncoding;
+
+                        if (existingScreen.BitsPerColorChannel <= 0 && screen.BitsPerColorChannel > 0)
+                            existingScreen.BitsPerColorChannel = screen.BitsPerColorChannel;
+
+                        allScreens[existingIndex] = existingScreen;
+                    }
+                    else
                     {
                         allScreens.Add(screen);
                     }
