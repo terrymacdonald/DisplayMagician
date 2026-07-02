@@ -87,6 +87,9 @@
     <Reference Include="WindowsWallpaperWrapper">
       <HintPath>DLL\WindowsWallpaperWrapper.dll</HintPath>
     </Reference>
+    <Reference Include="WindowsAudioWrapper">
+      <HintPath>DLL\WindowsAudioWrapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources.resx">

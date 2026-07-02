@@ -12,9 +12,6 @@ using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
-using IWshRuntimeLibrary;
-using AudioSwitcher.AudioApi;
-using AudioSwitcher.AudioApi.CoreAudio;
 using TsudaKageyu;
 using System.ComponentModel;
 using DisplayMagician.AppLibraries;
@@ -192,19 +189,10 @@ namespace DisplayMagician
         private bool _gameArgumentsRequired = false;
         private string _differentGameExeToMonitor = "";
         private bool _monitorDifferentGameExe = false;
-        private string _audioDevice = "";
-        private bool _changeAudioDevice = false;
-        private bool _useAsCommsAudioDevice = true;
-        private bool _setAudioVolume = false;
-        private decimal _audioVolume = -1;
-        private string _captureDevice = "";
-        private bool _changeCaptureDevice;
-        private bool _useAsCommsCaptureDevice = true;
-        private bool _setCaptureVolume = false;
-        private decimal _captureVolume = -1;
+        private string _audioProfileUUID = AudioProfileItem.SkipAudioProfilesChangeUUID;
+        private AudioProfileItem _audioProfileToUse = null;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
-        private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
         private bool _autoName = true;
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
@@ -378,20 +366,6 @@ namespace DisplayMagician
             set
             {
                 _audioPermanence = value;
-            }
-        }
-
-        [DefaultValue(ShortcutPermanence.Temporary)]
-        public ShortcutPermanence CapturePermanence
-        {
-            get
-            {
-                return _capturePermanence;
-            }
-
-            set
-            {
-                _capturePermanence = value;
             }
         }
 
@@ -719,143 +693,50 @@ namespace DisplayMagician
             }
         }
 
-        [DefaultValue("")]
-        public string AudioDevice
+        [JsonIgnore]
+        public AudioProfileItem AudioProfileToUse
         {
             get
             {
-                return _audioDevice;
+                return _audioProfileToUse;
             }
-
             set
             {
-                _audioDevice = value;
-            }
-        }
-
-        [DefaultValue(false)]
-        public bool ChangeAudioDevice
-        {
-            get
-            {
-                return _changeAudioDevice;
-            }
-
-            set
-            {
-                _changeAudioDevice = value;
-            }
-        }
-
-        [DefaultValue(true)]
-        public bool UseAsCommsAudioDevice
-        {
-            get
-            {
-                return _useAsCommsAudioDevice;
-            }
-
-            set
-            {
-                _useAsCommsAudioDevice = value;
-            }
-        }
-
-        [DefaultValue(50)]
-        public decimal AudioVolume
-        {
-            get
-            {
-                return _audioVolume;
-            }
-
-            set
-            {
-                _audioVolume = value;
-            }
-        }
-
-        [DefaultValue(false)]
-        public bool SetAudioVolume
-        {
-            get
-            {
-                return _setAudioVolume;
-            }
-
-            set
-            {
-                _setAudioVolume = value;
+                if (value is AudioProfileItem)
+                {
+                    _audioProfileToUse = value;
+                    _audioProfileUUID = _audioProfileToUse.UUID;
+                }
             }
         }
 
         [DefaultValue("")]
-        public string CaptureDevice
+        public string AudioProfileUUID
         {
             get
             {
-                return _captureDevice;
+                return _audioProfileUUID;
             }
-
             set
             {
-                _captureDevice = value;
-            }
-        }
+                _audioProfileUUID = value;
 
-        [DefaultValue(false)]
-        public bool ChangeCaptureDevice
-        {
-            get
-            {
-                return _changeCaptureDevice;
-            }
+                // The skip UUID is a special virtual profile — not in AllAudioProfiles, handle it directly
+                if (_audioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
+                {
+                    _audioProfileToUse = null;
+                    return;
+                }
 
-            set
-            {
-                _changeCaptureDevice = value;
-            }
-        }
-
-        [DefaultValue(true)]
-        public bool UseAsCommsCaptureDevice
-        {
-            get
-            {
-                return _useAsCommsCaptureDevice;
-            }
-
-            set
-            {
-                _useAsCommsCaptureDevice = value;
-            }
-        }
-
-        [DefaultValue(50)]
-        public decimal CaptureVolume
-        {
-            get
-            {
-                return _captureVolume;
-            }
-
-            set
-            {
-                _captureVolume = value;
-            }
-        }
-
-        [DefaultValue(false)]
-        public bool SetCaptureVolume
-        {
-            get
-            {
-                return _setCaptureVolume;
-            }
-
-            set
-            {
-                _setCaptureVolume = value;
+                // Try to find and set AudioProfileToUse from the repository
+                foreach (AudioProfileItem profileToTest in AudioProfileRepository.AllAudioProfiles)
+                {
+                    if (profileToTest.UUID.Equals(_audioProfileUUID, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _audioProfileToUse = profileToTest;
+                        return;
+                    }
+                }
             }
         }
 
@@ -1043,17 +924,8 @@ namespace DisplayMagician
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
-            ShortcutPermanence capturePermanence,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool useAsCommsAudioDevice = true,
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool useAsCommsCaptureDevice = true,
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
+            AudioProfileItem audioProfileToUse = null,
+            string audioProfileUUID = "",
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -1066,19 +938,10 @@ namespace DisplayMagician
             _name = name;
             _category = ShortcutCategory.NoGame;
             _profileToUse = profile;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _useAsCommsAudioDevice = useAsCommsAudioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
+            _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms;
@@ -1125,20 +988,11 @@ namespace DisplayMagician
             GameShorcutData game, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
             string originalIconPath,
             ShortcutBitmap selectedImage, 
             List<ShortcutBitmap> availableImages,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool useAsCommsAudioDevice = true,
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool useAsCommsCaptureDevice = true,
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
+            AudioProfileItem audioProfileToUse = null,
+            string audioProfileUUID = "",
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -1162,19 +1016,10 @@ namespace DisplayMagician
             _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
             _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _processPriority = game.ProcessPriority;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _useAsCommsAudioDevice = useAsCommsAudioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
+            _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms;
@@ -1216,20 +1061,11 @@ namespace DisplayMagician
             ExecutableShortcutData executable, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
             string originalIconPath,
             ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages, 
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool useAsCommsAudioDevice = true,
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool useAsCommsCaptureDevice = true,
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
+            AudioProfileItem audioProfileToUse = null,
+            string audioProfileUUID = "",
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -1250,19 +1086,10 @@ namespace DisplayMagician
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
             _processPriority = executable.ProcessPriority;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _useAsCommsAudioDevice = useAsCommsAudioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
+            _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms; 
@@ -1305,20 +1132,11 @@ namespace DisplayMagician
             AppShortcutData app,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
-            ShortcutPermanence capturePermanence,
             ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages,
             SupportedAppLibraryType supportedAppLibraryType,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool useAsCommsAudioDevice = true,
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool useAsCommsCaptureDevice = true,
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
+            AudioProfileItem audioProfileToUse = null,
+            string audioProfileUUID = "",
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -1343,19 +1161,10 @@ namespace DisplayMagician
             _executableArgumentsRequired = app.AppToUse.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = app.ProcessNameToMonitorUsesExecutable;
             _processPriority = app.ProcessPriority;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _useAsCommsAudioDevice = useAsCommsAudioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
+            _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms;
@@ -1400,7 +1209,6 @@ namespace DisplayMagician
             shortcut.AutoName = false; // Force the autoname to be off, as it's a copy.
             shortcut.DisplayPermanence = DisplayPermanence;
             shortcut.AudioPermanence = AudioPermanence;
-            shortcut.CapturePermanence = CapturePermanence;
             shortcut.Category = Category;
             shortcut.DifferentExecutableToMonitor = DifferentExecutableToMonitor;
             shortcut.ExecutableNameAndPath = ExecutableNameAndPath;
@@ -1423,16 +1231,8 @@ namespace DisplayMagician
             shortcut.OriginalIconPath = OriginalIconPath;           
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
-            shortcut.ChangeAudioDevice = ChangeAudioDevice;
-            shortcut.AudioDevice = AudioDevice;
-            shortcut.UseAsCommsAudioDevice = UseAsCommsAudioDevice;
-            shortcut.SetAudioVolume = SetAudioVolume;
-            shortcut.AudioVolume = AudioVolume;
-            shortcut.ChangeCaptureDevice = ChangeCaptureDevice;
-            shortcut.CaptureDevice = CaptureDevice;
-            shortcut.UseAsCommsCaptureDevice     = UseAsCommsCaptureDevice;
-            shortcut.SetCaptureVolume = SetCaptureVolume;
-            shortcut.CaptureVolume = CaptureVolume;
+            shortcut.AudioProfileToUse = AudioProfileToUse;
+            shortcut.AudioProfileUUID = AudioProfileUUID;
 
             // Duplicate the Images
 
@@ -1487,9 +1287,11 @@ namespace DisplayMagician
                 shortcut.StopPrograms.Add(copiedEntry);
             }
 
-            // Do the profiles last as AutoName will error if done earlier
+            // Do the display and audio profiles last as AutoName will error if done earlier
             shortcut.ProfileToUse = ProfileToUse;
             shortcut.ProfileUUID = ProfileUUID;
+            shortcut.AudioProfileToUse = AudioProfileToUse;
+            shortcut.AudioProfileUUID = AudioProfileUUID;
 
             // Save the shortcut incon to the icon cache
             shortcut.SaveShortcutIconToCache();
@@ -1657,163 +1459,16 @@ namespace DisplayMagician
                         worstError = ShortcutValidity.Error;
                 }
             }
-            // Check the Audio Device is still valid (if one is specified)
-            CoreAudioController audioController = ShortcutRepository.AudioController;
-            if (ChangeAudioDevice)
+            // Check the Audio Profile is still valid (if one is specified)
+            if (!_audioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
-                IEnumerable<CoreAudioDevice> audioDevices = null;
-                if (audioController != null)
+                if (!AudioProfileRepository.ContainsAudioProfile(_audioProfileUUID))
                 {
-                    try
-                    {
-                        audioDevices = audioController.GetPlaybackDevices();
-                        logger.Trace($"ShortcutItem/RefreshValidity: Audio Controller successfully detected");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, $"ShortcutItem/RefreshValidity: Exception trying to get all playback devices!");
-                    }
-                    if (audioDevices != null)
-                    {
-                        bool audioFound = false;
-                        logger.Trace($"ShortcutItem/RefreshValidity: Audio Controller successfully returned a list of audio playback devices");
-                        foreach (CoreAudioDevice audioDevice in audioDevices)
-                        {
-                            logger.Trace($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName}");
-                            if (audioDevice.FullName.Equals(AudioDevice))
-                            {
-                                audioFound = true;
-                                logger.Trace($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want!");
-                                if (audioDevice.State == DeviceState.Disabled)
-                                {
-                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is disabled!");
-                                    ShortcutError error = new ShortcutError();
-                                    error.Name = "AudioDeviceDisabled";
-                                    error.Validity = ShortcutValidity.Warning;
-                                    error.Message = $"The Audio Device { AudioDevice} is disabled, so the shortcut '{Name}' cannot be used.You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.";
-                                    _shortcutErrors.Add(error);
-                                    if (worstError != ShortcutValidity.Error)
-                                        worstError = ShortcutValidity.Warning;
-                                }
-                                if (audioDevice.State == DeviceState.NotPresent)
-                                {
-                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is not present!");
-                                    ShortcutError error = new ShortcutError();
-                                    error.Name = "AudioDeviceNotPresent";
-                                    error.Validity = ShortcutValidity.Warning;
-                                    error.Message = $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.";
-                                    _shortcutErrors.Add(error);
-                                    if (worstError != ShortcutValidity.Error)
-                                        worstError = ShortcutValidity.Warning;
-                                }
-                                break;
-                            }
-                        }
-
-                        if (!audioFound)
-                        {
-                            logger.Warn($"ShortcutItem/RefreshValidity: The audio device {AudioDevice} was not found in the list of audio devices currently available!");
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "AudioDeviceNotFound";
-                            error.Validity = ShortcutValidity.Warning;
-                            error.Message = $"The audio device {AudioDevice} was not found in the list of audio devices currently available!";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Warning;
-                        }
-                    }                    
-                    else
-                    {
-                        logger.Warn($"ShortcutItem/RefreshValidity: No audio devices detected by Capture Audio. That's fine though, so not logging as an error.");
-                    }
-                }
-                else
-                {
-                    logger.Error($"ShortcutItem/RefreshValidity: The audio device chipset is not supported by DisplayMagician!");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The audio profile UUID {_audioProfileUUID} isn't in the AudioProfileRepository");
                     ShortcutError error = new ShortcutError();
-                    error.Name = "AudioChipsetNotSupported";
+                    error.Name = "AudioProfileNotExist";
                     error.Validity = ShortcutValidity.Warning;
-                    error.Message = $"The Audio chipset isn't supported by DisplayMagician. You need to edit the shortcut to not change the audio output settings.";
-                    _shortcutErrors.Add(error);
-                    if (worstError != ShortcutValidity.Error)
-                        worstError = ShortcutValidity.Warning;
-                }
-            }
-            // Check the Capture Device is still valid (if one is specified)
-            if (ChangeCaptureDevice)
-            {
-                IEnumerable<CoreAudioDevice> captureDevices = null;
-                if (audioController != null)
-                {
-                    try
-                    {
-                        captureDevices = audioController.GetCaptureDevices();
-                    }
-                    catch(Exception ex)
-                    {
-                        logger.Warn(ex, $"ShortcutItem/RefreshValidity: Exception trying to get all capture devices!");
-                    }
-
-                    if (captureDevices != null)
-                    {
-                        bool captureFound = false;
-                        foreach (CoreAudioDevice captureDevice in captureDevices)
-                        {
-                            logger.Trace($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName}");
-                            if (captureDevice.FullName.Equals(CaptureDevice))
-                            {
-                                captureFound = true;
-                                logger.Trace($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want!");
-                                if (captureDevice.State == DeviceState.Disabled)
-                                {
-                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is disabled!");
-                                    ShortcutError error = new ShortcutError();
-                                    error.Name = "CaptureDeviceDisabled";
-                                    error.Validity = ShortcutValidity.Warning;
-                                    error.Message = $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.";
-                                    _shortcutErrors.Add(error);
-                                    if (worstError != ShortcutValidity.Error)
-                                        worstError = ShortcutValidity.Warning;
-                                }
-                                if (captureDevice.State == DeviceState.NotPresent)
-                                {
-                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is not present!");
-                                    ShortcutError error = new ShortcutError();
-                                    error.Name = "CaptureDeviceNotPresent";
-                                    error.Validity = ShortcutValidity.Warning;
-                                    error.Message = $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.";
-                                    _shortcutErrors.Add(error);
-                                    if (worstError != ShortcutValidity.Error)
-                                        worstError = ShortcutValidity.Warning;
-                                }
-                                break;
-                            }
-                        }
-
-                        if (!captureFound)
-                        {
-                            logger.Warn($"ShortcutItem/RefreshValidity: The capture device {CaptureDevice} was not found in the list of capture devices currently available!");
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "CaptureDeviceNotFound";
-                            error.Validity = ShortcutValidity.Warning;
-                            error.Message = $"The capture device {CaptureDevice} was not found in the list of capture devices currently available!";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Warning;
-                        }
-                    }   
-                    else
-                    {
-                        logger.Warn($"ShortcutItem/RefreshValidity: No capture devices detected by Capture Audio. That's fine though, so not logging as an error.");
-                    }
-                } 
-                else
-                {
-                    logger.Error($"ShortcutItem/RefreshValidity: The capture device chipset is not supported by DisplayMagician!");
-                    ShortcutError error = new ShortcutError();
-                    error.Name = "CaptureChipsetNotSupported";
-                    error.Validity = ShortcutValidity.Warning;
-                    error.Message = $"The Capture chipset isn't supported by DisplayMagician. You need to edit the shortcut to not change the microphone input settings.";
+                    error.Message = $"The audio profile does not exist (probably deleted) and cannot be used.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Warning;
@@ -1885,15 +1540,17 @@ namespace DisplayMagician
                         System.IO.File.Delete(shortcutFileName);
                     }                   
 
-                    WshShell shell = new WshShell();
-                    IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
+                    Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                    if (shellType == null)
+                        throw new InvalidOperationException("WScript.Shell COM type is unavailable.");
+
+                    dynamic shell = Activator.CreateInstance(shellType);
+                    dynamic shortcut = shell.CreateShortcut(shortcutFileName);
 
                     shortcut.TargetPath = Environment.ProcessPath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
                     shortcut.Description = shortcutDescription;
-                    shortcut.WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath) ??
-                                                string.Empty;
-
+                    shortcut.WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath) ?? string.Empty;
                     shortcut.IconLocation = shortcutIconFileName;
                     shortcut.Save();
                 }

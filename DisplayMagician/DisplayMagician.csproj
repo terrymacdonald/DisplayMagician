@@ -205,12 +205,6 @@
     <Folder Include="DLL\" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="AudioSwitcher.AudioApi">
-      <HintPath>DLL\AudioSwitcher.AudioApi.dll</HintPath>
-    </Reference>
-    <Reference Include="AudioSwitcher.AudioApi.CoreAudio">
-      <HintPath>DLL\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
-    </Reference>
     <Reference Include="IconLib">
       <HintPath>DLL\IconLib.dll</HintPath>
     </Reference>

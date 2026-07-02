@@ -9,8 +9,6 @@ using DisplayMagicianShared;
 using DisplayMagician.GameLibraries;
 using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
-using AudioSwitcher.AudioApi.CoreAudio;
-using AudioSwitcher.AudioApi;
 //using NHotkey.WindowsForms;
 //using NHotkey;
 using DisplayMagician;
@@ -41,20 +39,10 @@ namespace DisplayMagician.UIForms
         private AppShortcutData _appToUse;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
-        private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
         List<AfterProgram> _afterPrograms = new List<AfterProgram>();
         List<StopProgram> _stopPrograms = new List<StopProgram>();
-        private string _audioDevice = "";
-        private bool _useAsCommsAudioDevice = true;
-        private bool _changeAudioDevice = false;
-        private bool _setAudioVolume = false;
-        private decimal _audioVolume = -1;
-        private string _captureDevice = "";
-        private bool _useAsCommsCaptureDevice = true;
-        private bool _changeCaptureDevice = false;
-        private bool _setCaptureVolume = false;
-        private decimal _captureVolume = -1;
+        private AudioProfileItem _audioProfileToUse = null;
         private ShortcutItem _shortcutToEdit = null;
         private Game _selectedGame = null;
         private App _selectedApp = null;
@@ -65,11 +53,6 @@ namespace DisplayMagician.UIForms
         private string _gameId = "0";
         private string _uuid = "";
 
-        private CoreAudioController audioController = null;
-        private List<CoreAudioDevice> audioDevices = null;
-        private CoreAudioDevice selectedAudioDevice = null;
-        private List<CoreAudioDevice> captureDevices = null;
-        private CoreAudioDevice selectedCaptureDevice = null;
         //private Keys _hotkey = Keys.None;
         //private bool _userChoseOwnGameIcon = false;
         //private string _userGameIconPath = "";
@@ -138,19 +121,6 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown.Text = "No Display Profiles available";
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
             lbl_profile_shown_subtitle.Visible = true;
-
-            try
-            {
-                if (audioController == null)
-                {
-                    audioController = new CoreAudioController();
-                }
-
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutForm/ShortcutForm: Exception while trying to initialise CoreAudioController in ShortcutForm. Audio Chipset on your computer is not supported. You will be unable to set audio settings.");
-            }
 
             // Center the form on the primary screen
             //Utils.CenterOnPrimaryScreen(this);
@@ -251,133 +221,28 @@ namespace DisplayMagician.UIForms
             if (rb_switch_display_permanent.Checked)
                 _displayPermanence = ShortcutPermanence.Permanent;
 
-            // If we can get access to the audio chipset then
-            // we try to get the settings
-            if (audioController != null)
+            // Save the audio profile choice and permanence
+            if (rb_switch_audio_temp.Checked)
+                _audioPermanence = ShortcutPermanence.Temporary;
+            if (rb_switch_audio_permanent.Checked)
+                _audioPermanence = ShortcutPermanence.Permanent;
+
+            if (cb_dont_change_audio.Checked)
             {
-                if (audioDevices != null && audioDevices.Count > 0)
-                {
-                    // Save the Audio features
-                    if (rb_change_audio.Checked)
-                    {
-                        _changeAudioDevice = true;
-                        _audioDevice = cb_audio_device.Text;
-                    }
-                    else
-                    {
-                        _changeAudioDevice = false;
-                        _audioDevice = "";
-                    }
-
-                    if (cb_audio_comms_device.Checked)
-                    {
-                        _useAsCommsAudioDevice = true;
-                    }
-                    else
-                    {
-                        _useAsCommsAudioDevice = false;
-                    }
-
-                    if (rb_set_audio_volume.Checked)
-                    {
-                        _setAudioVolume = true;
-                        _audioVolume = nud_audio_volume.Value;
-                    }
-                    else
-                    {
-                        _setAudioVolume = false;
-                        _audioVolume = -1;
-                    }
-
-                    // Check the audio permanence requirements
-                    if (rb_switch_audio_temp.Checked)
-                        _audioPermanence = ShortcutPermanence.Temporary;
-
-                    if (rb_switch_audio_permanent.Checked)
-                        _audioPermanence = ShortcutPermanence.Permanent;
-
-                }
-                else
-                {
-                    // No active audio devices found, so we force the save to disable changing the audio device
-                    logger.Warn($"ShortcutForm/btn_save_Click: No active audio devices found, so forcing the save to disable changing the audio device for this shortcut.");
-                    _changeAudioDevice = false;
-                    _audioDevice = "";
-                    _setAudioVolume = false;
-                    _audioVolume = -1;
-                    _audioPermanence = ShortcutPermanence.Temporary;
-                }
-
-                if (captureDevices != null && captureDevices.Count > 0)
-                {
-                    // Save the Capture features
-                    if (rb_change_capture.Checked)
-                    {
-                        _changeCaptureDevice = true;
-                        _captureDevice = cb_capture_device.Text;
-                    }
-                    else
-                    {
-                        _changeCaptureDevice = false;
-                        _captureDevice = "";
-                    }
-
-                    if (cb_capture_comms_device.Checked)
-                    {
-                        _useAsCommsCaptureDevice = true;
-                    }
-                    else
-                    {
-                        _useAsCommsCaptureDevice = false;
-                    }
-
-                    if (rb_set_capture_volume.Checked)
-                    {
-                        _setCaptureVolume = true;
-                        _captureVolume = nud_capture_volume.Value;
-                    }
-                    else
-                    {
-                        _setCaptureVolume = false;
-                        _captureVolume = -1;
-                    }
-
-                    // Check the microphone permanence requirements
-                    if (rb_switch_capture_temp.Checked)
-                        _capturePermanence = ShortcutPermanence.Temporary;
-
-                    if (rb_switch_capture_permanent.Checked)
-                        _capturePermanence = ShortcutPermanence.Permanent;
-
-                }
-                else
-                {
-                    // No active capture devices found, so we force the save to disable changing the capture device
-                    logger.Warn($"ShortcutForm/btn_save_Click: No active capture devices found, so forcing the save to disable changing the capture device for this shortcut.");
-                    _changeCaptureDevice = false;
-                    _captureDevice = "";
-                    _setCaptureVolume = false;
-                    _captureVolume = -1;
-                    _capturePermanence = ShortcutPermanence.Temporary;
-                }
-
+                _audioProfileToUse = null;
             }
-            // Otherwise we force set the audio settings to no change
-            // just to be sure
             else
             {
-                _changeAudioDevice = false;
-                _audioDevice = "";
-                _useAsCommsAudioDevice = true;
-                _setAudioVolume = false;
-                _audioVolume = -1;
-                _changeCaptureDevice = false;
-                _captureDevice = "";
-                _useAsCommsCaptureDevice = true;
-                _setCaptureVolume = false;
-                _captureVolume = -1;
-                _audioPermanence = ShortcutPermanence.Temporary;
-                _capturePermanence = ShortcutPermanence.Temporary;
+                _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
+                if (_audioProfileToUse == null)
+                {
+                    MessageBox.Show(this,
+                        "Please select an Audio Profile or tick 'Don't change audio settings for this shortcut'.",
+                        "Audio Profile",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
             }
 
             // Add the startprograms to the list
@@ -441,6 +306,8 @@ namespace DisplayMagician.UIForms
 
                 _afterPrograms.Add(stopProgram);
             }
+
+            string audioProfileUuid = _audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
 
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
@@ -512,20 +379,11 @@ namespace DisplayMagician.UIForms
                         _gameToUse,
                         _displayPermanence,
                         _audioPermanence,
-                        _capturePermanence,
                         _gameToUse.GameToPlay.IconPath,
                         _selectedImage,
                         _availableImages,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
+                        _audioProfileToUse,
+                        audioProfileUuid,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -535,32 +393,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut! :  ",
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _gameToUse.GameToPlay.IconPath,
-                        _selectedImage,
-                        _availableImages,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _afterPrograms,
-                        _stopPrograms,
-                        _autoName,
-                        _uuid
-                    );
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut.");
                 }
 
             }
@@ -599,20 +432,11 @@ namespace DisplayMagician.UIForms
                         _executableToUse,
                         _displayPermanence,
                         _audioPermanence,
-                        _capturePermanence,
                         _executableToUse.ExecutableNameAndPath,
                         _selectedImage,
                         _availableImages,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
+                        _audioProfileToUse,
+                        audioProfileUuid,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -621,31 +445,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut! :  ",
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _executableToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _executableToUse.ExecutableNameAndPath,
-                        _selectedImage,
-                        _availableImages,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _afterPrograms,
-                        _stopPrograms,
-                        _autoName
-                    );
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an executable shortcut.");
                 }
             }
             else if (_shortcutCategory == ShortcutCategory.Application)
@@ -692,20 +492,11 @@ namespace DisplayMagician.UIForms
                         _appToUse,
                         _displayPermanence,
                         _audioPermanence,
-                        _capturePermanence,
                         _selectedImage,
                         _availableImages,
                         _appToUse.AppToUse.AppLibraryType,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
+                        _audioProfileToUse,
+                        audioProfileUuid,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -714,30 +505,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut! :  ",
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _appToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _selectedImage,
-                        _availableImages,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _afterPrograms,
-                        _stopPrograms,
-                        _autoName
-                    );
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut.");
                 }
             }
             else if (_shortcutCategory == ShortcutCategory.NoGame)
@@ -750,17 +518,8 @@ namespace DisplayMagician.UIForms
                         _profileToUse,
                         _displayPermanence,
                         _audioPermanence,
-                        _capturePermanence,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
+                        _audioProfileToUse,
+                        audioProfileUuid,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -769,27 +528,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a shortcut that doesn't run anything! :  ",
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _useAsCommsAudioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _useAsCommsCaptureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _afterPrograms,
-                        _stopPrograms,
-                        _autoName
-                    );
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a shortcut that doesn't run anything.");
                 }
             }
             else
@@ -1137,18 +876,10 @@ namespace DisplayMagician.UIForms
             _shortcutCategory = ShortcutCategory.Game;
             _displayPermanence = ShortcutPermanence.Temporary;
             _audioPermanence = ShortcutPermanence.Temporary;
-            _capturePermanence = ShortcutPermanence.Temporary;
             _startPrograms = new List<StartProgram>();
             _afterPrograms = new List<AfterProgram>();
             _stopPrograms = new List<StopProgram>();
-            _audioDevice = "";
-            _changeAudioDevice = false;
-            _setAudioVolume = false;
-            _audioVolume = -1;
-            _captureDevice = "";
-            _changeCaptureDevice = false;
-            _setCaptureVolume = false;
-            _captureVolume = -1;
+            _audioProfileToUse = null;
             _selectedGame = null;
             _selectedApp = null;
             _selectedAppId = "";
@@ -1157,10 +888,6 @@ namespace DisplayMagician.UIForms
             _autoName = true;
             _gameId = "0";
             _uuid = "";
-            audioDevices = null;
-            selectedAudioDevice = null;
-            captureDevices = null;
-            selectedCaptureDevice = null;
 
 
             // Prepare the Game process priority combo box
@@ -1215,102 +942,7 @@ namespace DisplayMagician.UIForms
                 // Restart updating the saved_profiles listview
                 ilv_saved_profiles.ResumeLayout();
             }
-
-
-            // Populate all the audio devices in the audio devices select box
-            if (audioController != null)
-            {
-                cb_audio_comms_device.Checked = true;
-                cb_audio_device.Items.Clear();
-                try
-                {
-                    audioDevices = audioController.GetPlaybackDevices(DeviceState.Active).ToList();
-                    if (audioDevices != null && audioDevices.Count > 0)
-                    {
-
-                        // we populate the audio devce list 
-                        foreach (CoreAudioDevice audioDevice in audioDevices)
-                        {
-                            int index = cb_audio_device.Items.Add(audioDevice.FullName);
-                            // Set the audio device to the default device by default
-                            if (audioDevice.IsDefaultDevice)
-                            {
-                                selectedAudioDevice = audioDevice;
-                                cb_audio_device.SelectedIndex = index;
-                                nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
-                            }
-                        }
-                        rb_keep_audio_volume.Checked = true;
-                    }
-                    else
-                    {
-                        // There are no active audio devices found
-                        // so we hide all audio changing controls
-                        gb_audio_settings.Visible = false;
-                        lbl_no_active_audio_devices.Visible = true;
-                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active playback devices so hiding the audio output controls.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active playback devices.");
-                }
-
-
-                // Populate all the Capture devices in the capture devices list.
-                cb_capture_comms_device.Checked = true;
-                cb_capture_device.Items.Clear();
-                try
-                {
-                    captureDevices = audioController.GetCaptureDevices(DeviceState.Active).ToList();
-                    if (captureDevices != null && captureDevices.Count > 0)
-                    {
-
-                        // Then we need to populate the list 
-                        foreach (CoreAudioDevice captureDevice in captureDevices)
-                        {
-                            int index = cb_capture_device.Items.Add(captureDevice.FullName);
-                            // Set the capture device to the default device by default
-                            if (captureDevice.IsDefaultDevice)
-                            {
-                                selectedCaptureDevice = captureDevice;
-                                cb_capture_device.SelectedIndex = index;
-                                nud_capture_volume.Value = Convert.ToDecimal(captureDevice.Volume);
-                            }
-                        }
-                        rb_keep_capture_volume.Checked = true;
-                    }
-                    else
-                    {
-                        // There are no active audio devices found
-                        // so we hide all audio changing controls
-                        gb_capture_settings.Visible = false;
-                        lbl_no_active_capture_devices.Visible = true;
-                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active capture devices so hiding the microphone input controls.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active capture devices.");
-                }
-            }
-            else
-            {
-                // Audio Controller == null, so the audio device isn't supported by AudioSwitcher.CoreAudio!
-                // We just have to disable the switching functionality at present :(
-                // Hopefully I find another library that works with everything including RealTek Audio
-                gb_audio_settings.Visible = false;
-                gb_capture_settings.Visible = false;
-                lbl_disabled_shortcut_audio_chipset.Visible = true;
-
-                // We also force the audio settings to off, just in case
-                rb_change_audio.Checked = false;
-                rb_set_audio_volume.Checked = false;
-                cb_audio_comms_device.Checked = false;
-                rb_change_capture.Checked = false;
-                rb_set_capture_volume.Checked = false;
-                cb_capture_comms_device.Checked = false;
-            }
+            RefreshAudioProfilesList();
 
 
             // Clear the textboxes
@@ -1324,15 +956,9 @@ namespace DisplayMagician.UIForms
             txt_run_cmd_afterwards_args.Text = "";
             txt_shortcut_save_name.Text = "";
 
-            // Set the radio buttons to default
-            rb_no_change_audio.Checked = true;
-            rb_change_audio.Checked = false;
-            rb_keep_audio_volume.Checked = true;
-            rb_set_audio_volume.Checked = false;
-            rb_change_capture.Checked = false;
-            rb_keep_capture_volume.Checked = true;
-            rb_no_change_capture.Checked = true;
-            rb_set_capture_volume.Checked = false;
+            // Set audio defaults
+            cb_dont_change_audio.Checked = true;
+            rb_switch_audio_temp.Checked = true;
 
             // Set the game mode on load
             rb_launcher.Checked = true;
@@ -1515,151 +1141,22 @@ namespace DisplayMagician.UIForms
                 }
 
                 // *** 2. Choose Audio Tab ***
-                // Populate all the Audio devices in the audio devices list.
-                // Set the Audio device to the shortcut audio device only if 
-                // the Change Audio radiobutton is set
-                if (audioController != null)
+                RefreshAudioProfilesList();
+                if (_shortcutToEdit.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
                 {
-                    rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
-                    cb_audio_comms_device.Checked = _shortcutToEdit.UseAsCommsAudioDevice;
-                    if (audioDevices != null && audioDevices.Count > 0)
+                    cb_dont_change_audio.Checked = true;
+                    lb_audio_profiles.ClearSelected();
+                    _audioProfileToUse = null;
+                }
+                else
+                {
+                    cb_dont_change_audio.Checked = false;
+                    AudioProfileItem selectedAudioProfile = AudioProfileRepository.GetAudioProfile(_shortcutToEdit.AudioProfileUUID);
+                    if (selectedAudioProfile != null)
                     {
-                        // If the shortcut is to change the audio device
-                        if (_shortcutToEdit.ChangeAudioDevice)
-                        {
-                            // Then we need to select the item in the list if it exists
-                            bool foundAudioDevice = false;
-                            bool foundAudioDeviceList = false;
-                            int cbIndex = cb_audio_device.FindStringExact(_shortcutToEdit.AudioDevice);
-                            if (cbIndex >= 0)
-                            {
-                                foundAudioDeviceList = true;
-                                cb_audio_device.SelectedIndex = cbIndex;
-                                foreach (CoreAudioDevice audioDevice in audioDevices)
-                                {
-                                    if (audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
-                                    {
-                                        selectedAudioDevice = audioDevice;
-                                        foundAudioDevice = true;
-                                    }
-                                }
-                                if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
-                                {
-                                    nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
-                                    rb_set_audio_volume.Checked = true;
-                                }
-                                else
-                                {
-                                    nud_audio_volume.Value = Convert.ToDecimal(selectedAudioDevice.Volume);
-                                    rb_set_audio_volume.Checked = false;
-                                }
-                            }
-
-                            // We need to handle the edgecase where the selected audio device
-                            // isn't currently plugged in. We don't want to break the shortcut
-                            // as it could be plugged in when it comes time to actually run
-                            // the shortcut, so we need to just add it to the list to not break
-                            // the UI.
-
-                            if (!foundAudioDevice || !foundAudioDeviceList)
-                            {
-                                int dIndex = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
-                                cb_audio_device.SelectedIndex = dIndex;
-                                selectedAudioDevice = null;
-                                if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
-                                {
-                                    rb_set_audio_volume.Checked = true;
-                                    nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
-                                }
-                                else
-                                {
-                                    rb_keep_audio_volume.Checked = true;
-                                    nud_audio_volume.Value = 50;
-                                }
-                            }
-                        }
+                        _audioProfileToUse = selectedAudioProfile;
+                        lb_audio_profiles.SelectedItem = selectedAudioProfile;
                     }
-                    else
-                    {
-                        // There are no active audio devices found
-                        // so we hide all audio changing controls
-                        gb_audio_settings.Visible = false;
-                        lbl_no_active_audio_devices.Visible = true;
-                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active playback devices so hiding the audio output controls.");
-                    }
-
-
-                    // Populate all the Capture devices in the capture devices list.
-                    // Set the Capture device to the shortcut capture device only if 
-                    // the Change Capture radiobutton is set
-                    rb_change_capture.Checked = _shortcutToEdit.ChangeCaptureDevice;
-                    cb_capture_comms_device.Checked = _shortcutToEdit.UseAsCommsCaptureDevice;
-                    if (captureDevices != null && captureDevices.Count > 0)
-                    {
-                        // If the shortcut is to change the capture device
-                        if (_shortcutToEdit.ChangeCaptureDevice)
-                        {
-                            // Then we need to select the item in the list if it exists
-                            bool foundCaptureDevice = false;
-                            bool foundCaptureDeviceList = false;
-                            int cbIndex = cb_capture_device.FindStringExact(_shortcutToEdit.CaptureDevice);
-                            if (cbIndex >= 0)
-                            {
-                                foundCaptureDeviceList = true;
-                                cb_capture_device.SelectedIndex = cbIndex;
-                                foreach (CoreAudioDevice captureDevice in captureDevices)
-                                {
-                                    if (captureDevice.FullName.Equals(_shortcutToEdit.CaptureDevice))
-                                    {
-                                        selectedCaptureDevice = captureDevice;
-                                        foundCaptureDevice = true;
-                                    }
-                                }
-                                if (_shortcutToEdit.SetCaptureVolume && _shortcutToEdit.CaptureVolume >= 0 && _shortcutToEdit.CaptureVolume <= 100)
-                                {
-                                    nud_capture_volume.Value = _shortcutToEdit.CaptureVolume;
-                                    rb_set_capture_volume.Checked = true;
-                                }
-                                else
-                                {
-                                    nud_capture_volume.Value = Convert.ToDecimal(selectedCaptureDevice.Volume);
-                                    rb_set_capture_volume.Checked = false;
-                                }
-                            }
-
-                            // We need to handle the edgecase where the selected capture device
-                            // isn't currently plugged in. We don't want to break the shortcut
-                            // as it could be plugged in when it comes time to actually run
-                            // the shortcut, so we need to just add it to the list to not break
-                            // the UI.
-
-                            if (!foundCaptureDevice || !foundCaptureDeviceList)
-                            {
-                                int dIndex = cb_capture_device.Items.Add(_shortcutToEdit.CaptureDevice);
-                                cb_capture_device.SelectedIndex = dIndex;
-                                selectedCaptureDevice = null;
-                                if (_shortcutToEdit.SetCaptureVolume && _shortcutToEdit.CaptureVolume >= 0 && _shortcutToEdit.CaptureVolume <= 100)
-                                {
-                                    rb_set_capture_volume.Checked = true;
-                                    nud_capture_volume.Value = _shortcutToEdit.CaptureVolume;
-                                }
-                                else
-                                {
-                                    rb_keep_capture_volume.Checked = true;
-                                    nud_capture_volume.Value = 50;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // There are no active audio devices found
-                        // so we hide all audio changing controls
-                        gb_capture_settings.Visible = false;
-                        lbl_no_active_capture_devices.Visible = true;
-                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active capture devices so hiding the microphone input controls.");
-                    }
-
                 }
 
                 // *** 3. Choose what happens before Tab ***
@@ -2208,16 +1705,6 @@ namespace DisplayMagician.UIForms
                         break;
                 }
 
-                switch (_shortcutToEdit.CapturePermanence)
-                {
-                    case ShortcutPermanence.Permanent:
-                        rb_switch_capture_permanent.Checked = true;
-                        break;
-                    case ShortcutPermanence.Temporary:
-                        rb_switch_capture_temp.Checked = true;
-                        break;
-                }
-
                 // Setup the single stop program we're beginning with
                 if (_shortcutToEdit.AfterPrograms is List<AfterProgram> && _shortcutToEdit.AfterPrograms.Count > 0)
                 {
@@ -2344,10 +1831,6 @@ namespace DisplayMagician.UIForms
                 // Set up audio permanance as temporary
                 _shortcutToEdit.AudioPermanence = ShortcutPermanence.Temporary;
                 rb_switch_audio_temp.Checked = true;
-
-                // Set up capture permanance as temporary
-                _shortcutToEdit.CapturePermanence = ShortcutPermanence.Temporary;
-                rb_switch_capture_temp.Checked = true;
 
                 // Set up the Game Timeouts
                 nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
@@ -2986,27 +2469,60 @@ namespace DisplayMagician.UIForms
             return textToReturn;
         }
 
-        private void rb_no_change_audio_CheckedChanged(object sender, EventArgs e)
+        private void RefreshAudioProfilesList()
         {
-            if (rb_no_change_audio.Checked)
+            lb_audio_profiles.Items.Clear();
+            foreach (AudioProfileItem audioProfile in AudioProfileRepository.AllAudioProfiles.OrderBy(p => p.Name))
             {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                cb_audio_device.Enabled = false;
-                btn_rescan_audio.Enabled = false;
-                gb_audio_volume.Visible = false;
+                lb_audio_profiles.Items.Add(audioProfile);
             }
         }
 
-        private void rb_change_audio_CheckedChanged(object sender, EventArgs e)
+        private void SetAudioProfileUiEnabled(bool enabled)
         {
-            if (rb_change_audio.Checked)
+            pnl_audio_profile.Enabled = enabled;
+            groupBox1.Enabled = enabled;
+        }
+
+        private string PromptForAudioProfileName(string title, string currentValue = "")
+        {
+            using (Form prompt = new Form())
             {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                cb_audio_device.Enabled = true;
-                btn_rescan_audio.Enabled = true;
-                gb_audio_volume.Visible = true;
+                prompt.Width = 520;
+                prompt.Height = 180;
+                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+                prompt.Text = title;
+                prompt.StartPosition = FormStartPosition.CenterParent;
+                prompt.MinimizeBox = false;
+                prompt.MaximizeBox = false;
+
+                Label textLabel = new Label() { Left = 12, Top = 12, Width = 480, Text = "Audio Profile name:" };
+                TextBox inputBox = new TextBox() { Left = 12, Top = 40, Width = 480, Text = currentValue ?? string.Empty };
+                Button confirmation = new Button() { Text = "OK", Left = 326, Width = 80, Top = 80, DialogResult = DialogResult.OK };
+                Button cancel = new Button() { Text = "Cancel", Left = 412, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+
+                prompt.Controls.Add(textLabel);
+                prompt.Controls.Add(inputBox);
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(cancel);
+                prompt.AcceptButton = confirmation;
+                prompt.CancelButton = cancel;
+
+                return prompt.ShowDialog(this) == DialogResult.OK ? inputBox.Text?.Trim() : string.Empty;
+            }
+        }
+
+        private void cb_dont_change_audio_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+
+            bool changeAudio = !cb_dont_change_audio.Checked;
+            SetAudioProfileUiEnabled(changeAudio);
+            if (!changeAudio)
+            {
+                lb_audio_profiles.ClearSelected();
+                _audioProfileToUse = null;
             }
         }
 
@@ -3030,346 +2546,103 @@ namespace DisplayMagician.UIForms
             }
         }
 
-
-        private void cb_audio_device_SelectedIndexChanged(object sender, EventArgs e)
+        private void lb_audio_profiles_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-
-            if (audioController == null)
-                return;
-
-            // Populate all the Audio devices in the audio devices list.
-            // Set the Audio device to the shortcut audio device only if 
-            // the Change Audio radiobutton is set
-            audioDevices = audioController.GetPlaybackDevices().ToList();
-
-            // If the shortcut is to change the audio device
-
-            // Then we need to populate the list 
-            bool foundAudioDevice = false;
-            foreach (CoreAudioDevice audioDevice in audioDevices)
-            {
-                if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
-                {
-                    // Set the audio device to the default device by default
-                    if (audioDevice.FullName.Equals(cb_audio_device.SelectedItem.ToString()))
-                    {
-                        foundAudioDevice = true;
-                        selectedAudioDevice = audioDevice;
-                        nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
-                    }
-                }
-            }
-
-            // We need to handle the edgecase where the selected audio device
-            // isn't currently plugged in. We don't want to break the shortcut
-            // as it could be plugged in when it comes time to actually run
-            // the shortcut, so we need to just add it to the list to not break
-            // the UI.
-
-            if (!foundAudioDevice)
-            {
-                selectedAudioDevice = null;
-                nud_audio_volume.Value = 50;
-            }
-
+            _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
+            btn_update_audio_profile.Enabled = _audioProfileToUse != null;
+            btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
         }
 
-        private void btn_rescan_audio_Click(object sender, EventArgs e)
+        private void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
-            if (audioController == null)
+            string profileName = PromptForAudioProfileName("Create Audio Profile");
+            if (string.IsNullOrWhiteSpace(profileName))
                 return;
 
-            // Populate all the Audio devices in the audio devices list.
-            // Set the Audio device to the shortcut audio device only if 
-            // the Change Audio radiobutton is set
-            rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
-            cb_audio_device.Items.Clear();
-            audioDevices = audioController.GetPlaybackDevices().ToList();
-
-            // If the shortcut is to change the audio device
-            if (_shortcutToEdit.ChangeAudioDevice)
+            if (!AudioProfileItem.IsValidName(profileName))
             {
-                // Then we need to populate thev list 
-                bool foundAudioDevice = false;
-                foreach (CoreAudioDevice audioDevice in audioDevices)
-                {
-                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
-                    {
-                        int index = cb_audio_device.Items.Add(audioDevice.FullName);
-                        // Set the audio device to the default device by default
-                        if (audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
-                        {
-                            foundAudioDevice = true;
-                            selectedAudioDevice = audioDevice;
-                            cb_audio_device.SelectedIndex = index;
-                            if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
-                                nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
-                            else
-                                nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
-                        }
-                    }
-                }
+                MessageBox.Show(this, "That Audio Profile name already exists. Please choose a unique name.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-                // We need to handle the edgecase where the selected audio device
-                // isn't currently plugged in. We don't want to break the shortcut
-                // as it could be plugged in when it comes time to actually run
-                // the shortcut, so we need to just add it to the list to not break
-                // the UI.
+            AudioProfileItem newAudioProfile = new AudioProfileItem
+            {
+                Name = profileName
+            };
 
-                if (!foundAudioDevice)
-                {
-                    int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
-                    cb_audio_device.SelectedIndex = index;
-                    selectedAudioDevice = null;
-                    if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
-                    {
-                        rb_set_audio_volume.Checked = true;
-                        nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
-                    }
-                    else
-                    {
-                        rb_keep_audio_volume.Checked = true;
-                        nud_audio_volume.Value = 50;
-                    }
+            if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
+            {
+                RefreshAudioProfilesList();
+                lb_audio_profiles.SelectedItem = newAudioProfile;
+                _audioProfileToUse = newAudioProfile;
+                btn_update_audio_profile.Enabled = true;
+                btn_delete_audio_profile.Enabled = true;
+                cb_dont_change_audio.Checked = false;
 
-                }
+                if (_loadedShortcut)
+                    _isUnsaved = true;
             }
             else
             {
-                // Then we need to populate the list 
-                foreach (CoreAudioDevice audioDevice in audioDevices)
-                {
-                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
-                    {
-                        int index = cb_audio_device.Items.Add(audioDevice.FullName);
-                        // Set the audio device to the default device by default
-                        if (audioDevice.IsDefaultDevice)
-                        {
-                            selectedAudioDevice = audioDevice;
-                            cb_audio_device.SelectedIndex = index;
-                            nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
-                        }
-                    }
-                }
-                rb_keep_audio_volume.Checked = true;
+                MessageBox.Show(this, "Unable to create the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void rb_keep_audio_volume_CheckedChanged(object sender, EventArgs e)
+        private void btn_update_audio_profile_Click(object sender, EventArgs e)
         {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            if (rb_keep_audio_volume.Checked)
-                nud_audio_volume.Enabled = false;
-        }
-
-        private void rb_set_audio_volume_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            if (rb_set_audio_volume.Checked)
-                nud_audio_volume.Enabled = true;
-        }
-
-        private void btn_rescan_capture_Click(object sender, EventArgs e)
-        {
-            if (audioController == null)
+            AudioProfileItem selected = lb_audio_profiles.SelectedItem as AudioProfileItem;
+            if (selected == null)
                 return;
 
-            // Populate all the Capture devices in the capture devices list.
-            // Set the capture  device to the shortcut capture  device only if 
-            // the Change capture  radiobutton is set
-            rb_change_capture.Checked = _shortcutToEdit.ChangeCaptureDevice;
-            cb_capture_device.Items.Clear();
-            captureDevices = audioController.GetCaptureDevices().ToList();
-
-            // If the shortcut is to change the capture device
-            if (_shortcutToEdit.ChangeCaptureDevice)
+            if (selected.CreateProfileFromCurrentAudioSettings())
             {
-                // Then we need to populate the list 
-                bool foundCaptureDevice = false;
-                foreach (CoreAudioDevice captureDevice in captureDevices)
-                {
-                    if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
-                    {
-                        int index = cb_capture_device.Items.Add(captureDevice.FullName);
-                        // Set the capture device to the default device by default
-                        if (captureDevice.FullName.Equals(_shortcutToEdit.CaptureDevice))
-                        {
-                            foundCaptureDevice = true;
-                            selectedCaptureDevice = captureDevice;
-                            cb_capture_device.SelectedIndex = index;
-                            if (_shortcutToEdit.SetCaptureVolume && _shortcutToEdit.CaptureVolume >= 0 && _shortcutToEdit.CaptureVolume <= 100)
-                                nud_capture_volume.Value = _shortcutToEdit.CaptureVolume;
-                            else
-                                nud_capture_volume.Value = Convert.ToDecimal(captureDevice.Volume);
-                        }
-                    }
-                }
-
-                // We need to handle the edgecase where the selected capture device
-                // isn't currently plugged in. We don't want to break the shortcut
-                // as it could be plugged in when it comes time to actually run
-                // the shortcut, so we need to just add it to the list to not break
-                // the UI.
-
-                if (!foundCaptureDevice)
-                {
-                    int index = cb_capture_device.Items.Add(_shortcutToEdit.CaptureDevice);
-                    cb_capture_device.SelectedIndex = index;
-                    selectedCaptureDevice = null;
-                    if (_shortcutToEdit.SetCaptureVolume && _shortcutToEdit.CaptureVolume >= 0 && _shortcutToEdit.CaptureVolume <= 100)
-                    {
-                        rb_set_capture_volume.Checked = true;
-                        nud_capture_volume.Value = _shortcutToEdit.CaptureVolume;
-                    }
-                    else
-                    {
-                        rb_keep_capture_volume.Checked = true;
-                        nud_capture_volume.Value = 50;
-                    }
-
-                }
+                AudioProfileRepository.SaveAudioProfiles();
+                RefreshAudioProfilesList();
+                lb_audio_profiles.SelectedItem = selected;
+                _audioProfileToUse = selected;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
             }
             else
             {
-                // Then we need to populate the list 
-                foreach (CoreAudioDevice captureDevice in captureDevices)
-                {
-                    if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
-                    {
-                        int index = cb_capture_device.Items.Add(captureDevice.FullName);
-                        // Set the capture device to the default device by default
-                        if (captureDevice.IsDefaultDevice)
-                        {
-                            selectedCaptureDevice = captureDevice;
-                            cb_capture_device.SelectedIndex = index;
-                            nud_capture_volume.Value = Convert.ToDecimal(captureDevice.Volume);
-                        }
-                    }
-                }
-                rb_keep_capture_volume.Checked = true;
+                MessageBox.Show(this, "Unable to update the Audio Profile from current settings.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void cb_capture_device_SelectedIndexChanged(object sender, EventArgs e)
+        private void btn_delete_audio_profile_Click(object sender, EventArgs e)
         {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-
-            if (audioController == null)
+            AudioProfileItem selected = lb_audio_profiles.SelectedItem as AudioProfileItem;
+            if (selected == null)
                 return;
 
-            // Populate all the Capture devices in the capture devices list.
-            // Set the Capture device to the shortcut capture device only if 
-            // the Change Capture radiobutton is set
-            captureDevices = audioController.GetCaptureDevices().ToList();
+            DialogResult result = MessageBox.Show(this,
+                $"Delete the Audio Profile '{selected.Name}'?",
+                "Delete Audio Profile",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
 
-            // Then we need to populate the list 
-            bool foundCaptureDevice = false;
-            foreach (CoreAudioDevice captureDevice in captureDevices)
+            if (result != DialogResult.Yes)
+                return;
+
+            if (AudioProfileRepository.RemoveAudioProfile(selected))
             {
-                if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                if (_audioProfileToUse != null && _audioProfileToUse.UUID.Equals(selected.UUID, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Set the capture device to the default device by default
-                    if (captureDevice.FullName.Equals(cb_capture_device.SelectedItem.ToString()))
-                    {
-                        foundCaptureDevice = true;
-                        selectedCaptureDevice = captureDevice;
-                        nud_capture_volume.Value = Convert.ToDecimal(captureDevice.Volume);
-                    }
+                    _audioProfileToUse = null;
                 }
-            }
 
-            // We need to handle the edgecase where the selected capture device
-            // isn't currently plugged in. We don't want to break the shortcut
-            // as it could be plugged in when it comes time to actually run
-            // the shortcut, so we need to just add it to the list to not break
-            // the UI.
-
-            if (!foundCaptureDevice)
-            {
-                selectedCaptureDevice = null;
-                nud_capture_volume.Value = 50;
-            }
-        }
-
-        private void rb_no_change_capture_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_no_change_capture.Checked)
-            {
+                RefreshAudioProfilesList();
+                btn_update_audio_profile.Enabled = false;
+                btn_delete_audio_profile.Enabled = false;
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                cb_capture_device.Enabled = false;
-                btn_rescan_capture.Enabled = false;
-                gb_capture_volume.Visible = false;
             }
-        }
-
-        private void rb_change_capture_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_change_capture.Checked)
+            else
             {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                cb_capture_device.Enabled = true;
-                btn_rescan_capture.Enabled = true;
-                gb_capture_volume.Visible = true;
+                MessageBox.Show(this, "Unable to delete the selected Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private void rb_keep_capture_volume_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            if (rb_keep_capture_volume.Checked)
-            {
-                nud_capture_volume.Enabled = false;
-            }
-
-        }
-
-        private void rb_set_capture_volume_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            if (rb_set_capture_volume.Checked)
-            {
-                nud_capture_volume.Enabled = true;
-            }
-
-        }
-
-        private void rb_switch_capture_temp_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_switch_capture_temp.Checked)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                rb_switch_capture_permanent.Checked = false;
-            }
-        }
-
-        private void rb_switch_capture_permanent_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_switch_capture_permanent.Checked)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                rb_switch_capture_temp.Checked = false;
-            }
-        }
-
-        private void nud_audio_volume_ValueChanged(object sender, EventArgs e)
-        {
-            _audioVolume = Convert.ToDecimal(nud_audio_volume.Value);
-        }
-
-        private void nud_capture_volume_ValueChanged(object sender, EventArgs e)
-        {
-            _captureVolume = Convert.ToDecimal(nud_capture_volume.Value);
         }
 
 

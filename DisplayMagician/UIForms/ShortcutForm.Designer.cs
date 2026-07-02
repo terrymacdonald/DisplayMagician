@@ -1,4 +1,4 @@
-﻿//using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
@@ -46,31 +46,13 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
             tabp_audio = new System.Windows.Forms.TabPage();
-            lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
-            gb_capture_settings = new System.Windows.Forms.GroupBox();
-            lbl_no_active_capture_devices = new System.Windows.Forms.Label();
-            cb_capture_comms_device = new System.Windows.Forms.CheckBox();
-            gb_capture_volume = new System.Windows.Forms.GroupBox();
-            rb_set_capture_volume = new System.Windows.Forms.RadioButton();
-            rb_keep_capture_volume = new System.Windows.Forms.RadioButton();
-            lbl_capture_volume = new System.Windows.Forms.Label();
-            nud_capture_volume = new System.Windows.Forms.NumericUpDown();
-            btn_rescan_capture = new System.Windows.Forms.Button();
-            cb_capture_device = new System.Windows.Forms.ComboBox();
-            rb_change_capture = new System.Windows.Forms.RadioButton();
-            rb_no_change_capture = new System.Windows.Forms.RadioButton();
-            gb_audio_settings = new System.Windows.Forms.GroupBox();
-            cb_audio_comms_device = new System.Windows.Forms.CheckBox();
-            lbl_no_active_audio_devices = new System.Windows.Forms.Label();
-            gb_audio_volume = new System.Windows.Forms.GroupBox();
-            rb_set_audio_volume = new System.Windows.Forms.RadioButton();
-            rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
-            lbl_audio_volume = new System.Windows.Forms.Label();
-            nud_audio_volume = new System.Windows.Forms.NumericUpDown();
-            btn_rescan_audio = new System.Windows.Forms.Button();
-            cb_audio_device = new System.Windows.Forms.ComboBox();
-            rb_change_audio = new System.Windows.Forms.RadioButton();
-            rb_no_change_audio = new System.Windows.Forms.RadioButton();
+            cb_dont_change_audio = new System.Windows.Forms.CheckBox();
+            pnl_audio_profile = new System.Windows.Forms.Panel();
+            lbl_audio_profiles = new System.Windows.Forms.Label();
+            lb_audio_profiles = new System.Windows.Forms.ListBox();
+            btn_create_audio_profile = new System.Windows.Forms.Button();
+            btn_update_audio_profile = new System.Windows.Forms.Button();
+            btn_delete_audio_profile = new System.Windows.Forms.Button();
             tabp_before = new System.Windows.Forms.TabPage();
             flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             p_start_program_upper = new System.Windows.Forms.Panel();
@@ -129,9 +111,6 @@ namespace DisplayMagician.UIForms
             btn_run_cmd_afterwards = new System.Windows.Forms.Button();
             txt_run_cmd_afterwards = new System.Windows.Forms.TextBox();
             cb_run_cmd_afterwards = new System.Windows.Forms.CheckBox();
-            groupBox2 = new System.Windows.Forms.GroupBox();
-            rb_switch_capture_permanent = new System.Windows.Forms.RadioButton();
-            rb_switch_capture_temp = new System.Windows.Forms.RadioButton();
             groupBox1 = new System.Windows.Forms.GroupBox();
             rb_switch_audio_permanent = new System.Windows.Forms.RadioButton();
             rb_switch_audio_temp = new System.Windows.Forms.RadioButton();
@@ -150,12 +129,7 @@ namespace DisplayMagician.UIForms
             p_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pbLogo).BeginInit();
             tabp_audio.SuspendLayout();
-            gb_capture_settings.SuspendLayout();
-            gb_capture_volume.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)nud_capture_volume).BeginInit();
-            gb_audio_settings.SuspendLayout();
-            gb_audio_volume.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)nud_audio_volume).BeginInit();
+            pnl_audio_profile.SuspendLayout();
             tabp_before.SuspendLayout();
             p_start_program_upper.SuspendLayout();
             tabp_game.SuspendLayout();
@@ -169,7 +143,6 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)nud_timeout_game).BeginInit();
             tabp_after.SuspendLayout();
             groupBox3.SuspendLayout();
-            groupBox2.SuspendLayout();
             groupBox1.SuspendLayout();
             gb_display_after.SuspendLayout();
             SuspendLayout();
@@ -343,9 +316,8 @@ namespace DisplayMagician.UIForms
             // tabp_audio
             // 
             tabp_audio.BackColor = System.Drawing.Color.Black;
-            tabp_audio.Controls.Add(lbl_disabled_shortcut_audio_chipset);
-            tabp_audio.Controls.Add(gb_capture_settings);
-            tabp_audio.Controls.Add(gb_audio_settings);
+            tabp_audio.Controls.Add(cb_dont_change_audio);
+            tabp_audio.Controls.Add(pnl_audio_profile);
             tabp_audio.Location = new System.Drawing.Point(4, 32);
             tabp_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabp_audio.Name = "tabp_audio";
@@ -354,362 +326,102 @@ namespace DisplayMagician.UIForms
             tabp_audio.TabIndex = 4;
             tabp_audio.Text = "2. Choose Audio";
             // 
-            // lbl_disabled_shortcut_audio_chipset
+            // cb_dont_change_audio
             // 
-            lbl_disabled_shortcut_audio_chipset.Anchor = System.Windows.Forms.AnchorStyles.None;
-            lbl_disabled_shortcut_audio_chipset.AutoSize = true;
-            lbl_disabled_shortcut_audio_chipset.BackColor = System.Drawing.Color.Brown;
-            lbl_disabled_shortcut_audio_chipset.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
-            lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(338, 362);
-            lbl_disabled_shortcut_audio_chipset.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
-            lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(557, 22);
-            lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
-            lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn't supported on your computer :(";
-            lbl_disabled_shortcut_audio_chipset.Visible = false;
+            cb_dont_change_audio.AutoSize = true;
+            cb_dont_change_audio.ForeColor = System.Drawing.Color.White;
+            cb_dont_change_audio.Location = new System.Drawing.Point(26, 20);
+            cb_dont_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_dont_change_audio.Name = "cb_dont_change_audio";
+            cb_dont_change_audio.Size = new System.Drawing.Size(320, 24);
+            cb_dont_change_audio.TabIndex = 0;
+            cb_dont_change_audio.Text = "Don't change audio settings for this shortcut";
+            cb_dont_change_audio.UseVisualStyleBackColor = true;
+            cb_dont_change_audio.CheckedChanged += cb_dont_change_audio_CheckedChanged;
             // 
-            // gb_capture_settings
+            // pnl_audio_profile
             // 
-            gb_capture_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
-            gb_capture_settings.Controls.Add(lbl_no_active_capture_devices);
-            gb_capture_settings.Controls.Add(cb_capture_comms_device);
-            gb_capture_settings.Controls.Add(gb_capture_volume);
-            gb_capture_settings.Controls.Add(btn_rescan_capture);
-            gb_capture_settings.Controls.Add(cb_capture_device);
-            gb_capture_settings.Controls.Add(rb_change_capture);
-            gb_capture_settings.Controls.Add(rb_no_change_capture);
-            gb_capture_settings.ForeColor = System.Drawing.Color.White;
-            gb_capture_settings.Location = new System.Drawing.Point(56, 392);
-            gb_capture_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_capture_settings.Name = "gb_capture_settings";
-            gb_capture_settings.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_capture_settings.Size = new System.Drawing.Size(1112, 328);
-            gb_capture_settings.TabIndex = 21;
-            gb_capture_settings.TabStop = false;
-            gb_capture_settings.Text = "Microphone Settings";
+            pnl_audio_profile.Controls.Add(lbl_audio_profiles);
+            pnl_audio_profile.Controls.Add(lb_audio_profiles);
+            pnl_audio_profile.Controls.Add(btn_create_audio_profile);
+            pnl_audio_profile.Controls.Add(btn_update_audio_profile);
+            pnl_audio_profile.Controls.Add(btn_delete_audio_profile);
+            pnl_audio_profile.Location = new System.Drawing.Point(26, 56);
+            pnl_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            pnl_audio_profile.Name = "pnl_audio_profile";
+            pnl_audio_profile.Size = new System.Drawing.Size(1200, 660);
+            pnl_audio_profile.TabIndex = 1;
             // 
-            // lbl_no_active_capture_devices
+            // lbl_audio_profiles
             // 
-            lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
-            lbl_no_active_capture_devices.AutoSize = true;
-            lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
-            lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
-            lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_no_active_capture_devices.Location = new System.Drawing.Point(125, 159);
-            lbl_no_active_capture_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
-            lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
-            lbl_no_active_capture_devices.TabIndex = 36;
-            lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one microphone if you want to use this feature.";
-            lbl_no_active_capture_devices.Visible = false;
+            lbl_audio_profiles.AutoSize = true;
+            lbl_audio_profiles.ForeColor = System.Drawing.Color.White;
+            lbl_audio_profiles.Location = new System.Drawing.Point(4, 4);
+            lbl_audio_profiles.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_audio_profiles.Name = "lbl_audio_profiles";
+            lbl_audio_profiles.Size = new System.Drawing.Size(245, 20);
+            lbl_audio_profiles.TabIndex = 0;
+            lbl_audio_profiles.Text = "Select an Audio Profile to apply:";
             // 
-            // cb_capture_comms_device
+            // lb_audio_profiles
             // 
-            cb_capture_comms_device.AutoSize = true;
-            cb_capture_comms_device.Location = new System.Drawing.Point(379, 132);
-            cb_capture_comms_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            cb_capture_comms_device.Name = "cb_capture_comms_device";
-            cb_capture_comms_device.Size = new System.Drawing.Size(418, 24);
-            cb_capture_comms_device.TabIndex = 22;
-            cb_capture_comms_device.Text = "Also set this as the default communicatons microphone";
-            cb_capture_comms_device.UseVisualStyleBackColor = true;
+            lb_audio_profiles.BackColor = System.Drawing.Color.FromArgb(64, 64, 64);
+            lb_audio_profiles.ForeColor = System.Drawing.Color.White;
+            lb_audio_profiles.FormattingEnabled = true;
+            lb_audio_profiles.ItemHeight = 20;
+            lb_audio_profiles.Location = new System.Drawing.Point(4, 30);
+            lb_audio_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            lb_audio_profiles.Name = "lb_audio_profiles";
+            lb_audio_profiles.Size = new System.Drawing.Size(800, 604);
+            lb_audio_profiles.TabIndex = 1;
+            lb_audio_profiles.SelectedIndexChanged += lb_audio_profiles_SelectedIndexChanged;
             // 
-            // gb_capture_volume
+            // btn_create_audio_profile
             // 
-            gb_capture_volume.Controls.Add(rb_set_capture_volume);
-            gb_capture_volume.Controls.Add(rb_keep_capture_volume);
-            gb_capture_volume.Controls.Add(lbl_capture_volume);
-            gb_capture_volume.Controls.Add(nud_capture_volume);
-            gb_capture_volume.ForeColor = System.Drawing.Color.White;
-            gb_capture_volume.Location = new System.Drawing.Point(382, 166);
-            gb_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_capture_volume.Name = "gb_capture_volume";
-            gb_capture_volume.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_capture_volume.Size = new System.Drawing.Size(500, 148);
-            gb_capture_volume.TabIndex = 20;
-            gb_capture_volume.TabStop = false;
-            gb_capture_volume.Text = "Microphone Volume";
-            gb_capture_volume.Visible = false;
+            btn_create_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_create_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_create_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_create_audio_profile.ForeColor = System.Drawing.Color.White;
+            btn_create_audio_profile.Location = new System.Drawing.Point(820, 30);
+            btn_create_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_create_audio_profile.Name = "btn_create_audio_profile";
+            btn_create_audio_profile.Size = new System.Drawing.Size(170, 35);
+            btn_create_audio_profile.TabIndex = 2;
+            btn_create_audio_profile.Text = "Create New";
+            btn_create_audio_profile.UseVisualStyleBackColor = true;
+            btn_create_audio_profile.Click += btn_create_audio_profile_Click;
             // 
-            // rb_set_capture_volume
+            // btn_update_audio_profile
             // 
-            rb_set_capture_volume.AutoSize = true;
-            rb_set_capture_volume.ForeColor = System.Drawing.Color.White;
-            rb_set_capture_volume.Location = new System.Drawing.Point(72, 90);
-            rb_set_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_set_capture_volume.Name = "rb_set_capture_volume";
-            rb_set_capture_volume.Size = new System.Drawing.Size(167, 24);
-            rb_set_capture_volume.TabIndex = 13;
-            rb_set_capture_volume.Text = "Set audio volume at";
-            rb_set_capture_volume.UseVisualStyleBackColor = true;
-            rb_set_capture_volume.CheckedChanged += rb_set_capture_volume_CheckedChanged;
+            btn_update_audio_profile.Enabled = false;
+            btn_update_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_update_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_update_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_update_audio_profile.ForeColor = System.Drawing.Color.White;
+            btn_update_audio_profile.Location = new System.Drawing.Point(820, 75);
+            btn_update_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_update_audio_profile.Name = "btn_update_audio_profile";
+            btn_update_audio_profile.Size = new System.Drawing.Size(170, 35);
+            btn_update_audio_profile.TabIndex = 3;
+            btn_update_audio_profile.Text = "Update";
+            btn_update_audio_profile.UseVisualStyleBackColor = true;
+            btn_update_audio_profile.Click += btn_update_audio_profile_Click;
             // 
-            // rb_keep_capture_volume
+            // btn_delete_audio_profile
             // 
-            rb_keep_capture_volume.AutoSize = true;
-            rb_keep_capture_volume.Checked = true;
-            rb_keep_capture_volume.ForeColor = System.Drawing.Color.White;
-            rb_keep_capture_volume.Location = new System.Drawing.Point(72, 40);
-            rb_keep_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_keep_capture_volume.Name = "rb_keep_capture_volume";
-            rb_keep_capture_volume.Size = new System.Drawing.Size(203, 24);
-            rb_keep_capture_volume.TabIndex = 12;
-            rb_keep_capture_volume.TabStop = true;
-            rb_keep_capture_volume.Text = "Leave audio volume as is";
-            rb_keep_capture_volume.UseVisualStyleBackColor = true;
-            rb_keep_capture_volume.CheckedChanged += rb_keep_capture_volume_CheckedChanged;
-            // 
-            // lbl_capture_volume
-            // 
-            lbl_capture_volume.AutoSize = true;
-            lbl_capture_volume.ForeColor = System.Drawing.Color.White;
-            lbl_capture_volume.Location = new System.Drawing.Point(349, 92);
-            lbl_capture_volume.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_capture_volume.Name = "lbl_capture_volume";
-            lbl_capture_volume.Size = new System.Drawing.Size(63, 20);
-            lbl_capture_volume.TabIndex = 11;
-            lbl_capture_volume.Text = "percent";
-            // 
-            // nud_capture_volume
-            // 
-            nud_capture_volume.Enabled = false;
-            nud_capture_volume.Location = new System.Drawing.Point(272, 90);
-            nud_capture_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            nud_capture_volume.Name = "nud_capture_volume";
-            nud_capture_volume.Size = new System.Drawing.Size(70, 26);
-            nud_capture_volume.TabIndex = 10;
-            nud_capture_volume.Value = new decimal(new int[] { 100, 0, 0, 0 });
-            nud_capture_volume.ValueChanged += nud_capture_volume_ValueChanged;
-            // 
-            // btn_rescan_capture
-            // 
-            btn_rescan_capture.Enabled = false;
-            btn_rescan_capture.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_rescan_capture.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_rescan_capture.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_rescan_capture.ForeColor = System.Drawing.Color.White;
-            btn_rescan_capture.Location = new System.Drawing.Point(887, 84);
-            btn_rescan_capture.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_rescan_capture.Name = "btn_rescan_capture";
-            btn_rescan_capture.Size = new System.Drawing.Size(83, 32);
-            btn_rescan_capture.TabIndex = 19;
-            btn_rescan_capture.Text = "rescan";
-            btn_rescan_capture.UseVisualStyleBackColor = true;
-            btn_rescan_capture.Click += btn_rescan_capture_Click;
-            // 
-            // cb_capture_device
-            // 
-            cb_capture_device.Enabled = false;
-            cb_capture_device.FormattingEnabled = true;
-            cb_capture_device.Location = new System.Drawing.Point(379, 84);
-            cb_capture_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            cb_capture_device.Name = "cb_capture_device";
-            cb_capture_device.Size = new System.Drawing.Size(500, 28);
-            cb_capture_device.TabIndex = 18;
-            cb_capture_device.SelectedIndexChanged += cb_capture_device_SelectedIndexChanged;
-            // 
-            // rb_change_capture
-            // 
-            rb_change_capture.AutoSize = true;
-            rb_change_capture.ForeColor = System.Drawing.Color.White;
-            rb_change_capture.Location = new System.Drawing.Point(141, 84);
-            rb_change_capture.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_change_capture.Name = "rb_change_capture";
-            rb_change_capture.Size = new System.Drawing.Size(192, 24);
-            rb_change_capture.TabIndex = 17;
-            rb_change_capture.Text = "Change microphone to:";
-            rb_change_capture.UseVisualStyleBackColor = true;
-            rb_change_capture.CheckedChanged += rb_change_capture_CheckedChanged;
-            // 
-            // rb_no_change_capture
-            // 
-            rb_no_change_capture.AutoSize = true;
-            rb_no_change_capture.Checked = true;
-            rb_no_change_capture.ForeColor = System.Drawing.Color.White;
-            rb_no_change_capture.Location = new System.Drawing.Point(141, 40);
-            rb_no_change_capture.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_no_change_capture.Name = "rb_no_change_capture";
-            rb_no_change_capture.Size = new System.Drawing.Size(308, 24);
-            rb_no_change_capture.TabIndex = 16;
-            rb_no_change_capture.TabStop = true;
-            rb_no_change_capture.Text = "Don't change microphone input settings";
-            rb_no_change_capture.UseVisualStyleBackColor = true;
-            rb_no_change_capture.CheckedChanged += rb_no_change_capture_CheckedChanged;
-            // 
-            // gb_audio_settings
-            // 
-            gb_audio_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
-            gb_audio_settings.Controls.Add(cb_audio_comms_device);
-            gb_audio_settings.Controls.Add(lbl_no_active_audio_devices);
-            gb_audio_settings.Controls.Add(gb_audio_volume);
-            gb_audio_settings.Controls.Add(btn_rescan_audio);
-            gb_audio_settings.Controls.Add(cb_audio_device);
-            gb_audio_settings.Controls.Add(rb_change_audio);
-            gb_audio_settings.Controls.Add(rb_no_change_audio);
-            gb_audio_settings.ForeColor = System.Drawing.Color.White;
-            gb_audio_settings.Location = new System.Drawing.Point(56, 22);
-            gb_audio_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_audio_settings.Name = "gb_audio_settings";
-            gb_audio_settings.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_audio_settings.Size = new System.Drawing.Size(1112, 337);
-            gb_audio_settings.TabIndex = 0;
-            gb_audio_settings.TabStop = false;
-            gb_audio_settings.Text = "Audio Output Settings";
-            // 
-            // cb_audio_comms_device
-            // 
-            cb_audio_comms_device.AutoSize = true;
-            cb_audio_comms_device.Location = new System.Drawing.Point(380, 129);
-            cb_audio_comms_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            cb_audio_comms_device.Name = "cb_audio_comms_device";
-            cb_audio_comms_device.Size = new System.Drawing.Size(424, 24);
-            cb_audio_comms_device.TabIndex = 21;
-            cb_audio_comms_device.Text = "Also set this as the default communicatons audio output";
-            cb_audio_comms_device.UseVisualStyleBackColor = true;
-            // 
-            // lbl_no_active_audio_devices
-            // 
-            lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
-            lbl_no_active_audio_devices.AutoSize = true;
-            lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
-            lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
-            lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_no_active_audio_devices.Location = new System.Drawing.Point(125, 156);
-            lbl_no_active_audio_devices.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
-            lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
-            lbl_no_active_audio_devices.TabIndex = 35;
-            lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output if you want to use this feature.";
-            lbl_no_active_audio_devices.Visible = false;
-            // 
-            // gb_audio_volume
-            // 
-            gb_audio_volume.Controls.Add(rb_set_audio_volume);
-            gb_audio_volume.Controls.Add(rb_keep_audio_volume);
-            gb_audio_volume.Controls.Add(lbl_audio_volume);
-            gb_audio_volume.Controls.Add(nud_audio_volume);
-            gb_audio_volume.ForeColor = System.Drawing.Color.White;
-            gb_audio_volume.Location = new System.Drawing.Point(379, 167);
-            gb_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_audio_volume.Name = "gb_audio_volume";
-            gb_audio_volume.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_audio_volume.Size = new System.Drawing.Size(500, 153);
-            gb_audio_volume.TabIndex = 20;
-            gb_audio_volume.TabStop = false;
-            gb_audio_volume.Text = "Audio Output Volume";
-            gb_audio_volume.Visible = false;
-            // 
-            // rb_set_audio_volume
-            // 
-            rb_set_audio_volume.AutoSize = true;
-            rb_set_audio_volume.ForeColor = System.Drawing.Color.White;
-            rb_set_audio_volume.Location = new System.Drawing.Point(71, 95);
-            rb_set_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_set_audio_volume.Name = "rb_set_audio_volume";
-            rb_set_audio_volume.Size = new System.Drawing.Size(167, 24);
-            rb_set_audio_volume.TabIndex = 13;
-            rb_set_audio_volume.Text = "Set audio volume at";
-            rb_set_audio_volume.UseVisualStyleBackColor = true;
-            rb_set_audio_volume.CheckedChanged += rb_set_audio_volume_CheckedChanged;
-            // 
-            // rb_keep_audio_volume
-            // 
-            rb_keep_audio_volume.AutoSize = true;
-            rb_keep_audio_volume.Checked = true;
-            rb_keep_audio_volume.ForeColor = System.Drawing.Color.White;
-            rb_keep_audio_volume.Location = new System.Drawing.Point(71, 44);
-            rb_keep_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_keep_audio_volume.Name = "rb_keep_audio_volume";
-            rb_keep_audio_volume.Size = new System.Drawing.Size(203, 24);
-            rb_keep_audio_volume.TabIndex = 12;
-            rb_keep_audio_volume.TabStop = true;
-            rb_keep_audio_volume.Text = "Leave audio volume as is";
-            rb_keep_audio_volume.UseVisualStyleBackColor = true;
-            rb_keep_audio_volume.CheckedChanged += rb_keep_audio_volume_CheckedChanged;
-            // 
-            // lbl_audio_volume
-            // 
-            lbl_audio_volume.AutoSize = true;
-            lbl_audio_volume.ForeColor = System.Drawing.Color.White;
-            lbl_audio_volume.Location = new System.Drawing.Point(348, 97);
-            lbl_audio_volume.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            lbl_audio_volume.Name = "lbl_audio_volume";
-            lbl_audio_volume.Size = new System.Drawing.Size(63, 20);
-            lbl_audio_volume.TabIndex = 11;
-            lbl_audio_volume.Text = "percent";
-            // 
-            // nud_audio_volume
-            // 
-            nud_audio_volume.Enabled = false;
-            nud_audio_volume.Location = new System.Drawing.Point(271, 95);
-            nud_audio_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            nud_audio_volume.Name = "nud_audio_volume";
-            nud_audio_volume.Size = new System.Drawing.Size(70, 26);
-            nud_audio_volume.TabIndex = 10;
-            nud_audio_volume.Value = new decimal(new int[] { 100, 0, 0, 0 });
-            nud_audio_volume.ValueChanged += nud_audio_volume_ValueChanged;
-            // 
-            // btn_rescan_audio
-            // 
-            btn_rescan_audio.Enabled = false;
-            btn_rescan_audio.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_rescan_audio.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_rescan_audio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_rescan_audio.ForeColor = System.Drawing.Color.White;
-            btn_rescan_audio.Location = new System.Drawing.Point(887, 83);
-            btn_rescan_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_rescan_audio.Name = "btn_rescan_audio";
-            btn_rescan_audio.Size = new System.Drawing.Size(83, 32);
-            btn_rescan_audio.TabIndex = 19;
-            btn_rescan_audio.Text = "rescan";
-            btn_rescan_audio.UseVisualStyleBackColor = true;
-            btn_rescan_audio.Click += btn_rescan_audio_Click;
-            // 
-            // cb_audio_device
-            // 
-            cb_audio_device.Enabled = false;
-            cb_audio_device.FormattingEnabled = true;
-            cb_audio_device.Location = new System.Drawing.Point(379, 83);
-            cb_audio_device.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            cb_audio_device.Name = "cb_audio_device";
-            cb_audio_device.Size = new System.Drawing.Size(500, 28);
-            cb_audio_device.TabIndex = 18;
-            cb_audio_device.SelectedIndexChanged += cb_audio_device_SelectedIndexChanged;
-            // 
-            // rb_change_audio
-            // 
-            rb_change_audio.AutoSize = true;
-            rb_change_audio.ForeColor = System.Drawing.Color.White;
-            rb_change_audio.Location = new System.Drawing.Point(141, 83);
-            rb_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_change_audio.Name = "rb_change_audio";
-            rb_change_audio.Size = new System.Drawing.Size(198, 24);
-            rb_change_audio.TabIndex = 17;
-            rb_change_audio.Text = "Change audio output to:";
-            rb_change_audio.UseVisualStyleBackColor = true;
-            rb_change_audio.CheckedChanged += rb_change_audio_CheckedChanged;
-            // 
-            // rb_no_change_audio
-            // 
-            rb_no_change_audio.AutoSize = true;
-            rb_no_change_audio.Checked = true;
-            rb_no_change_audio.ForeColor = System.Drawing.Color.White;
-            rb_no_change_audio.Location = new System.Drawing.Point(141, 39);
-            rb_no_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_no_change_audio.Name = "rb_no_change_audio";
-            rb_no_change_audio.Size = new System.Drawing.Size(275, 24);
-            rb_no_change_audio.TabIndex = 16;
-            rb_no_change_audio.TabStop = true;
-            rb_no_change_audio.Text = "Don't change audio output settings";
-            rb_no_change_audio.UseVisualStyleBackColor = true;
-            rb_no_change_audio.CheckedChanged += rb_no_change_audio_CheckedChanged;
+            btn_delete_audio_profile.Enabled = false;
+            btn_delete_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_delete_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_delete_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_delete_audio_profile.ForeColor = System.Drawing.Color.White;
+            btn_delete_audio_profile.Location = new System.Drawing.Point(820, 120);
+            btn_delete_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_delete_audio_profile.Name = "btn_delete_audio_profile";
+            btn_delete_audio_profile.Size = new System.Drawing.Size(170, 35);
+            btn_delete_audio_profile.TabIndex = 4;
+            btn_delete_audio_profile.Text = "Delete";
+            btn_delete_audio_profile.UseVisualStyleBackColor = true;
+            btn_delete_audio_profile.Click += btn_delete_audio_profile_Click;
             // 
             // tabp_before
             // 
@@ -1398,7 +1110,6 @@ namespace DisplayMagician.UIForms
             // 
             tabp_after.BackColor = System.Drawing.Color.Black;
             tabp_after.Controls.Add(groupBox3);
-            tabp_after.Controls.Add(groupBox2);
             tabp_after.Controls.Add(groupBox1);
             tabp_after.Controls.Add(gb_display_after);
             tabp_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -1520,50 +1231,6 @@ namespace DisplayMagician.UIForms
             cb_run_cmd_afterwards.Text = "Run this program:";
             cb_run_cmd_afterwards.UseVisualStyleBackColor = true;
             cb_run_cmd_afterwards.CheckedChanged += cb_run_cmd_afterwards_CheckedChanged;
-            // 
-            // groupBox2
-            // 
-            groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
-            groupBox2.Controls.Add(rb_switch_capture_permanent);
-            groupBox2.Controls.Add(rb_switch_capture_temp);
-            groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            groupBox2.ForeColor = System.Drawing.Color.White;
-            groupBox2.Location = new System.Drawing.Point(204, 360);
-            groupBox2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            groupBox2.Name = "groupBox2";
-            groupBox2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            groupBox2.Size = new System.Drawing.Size(892, 148);
-            groupBox2.TabIndex = 13;
-            groupBox2.TabStop = false;
-            groupBox2.Text = "What happens to the Microphone afterwards?";
-            // 
-            // rb_switch_capture_permanent
-            // 
-            rb_switch_capture_permanent.AutoSize = true;
-            rb_switch_capture_permanent.ForeColor = System.Drawing.Color.White;
-            rb_switch_capture_permanent.Location = new System.Drawing.Point(114, 89);
-            rb_switch_capture_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_switch_capture_permanent.Name = "rb_switch_capture_permanent";
-            rb_switch_capture_permanent.Size = new System.Drawing.Size(492, 24);
-            rb_switch_capture_permanent.TabIndex = 12;
-            rb_switch_capture_permanent.Text = "Keep using the Microphone after Game ends (permanent change)";
-            rb_switch_capture_permanent.UseVisualStyleBackColor = true;
-            rb_switch_capture_permanent.CheckedChanged += rb_switch_capture_permanent_CheckedChanged;
-            // 
-            // rb_switch_capture_temp
-            // 
-            rb_switch_capture_temp.AutoSize = true;
-            rb_switch_capture_temp.Checked = true;
-            rb_switch_capture_temp.ForeColor = System.Drawing.Color.White;
-            rb_switch_capture_temp.Location = new System.Drawing.Point(114, 47);
-            rb_switch_capture_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            rb_switch_capture_temp.Name = "rb_switch_capture_temp";
-            rb_switch_capture_temp.Size = new System.Drawing.Size(553, 24);
-            rb_switch_capture_temp.TabIndex = 11;
-            rb_switch_capture_temp.TabStop = true;
-            rb_switch_capture_temp.Text = "Revert back to original Microphone (temporary change while running game)";
-            rb_switch_capture_temp.UseVisualStyleBackColor = true;
-            rb_switch_capture_temp.CheckedChanged += rb_switch_capture_temp_CheckedChanged;
             // 
             // groupBox1
             // 
@@ -1792,16 +1459,7 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)pbLogo).EndInit();
             tabp_audio.ResumeLayout(false);
             tabp_audio.PerformLayout();
-            gb_capture_settings.ResumeLayout(false);
-            gb_capture_settings.PerformLayout();
-            gb_capture_volume.ResumeLayout(false);
-            gb_capture_volume.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)nud_capture_volume).EndInit();
-            gb_audio_settings.ResumeLayout(false);
-            gb_audio_settings.PerformLayout();
-            gb_audio_volume.ResumeLayout(false);
-            gb_audio_volume.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)nud_audio_volume).EndInit();
+            pnl_audio_profile.ResumeLayout(false);
             tabp_before.ResumeLayout(false);
             p_start_program_upper.ResumeLayout(false);
             p_start_program_upper.PerformLayout();
@@ -1820,8 +1478,6 @@ namespace DisplayMagician.UIForms
             tabp_after.ResumeLayout(false);
             groupBox3.ResumeLayout(false);
             groupBox3.PerformLayout();
-            groupBox2.ResumeLayout(false);
-            groupBox2.PerformLayout();
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
             gb_display_after.ResumeLayout(false);
@@ -1848,38 +1504,13 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_shortcut_name;
         private System.Windows.Forms.CheckBox cb_autosuggest;
         private System.Windows.Forms.TabPage tabp_audio;
-        private System.Windows.Forms.GroupBox gb_display_after;
-        private System.Windows.Forms.RadioButton rb_switch_display_permanent;
-        private System.Windows.Forms.RadioButton rb_switch_display_temp;
-        private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.RadioButton rb_switch_audio_permanent;
-        private System.Windows.Forms.RadioButton rb_switch_audio_temp;
-        private System.Windows.Forms.GroupBox gb_capture_settings;
-        private System.Windows.Forms.GroupBox gb_capture_volume;
-        private System.Windows.Forms.RadioButton rb_set_capture_volume;
-        private System.Windows.Forms.RadioButton rb_keep_capture_volume;
-        private System.Windows.Forms.Label lbl_capture_volume;
-        private System.Windows.Forms.NumericUpDown nud_capture_volume;
-        private System.Windows.Forms.Button btn_rescan_capture;
-        private System.Windows.Forms.ComboBox cb_capture_device;
-        private System.Windows.Forms.RadioButton rb_change_capture;
-        private System.Windows.Forms.RadioButton rb_no_change_capture;
-        private System.Windows.Forms.GroupBox gb_audio_settings;
-        private System.Windows.Forms.GroupBox gb_audio_volume;
-        private System.Windows.Forms.RadioButton rb_set_audio_volume;
-        private System.Windows.Forms.RadioButton rb_keep_audio_volume;
-        private System.Windows.Forms.Label lbl_audio_volume;
-        private System.Windows.Forms.NumericUpDown nud_audio_volume;
-        private System.Windows.Forms.Button btn_rescan_audio;
-        private System.Windows.Forms.ComboBox cb_audio_device;
-        private System.Windows.Forms.RadioButton rb_change_audio;
-        private System.Windows.Forms.RadioButton rb_no_change_audio;
-        private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.RadioButton rb_switch_capture_permanent;
-        private System.Windows.Forms.RadioButton rb_switch_capture_temp;
-        private System.Windows.Forms.Label lbl_disabled_shortcut_audio_chipset;
-        private System.Windows.Forms.Label lbl_no_active_audio_devices;
-        private System.Windows.Forms.Label lbl_no_active_capture_devices;
+        private System.Windows.Forms.CheckBox cb_dont_change_audio;
+        private System.Windows.Forms.Panel pnl_audio_profile;
+        private System.Windows.Forms.Label lbl_audio_profiles;
+        private System.Windows.Forms.ListBox lb_audio_profiles;
+        private System.Windows.Forms.Button btn_create_audio_profile;
+        private System.Windows.Forms.Button btn_update_audio_profile;
+        private System.Windows.Forms.Button btn_delete_audio_profile;
         private System.Windows.Forms.Button btn_hotkey;
         private System.Windows.Forms.Label lbl_hotkey_assigned;
         private System.Windows.Forms.PictureBox pbLogo;
@@ -1889,6 +1520,12 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards;
         private System.Windows.Forms.TextBox txt_run_cmd_afterwards_args;
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_args;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.RadioButton rb_switch_audio_permanent;
+        private System.Windows.Forms.RadioButton rb_switch_audio_temp;
+        private System.Windows.Forms.GroupBox gb_display_after;
+        private System.Windows.Forms.RadioButton rb_switch_display_permanent;
+        private System.Windows.Forms.RadioButton rb_switch_display_temp;
         private System.Windows.Forms.TabPage tabp_before;
         private System.Windows.Forms.Panel p_start_program_upper;
         private System.Windows.Forms.Button btn_find_examples_startprograms;
@@ -1941,7 +1578,5 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_run_exe_as_administrator;
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_run_as_administrator;
         private System.Windows.Forms.Button btn_help;
-        private System.Windows.Forms.CheckBox cb_audio_comms_device;
-        private System.Windows.Forms.CheckBox cb_capture_comms_device;
     }
 }
