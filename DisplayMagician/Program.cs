@@ -26,6 +26,7 @@ using System.Globalization;
 using System.Web;
 using Vortice.DirectInput;
 using System.Diagnostics;
+using DisplayMagician.Messaging;
 
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
@@ -41,6 +42,7 @@ namespace DisplayMagician {
         public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
         public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         public static string AppWallpaperPath = Path.Combine(Program.AppDataPath, $"Wallpaper");
+        public static string AppMessagesPath = Path.Combine(Program.AppDataPath, $"Messages");
         public static string AppLogPath = Path.Combine(Program.AppDataPath, $"Logs");
         public static string AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, @"DisplayMagician.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
@@ -90,6 +92,11 @@ namespace DisplayMagician {
         private static bool _lastUpdateCheckWasAutomatic = true;
         private static bool _startupBackgroundTasksQueued = false;
         private static SynchronizationContext _mainSynchronizationContext;
+        private static readonly SemaphoreSlim _messageSyncSemaphore = new SemaphoreSlim(1, 1);
+        private static MessageSyncService _messageSyncService;
+        private static System.Timers.Timer _messageSyncTimer;
+        private static readonly TimeSpan _messageSyncPollInterval = TimeSpan.FromHours(1);
+        private const string MessageManifestUrl = "https://displaymagician.littlebitbig.com/messages/manifest.json";
 
         public enum ERRORLEVEL: int
         {
@@ -844,6 +851,11 @@ namespace DisplayMagician {
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
 
+            logger.Trace($"Program/Main: Stopping message sync timer.");
+            _messageSyncTimer?.Stop();
+            _messageSyncTimer?.Dispose();
+            _messageSyncTimer = null;
+
             logger.Trace($"Program/Main: Disposing the DirectInput manager.");
             AppDirectInputManager?.Dispose();
             AppDirectInputManager = null;
@@ -1296,7 +1308,7 @@ namespace DisplayMagician {
                 ShowPackageIdentityWarningToast();
             }
 
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 try
                 {
@@ -1306,6 +1318,174 @@ namespace DisplayMagician {
                 {
                     logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic update check failed. DisplayMagician will continue running.");
                 }
+
+                try
+                {
+                    await RunMessageSyncAndNotifyUserAsync(force: true);
+                    EnsureMessageSyncTimer();
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic message sync failed. DisplayMagician will continue running.");
+                }
+            });
+        }
+
+        private static void EnsureMessageSyncTimer()
+        {
+            if (_messageSyncTimer != null)
+            {
+                return;
+            }
+
+            _messageSyncTimer = new System.Timers.Timer
+            {
+                Interval = _messageSyncPollInterval.TotalMilliseconds,
+                AutoReset = true,
+                Enabled = true,
+            };
+
+            _messageSyncTimer.Elapsed += async (_, __) =>
+            {
+                try
+                {
+                    await RunMessageSyncAndNotifyUserAsync(force: false);
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"Program/EnsureMessageSyncTimer: Periodic message sync failed.");
+                }
+            };
+
+            _messageSyncTimer.Start();
+        }
+
+        private static async Task RunMessageSyncAndNotifyUserAsync(bool force)
+        {
+            if (_messageSyncService == null)
+            {
+                _messageSyncService = new MessageSyncService(AppHttpClient, logger, MessageManifestUrl, AppMessagesPath);
+                _messageSyncService.EnsureStorage();
+            }
+
+            if (!force && !_messageSyncService.IsDailyCheckDue())
+            {
+                return;
+            }
+
+            if (!await _messageSyncSemaphore.WaitAsync(0).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            try
+            {
+                MessageSyncResult syncResult = await _messageSyncService.SyncMessagesAsync(AppVersion, CancellationToken.None).ConfigureAwait(false);
+                if (!syncResult.Success)
+                {
+                    return;
+                }
+
+                if (syncResult.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
+                {
+                    ShowNewMessagesToast(syncResult.NewMessagesCount);
+                }
+
+                RefreshMessageIndicators();
+            }
+            finally
+            {
+                _messageSyncSemaphore.Release();
+            }
+        }
+
+        private static MessageSyncService EnsureMessageSyncService()
+        {
+            if (_messageSyncService == null)
+            {
+                _messageSyncService = new MessageSyncService(AppHttpClient, logger, MessageManifestUrl, AppMessagesPath);
+                _messageSyncService.EnsureStorage();
+            }
+
+            return _messageSyncService;
+        }
+
+        public static List<LocalMessage> GetStoredMessages()
+        {
+            return EnsureMessageSyncService().GetMessages();
+        }
+
+        public static int GetUnreadMessageCount()
+        {
+            return EnsureMessageSyncService().GetUnreadCount();
+        }
+
+        public static void SetMessageReadState(IEnumerable<string> ids, bool isRead)
+        {
+            EnsureMessageSyncService().SetReadState(ids, isRead);
+        }
+
+        public static void RefreshMessageIndicators()
+        {
+            try
+            {
+                if (AppMainForm == null)
+                {
+                    return;
+                }
+
+                int unread = GetUnreadMessageCount();
+                AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                {
+                    AppMainForm.SetUnreadMessageCount(unread);
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/RefreshMessageIndicators: Failed to refresh unread indicator.");
+            }
+        }
+
+        private static void ShowNewMessagesToast(int newMessagesCount)
+        {
+            try
+            {
+                string headerText = newMessagesCount == 1
+                    ? "You have 1 new message"
+                    : $"You have {newMessagesCount} new messages";
+
+                new ToastContentBuilder()
+                    .AddText(headerText, hintMaxLines: 1)
+                    .AddText("Open DisplayMagician Messages to read them now, or read later.")
+                    .AddButton(new ToastButton()
+                        .SetContent("Read Now")
+                        .AddArgument("action", "readMessagesNow")
+                        .SetBackgroundActivation())
+                    .AddButton(new ToastButton()
+                        .SetContent("Read Later")
+                        .AddArgument("action", "readMessagesLater")
+                        .SetBackgroundActivation())
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                    .SetToastDuration(ToastDuration.Short)
+                    .Show();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/ShowNewMessagesToast: Could not show messages toast.");
+            }
+        }
+
+        private static void HandleReadMessagesNowAction()
+        {
+            if (Program.AppMainForm == null)
+            {
+                return;
+            }
+
+            Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                Program.AppMainForm.openApplicationWindow();
+                Program.AppMainForm.openMessagesWindow();
             });
         }
 
@@ -2099,6 +2279,13 @@ namespace DisplayMagician {
                                 });
 
                             }
+                            break;
+
+                        case "readMessagesNow":
+                            HandleReadMessagesNowAction();
+                            break;
+
+                        case "readMessagesLater":
                             break;
 
                         default:

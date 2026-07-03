@@ -29,6 +29,8 @@ namespace DisplayMagician.UIForms
 
         private DisplayProfileForm DisplayProfileWindow = new DisplayProfileForm();
         private ShortcutLibraryForm ShortcutLibraryWindow = new ShortcutLibraryForm();
+        private MessagesForm MessagesWindow;
+        private Button _btnMessages;
         private bool _screenHasChanged = false; // Used to stop the screen changing when the user is changing profiles
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -64,6 +66,7 @@ namespace DisplayMagician.UIForms
         public MainForm(Form formToOpen = null)
         {
             InitializeComponent();
+            CreateMessagesButton();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
             lbl_version.Text = string.Format(lbl_version.Text, Program.AppVersion);
@@ -198,6 +201,34 @@ namespace DisplayMagician.UIForms
                 Program.AppDonationSettings.LastDonationFormDate = DateTime.UtcNow;
                 Program.AppDonationSettings.SaveSettings();
             }
+        }
+
+        private void CreateMessagesButton()
+        {
+            _btnMessages = new Button
+            {
+                Name = "btn_messages",
+                Text = "Messages",
+                Width = btn_settings.Width,
+                Height = btn_settings.Height,
+                FlatStyle = btn_settings.FlatStyle,
+                ForeColor = btn_settings.ForeColor,
+                BackColor = btn_settings.BackColor,
+                Font = btn_settings.Font,
+                Anchor = btn_settings.Anchor,
+                UseVisualStyleBackColor = btn_settings.UseVisualStyleBackColor,
+            };
+
+            _btnMessages.FlatAppearance.MouseDownBackColor = btn_settings.FlatAppearance.MouseDownBackColor;
+            _btnMessages.FlatAppearance.MouseOverBackColor = btn_settings.FlatAppearance.MouseOverBackColor;
+
+            int midpointX = btn_fov_calc.Left + ((btn_settings.Left - btn_fov_calc.Left) / 2);
+            _btnMessages.Location = new Point(midpointX, btn_settings.Top);
+            _btnMessages.Click += btn_messages_Click;
+
+            splitContainer1.Panel1.Controls.Add(_btnMessages);
+            _btnMessages.BringToFront();
+            SetUnreadMessageCount(Program.GetUnreadMessageCount());
         }
 
         protected override void SetVisibleCore(bool value)
@@ -370,6 +401,19 @@ namespace DisplayMagician.UIForms
             
 
             logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
+            SetUnreadMessageCount(Program.GetUnreadMessageCount());
+        }
+
+        public void SetUnreadMessageCount(int unreadCount)
+        {
+            if (_btnMessages == null)
+            {
+                return;
+            }
+
+            _btnMessages.Text = unreadCount > 0
+                ? $"Messages ({unreadCount})"
+                : "Messages";
         }
 
         private void EnableShortcutButtonIfProfiles()
@@ -631,6 +675,26 @@ namespace DisplayMagician.UIForms
 
         }
 
+        public void openMessagesWindow()
+        {
+            foreach (Form f in Application.OpenForms)
+            {
+                if (f.Modal && f.Visible && f != this)
+                {
+                    MessageBox.Show($"Please close the {f.Text} window before opening Messages.",
+                        "DisplayMagician",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
+            MessagesWindow = new MessagesForm();
+            MessagesWindow.StartPosition = FormStartPosition.CenterParent;
+            MessagesWindow.ShowDialog(this);
+            SetUnreadMessageCount(Program.GetUnreadMessageCount());
+        }
+
 
         public void exitApplication()
         {
@@ -708,6 +772,11 @@ namespace DisplayMagician.UIForms
                 cb_minimise_notification_area.Checked = true;
             else if (!mySettings.MinimiseOnStart && cb_minimise_notification_area.Checked)
                 cb_minimise_notification_area.Checked = false;
+        }
+
+        private void btn_messages_Click(object sender, EventArgs e)
+        {
+            openMessagesWindow();
         }
 
         private void lbl_create_shortcut_Click(object sender, EventArgs e)

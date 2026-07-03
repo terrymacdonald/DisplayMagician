@@ -57,6 +57,7 @@ namespace DisplayMagician
         private bool _showSplashScreen = true;
         private bool _showMinimiseMessageInActionCenter = true;
         private bool _showStatusMessageInActionCenter = true;
+        private bool _showMessageToasts = true;
         private bool _upgradeToPrereleases = false;
         private bool _upgradeEnabled = true;
         private bool _installDesktopContextMenu = true;
@@ -182,6 +183,19 @@ namespace DisplayMagician
             set
             {
                 _showStatusMessageInActionCenter = value;               
+            }
+        }
+
+        [DefaultValue(true)]
+        public bool ShowMessageToasts
+        {
+            get
+            {
+                return _showMessageToasts;
+            }
+            set
+            {
+                _showMessageToasts = value;
             }
         }
 
