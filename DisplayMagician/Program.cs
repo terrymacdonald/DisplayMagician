@@ -1326,7 +1326,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic message sync failed. DisplayMagician will continue running.");
+                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic message sync failed (force=true, manifestUrl={MessageManifestUrl}, appVersion={AppVersion}, messagesPath={AppMessagesPath}). DisplayMagician will continue running.");
                 }
             });
         }
@@ -1353,7 +1353,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"Program/EnsureMessageSyncTimer: Periodic message sync failed.");
+                    logger.Warn(ex, $"Program/EnsureMessageSyncTimer: Periodic message sync failed (force=false, intervalHours={_messageSyncPollInterval.TotalHours}, manifestUrl={MessageManifestUrl}, appVersion={AppVersion}).");
                 }
             };
 
@@ -1370,11 +1370,13 @@ namespace DisplayMagician {
 
             if (!force && !_messageSyncService.IsDailyCheckDue())
             {
+                logger.Trace($"Program/RunMessageSyncAndNotifyUserAsync: Skipping sync because daily check is not due yet (force={force}).");
                 return;
             }
 
             if (!await _messageSyncSemaphore.WaitAsync(0).ConfigureAwait(false))
             {
+                logger.Warn($"Program/RunMessageSyncAndNotifyUserAsync: Skipping sync because another message sync is already in progress (force={force}).");
                 return;
             }
 
@@ -1383,12 +1385,19 @@ namespace DisplayMagician {
                 MessageSyncResult syncResult = await _messageSyncService.SyncMessagesAsync(AppVersion, CancellationToken.None).ConfigureAwait(false);
                 if (!syncResult.Success)
                 {
+                    logger.Warn($"Program/RunMessageSyncAndNotifyUserAsync: Sync completed with failure (force={force}, appVersion={AppVersion}, unreadCount={syncResult.UnreadCount}).");
                     return;
                 }
+
+                logger.Info($"Program/RunMessageSyncAndNotifyUserAsync: Sync completed successfully (force={force}, newMessages={syncResult.NewMessagesCount}, unreadCount={syncResult.UnreadCount}).");
 
                 if (syncResult.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
                 {
                     ShowNewMessagesToast(syncResult.NewMessagesCount);
+                }
+                else if (syncResult.NewMessagesCount > 0)
+                {
+                    logger.Info($"Program/RunMessageSyncAndNotifyUserAsync: New messages were synced but message toasts are disabled in settings.");
                 }
 
                 RefreshMessageIndicators();
@@ -1442,7 +1451,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"Program/RefreshMessageIndicators: Failed to refresh unread indicator.");
+                logger.Warn(ex, $"Program/RefreshMessageIndicators: Failed to refresh unread indicator (mainFormNull={AppMainForm == null}).");
             }
         }
 
@@ -1479,14 +1488,22 @@ namespace DisplayMagician {
         {
             if (Program.AppMainForm == null)
             {
+                logger.Warn($"Program/HandleReadMessagesNowAction: Received readMessagesNow action but AppMainForm is null, so Messages window cannot be opened.");
                 return;
             }
 
-            Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            try
             {
-                Program.AppMainForm.openApplicationWindow();
-                Program.AppMainForm.openMessagesWindow(selectNewestUnread: true);
-            });
+                Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                {
+                    Program.AppMainForm.openApplicationWindow();
+                    Program.AppMainForm.openMessagesWindow(selectNewestUnread: true);
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/HandleReadMessagesNowAction: Failed to open Messages window from toast action.");
+            }
         }
 
         private static void ShowPackageIdentityWarningToast()

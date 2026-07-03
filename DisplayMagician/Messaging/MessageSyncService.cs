@@ -42,11 +42,12 @@ namespace DisplayMagician.Messaging
                 if (!File.Exists(_storePath))
                 {
                     SaveStore(new MessageStoreDocument());
+                    _logger.Info($"MessageSyncService/EnsureStorage: Created new message index store at {_storePath}.");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Warn(ex, $"MessageSyncService/EnsureStorage: Failed to initialise message store at {_messagesFolderPath}.");
+                _logger.Warn(ex, $"MessageSyncService/EnsureStorage: Failed to initialise message store (messagesFolderPath={_messagesFolderPath}, storePath={_storePath}).");
             }
         }
 
@@ -119,15 +120,18 @@ namespace DisplayMagician.Messaging
             store.LastAttemptCheckUtc = DateTime.UtcNow;
             SaveStore(store);
 
+            _logger.Trace($"MessageSyncService/SyncMessagesAsync: Starting sync (manifestUrl={_manifestUrl}, appVersion={appVersion}, existingMessages={store.Messages.Count}).");
+
             MessageManifestDocument manifest = await DownloadManifestAsync(cancellationToken).ConfigureAwait(false);
             if (manifest == null)
             {
+                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Manifest download/parsing returned null (manifestUrl={_manifestUrl}).");
                 return new MessageSyncResult { Success = false, UnreadCount = store.Messages.Count(m => !m.IsRead) };
             }
 
             if (manifest.SchemaVersion != CurrentSchemaVersion)
             {
-                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Unsupported message schema version {manifest.SchemaVersion}.");
+                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Unsupported message schema version {manifest.SchemaVersion} (expected={CurrentSchemaVersion}, manifestUrl={_manifestUrl}).");
                 return new MessageSyncResult { Success = false, UnreadCount = store.Messages.Count(m => !m.IsRead) };
             }
 
@@ -147,6 +151,7 @@ namespace DisplayMagician.Messaging
 
                 if (store.Messages.Any(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase)))
                 {
+                    _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping existing message id={entry.Id}.");
                     continue;
                 }
 
@@ -169,7 +174,7 @@ namespace DisplayMagician.Messaging
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Failed to write markdown file {markdownFullPath}.");
+                    _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Failed to write markdown file (messageId={entry.Id}, markdownPath={markdownFullPath}, sourceMarkdownUrl={entry.MarkdownUrl}).");
                     continue;
                 }
 
@@ -191,6 +196,8 @@ namespace DisplayMagician.Messaging
             store.LastSuccessfulCheckUtc = DateTime.UtcNow;
             SaveStore(store);
 
+            _logger.Info($"MessageSyncService/SyncMessagesAsync: Sync finished (newMessages={newMessages}, totalMessages={store.Messages.Count}, unread={store.Messages.Count(m => !m.IsRead)}).");
+
             return new MessageSyncResult
             {
                 Success = true,
@@ -203,7 +210,14 @@ namespace DisplayMagician.Messaging
         {
             try
             {
-                string json = await _httpClient.GetStringAsync(_manifestUrl, cancellationToken).ConfigureAwait(false);
+                using HttpResponseMessage response = await _httpClient.GetAsync(_manifestUrl, cancellationToken).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.Warn($"MessageSyncService/DownloadManifestAsync: Manifest request failed (url={_manifestUrl}, statusCode={(int)response.StatusCode}, reason={response.ReasonPhrase}).");
+                    return null;
+                }
+
+                string json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     _logger.Warn($"MessageSyncService/DownloadManifestAsync: Manifest at {_manifestUrl} was empty.");
@@ -214,7 +228,7 @@ namespace DisplayMagician.Messaging
             }
             catch (Exception ex)
             {
-                _logger.Warn(ex, $"MessageSyncService/DownloadManifestAsync: Could not fetch manifest {_manifestUrl}.");
+                _logger.Warn(ex, $"MessageSyncService/DownloadManifestAsync: Could not fetch or parse manifest (url={_manifestUrl}).");
                 return null;
             }
         }
@@ -223,6 +237,7 @@ namespace DisplayMagician.Messaging
         {
             if (string.IsNullOrWhiteSpace(markdownUrl))
             {
+                _logger.Warn($"MessageSyncService/DownloadMarkdownAsync: Markdown URL was empty in manifest entry.");
                 return null;
             }
 
@@ -232,19 +247,40 @@ namespace DisplayMagician.Messaging
                     ? absolute
                     : new Uri(manifestUri, markdownUrl);
 
-                return await _httpClient.GetStringAsync(resolved, cancellationToken).ConfigureAwait(false);
+                using HttpResponseMessage response = await _httpClient.GetAsync(resolved, cancellationToken).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.Warn($"MessageSyncService/DownloadMarkdownAsync: Markdown request failed (manifestUrl={manifestUri}, sourceMarkdownUrl={markdownUrl}, resolvedUrl={resolved}, statusCode={(int)response.StatusCode}, reason={response.ReasonPhrase}).");
+                    return null;
+                }
+
+                string markdown = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(markdown))
+                {
+                    _logger.Warn($"MessageSyncService/DownloadMarkdownAsync: Markdown content was empty (manifestUrl={manifestUri}, sourceMarkdownUrl={markdownUrl}, resolvedUrl={resolved}).");
+                    return null;
+                }
+
+                return markdown;
             }
             catch (Exception ex)
             {
-                _logger.Warn(ex, $"MessageSyncService/DownloadMarkdownAsync: Failed to fetch markdown {markdownUrl}.");
+                _logger.Warn(ex, $"MessageSyncService/DownloadMarkdownAsync: Failed to fetch markdown (manifestUrl={manifestUri}, sourceMarkdownUrl={markdownUrl}).");
                 return null;
             }
         }
 
         private bool TryValidateEntry(MessageManifestEntry entry, HashSet<string> seenIds)
         {
-            if (entry == null || string.IsNullOrWhiteSpace(entry.Id))
+            if (entry == null)
             {
+                _logger.Warn($"MessageSyncService/TryValidateEntry: Skipping null manifest message entry.");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(entry.Id))
+            {
+                _logger.Warn($"MessageSyncService/TryValidateEntry: Skipping manifest entry with missing id (title={entry.Title ?? string.Empty}, markdownUrl={entry.MarkdownUrl ?? string.Empty}).");
                 return false;
             }
 
@@ -376,9 +412,9 @@ namespace DisplayMagician.Messaging
                     vendorIds.Add(NormalizeVendorToken(vendor));
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // If vendor detection fails, keep set empty and rely on default matching behavior.
+                NLog.LogManager.GetCurrentClassLogger().Warn(ex, "MessageSyncService/GetCurrentVendorIds: Failed to detect GPU vendor IDs. Vendor-filtered messages may be skipped.");
             }
 
             return vendorIds;
@@ -403,6 +439,12 @@ namespace DisplayMagician.Messaging
                 TryDeleteMarkdownFile(toRemove.MarkdownFileName);
             }
 
+            int removedCount = store.Messages.Count - ordered.Count;
+            if (removedCount > 0)
+            {
+                _logger.Info($"MessageSyncService/PruneToMaxMessages: Pruned {removedCount} old message(s) to enforce max={MaxStoredMessages}.");
+            }
+
             store.Messages = ordered
                 .OrderByDescending(m => m.ReceivedUtc)
                 .ToList();
@@ -425,7 +467,7 @@ namespace DisplayMagician.Messaging
             }
             catch (Exception ex)
             {
-                _logger.Warn(ex, $"MessageSyncService/TryDeleteMarkdownFile: Failed to delete {fullPath}.");
+                _logger.Warn(ex, $"MessageSyncService/TryDeleteMarkdownFile: Failed to delete markdown file (fullPath={fullPath}).");
             }
         }
 
@@ -452,7 +494,7 @@ namespace DisplayMagician.Messaging
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn(ex, $"MessageSyncService/LoadStore: Failed to load message store {_storePath}. Recreating.");
+                    _logger.Warn(ex, $"MessageSyncService/LoadStore: Failed to load message store (storePath={_storePath}). Recreating in-memory store for this run.");
                     return new MessageStoreDocument();
                 }
             }
@@ -470,7 +512,7 @@ namespace DisplayMagician.Messaging
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn(ex, $"MessageSyncService/SaveStore: Failed to persist message store {_storePath}.");
+                    _logger.Warn(ex, $"MessageSyncService/SaveStore: Failed to persist message store (storePath={_storePath}, messageCount={store?.Messages?.Count ?? 0}).");
                 }
             }
         }
