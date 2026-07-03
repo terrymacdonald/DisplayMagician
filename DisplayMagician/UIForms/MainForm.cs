@@ -675,7 +675,7 @@ namespace DisplayMagician.UIForms
 
         }
 
-        public void openMessagesWindow()
+        public void openMessagesWindow(bool selectNewestUnread = false)
         {
             foreach (Form f in Application.OpenForms)
             {
@@ -689,7 +689,7 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            MessagesWindow = new MessagesForm();
+            MessagesWindow = new MessagesForm(selectNewestUnread);
             MessagesWindow.StartPosition = FormStartPosition.CenterParent;
             MessagesWindow.ShowDialog(this);
             SetUnreadMessageCount(Program.GetUnreadMessageCount());

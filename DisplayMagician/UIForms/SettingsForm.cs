@@ -119,6 +119,17 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowStatusMessageInActionCenter set to false");
             }
 
+            if (Program.AppProgramSettings.ShowMessageToasts == true)
+            {
+                cb_show_message_toasts.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowMessageToasts set to true");
+            }
+            else
+            {
+                cb_show_message_toasts.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowMessageToasts set to false");
+            }
+
             // load the DLLs that keep NVIDIA and AMD from turning off their dGPUs in gaming laptops
             if (Program.AppProgramSettings.WakeUpGpus == true)
             {
@@ -291,6 +302,12 @@ namespace DisplayMagician.UIForms
             else
                 Program.AppProgramSettings.ShowStatusMessageInActionCenter = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowStatusMessageInActionCenter as {Program.AppProgramSettings.ShowStatusMessageInActionCenter}");
+
+            if (cb_show_message_toasts.Checked)
+                Program.AppProgramSettings.ShowMessageToasts = true;
+            else
+                Program.AppProgramSettings.ShowMessageToasts = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowMessageToasts as {Program.AppProgramSettings.ShowMessageToasts}");
 
             // save the wakeupgpus setting that controls loading the DLLs that keep NVIDIA and AMD from turning off their dGPUs in gaming laptops
             if (cb_wake_up_gpus.Checked == true)

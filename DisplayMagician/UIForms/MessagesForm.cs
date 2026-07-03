@@ -23,11 +23,17 @@ namespace DisplayMagician.UIForms
         private readonly Panel rightPanel = new Panel();
         private WebView2 webView;
         private readonly Label lblFallback = new Label();
+        private readonly bool _selectNewestUnreadOnLoad;
 
         private List<LocalMessage> _messages = new List<LocalMessage>();
 
-        public MessagesForm()
+        public MessagesForm() : this(false)
         {
+        }
+
+        public MessagesForm(bool selectNewestUnreadOnLoad)
+        {
+            _selectNewestUnreadOnLoad = selectNewestUnreadOnLoad;
             InitializeUi();
         }
 
@@ -36,6 +42,7 @@ namespace DisplayMagician.UIForms
             base.OnLoad(e);
             LoadMessagesIntoList();
             InitializeWebViewIfNeeded();
+            SelectInitialMessageIfNeeded();
         }
 
         private void InitializeUi()
@@ -213,6 +220,23 @@ namespace DisplayMagician.UIForms
                     item.Selected = true;
                 }
             }
+        }
+
+        private void SelectInitialMessageIfNeeded()
+        {
+            if (!_selectNewestUnreadOnLoad || lvMessages.Items.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem unreadItem = lvMessages.Items
+                .Cast<ListViewItem>()
+                .FirstOrDefault(i => (i.Tag as LocalMessage)?.IsRead == false);
+
+            ListViewItem itemToSelect = unreadItem ?? lvMessages.Items[0];
+            itemToSelect.Selected = true;
+            itemToSelect.Focused = true;
+            itemToSelect.EnsureVisible();
         }
 
         private void RenderMessage(LocalMessage message)

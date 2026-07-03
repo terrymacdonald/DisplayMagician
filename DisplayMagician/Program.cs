@@ -1485,7 +1485,7 @@ namespace DisplayMagician {
             Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 Program.AppMainForm.openApplicationWindow();
-                Program.AppMainForm.openMessagesWindow();
+                Program.AppMainForm.openMessagesWindow(selectNewestUnread: true);
             });
         }
 

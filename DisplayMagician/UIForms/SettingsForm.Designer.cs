@@ -35,6 +35,7 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
             btn_context_menu_reinstall = new System.Windows.Forms.Button();
             cb_show_status_action = new System.Windows.Forms.CheckBox();
+            cb_show_message_toasts = new System.Windows.Forms.CheckBox();
             cb_show_minimise_action = new System.Windows.Forms.CheckBox();
             label4 = new System.Windows.Forms.Label();
             btn_context_menu_uninstall = new System.Windows.Forms.Button();
@@ -96,6 +97,7 @@ namespace DisplayMagician.UIForms
             gb_general.Controls.Add(cb_wake_up_gpus);
             gb_general.Controls.Add(btn_context_menu_reinstall);
             gb_general.Controls.Add(cb_show_status_action);
+            gb_general.Controls.Add(cb_show_message_toasts);
             gb_general.Controls.Add(cb_show_minimise_action);
             gb_general.Controls.Add(label4);
             gb_general.Controls.Add(btn_context_menu_uninstall);
@@ -163,6 +165,21 @@ namespace DisplayMagician.UIForms
             cb_show_status_action.TabIndex = 46;
             cb_show_status_action.Text = "Show status change messages in Windows Action Center";
             cb_show_status_action.UseVisualStyleBackColor = true;
+            // 
+            // cb_show_message_toasts
+            // 
+            cb_show_message_toasts.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            cb_show_message_toasts.AutoSize = true;
+            cb_show_message_toasts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            cb_show_message_toasts.ForeColor = System.Drawing.Color.White;
+            cb_show_message_toasts.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            cb_show_message_toasts.Location = new System.Drawing.Point(33, 282);
+            cb_show_message_toasts.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_show_message_toasts.Name = "cb_show_message_toasts";
+            cb_show_message_toasts.Size = new System.Drawing.Size(420, 20);
+            cb_show_message_toasts.TabIndex = 52;
+            cb_show_message_toasts.Text = "Show new message notifications in Windows Action Center";
+            cb_show_message_toasts.UseVisualStyleBackColor = true;
             // 
             // cb_show_minimise_action
             // 
@@ -640,6 +657,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button btn_context_menu_uninstall;
         private System.Windows.Forms.CheckBox cb_show_status_action;
+        private System.Windows.Forms.CheckBox cb_show_message_toasts;
         private System.Windows.Forms.CheckBox cb_show_minimise_action;
         private System.Windows.Forms.CheckBox cb_upgrade_enabled;
         private System.Windows.Forms.Button btn_context_menu_reinstall;
