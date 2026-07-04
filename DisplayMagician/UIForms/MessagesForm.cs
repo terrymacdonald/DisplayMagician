@@ -1,5 +1,4 @@
 using DisplayMagician.Messaging;
-using DisplayMagician.Processes;
 using Markdig;
 using Microsoft.Web.WebView2.WinForms;
 using System;
@@ -11,18 +10,11 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
-    public class MessagesForm : Form
+    public partial class MessagesForm : Form
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private readonly SplitContainer splitContainer = new SplitContainer();
-        private readonly ListView lvMessages = new ListView();
-        private readonly Button btnMarkRead = new Button();
-        private readonly Button btnMarkUnread = new Button();
-        private readonly Label lblCount = new Label();
-        private readonly Panel rightPanel = new Panel();
         private WebView2 webView;
-        private readonly Label lblFallback = new Label();
         private readonly bool _selectNewestUnreadOnLoad;
 
         private List<LocalMessage> _messages = new List<LocalMessage>();
@@ -34,7 +26,7 @@ namespace DisplayMagician.UIForms
         public MessagesForm(bool selectNewestUnreadOnLoad)
         {
             _selectNewestUnreadOnLoad = selectNewestUnreadOnLoad;
-            InitializeUi();
+            InitializeComponent();
         }
 
         protected override void OnLoad(EventArgs e)
@@ -43,67 +35,6 @@ namespace DisplayMagician.UIForms
             LoadMessagesIntoList();
             InitializeWebViewIfNeeded();
             SelectInitialMessageIfNeeded();
-        }
-
-        private void InitializeUi()
-        {
-            Text = "DisplayMagician Messages";
-            StartPosition = FormStartPosition.CenterParent;
-            Width = 1120;
-            Height = 760;
-            MinimumSize = new Size(860, 560);
-            BackColor = Color.Black;
-            ForeColor = Color.White;
-
-            splitContainer.Dock = DockStyle.Fill;
-            splitContainer.SplitterDistance = 360;
-            splitContainer.BorderStyle = BorderStyle.FixedSingle;
-
-            lvMessages.Dock = DockStyle.Fill;
-            lvMessages.View = View.Details;
-            lvMessages.FullRowSelect = true;
-            lvMessages.MultiSelect = true;
-            lvMessages.HideSelection = false;
-            lvMessages.Columns.Add("Title", 230);
-            lvMessages.Columns.Add("Received", 120);
-            lvMessages.SelectedIndexChanged += LvMessages_SelectedIndexChanged;
-
-            Panel leftTopPanel = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.Black };
-            lblCount.Dock = DockStyle.Left;
-            lblCount.TextAlign = ContentAlignment.MiddleLeft;
-            lblCount.Padding = new Padding(8, 0, 0, 0);
-            lblCount.Text = "0 messages";
-
-            btnMarkUnread.Text = "Mark Unread";
-            btnMarkUnread.Dock = DockStyle.Right;
-            btnMarkUnread.Width = 110;
-            btnMarkUnread.Click += BtnMarkUnread_Click;
-
-            btnMarkRead.Text = "Mark Read";
-            btnMarkRead.Dock = DockStyle.Right;
-            btnMarkRead.Width = 95;
-            btnMarkRead.Click += BtnMarkRead_Click;
-
-            leftTopPanel.Controls.Add(btnMarkUnread);
-            leftTopPanel.Controls.Add(btnMarkRead);
-            leftTopPanel.Controls.Add(lblCount);
-
-            splitContainer.Panel1.Controls.Add(lvMessages);
-            splitContainer.Panel1.Controls.Add(leftTopPanel);
-
-            rightPanel.Dock = DockStyle.Fill;
-            rightPanel.BackColor = Color.White;
-
-            lblFallback.Dock = DockStyle.Fill;
-            lblFallback.Text = "Select a message to view its content.";
-            lblFallback.TextAlign = ContentAlignment.MiddleCenter;
-            lblFallback.BackColor = Color.White;
-            lblFallback.ForeColor = Color.Black;
-
-            rightPanel.Controls.Add(lblFallback);
-            splitContainer.Panel2.Controls.Add(rightPanel);
-
-            Controls.Add(splitContainer);
         }
 
         private void InitializeWebViewIfNeeded()
@@ -237,27 +168,6 @@ namespace DisplayMagician.UIForms
             itemToSelect.Selected = true;
             itemToSelect.Focused = true;
             itemToSelect.EnsureVisible();
-        }
-
-        private void InitializeComponent()
-        {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MessagesForm));
-            SuspendLayout();
-            // 
-            // MessagesForm
-            // 
-            BackColor = Color.Black;
-            ClientSize = new Size(1006, 630);
-            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            Icon = (Icon)resources.GetObject("$this.Icon");
-            MaximizeBox = false;
-            MinimizeBox = false;
-            Name = "MessagesForm";
-            ShowIcon = false;
-            StartPosition = FormStartPosition.CenterParent;
-            Text = "Messages";
-            ResumeLayout(false);
-
         }
 
         private void RenderMessage(LocalMessage message)
