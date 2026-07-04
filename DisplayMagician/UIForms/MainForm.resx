@@ -133,11 +133,86 @@
   <data name="splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
+  <data name="btn_audio.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="btn_audio.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="btn_audio.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="btn_audio.Location" type="System.Drawing.Point, System.Drawing">
+    <value>601, 9</value>
+  </data>
+  <data name="btn_audio.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="btn_audio.Size" type="System.Drawing.Size, System.Drawing">
+    <value>104, 27</value>
+  </data>
+  <data name="btn_audio.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="btn_audio.Text" xml:space="preserve">
+    <value>&amp;Audio Profiles</value>
+  </data>
+  <data name="&gt;&gt;btn_audio.Name" xml:space="preserve">
+    <value>btn_audio</value>
+  </data>
+  <data name="&gt;&gt;btn_audio.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btn_audio.Parent" xml:space="preserve">
+    <value>splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;btn_audio.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="btn_messages.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="btn_messages.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="btn_messages.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="btn_messages.Location" type="System.Drawing.Point, System.Drawing">
+    <value>713, 9</value>
+  </data>
+  <data name="btn_messages.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="btn_messages.Size" type="System.Drawing.Size, System.Drawing">
+    <value>96, 27</value>
+  </data>
+  <data name="btn_messages.TabIndex" type="System.Int32, mscorlib">
+    <value>12</value>
+  </data>
+  <data name="btn_messages.Text" xml:space="preserve">
+    <value>&amp;Messages</value>
+  </data>
+  <data name="&gt;&gt;btn_messages.Name" xml:space="preserve">
+    <value>btn_messages</value>
+  </data>
+  <data name="&gt;&gt;btn_messages.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btn_messages.Parent" xml:space="preserve">
+    <value>splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;btn_messages.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="lbl_donate.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
   <data name="lbl_donate.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
   <data name="lbl_donate.Location" type="System.Drawing.Point, System.Drawing">
-    <value>533, 42</value>
+    <value>699, 40</value>
   </data>
   <data name="lbl_donate.Size" type="System.Drawing.Size, System.Drawing">
     <value>205, 15</value>
@@ -161,7 +236,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;lbl_donate.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>2</value>
   </data>
   <data name="btn_fov_calc.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -173,13 +248,13 @@
     <value>NoControl</value>
   </data>
   <data name="btn_fov_calc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>722, 9</value>
+    <value>509, 9</value>
   </data>
   <data name="btn_fov_calc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
   </data>
   <data name="btn_fov_calc.Size" type="System.Drawing.Size, System.Drawing">
-    <value>88, 27</value>
+    <value>84, 27</value>
   </data>
   <data name="btn_fov_calc.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
@@ -197,7 +272,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;btn_fov_calc.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>3</value>
   </data>
   <data name="btn_help.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -209,13 +284,13 @@
     <value>NoControl</value>
   </data>
   <data name="btn_help.Location" type="System.Drawing.Point, System.Drawing">
-    <value>533, 9</value>
+    <value>325, 9</value>
   </data>
   <data name="btn_help.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
   </data>
   <data name="btn_help.Size" type="System.Drawing.Size, System.Drawing">
-    <value>88, 27</value>
+    <value>84, 27</value>
   </data>
   <data name="btn_help.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -233,7 +308,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;btn_help.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>4</value>
   </data>
   <data name="btn_donate.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -245,13 +320,13 @@
     <value>NoControl</value>
   </data>
   <data name="btn_donate.Location" type="System.Drawing.Point, System.Drawing">
-    <value>627, 9</value>
+    <value>417, 9</value>
   </data>
   <data name="btn_donate.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
   </data>
   <data name="btn_donate.Size" type="System.Drawing.Size, System.Drawing">
-    <value>88, 27</value>
+    <value>84, 27</value>
   </data>
   <data name="btn_donate.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -269,7 +344,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;btn_donate.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>5</value>
   </data>
   <data name="btn_settings.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -302,7 +377,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;btn_settings.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>6</value>
   </data>
   <data name="lbl_create_profile.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>None</value>
@@ -341,7 +416,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;lbl_create_profile.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>7</value>
   </data>
   <data name="btn_setup_display_profiles.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>None</value>
@@ -377,7 +452,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;btn_setup_display_profiles.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>8</value>
   </data>
   <data name="pb_display_profile.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -391,7 +466,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAALEQAACxEBf2RfkQAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
+        /wJiW2fk/tJodwAAAAlwSFlzAAALDwAACw8BkvkDpQAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
         Y+IBYxBoAE1oLFWVVKWhNJTmWUISiEFgMDaDDY4xYMdJXycrt3M7N3ct90o6vrnd6b6d21n3+todD3GG
         a5J2PDtux5lsEzcGgYaaTt1V+9H7//779+y9v/c751TplKgfrFrfeb/3HFWdb+/n+f++/b77O2n37t1X
         XHHFzp07t2/fvmPHju2FKwrbCvHg8onLjEsnLjEuLlxUeGeHCy+88ILC+eefH3+ef/755xXOTbxj4u3G
@@ -10842,7 +10917,7 @@
     <value>splitContainer1.Panel1</value>
   </data>
   <data name="&gt;&gt;pb_display_profile.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>9</value>
   </data>
   <data name="&gt;&gt;splitContainer1.Panel1.Name" xml:space="preserve">
     <value>splitContainer1.Panel1</value>
@@ -10869,7 +10944,7 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>346, 289</value>
+    <value>346, 293</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10914,7 +10989,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_minimise_notification_area.Location" type="System.Drawing.Point, System.Drawing">
-    <value>228, 416</value>
+    <value>228, 422</value>
   </data>
   <data name="cb_minimise_notification_area.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -10950,7 +11025,7 @@
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
   <data name="lbl_version.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 418</value>
+    <value>9, 424</value>
   </data>
   <data name="lbl_version.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10989,7 +11064,7 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 204</value>
+    <value>247, 208</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11025,7 +11100,7 @@
     <value>NoControl</value>
   </data>
   <data name="btn_exit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>823, 410</value>
+    <value>823, 416</value>
   </data>
   <data name="btn_exit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11063,7 +11138,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAAOwgAADsIBFShKgAAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
+        /wJiW2fk/tJodwAAAAlwSFlzAAAOwAAADsABataJCQAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
         2TImDjpmi5mZGSwzQxxmZiYnDpqZLduywJLFrMsMxXVBet+pfXVy2+mZN/9Mzz/zXnW1c1W34NSpqlt7
         nbX22g5uXnPcved6+c33CVjo6TvP1TPUwyfMJ2Chh0+Ys3sw/OnqGeriEQKf3b3nunqGunnN8fKb7+49
         181rDiz0CVgIO/H2X+DiETLL2R82EdaZ6+oZ4uYV6uoZ4uoZ4u4918MnzMtvvpvXHDevOZ6+86AB3v4L

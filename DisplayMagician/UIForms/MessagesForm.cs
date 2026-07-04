@@ -239,6 +239,27 @@ namespace DisplayMagician.UIForms
             itemToSelect.EnsureVisible();
         }
 
+        private void InitializeComponent()
+        {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MessagesForm));
+            SuspendLayout();
+            // 
+            // MessagesForm
+            // 
+            BackColor = Color.Black;
+            ClientSize = new Size(1006, 630);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "MessagesForm";
+            ShowIcon = false;
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Messages";
+            ResumeLayout(false);
+
+        }
+
         private void RenderMessage(LocalMessage message)
         {
             if (message == null)

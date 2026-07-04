@@ -32,6 +32,8 @@ namespace DisplayMagician.UIForms
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             btn_back = new System.Windows.Forms.Button();
             gb_general = new System.Windows.Forms.GroupBox();
+            label6 = new System.Windows.Forms.Label();
+            cmb_notify_icon_double_click = new System.Windows.Forms.ComboBox();
             cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
             btn_context_menu_reinstall = new System.Windows.Forms.Button();
             cb_show_status_action = new System.Windows.Forms.CheckBox();
@@ -63,9 +65,6 @@ namespace DisplayMagician.UIForms
             gb_support = new System.Windows.Forms.GroupBox();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
-            cmb_notify_icon_double_click = new System.Windows.Forms.ComboBox();
-            label5 = new System.Windows.Forms.Label();
-            label6 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             gb_hotkeys.SuspendLayout();
             gb_upgrades.SuspendLayout();
@@ -92,7 +91,6 @@ namespace DisplayMagician.UIForms
             // gb_general
             // 
             gb_general.Controls.Add(label6);
-            gb_general.Controls.Add(label5);
             gb_general.Controls.Add(cmb_notify_icon_double_click);
             gb_general.Controls.Add(cb_wake_up_gpus);
             gb_general.Controls.Add(btn_context_menu_reinstall);
@@ -112,10 +110,30 @@ namespace DisplayMagician.UIForms
             gb_general.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_general.Name = "gb_general";
             gb_general.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_general.Size = new System.Drawing.Size(612, 478);
+            gb_general.Size = new System.Drawing.Size(612, 503);
             gb_general.TabIndex = 11;
             gb_general.TabStop = false;
             gb_general.Text = "General Settings";
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label6.ForeColor = System.Drawing.Color.Transparent;
+            label6.Location = new System.Drawing.Point(32, 303);
+            label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label6.Name = "label6";
+            label6.Size = new System.Drawing.Size(308, 16);
+            label6.TabIndex = 51;
+            label6.Text = "Notification Icon (System Tray) double click action :";
+            // 
+            // cmb_notify_icon_double_click
+            // 
+            cmb_notify_icon_double_click.FormattingEnabled = true;
+            cmb_notify_icon_double_click.Location = new System.Drawing.Point(342, 300);
+            cmb_notify_icon_double_click.Name = "cmb_notify_icon_double_click";
+            cmb_notify_icon_double_click.Size = new System.Drawing.Size(243, 24);
+            cmb_notify_icon_double_click.TabIndex = 49;
             // 
             // cb_wake_up_gpus
             // 
@@ -126,7 +144,7 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_wake_up_gpus.ForeColor = System.Drawing.Color.White;
             cb_wake_up_gpus.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_wake_up_gpus.Location = new System.Drawing.Point(32, 253);
+            cb_wake_up_gpus.Location = new System.Drawing.Point(30, 271);
             cb_wake_up_gpus.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_wake_up_gpus.Name = "cb_wake_up_gpus";
             cb_wake_up_gpus.Size = new System.Drawing.Size(507, 20);
@@ -142,7 +160,7 @@ namespace DisplayMagician.UIForms
             btn_context_menu_reinstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_context_menu_reinstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_context_menu_reinstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_reinstall.Location = new System.Drawing.Point(30, 412);
+            btn_context_menu_reinstall.Location = new System.Drawing.Point(30, 437);
             btn_context_menu_reinstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_context_menu_reinstall.Name = "btn_context_menu_reinstall";
             btn_context_menu_reinstall.Size = new System.Drawing.Size(243, 38);
@@ -158,7 +176,7 @@ namespace DisplayMagician.UIForms
             cb_show_status_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_status_action.ForeColor = System.Drawing.Color.White;
             cb_show_status_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_status_action.Location = new System.Drawing.Point(33, 212);
+            cb_show_status_action.Location = new System.Drawing.Point(33, 178);
             cb_show_status_action.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_status_action.Name = "cb_show_status_action";
             cb_show_status_action.Size = new System.Drawing.Size(365, 20);
@@ -173,10 +191,10 @@ namespace DisplayMagician.UIForms
             cb_show_message_toasts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_message_toasts.ForeColor = System.Drawing.Color.White;
             cb_show_message_toasts.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_message_toasts.Location = new System.Drawing.Point(33, 282);
+            cb_show_message_toasts.Location = new System.Drawing.Point(33, 245);
             cb_show_message_toasts.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_message_toasts.Name = "cb_show_message_toasts";
-            cb_show_message_toasts.Size = new System.Drawing.Size(420, 20);
+            cb_show_message_toasts.Size = new System.Drawing.Size(372, 20);
             cb_show_message_toasts.TabIndex = 52;
             cb_show_message_toasts.Text = "Show new message notifications in Windows Action Center";
             cb_show_message_toasts.UseVisualStyleBackColor = true;
@@ -188,7 +206,7 @@ namespace DisplayMagician.UIForms
             cb_show_minimise_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_minimise_action.ForeColor = System.Drawing.Color.White;
             cb_show_minimise_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_minimise_action.Location = new System.Drawing.Point(33, 171);
+            cb_show_minimise_action.Location = new System.Drawing.Point(33, 145);
             cb_show_minimise_action.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_minimise_action.Name = "cb_show_minimise_action";
             cb_show_minimise_action.Size = new System.Drawing.Size(486, 20);
@@ -199,10 +217,10 @@ namespace DisplayMagician.UIForms
             // label4
             // 
             label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label4.Location = new System.Drawing.Point(130, 362);
+            label4.Location = new System.Drawing.Point(130, 399);
             label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label4.Name = "label4";
-            label4.Size = new System.Drawing.Size(361, 47);
+            label4.Size = new System.Drawing.Size(361, 28);
             label4.TabIndex = 44;
             label4.Text = "Add or remove the Desktop Background Context Menu. ";
             label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -215,7 +233,7 @@ namespace DisplayMagician.UIForms
             btn_context_menu_uninstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_context_menu_uninstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_context_menu_uninstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_uninstall.Location = new System.Drawing.Point(342, 412);
+            btn_context_menu_uninstall.Location = new System.Drawing.Point(342, 437);
             btn_context_menu_uninstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_context_menu_uninstall.Name = "btn_context_menu_uninstall";
             btn_context_menu_uninstall.Size = new System.Drawing.Size(243, 38);
@@ -231,7 +249,7 @@ namespace DisplayMagician.UIForms
             cb_show_splashscreen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_splashscreen.ForeColor = System.Drawing.Color.White;
             cb_show_splashscreen.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_splashscreen.Location = new System.Drawing.Point(33, 130);
+            cb_show_splashscreen.Location = new System.Drawing.Point(33, 113);
             cb_show_splashscreen.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_splashscreen.Name = "cb_show_splashscreen";
             cb_show_splashscreen.Size = new System.Drawing.Size(311, 20);
@@ -259,7 +277,7 @@ namespace DisplayMagician.UIForms
             label1.AutoSize = true;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label1.ForeColor = System.Drawing.Color.Transparent;
-            label1.Location = new System.Drawing.Point(32, 337);
+            label1.Location = new System.Drawing.Point(32, 353);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(136, 16);
@@ -270,7 +288,7 @@ namespace DisplayMagician.UIForms
             // 
             cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_loglevel.FormattingEnabled = true;
-            cmb_loglevel.Location = new System.Drawing.Point(197, 334);
+            cmb_loglevel.Location = new System.Drawing.Point(197, 350);
             cmb_loglevel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_loglevel.Name = "cmb_loglevel";
             cmb_loglevel.Size = new System.Drawing.Size(388, 24);
@@ -283,7 +301,7 @@ namespace DisplayMagician.UIForms
             cb_minimise_notification_area.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
             cb_minimise_notification_area.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_minimise_notification_area.Location = new System.Drawing.Point(33, 90);
+            cb_minimise_notification_area.Location = new System.Drawing.Point(33, 80);
             cb_minimise_notification_area.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_minimise_notification_area.Name = "cb_minimise_notification_area";
             cb_minimise_notification_area.Size = new System.Drawing.Size(331, 20);
@@ -310,7 +328,7 @@ namespace DisplayMagician.UIForms
             gb_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_hotkeys.Name = "gb_hotkeys";
             gb_hotkeys.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_hotkeys.Size = new System.Drawing.Size(803, 478);
+            gb_hotkeys.Size = new System.Drawing.Size(803, 503);
             gb_hotkeys.TabIndex = 12;
             gb_hotkeys.TabStop = false;
             gb_hotkeys.Text = "Hotkeys";
@@ -360,7 +378,7 @@ namespace DisplayMagician.UIForms
             lv_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             lv_hotkeys.Name = "lv_hotkeys";
             lv_hotkeys.ShowGroups = false;
-            lv_hotkeys.Size = new System.Drawing.Size(724, 223);
+            lv_hotkeys.Size = new System.Drawing.Size(724, 238);
             lv_hotkeys.TabIndex = 48;
             lv_hotkeys.UseCompatibleStateImageBehavior = false;
             lv_hotkeys.View = System.Windows.Forms.View.Details;
@@ -374,7 +392,7 @@ namespace DisplayMagician.UIForms
             btn_clear_all_hotkeys.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_clear_all_hotkeys.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_clear_all_hotkeys.ForeColor = System.Drawing.Color.White;
-            btn_clear_all_hotkeys.Location = new System.Drawing.Point(321, 412);
+            btn_clear_all_hotkeys.Location = new System.Drawing.Point(321, 437);
             btn_clear_all_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_clear_all_hotkeys.Name = "btn_clear_all_hotkeys";
             btn_clear_all_hotkeys.Size = new System.Drawing.Size(148, 38);
@@ -471,11 +489,11 @@ namespace DisplayMagician.UIForms
             gb_upgrades.Controls.Add(cb_upgrade_prerelease);
             gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_upgrades.ForeColor = System.Drawing.Color.White;
-            gb_upgrades.Location = new System.Drawing.Point(31, 534);
+            gb_upgrades.Location = new System.Drawing.Point(31, 555);
             gb_upgrades.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_upgrades.Name = "gb_upgrades";
             gb_upgrades.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_upgrades.Size = new System.Drawing.Size(612, 198);
+            gb_upgrades.Size = new System.Drawing.Size(612, 177);
             gb_upgrades.TabIndex = 13;
             gb_upgrades.TabStop = false;
             gb_upgrades.Text = "Upgrade Settings";
@@ -529,11 +547,11 @@ namespace DisplayMagician.UIForms
             gb_support.Controls.Add(label3);
             gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_support.ForeColor = System.Drawing.Color.White;
-            gb_support.Location = new System.Drawing.Point(681, 534);
+            gb_support.Location = new System.Drawing.Point(681, 555);
             gb_support.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_support.Name = "gb_support";
             gb_support.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_support.Size = new System.Drawing.Size(803, 137);
+            gb_support.Size = new System.Drawing.Size(803, 116);
             gb_support.TabIndex = 16;
             gb_support.TabStop = false;
             gb_support.Text = "Support Settings";
@@ -546,7 +564,7 @@ namespace DisplayMagician.UIForms
             btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_create_support_package.ForeColor = System.Drawing.Color.White;
-            btn_create_support_package.Location = new System.Drawing.Point(292, 31);
+            btn_create_support_package.Location = new System.Drawing.Point(292, 26);
             btn_create_support_package.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_create_support_package.Name = "btn_create_support_package";
             btn_create_support_package.Size = new System.Drawing.Size(214, 38);
@@ -558,45 +576,13 @@ namespace DisplayMagician.UIForms
             // label3
             // 
             label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label3.Location = new System.Drawing.Point(180, 72);
+            label3.Location = new System.Drawing.Point(180, 66);
             label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(441, 37);
             label3.TabIndex = 15;
             label3.Text = "Use this button to save a support zip file to your computer. You can then upload this file to GitHub when you have a problem you need me to fix";
             label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // cmb_notify_icon_double_click
-            // 
-            cmb_notify_icon_double_click.FormattingEnabled = true;
-            cmb_notify_icon_double_click.Location = new System.Drawing.Point(342, 290);
-            cmb_notify_icon_double_click.Name = "cmb_notify_icon_double_click";
-            cmb_notify_icon_double_click.Size = new System.Drawing.Size(243, 24);
-            cmb_notify_icon_double_click.TabIndex = 49;
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label5.ForeColor = System.Drawing.Color.Transparent;
-            label5.Location = new System.Drawing.Point(238, 231);
-            label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            label5.Name = "label5";
-            label5.Size = new System.Drawing.Size(136, 16);
-            label5.TabIndex = 50;
-            label5.Text = "What type of logging?";
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label6.ForeColor = System.Drawing.Color.Transparent;
-            label6.Location = new System.Drawing.Point(32, 293);
-            label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            label6.Name = "label6";
-            label6.Size = new System.Drawing.Size(308, 16);
-            label6.TabIndex = 51;
-            label6.Text = "Notification Icon (System Tray) double click action :";
             // 
             // SettingsForm
             // 
@@ -667,7 +653,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_hotkey_exit;
         private System.Windows.Forms.CheckBox cb_wake_up_gpus;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox cmb_notify_icon_double_click;
     }
 }

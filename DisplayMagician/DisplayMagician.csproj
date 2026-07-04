@@ -190,6 +190,7 @@
     <EmbeddedResource Include="UIForms\HotkeyForm.resx" />
     <EmbeddedResource Include="UIForms\LoadingForm.resx" />
     <EmbeddedResource Include="UIForms\MainForm.resx" />
+    <EmbeddedResource Include="UIForms\MessagesForm.resx" />
     <EmbeddedResource Include="UIForms\ProfileSettingsForm.resx" />
     <EmbeddedResource Include="UIForms\SettingsForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutErrorForm.resx" />

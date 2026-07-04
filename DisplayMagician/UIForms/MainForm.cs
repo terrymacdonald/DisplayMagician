@@ -30,7 +30,7 @@ namespace DisplayMagician.UIForms
         private DisplayProfileForm DisplayProfileWindow = new DisplayProfileForm();
         private ShortcutLibraryForm ShortcutLibraryWindow = new ShortcutLibraryForm();
         private MessagesForm MessagesWindow;
-        private Button _btnMessages;
+        //private Button _btnMessages;
         private bool _screenHasChanged = false; // Used to stop the screen changing when the user is changing profiles
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -59,17 +59,19 @@ namespace DisplayMagician.UIForms
         public bool AllowClose
         {
             get => _allowClose;
-            set =>  _allowClose = value;            
+            set => _allowClose = value;
         }
 
 
         public MainForm(Form formToOpen = null)
         {
             InitializeComponent();
-            CreateMessagesButton();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
             lbl_version.Text = string.Format(lbl_version.Text, Program.AppVersion);
+
+            // Update the message count on the Messages button to reflect any unread messages
+            SetUnreadMessageCount(Program.GetUnreadMessageCount());
 
             // Refresh all possible profiles and shortcuts
             ProfileRepository.IsPossibleRefresh();
@@ -203,33 +205,6 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void CreateMessagesButton()
-        {
-            _btnMessages = new Button
-            {
-                Name = "btn_messages",
-                Text = "Messages",
-                Width = btn_settings.Width,
-                Height = btn_settings.Height,
-                FlatStyle = btn_settings.FlatStyle,
-                ForeColor = btn_settings.ForeColor,
-                BackColor = btn_settings.BackColor,
-                Font = btn_settings.Font,
-                Anchor = btn_settings.Anchor,
-                UseVisualStyleBackColor = btn_settings.UseVisualStyleBackColor,
-            };
-
-            _btnMessages.FlatAppearance.MouseDownBackColor = btn_settings.FlatAppearance.MouseDownBackColor;
-            _btnMessages.FlatAppearance.MouseOverBackColor = btn_settings.FlatAppearance.MouseOverBackColor;
-
-            int midpointX = btn_fov_calc.Left + ((btn_settings.Left - btn_fov_calc.Left) / 2);
-            _btnMessages.Location = new Point(midpointX, btn_settings.Top);
-            _btnMessages.Click += btn_messages_Click;
-
-            splitContainer1.Panel1.Controls.Add(_btnMessages);
-            _btnMessages.BringToFront();
-            SetUnreadMessageCount(Program.GetUnreadMessageCount());
-        }
 
         protected override void SetVisibleCore(bool value)
         {
@@ -354,16 +329,6 @@ namespace DisplayMagician.UIForms
             ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
             ShortcutLibraryWindow.ShowDialog(this);
 
-            /*if (ShortcutLibraryWindow == null || ShortcutLibraryWindow.IsDisposed)
-            {
-                ShortcutLibraryWindow = new ShortcutLibraryForm();
-                ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
-                ShortcutLibraryWindow.ShowDialog(this);
-            }
-            else 
-            {
-                ShortcutLibraryWindow.Activate();
-            }*/
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -398,7 +363,7 @@ namespace DisplayMagician.UIForms
                     lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times without donating.";
                 }
             }
-            
+
 
             logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
             SetUnreadMessageCount(Program.GetUnreadMessageCount());
@@ -406,12 +371,7 @@ namespace DisplayMagician.UIForms
 
         public void SetUnreadMessageCount(int unreadCount)
         {
-            if (_btnMessages == null)
-            {
-                return;
-            }
-
-            _btnMessages.Text = unreadCount > 0
+            btn_messages.Text = unreadCount > 0
                 ? $"Messages ({unreadCount})"
                 : "Messages";
         }
@@ -613,7 +573,7 @@ namespace DisplayMagician.UIForms
         public void openShortcutLibraryWindow()
         {
 
-            foreach(var form in this.MdiChildren)
+            foreach (var form in this.MdiChildren)
             {
                 if (form is ShortcutLibraryForm && form.Modal)
                 {
@@ -634,11 +594,11 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            _allowVisible = true;           
+            _allowVisible = true;
 
             // Center this form on the primary screen
             //Utils.ActivateCenteredOnPrimaryScreen(this);
-           
+
             btn_setup_game_shortcuts.PerformClick();
         }
 
@@ -888,7 +848,7 @@ namespace DisplayMagician.UIForms
 
                     /*childForm.StartPosition = FormStartPosition.Manual;
                     childForm.Location = new Point(childX, childY);*/
-                    childForm.SetDesktopLocation(childX,childY);
+                    childForm.SetDesktopLocation(childX, childY);
                 }
             }
         }
@@ -933,5 +893,6 @@ namespace DisplayMagician.UIForms
 
             base.WndProc(ref m);
         }
+
     }
 }

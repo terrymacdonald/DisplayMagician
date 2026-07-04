@@ -31,6 +31,8 @@
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             splitContainer1 = new System.Windows.Forms.SplitContainer();
+            btn_audio = new System.Windows.Forms.Button();
+            btn_messages = new System.Windows.Forms.Button();
             lbl_donate = new System.Windows.Forms.Label();
             btn_fov_calc = new System.Windows.Forms.Button();
             btn_help = new System.Windows.Forms.Button();
@@ -75,6 +77,8 @@
             // 
             // splitContainer1.Panel1
             // 
+            splitContainer1.Panel1.Controls.Add(btn_audio);
+            splitContainer1.Panel1.Controls.Add(btn_messages);
             splitContainer1.Panel1.Controls.Add(lbl_donate);
             splitContainer1.Panel1.Controls.Add(btn_fov_calc);
             splitContainer1.Panel1.Controls.Add(btn_help);
@@ -93,6 +97,25 @@
             splitContainer1.Panel2.Controls.Add(btn_exit);
             splitContainer1.Panel2.Controls.Add(pb_game_shortcut);
             splitContainer1.TabStop = false;
+            // 
+            // btn_audio
+            // 
+            resources.ApplyResources(btn_audio, "btn_audio");
+            btn_audio.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_audio.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_audio.ForeColor = System.Drawing.Color.White;
+            btn_audio.Name = "btn_audio";
+            btn_audio.UseVisualStyleBackColor = true;
+            // 
+            // btn_messages
+            // 
+            resources.ApplyResources(btn_messages, "btn_messages");
+            btn_messages.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_messages.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_messages.ForeColor = System.Drawing.Color.White;
+            btn_messages.Name = "btn_messages";
+            btn_messages.UseVisualStyleBackColor = true;
+            btn_messages.Click += btn_messages_Click;
             // 
             // lbl_donate
             // 
@@ -344,5 +367,7 @@
         private System.Windows.Forms.Button btn_help;
         private System.Windows.Forms.Button btn_fov_calc;
         private System.Windows.Forms.Label lbl_donate;
+        private System.Windows.Forms.Button btn_messages;
+        private System.Windows.Forms.Button btn_audio;
     }
 }
