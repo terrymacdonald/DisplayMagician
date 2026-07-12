@@ -46,12 +46,14 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
             tabp_audio = new System.Windows.Forms.TabPage();
-            cb_dont_change_audio = new System.Windows.Forms.CheckBox();
+            gb_audio_profile = new System.Windows.Forms.GroupBox();
+            gb_audio_overrides = new System.Windows.Forms.GroupBox();
             lbl_audio_profiles = new System.Windows.Forms.Label();
             lb_audio_profiles = new System.Windows.Forms.ListBox();
+            btn_delete_audio_profile = new System.Windows.Forms.Button();
             btn_create_audio_profile = new System.Windows.Forms.Button();
             btn_update_audio_profile = new System.Windows.Forms.Button();
-            btn_delete_audio_profile = new System.Windows.Forms.Button();
+            cb_dont_change_audio = new System.Windows.Forms.CheckBox();
             tabp_before = new System.Windows.Forms.TabPage();
             flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             p_start_program_upper = new System.Windows.Forms.Panel();
@@ -123,13 +125,12 @@ namespace DisplayMagician.UIForms
             btn_hotkey = new System.Windows.Forms.Button();
             lbl_hotkey_assigned = new System.Windows.Forms.Label();
             btn_help = new System.Windows.Forms.Button();
-            gb_audio_profile = new System.Windows.Forms.GroupBox();
-            gb_audio_overrides = new System.Windows.Forms.GroupBox();
             tabc_shortcut.SuspendLayout();
             tabp_display.SuspendLayout();
             p_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pbLogo).BeginInit();
             tabp_audio.SuspendLayout();
+            gb_audio_profile.SuspendLayout();
             tabp_before.SuspendLayout();
             p_start_program_upper.SuspendLayout();
             tabp_game.SuspendLayout();
@@ -145,7 +146,6 @@ namespace DisplayMagician.UIForms
             groupBox3.SuspendLayout();
             groupBox1.SuspendLayout();
             gb_display_after.SuspendLayout();
-            gb_audio_profile.SuspendLayout();
             SuspendLayout();
             // 
             // btn_save
@@ -327,20 +327,35 @@ namespace DisplayMagician.UIForms
             tabp_audio.TabIndex = 4;
             tabp_audio.Text = "2. Choose Audio";
             // 
-            // cb_dont_change_audio
+            // gb_audio_profile
             // 
-            cb_dont_change_audio.AutoSize = true;
-            cb_dont_change_audio.Checked = true;
-            cb_dont_change_audio.CheckState = System.Windows.Forms.CheckState.Checked;
-            cb_dont_change_audio.ForeColor = System.Drawing.Color.White;
-            cb_dont_change_audio.Location = new System.Drawing.Point(26, 20);
-            cb_dont_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            cb_dont_change_audio.Name = "cb_dont_change_audio";
-            cb_dont_change_audio.Size = new System.Drawing.Size(340, 24);
-            cb_dont_change_audio.TabIndex = 0;
-            cb_dont_change_audio.Text = "Don't change audio settings for this shortcut";
-            cb_dont_change_audio.UseVisualStyleBackColor = true;
-            cb_dont_change_audio.CheckedChanged += cb_dont_change_audio_CheckedChanged;
+            gb_audio_profile.Controls.Add(gb_audio_overrides);
+            gb_audio_profile.Controls.Add(lbl_audio_profiles);
+            gb_audio_profile.Controls.Add(lb_audio_profiles);
+            gb_audio_profile.Controls.Add(btn_delete_audio_profile);
+            gb_audio_profile.Controls.Add(btn_create_audio_profile);
+            gb_audio_profile.Controls.Add(btn_update_audio_profile);
+            gb_audio_profile.Enabled = false;
+            gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            gb_audio_profile.ForeColor = System.Drawing.Color.White;
+            gb_audio_profile.Location = new System.Drawing.Point(26, 61);
+            gb_audio_profile.Name = "gb_audio_profile";
+            gb_audio_profile.Size = new System.Drawing.Size(1215, 664);
+            gb_audio_profile.TabIndex = 2;
+            gb_audio_profile.TabStop = false;
+            gb_audio_profile.Text = "Audio Profiles to use";
+            gb_audio_profile.Paint += groupbox_Paint;
+            // 
+            // gb_audio_overrides
+            // 
+            gb_audio_overrides.ForeColor = System.Drawing.Color.White;
+            gb_audio_overrides.Location = new System.Drawing.Point(463, 55);
+            gb_audio_overrides.Name = "gb_audio_overrides";
+            gb_audio_overrides.Size = new System.Drawing.Size(703, 557);
+            gb_audio_overrides.TabIndex = 5;
+            gb_audio_overrides.TabStop = false;
+            gb_audio_overrides.Text = "Selected Audio Profile Settings";
+            gb_audio_overrides.Paint += groupbox_Paint;
             // 
             // lbl_audio_profiles
             // 
@@ -353,11 +368,12 @@ namespace DisplayMagician.UIForms
             lbl_audio_profiles.TabIndex = 0;
             lbl_audio_profiles.Text = "Select an Audio Profile to use for this Shortcut:";
             lbl_audio_profiles.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            lbl_audio_profiles.Paint += label_Paint;
             // 
             // lb_audio_profiles
             // 
             lb_audio_profiles.BackColor = System.Drawing.Color.White;
-            lb_audio_profiles.ForeColor = System.Drawing.Color.White;
+            lb_audio_profiles.ForeColor = System.Drawing.Color.Black;
             lb_audio_profiles.FormattingEnabled = true;
             lb_audio_profiles.Location = new System.Drawing.Point(26, 76);
             lb_audio_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -365,6 +381,23 @@ namespace DisplayMagician.UIForms
             lb_audio_profiles.Size = new System.Drawing.Size(392, 400);
             lb_audio_profiles.TabIndex = 1;
             lb_audio_profiles.SelectedIndexChanged += lb_audio_profiles_SelectedIndexChanged;
+            // 
+            // btn_delete_audio_profile
+            // 
+            btn_delete_audio_profile.Enabled = false;
+            btn_delete_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_delete_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_delete_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_delete_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_delete_audio_profile.ForeColor = System.Drawing.Color.White;
+            btn_delete_audio_profile.Location = new System.Drawing.Point(74, 581);
+            btn_delete_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_delete_audio_profile.Name = "btn_delete_audio_profile";
+            btn_delete_audio_profile.Size = new System.Drawing.Size(296, 31);
+            btn_delete_audio_profile.TabIndex = 4;
+            btn_delete_audio_profile.Text = "Delete Selected Profile";
+            btn_delete_audio_profile.UseVisualStyleBackColor = true;
+            btn_delete_audio_profile.Click += btn_delete_audio_profile_Click;
             // 
             // btn_create_audio_profile
             // 
@@ -399,22 +432,20 @@ namespace DisplayMagician.UIForms
             btn_update_audio_profile.UseVisualStyleBackColor = true;
             btn_update_audio_profile.Click += btn_update_audio_profile_Click;
             // 
-            // btn_delete_audio_profile
+            // cb_dont_change_audio
             // 
-            btn_delete_audio_profile.Enabled = false;
-            btn_delete_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_delete_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_delete_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_delete_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btn_delete_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_delete_audio_profile.Location = new System.Drawing.Point(74, 581);
-            btn_delete_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_delete_audio_profile.Name = "btn_delete_audio_profile";
-            btn_delete_audio_profile.Size = new System.Drawing.Size(296, 31);
-            btn_delete_audio_profile.TabIndex = 4;
-            btn_delete_audio_profile.Text = "Delete Selected Profile";
-            btn_delete_audio_profile.UseVisualStyleBackColor = true;
-            btn_delete_audio_profile.Click += btn_delete_audio_profile_Click;
+            cb_dont_change_audio.AutoSize = true;
+            cb_dont_change_audio.Checked = true;
+            cb_dont_change_audio.CheckState = System.Windows.Forms.CheckState.Checked;
+            cb_dont_change_audio.ForeColor = System.Drawing.Color.White;
+            cb_dont_change_audio.Location = new System.Drawing.Point(26, 20);
+            cb_dont_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_dont_change_audio.Name = "cb_dont_change_audio";
+            cb_dont_change_audio.Size = new System.Drawing.Size(340, 24);
+            cb_dont_change_audio.TabIndex = 0;
+            cb_dont_change_audio.Text = "Don't change audio settings for this shortcut";
+            cb_dont_change_audio.UseVisualStyleBackColor = true;
+            cb_dont_change_audio.CheckedChanged += cb_dont_change_audio_CheckedChanged;
             // 
             // tabp_before
             // 
@@ -1416,34 +1447,6 @@ namespace DisplayMagician.UIForms
             btn_help.UseVisualStyleBackColor = true;
             btn_help.Click += btn_help_Click;
             // 
-            // gb_audio_profile
-            // 
-            gb_audio_profile.Controls.Add(gb_audio_overrides);
-            gb_audio_profile.Controls.Add(lbl_audio_profiles);
-            gb_audio_profile.Controls.Add(lb_audio_profiles);
-            gb_audio_profile.Controls.Add(btn_delete_audio_profile);
-            gb_audio_profile.Controls.Add(btn_create_audio_profile);
-            gb_audio_profile.Controls.Add(btn_update_audio_profile);
-            gb_audio_profile.Enabled = false;
-            gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            gb_audio_profile.ForeColor = System.Drawing.Color.White;
-            gb_audio_profile.Location = new System.Drawing.Point(26, 61);
-            gb_audio_profile.Name = "gb_audio_profile";
-            gb_audio_profile.Size = new System.Drawing.Size(1215, 664);
-            gb_audio_profile.TabIndex = 2;
-            gb_audio_profile.TabStop = false;
-            gb_audio_profile.Text = "Audio Profiles to use";
-            // 
-            // gb_audio_overrides
-            // 
-            gb_audio_overrides.ForeColor = System.Drawing.Color.White;
-            gb_audio_overrides.Location = new System.Drawing.Point(463, 55);
-            gb_audio_overrides.Name = "gb_audio_overrides";
-            gb_audio_overrides.Size = new System.Drawing.Size(703, 557);
-            gb_audio_overrides.TabIndex = 5;
-            gb_audio_overrides.TabStop = false;
-            gb_audio_overrides.Text = "Selected Audio Profile Settings";
-            // 
             // ShortcutForm
             // 
             AcceptButton = btn_save;
@@ -1480,6 +1483,8 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)pbLogo).EndInit();
             tabp_audio.ResumeLayout(false);
             tabp_audio.PerformLayout();
+            gb_audio_profile.ResumeLayout(false);
+            gb_audio_profile.PerformLayout();
             tabp_before.ResumeLayout(false);
             p_start_program_upper.ResumeLayout(false);
             p_start_program_upper.PerformLayout();
@@ -1502,8 +1507,6 @@ namespace DisplayMagician.UIForms
             groupBox1.PerformLayout();
             gb_display_after.ResumeLayout(false);
             gb_display_after.PerformLayout();
-            gb_audio_profile.ResumeLayout(false);
-            gb_audio_profile.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }

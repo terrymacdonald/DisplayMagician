@@ -2226,6 +2226,25 @@ namespace DisplayMagician.UIForms
 
         }
 
+        private void groupbox_Paint(object sender, PaintEventArgs e)
+        {
+
+            base.OnPaint(e);
+
+            GroupBox groupbox = sender as GroupBox;
+
+            if (!groupbox.Enabled)
+            {
+                int x = ClientRectangle.X + 3;
+                int y = ClientRectangle.Y;
+
+                TextRenderer.DrawText(e.Graphics, groupbox.Text,
+                    groupbox.Font, new Point(x, y), Color.Gray,
+                    TextFormatFlags.LeftAndRightPadding);
+            }
+
+        }
+
         private void checkbox_Paint(object sender, PaintEventArgs e)
         {
 

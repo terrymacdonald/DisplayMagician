@@ -10941,7 +10941,7 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>346, 291</value>
+    <value>346, 287</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -11061,7 +11061,7 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 206</value>
+    <value>247, 202</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
