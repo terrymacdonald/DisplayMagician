@@ -10941,7 +10941,7 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>346, 289</value>
+    <value>346, 291</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10986,7 +10986,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_minimise_notification_area.Location" type="System.Drawing.Point, System.Drawing">
-    <value>228, 412</value>
+    <value>227, 409</value>
   </data>
   <data name="cb_minimise_notification_area.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11022,7 +11022,7 @@
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
   <data name="lbl_version.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 414</value>
+    <value>8, 411</value>
   </data>
   <data name="lbl_version.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -11061,7 +11061,7 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 204</value>
+    <value>247, 206</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11097,7 +11097,7 @@
     <value>NoControl</value>
   </data>
   <data name="btn_exit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>823, 406</value>
+    <value>822, 403</value>
   </data>
   <data name="btn_exit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -72419,7 +72419,7 @@
     <value>True</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>914, 876</value>
+    <value>914, 871</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -80236,7 +80236,7 @@
     <value>4, 3, 4, 3</value>
   </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>930, 925</value>
+    <value>930, 910</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
     <value>814, 456</value>
