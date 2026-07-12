@@ -125,12 +125,21 @@ namespace DisplayMagician.UIForms
             btn_hotkey = new System.Windows.Forms.Button();
             lbl_hotkey_assigned = new System.Windows.Forms.Label();
             btn_help = new System.Windows.Forms.Button();
+            myWebClient1 = new AutoUpdaterDotNET.MyWebClient();
+            cd_override_speaker_volume = new System.Windows.Forms.CheckBox();
+            cb_override_microphone_volume = new System.Windows.Forms.CheckBox();
+            nud_speaker_volume = new System.Windows.Forms.NumericUpDown();
+            numericUpDown1 = new System.Windows.Forms.NumericUpDown();
+            label1 = new System.Windows.Forms.Label();
+            label4 = new System.Windows.Forms.Label();
+            textBox1 = new System.Windows.Forms.TextBox();
             tabc_shortcut.SuspendLayout();
             tabp_display.SuspendLayout();
             p_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pbLogo).BeginInit();
             tabp_audio.SuspendLayout();
             gb_audio_profile.SuspendLayout();
+            gb_audio_overrides.SuspendLayout();
             tabp_before.SuspendLayout();
             p_start_program_upper.SuspendLayout();
             tabp_game.SuspendLayout();
@@ -146,6 +155,8 @@ namespace DisplayMagician.UIForms
             groupBox3.SuspendLayout();
             groupBox1.SuspendLayout();
             gb_display_after.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_speaker_volume).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             SuspendLayout();
             // 
             // btn_save
@@ -267,7 +278,7 @@ namespace DisplayMagician.UIForms
             // 
             dv_profile.BackColor = System.Drawing.Color.DimGray;
             dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
+            dv_profile.Dock = System.Windows.Forms.DockStyle.Fill;
             dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
             dv_profile.Location = new System.Drawing.Point(0, 0);
@@ -336,7 +347,7 @@ namespace DisplayMagician.UIForms
             gb_audio_profile.Controls.Add(btn_create_audio_profile);
             gb_audio_profile.Controls.Add(btn_update_audio_profile);
             gb_audio_profile.Enabled = false;
-            gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_audio_profile.ForeColor = System.Drawing.Color.White;
             gb_audio_profile.Location = new System.Drawing.Point(26, 61);
             gb_audio_profile.Name = "gb_audio_profile";
@@ -348,6 +359,13 @@ namespace DisplayMagician.UIForms
             // 
             // gb_audio_overrides
             // 
+            gb_audio_overrides.Controls.Add(textBox1);
+            gb_audio_overrides.Controls.Add(label4);
+            gb_audio_overrides.Controls.Add(nud_speaker_volume);
+            gb_audio_overrides.Controls.Add(label1);
+            gb_audio_overrides.Controls.Add(numericUpDown1);
+            gb_audio_overrides.Controls.Add(cb_override_microphone_volume);
+            gb_audio_overrides.Controls.Add(cd_override_speaker_volume);
             gb_audio_overrides.ForeColor = System.Drawing.Color.White;
             gb_audio_overrides.Location = new System.Drawing.Point(463, 55);
             gb_audio_overrides.Name = "gb_audio_overrides";
@@ -361,10 +379,10 @@ namespace DisplayMagician.UIForms
             // 
             lbl_audio_profiles.AutoSize = true;
             lbl_audio_profiles.ForeColor = System.Drawing.Color.White;
-            lbl_audio_profiles.Location = new System.Drawing.Point(74, 55);
+            lbl_audio_profiles.Location = new System.Drawing.Point(57, 55);
             lbl_audio_profiles.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_audio_profiles.Name = "lbl_audio_profiles";
-            lbl_audio_profiles.Size = new System.Drawing.Size(314, 18);
+            lbl_audio_profiles.Size = new System.Drawing.Size(338, 20);
             lbl_audio_profiles.TabIndex = 0;
             lbl_audio_profiles.Text = "Select an Audio Profile to use for this Shortcut:";
             lbl_audio_profiles.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -378,7 +396,7 @@ namespace DisplayMagician.UIForms
             lb_audio_profiles.Location = new System.Drawing.Point(26, 76);
             lb_audio_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             lb_audio_profiles.Name = "lb_audio_profiles";
-            lb_audio_profiles.Size = new System.Drawing.Size(392, 400);
+            lb_audio_profiles.Size = new System.Drawing.Size(392, 384);
             lb_audio_profiles.TabIndex = 1;
             lb_audio_profiles.SelectedIndexChanged += lb_audio_profiles_SelectedIndexChanged;
             // 
@@ -441,9 +459,9 @@ namespace DisplayMagician.UIForms
             cb_dont_change_audio.Location = new System.Drawing.Point(26, 20);
             cb_dont_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_dont_change_audio.Name = "cb_dont_change_audio";
-            cb_dont_change_audio.Size = new System.Drawing.Size(340, 24);
+            cb_dont_change_audio.Size = new System.Drawing.Size(226, 24);
             cb_dont_change_audio.TabIndex = 0;
-            cb_dont_change_audio.Text = "Don't change audio settings for this shortcut";
+            cb_dont_change_audio.Text = "Don't change audio settings";
             cb_dont_change_audio.UseVisualStyleBackColor = true;
             cb_dont_change_audio.CheckedChanged += cb_dont_change_audio_CheckedChanged;
             // 
@@ -1447,6 +1465,93 @@ namespace DisplayMagician.UIForms
             btn_help.UseVisualStyleBackColor = true;
             btn_help.Click += btn_help_Click;
             // 
+            // myWebClient1
+            //                 
+            myWebClient1.BaseAddress = "";
+            myWebClient1.CachePolicy = null;
+            myWebClient1.Credentials = null;
+            myWebClient1.UseDefaultCredentials = false;
+            // 
+            // cd_override_speaker_volume
+            // 
+            cd_override_speaker_volume.AutoSize = true;
+            cd_override_speaker_volume.ForeColor = System.Drawing.Color.White;
+            cd_override_speaker_volume.Location = new System.Drawing.Point(24, 507);
+            cd_override_speaker_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cd_override_speaker_volume.Name = "cd_override_speaker_volume";
+            cd_override_speaker_volume.Size = new System.Drawing.Size(209, 24);
+            cd_override_speaker_volume.TabIndex = 3;
+            cd_override_speaker_volume.Text = "Override Speaker Volume";
+            cd_override_speaker_volume.UseVisualStyleBackColor = true;
+            cd_override_speaker_volume.CheckedChanged += cd_override_speaker_volume_CheckedChanged;
+            // 
+            // cb_override_microphone_volume
+            // 
+            cb_override_microphone_volume.AutoSize = true;
+            cb_override_microphone_volume.ForeColor = System.Drawing.Color.White;
+            cb_override_microphone_volume.Location = new System.Drawing.Point(360, 507);
+            cb_override_microphone_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_override_microphone_volume.Name = "cb_override_microphone_volume";
+            cb_override_microphone_volume.Size = new System.Drawing.Size(232, 24);
+            cb_override_microphone_volume.TabIndex = 4;
+            cb_override_microphone_volume.Text = "Override Microphone Volume";
+            cb_override_microphone_volume.UseVisualStyleBackColor = true;
+            // 
+            // nud_speaker_volume
+            // 
+            nud_speaker_volume.Enabled = false;
+            nud_speaker_volume.Location = new System.Drawing.Point(240, 507);
+            nud_speaker_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            nud_speaker_volume.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
+            nud_speaker_volume.Name = "nud_speaker_volume";
+            nud_speaker_volume.Size = new System.Drawing.Size(50, 26);
+            nud_speaker_volume.TabIndex = 6;
+            nud_speaker_volume.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            // 
+            // numericUpDown1
+            // 
+            numericUpDown1.Enabled = false;
+            numericUpDown1.Location = new System.Drawing.Point(600, 507);
+            numericUpDown1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            numericUpDown1.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
+            numericUpDown1.Name = "numericUpDown1";
+            numericUpDown1.Size = new System.Drawing.Size(50, 26);
+            numericUpDown1.TabIndex = 7;
+            numericUpDown1.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.ForeColor = System.Drawing.Color.White;
+            label1.Location = new System.Drawing.Point(293, 509);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(23, 20);
+            label1.TabIndex = 8;
+            label1.Text = "%";
+            label1.Click += label1_Click;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.ForeColor = System.Drawing.Color.White;
+            label4.Location = new System.Drawing.Point(652, 509);
+            label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label4.Name = "label4";
+            label4.Size = new System.Drawing.Size(23, 20);
+            label4.TabIndex = 9;
+            label4.Text = "%";
+            // 
+            // textBox1
+            // 
+            textBox1.Enabled = false;
+            textBox1.Location = new System.Drawing.Point(24, 32);
+            textBox1.Multiline = true;
+            textBox1.Name = "textBox1";
+            textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            textBox1.Size = new System.Drawing.Size(651, 453);
+            textBox1.TabIndex = 10;
+            // 
             // ShortcutForm
             // 
             AcceptButton = btn_save;
@@ -1485,6 +1590,8 @@ namespace DisplayMagician.UIForms
             tabp_audio.PerformLayout();
             gb_audio_profile.ResumeLayout(false);
             gb_audio_profile.PerformLayout();
+            gb_audio_overrides.ResumeLayout(false);
+            gb_audio_overrides.PerformLayout();
             tabp_before.ResumeLayout(false);
             p_start_program_upper.ResumeLayout(false);
             p_start_program_upper.PerformLayout();
@@ -1507,6 +1614,8 @@ namespace DisplayMagician.UIForms
             groupBox1.PerformLayout();
             gb_display_after.ResumeLayout(false);
             gb_display_after.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_speaker_volume).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDown1).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -1604,5 +1713,13 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_help;
         private System.Windows.Forms.GroupBox gb_audio_profile;
         private System.Windows.Forms.GroupBox gb_audio_overrides;
+        private System.Windows.Forms.CheckBox cb_override_microphone_volume;
+        private System.Windows.Forms.CheckBox cd_override_speaker_volume;
+        private AutoUpdaterDotNET.MyWebClient myWebClient1;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.NumericUpDown nud_speaker_volume;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }

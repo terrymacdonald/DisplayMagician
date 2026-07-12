@@ -3259,6 +3259,21 @@ namespace DisplayMagician.UIForms
             ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
         }
 
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cd_override_speaker_volume_CheckedChanged(object sender, EventArgs e)
+        {
+            if (sender is CheckBox cb)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                bool overrideVolume = cb.Checked;
+                nud_speaker_volume.Enabled = overrideVolume;
+            }
+        }
     }
 
     // Class used to populate combo boxes
