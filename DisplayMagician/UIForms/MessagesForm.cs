@@ -63,10 +63,10 @@ namespace DisplayMagician.UIForms
         private void LoadMessagesIntoList()
         {
             _messages = Program.GetStoredMessages();
-            lvMessages.Items.Clear();
+            lv_messages.Items.Clear();
 
-            Font unreadFont = new Font(lvMessages.Font, FontStyle.Bold);
-            Font readFont = new Font(lvMessages.Font, FontStyle.Regular);
+            Font unreadFont = new Font(lv_messages.Font, FontStyle.Bold);
+            Font readFont = new Font(lv_messages.Font, FontStyle.Regular);
 
             foreach (LocalMessage message in _messages)
             {
@@ -78,21 +78,21 @@ namespace DisplayMagician.UIForms
                 };
 
                 item.SubItems.Add(message.ReceivedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
-                lvMessages.Items.Add(item);
+                lv_messages.Items.Add(item);
             }
 
             int unreadCount = _messages.Count(m => !m.IsRead);
-            lblCount.Text = $"{_messages.Count} messages ({unreadCount} unread)";
+            lbl_count.Text = $"{_messages.Count} messages ({unreadCount} unread)";
         }
 
-        private void LvMessages_SelectedIndexChanged(object sender, EventArgs e)
+        private void lv_messages_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (lvMessages.SelectedItems.Count == 0)
+            if (lv_messages.SelectedItems.Count == 0)
             {
                 return;
             }
 
-            List<string> selectedIds = lvMessages.SelectedItems
+            List<string> selectedIds = lv_messages.SelectedItems
                 .Cast<ListViewItem>()
                 .Select(i => i.Name)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
@@ -103,28 +103,28 @@ namespace DisplayMagician.UIForms
             LoadMessagesIntoList();
             RestoreSelection(selectedIds);
 
-            if (lvMessages.SelectedItems.Count > 0)
+            if (lv_messages.SelectedItems.Count > 0)
             {
-                LocalMessage selectedMessage = lvMessages.SelectedItems[0].Tag as LocalMessage;
+                LocalMessage selectedMessage = lv_messages.SelectedItems[0].Tag as LocalMessage;
                 RenderMessage(selectedMessage);
             }
 
             Program.RefreshMessageIndicators();
         }
 
-        private void BtnMarkRead_Click(object sender, EventArgs e)
+        private void btn_mark_read_Click(object sender, EventArgs e)
         {
             ApplyReadStateForSelection(isRead: true);
         }
 
-        private void BtnMarkUnread_Click(object sender, EventArgs e)
+        private void btn_mark_unread_Click(object sender, EventArgs e)
         {
             ApplyReadStateForSelection(isRead: false);
         }
 
         private void ApplyReadStateForSelection(bool isRead)
         {
-            List<string> selectedIds = lvMessages.SelectedItems
+            List<string> selectedIds = lv_messages.SelectedItems
                 .Cast<ListViewItem>()
                 .Select(i => i.Name)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
@@ -144,7 +144,7 @@ namespace DisplayMagician.UIForms
 
         private void RestoreSelection(List<string> selectedIds)
         {
-            foreach (ListViewItem item in lvMessages.Items)
+            foreach (ListViewItem item in lv_messages.Items)
             {
                 if (selectedIds.Contains(item.Name, StringComparer.OrdinalIgnoreCase))
                 {
@@ -155,16 +155,16 @@ namespace DisplayMagician.UIForms
 
         private void SelectInitialMessageIfNeeded()
         {
-            if (!_selectNewestUnreadOnLoad || lvMessages.Items.Count == 0)
+            if (!_selectNewestUnreadOnLoad || lv_messages.Items.Count == 0)
             {
                 return;
             }
 
-            ListViewItem unreadItem = lvMessages.Items
+            ListViewItem unreadItem = lv_messages.Items
                 .Cast<ListViewItem>()
                 .FirstOrDefault(i => (i.Tag as LocalMessage)?.IsRead == false);
 
-            ListViewItem itemToSelect = unreadItem ?? lvMessages.Items[0];
+            ListViewItem itemToSelect = unreadItem ?? lv_messages.Items[0];
             itemToSelect.Selected = true;
             itemToSelect.Focused = true;
             itemToSelect.EnsureVisible();
@@ -174,8 +174,8 @@ namespace DisplayMagician.UIForms
         {
             if (message == null)
             {
-                lblFallback.Text = "Select a message to view its content.";
-                lblFallback.Visible = true;
+                lbl_fallback.Text = "Select a message to view its content.";
+                lbl_fallback.Visible = true;
                 if (webView != null)
                 {
                     webView.Visible = false;
@@ -187,8 +187,8 @@ namespace DisplayMagician.UIForms
             if (!File.Exists(fullPath))
             {
                 logger.Warn($"MessagesForm/RenderMessage: Markdown file is missing (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
-                lblFallback.Text = "This message content could not be found on disk.";
-                lblFallback.Visible = true;
+                lbl_fallback.Text = "This message content could not be found on disk.";
+                lbl_fallback.Visible = true;
                 if (webView != null)
                 {
                     webView.Visible = false;
@@ -207,8 +207,8 @@ namespace DisplayMagician.UIForms
             catch (Exception ex)
             {
                 logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to read or parse markdown content (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
-                lblFallback.Text = "This message content could not be loaded.";
-                lblFallback.Visible = true;
+                lbl_fallback.Text = "This message content could not be loaded.";
+                lbl_fallback.Visible = true;
                 if (webView != null)
                 {
                     webView.Visible = false;
@@ -221,22 +221,27 @@ namespace DisplayMagician.UIForms
                 try
                 {
                     webView.Visible = true;
-                    lblFallback.Visible = false;
+                    lbl_fallback.Visible = false;
                     webView.NavigateToString(htmlDoc);
                 }
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to render markdown in WebView2 (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
                     webView.Visible = false;
-                    lblFallback.Text = markdown;
-                    lblFallback.Visible = true;
+                    lbl_fallback.Text = markdown;
+                    lbl_fallback.Visible = true;
                 }
             }
             else
             {
-                lblFallback.Text = markdown;
-                lblFallback.Visible = true;
+                lbl_fallback.Text = markdown;
+                lbl_fallback.Visible = true;
             }
+        }
+
+        private void btn_back_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }

@@ -122,6 +122,8 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
             lbl_profile_shown_subtitle.Visible = true;
 
+            cb_dont_change_audio.Checked = true;
+
             // Center the form on the primary screen
             //Utils.CenterOnPrimaryScreen(this);
 
@@ -2480,8 +2482,7 @@ namespace DisplayMagician.UIForms
 
         private void SetAudioProfileUiEnabled(bool enabled)
         {
-            pnl_audio_profile.Enabled = enabled;
-            groupBox1.Enabled = enabled;
+            gb_audio_overrides.Enabled = enabled;
         }
 
         private string PromptForAudioProfileName(string title, string currentValue = "")
@@ -2523,6 +2524,11 @@ namespace DisplayMagician.UIForms
             {
                 lb_audio_profiles.ClearSelected();
                 _audioProfileToUse = null;
+                gb_audio_profile.Enabled = false;
+            }
+            else
+            {
+                gb_audio_profile.Enabled = true;
             }
         }
 

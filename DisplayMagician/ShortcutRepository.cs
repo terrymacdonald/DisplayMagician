@@ -875,13 +875,13 @@ namespace DisplayMagician
             var toast = new ToastNotification(doc);
 
             // Remember the profile we are on now
-            bool needToChangeProfiles = false;
+            bool needToChangeDisplayProfiles = false;
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
 
             if (shortcutToUse.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} doesn't have a profile to apply, so we won't change profiles.");
-                needToChangeProfiles = false;
+                needToChangeDisplayProfiles = false;
             }
             else
             {
@@ -889,7 +889,7 @@ namespace DisplayMagician
                 if (!rollbackProfile.Equals(shortcutToUse.ProfileToUse))
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.ProfileToUse} profile.");
-                    needToChangeProfiles = true;
+                    needToChangeDisplayProfiles = true;
                 }
                 else
                 {
@@ -901,8 +901,8 @@ namespace DisplayMagician
             //InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;
             //IPCService.GetInstance().Status = InstanceStatus.Busy;
 
-            // Only change profiles if we have to
-            if (needToChangeProfiles)
+            // Only change display profiles if we have to
+            if (needToChangeDisplayProfiles)
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {rollbackProfile.Name} profile.");
                 // Apply the Profile!
@@ -923,23 +923,47 @@ namespace DisplayMagician
                 }
             }
 
-            // Apply the Audio Profile (if one is specified)
-            AudioProfileItem rollbackAudioProfile = null;
-            if (!shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase)
-                && shortcutToUse.AudioProfileToUse != null)
+            bool needToChangeAudioProfiles = false;
+            AudioProfileItem rollbackAudioProfile = AudioProfileRepository.CurrentAudioProfile;
+
+            if (shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
+                logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} doesn't have a profile to apply, so we won't change profiles.");
+                needToChangeAudioProfiles = false;
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} has a profile to apply, so we need to check whether we need to change profiles.");
+                if (!rollbackAudioProfile.Equals(shortcutToUse.AudioProfileToUse))
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioProfileToUse} profile.");
+                    needToChangeAudioProfiles = true;
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We're already on the {rollbackAudioProfile.Name} profile so no need to change profiles.");
+                }
+
+            }
+
+            // Only change audio profiles if we have to
+            if (needToChangeAudioProfiles)
+            {
+                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioProfileToUse.Name} audio profile.");
                 try
                 {
-                    if (shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
-                    {
-                        // Capture the current audio state so we can roll back later
-                        rollbackAudioProfile = new AudioProfileItem();
-                        logger.Debug($"ShortcutRepository/RunShortcut: Saved current audio state for rollback.");
-                    }
 
-                    logger.Info($"ShortcutRepository/RunShortcut: Applying audio profile '{shortcutToUse.AudioProfileToUse.Name}'.");
-                    shortcutToUse.AudioProfileToUse.SetActive();
-                    logger.Info($"ShortcutRepository/RunShortcut: Audio profile '{shortcutToUse.AudioProfileToUse.Name}' applied successfully.");
+                    // Apply the Audio Profile!
+                    bool result = shortcutToUse.AudioProfileToUse.SetActive();
+                    if (!result)
+                    {
+                        logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.AudioProfileToUse.Name}' audio profile");
+                        return RunShortcutResult.Error;
+                    }
+                    else 
+                    {
+                        logger.Trace($"ShortcutRepository/RunShortcut: Applied '{shortcutToUse.AudioProfileToUse.Name}' audio profile successfully!");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -2169,7 +2193,7 @@ namespace DisplayMagician
             }
 
             // Revert Audio Profile (if applied temporarily)
-            if (rollbackAudioProfile != null && shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
+            if (needToChangeAudioProfiles&& shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
             {
                 try
                 {
@@ -2189,7 +2213,7 @@ namespace DisplayMagician
 
             // Change back to the original profile only if it is different
             // And if we're temporary
-            if (needToChangeProfiles && shortcutToUse.DisplayPermanence == ShortcutPermanence.Temporary)
+            if (needToChangeDisplayProfiles && shortcutToUse.DisplayPermanence == ShortcutPermanence.Temporary)
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 

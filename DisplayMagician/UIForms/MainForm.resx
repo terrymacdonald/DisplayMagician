@@ -208,14 +208,11 @@
   <data name="lbl_donate.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="lbl_donate.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
   <data name="lbl_donate.Location" type="System.Drawing.Point, System.Drawing">
-    <value>699, 40</value>
+    <value>682, 39</value>
   </data>
   <data name="lbl_donate.Size" type="System.Drawing.Size, System.Drawing">
-    <value>205, 15</value>
+    <value>223, 15</value>
   </data>
   <data name="lbl_donate.TabIndex" type="System.Int32, mscorlib">
     <value>11</value>
@@ -224,7 +221,7 @@
     <value>You've used DisplayMagician X times.</value>
   </data>
   <data name="lbl_donate.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>TopRight</value>
+    <value>MiddleRight</value>
   </data>
   <data name="&gt;&gt;lbl_donate.Name" xml:space="preserve">
     <value>lbl_donate</value>
@@ -466,7 +463,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAALDwAACw8BkvkDpQAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
+        /wJiW2fk/tJodwAAAAlwSFlzAAALDAAACwwBP0AiyAAA/jVJREFUeF7s/Qm0pld534mKycbGYBmBBAGE
         Y+IBYxBoAE1oLFWVVKWhNJTmWUISiEFgMDaDDY4xYMdJXycrt3M7N3ct90o6vrnd6b6d21n3+todD3GG
         a5J2PDtux5lsEzcGgYaaTt1V+9H7//779+y9v/c751TplKgfrFrfeb/3HFWdb+/n+f++/b77O2n37t1X
         XHHFzp07t2/fvmPHju2FKwrbCvHg8onLjEsnLjEuLlxUeGeHCy+88ILC+eefH3+ef/755xXOTbxj4u3G
@@ -10944,7 +10941,7 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>346, 293</value>
+    <value>346, 289</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -10989,7 +10986,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_minimise_notification_area.Location" type="System.Drawing.Point, System.Drawing">
-    <value>228, 422</value>
+    <value>228, 412</value>
   </data>
   <data name="cb_minimise_notification_area.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11025,7 +11022,7 @@
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
   <data name="lbl_version.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 424</value>
+    <value>9, 414</value>
   </data>
   <data name="lbl_version.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 0, 4, 0</value>
@@ -11064,7 +11061,7 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 208</value>
+    <value>247, 204</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
@@ -11100,13 +11097,13 @@
     <value>NoControl</value>
   </data>
   <data name="btn_exit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>823, 416</value>
+    <value>823, 406</value>
   </data>
   <data name="btn_exit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 3, 4, 3</value>
   </data>
   <data name="btn_exit.Size" type="System.Drawing.Size, System.Drawing">
-    <value>88, 27</value>
+    <value>88, 25</value>
   </data>
   <data name="btn_exit.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
@@ -11138,7 +11135,7 @@
         pX5w7AertJkVlpfTks0sqe963JfUJHLTU+KbZTZhEWaEIBpjDBGij24GZO0jQA+dsuOP+K5C/CSLEqtk
         NVjBZIEUaWzprcaSZE+IT4qekJFhxe3/775ayd6eYvaaIPgeHOelFSo24DPvOO/7jvN5AN57OMuV4hf3
         oP9V9HxJa9kF/xqcnJe02BacrkPjnRE1owXJK9OTTMLzEdRGoP4SquaKPfs+5/AW9FX5qgvY3oE2ue+f
-        /wJiW2fk/tJodwAAAAlwSFlzAAAOwAAADsABataJCQAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
+        /wJiW2fk/tJodwAAAAlwSFlzAAAOvAAADrwBlbxySQAA/jVJREFUeF7cvQV4HVeWNarudDpxnDgxymJm
         2TImDjpmi5mZGSwzQxxmZiYnDpqZLduywJLFrMsMxXVBet+pfXVy2+mZN/9Mzz/zXnW1c1W34NSpqlt7
         nbX22g5uXnPcved6+c33CVjo6TvP1TPUwyfMJ2Chh0+Ys3sw/OnqGeriEQKf3b3nunqGunnN8fKb7+49
         181rDiz0CVgIO/H2X+DiETLL2R82EdaZ6+oZ4uYV6uoZ4uoZ4u4918MnzMtvvpvXHDevOZ6+86AB3v4L
@@ -72422,7 +72419,7 @@
     <value>True</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>915, 878</value>
+    <value>914, 876</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -80239,7 +80236,7 @@
     <value>4, 3, 4, 3</value>
   </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>1281, 1090</value>
+    <value>930, 925</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
     <value>814, 456</value>
