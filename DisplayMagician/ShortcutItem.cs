@@ -190,6 +190,10 @@ namespace DisplayMagician
         private string _differentGameExeToMonitor = "";
         private bool _monitorDifferentGameExe = false;
         private string _audioProfileUUID = AudioProfileItem.SkipAudioProfilesChangeUUID;
+        private bool _overrideAudioSpeakerVolume = false;
+        private bool _overrideAudioMicrophoneVolume = false;
+        private int _overrideAudioSpeakerVolumeLevel = 50;
+        private int _overrideAudioMicrophoneVolumeLevel = 50;
         private AudioProfileItem _audioProfileToUse = null;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
@@ -740,6 +744,59 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
+        public bool OverrideAudioSpeakerVolume
+        {
+            get
+            {
+                return _overrideAudioSpeakerVolume;
+            }
+            set
+            {
+                _overrideAudioSpeakerVolume = value;
+            }
+        }
+
+        [DefaultValue(false)]
+        public bool OverrideAudioMicrophoneVolume
+        {
+            get
+            {
+                return _overrideAudioMicrophoneVolume;
+            }
+
+            set
+            {
+                _overrideAudioMicrophoneVolume = value;
+            }
+        }
+
+        [DefaultValue(50)]
+        public int OverrideAudioSpeakerVolumeLevel
+        {
+            get
+            {
+                return _overrideAudioSpeakerVolumeLevel;
+            }
+            set
+            {
+                _overrideAudioSpeakerVolumeLevel = value;
+            }
+        }
+
+        [DefaultValue(50)]
+        public int OverrideAudioMicrophoneVolumeLevel
+        {
+            get
+            {
+                return _overrideAudioMicrophoneVolumeLevel;
+            }
+            set
+            {
+                _overrideAudioMicrophoneVolumeLevel = value;
+            }
+        }
+
         [DefaultValue(default(List<StartProgram>))]
         public List<StartProgram> StartPrograms
         {
@@ -926,6 +983,10 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence,
             AudioProfileItem audioProfileToUse = null,
             string audioProfileUUID = "",
+            bool overrideAudioSpeakerVolume = false,
+            int overrideAudioSpeakerVolumeLevel = 50,
+            bool overrideAudioMicrophoneVolume = false,
+            int overrideAudioMicrophoneVolumeLevel = 50,
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -942,6 +1003,11 @@ namespace DisplayMagician
             _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
+            _overrideAudioSpeakerVolumeLevel = overrideAudioSpeakerVolumeLevel;
+            _overrideAudioMicrophoneVolume = overrideAudioMicrophoneVolume;
+            _overrideAudioMicrophoneVolumeLevel = overrideAudioMicrophoneVolumeLevel;
+
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms;
@@ -993,6 +1059,10 @@ namespace DisplayMagician
             List<ShortcutBitmap> availableImages,
             AudioProfileItem audioProfileToUse = null,
             string audioProfileUUID = "",
+            bool overrideAudioSpeakerVolume = false,
+            int overrideAudioSpeakerVolumeLevel = 50,
+            bool overrideAudioMicrophoneVolume = false,
+            int overrideAudioMicrophoneVolumeLevel = 50,
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -1020,6 +1090,10 @@ namespace DisplayMagician
             _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
+            _overrideAudioSpeakerVolumeLevel = overrideAudioSpeakerVolumeLevel;
+            _overrideAudioMicrophoneVolume = overrideAudioMicrophoneVolume;
+            _overrideAudioMicrophoneVolumeLevel = overrideAudioMicrophoneVolumeLevel;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms;
@@ -1066,6 +1140,10 @@ namespace DisplayMagician
             List<ShortcutBitmap> availableImages, 
             AudioProfileItem audioProfileToUse = null,
             string audioProfileUUID = "",
+            bool overrideAudioSpeakerVolume = false,
+            int overrideAudioSpeakerVolumeLevel = 50,
+            bool overrideAudioMicrophoneVolume = false,
+            int overrideAudioMicrophoneVolumeLevel = 50,
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -1090,6 +1168,10 @@ namespace DisplayMagician
             _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
+            _overrideAudioSpeakerVolumeLevel = overrideAudioSpeakerVolumeLevel;
+            _overrideAudioMicrophoneVolume = overrideAudioMicrophoneVolume;
+            _overrideAudioMicrophoneVolumeLevel = overrideAudioMicrophoneVolumeLevel;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms; 
@@ -1137,6 +1219,10 @@ namespace DisplayMagician
             SupportedAppLibraryType supportedAppLibraryType,
             AudioProfileItem audioProfileToUse = null,
             string audioProfileUUID = "",
+            bool overrideAudioSpeakerVolume = false,
+            int overrideAudioSpeakerVolumeLevel = 50,
+            bool overrideAudioMicrophoneVolume = false,
+            int overrideAudioMicrophoneVolumeLevel = 50,
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
@@ -1165,6 +1251,10 @@ namespace DisplayMagician
             _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
+            _overrideAudioSpeakerVolumeLevel = overrideAudioSpeakerVolumeLevel;
+            _overrideAudioMicrophoneVolume = overrideAudioMicrophoneVolume;
+            _overrideAudioMicrophoneVolumeLevel = overrideAudioMicrophoneVolumeLevel;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _afterPrograms = afterPrograms;
@@ -1233,6 +1323,10 @@ namespace DisplayMagician
             shortcut.Errors.AddRange(Errors);
             shortcut.AudioProfileToUse = AudioProfileToUse;
             shortcut.AudioProfileUUID = AudioProfileUUID;
+            shortcut.OverrideAudioSpeakerVolume = OverrideAudioSpeakerVolume;
+            shortcut.OverrideAudioSpeakerVolumeLevel = OverrideAudioSpeakerVolumeLevel;
+            shortcut.OverrideAudioMicrophoneVolume = OverrideAudioMicrophoneVolume;
+            shortcut.OverrideAudioMicrophoneVolumeLevel = OverrideAudioMicrophoneVolumeLevel;
 
             // Duplicate the Images
 
@@ -1362,11 +1456,13 @@ namespace DisplayMagician
             Errors.Clear();
             ShortcutValidity worstError = ShortcutValidity.Valid;
 
+            logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is named: {Name}");
+
             // Does the profile we want to Use still exist?
             if (ProfileUUID == ProfileItem.SkipDisplayChangeUUID)
             {
                 // Skip Display Change is a special virtual profile - always valid, never needs checking
-                logger.Trace($"ShortcutItem/RefreshValidity: ProfileUUID is SkipDisplayChangeUUID - skipping profile existence and possibility checks.");
+                logger.Trace($"ShortcutItem/RefreshValidity: ProfileUUID is SkipDisplayChangeUUID - skipping display profile existence and possibility checks.");
             }
             else
             {
@@ -1381,7 +1477,7 @@ namespace DisplayMagician
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
                 }
-                // Is the profile still valid right now? i.e. are all the screens available?
+                /*// Is the profile still valid right now? i.e. are all the screens available?
                 if (ProfileToUse != null)
                 {
                     ProfileToUse.RefreshPossbility();
@@ -1396,10 +1492,45 @@ namespace DisplayMagician
                         if (worstError != ShortcutValidity.Error)
                             worstError = ShortcutValidity.Warning;
                     }
-                }
+                }*/
             }
 
-            logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is named: {Name}");
+            // Does the profile we want to Use still exist?
+            if (AudioProfileUUID == AudioProfileItem.SkipAudioProfilesChangeUUID)
+            {
+                // Skip Audio Change is a special virtual profile - always valid, never needs checking
+                logger.Trace($"ShortcutItem/RefreshValidity: AudioProfileUUID is SkipAudioProfilesChangeUUID - skipping audio profile existence and possibility checks.");
+            }
+            else
+            {
+                if (!AudioProfileRepository.ContainsAudioProfile(AudioProfileUUID))
+                {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The audio profile UUID {AudioProfileUUID} isn't in the AudioProfileRepository");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "AudioProfileNotExist";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The audio profile does not exist (probably deleted) and cannot be used.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Error;
+                }
+                /*// Is the audio profile still valid right now? i.e. are all the screens available?
+                if (AudioProfileToUse != null)
+                {
+                    AudioProfileToUse.RefreshPossbility();
+                    if (!AudioProfileToUse.IsPossible)
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The audio profile {AudioProfileToUse} isn't possible to use right now!");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "InvalidAudioProfile";
+                        error.Validity = ShortcutValidity.Warning;
+                        error.Message = $"The audio profile '{AudioProfileToUse.Name}' is not valid right now and cannot be used.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Warning;
+                    }
+                }*/
+            }
 
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Executable))

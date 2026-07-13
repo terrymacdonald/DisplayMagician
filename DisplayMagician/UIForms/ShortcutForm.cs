@@ -2578,6 +2578,7 @@ namespace DisplayMagician.UIForms
             _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
             btn_update_audio_profile.Enabled = _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
+            gb_audio_profile.Enabled = _audioProfileToUse != null;
         }
 
         private void btn_create_audio_profile_Click(object sender, EventArgs e)
