@@ -2558,6 +2558,7 @@ namespace DisplayMagician.UIForms
                 lb_audio_profiles.ClearSelected();
                 _audioProfileToUse = null;
                 gb_audio_profile.Enabled = false;
+                txt_audio_profile_settings.Text = string.Empty;
             }
             else
             {
@@ -2593,7 +2594,10 @@ namespace DisplayMagician.UIForms
             btn_update_audio_profile.Enabled = _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
             gb_audio_profile.Enabled = _audioProfileToUse != null;
-
+            if (_audioProfileToUse != null)
+            {
+                txt_audio_profile_settings.Text = _audioProfileToUse.GenerateSettingsText();
+            }
         }
 
         private void btn_create_audio_profile_Click(object sender, EventArgs e)

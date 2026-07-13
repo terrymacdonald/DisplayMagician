@@ -344,10 +344,34 @@ namespace DisplayMagicianShared
             return !Equals(lhs, rhs);
         }
 
-        // IMPORTANT - This AudioProfileItem ToString function is required to make the Profile ImageListView work properly! DO NOT DELETE!
         public override string ToString()
         {
-            return (Name ?? "Untitled Profile");
+            return (Name ?? "No Audio Profile Available");
+        }
+
+        public string GenerateSettingsText()
+        {
+            if (WindowsAudioConfig == null)
+                return ("No Settings Available");
+
+            string settings = "Audio Profile Name: " + Name + Environment.NewLine;
+            settings += Environment.NewLine + "Speaker Settings:" + Environment.NewLine;
+            settings += "\tPlayback Multimedia Device: " + WindowsAudioConfig.Playback.MultimediaDevice.FriendlyName + Environment.NewLine;
+            settings += "\tPlayback Communication Device: " + WindowsAudioConfig.Playback.CommunicationsDevice.FriendlyName + Environment.NewLine;
+            settings += "\tPlayback Console Device: " + WindowsAudioConfig.Playback.ConsoleDevice.FriendlyName + Environment.NewLine;
+            settings += "\tPlayback Volume: " + WindowsAudioConfig.Playback.VolumePercent + Environment.NewLine;
+            settings += "\tPlayback Mute: " + WindowsAudioConfig.Playback.IsMuted + Environment.NewLine;
+            settings += Environment.NewLine + "Microphone Settings:" + Environment.NewLine;
+            settings += "\tRecording Multimedia Device: " + WindowsAudioConfig.Recording.MultimediaDevice.FriendlyName + Environment.NewLine;
+            settings += "\tRecording Communication Device: " + WindowsAudioConfig.Recording.CommunicationsDevice.FriendlyName + Environment.NewLine;
+            settings += "\tRecording Console Device: " + WindowsAudioConfig.Recording.ConsoleDevice.FriendlyName + Environment.NewLine;
+            settings += "\tRecording Volume: " + WindowsAudioConfig.Recording.VolumePercent + Environment.NewLine;
+            settings += "\tRecording Mute: " + WindowsAudioConfig.Recording.IsMuted + Environment.NewLine;
+            settings += Environment.NewLine + "System Settings:" + Environment.NewLine;
+            settings += "\tMono Audio Enabled: " + WindowsAudioConfig.System.IsMonoAudioEnabled + Environment.NewLine;
+            settings += "\tSystem Audio Enabled: " + WindowsAudioConfig.System.IsSystemAudioEnabled + Environment.NewLine;
+
+            return settings;
         }
 
         public string CreateCommand()

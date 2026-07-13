@@ -132,7 +132,6 @@ namespace DisplayMagician.UIForms
             btn_hotkey = new System.Windows.Forms.Button();
             lbl_hotkey_assigned = new System.Windows.Forms.Label();
             btn_help = new System.Windows.Forms.Button();
-            myWebClient1 = new AutoUpdaterDotNET.MyWebClient();
             tabc_shortcut.SuspendLayout();
             tabp_display.SuspendLayout();
             p_profiles.SuspendLayout();
@@ -378,6 +377,8 @@ namespace DisplayMagician.UIForms
             // 
             // txt_audio_profile_settings
             // 
+            txt_audio_profile_settings.AcceptsReturn = true;
+            txt_audio_profile_settings.AcceptsTab = true;
             txt_audio_profile_settings.Enabled = false;
             txt_audio_profile_settings.Location = new System.Drawing.Point(24, 32);
             txt_audio_profile_settings.Multiline = true;
@@ -1546,15 +1547,6 @@ namespace DisplayMagician.UIForms
             btn_help.UseVisualStyleBackColor = true;
             btn_help.Click += btn_help_Click;
             // 
-            // myWebClient1
-            // 
-            myWebClient1.AllowReadStreamBuffering = false;
-            myWebClient1.AllowWriteStreamBuffering = false;
-            myWebClient1.BaseAddress = "";
-            myWebClient1.CachePolicy = null;
-            myWebClient1.Credentials = null;
-            myWebClient1.UseDefaultCredentials = false;
-            // 
             // ShortcutForm
             // 
             AcceptButton = btn_save;
@@ -1718,7 +1710,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.GroupBox gb_audio_overrides;
         private System.Windows.Forms.CheckBox cb_override_microphone_volume;
         private System.Windows.Forms.CheckBox cb_override_speaker_volume;
-        private AutoUpdaterDotNET.MyWebClient myWebClient1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.NumericUpDown nud_microphone_volume;
         private System.Windows.Forms.NumericUpDown nud_speaker_volume;
