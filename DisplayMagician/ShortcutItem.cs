@@ -982,7 +982,6 @@ namespace DisplayMagician
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             AudioProfileItem audioProfileToUse = null,
-            string audioProfileUUID = "",
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1000,7 +999,6 @@ namespace DisplayMagician
             _category = ShortcutCategory.NoGame;
             _profileToUse = profile;
             _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1058,7 +1056,6 @@ namespace DisplayMagician
             ShortcutBitmap selectedImage, 
             List<ShortcutBitmap> availableImages,
             AudioProfileItem audioProfileToUse = null,
-            string audioProfileUUID = "",
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1087,7 +1084,6 @@ namespace DisplayMagician
             _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _processPriority = game.ProcessPriority;
             _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1139,7 +1135,6 @@ namespace DisplayMagician
             ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages, 
             AudioProfileItem audioProfileToUse = null,
-            string audioProfileUUID = "",
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1165,7 +1160,6 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
             _processPriority = executable.ProcessPriority;
             _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1218,7 +1212,6 @@ namespace DisplayMagician
             List<ShortcutBitmap> availableImages,
             SupportedAppLibraryType supportedAppLibraryType,
             AudioProfileItem audioProfileToUse = null,
-            string audioProfileUUID = "",
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1248,7 +1241,6 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = app.ProcessNameToMonitorUsesExecutable;
             _processPriority = app.ProcessPriority;
             _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = String.IsNullOrWhiteSpace(audioProfileUUID) ? AudioProfileItem.SkipAudioProfilesChangeUUID : audioProfileUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1322,7 +1314,6 @@ namespace DisplayMagician
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
             shortcut.AudioProfileToUse = AudioProfileToUse;
-            shortcut.AudioProfileUUID = AudioProfileUUID;
             shortcut.OverrideAudioSpeakerVolume = OverrideAudioSpeakerVolume;
             shortcut.OverrideAudioSpeakerVolumeLevel = OverrideAudioSpeakerVolumeLevel;
             shortcut.OverrideAudioMicrophoneVolume = OverrideAudioMicrophoneVolume;

@@ -44,6 +44,10 @@ namespace DisplayMagician.UIForms
         List<StopProgram> _stopPrograms = new List<StopProgram>();
         private AudioProfileItem _audioProfileToUse = null;
         private ShortcutItem _shortcutToEdit = null;
+        private bool _overrideAudioSpeakerVolume = false;
+        private bool _overrideAudioMicrophoneVolume = false;
+        private int _overrideAudioSpeakerVolumeLevel = 50;
+        private int _overrideAudioMicrophoneVolumeLevel = 50;
         private Game _selectedGame = null;
         private App _selectedApp = null;
         private string _selectedAppId = "";
@@ -309,8 +313,6 @@ namespace DisplayMagician.UIForms
                 _afterPrograms.Add(stopProgram);
             }
 
-            string audioProfileUuid = _audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
-
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
             if (_shortcutCategory == ShortcutCategory.Game)
@@ -385,7 +387,10 @@ namespace DisplayMagician.UIForms
                         _selectedImage,
                         _availableImages,
                         _audioProfileToUse,
-                        audioProfileUuid,
+                        _overrideAudioSpeakerVolume,
+                        _overrideAudioSpeakerVolumeLevel,
+                        _overrideAudioMicrophoneVolume,
+                        _overrideAudioMicrophoneVolumeLevel,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -438,7 +443,10 @@ namespace DisplayMagician.UIForms
                         _selectedImage,
                         _availableImages,
                         _audioProfileToUse,
-                        audioProfileUuid,
+                        _overrideAudioSpeakerVolume,
+                        _overrideAudioSpeakerVolumeLevel,
+                        _overrideAudioMicrophoneVolume,
+                        _overrideAudioMicrophoneVolumeLevel,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -498,7 +506,10 @@ namespace DisplayMagician.UIForms
                         _availableImages,
                         _appToUse.AppToUse.AppLibraryType,
                         _audioProfileToUse,
-                        audioProfileUuid,
+                        _overrideAudioSpeakerVolume,
+                        _overrideAudioSpeakerVolumeLevel,
+                        _overrideAudioMicrophoneVolume,
+                        _overrideAudioMicrophoneVolumeLevel,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -521,7 +532,10 @@ namespace DisplayMagician.UIForms
                         _displayPermanence,
                         _audioPermanence,
                         _audioProfileToUse,
-                        audioProfileUuid,
+                        _overrideAudioSpeakerVolume,
+                        _overrideAudioSpeakerVolumeLevel,
+                        _overrideAudioMicrophoneVolume,
+                        _overrideAudioMicrophoneVolumeLevel,
                         _startPrograms,
                         _afterPrograms,
                         _stopPrograms,
@@ -2579,6 +2593,7 @@ namespace DisplayMagician.UIForms
             btn_update_audio_profile.Enabled = _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
             gb_audio_profile.Enabled = _audioProfileToUse != null;
+
         }
 
         private void btn_create_audio_profile_Click(object sender, EventArgs e)
@@ -3260,12 +3275,7 @@ namespace DisplayMagician.UIForms
             ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
         }
 
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void cd_override_speaker_volume_CheckedChanged(object sender, EventArgs e)
+        private void cb_override_speaker_volume_CheckedChanged(object sender, EventArgs e)
         {
             if (sender is CheckBox cb)
             {
@@ -3273,6 +3283,17 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 bool overrideVolume = cb.Checked;
                 nud_speaker_volume.Enabled = overrideVolume;
+            }
+        }
+
+        private void cb_override_microphone_volume_CheckedChanged(object sender, EventArgs e)
+        {
+            if (sender is CheckBox cb)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                bool overrideVolume = cb.Checked;
+                nud_microphone_volume.Enabled = overrideVolume;
             }
         }
     }
