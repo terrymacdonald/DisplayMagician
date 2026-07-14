@@ -632,6 +632,13 @@ namespace DisplayMagician.UIForms
                 errors.Add("You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.");
             }
 
+            // Check if the user has selected to change the audio settings, and if so, that they have selected a valid audio profile
+            if (!cb_dont_change_audio.Checked && !(_audioProfileToUse is AudioProfileItem))
+            {
+                logger.Error($"ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings but doesn't have an audio profile selected!");
+                errors.Add("You need to select an Audio Profile to use with this shortcut. Please select one from the list of Audio Profiles on the left of the screen or create one if none exists, or select 'Don't change audio settings' if you don't want to change the audio settings.");
+            }
+
             // Check the Shortcut Category to see if it's application
             if (rb_standalone.Checked)
             {
