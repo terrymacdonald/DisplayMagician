@@ -1163,6 +1163,7 @@ namespace DisplayMagician.UIForms
                     cb_dont_change_audio.Checked = true;
                     lb_audio_profiles.ClearSelected();
                     _audioProfileToUse = null;
+                    gb_selected_audio_settings.Enabled = false;
                 }
                 else
                 {
@@ -1171,7 +1172,11 @@ namespace DisplayMagician.UIForms
                     if (selectedAudioProfile != null)
                     {
                         _audioProfileToUse = selectedAudioProfile;
-                        lb_audio_profiles.SelectedItem = selectedAudioProfile;
+                        lb_audio_profiles.SelectedItem = selectedAudioProfile;                        
+                    } 
+                    else
+                    {
+                        gb_selected_audio_settings.Enabled = false;
                     }
                 }
 
@@ -2515,7 +2520,7 @@ namespace DisplayMagician.UIForms
 
         private void SetAudioProfileUiEnabled(bool enabled)
         {
-            gb_audio_overrides.Enabled = enabled;
+            gb_selected_audio_settings.Enabled = enabled;
         }
 
         private string PromptForAudioProfileName(string title, string currentValue = "")
@@ -2673,14 +2678,26 @@ namespace DisplayMagician.UIForms
 
             if (AudioProfileRepository.RemoveAudioProfile(selected))
             {
-                if (_audioProfileToUse != null && _audioProfileToUse.UUID.Equals(selected.UUID, StringComparison.OrdinalIgnoreCase))
-                {
-                    _audioProfileToUse = null;
-                }
+                //if (_audioProfileToUse != null && _audioProfileToUse.UUID.Equals(selected.UUID, StringComparison.OrdinalIgnoreCase))
+                //{
+                //    _audioProfileToUse = null;
+                //}
 
                 RefreshAudioProfilesList();
-                btn_update_audio_profile.Enabled = false;
-                btn_delete_audio_profile.Enabled = false;
+                if (lb_audio_profiles.Items.Count > 0)
+                {
+                    lb_audio_profiles.SelectedIndex = 0;
+                    _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
+                    btn_update_audio_profile.Enabled = false;
+                    btn_delete_audio_profile.Enabled = false;
+                }
+                else
+                {
+                    _audioProfileToUse = null;
+                    gb_audio_profile.Enabled = false;
+                    txt_audio_profile_settings.Clear();
+                }
+
                 if (_loadedShortcut)
                     _isUnsaved = true;
             }
