@@ -374,6 +374,78 @@ namespace DisplayMagicianShared
             return settings;
         }
 
+        /// <summary>
+        /// Waits for the audio devices listed in the Audio Profile to become available (up to a supplied timeout period) and then applies the audio profile settings to the system. Returns true if successful, false if not.
+        /// Is designed to handle HDMI, DIsplay Port and USB display audio devices that may not be available immediately after a display profile change, and to wait for them to become available before applying the audio profile settings.
+        /// </summary>
+        /// <param name="timeoutInMs">Maximum time in milliseconds to wait for each audio device to become available. Defaults to 10000ms (10 seconds).</param>
+        /// <param name="delayInMs">Delay in milliseconds to wait after successfully applying the profile. Defaults to 500ms.</param>
+        /// <returns>true if successful, false if not.</returns>
+        public bool TrySetActive(int timeoutInMs = 10000, int delayInMs = 500)
+        {
+            try
+            {
+                SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Waiting for audio devices in profile {Name} to become available (timeout per device: {timeoutInMs}ms)...");
+
+                using (WindowsAudioController controller = new WindowsAudioController())
+                {
+                    // Collect all distinct endpoint references from the profile that have a DeviceId.
+                    // HDMI, Display Port and USB audio devices may not be present immediately after a
+                    // display profile change, so we wait for each unique device to appear before applying.
+                    var endpointsToWaitFor = new List<WindowsAudioWrapper.Models.AudioEndpointReference>();
+
+                    void AddIfNew(WindowsAudioWrapper.Models.AudioEndpointReference ep)
+                    {
+                        if (ep != null && !string.IsNullOrEmpty(ep.DeviceId) &&
+                            !endpointsToWaitFor.Any(e => e.DeviceId == ep.DeviceId))
+                            endpointsToWaitFor.Add(ep);
+                    }
+
+                    if (WindowsAudioConfig?.Playback != null)
+                    {
+                        AddIfNew(WindowsAudioConfig.Playback.MultimediaDevice);
+                        AddIfNew(WindowsAudioConfig.Playback.CommunicationsDevice);
+                        AddIfNew(WindowsAudioConfig.Playback.ConsoleDevice);
+                    }
+
+                    if (WindowsAudioConfig?.Recording != null)
+                    {
+                        AddIfNew(WindowsAudioConfig.Recording.MultimediaDevice);
+                        AddIfNew(WindowsAudioConfig.Recording.CommunicationsDevice);
+                        AddIfNew(WindowsAudioConfig.Recording.ConsoleDevice);
+                    }
+
+                    // Wait for each unique device to become available
+                    foreach (var endpoint in endpointsToWaitFor)
+                    {
+                        SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Waiting for audio device '{endpoint.FriendlyName}' ({endpoint.DeviceId}) to become available...");
+                        bool appeared = controller.WaitForAudioDeviceToAppear(endpoint, timeoutInMs);
+                        if (appeared)
+                        {
+                            SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Audio device '{endpoint.FriendlyName}' ({endpoint.DeviceId}) is now available.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Warn($"AudioProfileItem/TrySetActive: Audio device '{endpoint.FriendlyName}' ({endpoint.DeviceId}) did not appear within {timeoutInMs}ms. Attempting to apply profile anyway.");
+                        }
+                    }
+
+                    // Apply the audio profile now that we've waited for the devices
+                    SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Applying Windows audio profile {Name}...");
+                    controller.ApplyProfile(WindowsAudioConfig);
+                    Thread.Sleep(delayInMs);
+                }
+
+                SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: The Windows Audio Profile {Name} was successfully applied.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"AudioProfileItem/TrySetActive: Exception within TrySetActive function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return false;
+            }
+        }
+
         public string CreateCommand()
         {
             return $"{Application.ExecutablePath} {DisplayMagicianStartupAction.ChangeProfile} \"{UUID}\"";

@@ -897,14 +897,11 @@ namespace DisplayMagician
                 }
 
             }
-            // Tell the IPC Service we are busy right now, and keep the previous status for later
-            //InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;
-            //IPCService.GetInstance().Status = InstanceStatus.Busy;
 
             // Only change display profiles if we have to
             if (needToChangeDisplayProfiles)
             {
-                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {rollbackProfile.Name} profile.");
+                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.ProfileToUse.Name} display profile.");
                 // Apply the Profile!
                 ApplyProfileResult result = ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse);
                 if (result == ApplyProfileResult.Error)
@@ -952,9 +949,8 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioProfileToUse.Name} audio profile.");
                 try
                 {
-
                     // Apply the Audio Profile!
-                    bool result = shortcutToUse.AudioProfileToUse.SetActive();
+                    bool result = shortcutToUse.AudioProfileToUse.TrySetActive();
                     if (!result)
                     {
                         logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.AudioProfileToUse.Name}' audio profile");

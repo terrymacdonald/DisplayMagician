@@ -57,12 +57,6 @@ namespace DisplayMagician.UIForms
         private string _gameId = "0";
         private string _uuid = "";
 
-        //private Keys _hotkey = Keys.None;
-        //private bool _userChoseOwnGameIcon = false;
-        //private string _userGameIconPath = "";
-        //private bool _userChoseOwnExeIcon = false;
-        //private string _userExeIconPath = "";
-
         private List<HotkeyKeyboard> _shownKeyboardHotkeys = new();
         private List<HotkeyJoystick> _shownJoystickHotkeys = new();
 
