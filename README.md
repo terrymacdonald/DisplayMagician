@@ -36,9 +36,9 @@ Feel free to report missing features or bugs using the project [issue tracker](h
 DisplayMagician lets you set up the following information for each game or application:
 * Create and save a Display Profile to be used within future Desktop Shortcuts
 * Save a Game Shortcut that will automatically change to a different Display Profile and start your Game when you double-click on it.
-* Run your Game Shortcut using a keyboard shortcut or a joystick or game controller like an Elgato Stream Deck.
-* Or start your games by right-clicking on the DisplayMagician Notification Tray icon.
-* Choose which Audio Device you want the shortcut to use. Like using the wireless headset when driving? This lets you with a single click.
+* Run your Game Shortcut using a keyboard shortcut, joystick or game controller like an Elgato Stream Deck.
+* Or start your games by right-clicking on the DisplayMagician Notification Tray icon, or from a desktop background context menu (right-click on the desktop background).
+* Choose which Audio Profile you want the shortcut to use. Like using the wireless headset when driving? This lets you with a single click.
 * Add one or more programs to pre-start before your game or application (and close them afterwards!)
 * Allows you to easily select games from the following Game Launchers:
   * Steam
@@ -46,7 +46,7 @@ DisplayMagician lets you set up the following information for each game or appli
   * Origin (Electronic Arts)
   * Epic Games 
   * GOG.com
-* Or select your Game from a list of installed Windows applications
+* Or select your Game from a list of installed Windows applications (including UWP apps)
 * Or even select a specific game executable to run
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
@@ -68,7 +68,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * DisplayMagician only supports 64-bit Windows 10 (version 1809 or later) and 64-bit Windows 11
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
-* Intel Combined Display support requires Intel Graphics Command Center 1.100 or later t
+* Intel Combined Display support requires Intel Graphics Command Center 1.100 or later
 * Requires .Net 10.0 (automatically included in the installer)
 
 ## Donation
@@ -113,7 +113,7 @@ If you prefer to see a video on how to setup DisplayMagician, check out [this aw
 1. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you ever want to edit them.
 1. Click the 'New' button to create a new Game Shortcut
     * Choose the Display Profile you want to use with the Game Shortcut. Make sure it matches what the game expects :).
-    * Click on the '2. Choose Audio' tab, to modify which speakers you use for sound, or which microphone you use to talk into.
+    * Click on the '2. Choose Audio' tab, to create, choose or update which Audio Profile you want to use for sound and microphone details
     * Click on the '3. Choose what happens before' tab, to choose any other programs you want to start before you start the main Game or Application. You can choose if you want to shut them down afterwards too! Click on the 'Find Examples' button if you'd like to see some example helper software and their settings for popular games.
     * Click on the '4. Choose Game to start' tab, to choose the main game or application that the Game Shortcut will start and monitor.
     * Choose the Game from the list shown (be sure to click it so it has a red border), or if it's not shown in ths list then select the specific game or application executable in the 'Launch a Game executable' section of the page. 
@@ -121,14 +121,15 @@ If you prefer to see a video on how to setup DisplayMagician, check out [this aw
     * If the 'auto-suggest name' option is enabled then you should have a Shortcut Name already entered in automatically. 
     * You can optionally create a keyboard shortcut (Hotkey) for this Game Shortcut. To do this, click on the 'Hotkey' button.
     * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. The Save button only shows if you have a valid Shortcut set up.
-1. Once you've saved the Short cut, you should see it in the Shortcut Library.
+1. Once you've saved the Shortcut, you should see it in the Shortcut Library.
 1. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
 <p align="center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></p>
 
-You now have 3 different ways you can start your shortcut:
+You now have 4 different ways you can start your shortcut:
 * You can double-click on the Desktop shortcut you just saved to the Desktop to start your game; or
 * You can right mouse click on the DisplayMagician notification tray icon, and select the Game Shortcut from the DisplayMagician pop-up menu to start your game; or
-* (optionally) If you've set a Hotkey for your Game Shortcut, you can press the Hotkey keyboard shortcut whenever DisplayMagician is running and your Game Shortcut will run.
+* You can right mouse click on the Windows Desktop, and select the Game Shortcut from the DisplayMagician pop-up context menu to start your game; or
+* (optionally) If you've set a Hotkey/Joystick Button for your Game Shortcut, you can press the Hotkey keyboard shortcut or Joystick button whenever DisplayMagician is running and your Game Shortcut will run.
 
 Have fun!
 
@@ -154,14 +155,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 ## Credits
-I’m so very thankful for the help of the following people, who make DisplayMagician possible:
+I’m so very thankful for the help of the following people, who make DisplayMagician possible with their donations and help:
 
 * Sean at SimCraft (Thank you so much for your generous donation!)
 * Domenic (Thanks for the solid month of troubleshooting help and the monthly sponsorship!)
 * Frcooper (thanks for the monthly donations)
 * Miiinttt (thanks for the monthly donations)
 
-Also big thanks to:
+Also big thanks to [the amazing list of people shown here](CREDITS.md).
 * Stefan Hergesell (Thanks for the donation)
 * bladews (Thanks for the donation)
 * bstrut (Thanks for the donation)
@@ -171,7 +172,7 @@ Also big thanks to:
 * redbus500 (Thanks for the donation)
 * lgraves098 (Thanks for the donation)
 * SitromR (Thanks for the donation)
-* versedi (Thank you for your donation)
+* versedi (Thanks for your donation)
 * Detonation EMS (Thanks for the donation)
 * Nathan Anstice (Thanks for the donation)
 * Luuk (Thanks for the donation)

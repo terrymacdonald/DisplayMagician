@@ -165,6 +165,9 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to false");
             }
 
+            // Set the AudioDeviceWaitSecs numeric up down control to the value from the settings
+            nud_audio_device_wait.Value = Program.AppProgramSettings.AudioDeviceWaitSecs;
+
             // setup loglevel on start
             switch (Program.AppProgramSettings.LogLevel)
             {
@@ -320,6 +323,9 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.WakeUpGpus = false;
                 logger.Info($"SettingsForm/SettingsForm_FormClosing: AppProgramSettings WakeUpGpus now set to false");
             }
+
+            // Set the settings value from the AudioDeviceWaitSecs numeric up down control
+            Program.AppProgramSettings.AudioDeviceWaitSecs = (int)nud_audio_device_wait.Value;
 
             // save loglevel on close
             // and make that log level live in NLog straight away
@@ -786,7 +792,6 @@ namespace DisplayMagician.UIForms
                     }
                 }
             }
-        }
-
+        }        
     }
 }

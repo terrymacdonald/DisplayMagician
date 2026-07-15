@@ -1494,33 +1494,20 @@ namespace DisplayMagician
             }
             else
             {
-                if (!AudioProfileRepository.ContainsAudioProfile(AudioProfileUUID))
-                {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The audio profile UUID {AudioProfileUUID} isn't in the AudioProfileRepository");
-                    ShortcutError error = new ShortcutError();
-                    error.Name = "AudioProfileNotExist";
-                    error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The audio profile does not exist (probably deleted) and cannot be used.";
-                    _shortcutErrors.Add(error);
-                    if (worstError != ShortcutValidity.Error)
-                        worstError = ShortcutValidity.Error;
-                }
-                /*// Is the audio profile still valid right now? i.e. are all the screens available?
-                if (AudioProfileToUse != null)
-                {
-                    AudioProfileToUse.RefreshPossbility();
-                    if (!AudioProfileToUse.IsPossible)
-                    {
-                        logger.Warn($"ShortcutItem/RefreshValidity: The audio profile {AudioProfileToUse} isn't possible to use right now!");
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "InvalidAudioProfile";
-                        error.Validity = ShortcutValidity.Warning;
-                        error.Message = $"The audio profile '{AudioProfileToUse.Name}' is not valid right now and cannot be used.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Warning;
-                    }
-                }*/
+                //    // We can't actually do a full check for this, as there are some audio profiles that only become viable when the display profile changes. We have to insterad just
+                //    // assume the audiop will be ok. We did validate it when the shortcut was created, so it should be ok!
+                //    if (!AudioProfileRepository.ContainsAudioProfile(AudioProfileUUID))
+                //    {
+                //        logger.Warn($"ShortcutItem/RefreshValidity: The audio profile UUID {AudioProfileUUID} isn't in the AudioProfileRepository");
+                //        ShortcutError error = new ShortcutError();
+                //        error.Name = "AudioProfileNotExist";
+                //        error.Validity = ShortcutValidity.Error;
+                //        error.Message = $"The audio profile does not exist (probably deleted) and cannot be used.";
+                //        _shortcutErrors.Add(error);
+                //        if (worstError != ShortcutValidity.Error)
+                //            worstError = ShortcutValidity.Error;
+                //    }
+                logger.Trace($"ShortcutItem/RefreshValidity: Skipping audio profile existence and possibility checks as some audio devices like HDMI only appear after the display profile is applied.");
             }
 
             // Is the main application still installed?

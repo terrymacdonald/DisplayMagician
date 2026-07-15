@@ -65,10 +65,14 @@ namespace DisplayMagician.UIForms
             gb_support = new System.Windows.Forms.GroupBox();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
+            label5 = new System.Windows.Forms.Label();
+            nud_audio_device_wait = new System.Windows.Forms.NumericUpDown();
+            label7 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             gb_hotkeys.SuspendLayout();
             gb_upgrades.SuspendLayout();
             gb_support.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).BeginInit();
             SuspendLayout();
             // 
             // btn_back
@@ -90,6 +94,9 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            gb_general.Controls.Add(label7);
+            gb_general.Controls.Add(nud_audio_device_wait);
+            gb_general.Controls.Add(label5);
             gb_general.Controls.Add(label6);
             gb_general.Controls.Add(cmb_notify_icon_double_click);
             gb_general.Controls.Add(cb_wake_up_gpus);
@@ -144,12 +151,12 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_wake_up_gpus.ForeColor = System.Drawing.Color.White;
             cb_wake_up_gpus.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_wake_up_gpus.Location = new System.Drawing.Point(30, 271);
+            cb_wake_up_gpus.Location = new System.Drawing.Point(32, 232);
             cb_wake_up_gpus.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_wake_up_gpus.Name = "cb_wake_up_gpus";
-            cb_wake_up_gpus.Size = new System.Drawing.Size(507, 20);
+            cb_wake_up_gpus.Size = new System.Drawing.Size(389, 20);
             cb_wake_up_gpus.TabIndex = 48;
-            cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable (uses more battery)";
+            cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable";
             cb_wake_up_gpus.UseVisualStyleBackColor = true;
             // 
             // btn_context_menu_reinstall
@@ -176,7 +183,7 @@ namespace DisplayMagician.UIForms
             cb_show_status_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_status_action.ForeColor = System.Drawing.Color.White;
             cb_show_status_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_status_action.Location = new System.Drawing.Point(33, 178);
+            cb_show_status_action.Location = new System.Drawing.Point(33, 169);
             cb_show_status_action.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_status_action.Name = "cb_show_status_action";
             cb_show_status_action.Size = new System.Drawing.Size(365, 20);
@@ -191,7 +198,7 @@ namespace DisplayMagician.UIForms
             cb_show_message_toasts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_message_toasts.ForeColor = System.Drawing.Color.White;
             cb_show_message_toasts.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_message_toasts.Location = new System.Drawing.Point(33, 245);
+            cb_show_message_toasts.Location = new System.Drawing.Point(32, 201);
             cb_show_message_toasts.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_message_toasts.Name = "cb_show_message_toasts";
             cb_show_message_toasts.Size = new System.Drawing.Size(372, 20);
@@ -206,7 +213,7 @@ namespace DisplayMagician.UIForms
             cb_show_minimise_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_minimise_action.ForeColor = System.Drawing.Color.White;
             cb_show_minimise_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_minimise_action.Location = new System.Drawing.Point(33, 145);
+            cb_show_minimise_action.Location = new System.Drawing.Point(33, 136);
             cb_show_minimise_action.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_minimise_action.Name = "cb_show_minimise_action";
             cb_show_minimise_action.Size = new System.Drawing.Size(486, 20);
@@ -249,7 +256,7 @@ namespace DisplayMagician.UIForms
             cb_show_splashscreen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_splashscreen.ForeColor = System.Drawing.Color.White;
             cb_show_splashscreen.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_splashscreen.Location = new System.Drawing.Point(33, 113);
+            cb_show_splashscreen.Location = new System.Drawing.Point(33, 104);
             cb_show_splashscreen.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_show_splashscreen.Name = "cb_show_splashscreen";
             cb_show_splashscreen.Size = new System.Drawing.Size(311, 20);
@@ -264,7 +271,7 @@ namespace DisplayMagician.UIForms
             cb_start_on_boot.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_start_on_boot.ForeColor = System.Drawing.Color.White;
             cb_start_on_boot.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_start_on_boot.Location = new System.Drawing.Point(33, 48);
+            cb_start_on_boot.Location = new System.Drawing.Point(33, 39);
             cb_start_on_boot.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_start_on_boot.Name = "cb_start_on_boot";
             cb_start_on_boot.Size = new System.Drawing.Size(388, 20);
@@ -301,7 +308,7 @@ namespace DisplayMagician.UIForms
             cb_minimise_notification_area.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
             cb_minimise_notification_area.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_minimise_notification_area.Location = new System.Drawing.Point(33, 80);
+            cb_minimise_notification_area.Location = new System.Drawing.Point(33, 71);
             cb_minimise_notification_area.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_minimise_notification_area.Name = "cb_minimise_notification_area";
             cb_minimise_notification_area.Size = new System.Drawing.Size(331, 20);
@@ -584,6 +591,38 @@ namespace DisplayMagician.UIForms
             label3.Text = "Use this button to save a support zip file to your computer. You can then upload this file to GitHub when you have a problem you need me to fix";
             label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label5.ForeColor = System.Drawing.Color.Transparent;
+            label5.Location = new System.Drawing.Point(33, 266);
+            label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label5.Name = "label5";
+            label5.Size = new System.Drawing.Size(386, 16);
+            label5.TabIndex = 53;
+            label5.Text = "Max time to wait for audio device to appear (default 10 seconds):";
+            // 
+            // nud_audio_device_wait
+            // 
+            nud_audio_device_wait.Location = new System.Drawing.Point(429, 264);
+            nud_audio_device_wait.Maximum = new decimal(new int[] { 45, 0, 0, 0 });
+            nud_audio_device_wait.Name = "nud_audio_device_wait";
+            nud_audio_device_wait.Size = new System.Drawing.Size(60, 22);
+            nud_audio_device_wait.TabIndex = 54;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label7.ForeColor = System.Drawing.Color.Transparent;
+            label7.Location = new System.Drawing.Point(492, 266);
+            label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label7.Name = "label7";
+            label7.Size = new System.Drawing.Size(59, 16);
+            label7.TabIndex = 55;
+            label7.Text = "seconds";
+            // 
             // SettingsForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -615,6 +654,7 @@ namespace DisplayMagician.UIForms
             gb_upgrades.ResumeLayout(false);
             gb_upgrades.PerformLayout();
             gb_support.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).EndInit();
             ResumeLayout(false);
         }
 
@@ -654,5 +694,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_wake_up_gpus;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ComboBox cmb_notify_icon_double_click;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.NumericUpDown nud_audio_device_wait;
     }
 }

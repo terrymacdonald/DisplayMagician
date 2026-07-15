@@ -949,12 +949,19 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioProfileToUse.Name} audio profile.");
                 try
                 {
+                    // Figure out the max audio delay
+                    int maxAudioDelay = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
+                    int maxProfileDelay = shortcutToUse.ProfileToUse != null ? shortcutToUse.ProfileToUse.ApplyProfileDelay : 0;
                     // Apply the Audio Profile!
-                    bool result = shortcutToUse.AudioProfileToUse.TrySetActive();
+                    bool result = shortcutToUse.AudioProfileToUse.TrySetActive(maxAudioDelay, maxProfileDelay);
                     if (!result)
                     {
-                        logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.AudioProfileToUse.Name}' audio profile");
-                        return RunShortcutResult.Error;
+                        logger.Warn($"ShortcutRepository/RunShortcut: Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. The shortcut will skip setting the audio profile and continue.");
+                        MessageBox.Show(
+                            $"Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. The shortcut will skip setting the audio profile and continue.",
+                            @"Could not set the audio profile",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
                     }
                     else 
                     {
