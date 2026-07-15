@@ -1132,6 +1132,12 @@ namespace DisplayMagician.UIForms
                     // If we get here, and we still haven't matched the profile, then just pick the first one
                     if (!foundCurrentProfile)
                     {
+                        MessageBox.Show(
+                            "The Display Profile used in this Game Shortcut no longer exists! You will need to either select or create another display profile, or select the 'No change' display profile, then save the Shortcut in order to use it.",
+                            "Display Profile no longer exists",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+
                         if (ProfileRepository.ProfileCount > 0)
                         {
                             chosenProfile = ProfileRepository.AllProfiles[0];
@@ -1172,12 +1178,46 @@ namespace DisplayMagician.UIForms
                     AudioProfileItem selectedAudioProfile = AudioProfileRepository.GetAudioProfile(_shortcutToEdit.AudioProfileUUID);
                     if (selectedAudioProfile != null)
                     {
+                        // We still have ann audio profile in the audio profile repo that matches this UUID
                         _audioProfileToUse = selectedAudioProfile;
-                        lb_audio_profiles.SelectedItem = selectedAudioProfile;                        
-                    } 
+                        lb_audio_profiles.SelectedItem = selectedAudioProfile;
+                        gb_selected_audio_settings.Enabled = true;
+                        if (_shortcutToEdit.OverrideAudioSpeakerVolume)
+                        {
+                            cb_override_speaker_volume.Checked = true;
+                            nud_speaker_volume.Enabled = true;
+                            nud_speaker_volume.Value = _shortcutToEdit.OverrideAudioSpeakerVolumeLevel;
+                        }
+                        else
+                        {
+                            cb_override_speaker_volume.Checked = false;
+                            nud_speaker_volume.Enabled = false;
+                            nud_speaker_volume.Value = _shortcutToEdit.OverrideAudioSpeakerVolumeLevel;
+                        }
+                        if (_shortcutToEdit.OverrideAudioMicrophoneVolume)
+                        {
+                            cb_override_microphone_volume.Checked = true;
+                            nud_microphone_volume.Enabled = true;
+                            nud_microphone_volume.Value = _shortcutToEdit.OverrideAudioMicrophoneVolumeLevel;
+                        }
+                        else
+                        {
+                            cb_override_microphone_volume.Checked = false;
+                            nud_microphone_volume.Enabled = false;
+                            nud_microphone_volume.Value = _shortcutToEdit.OverrideAudioMicrophoneVolumeLevel;
+                        }
+                    }
                     else
                     {
+                        // The UUID of the audio profile is missing! THe user needs to select a new one.
+                        lb_audio_profiles.ClearSelected();
                         gb_selected_audio_settings.Enabled = false;
+                        _isUnsaved = true;
+                        MessageBox.Show(
+                            "The Audio Profile used in this Game Shortcut no longer exists! You will need to either select or create another audio profile, or select the 'Don't change audio settings' checkbox, then save the Shortcut in order to use it.",
+                            "Audio Profile no longer exists",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
                     }
                 }
 
@@ -2599,9 +2639,13 @@ namespace DisplayMagician.UIForms
             _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
             btn_update_audio_profile.Enabled = _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
-            gb_audio_profile.Enabled = _audioProfileToUse != null;
+            gb_selected_audio_settings.Enabled = _audioProfileToUse != null;
             if (_audioProfileToUse != null)
             {
+                // Save the select audio profile to the Shortcut
+                _shortcutToEdit.AudioProfileToUse = _audioProfileToUse;
+                _shortcutToEdit.AudioProfileUUID = _audioProfileToUse.UUID;
+                // Update the UI settings window too
                 txt_audio_profile_settings.Text = _audioProfileToUse.GenerateSettingsText();
             }
         }
@@ -3303,8 +3347,8 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                bool overrideVolume = cb.Checked;
-                nud_speaker_volume.Enabled = overrideVolume;
+                _shortcutToEdit.OverrideAudioSpeakerVolume = cb.Checked;
+                nud_speaker_volume.Enabled = _shortcutToEdit.OverrideAudioSpeakerVolume;
             }
         }
 
@@ -3314,9 +3358,19 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                bool overrideVolume = cb.Checked;
-                nud_microphone_volume.Enabled = overrideVolume;
+                _shortcutToEdit.OverrideAudioMicrophoneVolume = cb.Checked;
+                nud_microphone_volume.Enabled = _shortcutToEdit.OverrideAudioMicrophoneVolume;
             }
+        }
+
+        private void nud_speaker_volume_ValueChanged(object sender, EventArgs e)
+        {
+            _shortcutToEdit.OverrideAudioSpeakerVolumeLevel = (int)nud_speaker_volume.Value;
+        }
+
+        private void nud_microphone_volume_ValueChanged(object sender, EventArgs e)
+        {
+            _shortcutToEdit.OverrideAudioMicrophoneVolumeLevel = (int)nud_microphone_volume.Value;
         }
     }
 

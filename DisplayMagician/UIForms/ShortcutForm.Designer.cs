@@ -409,6 +409,7 @@ namespace DisplayMagician.UIForms
             nud_speaker_volume.Size = new System.Drawing.Size(50, 26);
             nud_speaker_volume.TabIndex = 6;
             nud_speaker_volume.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            nud_speaker_volume.ValueChanged += nud_speaker_volume_ValueChanged;
             // 
             // label1
             // 
@@ -432,6 +433,7 @@ namespace DisplayMagician.UIForms
             nud_microphone_volume.Size = new System.Drawing.Size(50, 26);
             nud_microphone_volume.TabIndex = 7;
             nud_microphone_volume.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            nud_microphone_volume.ValueChanged += nud_microphone_volume_ValueChanged;
             // 
             // cb_override_microphone_volume
             // 
