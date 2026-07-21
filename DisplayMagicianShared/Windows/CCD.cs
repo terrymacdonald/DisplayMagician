@@ -146,6 +146,8 @@ namespace DisplayMagicianShared.Windows
         DISPLAYCONFIG_PATH_ACTIVE = 0x00000001,
         DISPLAYCONFIG_PATH_PREFERRED_UNSCALED = 0x00000004,
         DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE = 0x00000008,
+        // Windows Dynamic Refresh Rate is enabled for this path.
+        DISPLAYCONFIG_PATH_BOOST_REFRESH_RATE = 0x00000010,
     }
 
     [Flags]
