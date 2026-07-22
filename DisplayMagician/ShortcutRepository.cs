@@ -2199,26 +2199,7 @@ namespace DisplayMagician
                 // Refresh the system tray / notification tray area to clean out any applications we stopped
                 WinLibrary.RefreshTrayArea();
             }
-
-            // Revert Audio Profile (if applied temporarily)
-            if (needToChangeAudioProfiles&& shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
-            {
-                try
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting audio profile back to pre-shortcut state.");
-                    rollbackAudioProfile.SetActive();
-                    logger.Debug($"ShortcutRepository/RunShortcut: Audio profile reverted successfully.");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception reverting audio profile!");
-                }
-            }
-            else
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: No audio profile rollback needed.");
-            }
-
+            
             // Change back to the original profile only if it is different
             // And if we're temporary
             if (needToChangeDisplayProfiles && shortcutToUse.DisplayPermanence == ShortcutPermanence.Temporary)
@@ -2246,6 +2227,45 @@ namespace DisplayMagician
             else
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Display Profile, so no need to change it back.");
+            }
+
+            // Revert Audio Profile (if applied temporarily)
+            if (needToChangeAudioProfiles&& shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
+            {
+                try
+                {
+                    int rollbackAudioTimeoutInMs = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
+                    const int rollbackApplyDelayInMs = 500;
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting audio profile back to pre-shortcut state (timeout: {rollbackAudioTimeoutInMs}ms).");
+
+                    List<string> rollbackMissingAudioDeviceNames;
+                    bool rollbackResult = rollbackAudioProfile.TrySetActive(rollbackAudioTimeoutInMs, rollbackApplyDelayInMs, out rollbackMissingAudioDeviceNames);
+                    if (rollbackResult)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Audio profile reverted successfully.");
+                    }
+                    else
+                    {
+                        string missingDevicesText = (rollbackMissingAudioDeviceNames != null && rollbackMissingAudioDeviceNames.Count > 0)
+                            ? $" Missing audio devices: {string.Join(", ", rollbackMissingAudioDeviceNames)}."
+                            : string.Empty;
+
+                        logger.Warn($"ShortcutRepository/RunShortcut: Could not revert the audio profile back to '{rollbackAudioProfile.Name}' after running '{shortcutToUse.Name}' shortcut. DisplayMagician will continue anyway.{missingDevicesText}");
+                        MessageBox.Show(
+                            $"Could not revert the audio profile back to '{rollbackAudioProfile.Name}' after running '{shortcutToUse.Name}' shortcut. DisplayMagician will continue anyway.{missingDevicesText}",
+                            @"Could not revert the audio profile",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception reverting audio profile!");
+                }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: No audio profile rollback needed.");
             }
 
             
