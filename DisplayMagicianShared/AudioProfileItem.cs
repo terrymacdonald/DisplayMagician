@@ -3,6 +3,7 @@ using NLog.Targets;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -376,22 +377,41 @@ namespace DisplayMagicianShared
 
         /// <summary>
         /// Waits for the audio devices listed in the Audio Profile to become available (up to a supplied timeout period) and then applies the audio profile settings to the system. Returns true if successful, false if not.
-        /// Is designed to handle HDMI, DIsplay Port and USB display audio devices that may not be available immediately after a display profile change, and to wait for them to become available before applying the audio profile settings.
+        /// Is designed to handle HDMI, Display Port and USB display audio devices that may not be available immediately after a display profile change.
         /// </summary>
-        /// <param name="timeoutInMs">Maximum time in milliseconds to wait for each audio device to become available. Defaults to 10000ms (10 seconds).</param>
+        /// <param name="timeoutInMs">Maximum time in milliseconds to wait in total for required audio devices to become available. Defaults to 20000ms (20 seconds).</param>
         /// <param name="delayInMs">Delay in milliseconds to wait after successfully applying the profile. Defaults to 500ms.</param>
         /// <returns>true if successful, false if not.</returns>
-        public bool TrySetActive(int timeoutInMs = 10000, int delayInMs = 500)
+        public bool TrySetActive(int timeoutInMs = 20000, int delayInMs = 500)
         {
+            List<string> ignoredMissingDeviceNames;
+            return TrySetActive(timeoutInMs, delayInMs, out ignoredMissingDeviceNames);
+        }
+
+        /// <summary>
+        /// Waits for the audio devices listed in the Audio Profile to become available using short round-robin polling slices,
+        /// then applies the profile. Returns missing devices in out parameter if timeout expires before all devices appear.
+        /// </summary>
+        /// <param name="timeoutInMs">Maximum time in milliseconds to wait in total for required audio devices to become available.</param>
+        /// <param name="delayInMs">Delay in milliseconds to wait after applying the profile.</param>
+        /// <param name="missingDeviceNames">Any audio device names that did not become available before timeout.</param>
+        /// <returns>true if profile applied and all devices became available; false if devices were still missing at timeout or if an exception occurs.</returns>
+        public bool TrySetActive(int timeoutInMs, int delayInMs, out List<string> missingDeviceNames)
+        {
+            missingDeviceNames = new List<string>();
+
             try
             {
-                SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Waiting for audio devices in profile {Name} to become available (timeout per device: {timeoutInMs}ms)...");
+                int clampedTimeoutInMs = Math.Max(0, timeoutInMs);
+                const int pollSliceMs = 250;
+
+                SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Waiting for audio devices in profile {Name} to become available (global timeout: {clampedTimeoutInMs}ms, poll slice: {pollSliceMs}ms)...");
 
                 using (WindowsAudioController controller = new WindowsAudioController())
                 {
                     // Collect all distinct endpoint references from the profile that have a DeviceId.
                     // HDMI, Display Port and USB audio devices may not be present immediately after a
-                    // display profile change, so we wait for each unique device to appear before applying.
+                    // display profile change, so we cycle across endpoints until all appear or timeout.
                     var endpointsToWaitFor = new List<WindowsAudioWrapper.Models.AudioEndpointReference>();
 
                     void AddIfNew(WindowsAudioWrapper.Models.AudioEndpointReference ep)
@@ -399,6 +419,15 @@ namespace DisplayMagicianShared
                         if (ep != null && !string.IsNullOrEmpty(ep.DeviceId) &&
                             !endpointsToWaitFor.Any(e => e.DeviceId == ep.DeviceId))
                             endpointsToWaitFor.Add(ep);
+                    }
+
+                    string GetEndpointDisplayName(WindowsAudioWrapper.Models.AudioEndpointReference endpoint)
+                    {
+                        if (!string.IsNullOrWhiteSpace(endpoint?.FriendlyName))
+                            return endpoint.FriendlyName;
+                        if (!string.IsNullOrWhiteSpace(endpoint?.DeviceId))
+                            return endpoint.DeviceId;
+                        return "Unknown Audio Device";
                     }
 
                     if (WindowsAudioConfig?.Playback != null)
@@ -415,25 +444,64 @@ namespace DisplayMagicianShared
                         AddIfNew(WindowsAudioConfig.Recording.ConsoleDevice);
                     }
 
-                    // Wait for each unique device to become available
-                    foreach (var endpoint in endpointsToWaitFor)
+                    var pendingEndpoints = new List<WindowsAudioWrapper.Models.AudioEndpointReference>(endpointsToWaitFor);
+                    var waitStopwatch = Stopwatch.StartNew();
+                    int endpointIndex = 0;
+
+                    while (pendingEndpoints.Count > 0 && waitStopwatch.ElapsedMilliseconds < clampedTimeoutInMs)
                     {
-                        SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Waiting for audio device '{endpoint.FriendlyName}' ({endpoint.DeviceId}) to become available...");
-                        bool appeared = controller.WaitForAudioDeviceToAppear(endpoint, timeoutInMs);
+                        if (endpointIndex >= pendingEndpoints.Count)
+                            endpointIndex = 0;
+
+                        var endpoint = pendingEndpoints[endpointIndex];
+                        int remainingMs = clampedTimeoutInMs - (int)waitStopwatch.ElapsedMilliseconds;
+                        int thisCheckTimeoutInMs = Math.Min(pollSliceMs, Math.Max(0, remainingMs));
+
+                        if (thisCheckTimeoutInMs <= 0)
+                            break;
+
+                        SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Polling audio device '{GetEndpointDisplayName(endpoint)}' ({endpoint.DeviceId}) for up to {thisCheckTimeoutInMs}ms...");
+                        bool appeared = controller.WaitForAudioDeviceToAppear(endpoint, thisCheckTimeoutInMs);
                         if (appeared)
                         {
-                            SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Audio device '{endpoint.FriendlyName}' ({endpoint.DeviceId}) is now available.");
+                            SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Audio device '{GetEndpointDisplayName(endpoint)}' ({endpoint.DeviceId}) is now available.");
+                            pendingEndpoints.RemoveAt(endpointIndex);
+                            if (endpointIndex >= pendingEndpoints.Count)
+                                endpointIndex = 0;
                         }
                         else
                         {
-                            SharedLogger.logger.Warn($"AudioProfileItem/TrySetActive: Audio device '{endpoint.FriendlyName}' ({endpoint.DeviceId}) did not appear within {timeoutInMs}ms. Attempting to apply profile anyway.");
+                            endpointIndex++;
                         }
+                    }
+
+                    if (pendingEndpoints.Count > 0)
+                    {
+                        missingDeviceNames = pendingEndpoints
+                            .Select(GetEndpointDisplayName)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+
+                        SharedLogger.logger.Warn($"AudioProfileItem/TrySetActive: Timed out after {clampedTimeoutInMs}ms waiting for audio devices: {string.Join(", ", missingDeviceNames)}. Attempting to apply profile anyway.");
                     }
 
                     // Apply the audio profile now that we've waited for the devices
                     SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Applying Windows audio profile {Name}...");
-                    controller.ApplyProfile(WindowsAudioConfig);
+                    var applyResult = controller.ApplyProfile(WindowsAudioConfig);
+                    bool profileAppliedSuccessfully = applyResult != null && applyResult.Successful;
                     Thread.Sleep(delayInMs);
+
+                    if (!profileAppliedSuccessfully)
+                    {
+                        SharedLogger.logger.Error($"AudioProfileItem/TrySetActive: The Windows Audio Profile {Name} was not applied correctly.");
+                        return false;
+                    }
+                }
+
+                if (missingDeviceNames.Count > 0)
+                {
+                    SharedLogger.logger.Warn($"AudioProfileItem/TrySetActive: The Windows Audio Profile {Name} was applied, but some expected audio devices did not appear in time.");
+                    return false;
                 }
 
                 SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: The Windows Audio Profile {Name} was successfully applied.");

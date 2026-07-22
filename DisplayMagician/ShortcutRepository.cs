@@ -953,12 +953,17 @@ namespace DisplayMagician
                     int maxAudioDelay = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
                     int maxProfileDelay = shortcutToUse.ProfileToUse != null ? shortcutToUse.ProfileToUse.ApplyProfileDelay : 0;
                     // Apply the Audio Profile!
-                    bool result = shortcutToUse.AudioProfileToUse.TrySetActive(maxAudioDelay, maxProfileDelay);
+                    List<string> missingAudioDeviceNames;
+                    bool result = shortcutToUse.AudioProfileToUse.TrySetActive(maxAudioDelay, maxProfileDelay, out missingAudioDeviceNames);
                     if (!result)
                     {
-                        logger.Warn($"ShortcutRepository/RunShortcut: Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. The shortcut will skip setting the audio profile and continue.");
+                        string missingDevicesText = (missingAudioDeviceNames != null && missingAudioDeviceNames.Count > 0)
+                            ? $" Missing audio devices: {string.Join(", ", missingAudioDeviceNames)}."
+                            : string.Empty;
+
+                        logger.Warn($"ShortcutRepository/RunShortcut: Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. The shortcut will skip setting the audio profile and continue.{missingDevicesText}");
                         MessageBox.Show(
-                            $"Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. The shortcut will skip setting the audio profile and continue.",
+                            $"Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. The shortcut will skip setting the audio profile and continue.{missingDevicesText}",
                             @"Could not set the audio profile",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Exclamation);

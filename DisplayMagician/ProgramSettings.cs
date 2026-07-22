@@ -59,7 +59,7 @@ namespace DisplayMagician
         private bool _showStatusMessageInActionCenter = true;
         private bool _showMessageToasts = true;
         private bool _upgradeToPrereleases = false;
-        private int _audioDeviceWaitSecs = 10;
+        private int _audioDeviceWaitSecs = 20;
         private bool _upgradeEnabled = true;
         private bool _installDesktopContextMenu = true;
         private bool _wakeUpGpus = true;
@@ -213,7 +213,7 @@ namespace DisplayMagician
             }
         }
 
-        [DefaultValue(10)]
+        [DefaultValue(20)]
         public int AudioDeviceWaitSecs
         {
             get
