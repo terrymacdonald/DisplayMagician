@@ -205,7 +205,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_close_Click(object sender, EventArgs e)
+        private void btn_back_Click(object sender, EventArgs e)
         {
             Close();
         }
