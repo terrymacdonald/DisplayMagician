@@ -267,6 +267,32 @@ namespace DisplayMagician.UIForms
             btn_setup_display_profiles.PerformClick();
         }
 
+        private void btn_audio_Click(object sender, EventArgs e)
+        {
+            logger.Trace($"MainForm/btn_audio_Click: User pressed the Audio Profiles button (or selected the menu item)");
+
+            // Check if *any* other modal window is already open
+            foreach (Form f in Application.OpenForms)
+            {
+                if (f.Modal && f.Visible && f != this)
+                {
+                    // Another modal window is already open!
+                    MessageBox.Show(this,
+                        $"Please close the {f.Text} window before opening the Audio Profiles window.",
+                        "DisplayMagician",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
+            using (AudioProfilesForm audioProfilesForm = new AudioProfilesForm())
+            {
+                audioProfilesForm.StartPosition = FormStartPosition.CenterParent;
+                audioProfilesForm.ShowDialog(this);
+            }
+        }
+
         private void btn_setup_display_profiles_Click(object sender, EventArgs e)
         {
             logger.Trace($"MainForm/btn_setup_display_profiles_Click: User pressed the Display Profiles button (or selected the menu item)");

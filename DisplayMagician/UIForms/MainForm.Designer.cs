@@ -106,6 +106,7 @@
             btn_audio.ForeColor = System.Drawing.Color.White;
             btn_audio.Name = "btn_audio";
             btn_audio.UseVisualStyleBackColor = true;
+            btn_audio.Click += btn_audio_Click;
             // 
             // btn_messages
             // 

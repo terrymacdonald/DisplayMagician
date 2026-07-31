@@ -92,6 +92,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Update="UIForms\AudioProfilesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="UIForms\DonationForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -178,12 +181,18 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="WindowsAudioWrapper">
+      <HintPath>..\DisplayMagicianShared\DLL\WindowsAudioWrapper.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\ChooseExecutableForm.resx" />
     <EmbeddedResource Include="UIForms\ChooseImageForm.resx" />
+    <EmbeddedResource Include="UIForms\AudioProfilesForm.resx" />
     <EmbeddedResource Include="UIForms\DisplayProfileForm.resx" />
     <EmbeddedResource Include="UIForms\DonationForm.resx" />
     <EmbeddedResource Include="UIForms\FovCalcForm.resx" />
