@@ -182,35 +182,12 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: GdiDisplaySettings is not equal.");
                 return false;
             }
-            if (!DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers))
+            // Compare display identifiers as an unordered set, normalizing them to ignore the
+            // instance ID component that changes across reboots and topology transitions.
+            if (!DisplayIdentifierSetsEqual(DisplayIdentifiers, other.DisplayIdentifiers))
             {
-                // If the number of identifiers differs then the configs cannot be equal, even if the
-                // first N identifiers happen to match when ignoring instance IDs.
-                if (DisplayIdentifiers.Count != other.DisplayIdentifiers.Count)
-                {
-                    SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: DisplayIdentifiers count is not equal.");
-                    return false;
-                }
-                for(int i = 0; i < DisplayIdentifiers.Count; i++)
-                {
-                    // If they don't match, it might be because the device path contains an instance id which changes after each reboot, so we ignore the instance id part of the device path and just compare the rest of it.
-                    var displayIdentifierParts = DisplayIdentifiers[i].Split('#');
-                    var otherdisplayIdentifierParts = other.DisplayIdentifiers[i].Split('#');
-               
-                    for (int j = 0; j < Math.Min(displayIdentifierParts.Length, otherdisplayIdentifierParts.Length); j++)
-                    {
-                        // Skip the troublesome instance ID part of the device path, which is the 5th part (index 4) if it exists
-                        if (j == 4)
-                        {
-                            continue;
-                        }
-                        if (!displayIdentifierParts[j].Equals(otherdisplayIdentifierParts[j]))
-                        {
-                            SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: Display Identifier {i} is not equal. Value in this config is {DisplayIdentifiers[i]} and value in other config is {other.DisplayIdentifiers[i]}.");
-                            return false;
-                        }
-                    }
-                }
+                SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: DisplayIdentifiers are not equal.");
+                return false;
             }
             // Now we need to go through the HDR states comparing vaues, as the order changes if there is a cloned display
             //if (!CollectionComparer.AreEquivalent(DisplayHDRStates, other.DisplayHDRStates))
@@ -245,9 +222,61 @@ namespace DisplayMagicianShared.Windows
 
         public override int GetHashCode()
         {
-            // Temporarily disabled this to make sure that the hashcode generation matched the equality tests.
-            //return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarSettings).GetHashCode();
-            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers).GetHashCode();
+            // Hash code must match Equals semantics. Adapter IDs inside paths/modes/HDR states are
+            // not part of equality, so we cannot hash the raw structs directly. Use counts and a
+            // stable, normalized hash of the display identifiers instead.
+            HashCode hash = new HashCode();
+            hash.Add(DisplayConfigPaths.Length);
+            hash.Add(DisplayConfigModes.Length);
+            hash.Add(DisplayHDRStates.Count);
+            hash.Add(IsCloned);
+            hash.Add(DisplaySources.Count);
+            hash.Add(GdiDisplaySettings.Count);
+            foreach (string id in DisplayIdentifiers)
+            {
+                hash.Add(NormalizeDisplayIdentifierForEquality(id));
+            }
+            return hash.ToHashCode();
+        }
+
+        private static string NormalizeDisplayIdentifierForEquality(string displayIdentifier)
+        {
+            if (string.IsNullOrWhiteSpace(displayIdentifier))
+                return string.Empty;
+
+            // Device paths contain an instance ID component that changes across reboots and
+            // topology transitions. Strip it so equality and hashing are stable.
+            var parts = displayIdentifier.Split('#');
+            if (parts.Length <= 5)
+                return displayIdentifier.ToUpperInvariant();
+
+            var normalizedParts = new List<string>(parts.Length - 1);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (i == 4)
+                    continue;
+
+                normalizedParts.Add(parts[i]);
+            }
+            return string.Join("#", normalizedParts).ToUpperInvariant();
+        }
+
+        private static bool DisplayIdentifierSetsEqual(List<string> left, List<string> right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+            if (left == null || right == null)
+                return false;
+            if (left.Count != right.Count)
+                return false;
+
+            var leftSet = new HashSet<string>(left.Select(NormalizeDisplayIdentifierForEquality));
+            foreach (string id in right)
+            {
+                if (!leftSet.Remove(NormalizeDisplayIdentifierForEquality(id)))
+                    return false;
+            }
+            return leftSet.Count == 0;
         }
         public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
