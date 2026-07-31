@@ -184,7 +184,14 @@ namespace DisplayMagicianShared.Windows
             }
             if (!DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers))
             {
-                for(int i = 0; i < Math.Min(DisplayIdentifiers.Count, other.DisplayIdentifiers.Count); i++)
+                // If the number of identifiers differs then the configs cannot be equal, even if the
+                // first N identifiers happen to match when ignoring instance IDs.
+                if (DisplayIdentifiers.Count != other.DisplayIdentifiers.Count)
+                {
+                    SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: DisplayIdentifiers count is not equal.");
+                    return false;
+                }
+                for(int i = 0; i < DisplayIdentifiers.Count; i++)
                 {
                     // If they don't match, it might be because the device path contains an instance id which changes after each reboot, so we ignore the instance id part of the device path and just compare the rest of it.
                     var displayIdentifierParts = DisplayIdentifiers[i].Split('#');
@@ -214,9 +221,20 @@ namespace DisplayMagicianShared.Windows
             }
 
             // Now we need to go through the values to make sure they are the same, but ignore the keys (as they change after each reboot!)
-            for (int i = 0; i < DisplaySources.Count; i++)
+            // Use key-based comparison because Dictionary iteration order is not guaranteed, especially after deserialization.
+            if (DisplaySources.Count != other.DisplaySources.Count)
             {
-                if (!DisplaySources.ElementAt(i).Value.SequenceEqual(other.DisplaySources.ElementAt(i).Value))
+                SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: DisplaySources count is not equal.");
+                return false;
+            }
+            foreach (var kvp in DisplaySources)
+            {
+                if (!other.DisplaySources.TryGetValue(kvp.Key, out var otherSources))
+                {
+                    SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: DisplaySources key {kvp.Key} is missing in other config.");
+                    return false;
+                }
+                if (!kvp.Value.SequenceEqual(otherSources))
                 {
                     SharedLogger.logger.Trace($"WINDOWS_DISPLAY_CONFIG/Equals: DisplaySources is not equal.");
                     return false;

@@ -3628,6 +3628,11 @@ namespace DisplayMagicianShared.NVIDIA
                 var adapters = _nvapiApiHelper.EnumeratePhysicalGpus();
                 int adapterNum = 0;
 
+                // Update the shared list of all connected display IDs once before we iterate adapters.
+                // Previously this was cleared inside the loop, which dropped display IDs from every
+                // GPU except the last one on multi-GPU systems.
+                _allConnectedDisplayIds.Clear();
+
                 // Go through each adapter
                 foreach (var adapter in adapters)
                 {
@@ -3642,11 +3647,6 @@ namespace DisplayMagicianShared.NVIDIA
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Attempting to get the list of all display IDs for physical GPU #{adapterNum + 1}.");
                         displayIds = adapter.GetAllDisplayIds();
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Successfully got {displayIds.Length} display IDs for physical GPU #{adapterNum + 1}.");
-
-                        // Update the shared list of all connected display IDs
-                        _allConnectedDisplayIds.Clear();
-                        foreach (var d in displayIds)
-                            _allConnectedDisplayIds.Add(d.DisplayId);
                     }
                     else
                     {
@@ -3654,6 +3654,10 @@ namespace DisplayMagicianShared.NVIDIA
                         displayIds = adapter.GetConnectedDisplayIds();
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Successfully got {displayIds.Length} connected display IDs for physical GPU #{adapterNum + 1}.");
                     }
+
+                    // Update the shared list of all connected display IDs with every adapter we find
+                    foreach (var d in displayIds)
+                        _allConnectedDisplayIds.Add(d.DisplayId);
 
                     // Set some adapter-specific items we will use later
                     var gpuName = adapter.GetFullName() ?? "";

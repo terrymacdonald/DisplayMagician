@@ -95,14 +95,14 @@ namespace DisplayMagicianShared.AMD
     [Flags]
     public enum ADL_DISPLAY_MODE_FLAG : int
     {
-        ColourFormat565 = 1,
-        ColourFormat8888 = 2,
-        Degrees0 = 4,
-        Degrees90 = 8,
-        Degrees180 = 10,
-        Degrees270 = 20,
-        ExactRefreshRate = 80,
-        RoundedRefreshRate = 40
+        ColourFormat565 = 0x1,
+        ColourFormat8888 = 0x2,
+        Degrees0 = 0x4,
+        Degrees90 = 0x8,
+        Degrees180 = 0x10,
+        Degrees270 = 0x20,
+        ExactRefreshRate = 0x80,
+        RoundedRefreshRate = 0x40
     }
     public enum ADL_DISPLAY_MODE_INTERLACING : int
     {
@@ -172,8 +172,8 @@ namespace DisplayMagicianShared.AMD
         public bool RefreshRateOnlySet => (ModeValue & 0x80) == 0x80;
 
         // Mode Flag settings
-        public bool ProgressiveSet => ModeValue == 0x0;
-        public bool InterlacedSet => ModeValue == 0x2;
+        public bool ProgressiveSet => ModeFlag == 0x0;
+        public bool InterlacedSet => ModeFlag == 0x2;
 
         public override bool Equals(object obj) => obj is ADL_MODE other && this.Equals(other);
         public bool Equals(ADL_MODE other)
@@ -323,28 +323,28 @@ namespace DisplayMagicianShared.AMD
 
         // AdapterDisplayCap Mask settings
         public bool NotActiveSupported => (AdapterDisplayCapMask & 0x1) == 0x1;
-        public bool SingleSupported => (AdapterDisplayCapMask & 0x1) == 0x2;
-        public bool CloneSupported => (AdapterDisplayCapMask & 0x1) == 0x4;
-        public bool NStretch1GPUSupported => (AdapterDisplayCapMask & 0x1) == 0x8;
-        public bool NStretchNGPUSupported => (AdapterDisplayCapMask & 0x1) == 0x10;
-        public bool TwoVStretchSupported => (AdapterDisplayCapMask & 0x1) == 0x20;
-        public bool TwoHStretchSupported => (AdapterDisplayCapMask & 0x1) == 0x40;
-        public bool ExtendedSupported => (AdapterDisplayCapMask & 0x1) == 0x80;
-        public bool PreferDisplaySupported => (AdapterDisplayCapMask & 0x1) == 0x100;
-        public bool BezelSupported => (AdapterDisplayCapMask & 0x1) == 0x200;
+        public bool SingleSupported => (AdapterDisplayCapMask & 0x2) == 0x2;
+        public bool CloneSupported => (AdapterDisplayCapMask & 0x4) == 0x4;
+        public bool NStretch1GPUSupported => (AdapterDisplayCapMask & 0x8) == 0x8;
+        public bool NStretchNGPUSupported => (AdapterDisplayCapMask & 0x10) == 0x10;
+        public bool TwoVStretchSupported => (AdapterDisplayCapMask & 0x20) == 0x20;
+        public bool TwoHStretchSupported => (AdapterDisplayCapMask & 0x40) == 0x40;
+        public bool ExtendedSupported => (AdapterDisplayCapMask & 0x80) == 0x80;
+        public bool PreferDisplaySupported => (AdapterDisplayCapMask & 0x100) == 0x100;
+        public bool BezelSupported => (AdapterDisplayCapMask & 0x200) == 0x200;
 
 
         // AdapterDisplayCap Value settings
         public bool NotActiveSet => (AdapterDisplayCapValue & 0x1) == 0x1;
-        public bool SingleSet => (AdapterDisplayCapValue & 0x1) == 0x2;
-        public bool CloneSet => (AdapterDisplayCapValue & 0x1) == 0x4;
-        public bool NStretch1GPUSet => (AdapterDisplayCapValue & 0x1) == 0x8;
-        public bool NStretchNGPUSet => (AdapterDisplayCapValue & 0x1) == 0x10;
-        public bool TwoVStretchSet => (AdapterDisplayCapValue & 0x1) == 0x20;
-        public bool TwoHStretchSet => (AdapterDisplayCapValue & 0x1) == 0x40;
-        public bool ExtendedSet => (AdapterDisplayCapValue & 0x1) == 0x80;
-        public bool PreferDisplaySet => (AdapterDisplayCapValue & 0x1) == 0x100;
-        public bool BezelSet => (AdapterDisplayCapValue & 0x1) == 0x200;
+        public bool SingleSet => (AdapterDisplayCapValue & 0x2) == 0x2;
+        public bool CloneSet => (AdapterDisplayCapValue & 0x4) == 0x4;
+        public bool NStretch1GPUSet => (AdapterDisplayCapValue & 0x8) == 0x8;
+        public bool NStretchNGPUSet => (AdapterDisplayCapValue & 0x10) == 0x10;
+        public bool TwoVStretchSet => (AdapterDisplayCapValue & 0x20) == 0x20;
+        public bool TwoHStretchSet => (AdapterDisplayCapValue & 0x40) == 0x40;
+        public bool ExtendedSet => (AdapterDisplayCapValue & 0x80) == 0x80;
+        public bool PreferDisplaySet => (AdapterDisplayCapValue & 0x100) == 0x100;
+        public bool BezelSet => (AdapterDisplayCapValue & 0x200) == 0x200;
 
                 /*#define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_NOTACTIVE        0x00000001
                 #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_SINGLE            0x00000002
@@ -732,6 +732,11 @@ namespace DisplayMagicianShared.AMD
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public int[] Reserved;
 
+        public ADL_DISPLAY_EDID_DATA()
+        {
+            Reserved = new int[4];
+        }
+
         public override bool Equals(object obj) => obj is ADL_DISPLAY_EDID_DATA other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_EDID_DATA other)
         {
@@ -859,14 +864,19 @@ namespace DisplayMagicianShared.AMD
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public int[] Reserved;
 
+        public ADL_DDC_INFO2()
+        {
+            Reserved = new int[4];
+        }
+
         // DDC Info Flag settings
         public bool IsProjectorDevice => (DDCInfoFlag & 0x1) == 0x1;
         public bool IsEDIDExtension => (DDCInfoFlag & 0x2) == 0x2;
         public bool IsDigitalDevice => (DDCInfoFlag & 0x4) == 0x4;
         public bool IsHDMIAudioDevice => (DDCInfoFlag & 0x8) == 0x8;
         public bool SupportsAI => (DDCInfoFlag & 0x10) == 0x10;
-        public bool SupportsxvYCC601 => (DDCInfoFlag & 0x10) == 0x20;
-        public bool SupportsxvYCC709 => (DDCInfoFlag & 0x10) == 0x40;
+        public bool SupportsxvYCC601 => (DDCInfoFlag & 0x20) == 0x20;
+        public bool SupportsxvYCC709 => (DDCInfoFlag & 0x40) == 0x40;
 
         /*#define ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE       (1 << 0)
         #define ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION         (1 << 1)
@@ -882,7 +892,7 @@ namespace DisplayMagicianShared.AMD
         public bool PixelFormatYCRCB444 => (PanelPixelFormat & 0x4) == 0x4;
         public bool PixelFormatYCRCB422 => (PanelPixelFormat & 0x8) == 0x8;
         public bool PixelFormatLimitedRange => (PanelPixelFormat & 0x10) == 0x10;
-        public bool PixelFormatYCRCB420 => (PanelPixelFormat & 0x10) == 0x20;
+        public bool PixelFormatYCRCB420 => (PanelPixelFormat & 0x20) == 0x20;
 
         // ADL_DISPLAY_ADJUSTMENT_PIXELFORMAT adjustment values
         // (bit-vector)
@@ -1003,11 +1013,6 @@ namespace DisplayMagicianShared.AMD
                 return false;
             }
             if (SupportedTransferFunction != other.SupportedTransferFunction)
-            {
-                SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SupportedTransferFunction values don't equal each other");
-                return false;
-            }
-            if(SupportedTransferFunction != other.SupportedTransferFunction)
             {
                 SharedLogger.logger.Trace($"ADL_DDC_INFO2/Equals: The SupportedTransferFunction values don't equal each other");
                 return false;
@@ -1193,7 +1198,7 @@ namespace DisplayMagicianShared.AMD
         public int DisplayType;
         /// <summary> Display output type </summary>
         public ADL_CONNECTION_TYPE DisplayOutputType;
-        /// <summary> Connector type</summary        
+        /// <summary> Connector type</summary>
         public ADL_DISPLAY_CONNECTION_TYPE DisplayConnector;
         ///<summary> Indicating the display info bits' mask.<summary>
         public int DisplayInfoMask;
@@ -1369,7 +1374,7 @@ namespace DisplayMagicianShared.AMD
 
         public override int GetHashCode()
         {
-            return (DisplayID, DisplayControllerIndex, DisplayName, DisplayID, DisplayType, DisplayOutputType, DisplayConnector, DisplayInfoMask, DisplayInfoValue).GetHashCode();
+            return (DisplayID, DisplayControllerIndex, DisplayName, DisplayManufacturerName, DisplayType, DisplayOutputType, DisplayConnector, DisplayInfoMask, DisplayInfoValue).GetHashCode();
         }
 
         public static bool operator ==(ADL_DISPLAY_INFO lhs, ADL_DISPLAY_INFO rhs) => lhs.Equals(rhs);
@@ -1669,7 +1674,7 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The NumDisplayMap values don't equal each other");
                 return false;
             }
-            if (DisplayMaps.Equals(other.DisplayMaps))
+            if (!DisplayMaps.Equals(other.DisplayMaps))
             {
                 SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The DisplayMaps values don't equal each other");
                 return false;
@@ -1679,7 +1684,7 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The NumDisplayTarget values don't equal each other");
                 return false;
             }
-            if (DisplayTargets.Equals(other.DisplayTargets))
+            if (!DisplayTargets.Equals(other.DisplayTargets))
             {
                 SharedLogger.logger.Trace($"ADL_POSSIBLE_MAP/Equals: The DisplayTargets values don't equal each other");
                 return false;
