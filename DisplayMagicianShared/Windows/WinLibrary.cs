@@ -254,7 +254,6 @@ namespace DisplayMagicianShared.Windows
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
 
-        static WinLibrary() { }
         public WinLibrary()
         {
             SharedLogger.logger.Trace("WinLibrary/WinLibrary: Intialising Windows CCD library interface");
@@ -429,6 +428,17 @@ namespace DisplayMagicianShared.Windows
             Dictionary<ulong, ulong> adapterOldToNewMap = GetAdapterIdMap(ref savedDisplayConfig);
             Dictionary<ulong, string> currentAdapterMap = GetAllAdapterIDs();
 
+            ulong fallbackAdapterId = 0;
+            bool hasFallbackAdapter = currentAdapterMap != null && currentAdapterMap.Count > 0;
+            if (hasFallbackAdapter)
+            {
+                fallbackAdapterId = currentAdapterMap.First().Key;
+            }
+            else
+            {
+                SharedLogger.logger.Warn("WinLibrary/PatchWindowsDisplayConfig: No current adapters were found. Any unmatched adapter IDs will not be patched.");
+            }
+
             ulong newAdapterValue = 0;
             ulong oldAdapterValue = 0;
 
@@ -483,7 +493,12 @@ namespace DisplayMagicianShared.Windows
                         }
                         else
                         {
-                            newAdapterValue = currentAdapterMap.First().Key;
+                            if (!hasFallbackAdapter)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/PatchWindowsDisplayConfig: Cannot patch target adapter for path #{i} as no current adapters are available.");
+                                continue;
+                            }
+                            newAdapterValue = fallbackAdapterId;
                             SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Target adapter {savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value} for path #{i} didn't have a current match! Attempting to use adapter {newAdapterValue} instead.");
                             savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
                         }
@@ -493,7 +508,12 @@ namespace DisplayMagicianShared.Windows
                     {
                         // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                         // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                        newAdapterValue = currentAdapterMap.First().Key;
+                        if (!hasFallbackAdapter)
+                        {
+                            SharedLogger.logger.Error($"WinLibrary/PatchWindowsDisplayConfig: Cannot patch source adapter for path #{i} as no current adapters are available.");
+                            continue;
+                        }
+                        newAdapterValue = fallbackAdapterId;
                         SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
                         savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
                         savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
@@ -524,7 +544,12 @@ namespace DisplayMagicianShared.Windows
                     {
                         // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                         // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                        newAdapterValue = currentAdapterMap.First().Key;
+                        if (!hasFallbackAdapter)
+                        {
+                            SharedLogger.logger.Error($"WinLibrary/PatchWindowsDisplayConfig: Cannot patch adapter for mode #{i} as no current adapters are available.");
+                            continue;
+                        }
+                        newAdapterValue = fallbackAdapterId;
                         SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
                         savedDisplayConfig.DisplayConfigModes[i].AdapterId = AdapterValueToLUID(newAdapterValue);
                     }
@@ -562,7 +587,12 @@ namespace DisplayMagicianShared.Windows
                         {
                             // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                             // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                            newAdapterValue = currentAdapterMap.First().Key;
+                            if (!hasFallbackAdapter)
+                            {
+                                SharedLogger.logger.Error($"WinLibrary/PatchWindowsDisplayConfig: Cannot patch adapter for HDR state #{i} as no current adapters are available.");
+                                continue;
+                            }
+                            newAdapterValue = fallbackAdapterId;
                             SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
                             hdrInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
                             hdrInfo.AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
@@ -606,7 +636,12 @@ namespace DisplayMagicianShared.Windows
                             {
                                 // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                                 // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                                newAdapterValue = currentAdapterMap.First().Key;
+                                if (!hasFallbackAdapter)
+                                {
+                                    SharedLogger.logger.Error($"WinLibrary/PatchWindowsDisplayConfig: Cannot patch adapter for display source [{i},{j}] as no current adapters are available.");
+                                    continue;
+                                }
+                                newAdapterValue = fallbackAdapterId;
                                 SharedLogger.logger.Warn($"WinLibrary/PatchWindowsDisplayConfig: Uh Oh. Adapter {ds.AdapterId.Value} didn't have a current match in Display Sources! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
                                 ds.AdapterId = AdapterValueToLUID(newAdapterValue);
                             }
@@ -2892,21 +2927,21 @@ namespace DisplayMagicianShared.Windows
 
         public static bool GDISettingsEqual(Dictionary<string, GDI_DISPLAY_SETTING> gdi1, Dictionary<string, GDI_DISPLAY_SETTING> gdi2)
         {
-            if (gdi1.Count == gdi2.Count)
-            {
-                for (int i = 0; i < gdi1.Count; i++)
-                {
-                    if (gdi1.Values.ToList()[i] != gdi2.Values.ToList()[i])
-                    {
-                        return false;
-                    }
-                }
+            if (ReferenceEquals(gdi1, gdi2))
                 return true;
-            }
-            else
-            {
+            if (gdi1 == null || gdi2 == null)
                 return false;
+            if (gdi1.Count != gdi2.Count)
+                return false;
+
+            foreach (var kvp in gdi1)
+            {
+                if (!gdi2.TryGetValue(kvp.Key, out var value2) || kvp.Value != value2)
+                {
+                    return false;
+                }
             }
+            return true;
         }
 
         public static void RefreshTrayArea()

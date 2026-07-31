@@ -827,10 +827,65 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrent9300K values don't equal each other");
                 return false;
             }
+            if (IsCurrentCustomWhitePoint != other.IsCurrentCustomWhitePoint)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrentCustomWhitePoint values don't equal each other");
+                return false;
+            }
+            if (IsCurrent709 != other.IsCurrent709)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrent709 values don't equal each other");
+                return false;
+            }
+            if (IsCurrent601 != other.IsCurrent601)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrent601 values don't equal each other");
+                return false;
+            }
+            if (IsCurrentAdobe != other.IsCurrentAdobe)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrentAdobe values don't equal each other");
+                return false;
+            }
+            if (IsCurrentCieRgb != other.IsCurrentCieRgb)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrentCieRgb values don't equal each other");
+                return false;
+            }
+            if (IsCurrent2020 != other.IsCurrent2020)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrent2020 values don't equal each other");
+                return false;
+            }
+            if (IsCurrentCustomColorSpace != other.IsCurrentCustomColorSpace)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The IsCurrentCustomColorSpace values don't equal each other");
+                return false;
+            }
+            if (!CurrentGamutSpace.Equals(other.CurrentGamutSpace))
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The CurrentGamutSpace values don't equal each other");
+                return false;
+            }
+            if (WhitePointX != other.WhitePointX)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The WhitePointX values don't equal each other");
+                return false;
+            }
+            if (WhitePointY != other.WhitePointY)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The WhitePointY values don't equal each other");
+                return false;
+            }
+            if (HasWhitePoint != other.HasWhitePoint)
+            {
+                SharedLogger.logger.Trace($"AMD_GAMUT_INFO/Equals: The HasWhitePoint values don't equal each other");
+                return false;
+            }
             return true;
         }
 
-        public override int GetHashCode() => (IsWhitePointSupported, IsGamutSupported, IsCurrent5000K, IsCurrent6500K, IsCurrent7500K, IsCurrent9300K).GetHashCode();
+        public override int GetHashCode() => (IsWhitePointSupported, IsGamutSupported, IsCurrent5000K, IsCurrent6500K, IsCurrent7500K, IsCurrent9300K, IsCurrentCustomWhitePoint, IsCurrent709, IsCurrent601, IsCurrentAdobe, IsCurrentCieRgb, IsCurrent2020, IsCurrentCustomColorSpace, CurrentGamutSpace, WhitePointX, WhitePointY, HasWhitePoint).GetHashCode();
     }
 
     public struct AMD_REGAMMA_COEFFICIENT : IEquatable<AMD_REGAMMA_COEFFICIENT>
@@ -1303,6 +1358,9 @@ namespace DisplayMagicianShared.AMD
             CurrentScalingMode = ADLX_SCALE_MODE.PRESERVE_ASPECT_RATIO;
             ThreeDLUTSettings = new AMD_3DLUT_INFO();
             GamutInfo = new AMD_GAMUT_INFO();
+            GammaInfo = new AMD_GAMMA_INFO();
+            CustomColorInfo = new AMD_CUSTOM_COLOR_INFO();
+            ConnectivityExperience = new AMD_CONNECTIVITY_EXPERIENCE_INFO();
             VariBrightMode = VariBrightMode.Unknown;
         }
 
@@ -1782,7 +1840,6 @@ namespace DisplayMagicianShared.AMD
         public const string AMD_ADLX_BINDING_DLL = "ADLXWrapper.dll";
         public const string AMD_ADLX_DLL = "amdadlx64.dll";
 
-        static AMDLibrary() { }
         public AMDLibrary()
         {
             _activeDisplayConfig = CreateDefaultConfig();
@@ -2078,7 +2135,9 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
-                return _activeDisplayConfig.Value.DisplayIdentifiers;
+                if (_activeDisplayConfig == null)
+                    _activeDisplayConfig = CreateDefaultConfig();
+                return new List<string>(_activeDisplayConfig.Value.DisplayIdentifiers);
             }
         }
 
@@ -2145,7 +2204,6 @@ namespace DisplayMagicianShared.AMD
                 // - A single desktop is associated with one display.
                 // - A duplicate desktop is associated with two or more displays.
                 // - An AMD Eyefinity desktop is associated with two or more displays.
-                List<AMD_DESKTOP> desktopsToStore = new List<AMD_DESKTOP>();
                 List<AMD_DISPLAY_WITH_SETTINGS> displaysToStore = new List<AMD_DISPLAY_WITH_SETTINGS>();
                 AMD_EYEFINITY_DESKTOP eyefinityDesktopToStore = new AMD_EYEFINITY_DESKTOP();
 
@@ -2159,10 +2217,10 @@ namespace DisplayMagicianShared.AMD
                 else
                 {
                     SharedLogger.logger.Trace($"AMDLibrary/GetAMDDesktopConfig: Successfully got the desktop list");
-                    AMD_DESKTOP newDesktop = new AMD_DESKTOP();
                     // Iterate through the desktop list
                     foreach (var desktop in desktopsList)
                     {
+                        AMD_DESKTOP newDesktop = new AMD_DESKTOP();
                         var desktopDisplayList = desktop.EnumerateDisplaysForDesktop();
                         newDesktop.Displays = new List<AMD_DISPLAY>();
 
@@ -2565,6 +2623,7 @@ namespace DisplayMagicianShared.AMD
                             Marshal.FreeCoTaskMem(adapterInfoBuffer);
 
                             SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Adapter_AdapterInfoX4_Get returned information about all AMD Adapters.");
+
                             // Now go through each adapter and get the information we need from it
                             for (int adapterIndex = 0; adapterIndex < numAdaptersInfo; adapterIndex++)
                             {
@@ -2619,6 +2678,13 @@ namespace DisplayMagicianShared.AMD
                                 {
                                     SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - ADL2_Display_DisplayMapConfig_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer.");
                                     throw new AMDLibraryException($"ADL2_Display_DisplayMapConfig_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer");
+                                }
+
+                                // Free the display map buffer allocated by ADL2 (we only need the display targets)
+                                if (displayMapBuffer != IntPtr.Zero)
+                                {
+                                    Marshal.FreeCoTaskMem(displayMapBuffer);
+                                    displayMapBuffer = IntPtr.Zero;
                                 }
 
                                 ADL_DISPLAY_TARGET[] displayTargetArray = { };
@@ -2721,6 +2787,14 @@ namespace DisplayMagicianShared.AMD
                                         {
                                             //Number of display targets returned is not equal to the SLS grid size, so SLS can't be enabled fo this display
                                             //myDisplayConfig.SlsConfig.IsSlsEnabled = false; // This is already set to false at the start!
+
+                                            // Free the SLS buffers allocated by ADL2 before we abandon this adapter
+                                            if (slsTargetBuffer != IntPtr.Zero) Marshal.FreeCoTaskMem(slsTargetBuffer);
+                                            if (nativeModeBuffer != IntPtr.Zero) Marshal.FreeCoTaskMem(nativeModeBuffer);
+                                            if (nativeModeOffsetsBuffer != IntPtr.Zero) Marshal.FreeCoTaskMem(nativeModeOffsetsBuffer);
+                                            if (bezelModeBuffer != IntPtr.Zero) Marshal.FreeCoTaskMem(bezelModeBuffer);
+                                            if (transientModeBuffer != IntPtr.Zero) Marshal.FreeCoTaskMem(transientModeBuffer);
+                                            if (slsOffsetBuffer != IntPtr.Zero) Marshal.FreeCoTaskMem(slsOffsetBuffer);
                                             break;
                                         }
 
@@ -2942,12 +3016,16 @@ namespace DisplayMagicianShared.AMD
                                                     // advance the buffer forwards to the next object
                                                     currentDisplayModeBuffer = (IntPtr)((long)currentDisplayModeBuffer + Marshal.SizeOf(displayModeArray[i]));
                                                 }
-                                                // Free the memory used by the buffer                        
-                                                Marshal.FreeCoTaskMem(displayModeBuffer);
 
                                                 // Add the slsOffsets to the config we want to store
                                                 //mySLSMapConfig.SLSOffsets = displayModeArray.ToList();
 
+                                            }
+                                            // Free the memory used by the buffer regardless of whether any modes were returned
+                                            if (displayModeBuffer != IntPtr.Zero)
+                                            {
+                                                Marshal.FreeCoTaskMem(displayModeBuffer);
+                                                displayModeBuffer = IntPtr.Zero;
                                             }
 
                                             // If Eyefinity is enabled for this adapter, then the display mode of an
@@ -3503,6 +3581,20 @@ namespace DisplayMagicianShared.AMD
                                     return false;
                                 }
 
+                                // Enable the newly created SLS map if we have a valid index
+                                if (newSlsMapIndex != -1)
+                                {
+                                    ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, newSlsMapIndex, ADLImport.ADL_TRUE);
+                                    if (ADLRet == ADL_STATUS.ADL_OK)
+                                    {
+                                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully enabled the new SLSMAP with index {newSlsMapIndex} for adapter {slsMapConfig.SLSMap.AdapterIndex}.");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - ADL2_Display_SLSMapConfig_SetState returned ADL_STATUS {ADLRet} when trying to enable the new SLSMAP with index {newSlsMapIndex} for adapter {slsMapConfig.SLSMap.AdapterIndex}.");
+                                    }
+                                }
+
                                 // Make the changes permanent
                                 ADLRet = ADLImport.ADL2_Flush_Driver_Data(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex);
                                 if (ADLRet == ADL_STATUS.ADL_OK)
@@ -3736,49 +3828,55 @@ namespace DisplayMagicianShared.AMD
                         }
 
                         // Gamma best effort reapply
-                        var currentGamma = new AMD_GAMMA_INFO(display.GetGamma());
-                        if (currentGamma.IsSupported)
+                        if (stored.GammaInfo.IsSupported)
                         {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma supported for display {display.UniqueId}.");
-                            if (!currentGamma.Equals(stored.GammaInfo))
+                            var currentGamma = new AMD_GAMMA_INFO(display.GetGamma());
+                            if (currentGamma.IsSupported)
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma differs for display {display.UniqueId}, reapplying.");
-                                if (!display.TryReapplyGamma())
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma supported for display {display.UniqueId}.");
+                                if (!currentGamma.Equals(stored.GammaInfo))
                                 {
-                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamma is no longer supported for display {display.UniqueId}, skipping.");
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma differs for display {display.UniqueId}, reapplying.");
+                                    if (!display.TryReapplyGamma())
+                                    {
+                                        SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamma is no longer supported for display {display.UniqueId}, skipping.");
+                                    }
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma already matches for display {display.UniqueId}, skipping.");
                                 }
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma already matches for display {display.UniqueId}, skipping.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma NOT supported for display {display.UniqueId}.");
                             }
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma NOT supported for display {display.UniqueId}.");
                         }
 
                         // Gamut best effort reapply
-                        var currentGamut = new AMD_GAMUT_INFO(display.GetGamut());
-                        if (currentGamut.IsGamutSupported || currentGamut.IsWhitePointSupported)
+                        if (stored.GamutInfo.IsGamutSupported || stored.GamutInfo.IsWhitePointSupported)
                         {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut supported for display {display.UniqueId}.");
-                            if (!currentGamut.Equals(stored.GamutInfo))
+                            var currentGamut = new AMD_GAMUT_INFO(display.GetGamut());
+                            if (currentGamut.IsGamutSupported || currentGamut.IsWhitePointSupported)
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut differs for display {display.UniqueId}, reapplying.");
-                                if (!display.TryReapplyGamut())
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut supported for display {display.UniqueId}.");
+                                if (!currentGamut.Equals(stored.GamutInfo))
                                 {
-                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamut is no longer supported for display {display.UniqueId}, skipping.");
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut differs for display {display.UniqueId}, reapplying.");
+                                    if (!display.TryReapplyGamut())
+                                    {
+                                        SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamut is no longer supported for display {display.UniqueId}, skipping.");
+                                    }
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut already matches for display {display.UniqueId}, skipping.");
                                 }
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut already matches for display {display.UniqueId}, skipping.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut NOT supported for display {display.UniqueId}.");
                             }
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut NOT supported for display {display.UniqueId}.");
                         }
 
                         // Connectivity experience
@@ -3797,18 +3895,21 @@ namespace DisplayMagicianShared.AMD
                         }
 
                         // Apply 3DLUT
-                        var current3dLut = new AMD_3DLUT_INFO(display.GetThreeDLut());
-                        if (!current3dLut.Equals(stored.ThreeDLUTSettings))
+                        if (stored.ThreeDLUTSettings.IsSupportedSCE || stored.ThreeDLUTSettings.IsSupportedSCEVividGaming || stored.ThreeDLUTSettings.IsSupportedSCEDynamicContrast || stored.ThreeDLUTSettings.IsSupportedUser3DLUT)
                         {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: 3DLUT differs for display {display.UniqueId}, reapplying.");
-                            if (!display.TryReapplyThreeDLut())
+                            var current3dLut = new AMD_3DLUT_INFO(display.GetThreeDLut());
+                            if (!current3dLut.Equals(stored.ThreeDLUTSettings))
                             {
-                                SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT is no longer supported for display {display.UniqueId}, skipping.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: 3DLUT differs for display {display.UniqueId}, reapplying.");
+                                if (!display.TryReapplyThreeDLut())
+                                {
+                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT is no longer supported for display {display.UniqueId}, skipping.");
+                                }
                             }
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: 3DLUT already matches for display {display.UniqueId}, skipping.");
+                            else
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: 3DLUT already matches for display {display.UniqueId}, skipping.");
+                            }
                         }
 
                         // FreeSync

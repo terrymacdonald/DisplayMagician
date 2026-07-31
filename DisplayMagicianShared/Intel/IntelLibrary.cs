@@ -154,7 +154,7 @@ namespace DisplayMagicianShared.Intel
                 left.QuantizationRange == right.QuantizationRange &&
                 left.SupportedPictureAr == right.SupportedPictureAr &&
                 left.PictureAr == right.PictureAr &&
-                left.AudioSettings == right.AudioSettings;
+                object.Equals(left.AudioSettings, right.AudioSettings);
         }
 
         internal static int GetDisplaySettingsHash(DisplaySettingsDto settings)
@@ -584,17 +584,17 @@ namespace DisplayMagicianShared.Intel
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_CONFIG/Equals: The CombinedDisplayIsInUse values don't equal each other");
                 return false;
-            }            
-            if (!PhysicalAdapters.SequenceEqual(other.PhysicalAdapters))
+            }
+            if (!DictionaryEquals(PhysicalAdapters, other.PhysicalAdapters))
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_CONFIG/Equals: The PhysicalAdapters values don't equal each other");
                 return false;
             }
-            if (!Displays.SequenceEqual(other.Displays))
+            if (!DictionaryEquals(Displays, other.Displays))
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_CONFIG/Equals: The Displays values don't equal each other");
                 return false;
-            }            
+            }
             if (!DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers))
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_CONFIG/Equals: The DisplayIdentifiers values don't equal each other");
@@ -603,9 +603,26 @@ namespace DisplayMagicianShared.Intel
             return true;
         }
 
+        private static bool DictionaryEquals<TKey, TValue>(Dictionary<TKey, TValue> left, Dictionary<TKey, TValue> right)
+            where TKey : notnull
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+            if (left == null || right == null)
+                return false;
+            if (left.Count != right.Count)
+                return false;
+            foreach (var kvp in left)
+            {
+                if (!right.TryGetValue(kvp.Key, out var rightValue) || !EqualityComparer<TValue>.Default.Equals(kvp.Value, rightValue))
+                    return false;
+            }
+            return true;
+        }
+
         public override int GetHashCode()
         {
-            return (IsInUse, CombinedDisplayIsInUse, PhysicalAdapters, Displays, DisplayIdentifiers).GetHashCode();
+            return (IsInUse, CombinedDisplayIsInUse, PhysicalAdapters.Count, Displays.Count, DisplayIdentifiers).GetHashCode();
         }
 
         public static bool operator ==(INTEL_DISPLAY_CONFIG lhs, INTEL_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
@@ -652,8 +669,6 @@ namespace DisplayMagicianShared.Intel
         const uint IGCL_IMPL_MINOR = 1;
         const uint IGCL_VERSION = (IGCL_IMPL_MAJOR << 16) | (IGCL_IMPL_MINOR & 0x0000FFFF);
 
-        static IntelLibrary() { }
-        
         public IntelLibrary()
         {
             _activeDisplayConfig = CreateDefaultConfig();
@@ -2503,7 +2518,7 @@ namespace DisplayMagicianShared.Intel
             }
             else
             {
-                return false;
+                return true;
             }
         }
 

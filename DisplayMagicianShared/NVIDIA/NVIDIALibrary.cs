@@ -989,7 +989,6 @@ namespace DisplayMagicianShared.NVIDIA
         public IntPtr hNVAPIBindingModule = IntPtr.Zero;
         public const string NVIDIA_NVAPI_BINDING_DLL = "NVAPIWrapper.dll";
 
-        static NVIDIALibrary() { }
         public NVIDIALibrary()
         {
             _activeDisplayConfig = CreateDefaultConfig();
@@ -2747,7 +2746,7 @@ namespace DisplayMagicianShared.NVIDIA
                 UpdateActiveConfig();
 
                 // Set the DRS Settings only if we need to
-                if (displayConfig.DRSSettings.Count > 0)
+                if (displayConfig.DRSSettings != null && displayConfig.DRSSettings.Count > 0)
                 {
                     try
                     {
@@ -2785,7 +2784,7 @@ namespace DisplayMagicianShared.NVIDIA
                                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Successfully got the base DRS Profile.");
 
                                         // Go through all the settings we have in the saved profile, and change the current profile settings to be the same
-                                        if (displayConfig.DRSSettings.Count > 0)
+                                        if (displayConfig.DRSSettings != null && displayConfig.DRSSettings.Count > 0)
                                         {
                                             bool needToSave = false;
                                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: There are {displayConfig.DRSSettings.Count} stored DRS settings in the base DRS profile so we need to process them");
@@ -2793,69 +2792,76 @@ namespace DisplayMagicianShared.NVIDIA
                                             try
                                             {
                                                 // Get the Base Profiles from the stored config and the active config
-                                                NVIDIA_DRS_CONFIG storedBaseProfile = displayConfig.DRSSettings.Find(p => p.IsBaseProfile == true);
-                                                NVIDIA_DRS_CONFIG activeBaseProfile = ActiveDisplayConfig.DRSSettings.Find(p => p.IsBaseProfile == true);
-                                                foreach (var drsSetting in storedBaseProfile.DriverSettings)
+                                                NVIDIA_DRS_CONFIG? storedBaseProfile = displayConfig.DRSSettings.Find(p => p.IsBaseProfile == true);
+                                                NVIDIA_DRS_CONFIG? activeBaseProfile = ActiveDisplayConfig.DRSSettings?.Find(p => p.IsBaseProfile == true);
+                                                if (storedBaseProfile == null || activeBaseProfile == null)
                                                 {
-                                                    for (int i = 0; i < activeBaseProfile.DriverSettings.Count; i++)
+                                                    SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Could not find both the stored and active base DRS profiles. Skipping DRS setting application.");
+                                                }
+                                                else
+                                                {
+                                                    foreach (var drsSetting in storedBaseProfile.Value.DriverSettings)
                                                     {
-                                                        NVAPIDrsSettingDto currentSetting = activeBaseProfile.DriverSettings[i];
-
-                                                        // If the setting is also in the active base profile (it should be!), then we set it.
-                                                        if (drsSetting.SettingId == currentSetting.SettingId)
+                                                        for (int i = 0; i < activeBaseProfile.Value.DriverSettings.Count; i++)
                                                         {
-                                                            // Compare only the current value based on the setting type (closest to old CurrentValue behavior)
-                                                            bool currentValueMatches = drsSetting.SettingType switch
-                                                            {
-                                                                _NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE => drsSetting.CurrentDwordValue == currentSetting.CurrentDwordValue,
-                                                                _NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE or _NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE => string.Equals(drsSetting.CurrentStringValue, currentSetting.CurrentStringValue, StringComparison.Ordinal),
-                                                                _NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE => (drsSetting.CurrentBinaryValue == null && currentSetting.CurrentBinaryValue == null) ||
-                                                                    (drsSetting.CurrentBinaryValue != null && currentSetting.CurrentBinaryValue != null && drsSetting.CurrentBinaryValue.SequenceEqual(currentSetting.CurrentBinaryValue)),
-                                                                _ => drsSetting.Equals(currentSetting)
-                                                            };
+                                                            NVAPIDrsSettingDto currentSetting = activeBaseProfile.Value.DriverSettings[i];
 
-                                                            if (currentValueMatches)
+                                                            // If the setting is also in the active base profile (it should be!), then we set it.
+                                                            if (drsSetting.SettingId == currentSetting.SettingId)
                                                             {
-                                                                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: '{currentSetting.SettingName}' ({currentSetting.SettingId}) current value already matches the desired value, so skipping changing it.");
-                                                            }
-                                                            else
-                                                            {
-                                                                try
+                                                                // Compare only the current value based on the setting type (closest to old CurrentValue behavior)
+                                                                bool currentValueMatches = drsSetting.SettingType switch
                                                                 {
-                                                                    drsHelper.SetSetting(baseProfile.Value, drsSetting);
-                                                                    needToSave = true;
-                                                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We changed setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) using NVAPIDrsHelper.SetSetting()");
-                                                                }
-                                                                catch (Exception ex)
+                                                                    _NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE => drsSetting.CurrentDwordValue == currentSetting.CurrentDwordValue,
+                                                                    _NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE or _NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE => string.Equals(drsSetting.CurrentStringValue, currentSetting.CurrentStringValue, StringComparison.Ordinal),
+                                                                    _NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE => (drsSetting.CurrentBinaryValue == null && currentSetting.CurrentBinaryValue == null) ||
+                                                                        (drsSetting.CurrentBinaryValue != null && currentSetting.CurrentBinaryValue != null && drsSetting.CurrentBinaryValue.SequenceEqual(currentSetting.CurrentBinaryValue)),
+                                                                    _ => drsSetting.Equals(currentSetting)
+                                                                };
+
+                                                                if (currentValueMatches)
                                                                 {
-                                                                    SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception caused whilst changing setting '{currentSetting.SettingName}' ({currentSetting.SettingId}).");
+                                                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: '{currentSetting.SettingName}' ({currentSetting.SettingId}) current value already matches the desired value, so skipping changing it.");
                                                                 }
+                                                                else
+                                                                {
+                                                                    try
+                                                                    {
+                                                                        drsHelper.SetSetting(baseProfile.Value, drsSetting);
+                                                                        needToSave = true;
+                                                                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We changed setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) using NVAPIDrsHelper.SetSetting()");
+                                                                    }
+                                                                    catch (Exception ex)
+                                                                    {
+                                                                        SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception caused whilst changing setting '{currentSetting.SettingName}' ({currentSetting.SettingId}).");
+                                                                    }
+                                                                }
+                                                                break;
                                                             }
-                                                            break;
                                                         }
                                                     }
-                                                }
 
-                                                // Now go through and revert any unset settings to defaults. This guards against new settings being added by other profiles
-                                                // after we've created a display profile. If we didn't do this those newer settings would stay set.
-                                                foreach (var currentSetting in activeBaseProfile.DriverSettings)
-                                                {
-                                                    // Skip any settings that we've already set
-                                                    if (storedBaseProfile.DriverSettings.Exists(ds => ds.SettingId == currentSetting.SettingId))
+                                                    // Now go through and revert any unset settings to defaults. This guards against new settings being added by other profiles
+                                                    // after we've created a display profile. If we didn't do this those newer settings would stay set.
+                                                    foreach (var currentSetting in activeBaseProfile.Value.DriverSettings)
                                                     {
-                                                        continue;
-                                                    }
+                                                        // Skip any settings that we've already set
+                                                        if (storedBaseProfile.Value.DriverSettings.Exists(ds => ds.SettingId == currentSetting.SettingId))
+                                                        {
+                                                            continue;
+                                                        }
 
-                                                    try
-                                                    {
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Attempting to restore DRS setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default.");
-                                                        drsHelper.RestoreProfileDefaultSetting(baseProfile.Value, currentSetting.SettingId);
-                                                        needToSave = true;
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We restored active setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default value using NVAPIDrsHelper.RestoreProfileDefaultSetting()");
-                                                    }
-                                                    catch (Exception ex)
-                                                    {
-                                                        SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to restore setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default.");
+                                                        try
+                                                        {
+                                                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Attempting to restore DRS setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default.");
+                                                            drsHelper.RestoreProfileDefaultSetting(baseProfile.Value, currentSetting.SettingId);
+                                                            needToSave = true;
+                                                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We restored active setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default value using NVAPIDrsHelper.RestoreProfileDefaultSetting()");
+                                                        }
+                                                        catch (Exception ex)
+                                                        {
+                                                            SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to restore setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default.");
+                                                        }
                                                     }
                                                 }
                                             }
@@ -3993,14 +3999,14 @@ namespace DisplayMagicianShared.NVIDIA
                                 // We get here if there is a matching adapter
                                 var newAdapterValue = adapterOldToNewMap[(ulong)displayIdInfoAdapterLuid];
                                 displayIdInfo.DisplayIdInfo.AdapterLuid = (long)newAdapterValue;
-                                SharedLogger.logger.Trace($"WinLibrary/PatchNVIDADisplayConfig: Updated DisplayIdInfo for display {displayIdInfo.DisplayId} from adapter {displayIdInfoAdapterLuid} to adapter {newAdapterValue} instead.");
+                                SharedLogger.logger.Trace($"NVIDIALibrary/PatchNVIDADisplayConfig: Updated DisplayIdInfo for display {displayIdInfo.DisplayId} from adapter {displayIdInfoAdapterLuid} to adapter {newAdapterValue} instead.");
                             }
                             else
                             {
                                 // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                                 // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
                                 var newAdapterValue = adapterOldToNewMap.First().Value;
-                                SharedLogger.logger.Warn($"WinLibrary/PatchNVIDADisplayConfig: Uh Oh. Adapter {displayIdInfoAdapterLuid} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/PatchNVIDADisplayConfig: Uh Oh. Adapter {displayIdInfoAdapterLuid} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
                                 displayIdInfo.DisplayIdInfo.AdapterLuid = (long)newAdapterValue;
                             }
                             // Write the modified struct back into the dictionary
@@ -4011,7 +4017,7 @@ namespace DisplayMagicianShared.NVIDIA
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, "WinLibrary/PatchWindowsDisplayConfig: Exception while going through the display adapters update the adapter ids");
+                SharedLogger.logger.Error(ex, "NVIDIALibrary/PatchNVIDADisplayConfig: Exception while going through the display adapters update the adapter ids");
             }
         }
 
