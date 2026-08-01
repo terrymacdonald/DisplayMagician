@@ -84,7 +84,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
-            string profileName = PromptForAudioProfileName("Create Audio Profile");
+            string profileName = PromptForAudioProfileName("New Audio Profile");
             if (string.IsNullOrWhiteSpace(profileName))
                 return;
 
@@ -205,7 +205,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_close_Click(object sender, EventArgs e)
+        private void btn_back_Click(object sender, EventArgs e)
         {
             Close();
         }
@@ -236,22 +236,6 @@ namespace DisplayMagician.UIForms
 
                 return prompt.ShowDialog(this) == DialogResult.OK ? inputBox.Text?.Trim() : string.Empty;
             }
-        }
-
-        private void AudioValueChanged(object sender, EventArgs e)
-        {
-            if (_isUpdatingUI || _selectedAudioProfile == null || _selectedAudioProfile.WindowsAudioConfig == null)
-                return;
-
-            _selectedAudioProfile.WindowsAudioConfig.Playback.VolumePercent = (int)nud_speaker_volume.Value;
-            _selectedAudioProfile.WindowsAudioConfig.Playback.IsMuted = cb_speaker_mute.Checked;
-            _selectedAudioProfile.WindowsAudioConfig.Recording.VolumePercent = (int)nud_microphone_volume.Value;
-            _selectedAudioProfile.WindowsAudioConfig.Recording.IsMuted = cb_microphone_mute.Checked;
-            _selectedAudioProfile.WindowsAudioConfig.System.IsMonoAudioEnabled = cb_mono_audio.Checked;
-            _selectedAudioProfile.WindowsAudioConfig.System.IsSystemAudioEnabled = cb_system_audio_enabled.Checked;
-
-            txt_audio_profile_settings.Text = _selectedAudioProfile.GenerateSettingsText();
-            AudioProfileRepository.SaveAudioProfiles();
         }
 
         private void groupbox_Paint(object sender, PaintEventArgs e)

@@ -32,6 +32,9 @@ namespace DisplayMagician.UIForms
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             btn_back = new System.Windows.Forms.Button();
             gb_general = new System.Windows.Forms.GroupBox();
+            label7 = new System.Windows.Forms.Label();
+            nud_audio_device_wait = new System.Windows.Forms.NumericUpDown();
+            label5 = new System.Windows.Forms.Label();
             label6 = new System.Windows.Forms.Label();
             cmb_notify_icon_double_click = new System.Windows.Forms.ComboBox();
             cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
@@ -65,14 +68,11 @@ namespace DisplayMagician.UIForms
             gb_support = new System.Windows.Forms.GroupBox();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
-            label5 = new System.Windows.Forms.Label();
-            nud_audio_device_wait = new System.Windows.Forms.NumericUpDown();
-            label7 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).BeginInit();
             gb_hotkeys.SuspendLayout();
             gb_upgrades.SuspendLayout();
             gb_support.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).BeginInit();
             SuspendLayout();
             // 
             // btn_back
@@ -83,10 +83,10 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1396, 705);
-            btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_back.Location = new System.Drawing.Point(2593, 1504);
+            btn_back.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_back.Name = "btn_back";
-            btn_back.Size = new System.Drawing.Size(88, 27);
+            btn_back.Size = new System.Drawing.Size(163, 58);
             btn_back.TabIndex = 9;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
@@ -113,33 +113,67 @@ namespace DisplayMagician.UIForms
             gb_general.Controls.Add(cb_minimise_notification_area);
             gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_general.ForeColor = System.Drawing.Color.White;
-            gb_general.Location = new System.Drawing.Point(31, 24);
-            gb_general.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_general.Location = new System.Drawing.Point(58, 51);
+            gb_general.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             gb_general.Name = "gb_general";
-            gb_general.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_general.Size = new System.Drawing.Size(612, 503);
+            gb_general.Padding = new System.Windows.Forms.Padding(7, 6, 7, 6);
+            gb_general.Size = new System.Drawing.Size(1137, 1073);
             gb_general.TabIndex = 11;
             gb_general.TabStop = false;
             gb_general.Text = "General Settings";
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label7.ForeColor = System.Drawing.Color.Transparent;
+            label7.Location = new System.Drawing.Point(914, 567);
+            label7.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
+            label7.Name = "label7";
+            label7.Size = new System.Drawing.Size(108, 30);
+            label7.TabIndex = 55;
+            label7.Text = "seconds";
+            // 
+            // nud_audio_device_wait
+            // 
+            nud_audio_device_wait.Location = new System.Drawing.Point(797, 563);
+            nud_audio_device_wait.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            nud_audio_device_wait.Maximum = new decimal(new int[] { 45, 0, 0, 0 });
+            nud_audio_device_wait.Name = "nud_audio_device_wait";
+            nud_audio_device_wait.Size = new System.Drawing.Size(111, 37);
+            nud_audio_device_wait.TabIndex = 54;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label5.ForeColor = System.Drawing.Color.Transparent;
+            label5.Location = new System.Drawing.Point(61, 567);
+            label5.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
+            label5.Name = "label5";
+            label5.Size = new System.Drawing.Size(744, 30);
+            label5.TabIndex = 53;
+            label5.Text = "Max time to wait for audio device to appear (default 10 seconds):";
             // 
             // label6
             // 
             label6.AutoSize = true;
             label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label6.ForeColor = System.Drawing.Color.Transparent;
-            label6.Location = new System.Drawing.Point(32, 303);
-            label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label6.Location = new System.Drawing.Point(59, 646);
+            label6.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             label6.Name = "label6";
-            label6.Size = new System.Drawing.Size(308, 16);
+            label6.Size = new System.Drawing.Size(594, 30);
             label6.TabIndex = 51;
             label6.Text = "Notification Icon (System Tray) double click action :";
             // 
             // cmb_notify_icon_double_click
             // 
             cmb_notify_icon_double_click.FormattingEnabled = true;
-            cmb_notify_icon_double_click.Location = new System.Drawing.Point(342, 300);
+            cmb_notify_icon_double_click.Location = new System.Drawing.Point(666, 640);
+            cmb_notify_icon_double_click.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             cmb_notify_icon_double_click.Name = "cmb_notify_icon_double_click";
-            cmb_notify_icon_double_click.Size = new System.Drawing.Size(243, 24);
+            cmb_notify_icon_double_click.Size = new System.Drawing.Size(417, 38);
             cmb_notify_icon_double_click.TabIndex = 49;
             // 
             // cb_wake_up_gpus
@@ -151,10 +185,10 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_wake_up_gpus.ForeColor = System.Drawing.Color.White;
             cb_wake_up_gpus.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_wake_up_gpus.Location = new System.Drawing.Point(32, 232);
-            cb_wake_up_gpus.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_wake_up_gpus.Location = new System.Drawing.Point(59, 495);
+            cb_wake_up_gpus.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_wake_up_gpus.Name = "cb_wake_up_gpus";
-            cb_wake_up_gpus.Size = new System.Drawing.Size(389, 20);
+            cb_wake_up_gpus.Size = new System.Drawing.Size(728, 34);
             cb_wake_up_gpus.TabIndex = 48;
             cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable";
             cb_wake_up_gpus.UseVisualStyleBackColor = true;
@@ -167,10 +201,10 @@ namespace DisplayMagician.UIForms
             btn_context_menu_reinstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_context_menu_reinstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_context_menu_reinstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_reinstall.Location = new System.Drawing.Point(30, 437);
-            btn_context_menu_reinstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_context_menu_reinstall.Location = new System.Drawing.Point(56, 932);
+            btn_context_menu_reinstall.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_context_menu_reinstall.Name = "btn_context_menu_reinstall";
-            btn_context_menu_reinstall.Size = new System.Drawing.Size(243, 38);
+            btn_context_menu_reinstall.Size = new System.Drawing.Size(451, 81);
             btn_context_menu_reinstall.TabIndex = 47;
             btn_context_menu_reinstall.Text = "Add Desktop Context Menu";
             btn_context_menu_reinstall.UseVisualStyleBackColor = true;
@@ -183,10 +217,10 @@ namespace DisplayMagician.UIForms
             cb_show_status_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_status_action.ForeColor = System.Drawing.Color.White;
             cb_show_status_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_status_action.Location = new System.Drawing.Point(33, 169);
-            cb_show_status_action.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_show_status_action.Location = new System.Drawing.Point(61, 361);
+            cb_show_status_action.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_show_status_action.Name = "cb_show_status_action";
-            cb_show_status_action.Size = new System.Drawing.Size(365, 20);
+            cb_show_status_action.Size = new System.Drawing.Size(699, 34);
             cb_show_status_action.TabIndex = 46;
             cb_show_status_action.Text = "Show status change messages in Windows Action Center";
             cb_show_status_action.UseVisualStyleBackColor = true;
@@ -198,10 +232,10 @@ namespace DisplayMagician.UIForms
             cb_show_message_toasts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_message_toasts.ForeColor = System.Drawing.Color.White;
             cb_show_message_toasts.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_message_toasts.Location = new System.Drawing.Point(32, 201);
-            cb_show_message_toasts.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_show_message_toasts.Location = new System.Drawing.Point(59, 429);
+            cb_show_message_toasts.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_show_message_toasts.Name = "cb_show_message_toasts";
-            cb_show_message_toasts.Size = new System.Drawing.Size(372, 20);
+            cb_show_message_toasts.Size = new System.Drawing.Size(717, 34);
             cb_show_message_toasts.TabIndex = 52;
             cb_show_message_toasts.Text = "Show new message notifications in Windows Action Center";
             cb_show_message_toasts.UseVisualStyleBackColor = true;
@@ -213,10 +247,10 @@ namespace DisplayMagician.UIForms
             cb_show_minimise_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_minimise_action.ForeColor = System.Drawing.Color.White;
             cb_show_minimise_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_minimise_action.Location = new System.Drawing.Point(33, 136);
-            cb_show_minimise_action.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_show_minimise_action.Location = new System.Drawing.Point(61, 290);
+            cb_show_minimise_action.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_show_minimise_action.Name = "cb_show_minimise_action";
-            cb_show_minimise_action.Size = new System.Drawing.Size(486, 20);
+            cb_show_minimise_action.Size = new System.Drawing.Size(939, 34);
             cb_show_minimise_action.TabIndex = 45;
             cb_show_minimise_action.Text = "Show reminder in Windows Action Center when DisplayMagician  is minimised";
             cb_show_minimise_action.UseVisualStyleBackColor = true;
@@ -224,10 +258,10 @@ namespace DisplayMagician.UIForms
             // label4
             // 
             label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label4.Location = new System.Drawing.Point(130, 399);
-            label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label4.Location = new System.Drawing.Point(241, 851);
+            label4.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             label4.Name = "label4";
-            label4.Size = new System.Drawing.Size(361, 28);
+            label4.Size = new System.Drawing.Size(670, 60);
             label4.TabIndex = 44;
             label4.Text = "Add or remove the Desktop Background Context Menu. ";
             label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -240,10 +274,10 @@ namespace DisplayMagician.UIForms
             btn_context_menu_uninstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_context_menu_uninstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_context_menu_uninstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_uninstall.Location = new System.Drawing.Point(342, 437);
-            btn_context_menu_uninstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_context_menu_uninstall.Location = new System.Drawing.Point(635, 932);
+            btn_context_menu_uninstall.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_context_menu_uninstall.Name = "btn_context_menu_uninstall";
-            btn_context_menu_uninstall.Size = new System.Drawing.Size(243, 38);
+            btn_context_menu_uninstall.Size = new System.Drawing.Size(451, 81);
             btn_context_menu_uninstall.TabIndex = 43;
             btn_context_menu_uninstall.Text = "Remove Desktop Context Menu";
             btn_context_menu_uninstall.UseVisualStyleBackColor = true;
@@ -256,10 +290,10 @@ namespace DisplayMagician.UIForms
             cb_show_splashscreen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_show_splashscreen.ForeColor = System.Drawing.Color.White;
             cb_show_splashscreen.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_show_splashscreen.Location = new System.Drawing.Point(33, 104);
-            cb_show_splashscreen.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_show_splashscreen.Location = new System.Drawing.Point(61, 222);
+            cb_show_splashscreen.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_show_splashscreen.Name = "cb_show_splashscreen";
-            cb_show_splashscreen.Size = new System.Drawing.Size(311, 20);
+            cb_show_splashscreen.Size = new System.Drawing.Size(589, 34);
             cb_show_splashscreen.TabIndex = 15;
             cb_show_splashscreen.Text = "Show DisplayMagician splash screen on startup";
             cb_show_splashscreen.UseVisualStyleBackColor = true;
@@ -271,10 +305,10 @@ namespace DisplayMagician.UIForms
             cb_start_on_boot.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_start_on_boot.ForeColor = System.Drawing.Color.White;
             cb_start_on_boot.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_start_on_boot.Location = new System.Drawing.Point(33, 39);
-            cb_start_on_boot.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_start_on_boot.Location = new System.Drawing.Point(61, 83);
+            cb_start_on_boot.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_start_on_boot.Name = "cb_start_on_boot";
-            cb_start_on_boot.Size = new System.Drawing.Size(388, 20);
+            cb_start_on_boot.Size = new System.Drawing.Size(745, 34);
             cb_start_on_boot.TabIndex = 14;
             cb_start_on_boot.Text = "Start DisplayMagician automatically when the computer starts";
             cb_start_on_boot.UseVisualStyleBackColor = true;
@@ -284,10 +318,10 @@ namespace DisplayMagician.UIForms
             label1.AutoSize = true;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label1.ForeColor = System.Drawing.Color.Transparent;
-            label1.Location = new System.Drawing.Point(32, 353);
-            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Location = new System.Drawing.Point(59, 753);
+            label1.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             label1.Name = "label1";
-            label1.Size = new System.Drawing.Size(136, 16);
+            label1.Size = new System.Drawing.Size(259, 30);
             label1.TabIndex = 13;
             label1.Text = "What type of logging?";
             // 
@@ -295,10 +329,10 @@ namespace DisplayMagician.UIForms
             // 
             cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_loglevel.FormattingEnabled = true;
-            cmb_loglevel.Location = new System.Drawing.Point(197, 350);
-            cmb_loglevel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cmb_loglevel.Location = new System.Drawing.Point(332, 747);
+            cmb_loglevel.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cmb_loglevel.Name = "cmb_loglevel";
-            cmb_loglevel.Size = new System.Drawing.Size(388, 24);
+            cmb_loglevel.Size = new System.Drawing.Size(751, 38);
             cmb_loglevel.TabIndex = 12;
             // 
             // cb_minimise_notification_area
@@ -308,10 +342,10 @@ namespace DisplayMagician.UIForms
             cb_minimise_notification_area.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
             cb_minimise_notification_area.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_minimise_notification_area.Location = new System.Drawing.Point(33, 71);
-            cb_minimise_notification_area.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_minimise_notification_area.Location = new System.Drawing.Point(61, 151);
+            cb_minimise_notification_area.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_minimise_notification_area.Name = "cb_minimise_notification_area";
-            cb_minimise_notification_area.Size = new System.Drawing.Size(331, 20);
+            cb_minimise_notification_area.Size = new System.Drawing.Size(632, 34);
             cb_minimise_notification_area.TabIndex = 11;
             cb_minimise_notification_area.Text = "Start DisplayMagician minimised in notification area";
             cb_minimise_notification_area.UseVisualStyleBackColor = true;
@@ -331,11 +365,11 @@ namespace DisplayMagician.UIForms
             gb_hotkeys.Controls.Add(btn_hotkey_main_window);
             gb_hotkeys.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_hotkeys.ForeColor = System.Drawing.Color.White;
-            gb_hotkeys.Location = new System.Drawing.Point(681, 24);
-            gb_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_hotkeys.Location = new System.Drawing.Point(1265, 51);
+            gb_hotkeys.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             gb_hotkeys.Name = "gb_hotkeys";
-            gb_hotkeys.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_hotkeys.Size = new System.Drawing.Size(803, 503);
+            gb_hotkeys.Padding = new System.Windows.Forms.Padding(7, 6, 7, 6);
+            gb_hotkeys.Size = new System.Drawing.Size(1491, 1073);
             gb_hotkeys.TabIndex = 12;
             gb_hotkeys.TabStop = false;
             gb_hotkeys.Text = "Hotkeys";
@@ -343,10 +377,10 @@ namespace DisplayMagician.UIForms
             // lbl_hotkey_exit
             // 
             lbl_hotkey_exit.AutoSize = true;
-            lbl_hotkey_exit.Location = new System.Drawing.Point(456, 40);
-            lbl_hotkey_exit.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_hotkey_exit.Location = new System.Drawing.Point(847, 85);
+            lbl_hotkey_exit.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             lbl_hotkey_exit.Name = "lbl_hotkey_exit";
-            lbl_hotkey_exit.Size = new System.Drawing.Size(194, 16);
+            lbl_hotkey_exit.Size = new System.Drawing.Size(369, 30);
             lbl_hotkey_exit.TabIndex = 52;
             lbl_hotkey_exit.Text = "Hotkey to exit DisplayMagician:";
             lbl_hotkey_exit.Click += lbl_hotkey_exit_Click;
@@ -359,10 +393,10 @@ namespace DisplayMagician.UIForms
             btn_hotkey_exit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey_exit.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_hotkey_exit.ForeColor = System.Drawing.Color.White;
-            btn_hotkey_exit.Location = new System.Drawing.Point(658, 35);
-            btn_hotkey_exit.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_hotkey_exit.Location = new System.Drawing.Point(1222, 75);
+            btn_hotkey_exit.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_hotkey_exit.Name = "btn_hotkey_exit";
-            btn_hotkey_exit.Size = new System.Drawing.Size(103, 27);
+            btn_hotkey_exit.Size = new System.Drawing.Size(191, 58);
             btn_hotkey_exit.TabIndex = 51;
             btn_hotkey_exit.Text = "Set Hotkey";
             btn_hotkey_exit.UseVisualStyleBackColor = true;
@@ -372,20 +406,21 @@ namespace DisplayMagician.UIForms
             // 
             lbl_hotkey_exit_app.AutoSize = true;
             lbl_hotkey_exit_app.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_hotkey_exit_app.Location = new System.Drawing.Point(329, 148);
+            lbl_hotkey_exit_app.Location = new System.Drawing.Point(611, 316);
+            lbl_hotkey_exit_app.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             lbl_hotkey_exit_app.Name = "lbl_hotkey_exit_app";
-            lbl_hotkey_exit_app.Size = new System.Drawing.Size(137, 20);
+            lbl_hotkey_exit_app.Size = new System.Drawing.Size(274, 37);
             lbl_hotkey_exit_app.TabIndex = 50;
             lbl_hotkey_exit_app.Text = "All Saved Hotkeys";
             lbl_hotkey_exit_app.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // lv_hotkeys
             // 
-            lv_hotkeys.Location = new System.Drawing.Point(37, 171);
-            lv_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            lv_hotkeys.Location = new System.Drawing.Point(69, 365);
+            lv_hotkeys.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             lv_hotkeys.Name = "lv_hotkeys";
             lv_hotkeys.ShowGroups = false;
-            lv_hotkeys.Size = new System.Drawing.Size(724, 238);
+            lv_hotkeys.Size = new System.Drawing.Size(1341, 503);
             lv_hotkeys.TabIndex = 48;
             lv_hotkeys.UseCompatibleStateImageBehavior = false;
             lv_hotkeys.View = System.Windows.Forms.View.Details;
@@ -399,10 +434,10 @@ namespace DisplayMagician.UIForms
             btn_clear_all_hotkeys.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_clear_all_hotkeys.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_clear_all_hotkeys.ForeColor = System.Drawing.Color.White;
-            btn_clear_all_hotkeys.Location = new System.Drawing.Point(321, 437);
-            btn_clear_all_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_clear_all_hotkeys.Location = new System.Drawing.Point(596, 932);
+            btn_clear_all_hotkeys.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_clear_all_hotkeys.Name = "btn_clear_all_hotkeys";
-            btn_clear_all_hotkeys.Size = new System.Drawing.Size(148, 38);
+            btn_clear_all_hotkeys.Size = new System.Drawing.Size(275, 81);
             btn_clear_all_hotkeys.TabIndex = 42;
             btn_clear_all_hotkeys.Text = "Clear All Hotkeys";
             btn_clear_all_hotkeys.UseVisualStyleBackColor = true;
@@ -411,30 +446,30 @@ namespace DisplayMagician.UIForms
             // lbl_hotkey_shortcut_library_description
             // 
             lbl_hotkey_shortcut_library_description.AutoSize = true;
-            lbl_hotkey_shortcut_library_description.Location = new System.Drawing.Point(454, 85);
-            lbl_hotkey_shortcut_library_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_hotkey_shortcut_library_description.Location = new System.Drawing.Point(843, 181);
+            lbl_hotkey_shortcut_library_description.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             lbl_hotkey_shortcut_library_description.Name = "lbl_hotkey_shortcut_library_description";
-            lbl_hotkey_shortcut_library_description.Size = new System.Drawing.Size(196, 16);
+            lbl_hotkey_shortcut_library_description.Size = new System.Drawing.Size(379, 30);
             lbl_hotkey_shortcut_library_description.TabIndex = 41;
             lbl_hotkey_shortcut_library_description.Text = "Hotkey to open Shortcut Library:";
             // 
             // lbl_hotkey_display_profile_description
             // 
             lbl_hotkey_display_profile_description.AutoSize = true;
-            lbl_hotkey_display_profile_description.Location = new System.Drawing.Point(47, 85);
-            lbl_hotkey_display_profile_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_hotkey_display_profile_description.Location = new System.Drawing.Point(87, 181);
+            lbl_hotkey_display_profile_description.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             lbl_hotkey_display_profile_description.Name = "lbl_hotkey_display_profile_description";
-            lbl_hotkey_display_profile_description.Size = new System.Drawing.Size(242, 16);
+            lbl_hotkey_display_profile_description.Size = new System.Drawing.Size(462, 30);
             lbl_hotkey_display_profile_description.TabIndex = 40;
             lbl_hotkey_display_profile_description.Text = "Hotkey to open Display Profile Window:";
             // 
             // lbl_hotkey_main_window_description
             // 
             lbl_hotkey_main_window_description.AutoSize = true;
-            lbl_hotkey_main_window_description.Location = new System.Drawing.Point(105, 40);
-            lbl_hotkey_main_window_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_hotkey_main_window_description.Location = new System.Drawing.Point(195, 85);
+            lbl_hotkey_main_window_description.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             lbl_hotkey_main_window_description.Name = "lbl_hotkey_main_window_description";
-            lbl_hotkey_main_window_description.Size = new System.Drawing.Size(184, 16);
+            lbl_hotkey_main_window_description.Size = new System.Drawing.Size(353, 30);
             lbl_hotkey_main_window_description.TabIndex = 39;
             lbl_hotkey_main_window_description.Text = "Hotkey to open Main Window:";
             // 
@@ -446,10 +481,10 @@ namespace DisplayMagician.UIForms
             btn_hotkey_shortcuts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey_shortcuts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_hotkey_shortcuts.ForeColor = System.Drawing.Color.White;
-            btn_hotkey_shortcuts.Location = new System.Drawing.Point(658, 80);
-            btn_hotkey_shortcuts.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_hotkey_shortcuts.Location = new System.Drawing.Point(1222, 171);
+            btn_hotkey_shortcuts.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_hotkey_shortcuts.Name = "btn_hotkey_shortcuts";
-            btn_hotkey_shortcuts.Size = new System.Drawing.Size(103, 27);
+            btn_hotkey_shortcuts.Size = new System.Drawing.Size(191, 58);
             btn_hotkey_shortcuts.TabIndex = 38;
             btn_hotkey_shortcuts.Text = "Set Hotkey";
             btn_hotkey_shortcuts.UseVisualStyleBackColor = true;
@@ -463,10 +498,10 @@ namespace DisplayMagician.UIForms
             btn_hotkey_display_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey_display_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_hotkey_display_profile.ForeColor = System.Drawing.Color.White;
-            btn_hotkey_display_profile.Location = new System.Drawing.Point(297, 80);
-            btn_hotkey_display_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_hotkey_display_profile.Location = new System.Drawing.Point(552, 171);
+            btn_hotkey_display_profile.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_hotkey_display_profile.Name = "btn_hotkey_display_profile";
-            btn_hotkey_display_profile.Size = new System.Drawing.Size(104, 27);
+            btn_hotkey_display_profile.Size = new System.Drawing.Size(193, 58);
             btn_hotkey_display_profile.TabIndex = 37;
             btn_hotkey_display_profile.Text = "Set Hotkey";
             btn_hotkey_display_profile.UseVisualStyleBackColor = true;
@@ -480,10 +515,10 @@ namespace DisplayMagician.UIForms
             btn_hotkey_main_window.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey_main_window.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_hotkey_main_window.ForeColor = System.Drawing.Color.White;
-            btn_hotkey_main_window.Location = new System.Drawing.Point(297, 35);
-            btn_hotkey_main_window.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_hotkey_main_window.Location = new System.Drawing.Point(552, 75);
+            btn_hotkey_main_window.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_hotkey_main_window.Name = "btn_hotkey_main_window";
-            btn_hotkey_main_window.Size = new System.Drawing.Size(103, 27);
+            btn_hotkey_main_window.Size = new System.Drawing.Size(191, 58);
             btn_hotkey_main_window.TabIndex = 36;
             btn_hotkey_main_window.Text = "Set Hotkey";
             btn_hotkey_main_window.UseVisualStyleBackColor = true;
@@ -496,11 +531,11 @@ namespace DisplayMagician.UIForms
             gb_upgrades.Controls.Add(cb_upgrade_prerelease);
             gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_upgrades.ForeColor = System.Drawing.Color.White;
-            gb_upgrades.Location = new System.Drawing.Point(31, 555);
-            gb_upgrades.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_upgrades.Location = new System.Drawing.Point(58, 1184);
+            gb_upgrades.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             gb_upgrades.Name = "gb_upgrades";
-            gb_upgrades.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_upgrades.Size = new System.Drawing.Size(612, 177);
+            gb_upgrades.Padding = new System.Windows.Forms.Padding(7, 6, 7, 6);
+            gb_upgrades.Size = new System.Drawing.Size(1137, 378);
             gb_upgrades.TabIndex = 13;
             gb_upgrades.TabStop = false;
             gb_upgrades.Text = "Upgrade Settings";
@@ -514,10 +549,10 @@ namespace DisplayMagician.UIForms
             cb_upgrade_enabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_upgrade_enabled.ForeColor = System.Drawing.Color.White;
             cb_upgrade_enabled.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_upgrade_enabled.Location = new System.Drawing.Point(33, 46);
-            cb_upgrade_enabled.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_upgrade_enabled.Location = new System.Drawing.Point(61, 98);
+            cb_upgrade_enabled.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_upgrade_enabled.Name = "cb_upgrade_enabled";
-            cb_upgrade_enabled.Size = new System.Drawing.Size(399, 20);
+            cb_upgrade_enabled.Size = new System.Drawing.Size(756, 34);
             cb_upgrade_enabled.TabIndex = 16;
             cb_upgrade_enabled.Text = "Check if new DisplayMagician updates are available on startup";
             cb_upgrade_enabled.UseVisualStyleBackColor = true;
@@ -526,10 +561,10 @@ namespace DisplayMagician.UIForms
             // 
             label2.AutoSize = true;
             label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label2.Location = new System.Drawing.Point(50, 114);
-            label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label2.Location = new System.Drawing.Point(93, 243);
+            label2.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             label2.Name = "label2";
-            label2.Size = new System.Drawing.Size(410, 13);
+            label2.Size = new System.Drawing.Size(835, 26);
             label2.TabIndex = 15;
             label2.Text = "(NOTE: beta versions may crash and not work correctly. Use this option with caution!)";
             // 
@@ -540,10 +575,10 @@ namespace DisplayMagician.UIForms
             cb_upgrade_prerelease.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_upgrade_prerelease.ForeColor = System.Drawing.Color.White;
             cb_upgrade_prerelease.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_upgrade_prerelease.Location = new System.Drawing.Point(33, 89);
-            cb_upgrade_prerelease.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_upgrade_prerelease.Location = new System.Drawing.Point(61, 190);
+            cb_upgrade_prerelease.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             cb_upgrade_prerelease.Name = "cb_upgrade_prerelease";
-            cb_upgrade_prerelease.Size = new System.Drawing.Size(410, 20);
+            cb_upgrade_prerelease.Size = new System.Drawing.Size(769, 34);
             cb_upgrade_prerelease.TabIndex = 14;
             cb_upgrade_prerelease.Text = "Upgrade DisplayMagician to latest beta versions when available";
             cb_upgrade_prerelease.UseVisualStyleBackColor = true;
@@ -554,11 +589,11 @@ namespace DisplayMagician.UIForms
             gb_support.Controls.Add(label3);
             gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_support.ForeColor = System.Drawing.Color.White;
-            gb_support.Location = new System.Drawing.Point(681, 555);
-            gb_support.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gb_support.Location = new System.Drawing.Point(1265, 1184);
+            gb_support.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             gb_support.Name = "gb_support";
-            gb_support.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_support.Size = new System.Drawing.Size(803, 116);
+            gb_support.Padding = new System.Windows.Forms.Padding(7, 6, 7, 6);
+            gb_support.Size = new System.Drawing.Size(1491, 247);
             gb_support.TabIndex = 16;
             gb_support.TabStop = false;
             gb_support.Text = "Support Settings";
@@ -571,10 +606,10 @@ namespace DisplayMagician.UIForms
             btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_create_support_package.ForeColor = System.Drawing.Color.White;
-            btn_create_support_package.Location = new System.Drawing.Point(292, 26);
-            btn_create_support_package.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_create_support_package.Location = new System.Drawing.Point(542, 55);
+            btn_create_support_package.Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             btn_create_support_package.Name = "btn_create_support_package";
-            btn_create_support_package.Size = new System.Drawing.Size(214, 38);
+            btn_create_support_package.Size = new System.Drawing.Size(397, 81);
             btn_create_support_package.TabIndex = 48;
             btn_create_support_package.Text = "Create a Support Zip File";
             btn_create_support_package.UseVisualStyleBackColor = true;
@@ -583,52 +618,20 @@ namespace DisplayMagician.UIForms
             // label3
             // 
             label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label3.Location = new System.Drawing.Point(180, 66);
-            label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label3.Location = new System.Drawing.Point(334, 141);
+            label3.Margin = new System.Windows.Forms.Padding(7, 0, 7, 0);
             label3.Name = "label3";
-            label3.Size = new System.Drawing.Size(441, 37);
+            label3.Size = new System.Drawing.Size(819, 79);
             label3.TabIndex = 15;
             label3.Text = "Use this button to save a support zip file to your computer. You can then upload this file to GitHub when you have a problem you need me to fix";
             label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label5.ForeColor = System.Drawing.Color.Transparent;
-            label5.Location = new System.Drawing.Point(33, 266);
-            label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            label5.Name = "label5";
-            label5.Size = new System.Drawing.Size(386, 16);
-            label5.TabIndex = 53;
-            label5.Text = "Max time to wait for audio device to appear (default 10 seconds):";
-            // 
-            // nud_audio_device_wait
-            // 
-            nud_audio_device_wait.Location = new System.Drawing.Point(429, 264);
-            nud_audio_device_wait.Maximum = new decimal(new int[] { 45, 0, 0, 0 });
-            nud_audio_device_wait.Name = "nud_audio_device_wait";
-            nud_audio_device_wait.Size = new System.Drawing.Size(60, 22);
-            nud_audio_device_wait.TabIndex = 54;
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label7.ForeColor = System.Drawing.Color.Transparent;
-            label7.Location = new System.Drawing.Point(492, 266);
-            label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            label7.Name = "label7";
-            label7.Size = new System.Drawing.Size(59, 16);
-            label7.TabIndex = 55;
-            label7.Text = "seconds";
-            // 
             // SettingsForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1515, 763);
+            ClientSize = new System.Drawing.Size(2814, 1628);
             Controls.Add(gb_support);
             Controls.Add(gb_upgrades);
             Controls.Add(gb_hotkeys);
@@ -636,7 +639,7 @@ namespace DisplayMagician.UIForms
             Controls.Add(btn_back);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
-            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "SettingsForm";
@@ -649,12 +652,12 @@ namespace DisplayMagician.UIForms
             Load += SettingsForm_Load;
             gb_general.ResumeLayout(false);
             gb_general.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).EndInit();
             gb_hotkeys.ResumeLayout(false);
             gb_hotkeys.PerformLayout();
             gb_upgrades.ResumeLayout(false);
             gb_upgrades.PerformLayout();
             gb_support.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).EndInit();
             ResumeLayout(false);
         }
 
