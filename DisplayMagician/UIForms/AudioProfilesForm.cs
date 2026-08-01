@@ -10,7 +10,6 @@ namespace DisplayMagician.UIForms
     public partial class AudioProfilesForm : Form
     {
         private AudioProfileItem _selectedAudioProfile;
-        private bool _isUpdatingUI = false;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -43,36 +42,13 @@ namespace DisplayMagician.UIForms
             btn_apply_audio_profile.Enabled = hasSelection;
             gb_selected_audio_settings.Enabled = hasSelection;
 
-            _isUpdatingUI = true;
-            try
+            if (hasSelection && _selectedAudioProfile.WindowsAudioConfig != null)
             {
-                if (hasSelection && _selectedAudioProfile.WindowsAudioConfig != null)
-                {
-                    txt_audio_profile_settings.Text = _selectedAudioProfile.GenerateSettingsText();
-
-                    nud_speaker_volume.Value = _selectedAudioProfile.WindowsAudioConfig.Playback.VolumePercent;
-                    cb_speaker_mute.Checked = _selectedAudioProfile.WindowsAudioConfig.Playback.IsMuted;
-
-                    nud_microphone_volume.Value = _selectedAudioProfile.WindowsAudioConfig.Recording.VolumePercent;
-                    cb_microphone_mute.Checked = _selectedAudioProfile.WindowsAudioConfig.Recording.IsMuted;
-
-                    cb_mono_audio.Checked = _selectedAudioProfile.WindowsAudioConfig.System.IsMonoAudioEnabled;
-                    cb_system_audio_enabled.Checked = _selectedAudioProfile.WindowsAudioConfig.System.IsSystemAudioEnabled;
-                }
-                else
-                {
-                    txt_audio_profile_settings.Clear();
-                    nud_speaker_volume.Value = 50;
-                    cb_speaker_mute.Checked = false;
-                    nud_microphone_volume.Value = 50;
-                    cb_microphone_mute.Checked = false;
-                    cb_mono_audio.Checked = false;
-                    cb_system_audio_enabled.Checked = true;
-                }
+                txt_audio_profile_settings.Text = _selectedAudioProfile.GenerateSettingsText();
             }
-            finally
+            else
             {
-                _isUpdatingUI = false;
+                txt_audio_profile_settings.Clear();
             }
         }
 
@@ -84,30 +60,27 @@ namespace DisplayMagician.UIForms
 
         private void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
-            string profileName = PromptForAudioProfileName("New Audio Profile");
-            if (string.IsNullOrWhiteSpace(profileName))
-                return;
+            using (AudioProfileNameForm nameForm = new AudioProfileNameForm(AudioProfileNameFormMode.Create))
+            {
+                nameForm.StartPosition = FormStartPosition.CenterParent;
+                if (nameForm.ShowDialog(this) != DialogResult.OK)
+                    return;
 
-            if (!AudioProfileItem.IsValidName(profileName))
-            {
-                MessageBox.Show(this, "That Audio Profile name already exists. Please choose a unique name.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                AudioProfileItem newAudioProfile = new AudioProfileItem
+                {
+                    Name = nameForm.ProfileName
+                };
 
-            AudioProfileItem newAudioProfile = new AudioProfileItem
-            {
-                Name = profileName
-            };
-
-            if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
-            {
-                RefreshAudioProfilesList();
-                lb_audio_profiles.SelectedItem = newAudioProfile;
-                _selectedAudioProfile = newAudioProfile;
-            }
-            else
-            {
-                MessageBox.Show(this, "Unable to create the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
+                {
+                    RefreshAudioProfilesList();
+                    lb_audio_profiles.SelectedItem = newAudioProfile;
+                    _selectedAudioProfile = newAudioProfile;
+                }
+                else
+                {
+                    MessageBox.Show(this, "Unable to create the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -136,25 +109,22 @@ namespace DisplayMagician.UIForms
             if (selected == null)
                 return;
 
-            string newName = PromptForAudioProfileName("Rename Audio Profile", selected.Name);
-            if (string.IsNullOrWhiteSpace(newName) || newName == selected.Name)
-                return;
+            using (AudioProfileNameForm nameForm = new AudioProfileNameForm(AudioProfileNameFormMode.Rename, selected.Name))
+            {
+                nameForm.StartPosition = FormStartPosition.CenterParent;
+                if (nameForm.ShowDialog(this) != DialogResult.OK)
+                    return;
 
-            if (!AudioProfileItem.IsValidName(newName))
-            {
-                MessageBox.Show(this, "That Audio Profile name already exists. Please choose a unique name.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (AudioProfileRepository.RenameAudioProfile(selected, newName))
-            {
-                RefreshAudioProfilesList();
-                lb_audio_profiles.SelectedItem = selected;
-                _selectedAudioProfile = selected;
-            }
-            else
-            {
-                MessageBox.Show(this, "Unable to rename the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (AudioProfileRepository.RenameAudioProfile(selected, nameForm.ProfileName))
+                {
+                    RefreshAudioProfilesList();
+                    lb_audio_profiles.SelectedItem = selected;
+                    _selectedAudioProfile = selected;
+                }
+                else
+                {
+                    MessageBox.Show(this, "Unable to rename the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -210,34 +180,6 @@ namespace DisplayMagician.UIForms
             Close();
         }
 
-        private string PromptForAudioProfileName(string title, string currentValue = "")
-        {
-            using (Form prompt = new Form())
-            {
-                prompt.Width = 520;
-                prompt.Height = 180;
-                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
-                prompt.Text = title;
-                prompt.StartPosition = FormStartPosition.CenterParent;
-                prompt.MinimizeBox = false;
-                prompt.MaximizeBox = false;
-
-                Label textLabel = new Label() { Left = 12, Top = 12, Width = 480, Text = "Audio Profile name:" };
-                TextBox inputBox = new TextBox() { Left = 12, Top = 40, Width = 480, Text = currentValue ?? string.Empty };
-                Button confirmation = new Button() { Text = "OK", Left = 326, Width = 80, Top = 80, DialogResult = DialogResult.OK };
-                Button cancel = new Button() { Text = "Cancel", Left = 412, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
-
-                prompt.Controls.Add(textLabel);
-                prompt.Controls.Add(inputBox);
-                prompt.Controls.Add(confirmation);
-                prompt.Controls.Add(cancel);
-                prompt.AcceptButton = confirmation;
-                prompt.CancelButton = cancel;
-
-                return prompt.ShowDialog(this) == DialogResult.OK ? inputBox.Text?.Trim() : string.Empty;
-            }
-        }
-
         private void groupbox_Paint(object sender, PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -246,8 +188,8 @@ namespace DisplayMagician.UIForms
 
             if (!groupbox.Enabled)
             {
-                int x = ClientRectangle.X + 3;
-                int y = ClientRectangle.Y;
+                int x = groupbox.ClientRectangle.X + 3;
+                int y = groupbox.ClientRectangle.Y;
 
                 TextRenderer.DrawText(e.Graphics, groupbox.Text,
                     groupbox.Font, new Point(x, y), Color.Gray,
@@ -263,9 +205,9 @@ namespace DisplayMagician.UIForms
 
             if (!checkbox.Enabled)
             {
-                int x = ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
+                int x = checkbox.ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
                     e.Graphics, CheckBoxState.UncheckedNormal).Width;
-                int y = ClientRectangle.Y + 1;
+                int y = checkbox.ClientRectangle.Y + 1;
 
                 TextRenderer.DrawText(e.Graphics, checkbox.Text,
                     checkbox.Font, new Point(x, y), Color.Gray,
@@ -281,8 +223,8 @@ namespace DisplayMagician.UIForms
 
             if (!label.Enabled)
             {
-                int x = ClientRectangle.X - 3;
-                int y = ClientRectangle.Y;
+                int x = label.ClientRectangle.X - 3;
+                int y = label.ClientRectangle.Y;
 
                 TextRenderer.DrawText(e.Graphics, label.Text,
                     label.Font, new Point(x, y), Color.Gray,

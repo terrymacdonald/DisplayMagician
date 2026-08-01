@@ -35,7 +35,7 @@
             // 
             // DisplayView
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(37F, 79F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LightSkyBlue;
             this.Font = new System.Drawing.Font("Consolas", 50F);

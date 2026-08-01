@@ -84,7 +84,7 @@ namespace DisplayMagician.UIForms
             lbl_title.AutoSize = true;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(531, 22);
+            lbl_title.Location = new System.Drawing.Point(231, 22);
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(375, 33);
@@ -98,7 +98,7 @@ namespace DisplayMagician.UIForms
             lbl_select_exe.BackColor = System.Drawing.Color.Black;
             lbl_select_exe.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_select_exe.ForeColor = System.Drawing.Color.White;
-            lbl_select_exe.Location = new System.Drawing.Point(904, 97);
+            lbl_select_exe.Location = new System.Drawing.Point(450, 97);
             lbl_select_exe.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_select_exe.Name = "lbl_select_exe";
             lbl_select_exe.Size = new System.Drawing.Size(438, 20);
@@ -108,13 +108,12 @@ namespace DisplayMagician.UIForms
             // 
             // gb_select_exe
             // 
-            gb_select_exe.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             gb_select_exe.Controls.Add(btn_select_exe);
-            gb_select_exe.Location = new System.Drawing.Point(863, 132);
+            gb_select_exe.Location = new System.Drawing.Point(420, 132);
             gb_select_exe.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_select_exe.Name = "gb_select_exe";
             gb_select_exe.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_select_exe.Size = new System.Drawing.Size(598, 440);
+            gb_select_exe.Size = new System.Drawing.Size(340, 440);
             gb_select_exe.TabIndex = 47;
             gb_select_exe.TabStop = false;
             // 
@@ -124,10 +123,10 @@ namespace DisplayMagician.UIForms
             btn_select_exe.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_select_exe.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
             btn_select_exe.ForeColor = System.Drawing.Color.White;
-            btn_select_exe.Location = new System.Drawing.Point(85, 201);
+            btn_select_exe.Location = new System.Drawing.Point(20, 201);
             btn_select_exe.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_select_exe.Name = "btn_select_exe";
-            btn_select_exe.Size = new System.Drawing.Size(440, 36);
+            btn_select_exe.Size = new System.Drawing.Size(300, 36);
             btn_select_exe.TabIndex = 41;
             btn_select_exe.Text = "Choose Exe from your Computer";
             btn_select_exe.UseVisualStyleBackColor = true;
@@ -140,7 +139,7 @@ namespace DisplayMagician.UIForms
             lbl_or.BackColor = System.Drawing.Color.Black;
             lbl_or.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_or.ForeColor = System.Drawing.Color.White;
-            lbl_or.Location = new System.Drawing.Point(786, 337);
+            lbl_or.Location = new System.Drawing.Point(367, 337);
             lbl_or.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_or.Name = "lbl_or";
             lbl_or.Size = new System.Drawing.Size(51, 29);
@@ -150,13 +149,13 @@ namespace DisplayMagician.UIForms
             // 
             // ilv_installed_apps
             // 
-            ilv_installed_apps.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            ilv_installed_apps.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             ilv_installed_apps.Location = new System.Drawing.Point(31, 138);
             ilv_installed_apps.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ilv_installed_apps.Name = "ilv_installed_apps";
             ilv_installed_apps.PersistentCacheDirectory = "";
             ilv_installed_apps.PersistentCacheSize = 100L;
-            ilv_installed_apps.Size = new System.Drawing.Size(740, 433);
+            ilv_installed_apps.Size = new System.Drawing.Size(360, 433);
             ilv_installed_apps.TabIndex = 49;
             ilv_installed_apps.UseWIC = true;
             ilv_installed_apps.ItemClick += ilv_installed_apps_ItemClick;
@@ -170,7 +169,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1396, 616);
+            btn_back.Location = new System.Drawing.Point(672, 559);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -183,7 +182,7 @@ namespace DisplayMagician.UIForms
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1498, 657);
+            ClientSize = new System.Drawing.Size(784, 600);
             Controls.Add(btn_back);
             Controls.Add(ilv_installed_apps);
             Controls.Add(lbl_or);

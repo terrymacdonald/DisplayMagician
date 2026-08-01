@@ -36,11 +36,12 @@
             // 
             // lbl_title
             // 
+            lbl_title.Anchor = System.Windows.Forms.AnchorStyles.Top;
             lbl_title.AutoSize = true;
             lbl_title.BackColor = System.Drawing.Color.Black;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(306, 17);
+            lbl_title.Location = new System.Drawing.Point(288, 16);
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(277, 29);
@@ -56,7 +57,7 @@
             btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_save.ForeColor = System.Drawing.Color.White;
-            btn_save.Location = new System.Drawing.Point(397, 459);
+            btn_save.Location = new System.Drawing.Point(340, 444);
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(140, 38);
@@ -67,12 +68,13 @@
             // 
             // txt_errors
             // 
+            txt_errors.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_errors.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_errors.Location = new System.Drawing.Point(14, 67);
             txt_errors.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_errors.Multiline = true;
             txt_errors.Name = "txt_errors";
-            txt_errors.Size = new System.Drawing.Size(906, 380);
+            txt_errors.Size = new System.Drawing.Size(792, 360);
             txt_errors.TabIndex = 23;
             // 
             // ShortcutErrorForm
@@ -80,15 +82,16 @@
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(933, 519);
+            ClientSize = new System.Drawing.Size(820, 496);
             Controls.Add(txt_errors);
             Controls.Add(btn_save);
             Controls.Add(lbl_title);
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
+            MinimumSize = new System.Drawing.Size(700, 440);
             Name = "ShortcutErrorForm";
             ShowIcon = false;
             ShowInTaskbar = false;

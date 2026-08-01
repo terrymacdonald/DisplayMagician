@@ -39,11 +39,12 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_heading_text
             // 
+            lbl_heading_text.Anchor = System.Windows.Forms.AnchorStyles.Top;
             lbl_heading_text.AutoSize = true;
             lbl_heading_text.BackColor = System.Drawing.Color.Black;
             lbl_heading_text.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_heading_text.ForeColor = System.Drawing.Color.White;
-            lbl_heading_text.Location = new System.Drawing.Point(510, 22);
+            lbl_heading_text.Location = new System.Drawing.Point(193, 22);
             lbl_heading_text.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_heading_text.Name = "lbl_heading_text";
             lbl_heading_text.Size = new System.Drawing.Size(400, 29);
@@ -72,7 +73,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1385, 933);
+            btn_back.Location = new System.Drawing.Point(697, 559);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -83,6 +84,7 @@ namespace DisplayMagician.UIForms
             // 
             // pnl_richtextbox
             // 
+            pnl_richtextbox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             pnl_richtextbox.BackColor = System.Drawing.Color.White;
             pnl_richtextbox.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             pnl_richtextbox.Controls.Add(rtb_message);
@@ -90,7 +92,7 @@ namespace DisplayMagician.UIForms
             pnl_richtextbox.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             pnl_richtextbox.Name = "pnl_richtextbox";
             pnl_richtextbox.Padding = new System.Windows.Forms.Padding(23, 23, 23, 23);
-            pnl_richtextbox.Size = new System.Drawing.Size(1456, 838);
+            pnl_richtextbox.Size = new System.Drawing.Size(770, 464);
             pnl_richtextbox.TabIndex = 23;
             // 
             // StartMessageForm
@@ -100,12 +102,13 @@ namespace DisplayMagician.UIForms
             BackColor = System.Drawing.Color.Black;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(1486, 974);
+            ClientSize = new System.Drawing.Size(800, 600);
             Controls.Add(pnl_richtextbox);
             Controls.Add(btn_back);
             Controls.Add(lbl_heading_text);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            MinimumSize = new System.Drawing.Size(600, 400);
             Name = "StartMessageForm";
             ShowIcon = false;
             ShowInTaskbar = false;

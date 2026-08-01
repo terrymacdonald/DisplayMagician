@@ -271,7 +271,8 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Registering DisplayMagician with Windows.");
             RegisterDisplayMagicianWithWindows();
 
-            logger.Trace($"Program/Main: Setting visual styles and rendering mode");
+            logger.Trace($"Program/Main: Setting high DPI mode, visual styles and rendering mode");
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -1844,7 +1845,7 @@ namespace DisplayMagician {
                 myMessageWindow.URL = message.Url;
                 myMessageWindow.HeadingText = message.HeadingText;
                 myMessageWindow.ButtonText = message.ButtonText;
-                myMessageWindow.ShowDialog();
+                myMessageWindow.ShowDialog(AppMainForm);
                 // If this the list of messages is still trying to monitor this message, then remove it if we've shown it to the user.
                 if (AppProgramSettings.MessagesToMonitor.Contains(message.Id))
                 {
@@ -2122,7 +2123,7 @@ namespace DisplayMagician {
                     upgradeForm.Message = message.ToString();
                     upgradeForm.ChangelogURL = args.ChangelogURL;
 
-                    dialogResult = upgradeForm.ShowDialog();
+                    dialogResult = upgradeForm.ShowDialog(AppMainForm);
 
                     if (dialogResult.Equals(DialogResult.Yes) || dialogResult.Equals(DialogResult.OK))
                     {

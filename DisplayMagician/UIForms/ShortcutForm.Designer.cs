@@ -33,8 +33,13 @@ namespace DisplayMagician.UIForms
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutForm));
+            tlpMain = new System.Windows.Forms.TableLayoutPanel();
+            flp_header = new System.Windows.Forms.FlowLayoutPanel();
+            tlp_name = new System.Windows.Forms.TableLayoutPanel();
+            flp_bottom = new System.Windows.Forms.FlowLayoutPanel();
             btn_save = new System.Windows.Forms.Button();
             btn_cancel = new System.Windows.Forms.Button();
+            btn_hotkey = new System.Windows.Forms.Button();
             il_games = new System.Windows.Forms.ImageList(components);
             dialog_open = new System.Windows.Forms.OpenFileDialog();
             tabc_shortcut = new System.Windows.Forms.TabControl();
@@ -129,7 +134,6 @@ namespace DisplayMagician.UIForms
             lbl_title = new System.Windows.Forms.Label();
             lbl_shortcut_name = new System.Windows.Forms.Label();
             cb_autosuggest = new System.Windows.Forms.CheckBox();
-            btn_hotkey = new System.Windows.Forms.Button();
             lbl_hotkey_assigned = new System.Windows.Forms.Label();
             btn_help = new System.Windows.Forms.Button();
             tabc_shortcut.SuspendLayout();
@@ -156,20 +160,35 @@ namespace DisplayMagician.UIForms
             groupBox3.SuspendLayout();
             groupBox1.SuspendLayout();
             gb_display_after.SuspendLayout();
+            tlpMain.SuspendLayout();
+            flp_header.SuspendLayout();
+            tlp_name.SuspendLayout();
+            flp_bottom.SuspendLayout();
             SuspendLayout();
+            // 
+            // flp_bottom
+            // 
+            flp_bottom.Controls.Add(btn_hotkey);
+            flp_bottom.Controls.Add(btn_save);
+            flp_bottom.Controls.Add(btn_cancel);
+            flp_bottom.Dock = System.Windows.Forms.DockStyle.Fill;
+            flp_bottom.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
+            flp_bottom.Location = new System.Drawing.Point(3, 931);
+            flp_bottom.Name = "flp_bottom";
+            flp_bottom.Size = new System.Drawing.Size(1294, 45);
+            flp_bottom.TabIndex = 39;
             // 
             // btn_save
             // 
-            btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_save.AutoSize = true;
             btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
+            btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             btn_save.ForeColor = System.Drawing.Color.White;
-            btn_save.Location = new System.Drawing.Point(654, 928);
-            btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_save.Location = new System.Drawing.Point(1206, 3);
             btn_save.Name = "btn_save";
-            btn_save.Size = new System.Drawing.Size(140, 35);
+            btn_save.Size = new System.Drawing.Size(85, 39);
             btn_save.TabIndex = 6;
             btn_save.Text = "&Save";
             btn_save.UseVisualStyleBackColor = true;
@@ -177,16 +196,15 @@ namespace DisplayMagician.UIForms
             // 
             // btn_cancel
             // 
-            btn_cancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btn_cancel.AutoSize = true;
             btn_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             btn_cancel.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_cancel.ForeColor = System.Drawing.Color.White;
-            btn_cancel.Location = new System.Drawing.Point(1176, 936);
-            btn_cancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_cancel.Location = new System.Drawing.Point(1131, 3);
             btn_cancel.Name = "btn_cancel";
-            btn_cancel.Size = new System.Drawing.Size(110, 29);
+            btn_cancel.Size = new System.Drawing.Size(69, 39);
             btn_cancel.TabIndex = 5;
             btn_cancel.Text = "&Back";
             btn_cancel.UseVisualStyleBackColor = true;
@@ -207,7 +225,7 @@ namespace DisplayMagician.UIForms
             // 
             // tabc_shortcut
             // 
-            tabc_shortcut.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            tabc_shortcut.Dock = System.Windows.Forms.DockStyle.Fill;
             tabc_shortcut.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
             tabc_shortcut.Controls.Add(tabp_display);
             tabc_shortcut.Controls.Add(tabp_audio);
@@ -216,12 +234,11 @@ namespace DisplayMagician.UIForms
             tabc_shortcut.Controls.Add(tabp_after);
             tabc_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             tabc_shortcut.HotTrack = true;
-            tabc_shortcut.Location = new System.Drawing.Point(14, 58);
-            tabc_shortcut.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabc_shortcut.Location = new System.Drawing.Point(3, 58);
             tabc_shortcut.Name = "tabc_shortcut";
             tabc_shortcut.SelectedIndex = 0;
             tabc_shortcut.ShowToolTips = true;
-            tabc_shortcut.Size = new System.Drawing.Size(1272, 786);
+            tabc_shortcut.Size = new System.Drawing.Size(1294, 810);
             tabc_shortcut.TabIndex = 28;
             // 
             // tabp_display
@@ -339,6 +356,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_audio_profile
             // 
+            gb_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gb_audio_profile.Controls.Add(gb_selected_audio_settings);
             gb_audio_profile.Controls.Add(lbl_audio_profiles);
             gb_audio_profile.Controls.Add(lb_audio_profiles);
@@ -348,9 +366,9 @@ namespace DisplayMagician.UIForms
             gb_audio_profile.Enabled = false;
             gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_audio_profile.ForeColor = System.Drawing.Color.White;
-            gb_audio_profile.Location = new System.Drawing.Point(26, 61);
+            gb_audio_profile.Location = new System.Drawing.Point(10, 50);
             gb_audio_profile.Name = "gb_audio_profile";
-            gb_audio_profile.Size = new System.Drawing.Size(1215, 664);
+            gb_audio_profile.Size = new System.Drawing.Size(1240, 690);
             gb_audio_profile.TabIndex = 2;
             gb_audio_profile.TabStop = false;
             gb_audio_profile.Text = "Audio Profiles to use";
@@ -358,6 +376,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_selected_audio_settings
             // 
+            gb_selected_audio_settings.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gb_selected_audio_settings.Controls.Add(txt_audio_profile_settings);
             gb_selected_audio_settings.Controls.Add(label4);
             gb_selected_audio_settings.Controls.Add(nud_speaker_volume);
@@ -367,9 +386,9 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.Controls.Add(cb_override_speaker_volume);
             gb_selected_audio_settings.Enabled = false;
             gb_selected_audio_settings.ForeColor = System.Drawing.Color.White;
-            gb_selected_audio_settings.Location = new System.Drawing.Point(463, 55);
+            gb_selected_audio_settings.Location = new System.Drawing.Point(420, 25);
             gb_selected_audio_settings.Name = "gb_selected_audio_settings";
-            gb_selected_audio_settings.Size = new System.Drawing.Size(703, 557);
+            gb_selected_audio_settings.Size = new System.Drawing.Size(800, 650);
             gb_selected_audio_settings.TabIndex = 5;
             gb_selected_audio_settings.TabStop = false;
             gb_selected_audio_settings.Text = "Selected Audio Profile Settings";
@@ -379,19 +398,21 @@ namespace DisplayMagician.UIForms
             // 
             txt_audio_profile_settings.AcceptsReturn = true;
             txt_audio_profile_settings.AcceptsTab = true;
+            txt_audio_profile_settings.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_audio_profile_settings.Enabled = false;
-            txt_audio_profile_settings.Location = new System.Drawing.Point(24, 32);
+            txt_audio_profile_settings.Location = new System.Drawing.Point(10, 25);
             txt_audio_profile_settings.Multiline = true;
             txt_audio_profile_settings.Name = "txt_audio_profile_settings";
             txt_audio_profile_settings.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txt_audio_profile_settings.Size = new System.Drawing.Size(651, 453);
+            txt_audio_profile_settings.Size = new System.Drawing.Size(780, 545);
             txt_audio_profile_settings.TabIndex = 10;
             // 
             // label4
             // 
+            label4.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             label4.AutoSize = true;
             label4.ForeColor = System.Drawing.Color.White;
-            label4.Location = new System.Drawing.Point(652, 509);
+            label4.Location = new System.Drawing.Point(290, 605);
             label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label4.Name = "label4";
             label4.Size = new System.Drawing.Size(23, 20);
@@ -401,8 +422,9 @@ namespace DisplayMagician.UIForms
             // 
             // nud_speaker_volume
             // 
+            nud_speaker_volume.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             nud_speaker_volume.Enabled = false;
-            nud_speaker_volume.Location = new System.Drawing.Point(240, 507);
+            nud_speaker_volume.Location = new System.Drawing.Point(230, 603);
             nud_speaker_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             nud_speaker_volume.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
             nud_speaker_volume.Name = "nud_speaker_volume";
@@ -413,9 +435,10 @@ namespace DisplayMagician.UIForms
             // 
             // label1
             // 
+            label1.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             label1.AutoSize = true;
             label1.ForeColor = System.Drawing.Color.White;
-            label1.Location = new System.Drawing.Point(293, 509);
+            label1.Location = new System.Drawing.Point(550, 605);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(23, 20);
@@ -425,8 +448,9 @@ namespace DisplayMagician.UIForms
             // 
             // nud_microphone_volume
             // 
+            nud_microphone_volume.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             nud_microphone_volume.Enabled = false;
-            nud_microphone_volume.Location = new System.Drawing.Point(600, 507);
+            nud_microphone_volume.Location = new System.Drawing.Point(490, 603);
             nud_microphone_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             nud_microphone_volume.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
             nud_microphone_volume.Name = "nud_microphone_volume";
@@ -437,9 +461,10 @@ namespace DisplayMagician.UIForms
             // 
             // cb_override_microphone_volume
             // 
+            cb_override_microphone_volume.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             cb_override_microphone_volume.AutoSize = true;
             cb_override_microphone_volume.ForeColor = System.Drawing.Color.White;
-            cb_override_microphone_volume.Location = new System.Drawing.Point(360, 507);
+            cb_override_microphone_volume.Location = new System.Drawing.Point(580, 603);
             cb_override_microphone_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_override_microphone_volume.Name = "cb_override_microphone_volume";
             cb_override_microphone_volume.Size = new System.Drawing.Size(232, 24);
@@ -451,9 +476,10 @@ namespace DisplayMagician.UIForms
             // 
             // cb_override_speaker_volume
             // 
+            cb_override_speaker_volume.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             cb_override_speaker_volume.AutoSize = true;
             cb_override_speaker_volume.ForeColor = System.Drawing.Color.White;
-            cb_override_speaker_volume.Location = new System.Drawing.Point(24, 507);
+            cb_override_speaker_volume.Location = new System.Drawing.Point(10, 603);
             cb_override_speaker_volume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_override_speaker_volume.Name = "cb_override_speaker_volume";
             cb_override_speaker_volume.Size = new System.Drawing.Size(209, 24);
@@ -467,7 +493,7 @@ namespace DisplayMagician.UIForms
             // 
             lbl_audio_profiles.AutoSize = true;
             lbl_audio_profiles.ForeColor = System.Drawing.Color.White;
-            lbl_audio_profiles.Location = new System.Drawing.Point(57, 55);
+            lbl_audio_profiles.Location = new System.Drawing.Point(20, 25);
             lbl_audio_profiles.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_audio_profiles.Name = "lbl_audio_profiles";
             lbl_audio_profiles.Size = new System.Drawing.Size(338, 20);
@@ -478,28 +504,30 @@ namespace DisplayMagician.UIForms
             // 
             // lb_audio_profiles
             // 
+            lb_audio_profiles.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             lb_audio_profiles.BackColor = System.Drawing.Color.White;
             lb_audio_profiles.ForeColor = System.Drawing.Color.Black;
             lb_audio_profiles.FormattingEnabled = true;
-            lb_audio_profiles.Location = new System.Drawing.Point(26, 76);
+            lb_audio_profiles.Location = new System.Drawing.Point(10, 50);
             lb_audio_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             lb_audio_profiles.Name = "lb_audio_profiles";
-            lb_audio_profiles.Size = new System.Drawing.Size(392, 384);
+            lb_audio_profiles.Size = new System.Drawing.Size(390, 544);
             lb_audio_profiles.TabIndex = 1;
             lb_audio_profiles.SelectedIndexChanged += lb_audio_profiles_SelectedIndexChanged;
             // 
             // btn_delete_audio_profile
             // 
+            btn_delete_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             btn_delete_audio_profile.Enabled = false;
             btn_delete_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_delete_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_delete_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_delete_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_delete_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_delete_audio_profile.Location = new System.Drawing.Point(74, 581);
+            btn_delete_audio_profile.Location = new System.Drawing.Point(50, 605);
             btn_delete_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_delete_audio_profile.Name = "btn_delete_audio_profile";
-            btn_delete_audio_profile.Size = new System.Drawing.Size(296, 31);
+            btn_delete_audio_profile.Size = new System.Drawing.Size(310, 31);
             btn_delete_audio_profile.TabIndex = 4;
             btn_delete_audio_profile.Text = "Delete Selected Profile";
             btn_delete_audio_profile.UseVisualStyleBackColor = true;
@@ -507,15 +535,16 @@ namespace DisplayMagician.UIForms
             // 
             // btn_create_audio_profile
             // 
+            btn_create_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             btn_create_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_create_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_create_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_create_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_create_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_create_audio_profile.Location = new System.Drawing.Point(74, 491);
+            btn_create_audio_profile.Location = new System.Drawing.Point(50, 525);
             btn_create_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_create_audio_profile.Name = "btn_create_audio_profile";
-            btn_create_audio_profile.Size = new System.Drawing.Size(296, 31);
+            btn_create_audio_profile.Size = new System.Drawing.Size(310, 31);
             btn_create_audio_profile.TabIndex = 2;
             btn_create_audio_profile.Text = "Create New Profile from Current Audio";
             btn_create_audio_profile.UseVisualStyleBackColor = true;
@@ -523,16 +552,17 @@ namespace DisplayMagician.UIForms
             // 
             // btn_update_audio_profile
             // 
+            btn_update_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             btn_update_audio_profile.Enabled = false;
             btn_update_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_update_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_update_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_update_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_update_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_update_audio_profile.Location = new System.Drawing.Point(74, 536);
+            btn_update_audio_profile.Location = new System.Drawing.Point(50, 565);
             btn_update_audio_profile.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_update_audio_profile.Name = "btn_update_audio_profile";
-            btn_update_audio_profile.Size = new System.Drawing.Size(296, 31);
+            btn_update_audio_profile.Size = new System.Drawing.Size(310, 31);
             btn_update_audio_profile.TabIndex = 3;
             btn_update_audio_profile.Text = "Update Profile from Current Audio";
             btn_update_audio_profile.UseVisualStyleBackColor = true;
@@ -544,7 +574,7 @@ namespace DisplayMagician.UIForms
             cb_dont_change_audio.Checked = true;
             cb_dont_change_audio.CheckState = System.Windows.Forms.CheckState.Checked;
             cb_dont_change_audio.ForeColor = System.Drawing.Color.White;
-            cb_dont_change_audio.Location = new System.Drawing.Point(26, 20);
+            cb_dont_change_audio.Location = new System.Drawing.Point(10, 15);
             cb_dont_change_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_dont_change_audio.Name = "cb_dont_change_audio";
             cb_dont_change_audio.Size = new System.Drawing.Size(226, 24);
@@ -676,10 +706,10 @@ namespace DisplayMagician.UIForms
             // 
             p_game_list.Controls.Add(ilv_games);
             p_game_list.Dock = System.Windows.Forms.DockStyle.Fill;
-            p_game_list.Location = new System.Drawing.Point(4, 578);
+            p_game_list.Location = new System.Drawing.Point(4, 558);
             p_game_list.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_game_list.Name = "p_game_list";
-            p_game_list.Size = new System.Drawing.Size(1256, 169);
+            p_game_list.Size = new System.Drawing.Size(1256, 189);
             p_game_list.TabIndex = 44;
             // 
             // ilv_games
@@ -715,7 +745,7 @@ namespace DisplayMagician.UIForms
             p_gametostart.Location = new System.Drawing.Point(4, 3);
             p_gametostart.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_gametostart.Name = "p_gametostart";
-            p_gametostart.Size = new System.Drawing.Size(1256, 575);
+            p_gametostart.Size = new System.Drawing.Size(1256, 555);
             p_gametostart.TabIndex = 43;
             // 
             // btn_find_examples_game
@@ -737,7 +767,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_standalone
             // 
-            p_standalone.Anchor = System.Windows.Forms.AnchorStyles.None;
+            p_standalone.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             p_standalone.Controls.Add(cb_run_exe_as_administrator);
             p_standalone.Controls.Add(btn_choose_exe_icon);
             p_standalone.Controls.Add(pb_exe_icon);
@@ -755,18 +785,19 @@ namespace DisplayMagician.UIForms
             p_standalone.Controls.Add(label2);
             p_standalone.Controls.Add(nud_timeout_executable);
             p_standalone.Enabled = false;
-            p_standalone.Location = new System.Drawing.Point(21, 78);
+            p_standalone.Location = new System.Drawing.Point(10, 50);
             p_standalone.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_standalone.Name = "p_standalone";
-            p_standalone.Size = new System.Drawing.Size(1220, 232);
+            p_standalone.Size = new System.Drawing.Size(1240, 240);
             p_standalone.TabIndex = 46;
             // 
             // cb_run_exe_as_administrator
             // 
+            cb_run_exe_as_administrator.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             cb_run_exe_as_administrator.AutoSize = true;
             cb_run_exe_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cb_run_exe_as_administrator.ForeColor = System.Drawing.Color.White;
-            cb_run_exe_as_administrator.Location = new System.Drawing.Point(200, 93);
+            cb_run_exe_as_administrator.Location = new System.Drawing.Point(960, 90);
             cb_run_exe_as_administrator.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_run_exe_as_administrator.Name = "cb_run_exe_as_administrator";
             cb_run_exe_as_administrator.Size = new System.Drawing.Size(256, 24);
@@ -807,9 +838,10 @@ namespace DisplayMagician.UIForms
             // cbx_exe_priority
             // 
             cbx_exe_priority.AllowDrop = true;
+            cbx_exe_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             cbx_exe_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cbx_exe_priority.FormattingEnabled = true;
-            cbx_exe_priority.Location = new System.Drawing.Point(1036, 95);
+            cbx_exe_priority.Location = new System.Drawing.Point(1056, 90);
             cbx_exe_priority.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cbx_exe_priority.Name = "cbx_exe_priority";
             cbx_exe_priority.Size = new System.Drawing.Size(174, 28);
@@ -817,9 +849,10 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_exe_priority
             // 
+            lbl_exe_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             lbl_exe_priority.AutoSize = true;
             lbl_exe_priority.ForeColor = System.Drawing.Color.White;
-            lbl_exe_priority.Location = new System.Drawing.Point(864, 98);
+            lbl_exe_priority.Location = new System.Drawing.Point(884, 93);
             lbl_exe_priority.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_exe_priority.Name = "lbl_exe_priority";
             lbl_exe_priority.Size = new System.Drawing.Size(143, 20);
@@ -829,9 +862,10 @@ namespace DisplayMagician.UIForms
             // 
             // btn_exe_to_start
             // 
+            btn_exe_to_start.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_exe_to_start.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_exe_to_start.ForeColor = System.Drawing.Color.White;
-            btn_exe_to_start.Location = new System.Drawing.Point(777, 12);
+            btn_exe_to_start.Location = new System.Drawing.Point(1131, 10);
             btn_exe_to_start.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_exe_to_start.Name = "btn_exe_to_start";
             btn_exe_to_start.Size = new System.Drawing.Size(99, 31);
@@ -842,18 +876,19 @@ namespace DisplayMagician.UIForms
             // 
             // txt_args_executable
             // 
+            txt_args_executable.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_args_executable.Enabled = false;
-            txt_args_executable.Location = new System.Drawing.Point(496, 53);
+            txt_args_executable.Location = new System.Drawing.Point(460, 50);
             txt_args_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_args_executable.Name = "txt_args_executable";
-            txt_args_executable.Size = new System.Drawing.Size(714, 26);
+            txt_args_executable.Size = new System.Drawing.Size(770, 26);
             txt_args_executable.TabIndex = 11;
             // 
             // cb_args_executable
             // 
             cb_args_executable.AutoSize = true;
             cb_args_executable.ForeColor = System.Drawing.Color.White;
-            cb_args_executable.Location = new System.Drawing.Point(200, 55);
+            cb_args_executable.Location = new System.Drawing.Point(200, 52);
             cb_args_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_args_executable.Name = "cb_args_executable";
             cb_args_executable.Size = new System.Drawing.Size(248, 24);
@@ -866,9 +901,10 @@ namespace DisplayMagician.UIForms
             // 
             // btn_choose_alternative_executable
             // 
+            btn_choose_alternative_executable.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             btn_choose_alternative_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_choose_alternative_executable.ForeColor = System.Drawing.Color.White;
-            btn_choose_alternative_executable.Location = new System.Drawing.Point(1112, 179);
+            btn_choose_alternative_executable.Location = new System.Drawing.Point(1131, 198);
             btn_choose_alternative_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_choose_alternative_executable.Name = "btn_choose_alternative_executable";
             btn_choose_alternative_executable.Size = new System.Drawing.Size(99, 31);
@@ -879,19 +915,21 @@ namespace DisplayMagician.UIForms
             // 
             // txt_alternative_executable
             // 
+            txt_alternative_executable.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_alternative_executable.Enabled = false;
-            txt_alternative_executable.Location = new System.Drawing.Point(738, 180);
+            txt_alternative_executable.Location = new System.Drawing.Point(700, 200);
             txt_alternative_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_alternative_executable.Name = "txt_alternative_executable";
-            txt_alternative_executable.Size = new System.Drawing.Size(366, 26);
+            txt_alternative_executable.Size = new System.Drawing.Size(420, 26);
             txt_alternative_executable.TabIndex = 4;
             txt_alternative_executable.TextChanged += txt_alternative_executable_TextChanged;
             // 
             // rb_wait_alternative_executable
             // 
+            rb_wait_alternative_executable.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             rb_wait_alternative_executable.AutoSize = true;
             rb_wait_alternative_executable.ForeColor = System.Drawing.Color.White;
-            rb_wait_alternative_executable.Location = new System.Drawing.Point(197, 180);
+            rb_wait_alternative_executable.Location = new System.Drawing.Point(197, 200);
             rb_wait_alternative_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_wait_alternative_executable.Name = "rb_wait_alternative_executable";
             rb_wait_alternative_executable.Size = new System.Drawing.Size(468, 24);
@@ -903,10 +941,11 @@ namespace DisplayMagician.UIForms
             // 
             // rb_wait_executable
             // 
+            rb_wait_executable.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             rb_wait_executable.AutoSize = true;
             rb_wait_executable.Checked = true;
             rb_wait_executable.ForeColor = System.Drawing.Color.White;
-            rb_wait_executable.Location = new System.Drawing.Point(197, 135);
+            rb_wait_executable.Location = new System.Drawing.Point(197, 160);
             rb_wait_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_wait_executable.Name = "rb_wait_executable";
             rb_wait_executable.Size = new System.Drawing.Size(439, 24);
@@ -919,10 +958,11 @@ namespace DisplayMagician.UIForms
             // 
             // txt_executable
             // 
+            txt_executable.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_executable.Location = new System.Drawing.Point(200, 12);
             txt_executable.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_executable.Name = "txt_executable";
-            txt_executable.Size = new System.Drawing.Size(570, 26);
+            txt_executable.Size = new System.Drawing.Size(920, 26);
             txt_executable.TabIndex = 1;
             txt_executable.TextChanged += txt_executable_TextChanged;
             // 
@@ -965,7 +1005,7 @@ namespace DisplayMagician.UIForms
             // 
             rb_standalone.AutoSize = true;
             rb_standalone.ForeColor = System.Drawing.Color.White;
-            rb_standalone.Location = new System.Drawing.Point(18, 47);
+            rb_standalone.Location = new System.Drawing.Point(18, 45);
             rb_standalone.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_standalone.Name = "rb_standalone";
             rb_standalone.Size = new System.Drawing.Size(326, 24);
@@ -990,8 +1030,8 @@ namespace DisplayMagician.UIForms
             rb_no_game.Paint += radiobutton_Paint;
             // 
             // p_game
-            // 
-            p_game.Anchor = System.Windows.Forms.AnchorStyles.None;
+            //
+            p_game.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             p_game.Controls.Add(btn_refresh_games_list);
             p_game.Controls.Add(btn_choose_game_icon);
             p_game.Controls.Add(pb_game_icon);
@@ -1008,21 +1048,21 @@ namespace DisplayMagician.UIForms
             p_game.Controls.Add(lbl_game_timeout);
             p_game.Controls.Add(nud_timeout_game);
             p_game.Controls.Add(lbl_game_library);
-            p_game.Location = new System.Drawing.Point(22, 355);
+            p_game.Location = new System.Drawing.Point(10, 300);
             p_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_game.Name = "p_game";
-            p_game.Size = new System.Drawing.Size(1220, 209);
+            p_game.Size = new System.Drawing.Size(1240, 240);
             p_game.TabIndex = 43;
             // 
             // btn_refresh_games_list
             // 
-            btn_refresh_games_list.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            btn_refresh_games_list.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             btn_refresh_games_list.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_refresh_games_list.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_refresh_games_list.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_refresh_games_list.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_refresh_games_list.ForeColor = System.Drawing.Color.White;
-            btn_refresh_games_list.Location = new System.Drawing.Point(1074, 170);
+            btn_refresh_games_list.Location = new System.Drawing.Point(1084, 198);
             btn_refresh_games_list.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_refresh_games_list.Name = "btn_refresh_games_list";
             btn_refresh_games_list.Size = new System.Drawing.Size(136, 29);
@@ -1080,9 +1120,10 @@ namespace DisplayMagician.UIForms
             // cbx_game_priority
             // 
             cbx_game_priority.AllowDrop = true;
+            cbx_game_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             cbx_game_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cbx_game_priority.FormattingEnabled = true;
-            cbx_game_priority.Location = new System.Drawing.Point(777, 14);
+            cbx_game_priority.Location = new System.Drawing.Point(1030, 10);
             cbx_game_priority.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cbx_game_priority.Name = "cbx_game_priority";
             cbx_game_priority.Size = new System.Drawing.Size(191, 28);
@@ -1103,10 +1144,11 @@ namespace DisplayMagician.UIForms
             // 
             // btn_choose_alternative_game
             // 
+            btn_choose_alternative_game.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_choose_alternative_game.Enabled = false;
             btn_choose_alternative_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_choose_alternative_game.ForeColor = System.Drawing.Color.White;
-            btn_choose_alternative_game.Location = new System.Drawing.Point(1112, 113);
+            btn_choose_alternative_game.Location = new System.Drawing.Point(1131, 110);
             btn_choose_alternative_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_choose_alternative_game.Name = "btn_choose_alternative_game";
             btn_choose_alternative_game.Size = new System.Drawing.Size(99, 31);
@@ -1117,30 +1159,33 @@ namespace DisplayMagician.UIForms
             // 
             // txt_alternative_game
             // 
+            txt_alternative_game.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_alternative_game.Enabled = false;
             txt_alternative_game.Location = new System.Drawing.Point(465, 113);
             txt_alternative_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_alternative_game.Name = "txt_alternative_game";
-            txt_alternative_game.Size = new System.Drawing.Size(639, 26);
+            txt_alternative_game.Size = new System.Drawing.Size(660, 26);
             txt_alternative_game.TabIndex = 24;
             txt_alternative_game.TextChanged += txt_alternative_game_TextChanged;
             // 
             // txt_game_name
             // 
+            txt_game_name.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_game_name.Enabled = false;
             txt_game_name.Location = new System.Drawing.Point(175, 13);
             txt_game_name.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_game_name.Name = "txt_game_name";
             txt_game_name.ReadOnly = true;
-            txt_game_name.Size = new System.Drawing.Size(448, 26);
+            txt_game_name.Size = new System.Drawing.Size(740, 26);
             txt_game_name.TabIndex = 21;
             txt_game_name.Text = "Please select a game from the list below...";
             // 
             // lbl_game_priority
             // 
+            lbl_game_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             lbl_game_priority.AutoSize = true;
             lbl_game_priority.ForeColor = System.Drawing.Color.White;
-            lbl_game_priority.Location = new System.Drawing.Point(650, 17);
+            lbl_game_priority.Location = new System.Drawing.Point(900, 13);
             lbl_game_priority.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_game_priority.Name = "lbl_game_priority";
             lbl_game_priority.Size = new System.Drawing.Size(108, 20);
@@ -1163,11 +1208,12 @@ namespace DisplayMagician.UIForms
             // 
             // txt_args_game
             // 
+            txt_args_game.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_args_game.Enabled = false;
-            txt_args_game.Location = new System.Drawing.Point(465, 70);
+            txt_args_game.Location = new System.Drawing.Point(430, 70);
             txt_args_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_args_game.Name = "txt_args_game";
-            txt_args_game.Size = new System.Drawing.Size(745, 26);
+            txt_args_game.Size = new System.Drawing.Size(800, 26);
             txt_args_game.TabIndex = 13;
             // 
             // cb_args_game
@@ -1187,9 +1233,10 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_game_timeout
             // 
+            lbl_game_timeout.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             lbl_game_timeout.AutoSize = true;
             lbl_game_timeout.ForeColor = System.Drawing.Color.White;
-            lbl_game_timeout.Location = new System.Drawing.Point(995, 16);
+            lbl_game_timeout.Location = new System.Drawing.Point(1035, 16);
             lbl_game_timeout.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_game_timeout.Name = "lbl_game_timeout";
             lbl_game_timeout.Size = new System.Drawing.Size(125, 20);
@@ -1199,7 +1246,8 @@ namespace DisplayMagician.UIForms
             // 
             // nud_timeout_game
             // 
-            nud_timeout_game.Location = new System.Drawing.Point(1148, 15);
+            nud_timeout_game.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            nud_timeout_game.Location = new System.Drawing.Point(1178, 15);
             nud_timeout_game.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             nud_timeout_game.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
             nud_timeout_game.Name = "nud_timeout_game";
@@ -1247,14 +1295,14 @@ namespace DisplayMagician.UIForms
             tabp_after.Location = new System.Drawing.Point(4, 32);
             tabp_after.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             tabp_after.Name = "tabp_after";
-            tabp_after.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            tabp_after.Padding = new System.Windows.Forms.Padding(10);
             tabp_after.Size = new System.Drawing.Size(1264, 750);
             tabp_after.TabIndex = 3;
             tabp_after.Text = "5. Choose what happens afterwards";
             // 
             // groupBox3
             // 
-            groupBox3.Anchor = System.Windows.Forms.AnchorStyles.None;
+            groupBox3.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             groupBox3.Controls.Add(cb_run_cmd_afterwards_run_as_administrator);
             groupBox3.Controls.Add(cb_run_cmd_afterwards_dont_start);
             groupBox3.Controls.Add(txt_run_cmd_afterwards_args);
@@ -1264,21 +1312,22 @@ namespace DisplayMagician.UIForms
             groupBox3.Controls.Add(cb_run_cmd_afterwards);
             groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             groupBox3.ForeColor = System.Drawing.Color.White;
-            groupBox3.Location = new System.Drawing.Point(204, 526);
+            groupBox3.Location = new System.Drawing.Point(10, 540);
             groupBox3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             groupBox3.Name = "groupBox3";
             groupBox3.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            groupBox3.Size = new System.Drawing.Size(892, 181);
+            groupBox3.Size = new System.Drawing.Size(1240, 180);
             groupBox3.TabIndex = 14;
             groupBox3.TabStop = false;
             groupBox3.Text = "Run a program or command afterwards?";
             // 
             // cb_run_cmd_afterwards_run_as_administrator
             // 
+            cb_run_cmd_afterwards_run_as_administrator.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             cb_run_cmd_afterwards_run_as_administrator.AutoSize = true;
             cb_run_cmd_afterwards_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cb_run_cmd_afterwards_run_as_administrator.ForeColor = System.Drawing.Color.White;
-            cb_run_cmd_afterwards_run_as_administrator.Location = new System.Drawing.Point(574, 132);
+            cb_run_cmd_afterwards_run_as_administrator.Location = new System.Drawing.Point(980, 140);
             cb_run_cmd_afterwards_run_as_administrator.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_run_cmd_afterwards_run_as_administrator.Name = "cb_run_cmd_afterwards_run_as_administrator";
             cb_run_cmd_afterwards_run_as_administrator.Size = new System.Drawing.Size(238, 24);
@@ -1290,10 +1339,11 @@ namespace DisplayMagician.UIForms
             // 
             // cb_run_cmd_afterwards_dont_start
             // 
+            cb_run_cmd_afterwards_dont_start.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             cb_run_cmd_afterwards_dont_start.AutoSize = true;
             cb_run_cmd_afterwards_dont_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cb_run_cmd_afterwards_dont_start.ForeColor = System.Drawing.Color.White;
-            cb_run_cmd_afterwards_dont_start.Location = new System.Drawing.Point(114, 132);
+            cb_run_cmd_afterwards_dont_start.Location = new System.Drawing.Point(20, 140);
             cb_run_cmd_afterwards_dont_start.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_run_cmd_afterwards_dont_start.Name = "cb_run_cmd_afterwards_dont_start";
             cb_run_cmd_afterwards_dont_start.Size = new System.Drawing.Size(289, 24);
@@ -1305,18 +1355,19 @@ namespace DisplayMagician.UIForms
             // 
             // txt_run_cmd_afterwards_args
             // 
+            txt_run_cmd_afterwards_args.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_run_cmd_afterwards_args.Enabled = false;
-            txt_run_cmd_afterwards_args.Location = new System.Drawing.Point(293, 87);
+            txt_run_cmd_afterwards_args.Location = new System.Drawing.Point(300, 90);
             txt_run_cmd_afterwards_args.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_run_cmd_afterwards_args.Name = "txt_run_cmd_afterwards_args";
-            txt_run_cmd_afterwards_args.Size = new System.Drawing.Size(558, 26);
+            txt_run_cmd_afterwards_args.Size = new System.Drawing.Size(920, 26);
             txt_run_cmd_afterwards_args.TabIndex = 13;
             // 
             // cb_run_cmd_afterwards_args
             // 
             cb_run_cmd_afterwards_args.AutoSize = true;
             cb_run_cmd_afterwards_args.ForeColor = System.Drawing.Color.White;
-            cb_run_cmd_afterwards_args.Location = new System.Drawing.Point(114, 89);
+            cb_run_cmd_afterwards_args.Location = new System.Drawing.Point(20, 92);
             cb_run_cmd_afterwards_args.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_run_cmd_afterwards_args.Name = "cb_run_cmd_afterwards_args";
             cb_run_cmd_afterwards_args.Size = new System.Drawing.Size(147, 24);
@@ -1329,10 +1380,11 @@ namespace DisplayMagician.UIForms
             // 
             // btn_run_cmd_afterwards
             // 
+            btn_run_cmd_afterwards.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_run_cmd_afterwards.Enabled = false;
             btn_run_cmd_afterwards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_run_cmd_afterwards.ForeColor = System.Drawing.Color.White;
-            btn_run_cmd_afterwards.Location = new System.Drawing.Point(752, 40);
+            btn_run_cmd_afterwards.Location = new System.Drawing.Point(1121, 40);
             btn_run_cmd_afterwards.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_run_cmd_afterwards.Name = "btn_run_cmd_afterwards";
             btn_run_cmd_afterwards.Size = new System.Drawing.Size(99, 31);
@@ -1343,17 +1395,18 @@ namespace DisplayMagician.UIForms
             // 
             // txt_run_cmd_afterwards
             // 
+            txt_run_cmd_afterwards.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_run_cmd_afterwards.Enabled = false;
-            txt_run_cmd_afterwards.Location = new System.Drawing.Point(292, 42);
+            txt_run_cmd_afterwards.Location = new System.Drawing.Point(300, 42);
             txt_run_cmd_afterwards.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_run_cmd_afterwards.Name = "txt_run_cmd_afterwards";
-            txt_run_cmd_afterwards.Size = new System.Drawing.Size(453, 26);
+            txt_run_cmd_afterwards.Size = new System.Drawing.Size(810, 26);
             txt_run_cmd_afterwards.TabIndex = 10;
             // 
             // cb_run_cmd_afterwards
             // 
             cb_run_cmd_afterwards.AutoSize = true;
-            cb_run_cmd_afterwards.Location = new System.Drawing.Point(114, 44);
+            cb_run_cmd_afterwards.Location = new System.Drawing.Point(20, 44);
             cb_run_cmd_afterwards.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_run_cmd_afterwards.Name = "cb_run_cmd_afterwards";
             cb_run_cmd_afterwards.Size = new System.Drawing.Size(154, 24);
@@ -1364,16 +1417,16 @@ namespace DisplayMagician.UIForms
             // 
             // groupBox1
             // 
-            groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            groupBox1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             groupBox1.Controls.Add(rb_switch_audio_permanent);
             groupBox1.Controls.Add(rb_switch_audio_temp);
             groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             groupBox1.ForeColor = System.Drawing.Color.White;
-            groupBox1.Location = new System.Drawing.Point(204, 194);
+            groupBox1.Location = new System.Drawing.Point(10, 185);
             groupBox1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             groupBox1.Name = "groupBox1";
             groupBox1.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            groupBox1.Size = new System.Drawing.Size(892, 145);
+            groupBox1.Size = new System.Drawing.Size(1240, 145);
             groupBox1.TabIndex = 12;
             groupBox1.TabStop = false;
             groupBox1.Text = "What happens to the Audio output afterwards?";
@@ -1382,7 +1435,7 @@ namespace DisplayMagician.UIForms
             // 
             rb_switch_audio_permanent.AutoSize = true;
             rb_switch_audio_permanent.ForeColor = System.Drawing.Color.White;
-            rb_switch_audio_permanent.Location = new System.Drawing.Point(114, 86);
+            rb_switch_audio_permanent.Location = new System.Drawing.Point(20, 86);
             rb_switch_audio_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
             rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
@@ -1396,7 +1449,7 @@ namespace DisplayMagician.UIForms
             rb_switch_audio_temp.AutoSize = true;
             rb_switch_audio_temp.Checked = true;
             rb_switch_audio_temp.ForeColor = System.Drawing.Color.White;
-            rb_switch_audio_temp.Location = new System.Drawing.Point(114, 44);
+            rb_switch_audio_temp.Location = new System.Drawing.Point(20, 44);
             rb_switch_audio_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_audio_temp.Name = "rb_switch_audio_temp";
             rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
@@ -1408,16 +1461,16 @@ namespace DisplayMagician.UIForms
             // 
             // gb_display_after
             // 
-            gb_display_after.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_display_after.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gb_display_after.Controls.Add(rb_switch_display_permanent);
             gb_display_after.Controls.Add(rb_switch_display_temp);
             gb_display_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_display_after.ForeColor = System.Drawing.Color.White;
-            gb_display_after.Location = new System.Drawing.Point(204, 32);
+            gb_display_after.Location = new System.Drawing.Point(10, 10);
             gb_display_after.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_display_after.Name = "gb_display_after";
             gb_display_after.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_display_after.Size = new System.Drawing.Size(892, 143);
+            gb_display_after.Size = new System.Drawing.Size(1240, 155);
             gb_display_after.TabIndex = 11;
             gb_display_after.TabStop = false;
             gb_display_after.Text = "What happens to the Display Profile afterwards?";
@@ -1426,7 +1479,7 @@ namespace DisplayMagician.UIForms
             // 
             rb_switch_display_permanent.AutoSize = true;
             rb_switch_display_permanent.ForeColor = System.Drawing.Color.White;
-            rb_switch_display_permanent.Location = new System.Drawing.Point(114, 84);
+            rb_switch_display_permanent.Location = new System.Drawing.Point(20, 84);
             rb_switch_display_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_display_permanent.Name = "rb_switch_display_permanent";
             rb_switch_display_permanent.Size = new System.Drawing.Size(508, 24);
@@ -1440,7 +1493,7 @@ namespace DisplayMagician.UIForms
             rb_switch_display_temp.AutoSize = true;
             rb_switch_display_temp.Checked = true;
             rb_switch_display_temp.ForeColor = System.Drawing.Color.White;
-            rb_switch_display_temp.Location = new System.Drawing.Point(114, 45);
+            rb_switch_display_temp.Location = new System.Drawing.Point(20, 45);
             rb_switch_display_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_display_temp.Name = "rb_switch_display_temp";
             rb_switch_display_temp.Size = new System.Drawing.Size(569, 24);
@@ -1450,54 +1503,97 @@ namespace DisplayMagician.UIForms
             rb_switch_display_temp.UseVisualStyleBackColor = true;
             rb_switch_display_temp.CheckedChanged += rb_switch_display_temp_CheckedChanged;
             // 
-            // txt_shortcut_save_name
+            // flp_header
             // 
-            txt_shortcut_save_name.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            txt_shortcut_save_name.Location = new System.Drawing.Point(241, 876);
-            txt_shortcut_save_name.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            txt_shortcut_save_name.MaxLength = 200;
-            txt_shortcut_save_name.Name = "txt_shortcut_save_name";
-            txt_shortcut_save_name.Size = new System.Drawing.Size(867, 31);
-            txt_shortcut_save_name.TabIndex = 29;
-            txt_shortcut_save_name.Click += txt_shortcut_save_name_Click;
-            txt_shortcut_save_name.TextChanged += txt_shortcut_save_name_TextChanged;
+            flp_header.Controls.Add(btn_help);
+            flp_header.Controls.Add(lbl_title);
+            flp_header.Dock = System.Windows.Forms.DockStyle.Fill;
+            flp_header.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
+            flp_header.Location = new System.Drawing.Point(3, 3);
+            flp_header.Name = "flp_header";
+            flp_header.Size = new System.Drawing.Size(1294, 49);
+            flp_header.TabIndex = 38;
+            // 
+            // btn_help
+            // 
+            btn_help.AutoSize = true;
+            btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_help.ForeColor = System.Drawing.Color.White;
+            btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            btn_help.Location = new System.Drawing.Point(1236, 3);
+            btn_help.Name = "btn_help";
+            btn_help.Size = new System.Drawing.Size(55, 42);
+            btn_help.TabIndex = 38;
+            btn_help.Text = "&Help";
+            btn_help.UseVisualStyleBackColor = true;
+            btn_help.Click += btn_help_Click;
             // 
             // lbl_title
             // 
             lbl_title.AutoSize = true;
-            lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(449, 16);
-            lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_title.Location = new System.Drawing.Point(448, 9);
             lbl_title.Name = "lbl_title";
-            lbl_title.Size = new System.Drawing.Size(345, 33);
+            lbl_title.Size = new System.Drawing.Size(283, 29);
             lbl_title.TabIndex = 30;
             lbl_title.Text = "Configure Game Shortcut";
             // 
+            // tlp_name
+            // 
+            tlp_name.ColumnCount = 3;
+            tlp_name.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            tlp_name.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            tlp_name.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            tlp_name.Controls.Add(lbl_shortcut_name, 0, 0);
+            tlp_name.Controls.Add(txt_shortcut_save_name, 1, 0);
+            tlp_name.Controls.Add(cb_autosuggest, 2, 0);
+            tlp_name.Dock = System.Windows.Forms.DockStyle.Fill;
+            tlp_name.Location = new System.Drawing.Point(3, 874);
+            tlp_name.Name = "tlp_name";
+            tlp_name.RowCount = 1;
+            tlp_name.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            tlp_name.Size = new System.Drawing.Size(1294, 51);
+            tlp_name.TabIndex = 40;
+            // 
             // lbl_shortcut_name
             // 
-            lbl_shortcut_name.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             lbl_shortcut_name.AutoSize = true;
-            lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_shortcut_name.Dock = System.Windows.Forms.DockStyle.Fill;
+            lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
-            lbl_shortcut_name.Location = new System.Drawing.Point(27, 879);
-            lbl_shortcut_name.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_shortcut_name.Location = new System.Drawing.Point(3, 0);
             lbl_shortcut_name.Name = "lbl_shortcut_name";
-            lbl_shortcut_name.Size = new System.Drawing.Size(160, 25);
+            lbl_shortcut_name.Size = new System.Drawing.Size(121, 51);
             lbl_shortcut_name.TabIndex = 31;
             lbl_shortcut_name.Text = "Shortcut Name:";
+            lbl_shortcut_name.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // txt_shortcut_save_name
+            // 
+            txt_shortcut_save_name.Dock = System.Windows.Forms.DockStyle.Fill;
+            txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            txt_shortcut_save_name.Location = new System.Drawing.Point(130, 10);
+            txt_shortcut_save_name.Margin = new System.Windows.Forms.Padding(3, 10, 3, 3);
+            txt_shortcut_save_name.MaxLength = 200;
+            txt_shortcut_save_name.Name = "txt_shortcut_save_name";
+            txt_shortcut_save_name.Size = new System.Drawing.Size(1008, 26);
+            txt_shortcut_save_name.TabIndex = 29;
+            txt_shortcut_save_name.Click += txt_shortcut_save_name_Click;
+            txt_shortcut_save_name.TextChanged += txt_shortcut_save_name_TextChanged;
             // 
             // cb_autosuggest
             // 
-            cb_autosuggest.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            cb_autosuggest.AutoSize = true;
             cb_autosuggest.Checked = true;
             cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
+            cb_autosuggest.Dock = System.Windows.Forms.DockStyle.Fill;
             cb_autosuggest.ForeColor = System.Drawing.Color.White;
-            cb_autosuggest.Location = new System.Drawing.Point(1148, 882);
-            cb_autosuggest.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cb_autosuggest.Location = new System.Drawing.Point(1144, 3);
             cb_autosuggest.Name = "cb_autosuggest";
-            cb_autosuggest.Size = new System.Drawing.Size(136, 20);
+            cb_autosuggest.Size = new System.Drawing.Size(136, 45);
             cb_autosuggest.TabIndex = 32;
             cb_autosuggest.Text = "Auto-suggest name";
             cb_autosuggest.UseVisualStyleBackColor = true;
@@ -1505,16 +1601,15 @@ namespace DisplayMagician.UIForms
             // 
             // btn_hotkey
             // 
-            btn_hotkey.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_hotkey.AutoSize = true;
             btn_hotkey.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_hotkey.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
+            btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             btn_hotkey.ForeColor = System.Drawing.Color.White;
-            btn_hotkey.Location = new System.Drawing.Point(507, 928);
-            btn_hotkey.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_hotkey.Location = new System.Drawing.Point(3, 3);
             btn_hotkey.Name = "btn_hotkey";
-            btn_hotkey.Size = new System.Drawing.Size(140, 35);
+            btn_hotkey.Size = new System.Drawing.Size(95, 39);
             btn_hotkey.TabIndex = 36;
             btn_hotkey.Text = "&Hotkey";
             btn_hotkey.UseVisualStyleBackColor = true;
@@ -1522,36 +1617,38 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_hotkey_assigned
             // 
-            lbl_hotkey_assigned.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             lbl_hotkey_assigned.AutoSize = true;
             lbl_hotkey_assigned.BackColor = System.Drawing.Color.Brown;
+            lbl_hotkey_assigned.Dock = System.Windows.Forms.DockStyle.Fill;
             lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_assigned.Location = new System.Drawing.Point(241, 851);
-            lbl_hotkey_assigned.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_hotkey_assigned.Location = new System.Drawing.Point(3, 0);
             lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
             lbl_hotkey_assigned.Size = new System.Drawing.Size(113, 20);
             lbl_hotkey_assigned.TabIndex = 37;
             lbl_hotkey_assigned.Text = "Hotkeys: None";
+            lbl_hotkey_assigned.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             lbl_hotkey_assigned.Visible = false;
             lbl_hotkey_assigned.Click += lbl_hotkey_assigned_Click;
             // 
-            // btn_help
+            // tlpMain
             // 
-            btn_help.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_help.ForeColor = System.Drawing.Color.White;
-            btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_help.Location = new System.Drawing.Point(1198, 16);
-            btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_help.Name = "btn_help";
-            btn_help.Size = new System.Drawing.Size(88, 27);
-            btn_help.TabIndex = 38;
-            btn_help.Text = "&Help";
-            btn_help.UseVisualStyleBackColor = true;
-            btn_help.Click += btn_help_Click;
+            tlpMain.ColumnCount = 1;
+            tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            tlpMain.Controls.Add(flp_header, 0, 0);
+            tlpMain.Controls.Add(tabc_shortcut, 0, 1);
+            tlpMain.Controls.Add(tlp_name, 0, 2);
+            tlpMain.Controls.Add(flp_bottom, 0, 3);
+            tlpMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            tlpMain.Location = new System.Drawing.Point(0, 0);
+            tlpMain.Name = "tlpMain";
+            tlpMain.RowCount = 4;
+            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            tlpMain.Size = new System.Drawing.Size(1300, 979);
+            tlpMain.TabIndex = 0;
             // 
             // ShortcutForm
             // 
@@ -1561,21 +1658,13 @@ namespace DisplayMagician.UIForms
             BackColor = System.Drawing.Color.Black;
             CancelButton = btn_cancel;
             ClientSize = new System.Drawing.Size(1300, 979);
-            Controls.Add(btn_help);
+            Controls.Add(tlpMain);
             Controls.Add(lbl_hotkey_assigned);
-            Controls.Add(btn_hotkey);
-            Controls.Add(cb_autosuggest);
-            Controls.Add(txt_shortcut_save_name);
-            Controls.Add(lbl_shortcut_name);
-            Controls.Add(lbl_title);
-            Controls.Add(tabc_shortcut);
-            Controls.Add(btn_cancel);
-            Controls.Add(btn_save);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
-            MinimumSize = new System.Drawing.Size(800, 600);
+            MinimumSize = new System.Drawing.Size(1200, 900);
             Name = "ShortcutForm";
             ShowIcon = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
@@ -1617,11 +1706,23 @@ namespace DisplayMagician.UIForms
             groupBox1.PerformLayout();
             gb_display_after.ResumeLayout(false);
             gb_display_after.PerformLayout();
+            flp_bottom.ResumeLayout(false);
+            flp_bottom.PerformLayout();
+            tlp_name.ResumeLayout(false);
+            tlp_name.PerformLayout();
+            flp_header.ResumeLayout(false);
+            flp_header.PerformLayout();
+            tlpMain.ResumeLayout(false);
+            tlpMain.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
+        private System.Windows.Forms.TableLayoutPanel tlpMain;
+        private System.Windows.Forms.FlowLayoutPanel flp_header;
+        private System.Windows.Forms.TableLayoutPanel tlp_name;
+        private System.Windows.Forms.FlowLayoutPanel flp_bottom;
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.Button btn_cancel;
         private System.Windows.Forms.OpenFileDialog dialog_open;

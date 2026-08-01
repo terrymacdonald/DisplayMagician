@@ -52,7 +52,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_back
             // 
-            btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
@@ -69,6 +69,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            gb_general.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gb_general.Controls.Add(lbl_wallpaper_mode);
             gb_general.Controls.Add(cmb_wallpaper_mode);
             gb_general.Controls.Add(lbl_wallpaper_bg_type_label);
@@ -135,6 +136,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_multiple_applies
             // 
+            gb_multiple_applies.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gb_multiple_applies.Controls.Add(label2);
             gb_multiple_applies.Controls.Add(cb_force_restart_explorer);
             gb_multiple_applies.Controls.Add(nud_apply_profile_delay);

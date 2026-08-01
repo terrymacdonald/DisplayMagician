@@ -80,21 +80,23 @@ namespace DisplayMagician.UIForms
             // 
             // txt_stop_program
             // 
+            txt_stop_program.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_stop_program.BackColor = System.Drawing.Color.White;
             txt_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_stop_program.ForeColor = System.Drawing.Color.Black;
             txt_stop_program.Location = new System.Drawing.Point(275, 16);
             txt_stop_program.Name = "txt_stop_program";
-            txt_stop_program.Size = new System.Drawing.Size(538, 26);
+            txt_stop_program.Size = new System.Drawing.Size(710, 26);
             txt_stop_program.TabIndex = 4;
             txt_stop_program.TextChanged += txt_stop_program_TextChanged;
             // 
             // btn_stop_program
             // 
+            btn_stop_program.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_stop_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_stop_program.ForeColor = System.Drawing.Color.White;
-            btn_stop_program.Location = new System.Drawing.Point(819, 15);
+            btn_stop_program.Location = new System.Drawing.Point(995, 15);
             btn_stop_program.Name = "btn_stop_program";
             btn_stop_program.Size = new System.Drawing.Size(85, 27);
             btn_stop_program.TabIndex = 5;
@@ -132,10 +134,11 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_restart_priority
             // 
+            lbl_restart_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             lbl_restart_priority.AutoSize = true;
             lbl_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_restart_priority.ForeColor = System.Drawing.Color.White;
-            lbl_restart_priority.Location = new System.Drawing.Point(563, 53);
+            lbl_restart_priority.Location = new System.Drawing.Point(739, 53);
             lbl_restart_priority.Name = "lbl_restart_priority";
             lbl_restart_priority.Size = new System.Drawing.Size(117, 20);
             lbl_restart_priority.TabIndex = 8;
@@ -144,11 +147,12 @@ namespace DisplayMagician.UIForms
             // cbx_restart_priority
             // 
             cbx_restart_priority.AllowDrop = true;
+            cbx_restart_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             cbx_restart_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cbx_restart_priority.Enabled = false;
             cbx_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cbx_restart_priority.FormattingEnabled = true;
-            cbx_restart_priority.Location = new System.Drawing.Point(725, 50);
+            cbx_restart_priority.Location = new System.Drawing.Point(901, 50);
             cbx_restart_priority.Name = "cbx_restart_priority";
             cbx_restart_priority.Size = new System.Drawing.Size(179, 28);
             cbx_restart_priority.TabIndex = 9;
@@ -206,7 +210,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(10);
             MinimumSize = new System.Drawing.Size(800, 155);
             Name = "StopProgramControl";
-            Size = new System.Drawing.Size(1036, 155);
+            Size = new System.Drawing.Size(1090, 155);
             ((System.ComponentModel.ISupportInitialize)pb_up_arrow).EndInit();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
             ResumeLayout(false);

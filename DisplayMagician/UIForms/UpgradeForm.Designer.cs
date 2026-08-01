@@ -40,6 +40,7 @@
             // 
             // lbl_title
             // 
+            lbl_title.Anchor = System.Windows.Forms.AnchorStyles.Top;
             lbl_title.AutoSize = true;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
@@ -58,7 +59,7 @@
             btn_upgrade.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_upgrade.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
             btn_upgrade.ForeColor = System.Drawing.Color.White;
-            btn_upgrade.Location = new System.Drawing.Point(214, 390);
+            btn_upgrade.Location = new System.Drawing.Point(214, 388);
             btn_upgrade.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_upgrade.Name = "btn_upgrade";
             btn_upgrade.Size = new System.Drawing.Size(240, 34);
@@ -75,7 +76,7 @@
             btn_remind_later.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_remind_later.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
             btn_remind_later.ForeColor = System.Drawing.Color.White;
-            btn_remind_later.Location = new System.Drawing.Point(523, 390);
+            btn_remind_later.Location = new System.Drawing.Point(523, 388);
             btn_remind_later.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_remind_later.Name = "btn_remind_later";
             btn_remind_later.Size = new System.Drawing.Size(257, 34);
@@ -103,14 +104,14 @@
             // 
             // lbl_changelog
             // 
-            lbl_changelog.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            lbl_changelog.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             lbl_changelog.BackColor = System.Drawing.Color.Transparent;
             lbl_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_changelog.ForeColor = System.Drawing.Color.White;
-            lbl_changelog.Location = new System.Drawing.Point(86, 301);
+            lbl_changelog.Location = new System.Drawing.Point(14, 305);
             lbl_changelog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_changelog.Name = "lbl_changelog";
-            lbl_changelog.Size = new System.Drawing.Size(819, 37);
+            lbl_changelog.Size = new System.Drawing.Size(963, 37);
             lbl_changelog.TabIndex = 39;
             lbl_changelog.Text = "For more information on what has changed in the new version please visit the changelog: ";
             lbl_changelog.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -121,7 +122,7 @@
             lnk_changelog.AutoSize = true;
             lnk_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lnk_changelog.LinkColor = System.Drawing.Color.LightSkyBlue;
-            lnk_changelog.Location = new System.Drawing.Point(311, 338);
+            lnk_changelog.Location = new System.Drawing.Point(310, 340);
             lnk_changelog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lnk_changelog.Name = "lnk_changelog";
             lnk_changelog.Size = new System.Drawing.Size(371, 16);
@@ -133,6 +134,7 @@
             // 
             // rtb_message
             // 
+            rtb_message.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             rtb_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             rtb_message.Location = new System.Drawing.Point(14, 60);
             rtb_message.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -154,11 +156,12 @@
             Controls.Add(btn_remind_later);
             Controls.Add(btn_upgrade);
             Controls.Add(lbl_title);
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
+            MinimumSize = new System.Drawing.Size(820, 420);
             Name = "UpgradeForm";
             ShowIcon = false;
             Text = "Upgrade DisplayMagician";

@@ -318,9 +318,11 @@
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             Controls.Add(splitContainer1);
             MaximizeBox = false;
+            MinimumSize = new System.Drawing.Size(900, 700);
             Name = "MainForm";
             ShowIcon = false;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;

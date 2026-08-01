@@ -64,23 +64,25 @@ namespace DisplayMagician.UIForms
             // 
             // txt_start_program
             // 
+            txt_start_program.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_start_program.BackColor = System.Drawing.Color.White;
             txt_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_start_program.ForeColor = System.Drawing.Color.Black;
             txt_start_program.Location = new System.Drawing.Point(275, 16);
             txt_start_program.Name = "txt_start_program";
-            txt_start_program.Size = new System.Drawing.Size(538, 26);
+            txt_start_program.Size = new System.Drawing.Size(710, 26);
             txt_start_program.TabIndex = 25;
             txt_start_program.TextChanged += txt_start_program_TextChanged;
             // 
             // cb_start_program_close
             // 
+            cb_start_program_close.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             cb_start_program_close.AutoSize = true;
             cb_start_program_close.Checked = true;
             cb_start_program_close.CheckState = System.Windows.Forms.CheckState.Checked;
             cb_start_program_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cb_start_program_close.ForeColor = System.Drawing.Color.White;
-            cb_start_program_close.Location = new System.Drawing.Point(614, 123);
+            cb_start_program_close.Location = new System.Drawing.Point(758, 120);
             cb_start_program_close.Name = "cb_start_program_close";
             cb_start_program_close.Size = new System.Drawing.Size(290, 44);
             cb_start_program_close.TabIndex = 24;
@@ -90,10 +92,11 @@ namespace DisplayMagician.UIForms
             // 
             // btn_start_program
             // 
+            btn_start_program.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_start_program.ForeColor = System.Drawing.Color.White;
-            btn_start_program.Location = new System.Drawing.Point(819, 15);
+            btn_start_program.Location = new System.Drawing.Point(995, 15);
             btn_start_program.Name = "btn_start_program";
             btn_start_program.Size = new System.Drawing.Size(85, 27);
             btn_start_program.TabIndex = 23;
@@ -103,12 +106,13 @@ namespace DisplayMagician.UIForms
             // 
             // txt_start_program_args
             // 
+            txt_start_program_args.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_start_program_args.BackColor = System.Drawing.Color.White;
             txt_start_program_args.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_start_program_args.ForeColor = System.Drawing.Color.Black;
             txt_start_program_args.Location = new System.Drawing.Point(398, 50);
             txt_start_program_args.Name = "txt_start_program_args";
-            txt_start_program_args.Size = new System.Drawing.Size(506, 26);
+            txt_start_program_args.Size = new System.Drawing.Size(587, 26);
             txt_start_program_args.TabIndex = 22;
             txt_start_program_args.TextChanged += txt_start_program_args_TextChanged;
             // 
@@ -203,10 +207,11 @@ namespace DisplayMagician.UIForms
             // cbx_start_program_priority
             // 
             cbx_start_program_priority.AllowDrop = true;
+            cbx_start_program_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             cbx_start_program_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cbx_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cbx_start_program_priority.FormattingEnabled = true;
-            cbx_start_program_priority.Location = new System.Drawing.Point(725, 84);
+            cbx_start_program_priority.Location = new System.Drawing.Point(901, 84);
             cbx_start_program_priority.Name = "cbx_start_program_priority";
             cbx_start_program_priority.Size = new System.Drawing.Size(179, 28);
             cbx_start_program_priority.TabIndex = 34;
@@ -214,10 +219,11 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_start_program_priority
             // 
+            lbl_start_program_priority.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             lbl_start_program_priority.AutoSize = true;
             lbl_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_start_program_priority.ForeColor = System.Drawing.Color.White;
-            lbl_start_program_priority.Location = new System.Drawing.Point(563, 87);
+            lbl_start_program_priority.Location = new System.Drawing.Point(739, 87);
             lbl_start_program_priority.Name = "lbl_start_program_priority";
             lbl_start_program_priority.Size = new System.Drawing.Size(163, 20);
             lbl_start_program_priority.TabIndex = 33;
@@ -225,10 +231,11 @@ namespace DisplayMagician.UIForms
             // 
             // cb_run_as_administrator
             // 
+            cb_run_as_administrator.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             cb_run_as_administrator.AutoSize = true;
             cb_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cb_run_as_administrator.ForeColor = System.Drawing.Color.White;
-            cb_run_as_administrator.Location = new System.Drawing.Point(160, 82);
+            cb_run_as_administrator.Location = new System.Drawing.Point(785, 84);
             cb_run_as_administrator.Name = "cb_run_as_administrator";
             cb_run_as_administrator.Size = new System.Drawing.Size(238, 24);
             cb_run_as_administrator.TabIndex = 35;
@@ -262,7 +269,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(10);
             MinimumSize = new System.Drawing.Size(800, 185);
             Name = "StartProgramControl";
-            Size = new System.Drawing.Size(1036, 185);
+            Size = new System.Drawing.Size(1090, 185);
             ((System.ComponentModel.ISupportInitialize)pb_up_arrow).EndInit();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
             ResumeLayout(false);
