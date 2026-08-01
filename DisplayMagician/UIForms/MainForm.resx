@@ -117,6 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="splitContainer1.IsSplitterFixed" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -127,9 +131,8 @@
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -143,16 +146,19 @@
     <value>NoControl</value>
   </data>
   <data name="btn_audio.Location" type="System.Drawing.Point, System.Drawing">
-    <value>601, 9</value>
+    <value>1322, 41</value>
   </data>
   <data name="btn_audio.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_audio.Size" type="System.Drawing.Size, System.Drawing">
-    <value>104, 27</value>
+    <value>207, 58</value>
   </data>
   <data name="btn_audio.TabIndex" type="System.Int32, mscorlib">
     <value>13</value>
+  </data>
+  <data name="btn_audio.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
   </data>
   <data name="btn_audio.Text" xml:space="preserve">
     <value>&amp;Audio Profiles</value>
@@ -179,16 +185,19 @@
     <value>NoControl</value>
   </data>
   <data name="btn_messages.Location" type="System.Drawing.Point, System.Drawing">
-    <value>713, 9</value>
+    <value>1133, 41</value>
   </data>
   <data name="btn_messages.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_messages.Size" type="System.Drawing.Size, System.Drawing">
-    <value>96, 27</value>
+    <value>163, 58</value>
   </data>
   <data name="btn_messages.TabIndex" type="System.Int32, mscorlib">
     <value>12</value>
+  </data>
+  <data name="btn_messages.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
   </data>
   <data name="btn_messages.Text" xml:space="preserve">
     <value>&amp;Messages</value>
@@ -209,10 +218,13 @@
     <value>Top, Right</value>
   </data>
   <data name="lbl_donate.Location" type="System.Drawing.Point, System.Drawing">
-    <value>682, 39</value>
+    <value>944, 112</value>
+  </data>
+  <data name="lbl_donate.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>11, 0, 11, 0</value>
   </data>
   <data name="lbl_donate.Size" type="System.Drawing.Size, System.Drawing">
-    <value>223, 15</value>
+    <value>774, 44</value>
   </data>
   <data name="lbl_donate.TabIndex" type="System.Int32, mscorlib">
     <value>11</value>
@@ -245,16 +257,19 @@
     <value>NoControl</value>
   </data>
   <data name="btn_fov_calc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>509, 9</value>
+    <value>944, 41</value>
   </data>
   <data name="btn_fov_calc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_fov_calc.Size" type="System.Drawing.Size, System.Drawing">
-    <value>84, 27</value>
+    <value>163, 58</value>
   </data>
   <data name="btn_fov_calc.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
+  </data>
+  <data name="btn_fov_calc.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
   </data>
   <data name="btn_fov_calc.Text" xml:space="preserve">
     <value>&amp;FOV Calc</value>
@@ -281,16 +296,19 @@
     <value>NoControl</value>
   </data>
   <data name="btn_help.Location" type="System.Drawing.Point, System.Drawing">
-    <value>325, 9</value>
+    <value>755, 41</value>
   </data>
   <data name="btn_help.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_help.Size" type="System.Drawing.Size, System.Drawing">
-    <value>84, 27</value>
+    <value>163, 58</value>
   </data>
   <data name="btn_help.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
+  </data>
+  <data name="btn_help.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
   </data>
   <data name="btn_help.Text" xml:space="preserve">
     <value>&amp;Help</value>
@@ -317,16 +335,19 @@
     <value>NoControl</value>
   </data>
   <data name="btn_donate.Location" type="System.Drawing.Point, System.Drawing">
-    <value>417, 9</value>
+    <value>566, 41</value>
   </data>
   <data name="btn_donate.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_donate.Size" type="System.Drawing.Size, System.Drawing">
-    <value>84, 27</value>
+    <value>163, 58</value>
   </data>
   <data name="btn_donate.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
+  </data>
+  <data name="btn_donate.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
   </data>
   <data name="btn_donate.Text" xml:space="preserve">
     <value>D&amp;onate</value>
@@ -349,17 +370,23 @@
   <data name="btn_settings.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
   </data>
+  <data name="btn_settings.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
   <data name="btn_settings.Location" type="System.Drawing.Point, System.Drawing">
-    <value>817, 9</value>
+    <value>1555, 41</value>
   </data>
   <data name="btn_settings.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_settings.Size" type="System.Drawing.Size, System.Drawing">
-    <value>88, 27</value>
+    <value>163, 58</value>
   </data>
   <data name="btn_settings.TabIndex" type="System.Int32, mscorlib">
     <value>7</value>
+  </data>
+  <data name="btn_settings.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
   </data>
   <data name="btn_settings.Text" xml:space="preserve">
     <value>&amp;Settings</value>
@@ -386,13 +413,13 @@
     <value>Microsoft Sans Serif, 12pt</value>
   </data>
   <data name="lbl_create_profile.Location" type="System.Drawing.Point, System.Drawing">
-    <value>299, 274</value>
+    <value>588, 502</value>
   </data>
   <data name="lbl_create_profile.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>13, 0, 13, 0</value>
   </data>
   <data name="lbl_create_profile.Size" type="System.Drawing.Size, System.Drawing">
-    <value>316, 22</value>
+    <value>634, 39</value>
   </data>
   <data name="lbl_create_profile.TabIndex" type="System.Int32, mscorlib">
     <value>6</value>
@@ -425,13 +452,13 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_display_profiles.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 189</value>
+    <value>450, 362</value>
   </data>
   <data name="btn_setup_display_profiles.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_setup_display_profiles.Size" type="System.Drawing.Size, System.Drawing">
-    <value>420, 58</value>
+    <value>900, 115</value>
   </data>
   <data name="btn_setup_display_profiles.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -10893,13 +10920,13 @@
     <value>0, 0</value>
   </data>
   <data name="pb_display_profile.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="pb_display_profile.Size" type="System.Drawing.Size, System.Drawing">
-    <value>915, 437</value>
+    <value>1754, 850</value>
   </data>
   <data name="pb_display_profile.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
-    <value>CenterImage</value>
+    <value>StretchImage</value>
   </data>
   <data name="pb_display_profile.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -10941,13 +10968,13 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>346, 287</value>
+    <value>686, 494</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>13, 0, 13, 0</value>
   </data>
   <data name="lbl_create_shortcut.Size" type="System.Drawing.Size, System.Drawing">
-    <value>222, 22</value>
+    <value>444, 39</value>
   </data>
   <data name="lbl_create_shortcut.TabIndex" type="System.Int32, mscorlib">
     <value>7</value>
@@ -10986,13 +11013,13 @@
     <value>NoControl</value>
   </data>
   <data name="cb_minimise_notification_area.Location" type="System.Drawing.Point, System.Drawing">
-    <value>227, 409</value>
+    <value>481, 799</value>
   </data>
   <data name="cb_minimise_notification_area.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="cb_minimise_notification_area.Size" type="System.Drawing.Size, System.Drawing">
-    <value>459, 20</value>
+    <value>884, 34</value>
   </data>
   <data name="cb_minimise_notification_area.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -11022,13 +11049,13 @@
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
   <data name="lbl_version.Location" type="System.Drawing.Point, System.Drawing">
-    <value>8, 411</value>
+    <value>31, 799</value>
   </data>
   <data name="lbl_version.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>13, 0, 13, 0</value>
   </data>
   <data name="lbl_version.Size" type="System.Drawing.Size, System.Drawing">
-    <value>24, 16</value>
+    <value>45, 30</value>
   </data>
   <data name="lbl_version.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -11061,13 +11088,13 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>247, 202</value>
+    <value>465, 356</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_setup_game_shortcuts.Size" type="System.Drawing.Size, System.Drawing">
-    <value>420, 58</value>
+    <value>900, 115</value>
   </data>
   <data name="btn_setup_game_shortcuts.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
@@ -11097,16 +11124,19 @@
     <value>NoControl</value>
   </data>
   <data name="btn_exit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>822, 403</value>
+    <value>1555, 775</value>
   </data>
   <data name="btn_exit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="btn_exit.Size" type="System.Drawing.Size, System.Drawing">
-    <value>88, 25</value>
+    <value>168, 58</value>
   </data>
   <data name="btn_exit.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
+  </data>
+  <data name="btn_exit.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
   </data>
   <data name="btn_exit.Text" xml:space="preserve">
     <value>E&amp;xit</value>
@@ -64428,13 +64458,13 @@
     <value>0, 0</value>
   </data>
   <data name="pb_game_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="pb_game_shortcut.Size" type="System.Drawing.Size, System.Drawing">
-    <value>915, 440</value>
+    <value>1754, 855</value>
   </data>
   <data name="pb_game_shortcut.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
-    <value>CenterImage</value>
+    <value>StretchImage</value>
   </data>
   <data name="pb_game_shortcut.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -64464,13 +64494,10 @@
     <value>1</value>
   </data>
   <data name="splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>915, 878</value>
+    <value>1754, 1709</value>
   </data>
   <data name="splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
-    <value>437</value>
-  </data>
-  <data name="splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>1</value>
+    <value>850</value>
   </data>
   <data name="splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -64506,19 +64533,19 @@
     <value>Segoe UI, 9pt, style=Italic</value>
   </data>
   <data name="toolStripMenuItemHeading.Size" type="System.Drawing.Size, System.Drawing">
-    <value>218, 22</value>
+    <value>390, 38</value>
   </data>
   <data name="toolStripMenuItemHeading.Text" xml:space="preserve">
     <value>DisplayMagician</value>
   </data>
   <data name="toolStripSeparator.Size" type="System.Drawing.Size, System.Drawing">
-    <value>215, 6</value>
+    <value>387, 6</value>
   </data>
   <data name="openApplicationWindowToolStripMenuItem.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt, style=Bold</value>
   </data>
   <data name="openApplicationWindowToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>218, 22</value>
+    <value>390, 38</value>
   </data>
   <data name="openApplicationWindowToolStripMenuItem.Text" xml:space="preserve">
     <value>Open Application Window</value>
@@ -64530,16 +64557,16 @@
     <value>Segoe UI, 9pt, style=Italic</value>
   </data>
   <data name="profilesToolStripMenuItemHeading.Size" type="System.Drawing.Size, System.Drawing">
-    <value>155, 22</value>
+    <value>306, 44</value>
   </data>
   <data name="profilesToolStripMenuItemHeading.Text" xml:space="preserve">
     <value>Display Profiles</value>
   </data>
   <data name="profileToolStripSeparator.Size" type="System.Drawing.Size, System.Drawing">
-    <value>152, 6</value>
+    <value>303, 6</value>
   </data>
   <data name="profileToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>218, 22</value>
+    <value>390, 38</value>
   </data>
   <data name="profileToolStripMenuItem.Text" xml:space="preserve">
     <value>Change Display Profile</value>
@@ -64551,31 +64578,31 @@
     <value>Segoe UI, 9pt, style=Italic</value>
   </data>
   <data name="shortcutsToolStripMenuItemHeading.Size" type="System.Drawing.Size, System.Drawing">
-    <value>156, 22</value>
+    <value>312, 44</value>
   </data>
   <data name="shortcutsToolStripMenuItemHeading.Text" xml:space="preserve">
     <value>Game Shortcuts</value>
   </data>
   <data name="shortcutToolStripSeparator.Size" type="System.Drawing.Size, System.Drawing">
-    <value>153, 6</value>
+    <value>309, 6</value>
   </data>
   <data name="shortcutToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>218, 22</value>
+    <value>390, 38</value>
   </data>
   <data name="shortcutToolStripMenuItem.Text" xml:space="preserve">
     <value>Run Game Shortcut</value>
   </data>
   <data name="toolStripSeparator1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>215, 6</value>
+    <value>387, 6</value>
   </data>
   <data name="exitToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>218, 22</value>
+    <value>390, 38</value>
   </data>
   <data name="exitToolStripMenuItem.Text" xml:space="preserve">
     <value>Exit DisplayMagician</value>
   </data>
   <data name="mainContextMenuStrip.Size" type="System.Drawing.Size, System.Drawing">
-    <value>219, 126</value>
+    <value>391, 206</value>
   </data>
   <data name="mainContextMenuStrip.Text" xml:space="preserve">
     <value>Text</value>
@@ -72406,20 +72433,14 @@
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>43</value>
   </metadata>
-  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
-    <value>7, 15</value>
-  </data>
   <data name="$this.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>914, 871</value>
+    <value>1754, 1709</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -80233,13 +80254,13 @@
 </value>
   </data>
   <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 3, 4, 3</value>
+    <value>13, 13, 13, 13</value>
   </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>930, 910</value>
+    <value>4000, 4000</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
-    <value>814, 456</value>
+    <value>1780, 1780</value>
   </data>
   <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
     <value>CenterScreen</value>

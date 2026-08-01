@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.UIForms
+namespace DisplayMagician.UIForms
 {
     partial class MainForm
     {
@@ -252,6 +252,7 @@
             // 
             // mainContextMenuStrip
             // 
+            mainContextMenuStrip.ImageScalingSize = new System.Drawing.Size(32, 32);
             mainContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripMenuItemHeading, toolStripSeparator, openApplicationWindowToolStripMenuItem, profileToolStripMenuItem, shortcutToolStripMenuItem, toolStripSeparator1, exitToolStripMenuItem });
             mainContextMenuStrip.Name = "mainContextMenuStrip";
             resources.ApplyResources(mainContextMenuStrip, "mainContextMenuStrip");
@@ -318,11 +319,9 @@
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             Controls.Add(splitContainer1);
             MaximizeBox = false;
-            MinimumSize = new System.Drawing.Size(900, 700);
             Name = "MainForm";
             ShowIcon = false;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;

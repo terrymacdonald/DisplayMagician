@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class StartProgramControl
@@ -296,3 +296,4 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_run_as_administrator;
     }
 }
+

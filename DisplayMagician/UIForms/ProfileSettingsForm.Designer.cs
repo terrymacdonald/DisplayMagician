@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class ProfileSettingsForm
@@ -132,7 +132,7 @@ namespace DisplayMagician.UIForms
             lbl_wallpaper_bg_type.Name = "lbl_wallpaper_bg_type";
             lbl_wallpaper_bg_type.Size = new System.Drawing.Size(16, 16);
             lbl_wallpaper_bg_type.TabIndex = 3;
-            lbl_wallpaper_bg_type.Text = "—";
+            lbl_wallpaper_bg_type.Text = "�";
             // 
             // gb_multiple_applies
             // 
@@ -225,7 +225,7 @@ namespace DisplayMagician.UIForms
             // ProfileSettingsForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             ClientSize = new System.Drawing.Size(677, 330);
             Controls.Add(gb_multiple_applies);

@@ -121,7 +121,7 @@ namespace DisplayMagician.UIForms
             // 
             AcceptButton = btn_ok;
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             CancelButton = btn_cancel;
             ClientSize = new System.Drawing.Size(584, 244);
@@ -149,3 +149,4 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_ok;
     }
 }
+

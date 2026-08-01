@@ -291,7 +291,7 @@ namespace DisplayMagician.UIForms
             // AudioProfilesForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             ClientSize = new System.Drawing.Size(1200, 700);
             Controls.Add(tlpMain);
@@ -333,3 +333,4 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_back;
     }
 }
+

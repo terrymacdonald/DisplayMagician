@@ -1,4 +1,4 @@
-﻿namespace DisplayMagicianShared.UserControls
+namespace DisplayMagicianShared.UserControls
 {
     partial class DisplayView
     {
@@ -36,7 +36,7 @@
             // DisplayView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.BackColor = System.Drawing.Color.LightSkyBlue;
             this.Font = new System.Drawing.Font("Consolas", 50F);
             this.ForeColor = System.Drawing.Color.MidnightBlue;
@@ -50,3 +50,4 @@
         #endregion
     }
 }
+

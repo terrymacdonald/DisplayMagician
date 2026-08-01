@@ -233,3 +233,4 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_delete;
     }
 }
+

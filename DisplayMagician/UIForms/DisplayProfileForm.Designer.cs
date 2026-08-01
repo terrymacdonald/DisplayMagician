@@ -1,4 +1,4 @@
-﻿//using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
@@ -548,7 +548,7 @@ namespace DisplayMagician.UIForms
             // 
             AcceptButton = btn_apply;
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             CancelButton = btn_back;
@@ -617,4 +617,5 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ToolStripMenuItem saveProfileToDesktopToolStripMenuItem;
     }
 }
+
 
