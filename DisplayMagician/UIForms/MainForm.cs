@@ -205,6 +205,36 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void ResizeDonateLabel()
+        {
+            if (lbl_donate == null) return;
+
+            // The right edge of the label must stay exactly where it is now.
+            int rightEdge = lbl_donate.Right;
+
+            // Measure the text using the label's own device context so DPI (1080p vs 4K) is correct.
+            Size textSize;
+            using (Graphics g = lbl_donate.CreateGraphics())
+            {
+                textSize = TextRenderer.MeasureText(
+                    g,
+                    lbl_donate.Text,
+                    lbl_donate.Font,
+                    new Size(int.MaxValue, int.MaxValue),
+                    TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+            }
+
+            // Move/rescale in one step so the label width matches the text while the right edge stays put.
+            int newWidth = textSize.Width + lbl_donate.Margin.Left + lbl_donate.Margin.Right;
+            int newLeft = rightEdge - newWidth;
+            lbl_donate.SetBounds(newLeft, lbl_donate.Top, newWidth, lbl_donate.Height);
+        }
+
+        private void splitContainer1_Panel1_Resize(object sender, EventArgs e)
+        {
+            ResizeDonateLabel();
+        }
+
 
         protected override void SetVisibleCore(bool value)
         {
@@ -370,16 +400,19 @@ namespace DisplayMagician.UIForms
             if (Program.AppDonationSettings.NumberOfTimesRun == 1)
             {
                 lbl_donate.Text = $"You've used DisplayMagician 1 time.";
+                ResizeDonateLabel();
             }
             else
             {
                 lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times.";
+                ResizeDonateLabel();
             }
 
             if (Program.AppDonationSettings.NumberOfDonations > 0 && Program.AppDonationSettings.LastDonationDate > DateTime.Parse("2024-01-01"))
             {
                 logger.Trace($"MainForm/MainForm_Load: User has donated {Program.AppDonationSettings.NumberOfDonations} times.");
                 lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times and donated - thank you!";
+                ResizeDonateLabel();
             }
             else
             {
@@ -387,6 +420,7 @@ namespace DisplayMagician.UIForms
                 {
                     lbl_donate.BackColor = Color.Brown;
                     lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times without donating.";
+                    ResizeDonateLabel();
                 }
             }
 
@@ -784,6 +818,7 @@ namespace DisplayMagician.UIForms
             // revert the button back to a nice donated message
             lbl_donate.BackColor = Color.Black;
             lbl_donate.Text = $"You've used DisplayMagician {Program.AppDonationSettings.NumberOfTimesRun} times and donated - Thank you!";
+            ResizeDonateLabel();
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)

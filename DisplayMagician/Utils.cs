@@ -264,10 +264,10 @@ namespace DisplayMagician
 
             //TODO update as appropriate or make it a parameter
             TimeSpan animationDuration = TimeSpan.FromMilliseconds(250);
-            int initialWidth = 88;
-            int endWidth = 100;
-            int initialHeight = 27;
-            int endHeight = 35;
+            int initialWidth = button.Width;
+            int endWidth = button.Width + 20;
+            int initialHeight = button.Height;
+            int endHeight = button.Height + 20;
             bool expanding = false;
             int horDiff = endWidth - initialWidth;
             int vertDiff = endHeight - initialHeight;
