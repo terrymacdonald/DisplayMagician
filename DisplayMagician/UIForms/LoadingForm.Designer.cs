@@ -40,7 +40,7 @@ namespace DisplayMagician.UIForms
             lbl_title.BackColor = System.Drawing.Color.Black;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(94, 57);
+            lbl_title.Location = new System.Drawing.Point(80, 76);
             lbl_title.Margin = new System.Windows.Forms.Padding(110, 0, 110, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(1109, 119);
@@ -54,7 +54,7 @@ namespace DisplayMagician.UIForms
             lbl_description.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_description.BackColor = System.Drawing.Color.WhiteSmoke;
             lbl_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_description.Location = new System.Drawing.Point(94, 176);
+            lbl_description.Location = new System.Drawing.Point(80, 195);
             lbl_description.Margin = new System.Windows.Forms.Padding(110, 0, 110, 0);
             lbl_description.Name = "lbl_description";
             lbl_description.Size = new System.Drawing.Size(1109, 168);
@@ -69,7 +69,7 @@ namespace DisplayMagician.UIForms
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(1300, 394);
+            ClientSize = new System.Drawing.Size(1268, 433);
             ControlBox = false;
             Controls.Add(lbl_description);
             Controls.Add(lbl_title);
@@ -77,9 +77,9 @@ namespace DisplayMagician.UIForms
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(110, 38, 110, 38);
             MaximizeBox = false;
-            MaximumSize = new System.Drawing.Size(2024, 768);
+            MaximumSize = new System.Drawing.Size(1592, 768);
             MinimizeBox = false;
-            MinimumSize = new System.Drawing.Size(1024, 400);
+            MinimumSize = new System.Drawing.Size(1180, 400);
             Name = "LoadingForm";
             ShowIcon = false;
             ShowInTaskbar = false;
