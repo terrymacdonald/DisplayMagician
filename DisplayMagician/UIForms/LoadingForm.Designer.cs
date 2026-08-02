@@ -40,10 +40,10 @@ namespace DisplayMagician.UIForms
             lbl_title.BackColor = System.Drawing.Color.Black;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(80, 76);
-            lbl_title.Margin = new System.Windows.Forms.Padding(110, 0, 110, 0);
+            lbl_title.Location = new System.Drawing.Point(40, 21);
+            lbl_title.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_title.Name = "lbl_title";
-            lbl_title.Size = new System.Drawing.Size(1109, 119);
+            lbl_title.Size = new System.Drawing.Size(554, 60);
             lbl_title.TabIndex = 2;
             lbl_title.Text = "DisplayMagician is loading...";
             lbl_title.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -54,10 +54,10 @@ namespace DisplayMagician.UIForms
             lbl_description.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_description.BackColor = System.Drawing.Color.WhiteSmoke;
             lbl_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_description.Location = new System.Drawing.Point(80, 195);
-            lbl_description.Margin = new System.Windows.Forms.Padding(110, 0, 110, 0);
+            lbl_description.Location = new System.Drawing.Point(40, 81);
+            lbl_description.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_description.Name = "lbl_description";
-            lbl_description.Size = new System.Drawing.Size(1109, 168);
+            lbl_description.Size = new System.Drawing.Size(554, 75);
             lbl_description.TabIndex = 3;
             lbl_description.Text = "Please wait. We should have everything configured and ready for you to use in just a few moments.";
             lbl_description.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -65,21 +65,21 @@ namespace DisplayMagician.UIForms
             // 
             // LoadingForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(192F, 192F);
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(1268, 433);
+            ClientSize = new System.Drawing.Size(632, 180);
             ControlBox = false;
             Controls.Add(lbl_description);
             Controls.Add(lbl_title);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
-            Margin = new System.Windows.Forms.Padding(110, 38, 110, 38);
+            Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             MaximizeBox = false;
-            MaximumSize = new System.Drawing.Size(1592, 768);
+            MaximumSize = new System.Drawing.Size(804, 403);
             MinimizeBox = false;
-            MinimumSize = new System.Drawing.Size(1180, 400);
+            MinimumSize = new System.Drawing.Size(598, 219);
             Name = "LoadingForm";
             ShowIcon = false;
             ShowInTaskbar = false;
