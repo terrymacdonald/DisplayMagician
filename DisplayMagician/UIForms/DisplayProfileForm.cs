@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows.Forms;
 //using DisplayMagician.Resources;
 using DisplayMagicianShared;
+using DisplayMagicianShared.UserControls;
 using DisplayMagicianShared.Windows;
 using Manina.Windows.Forms;
 using System.Drawing;
@@ -40,7 +41,7 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
             this.AcceptButton = this.btn_save_or_rename;
             ilv_saved_profiles.MultiSelect = false;
-            ilv_saved_profiles.ThumbnailSize = new Size(100, 100);
+            //ilv_saved_profiles.ThumbnailSize = new Size(ilv_saved_profiles.Height, ilv_saved_profiles.Height);
             ilv_saved_profiles.AllowDrag = false;
             ilv_saved_profiles.AllowDrop = false;
             ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
@@ -102,26 +103,26 @@ namespace DisplayMagician.UIForms
 
         }
 
-       /* private void RecenterWindow()
-        {
-            if (Program.AppMainForm is Form)
-            {
-                // Center the MainAppForm
-                Utils.CenterOnPrimaryScreen(Program.AppMainForm);
-                // Also refresh the right-click menu (if we have a main form loaded)
-                Program.AppMainForm.RefreshNotifyIconMenus();
-                // We update the Game Shortcut context menu is always updated and correct.
-                if (Program.AppProgramSettings.InstallDesktopContextMenu)
-                {
-                    ContextMenu.UpdateShortcutContextMenu();
-                }
+        /* private void RecenterWindow()
+         {
+             if (Program.AppMainForm is Form)
+             {
+                 // Center the MainAppForm
+                 Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+                 // Also refresh the right-click menu (if we have a main form loaded)
+                 Program.AppMainForm.RefreshNotifyIconMenus();
+                 // We update the Game Shortcut context menu is always updated and correct.
+                 if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                 {
+                     ContextMenu.UpdateShortcutContextMenu();
+                 }
 
-            }
+             }
 
-            // Bring the window back to the front
-            Utils.ActivateCenteredOnPrimaryScreen(this);
+             // Bring the window back to the front
+             Utils.ActivateCenteredOnPrimaryScreen(this);
 
-        }*/
+         }*/
 
 
         private void Exit_Click(object sender, EventArgs e)
@@ -302,7 +303,7 @@ namespace DisplayMagician.UIForms
 
             // Restart updating the saved_profiles listview
             ilv_saved_profiles.ResumeLayout();
-           
+
         }
 
 
@@ -328,7 +329,7 @@ namespace DisplayMagician.UIForms
 
             // If the user is changing profiles right now, then we need to wait until the profile change has finished
             // We need a 30 second timeout in there too, just in case the user is changing profiles and it's taking a long time
-            if (ProfileRepository.UserChangingProfiles) 
+            if (ProfileRepository.UserChangingProfiles)
             {
                 logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Waiting for the User to finish changing profiles before we can load the Display Profile window.");
                 int timeout = 30;
@@ -456,7 +457,7 @@ namespace DisplayMagician.UIForms
 
         }
 
-        
+
 
         private void btn_save_as_Click(object sender, EventArgs e)
         {
@@ -528,7 +529,7 @@ namespace DisplayMagician.UIForms
                         MessageBox.Show("Display Layout image rendering error (ProfileTightestBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-                }               
+                }
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"DisplayProfileForm/btn_save_as_Click: Exception whilst trying to save the display layout. We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
@@ -584,7 +585,7 @@ namespace DisplayMagician.UIForms
 
                 // And we also need to go through the any Shortcuts that use the profile and rename them too!
                 ShortcutRepository.RenameShortcutProfile(_selectedProfile);
-                
+
 
             }
 
@@ -655,11 +656,11 @@ namespace DisplayMagician.UIForms
             if (e.KeyCode.Equals(Keys.Enter))
             {
                 //MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                btn_save_or_rename.PerformClick();                
+                btn_save_or_rename.PerformClick();
             }
         }
 
-        
+
 
         private void ilv_saved_profiles_ItemHover(object sender, ItemHoverEventArgs e)
         {
@@ -704,9 +705,9 @@ namespace DisplayMagician.UIForms
             //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.Changed)
-            {                
+            {
                 UpdateHotkeyText();
-                
+
             }
         }
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
@@ -737,7 +738,7 @@ namespace DisplayMagician.UIForms
             // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
             List<string> hotkeyList = new List<string>();
             if (_shownKeyboardHotkeys.Count > 0)
-            {                
+            {
                 foreach (HotkeyKeyboard kb in _shownKeyboardHotkeys)
                 {
                     hotkeyList.Add(Program.AppDirectInputManager.GetNameOfKeyboardHotkey(kb));
@@ -748,7 +749,7 @@ namespace DisplayMagician.UIForms
                 foreach (HotkeyJoystick kb in _shownJoystickHotkeys)
                 {
                     hotkeyList.Add(Program.AppDirectInputManager.GetNameOfJoystickHotkey(kb));
-                }                
+                }
             }
             string hotkeyText = string.Join(", ", hotkeyList);
             if (hotkeyList.Count > 0)
@@ -800,7 +801,7 @@ namespace DisplayMagician.UIForms
             {
                 //_selectedProfile = profileSettingsForm.Profile;
                 ProfileRepository.SaveProfiles();
-            }                
+            }
         }
 
         private void btn_help_Click(object sender, EventArgs e)
@@ -833,7 +834,7 @@ namespace DisplayMagician.UIForms
         private void ilv_saved_profiles_ItemDoubleClick(object sender, ItemClickEventArgs e)
         {
             // This is the double click to apply
-            _selectedProfile = ProfileRepository.GetProfile(e.Item.Text);            
+            _selectedProfile = ProfileRepository.GetProfile(e.Item.Text);
 
             // Apply the selected profile
             btn_apply.PerformClick();
@@ -849,7 +850,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_update_Click(object sender, EventArgs e)
         {
-            if (ProfileRepository.UserChangingProfiles) 
+            if (ProfileRepository.UserChangingProfiles)
             {
                 logger.Error($"DisplayProfileForm/btn_update_Click: The User is currently changing profiles. We can't update the Display Profile settings until they're finished.");
                 MessageBox.Show("The User is currently changing profiles. We can't update the Display Profile settings until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -898,7 +899,7 @@ namespace DisplayMagician.UIForms
                     RefreshDisplayProfileUI();
                     // Recenter the Window
                     //RecenterWindow();
-                    
+
                     logger.Trace($"DisplayProfileForm/btn_update_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
                     ChangeSelectedProfile(_selectedProfile);
 
@@ -914,5 +915,6 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
+
     }
 }

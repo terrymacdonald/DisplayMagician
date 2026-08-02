@@ -187,6 +187,26 @@
     <Reference Include="WindowsAudioWrapper">
       <HintPath>..\DisplayMagicianShared\DLL\WindowsAudioWrapper.dll</HintPath>
     </Reference>
+	  <Reference Include="ADLXWrapper">
+		  <HintPath>..\DisplayMagicianShared\DLL\ADLXWrapper.dll</HintPath>
+		  <Private>true</Private>
+	  </Reference>
+	  <Reference Include="IGCLWrapper">
+		  <HintPath>..\DisplayMagicianShared\DLL\IGCLWrapper.dll</HintPath>
+		  <Private>true</Private>
+	  </Reference>
+	  <Reference Include="NVAPIWrapper">
+		  <HintPath>..\DisplayMagicianShared\DLL\NVAPIWrapper.dll</HintPath>
+		  <Private>true</Private>
+	  </Reference>
+	  <Reference Include="WindowsAudioWrapper">
+		  <HintPath>..\DisplayMagicianShared\DLL\WindowsAudioWrapper.dll</HintPath>
+		  <Private>true</Private>
+	  </Reference>
+	  <Reference Include="WindowsWallpaperWrapper">
+		  <HintPath>..\DisplayMagicianShared\DLL\WindowsWallpaperWrapper.dll</HintPath>
+		  <Private>true</Private>
+	  </Reference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

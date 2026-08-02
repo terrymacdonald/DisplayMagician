@@ -17,6 +17,7 @@ namespace DisplayMagicianShared.UserControls
         public DisplayView()
         {
             InitializeComponent();
+            this.Font = new Font("Segoe UI", 11);
             ResizeRedraw = true;
         }
 
