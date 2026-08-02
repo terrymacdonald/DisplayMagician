@@ -143,7 +143,7 @@ namespace DisplayMagician.AppLibraries
             }
             else
             {
-                logger.Info($"AppLibrary/GetAppById: Didn't find App {appToUse.Name} from ID {appId}");
+                logger.Info($"AppLibrary/GetAppById: Didn't find App from ID {appId}");
                 
             }
             return appToUse;

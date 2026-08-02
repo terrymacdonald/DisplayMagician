@@ -826,7 +826,7 @@ namespace DisplayMagician.UIForms
                 {
                     ShortcutErrorForm errorForm = new ShortcutErrorForm();
                     errorForm.Errors = errors;
-                    errorForm.ShowDialog(this);
+                    errorForm.ShowDialog();
 
                 }
                 return false;
@@ -2432,7 +2432,7 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            if (exeForm.ShowDialog(this) == DialogResult.OK)
+            if (exeForm.ShowDialog() == DialogResult.OK)
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
@@ -2564,6 +2564,34 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.Enabled = enabled;
         }
 
+        private string PromptForAudioProfileName(string title, string currentValue = "")
+        {
+            using (Form prompt = new Form())
+            {
+                prompt.Width = 520;
+                prompt.Height = 180;
+                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+                prompt.Text = title;
+                prompt.StartPosition = FormStartPosition.CenterParent;
+                prompt.MinimizeBox = false;
+                prompt.MaximizeBox = false;
+
+                Label textLabel = new Label() { Left = 12, Top = 12, Width = 480, Text = "Audio Profile name:" };
+                TextBox inputBox = new TextBox() { Left = 12, Top = 40, Width = 480, Text = currentValue ?? string.Empty };
+                Button confirmation = new Button() { Text = "OK", Left = 326, Width = 80, Top = 80, DialogResult = DialogResult.OK };
+                Button cancel = new Button() { Text = "Cancel", Left = 412, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+
+                prompt.Controls.Add(textLabel);
+                prompt.Controls.Add(inputBox);
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(cancel);
+                prompt.AcceptButton = confirmation;
+                prompt.CancelButton = cancel;
+
+                return prompt.ShowDialog(this) == DialogResult.OK ? inputBox.Text?.Trim() : string.Empty;
+            }
+        }
+
         private void cb_dont_change_audio_CheckedChanged(object sender, EventArgs e)
         {
             if (_loadedShortcut)
@@ -2624,33 +2652,36 @@ namespace DisplayMagician.UIForms
 
         private void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
-            using (AudioProfileNameForm nameForm = new AudioProfileNameForm(AudioProfileNameFormMode.Create))
+            string profileName = PromptForAudioProfileName("Create Audio Profile");
+            if (string.IsNullOrWhiteSpace(profileName))
+                return;
+
+            if (!AudioProfileItem.IsValidName(profileName))
             {
-                nameForm.StartPosition = FormStartPosition.CenterParent;
-                if (nameForm.ShowDialog(this) != DialogResult.OK)
-                    return;
+                MessageBox.Show(this, "That Audio Profile name already exists. Please choose a unique name.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-                AudioProfileItem newAudioProfile = new AudioProfileItem
-                {
-                    Name = nameForm.ProfileName
-                };
+            AudioProfileItem newAudioProfile = new AudioProfileItem
+            {
+                Name = profileName
+            };
 
-                if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
-                {
-                    RefreshAudioProfilesList();
-                    lb_audio_profiles.SelectedItem = newAudioProfile;
-                    _audioProfileToUse = newAudioProfile;
-                    btn_update_audio_profile.Enabled = true;
-                    btn_delete_audio_profile.Enabled = true;
-                    cb_dont_change_audio.Checked = false;
+            if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
+            {
+                RefreshAudioProfilesList();
+                lb_audio_profiles.SelectedItem = newAudioProfile;
+                _audioProfileToUse = newAudioProfile;
+                btn_update_audio_profile.Enabled = true;
+                btn_delete_audio_profile.Enabled = true;
+                cb_dont_change_audio.Checked = false;
 
-                    if (_loadedShortcut)
-                        _isUnsaved = true;
-                }
-                else
-                {
-                    MessageBox.Show(this, "Unable to create the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+            }
+            else
+            {
+                MessageBox.Show(this, "Unable to create the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -3167,7 +3198,7 @@ namespace DisplayMagician.UIForms
                 ChooseImageForm exeIconForm = new ChooseImageForm();
                 exeIconForm.AvailableImages = _availableImages;
                 exeIconForm.SelectedImage = _selectedImage;
-                if (exeIconForm.ShowDialog(this) == DialogResult.OK)
+                if (exeIconForm.ShowDialog() == DialogResult.OK)
                 {
                     if (_loadedShortcut)
                         _isUnsaved = true;
@@ -3186,7 +3217,7 @@ namespace DisplayMagician.UIForms
                 ChooseImageForm gameIconForm = new ChooseImageForm();
                 gameIconForm.AvailableImages = _availableImages;
                 gameIconForm.SelectedImage = _selectedImage;
-                if (gameIconForm.ShowDialog(this) == DialogResult.OK)
+                if (gameIconForm.ShowDialog() == DialogResult.OK)
                 {
                     if (_loadedShortcut)
                         _isUnsaved = true;
