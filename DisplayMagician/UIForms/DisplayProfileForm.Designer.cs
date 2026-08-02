@@ -255,7 +255,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.Name = "ilv_saved_profiles";
             ilv_saved_profiles.PersistentCacheDirectory = "";
             ilv_saved_profiles.PersistentCacheSize = 100L;
-            ilv_saved_profiles.Size = new System.Drawing.Size(1020, 175);
+            ilv_saved_profiles.Size = new System.Drawing.Size(1020, 176);
             ilv_saved_profiles.TabIndex = 21;
             ilv_saved_profiles.UseWIC = true;
             ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -470,7 +470,7 @@ namespace DisplayMagician.UIForms
             p_lower.Controls.Add(btn_save);
             p_lower.Controls.Add(btn_back);
             p_lower.Dock = System.Windows.Forms.DockStyle.Bottom;
-            p_lower.Location = new System.Drawing.Point(0, 812);
+            p_lower.Location = new System.Drawing.Point(0, 813);
             p_lower.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_lower.MaximumSize = new System.Drawing.Size(0, 118);
             p_lower.Name = "p_lower";
@@ -503,7 +503,7 @@ namespace DisplayMagician.UIForms
             p_fill.Location = new System.Drawing.Point(0, 637);
             p_fill.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_fill.Name = "p_fill";
-            p_fill.Size = new System.Drawing.Size(1020, 175);
+            p_fill.Size = new System.Drawing.Size(1020, 176);
             p_fill.TabIndex = 39;
             // 
             // DisplayProfileForm
@@ -514,14 +514,14 @@ namespace DisplayMagician.UIForms
             BackColor = System.Drawing.Color.Black;
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             CancelButton = btn_back;
-            ClientSize = new System.Drawing.Size(1020, 930);
+            ClientSize = new System.Drawing.Size(1020, 931);
             Controls.Add(p_fill);
             Controls.Add(p_lower);
             Controls.Add(p_upper);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
-            MinimumSize = new System.Drawing.Size(1024, 715);
+            MinimumSize = new System.Drawing.Size(1024, 970);
             Name = "DisplayProfileForm";
             ShowIcon = false;
             ShowInTaskbar = false;
