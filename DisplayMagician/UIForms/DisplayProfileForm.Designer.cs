@@ -78,7 +78,7 @@ namespace DisplayMagician.UIForms
             btn_apply.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_apply.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_apply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_apply.ForeColor = System.Drawing.Color.White;
             btn_apply.Location = new System.Drawing.Point(273, 42);
             btn_apply.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -112,7 +112,7 @@ namespace DisplayMagician.UIForms
             btn_delete.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_delete.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_delete.ForeColor = System.Drawing.Color.White;
             btn_delete.Location = new System.Drawing.Point(535, 42);
             btn_delete.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -190,7 +190,7 @@ namespace DisplayMagician.UIForms
             btn_save_or_rename.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_save_or_rename.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_save_or_rename.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_save_or_rename.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_save_or_rename.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_save_or_rename.ForeColor = System.Drawing.Color.White;
             btn_save_or_rename.Location = new System.Drawing.Point(133, 550);
             btn_save_or_rename.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -315,7 +315,7 @@ namespace DisplayMagician.UIForms
             btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_save.ForeColor = System.Drawing.Color.White;
             btn_save.Location = new System.Drawing.Point(668, 42);
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -339,7 +339,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_hotkey.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_hotkey.ForeColor = System.Drawing.Color.White;
             btn_hotkey.Location = new System.Drawing.Point(138, 42);
             btn_hotkey.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -434,7 +434,7 @@ namespace DisplayMagician.UIForms
             btn_profile_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_profile_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_profile_settings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_profile_settings.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_profile_settings.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_profile_settings.ForeColor = System.Drawing.Color.White;
             btn_profile_settings.Location = new System.Drawing.Point(713, 550);
             btn_profile_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -484,7 +484,7 @@ namespace DisplayMagician.UIForms
             btn_update.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_update.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_update.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_update.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            btn_update.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_update.ForeColor = System.Drawing.Color.White;
             btn_update.Location = new System.Drawing.Point(403, 42);
             btn_update.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
