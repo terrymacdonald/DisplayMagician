@@ -400,7 +400,7 @@ namespace DisplayMagician.UIForms
             btn_donate.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_donate.ForeColor = System.Drawing.Color.White;
             btn_donate.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_donate.Location = new System.Drawing.Point(928, 78);
+            btn_donate.Location = new System.Drawing.Point(842, 78);
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(78, 29);
@@ -418,7 +418,7 @@ namespace DisplayMagician.UIForms
             btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_help.ForeColor = System.Drawing.Color.White;
             btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_help.Location = new System.Drawing.Point(844, 78);
+            btn_help.Location = new System.Drawing.Point(928, 78);
             btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_help.Name = "btn_help";
             btn_help.Size = new System.Drawing.Size(78, 29);

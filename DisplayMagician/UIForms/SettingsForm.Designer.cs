@@ -77,13 +77,13 @@ namespace DisplayMagician.UIForms
             // 
             // btn_back
             // 
-            btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1396, 705);
+            btn_back.Location = new System.Drawing.Point(1396, 709);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -94,6 +94,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            gb_general.Anchor = System.Windows.Forms.AnchorStyles.None;
             gb_general.Controls.Add(label7);
             gb_general.Controls.Add(nud_audio_device_wait);
             gb_general.Controls.Add(label5);
@@ -350,6 +351,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_hotkeys
             // 
+            gb_hotkeys.Anchor = System.Windows.Forms.AnchorStyles.None;
             gb_hotkeys.Controls.Add(lbl_hotkey_exit);
             gb_hotkeys.Controls.Add(btn_hotkey_exit);
             gb_hotkeys.Controls.Add(lbl_hotkey_exit_app);
@@ -523,6 +525,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_upgrades
             // 
+            gb_upgrades.Anchor = System.Windows.Forms.AnchorStyles.None;
             gb_upgrades.Controls.Add(cb_upgrade_enabled);
             gb_upgrades.Controls.Add(label2);
             gb_upgrades.Controls.Add(cb_upgrade_prerelease);
@@ -582,6 +585,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_support
             // 
+            gb_support.Anchor = System.Windows.Forms.AnchorStyles.None;
             gb_support.Controls.Add(btn_create_support_package);
             gb_support.Controls.Add(label3);
             gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -628,7 +632,7 @@ namespace DisplayMagician.UIForms
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1515, 763);
+            ClientSize = new System.Drawing.Size(1528, 767);
             Controls.Add(gb_support);
             Controls.Add(gb_upgrades);
             Controls.Add(gb_hotkeys);
@@ -639,6 +643,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
+            MinimumSize = new System.Drawing.Size(1544, 806);
             Name = "SettingsForm";
             ShowIcon = false;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;

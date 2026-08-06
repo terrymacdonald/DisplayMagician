@@ -1,4 +1,4 @@
-
+﻿
 namespace DisplayMagician.UIForms
 {
     partial class ChooseImageForm
@@ -46,15 +46,15 @@ namespace DisplayMagician.UIForms
             // 
             // lv_icons
             // 
-            lv_icons.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            lv_icons.Anchor = System.Windows.Forms.AnchorStyles.None;
             lv_icons.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] { columnHeaderName, columnHeaderSize });
             lv_icons.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-            lv_icons.Location = new System.Drawing.Point(30, 46);
+            lv_icons.Location = new System.Drawing.Point(17, 42);
             lv_icons.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             lv_icons.MultiSelect = false;
             lv_icons.Name = "lv_icons";
             lv_icons.ShowGroups = false;
-            lv_icons.Size = new System.Drawing.Size(431, 240);
+            lv_icons.Size = new System.Drawing.Size(344, 230);
             lv_icons.TabIndex = 0;
             lv_icons.UseCompatibleStateImageBehavior = false;
             lv_icons.View = System.Windows.Forms.View.Details;
@@ -72,23 +72,24 @@ namespace DisplayMagician.UIForms
             // 
             // pb_selected_icon
             // 
-            pb_selected_icon.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            pb_selected_icon.Anchor = System.Windows.Forms.AnchorStyles.None;
             pb_selected_icon.BackColor = System.Drawing.Color.DimGray;
-            pb_selected_icon.Location = new System.Drawing.Point(469, 46);
+            pb_selected_icon.Location = new System.Drawing.Point(381, 42);
             pb_selected_icon.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             pb_selected_icon.Name = "pb_selected_icon";
-            pb_selected_icon.Size = new System.Drawing.Size(233, 240);
-            pb_selected_icon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_selected_icon.Size = new System.Drawing.Size(233, 231);
+            pb_selected_icon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             pb_selected_icon.TabIndex = 1;
             pb_selected_icon.TabStop = false;
             // 
             // label1
             // 
+            label1.Anchor = System.Windows.Forms.AnchorStyles.Top;
             label1.AutoSize = true;
             label1.BackColor = System.Drawing.Color.Black;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label1.ForeColor = System.Drawing.Color.White;
-            label1.Location = new System.Drawing.Point(126, 24);
+            label1.Location = new System.Drawing.Point(108, 23);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(137, 16);
@@ -98,12 +99,12 @@ namespace DisplayMagician.UIForms
             // 
             // label2
             // 
-            label2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            label2.Anchor = System.Windows.Forms.AnchorStyles.Top;
             label2.AutoSize = true;
             label2.BackColor = System.Drawing.Color.Black;
             label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label2.ForeColor = System.Drawing.Color.White;
-            label2.Location = new System.Drawing.Point(533, 24);
+            label2.Location = new System.Drawing.Point(445, 23);
             label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(105, 16);
@@ -113,11 +114,12 @@ namespace DisplayMagician.UIForms
             // 
             // btn_add
             // 
-            btn_add.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            btn_add.Anchor = System.Windows.Forms.AnchorStyles.None;
             btn_add.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_add.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_add.ForeColor = System.Drawing.Color.White;
-            btn_add.Location = new System.Drawing.Point(30, 301);
+            btn_add.ImageAlign = System.Drawing.ContentAlignment.BottomRight;
+            btn_add.Location = new System.Drawing.Point(17, 287);
             btn_add.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_add.Name = "btn_add";
             btn_add.Size = new System.Drawing.Size(100, 35);
@@ -128,11 +130,11 @@ namespace DisplayMagician.UIForms
             // 
             // btn_select
             // 
-            btn_select.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_select.Anchor = System.Windows.Forms.AnchorStyles.None;
             btn_select.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_select.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_select.ForeColor = System.Drawing.Color.White;
-            btn_select.Location = new System.Drawing.Point(356, 301);
+            btn_select.Location = new System.Drawing.Point(265, 287);
             btn_select.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_select.Name = "btn_select";
             btn_select.Size = new System.Drawing.Size(208, 35);
@@ -147,10 +149,10 @@ namespace DisplayMagician.UIForms
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(612, 301);
+            btn_back.Location = new System.Drawing.Point(526, 320);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
-            btn_back.Size = new System.Drawing.Size(92, 35);
+            btn_back.Size = new System.Drawing.Size(88, 27);
             btn_back.TabIndex = 41;
             btn_back.Text = "Back";
             btn_back.UseVisualStyleBackColor = true;
@@ -162,11 +164,11 @@ namespace DisplayMagician.UIForms
             // 
             // btn_remove
             // 
-            btn_remove.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            btn_remove.Anchor = System.Windows.Forms.AnchorStyles.None;
             btn_remove.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_remove.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_remove.ForeColor = System.Drawing.Color.White;
-            btn_remove.Location = new System.Drawing.Point(152, 301);
+            btn_remove.Location = new System.Drawing.Point(125, 287);
             btn_remove.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_remove.Name = "btn_remove";
             btn_remove.Size = new System.Drawing.Size(132, 35);
@@ -177,10 +179,10 @@ namespace DisplayMagician.UIForms
             // 
             // ChooseImageForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(734, 357);
+            ClientSize = new System.Drawing.Size(631, 360);
             Controls.Add(btn_remove);
             Controls.Add(btn_back);
             Controls.Add(btn_select);
@@ -194,6 +196,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
+            MinimumSize = new System.Drawing.Size(647, 399);
             Name = "ChooseImageForm";
             ShowIcon = false;
             ShowInTaskbar = false;

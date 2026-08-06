@@ -70,7 +70,7 @@
             ilv_saved_shortcuts.Name = "ilv_saved_shortcuts";
             ilv_saved_shortcuts.PersistentCacheDirectory = "";
             ilv_saved_shortcuts.PersistentCacheSize = 100L;
-            ilv_saved_shortcuts.Size = new System.Drawing.Size(1323, 591);
+            ilv_saved_shortcuts.Size = new System.Drawing.Size(1020, 696);
             ilv_saved_shortcuts.TabIndex = 22;
             ilv_saved_shortcuts.UseWIC = true;
             ilv_saved_shortcuts.ItemClick += ilv_saved_shortcuts_ItemClick;
@@ -85,10 +85,10 @@
             btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_delete.ForeColor = System.Drawing.Color.White;
-            btn_delete.Location = new System.Drawing.Point(440, 742);
+            btn_delete.Location = new System.Drawing.Point(328, 842);
             btn_delete.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_delete.Name = "btn_delete";
-            btn_delete.Size = new System.Drawing.Size(140, 36);
+            btn_delete.Size = new System.Drawing.Size(128, 40);
             btn_delete.TabIndex = 26;
             btn_delete.Text = "&Delete";
             btn_delete.UseVisualStyleBackColor = true;
@@ -103,7 +103,7 @@
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1222, 786);
+            btn_back.Location = new System.Drawing.Point(919, 891);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -121,10 +121,10 @@
             btn_run.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_run.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_run.ForeColor = System.Drawing.Color.White;
-            btn_run.Location = new System.Drawing.Point(734, 742);
+            btn_run.Location = new System.Drawing.Point(600, 842);
             btn_run.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_run.Name = "btn_run";
-            btn_run.Size = new System.Drawing.Size(140, 36);
+            btn_run.Size = new System.Drawing.Size(128, 40);
             btn_run.TabIndex = 25;
             btn_run.Text = "&Run";
             btn_run.UseVisualStyleBackColor = false;
@@ -139,10 +139,10 @@
             btn_edit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_edit.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_edit.ForeColor = System.Drawing.Color.White;
-            btn_edit.Location = new System.Drawing.Point(293, 742);
+            btn_edit.Location = new System.Drawing.Point(192, 842);
             btn_edit.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_edit.Name = "btn_edit";
-            btn_edit.Size = new System.Drawing.Size(140, 36);
+            btn_edit.Size = new System.Drawing.Size(128, 40);
             btn_edit.TabIndex = 28;
             btn_edit.Text = "&Edit";
             btn_edit.UseVisualStyleBackColor = false;
@@ -157,10 +157,10 @@
             btn_new.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_new.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_new.ForeColor = System.Drawing.Color.White;
-            btn_new.Location = new System.Drawing.Point(146, 742);
+            btn_new.Location = new System.Drawing.Point(56, 842);
             btn_new.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_new.Name = "btn_new";
-            btn_new.Size = new System.Drawing.Size(140, 36);
+            btn_new.Size = new System.Drawing.Size(128, 40);
             btn_new.TabIndex = 29;
             btn_new.Text = "&New";
             btn_new.UseVisualStyleBackColor = false;
@@ -175,10 +175,10 @@
             btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_save.ForeColor = System.Drawing.Color.White;
-            btn_save.Location = new System.Drawing.Point(881, 742);
+            btn_save.Location = new System.Drawing.Point(736, 842);
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
-            btn_save.Size = new System.Drawing.Size(246, 36);
+            btn_save.Size = new System.Drawing.Size(228, 40);
             btn_save.TabIndex = 30;
             btn_save.Text = "&Save to Desktop";
             btn_save.UseVisualStyleBackColor = false;
@@ -197,7 +197,7 @@
             label1.AutoSize = true;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label1.ForeColor = System.Drawing.Color.White;
-            label1.Location = new System.Drawing.Point(475, 38);
+            label1.Location = new System.Drawing.Point(356, 38);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(309, 33);
@@ -213,7 +213,7 @@
             lbl_create_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
             lbl_create_shortcut.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_create_shortcut.Location = new System.Drawing.Point(482, 648);
+            lbl_create_shortcut.Location = new System.Drawing.Point(331, 753);
             lbl_create_shortcut.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_create_shortcut.Name = "lbl_create_shortcut";
             lbl_create_shortcut.Size = new System.Drawing.Size(304, 22);
@@ -272,14 +272,14 @@
             // 
             // lbl_mask
             // 
-            lbl_mask.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            lbl_mask.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_mask.BackColor = System.Drawing.Color.Gray;
             lbl_mask.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_mask.ForeColor = System.Drawing.Color.White;
-            lbl_mask.Location = new System.Drawing.Point(420, 353);
+            lbl_mask.Location = new System.Drawing.Point(414, 478);
             lbl_mask.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_mask.Name = "lbl_mask";
-            lbl_mask.Size = new System.Drawing.Size(484, 120);
+            lbl_mask.Size = new System.Drawing.Size(182, 8);
             lbl_mask.TabIndex = 33;
             lbl_mask.Text = "lbl_masked_form";
             lbl_mask.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -294,7 +294,7 @@
             btn_help.Font = new System.Drawing.Font("Segoe UI", 9F);
             btn_help.ForeColor = System.Drawing.Color.White;
             btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_help.Location = new System.Drawing.Point(1127, 14);
+            btn_help.Location = new System.Drawing.Point(919, 14);
             btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_help.Name = "btn_help";
             btn_help.Size = new System.Drawing.Size(88, 27);
@@ -312,7 +312,7 @@
             btn_donate.Font = new System.Drawing.Font("Segoe UI", 9F);
             btn_donate.ForeColor = System.Drawing.Color.White;
             btn_donate.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_donate.Location = new System.Drawing.Point(1222, 14);
+            btn_donate.Location = new System.Drawing.Point(823, 14);
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(88, 27);
@@ -330,10 +330,10 @@
             btn_copy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_copy.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_copy.ForeColor = System.Drawing.Color.White;
-            btn_copy.Location = new System.Drawing.Point(587, 742);
+            btn_copy.Location = new System.Drawing.Point(464, 842);
             btn_copy.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_copy.Name = "btn_copy";
-            btn_copy.Size = new System.Drawing.Size(140, 36);
+            btn_copy.Size = new System.Drawing.Size(128, 40);
             btn_copy.TabIndex = 36;
             btn_copy.Text = "&Copy";
             btn_copy.UseVisualStyleBackColor = false;
@@ -349,7 +349,7 @@
             btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_cancel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_cancel.ForeColor = System.Drawing.Color.White;
-            btn_cancel.Location = new System.Drawing.Point(587, 563);
+            btn_cancel.Location = new System.Drawing.Point(440, 668);
             btn_cancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_cancel.Name = "btn_cancel";
             btn_cancel.Size = new System.Drawing.Size(140, 42);
@@ -366,7 +366,7 @@
             BackColor = System.Drawing.Color.Black;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(1323, 826);
+            ClientSize = new System.Drawing.Size(1020, 931);
             Controls.Add(btn_cancel);
             Controls.Add(btn_copy);
             Controls.Add(btn_donate);
@@ -384,8 +384,7 @@
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
-            MaximumSize = new System.Drawing.Size(1339, 865);
-            MinimumSize = new System.Drawing.Size(987, 444);
+            MinimumSize = new System.Drawing.Size(950, 652);
             Name = "ShortcutLibraryForm";
             ShowIcon = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
