@@ -36,56 +36,57 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_title
             // 
+            lbl_title.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_title.BackColor = System.Drawing.Color.Black;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(42, 30);
-            lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_title.Location = new System.Drawing.Point(40, 21);
+            lbl_title.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_title.Name = "lbl_title";
-            lbl_title.Size = new System.Drawing.Size(405, 35);
+            lbl_title.Size = new System.Drawing.Size(554, 60);
             lbl_title.TabIndex = 2;
-            lbl_title.Text = "Scanning  your Apps and Games...";
+            lbl_title.Text = "Scanning your Apps and Games...";
             lbl_title.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lbl_title.UseWaitCursor = true;
             // 
             // lbl_description
             // 
+            lbl_description.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_description.BackColor = System.Drawing.Color.WhiteSmoke;
             lbl_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_description.Location = new System.Drawing.Point(42, 65);
-            lbl_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_description.Location = new System.Drawing.Point(40, 81);
+            lbl_description.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_description.Name = "lbl_description";
-            lbl_description.Size = new System.Drawing.Size(405, 55);
+            lbl_description.Size = new System.Drawing.Size(554, 75);
             lbl_description.TabIndex = 3;
-            lbl_description.Text = "If you have installed a lot of games over time or have a lot of games installed now, this may take a while!";
+            lbl_description.Text = "Please wait. If you have installed a lot of games in the past or now, this may take a while.";
             lbl_description.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lbl_description.UseWaitCursor = true;
             // 
             // ShortcutLoadingForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
-            BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            ClientSize = new System.Drawing.Size(488, 149);
+            BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            ClientSize = new System.Drawing.Size(628, 213);
             ControlBox = false;
             Controls.Add(lbl_description);
             Controls.Add(lbl_title);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
-            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             MaximizeBox = false;
-            MaximumSize = new System.Drawing.Size(504, 188);
+            MaximumSize = new System.Drawing.Size(804, 403);
             MinimizeBox = false;
-            MinimumSize = new System.Drawing.Size(504, 188);
+            MinimumSize = new System.Drawing.Size(598, 219);
             Name = "ShortcutLoadingForm";
             ShowIcon = false;
             ShowInTaskbar = false;
-            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "DisplayMagician is scanning your Apps and Games....";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "DisplayMagician is loading....";
             UseWaitCursor = true;
             Load += LoadingForm_Load;
-            Shown += ShortcutLoadingForm_Shown;
             ResumeLayout(false);
 
         }

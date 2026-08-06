@@ -14,17 +14,11 @@ namespace DisplayMagician.UIForms
     {
         private string _title = "DisplayMagician is loading...";
         private string _description = "If you have installed a lot of games over time or have a lot of games installed now, this may take a while!";
-        private Point _wantedLocation = new Point(0, 0);
 
         public ShortcutLoadingForm()
         {
             InitializeComponent();
-            this.StartPosition = FormStartPosition.Manual;
-            /*_owner = owner;            
-            int resultX = _owner.DisplayRectangle.X + _owner.Width - this.Width;
-            int resultY = _owner.DisplayRectangle.Y + _owner.Height - this.Height;
-            _owner.Location = new Point(resultX, resultY);*/
-            this.TopMost = true;
+            this.TopMost = false;
         }
 
 
@@ -57,23 +51,10 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public Point WantedLocation
-        {
-            set
-            {
-                _wantedLocation = value;
-            }
-        }
 
         private void LoadingForm_Load(object sender, EventArgs e)
         {
-            DesktopLocation = _wantedLocation;
-        }
 
-        private void ShortcutLoadingForm_Shown(object sender, EventArgs e)
-        {
-            DesktopLocation = _wantedLocation;
         }
 
     }

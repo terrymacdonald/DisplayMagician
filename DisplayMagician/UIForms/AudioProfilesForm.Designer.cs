@@ -62,7 +62,7 @@ namespace DisplayMagician.UIForms
             tlpMain.RowCount = 2;
             tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            tlpMain.Size = new System.Drawing.Size(1200, 700);
+            tlpMain.Size = new System.Drawing.Size(1144, 601);
             tlpMain.TabIndex = 0;
             // 
             // tlpContent
@@ -74,11 +74,10 @@ namespace DisplayMagician.UIForms
             tlpContent.Controls.Add(gb_selected_audio_settings, 1, 0);
             tlpContent.Dock = System.Windows.Forms.DockStyle.Fill;
             tlpContent.Location = new System.Drawing.Point(3, 3);
-            tlpContent.Margin = new System.Windows.Forms.Padding(3);
             tlpContent.Name = "tlpContent";
             tlpContent.RowCount = 1;
             tlpContent.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            tlpContent.Size = new System.Drawing.Size(1194, 640);
+            tlpContent.Size = new System.Drawing.Size(1138, 550);
             tlpContent.TabIndex = 0;
             // 
             // tlpLeft
@@ -94,7 +93,6 @@ namespace DisplayMagician.UIForms
             tlpLeft.Controls.Add(btn_delete_audio_profile, 0, 6);
             tlpLeft.Dock = System.Windows.Forms.DockStyle.Fill;
             tlpLeft.Location = new System.Drawing.Point(3, 3);
-            tlpLeft.Margin = new System.Windows.Forms.Padding(3);
             tlpLeft.Name = "tlpLeft";
             tlpLeft.RowCount = 7;
             tlpLeft.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -104,7 +102,7 @@ namespace DisplayMagician.UIForms
             tlpLeft.RowStyles.Add(new System.Windows.Forms.RowStyle());
             tlpLeft.RowStyles.Add(new System.Windows.Forms.RowStyle());
             tlpLeft.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            tlpLeft.Size = new System.Drawing.Size(411, 634);
+            tlpLeft.Size = new System.Drawing.Size(392, 544);
             tlpLeft.TabIndex = 0;
             // 
             // lbl_audio_profiles
@@ -116,7 +114,7 @@ namespace DisplayMagician.UIForms
             lbl_audio_profiles.Location = new System.Drawing.Point(3, 3);
             lbl_audio_profiles.Margin = new System.Windows.Forms.Padding(3, 3, 3, 6);
             lbl_audio_profiles.Name = "lbl_audio_profiles";
-            lbl_audio_profiles.Size = new System.Drawing.Size(405, 37);
+            lbl_audio_profiles.Size = new System.Drawing.Size(386, 19);
             lbl_audio_profiles.TabIndex = 0;
             lbl_audio_profiles.Text = "Select an Audio Profile to manage:";
             lbl_audio_profiles.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -129,10 +127,9 @@ namespace DisplayMagician.UIForms
             lb_audio_profiles.Font = new System.Drawing.Font("Segoe UI", 10.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lb_audio_profiles.ForeColor = System.Drawing.Color.Black;
             lb_audio_profiles.FormattingEnabled = true;
-            lb_audio_profiles.Location = new System.Drawing.Point(3, 49);
-            lb_audio_profiles.Margin = new System.Windows.Forms.Padding(3);
+            lb_audio_profiles.Location = new System.Drawing.Point(3, 31);
             lb_audio_profiles.Name = "lb_audio_profiles";
-            lb_audio_profiles.Size = new System.Drawing.Size(405, 357);
+            lb_audio_profiles.Size = new System.Drawing.Size(386, 240);
             lb_audio_profiles.TabIndex = 1;
             lb_audio_profiles.SelectedIndexChanged += lb_audio_profiles_SelectedIndexChanged;
             // 
@@ -144,10 +141,10 @@ namespace DisplayMagician.UIForms
             btn_create_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_create_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_create_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_create_audio_profile.Location = new System.Drawing.Point(3, 415);
+            btn_create_audio_profile.Location = new System.Drawing.Point(3, 278);
             btn_create_audio_profile.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             btn_create_audio_profile.Name = "btn_create_audio_profile";
-            btn_create_audio_profile.Size = new System.Drawing.Size(405, 46);
+            btn_create_audio_profile.Size = new System.Drawing.Size(386, 46);
             btn_create_audio_profile.TabIndex = 2;
             btn_create_audio_profile.Text = "&Create New Profile from Current Audio";
             btn_create_audio_profile.UseVisualStyleBackColor = true;
@@ -162,10 +159,10 @@ namespace DisplayMagician.UIForms
             btn_update_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_update_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_update_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_update_audio_profile.Location = new System.Drawing.Point(3, 469);
+            btn_update_audio_profile.Location = new System.Drawing.Point(3, 332);
             btn_update_audio_profile.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             btn_update_audio_profile.Name = "btn_update_audio_profile";
-            btn_update_audio_profile.Size = new System.Drawing.Size(405, 46);
+            btn_update_audio_profile.Size = new System.Drawing.Size(386, 46);
             btn_update_audio_profile.TabIndex = 3;
             btn_update_audio_profile.Text = "&Update Profile from Current Audio";
             btn_update_audio_profile.UseVisualStyleBackColor = true;
@@ -180,10 +177,10 @@ namespace DisplayMagician.UIForms
             btn_apply_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_apply_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_apply_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_apply_audio_profile.Location = new System.Drawing.Point(3, 523);
+            btn_apply_audio_profile.Location = new System.Drawing.Point(3, 386);
             btn_apply_audio_profile.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             btn_apply_audio_profile.Name = "btn_apply_audio_profile";
-            btn_apply_audio_profile.Size = new System.Drawing.Size(405, 46);
+            btn_apply_audio_profile.Size = new System.Drawing.Size(386, 46);
             btn_apply_audio_profile.TabIndex = 4;
             btn_apply_audio_profile.Text = "&Apply Selected Profile";
             btn_apply_audio_profile.UseVisualStyleBackColor = true;
@@ -198,10 +195,10 @@ namespace DisplayMagician.UIForms
             btn_rename_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_rename_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_rename_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_rename_audio_profile.Location = new System.Drawing.Point(3, 577);
+            btn_rename_audio_profile.Location = new System.Drawing.Point(3, 440);
             btn_rename_audio_profile.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             btn_rename_audio_profile.Name = "btn_rename_audio_profile";
-            btn_rename_audio_profile.Size = new System.Drawing.Size(405, 46);
+            btn_rename_audio_profile.Size = new System.Drawing.Size(386, 46);
             btn_rename_audio_profile.TabIndex = 5;
             btn_rename_audio_profile.Text = "&Rename Selected Profile";
             btn_rename_audio_profile.UseVisualStyleBackColor = true;
@@ -216,10 +213,10 @@ namespace DisplayMagician.UIForms
             btn_delete_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_delete_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_delete_audio_profile.ForeColor = System.Drawing.Color.White;
-            btn_delete_audio_profile.Location = new System.Drawing.Point(3, 585);
+            btn_delete_audio_profile.Location = new System.Drawing.Point(3, 494);
             btn_delete_audio_profile.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             btn_delete_audio_profile.Name = "btn_delete_audio_profile";
-            btn_delete_audio_profile.Size = new System.Drawing.Size(405, 46);
+            btn_delete_audio_profile.Size = new System.Drawing.Size(386, 46);
             btn_delete_audio_profile.TabIndex = 6;
             btn_delete_audio_profile.Text = "&Delete Selected Profile";
             btn_delete_audio_profile.UseVisualStyleBackColor = true;
@@ -232,11 +229,10 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.Enabled = false;
             gb_selected_audio_settings.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_selected_audio_settings.ForeColor = System.Drawing.Color.White;
-            gb_selected_audio_settings.Location = new System.Drawing.Point(420, 3);
-            gb_selected_audio_settings.Margin = new System.Windows.Forms.Padding(3);
+            gb_selected_audio_settings.Location = new System.Drawing.Point(401, 3);
             gb_selected_audio_settings.Name = "gb_selected_audio_settings";
             gb_selected_audio_settings.Padding = new System.Windows.Forms.Padding(6);
-            gb_selected_audio_settings.Size = new System.Drawing.Size(771, 634);
+            gb_selected_audio_settings.Size = new System.Drawing.Size(734, 544);
             gb_selected_audio_settings.TabIndex = 1;
             gb_selected_audio_settings.TabStop = false;
             gb_selected_audio_settings.Text = "Selected Audio Profile Settings";
@@ -249,13 +245,13 @@ namespace DisplayMagician.UIForms
             txt_audio_profile_settings.BackColor = System.Drawing.Color.White;
             txt_audio_profile_settings.Dock = System.Windows.Forms.DockStyle.Fill;
             txt_audio_profile_settings.ForeColor = System.Drawing.Color.Black;
-            txt_audio_profile_settings.Location = new System.Drawing.Point(6, 30);
+            txt_audio_profile_settings.Location = new System.Drawing.Point(6, 22);
             txt_audio_profile_settings.Margin = new System.Windows.Forms.Padding(6);
             txt_audio_profile_settings.Multiline = true;
             txt_audio_profile_settings.Name = "txt_audio_profile_settings";
             txt_audio_profile_settings.ReadOnly = true;
             txt_audio_profile_settings.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txt_audio_profile_settings.Size = new System.Drawing.Size(759, 598);
+            txt_audio_profile_settings.Size = new System.Drawing.Size(722, 516);
             txt_audio_profile_settings.TabIndex = 0;
             // 
             // flpBottom
@@ -264,11 +260,10 @@ namespace DisplayMagician.UIForms
             flpBottom.Controls.Add(btn_back);
             flpBottom.Dock = System.Windows.Forms.DockStyle.Fill;
             flpBottom.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
-            flpBottom.Location = new System.Drawing.Point(3, 649);
-            flpBottom.Margin = new System.Windows.Forms.Padding(3);
+            flpBottom.Location = new System.Drawing.Point(3, 559);
             flpBottom.Name = "flpBottom";
             flpBottom.Padding = new System.Windows.Forms.Padding(3);
-            flpBottom.Size = new System.Drawing.Size(1194, 48);
+            flpBottom.Size = new System.Drawing.Size(1138, 39);
             flpBottom.TabIndex = 1;
             // 
             // btn_back
@@ -277,12 +272,11 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_back.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_back.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1087, 6);
-            btn_back.Margin = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            btn_back.Location = new System.Drawing.Point(1041, 6);
             btn_back.Name = "btn_back";
-            btn_back.Size = new System.Drawing.Size(95, 36);
+            btn_back.Size = new System.Drawing.Size(88, 27);
             btn_back.TabIndex = 7;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
@@ -290,10 +284,10 @@ namespace DisplayMagician.UIForms
             // 
             // AudioProfilesForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1200, 700);
+            ClientSize = new System.Drawing.Size(1144, 601);
             Controls.Add(tlpMain);
             Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             Margin = new System.Windows.Forms.Padding(7, 6, 7, 6);
@@ -302,18 +296,15 @@ namespace DisplayMagician.UIForms
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Audio Profiles";
             Load += AudioProfilesForm_Load;
-            flpBottom.ResumeLayout(false);
-            flpBottom.PerformLayout();
-            gb_selected_audio_settings.ResumeLayout(false);
-            gb_selected_audio_settings.PerformLayout();
-            tlpLeft.ResumeLayout(false);
-            tlpLeft.PerformLayout();
-            tlpContent.ResumeLayout(false);
-            tlpContent.PerformLayout();
             tlpMain.ResumeLayout(false);
             tlpMain.PerformLayout();
+            tlpContent.ResumeLayout(false);
+            tlpLeft.ResumeLayout(false);
+            tlpLeft.PerformLayout();
+            gb_selected_audio_settings.ResumeLayout(false);
+            gb_selected_audio_settings.PerformLayout();
+            flpBottom.ResumeLayout(false);
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
