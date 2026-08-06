@@ -37,7 +37,7 @@ namespace DisplayMagician.UIForms
 
         private DateTime _lastNonEmptyPressTime = DateTime.MinValue;
         private const double _gracePeriodMilliseconds = 10000; // 10 seconds
-        private TimeSpan _gracePeriod = TimeSpan.FromMilliseconds(_gracePeriodMilliseconds);       
+        private TimeSpan _gracePeriod = TimeSpan.FromMilliseconds(_gracePeriodMilliseconds);
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public List<HotkeyKeyboard> ShownKeyboardHotkeys
@@ -222,7 +222,7 @@ namespace DisplayMagician.UIForms
             // Load the list with any pre-existing hotkeys we have been given
             // Check if the hotkey is a keyboard hotkey or a joystick hotkey, and add it to the list of hotkeys
             if (_shownKeyboardHotkeys.Any())
-            {                
+            {
                 foreach (var existingHotkey in _shownKeyboardHotkeys)
                 {
                     ListViewItem lvItem = new ListViewItem("");
@@ -234,7 +234,7 @@ namespace DisplayMagician.UIForms
                 }
             }
             if (_shownJoystickHotkeys.Any())
-            {               
+            {
                 foreach (var existingHotkey in _shownJoystickHotkeys)
                 {
                     ListViewItem lvItem = new ListViewItem("");
@@ -301,7 +301,7 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            
+
             // Check if the hotkey is a keyboard hotkey or a joystick hotkey, and add it to the list of hotkeys
             if (_displayedKeys.Any())
             {
@@ -412,7 +412,7 @@ namespace DisplayMagician.UIForms
                             logger.Warn($"HotkeyForm/CaptureLoop: Couldn't Acquire the joystick to poll it a second time to get the joystick data.");
                             break;
                         }
-                            
+
                     }
 
                     try
@@ -493,7 +493,7 @@ namespace DisplayMagician.UIForms
                     txt_hotkey.Text = hotkeyText;
                 }
             }
-            
+
         }
 
         /* private void GenerateInvalidModifiers()
@@ -628,5 +628,6 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
+
     }
 }

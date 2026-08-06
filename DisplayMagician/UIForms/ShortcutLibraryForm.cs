@@ -322,7 +322,7 @@ namespace DisplayMagician.UIForms
             Program.AppShortcutLoadingSplashScreen.Description = "Getting the Shortcut information ready for you to edit. Scanning your computer for all Games and Apps so you can choose them from a list.";
             int resultX = this.DesktopLocation.X + ((this.Width - Program.AppShortcutLoadingSplashScreen.Width) / 2);
             int resultY = this.DesktopLocation.Y + ((this.Height - Program.AppShortcutLoadingSplashScreen.Height) / 2);
-            Program.AppShortcutLoadingSplashScreen.WantedLocation = new Point(resultX, resultY);
+            //Program.AppShortcutLoadingSplashScreen.WantedLocation = new Point(resultX, resultY);
             //_loadingScreen.CenterParent(ownerRect);
             //_loadingScreen.StartPosition = FormStartPosition.Manual;
             var splashThread = new Thread(new ThreadStart(

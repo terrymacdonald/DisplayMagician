@@ -28,6 +28,10 @@
 	  <GenerateResourceDesigner>true</GenerateResourceDesigner>
 	  <EnableWinFormsAnalyzers>true</EnableWinFormsAnalyzers>
 	  <UseWinForms>true</UseWinForms>
+	  <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+	  <ApplicationVisualStyles>true</ApplicationVisualStyles>
+	  <ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
+	  <ApplicationDefaultFont>Microsoft Sans Serif, 9pt</ApplicationDefaultFont>
 	  <!-- Set this to prevent target framework and runtime subfolders -->
 	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>

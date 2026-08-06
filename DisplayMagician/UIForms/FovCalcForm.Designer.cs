@@ -1,4 +1,4 @@
-namespace DisplayMagician.UIForms
+﻿namespace DisplayMagician.UIForms
 {
     partial class FovCalcForm
     {
@@ -29,9 +29,6 @@ namespace DisplayMagician.UIForms
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FovCalcForm));
-            tlpMain = new System.Windows.Forms.TableLayoutPanel();
-            flp_header = new System.Windows.Forms.FlowLayoutPanel();
-            flp_bottom = new System.Windows.Forms.FlowLayoutPanel();
             btn_back = new System.Windows.Forms.Button();
             pnl_fov = new System.Windows.Forms.Panel();
             split_fov = new System.Windows.Forms.SplitContainer();
@@ -70,69 +67,24 @@ namespace DisplayMagician.UIForms
             lbl_title = new System.Windows.Forms.Label();
             lbl_about_fov = new System.Windows.Forms.Label();
             pnl_fov.SuspendLayout();
-            flp_header.SuspendLayout();
-            flp_bottom.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)split_fov).BeginInit();
             split_fov.Panel1.SuspendLayout();
             split_fov.Panel2.SuspendLayout();
             split_fov.SuspendLayout();
             SuspendLayout();
             // 
-            // flp_header
-            // 
-            flp_header.Controls.Add(lbl_title);
-            flp_header.Dock = System.Windows.Forms.DockStyle.Fill;
-            flp_header.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            flp_header.Location = new System.Drawing.Point(3, 3);
-            flp_header.Name = "flp_header";
-            flp_header.Size = new System.Drawing.Size(1294, 96);
-            flp_header.TabIndex = 0;
-            // 
-            // lbl_title
-            // 
-            lbl_title.AutoSize = true;
-            lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(470, 0);
-            lbl_title.Name = "lbl_title";
-            lbl_title.Size = new System.Drawing.Size(276, 29);
-            lbl_title.TabIndex = 20;
-            lbl_title.Text = "Field of View (FOV) Calculator";
-            lbl_title.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            // 
-            // lbl_about_fov
-            // 
-            lbl_about_fov.Dock = System.Windows.Forms.DockStyle.Fill;
-            lbl_about_fov.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_about_fov.ForeColor = System.Drawing.Color.White;
-            lbl_about_fov.Location = new System.Drawing.Point(3, 102);
-            lbl_about_fov.Name = "lbl_about_fov";
-            lbl_about_fov.Size = new System.Drawing.Size(1294, 59);
-            lbl_about_fov.TabIndex = 21;
-            lbl_about_fov.Text = resources.GetString("lbl_about_fov.Text");
-            lbl_about_fov.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // flp_bottom
-            // 
-            flp_bottom.Controls.Add(btn_back);
-            flp_bottom.Dock = System.Windows.Forms.DockStyle.Fill;
-            flp_bottom.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
-            flp_bottom.Location = new System.Drawing.Point(3, 937);
-            flp_bottom.Name = "flp_bottom";
-            flp_bottom.Size = new System.Drawing.Size(1294, 41);
-            flp_bottom.TabIndex = 2;
-            // 
             // btn_back
             // 
-            btn_back.AutoSize = true;
+            btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1224, 3);
+            btn_back.Location = new System.Drawing.Point(1416, 848);
+            btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
-            btn_back.Size = new System.Drawing.Size(67, 35);
+            btn_back.Size = new System.Drawing.Size(88, 27);
             btn_back.TabIndex = 6;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
@@ -141,16 +93,17 @@ namespace DisplayMagician.UIForms
             // pnl_fov
             // 
             pnl_fov.Controls.Add(split_fov);
-            pnl_fov.Dock = System.Windows.Forms.DockStyle.Fill;
-            pnl_fov.Location = new System.Drawing.Point(3, 164);
+            pnl_fov.Location = new System.Drawing.Point(2, 148);
+            pnl_fov.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             pnl_fov.Name = "pnl_fov";
-            pnl_fov.Size = new System.Drawing.Size(1294, 767);
+            pnl_fov.Size = new System.Drawing.Size(1518, 685);
             pnl_fov.TabIndex = 9;
             // 
             // split_fov
             // 
+            split_fov.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             split_fov.BackColor = System.Drawing.Color.White;
-            split_fov.Dock = System.Windows.Forms.DockStyle.Fill;
+            split_fov.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             split_fov.Location = new System.Drawing.Point(0, 0);
             split_fov.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             split_fov.Name = "split_fov";
@@ -582,6 +535,7 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_title
             // 
+            lbl_title.Anchor = System.Windows.Forms.AnchorStyles.Top;
             lbl_title.AutoSize = true;
             lbl_title.BackColor = System.Drawing.Color.Black;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -596,6 +550,7 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_about_fov
             // 
+            lbl_about_fov.Anchor = System.Windows.Forms.AnchorStyles.Top;
             lbl_about_fov.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_about_fov.ForeColor = System.Drawing.Color.White;
             lbl_about_fov.Location = new System.Drawing.Point(68, 65);
@@ -606,39 +561,23 @@ namespace DisplayMagician.UIForms
             lbl_about_fov.Text = resources.GetString("lbl_about_fov.Text");
             lbl_about_fov.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // 
-            // tlpMain
-            // 
-            tlpMain.ColumnCount = 1;
-            tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            tlpMain.Controls.Add(flp_header, 0, 0);
-            tlpMain.Controls.Add(lbl_about_fov, 0, 1);
-            tlpMain.Controls.Add(pnl_fov, 0, 2);
-            tlpMain.Controls.Add(flp_bottom, 0, 3);
-            tlpMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            tlpMain.Location = new System.Drawing.Point(0, 0);
-            tlpMain.Name = "tlpMain";
-            tlpMain.RowCount = 4;
-            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            tlpMain.Size = new System.Drawing.Size(1300, 981);
-            tlpMain.TabIndex = 0;
-            // 
             // FovCalcForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(1300, 981);
-            Controls.Add(tlpMain);
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+            ClientSize = new System.Drawing.Size(1518, 888);
+            Controls.Add(lbl_about_fov);
+            Controls.Add(lbl_title);
+            Controls.Add(pnl_fov);
+            Controls.Add(btn_back);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            MinimumSize = new System.Drawing.Size(1200, 900);
+            MaximumSize = new System.Drawing.Size(1534, 927);
+            MinimumSize = new System.Drawing.Size(1534, 927);
             Name = "FovCalcForm";
             ShowIcon = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
@@ -651,21 +590,12 @@ namespace DisplayMagician.UIForms
             split_fov.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)split_fov).EndInit();
             split_fov.ResumeLayout(false);
-            flp_header.ResumeLayout(false);
-            flp_header.PerformLayout();
-            flp_bottom.ResumeLayout(false);
-            flp_bottom.PerformLayout();
-            tlpMain.ResumeLayout(false);
-            tlpMain.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private System.Windows.Forms.TableLayoutPanel tlpMain;
-        private System.Windows.Forms.FlowLayoutPanel flp_header;
-        private System.Windows.Forms.FlowLayoutPanel flp_bottom;
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.Panel pnl_fov;
         private System.Windows.Forms.SplitContainer split_fov;
