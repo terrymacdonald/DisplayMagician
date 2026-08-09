@@ -96,6 +96,22 @@ namespace DisplayMagician
                 frm.Size = new Size(width, height);
             }
 
+            if (frm.Owner != null)
+            {
+                Rectangle ownerRect = frm.Owner.DesktopBounds;
+                frm.Location = new Point(
+                    ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
+                    ownerRect.Top + (ownerRect.Height - frm.Height) / 2
+                );
+            }
+            else
+            {
+                frm.Location = new Point(
+                    (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2,
+                    (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2
+                );
+            }
+
             if (max)
             {
                 frm.WindowState = FormWindowState.Maximized;
@@ -103,25 +119,6 @@ namespace DisplayMagician
             else
             {
                 frm.WindowState = FormWindowState.Normal;
-            }
-
-            if (!max)
-            {
-                if (frm.Owner != null)
-                {
-                    Rectangle ownerRect = frm.Owner.DesktopBounds;
-                    frm.Location = new Point(
-                        ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
-                        ownerRect.Top + (ownerRect.Height - frm.Height) / 2
-                    );
-                }
-                else
-                {
-                    frm.Location = new Point(
-                        (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2,
-                        (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2
-                    );
-                }
             }
         }
 
