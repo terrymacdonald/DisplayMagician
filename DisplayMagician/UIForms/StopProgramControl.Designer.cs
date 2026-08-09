@@ -86,7 +86,7 @@ namespace DisplayMagician.UIForms
             txt_stop_program.ForeColor = System.Drawing.Color.Black;
             txt_stop_program.Location = new System.Drawing.Point(275, 16);
             txt_stop_program.Name = "txt_stop_program";
-            txt_stop_program.Size = new System.Drawing.Size(710, 26);
+            txt_stop_program.Size = new System.Drawing.Size(472, 26);
             txt_stop_program.TabIndex = 4;
             txt_stop_program.TextChanged += txt_stop_program_TextChanged;
             // 
@@ -96,7 +96,7 @@ namespace DisplayMagician.UIForms
             btn_stop_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_stop_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_stop_program.ForeColor = System.Drawing.Color.White;
-            btn_stop_program.Location = new System.Drawing.Point(995, 15);
+            btn_stop_program.Location = new System.Drawing.Point(753, 16);
             btn_stop_program.Name = "btn_stop_program";
             btn_stop_program.Size = new System.Drawing.Size(85, 27);
             btn_stop_program.TabIndex = 5;
@@ -109,7 +109,7 @@ namespace DisplayMagician.UIForms
             chk_disabled.AutoSize = true;
             chk_disabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             chk_disabled.ForeColor = System.Drawing.Color.White;
-            chk_disabled.Location = new System.Drawing.Point(159, 115);
+            chk_disabled.Location = new System.Drawing.Point(161, 115);
             chk_disabled.Name = "chk_disabled";
             chk_disabled.Size = new System.Drawing.Size(320, 24);
             chk_disabled.TabIndex = 6;
@@ -123,7 +123,7 @@ namespace DisplayMagician.UIForms
             chk_restart_afterwards.AutoSize = true;
             chk_restart_afterwards.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             chk_restart_afterwards.ForeColor = System.Drawing.Color.White;
-            chk_restart_afterwards.Location = new System.Drawing.Point(159, 50);
+            chk_restart_afterwards.Location = new System.Drawing.Point(161, 50);
             chk_restart_afterwards.Name = "chk_restart_afterwards";
             chk_restart_afterwards.Size = new System.Drawing.Size(288, 24);
             chk_restart_afterwards.TabIndex = 7;
@@ -138,7 +138,7 @@ namespace DisplayMagician.UIForms
             lbl_restart_priority.AutoSize = true;
             lbl_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_restart_priority.ForeColor = System.Drawing.Color.White;
-            lbl_restart_priority.Location = new System.Drawing.Point(739, 53);
+            lbl_restart_priority.Location = new System.Drawing.Point(536, 54);
             lbl_restart_priority.Name = "lbl_restart_priority";
             lbl_restart_priority.Size = new System.Drawing.Size(117, 20);
             lbl_restart_priority.TabIndex = 8;
@@ -152,7 +152,7 @@ namespace DisplayMagician.UIForms
             cbx_restart_priority.Enabled = false;
             cbx_restart_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cbx_restart_priority.FormattingEnabled = true;
-            cbx_restart_priority.Location = new System.Drawing.Point(901, 50);
+            cbx_restart_priority.Location = new System.Drawing.Point(659, 50);
             cbx_restart_priority.Name = "cbx_restart_priority";
             cbx_restart_priority.Size = new System.Drawing.Size(179, 28);
             cbx_restart_priority.TabIndex = 9;
@@ -164,7 +164,7 @@ namespace DisplayMagician.UIForms
             chk_run_as_admin.Enabled = false;
             chk_run_as_admin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             chk_run_as_admin.ForeColor = System.Drawing.Color.White;
-            chk_run_as_admin.Location = new System.Drawing.Point(159, 83);
+            chk_run_as_admin.Location = new System.Drawing.Point(161, 83);
             chk_run_as_admin.Name = "chk_run_as_admin";
             chk_run_as_admin.Size = new System.Drawing.Size(288, 24);
             chk_run_as_admin.TabIndex = 10;
@@ -180,7 +180,7 @@ namespace DisplayMagician.UIForms
             btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_delete.ForeColor = System.Drawing.Color.White;
-            btn_delete.Location = new System.Drawing.Point(996, 7);
+            btn_delete.Location = new System.Drawing.Point(868, 3);
             btn_delete.Name = "btn_delete";
             btn_delete.Size = new System.Drawing.Size(29, 27);
             btn_delete.TabIndex = 11;
@@ -210,7 +210,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(10);
             MinimumSize = new System.Drawing.Size(800, 155);
             Name = "StopProgramControl";
-            Size = new System.Drawing.Size(1090, 155);
+            Size = new System.Drawing.Size(900, 155);
             ((System.ComponentModel.ISupportInitialize)pb_up_arrow).EndInit();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
             ResumeLayout(false);

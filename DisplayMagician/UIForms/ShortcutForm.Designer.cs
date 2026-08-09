@@ -62,7 +62,6 @@ namespace DisplayMagician.UIForms
             btn_update_audio_profile = new System.Windows.Forms.Button();
             cb_dont_change_audio = new System.Windows.Forms.CheckBox();
             tabp_before = new System.Windows.Forms.TabPage();
-            flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             p_start_program_upper = new System.Windows.Forms.Panel();
             btn_find_examples_startprograms = new System.Windows.Forms.Button();
             btn_add_new_stop_program = new System.Windows.Forms.Button();
@@ -132,6 +131,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey = new System.Windows.Forms.Button();
             lbl_hotkey_assigned = new System.Windows.Forms.Label();
             btn_help = new System.Windows.Forms.Button();
+            flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             tabc_shortcut.SuspendLayout();
             tabp_display.SuspendLayout();
             p_profiles.SuspendLayout();
@@ -567,20 +567,6 @@ namespace DisplayMagician.UIForms
             tabp_before.Size = new System.Drawing.Size(1264, 750);
             tabp_before.TabIndex = 1;
             tabp_before.Text = "3. Choose what happens before";
-            // 
-            // flp_start_programs
-            // 
-            flp_start_programs.AllowDrop = true;
-            flp_start_programs.AutoScroll = true;
-            flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
-            flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
-            flp_start_programs.BackColor = System.Drawing.Color.White;
-            flp_start_programs.Dock = System.Windows.Forms.DockStyle.Fill;
-            flp_start_programs.Location = new System.Drawing.Point(4, 143);
-            flp_start_programs.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            flp_start_programs.Name = "flp_start_programs";
-            flp_start_programs.Size = new System.Drawing.Size(1256, 604);
-            flp_start_programs.TabIndex = 0;
             // 
             // p_start_program_upper
             // 
@@ -1553,6 +1539,20 @@ namespace DisplayMagician.UIForms
             btn_help.UseVisualStyleBackColor = true;
             btn_help.Click += btn_help_Click;
             // 
+            // flp_start_programs
+            // 
+            flp_start_programs.AllowDrop = true;
+            flp_start_programs.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            flp_start_programs.AutoScroll = true;
+            flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
+            flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
+            flp_start_programs.BackColor = System.Drawing.Color.White;
+            flp_start_programs.Location = new System.Drawing.Point(4, 143);
+            flp_start_programs.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            flp_start_programs.Name = "flp_start_programs";
+            flp_start_programs.Size = new System.Drawing.Size(1256, 604);
+            flp_start_programs.TabIndex = 0;
+            // 
             // ShortcutForm
             // 
             AcceptButton = btn_save;
@@ -1666,7 +1666,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_add_new_start_program;
         private System.Windows.Forms.Button btn_add_new_stop_program;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.FlowLayoutPanel flp_start_programs;
         private System.Windows.Forms.Panel p_gametostart;
         private System.Windows.Forms.Button btn_find_examples_game;
         private System.Windows.Forms.Panel p_standalone;
@@ -1721,5 +1720,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.NumericUpDown nud_speaker_volume;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox txt_audio_profile_settings;
+        private System.Windows.Forms.FlowLayoutPanel flp_start_programs;
     }
 }
