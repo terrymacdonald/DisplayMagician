@@ -1576,15 +1576,50 @@ namespace DisplayMagician
                     logger.Warn($"ShortcutItem/RefreshValidity: The audio profile UUID {_audioProfileUUID} isn't in the AudioProfileRepository");
                     ShortcutError error = new ShortcutError();
                     error.Name = "AudioProfileNotExist";
-                    error.Validity = ShortcutValidity.Warning;
+                    error.Validity = ShortcutValidity.Error;
                     error.Message = $"The audio profile does not exist (probably deleted) and cannot be used.";
                     _shortcutErrors.Add(error);
-                    if (worstError != ShortcutValidity.Error)
-                        worstError = ShortcutValidity.Warning;
+                    worstError = ShortcutValidity.Error;
                 }
             }
 
-            // TODO Do all the specified pre-start apps still exist?
+            // Do all the active/enabled specified start programs still exist?
+            foreach (StartProgram sp in StartPrograms)
+            {
+                if (!sp.Disabled && !string.IsNullOrWhiteSpace(sp.Executable))
+                {
+                    if (!System.IO.File.Exists(sp.Executable))
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The start program executable '{sp.Executable}' does not exist");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "StartProgramNotExist";
+                        error.Validity = ShortcutValidity.Warning;
+                        error.Message = $"The start program '{Path.GetFileName(sp.Executable)}' does not exist.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Warning;
+                    }
+                }
+            }
+
+            // Do all the active/enabled specified stop programs still exist?
+            foreach (StopProgram sp in StopPrograms)
+            {
+                if (!sp.Disabled && !string.IsNullOrWhiteSpace(sp.Executable))
+                {
+                    if (!System.IO.File.Exists(sp.Executable))
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The stop program executable '{sp.Executable}' does not exist");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "StopProgramNotExist";
+                        error.Validity = ShortcutValidity.Warning;
+                        error.Message = $"The stop program '{Path.GetFileName(sp.Executable)}' does not exist.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Warning;
+                    }
+                }
+            }
 
             // Save the worst error level to IsValid property
             IsValid = worstError;
