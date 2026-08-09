@@ -82,6 +82,12 @@ namespace DisplayMagician
         private double _fovCalcBezelSize = 3;
         private ScreenMeasurementUnit _fovCalcBezelSizeUnit = ScreenMeasurementUnit.MM;
         private NotifyIconDoubleClickAction _notifyIconDoubleClickAction = NotifyIconDoubleClickAction.ShortcutLibraryForm;
+        private bool _displayProfileFormMaximized = false;
+        private int _displayProfileFormWidth = 0;
+        private int _displayProfileFormHeight = 0;
+        private bool _shortcutLibraryFormMaximized = false;
+        private int _shortcutLibraryFormWidth = 0;
+        private int _shortcutLibraryFormHeight = 0;
         #endregion
 
         #region Class Properties
@@ -505,6 +511,84 @@ namespace DisplayMagician
             set
             {
                 _wakeUpGpus = value;
+            }
+        }
+
+        [DefaultValue(false)]
+        public bool DisplayProfileFormMaximized
+        {
+            get
+            {
+                return _displayProfileFormMaximized;
+            }
+            set
+            {
+                _displayProfileFormMaximized = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int DisplayProfileFormWidth
+        {
+            get
+            {
+                return _displayProfileFormWidth;
+            }
+            set
+            {
+                _displayProfileFormWidth = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int DisplayProfileFormHeight
+        {
+            get
+            {
+                return _displayProfileFormHeight;
+            }
+            set
+            {
+                _displayProfileFormHeight = value;
+            }
+        }
+
+        [DefaultValue(false)]
+        public bool ShortcutLibraryFormMaximized
+        {
+            get
+            {
+                return _shortcutLibraryFormMaximized;
+            }
+            set
+            {
+                _shortcutLibraryFormMaximized = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int ShortcutLibraryFormWidth
+        {
+            get
+            {
+                return _shortcutLibraryFormWidth;
+            }
+            set
+            {
+                _shortcutLibraryFormWidth = value;
+            }
+        }
+
+        [DefaultValue(0)]
+        public int ShortcutLibraryFormHeight
+        {
+            get
+            {
+                return _shortcutLibraryFormHeight;
+            }
+            set
+            {
+                _shortcutLibraryFormHeight = value;
             }
         }
 

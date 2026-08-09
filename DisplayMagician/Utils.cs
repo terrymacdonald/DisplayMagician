@@ -64,6 +64,119 @@ namespace DisplayMagician
             }
         }
 
+        public static void LoadFormState(Form frm)
+        {
+            if (frm == null) return;
+
+            bool max = false;
+            int width = 0;
+            int height = 0;
+
+            if (frm.GetType().Name == "DisplayProfileForm")
+            {
+                max = Program.AppProgramSettings.DisplayProfileFormMaximized;
+                width = Program.AppProgramSettings.DisplayProfileFormWidth;
+                height = Program.AppProgramSettings.DisplayProfileFormHeight;
+            }
+            else if (frm.GetType().Name == "ShortcutLibraryForm")
+            {
+                max = Program.AppProgramSettings.ShortcutLibraryFormMaximized;
+                width = Program.AppProgramSettings.ShortcutLibraryFormWidth;
+                height = Program.AppProgramSettings.ShortcutLibraryFormHeight;
+            }
+            else
+            {
+                return;
+            }
+
+            frm.StartPosition = FormStartPosition.Manual;
+
+            if (width > 0 && height > 0)
+            {
+                frm.Size = new Size(width, height);
+            }
+
+            if (max)
+            {
+                frm.WindowState = FormWindowState.Maximized;
+            }
+            else
+            {
+                frm.WindowState = FormWindowState.Normal;
+            }
+
+            if (!max)
+            {
+                if (frm.Owner != null)
+                {
+                    Rectangle ownerRect = frm.Owner.DesktopBounds;
+                    frm.Location = new Point(
+                        ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
+                        ownerRect.Top + (ownerRect.Height - frm.Height) / 2
+                    );
+                }
+                else
+                {
+                    frm.Location = new Point(
+                        (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2,
+                        (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2
+                    );
+                }
+            }
+        }
+
+        public static void SaveFormState(Form frm)
+        {
+            if (frm == null) return;
+
+            bool max = (frm.WindowState == FormWindowState.Maximized);
+            int width;
+            int height;
+
+            if (max)
+            {
+                width = frm.RestoreBounds.Width;
+                height = frm.RestoreBounds.Height;
+            }
+            else
+            {
+                width = frm.Width;
+                height = frm.Height;
+            }
+
+            bool changed = false;
+
+            if (frm.GetType().Name == "DisplayProfileForm")
+            {
+                if (Program.AppProgramSettings.DisplayProfileFormMaximized != max ||
+                    Program.AppProgramSettings.DisplayProfileFormWidth != width ||
+                    Program.AppProgramSettings.DisplayProfileFormHeight != height)
+                {
+                    Program.AppProgramSettings.DisplayProfileFormMaximized = max;
+                    Program.AppProgramSettings.DisplayProfileFormWidth = width;
+                    Program.AppProgramSettings.DisplayProfileFormHeight = height;
+                    changed = true;
+                }
+            }
+            else if (frm.GetType().Name == "ShortcutLibraryForm")
+            {
+                if (Program.AppProgramSettings.ShortcutLibraryFormMaximized != max ||
+                    Program.AppProgramSettings.ShortcutLibraryFormWidth != width ||
+                    Program.AppProgramSettings.ShortcutLibraryFormHeight != height)
+                {
+                    Program.AppProgramSettings.ShortcutLibraryFormMaximized = max;
+                    Program.AppProgramSettings.ShortcutLibraryFormWidth = width;
+                    Program.AppProgramSettings.ShortcutLibraryFormHeight = height;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                Program.AppProgramSettings.SaveSettings();
+            }
+        }
+
         public static void ActivateCenteredOnPrimaryScreen(this Form frm)
         {
             if (!(frm is Form))

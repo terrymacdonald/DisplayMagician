@@ -37,6 +37,18 @@ namespace DisplayMagician.UIForms
             //Utils.CenterOnPrimaryScreen(this);
         }
 
+        protected override void OnLoad(EventArgs e)
+        {
+            Utils.LoadFormState(this);
+            base.OnLoad(e);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            Utils.SaveFormState(this);
+            base.OnFormClosing(e);
+        }
+
         private void btn_back_Click(object sender, EventArgs e)
         {
             logger.Trace($"ShortcutLibraryForm/btn_back_Click: User clicked on the Back button.");

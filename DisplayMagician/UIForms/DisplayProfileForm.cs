@@ -54,6 +54,18 @@ namespace DisplayMagician.UIForms
             _profileToLoad = profileToLoad;
         }
 
+        protected override void OnLoad(EventArgs e)
+        {
+            Utils.LoadFormState(this);
+            base.OnLoad(e);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            Utils.SaveFormState(this);
+            base.OnFormClosing(e);
+        }
+
         private void Apply_Click(object sender, EventArgs e)
         {
             if (_selectedProfile == null)

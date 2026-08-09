@@ -40,7 +40,7 @@ namespace DisplayMagician.UIForms
             lbl_title.BackColor = System.Drawing.Color.Black;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(40, 22);
+            lbl_title.Location = new System.Drawing.Point(40, 40);
             lbl_title.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(554, 60);
@@ -54,7 +54,7 @@ namespace DisplayMagician.UIForms
             lbl_description.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_description.BackColor = System.Drawing.Color.WhiteSmoke;
             lbl_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_description.Location = new System.Drawing.Point(40, 82);
+            lbl_description.Location = new System.Drawing.Point(40, 100);
             lbl_description.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_description.Name = "lbl_description";
             lbl_description.Size = new System.Drawing.Size(554, 75);
@@ -69,7 +69,7 @@ namespace DisplayMagician.UIForms
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(628, 180);
+            ClientSize = new System.Drawing.Size(624, 213);
             ControlBox = false;
             Controls.Add(lbl_description);
             Controls.Add(lbl_title);
