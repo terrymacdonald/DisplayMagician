@@ -39,6 +39,7 @@ namespace DisplayMagician.UIForms
         public DisplayProfileForm()
         {
             InitializeComponent();
+            this.DoubleBuffered = true;
             this.AcceptButton = this.btn_save_or_rename;
             ilv_saved_profiles.MultiSelect = false;
             //ilv_saved_profiles.ThumbnailSize = new Size(ilv_saved_profiles.Height, ilv_saved_profiles.Height);

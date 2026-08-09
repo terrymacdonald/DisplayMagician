@@ -89,6 +89,8 @@ namespace DisplayMagician
                 return;
             }
 
+            frm.SuspendLayout();
+
             frm.StartPosition = FormStartPosition.Manual;
 
             if (width > 0 && height > 0)
@@ -120,6 +122,8 @@ namespace DisplayMagician
             {
                 frm.WindowState = FormWindowState.Normal;
             }
+
+            frm.ResumeLayout(true);
         }
 
         public static void SaveFormState(Form frm)

@@ -28,6 +28,7 @@ namespace DisplayMagician.UIForms
         public ShortcutLibraryForm()
         {
             InitializeComponent();
+            this.DoubleBuffered = true;
             ilv_saved_shortcuts.MultiSelect = false;
             ilv_saved_shortcuts.ThumbnailSize = new Size(100,100);
             ilv_saved_shortcuts.AllowDrag = false;
