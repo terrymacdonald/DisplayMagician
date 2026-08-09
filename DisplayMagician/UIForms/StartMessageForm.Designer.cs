@@ -1,4 +1,4 @@
-
+﻿
 namespace DisplayMagician.UIForms
 {
     partial class StartMessageForm
@@ -44,7 +44,7 @@ namespace DisplayMagician.UIForms
             lbl_heading_text.BackColor = System.Drawing.Color.Black;
             lbl_heading_text.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_heading_text.ForeColor = System.Drawing.Color.White;
-            lbl_heading_text.Location = new System.Drawing.Point(193, 22);
+            lbl_heading_text.Location = new System.Drawing.Point(466, 22);
             lbl_heading_text.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_heading_text.Name = "lbl_heading_text";
             lbl_heading_text.Size = new System.Drawing.Size(400, 29);
@@ -61,7 +61,7 @@ namespace DisplayMagician.UIForms
             rtb_message.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rtb_message.Name = "rtb_message";
             rtb_message.ReadOnly = true;
-            rtb_message.Size = new System.Drawing.Size(1406, 788);
+            rtb_message.Size = new System.Drawing.Size(1323, 730);
             rtb_message.TabIndex = 21;
             rtb_message.Text = "";
             // 
@@ -73,7 +73,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(697, 559);
+            btn_back.Location = new System.Drawing.Point(1302, 874);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -91,24 +91,23 @@ namespace DisplayMagician.UIForms
             pnl_richtextbox.Location = new System.Drawing.Point(15, 73);
             pnl_richtextbox.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             pnl_richtextbox.Name = "pnl_richtextbox";
-            pnl_richtextbox.Padding = new System.Windows.Forms.Padding(23, 23, 23, 23);
-            pnl_richtextbox.Size = new System.Drawing.Size(770, 464);
+            pnl_richtextbox.Padding = new System.Windows.Forms.Padding(23);
+            pnl_richtextbox.Size = new System.Drawing.Size(1373, 780);
             pnl_richtextbox.TabIndex = 23;
             // 
             // StartMessageForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Black;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(800, 600);
+            ClientSize = new System.Drawing.Size(1403, 915);
             Controls.Add(pnl_richtextbox);
             Controls.Add(btn_back);
             Controls.Add(lbl_heading_text);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            MinimumSize = new System.Drawing.Size(600, 400);
             Name = "StartMessageForm";
             ShowIcon = false;
             ShowInTaskbar = false;

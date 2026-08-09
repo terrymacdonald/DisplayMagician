@@ -44,7 +44,7 @@ namespace DisplayMagician.UIForms
             lbl_title.BackColor = System.Drawing.Color.Black;
             lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(42, 38);
+            lbl_title.Location = new System.Drawing.Point(37, 42);
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(547, 35);
@@ -57,7 +57,7 @@ namespace DisplayMagician.UIForms
             lbl_description.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_description.BackColor = System.Drawing.Color.WhiteSmoke;
             lbl_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_description.Location = new System.Drawing.Point(110, 101);
+            lbl_description.Location = new System.Drawing.Point(109, 109);
             lbl_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_description.Name = "lbl_description";
             lbl_description.Size = new System.Drawing.Size(411, 31);
@@ -75,7 +75,7 @@ namespace DisplayMagician.UIForms
             btn_donate.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             btn_donate.ForeColor = System.Drawing.Color.White;
             btn_donate.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_donate.Location = new System.Drawing.Point(235, 242);
+            btn_donate.Location = new System.Drawing.Point(230, 251);
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(161, 53);
@@ -89,7 +89,7 @@ namespace DisplayMagician.UIForms
             label1.Anchor = System.Windows.Forms.AnchorStyles.None;
             label1.BackColor = System.Drawing.Color.WhiteSmoke;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label1.Location = new System.Drawing.Point(110, 132);
+            label1.Location = new System.Drawing.Point(109, 139);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(411, 37);
@@ -103,7 +103,7 @@ namespace DisplayMagician.UIForms
             label2.BackColor = System.Drawing.Color.Brown;
             label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label2.ForeColor = System.Drawing.Color.White;
-            label2.Location = new System.Drawing.Point(110, 169);
+            label2.Location = new System.Drawing.Point(109, 176);
             label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(411, 37);

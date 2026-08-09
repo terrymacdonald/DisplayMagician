@@ -50,7 +50,7 @@ namespace DisplayMagician.UIForms
             btn_select_app.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_select_app.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
             btn_select_app.ForeColor = System.Drawing.Color.White;
-            btn_select_app.Location = new System.Drawing.Point(177, 409);
+            btn_select_app.Location = new System.Drawing.Point(177, 408);
             btn_select_app.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_select_app.Name = "btn_select_app";
             btn_select_app.Size = new System.Drawing.Size(411, 37);
@@ -69,7 +69,7 @@ namespace DisplayMagician.UIForms
             lbl_installed_apps.BackColor = System.Drawing.Color.Black;
             lbl_installed_apps.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_installed_apps.ForeColor = System.Drawing.Color.White;
-            lbl_installed_apps.Location = new System.Drawing.Point(177, 97);
+            lbl_installed_apps.Location = new System.Drawing.Point(177, 77);
             lbl_installed_apps.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_installed_apps.Name = "lbl_installed_apps";
             lbl_installed_apps.Size = new System.Drawing.Size(406, 20);
@@ -97,7 +97,7 @@ namespace DisplayMagician.UIForms
             lbl_select_exe.BackColor = System.Drawing.Color.Black;
             lbl_select_exe.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_select_exe.ForeColor = System.Drawing.Color.White;
-            lbl_select_exe.Location = new System.Drawing.Point(901, 97);
+            lbl_select_exe.Location = new System.Drawing.Point(901, 77);
             lbl_select_exe.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_select_exe.Name = "lbl_select_exe";
             lbl_select_exe.Size = new System.Drawing.Size(438, 20);
@@ -109,11 +109,11 @@ namespace DisplayMagician.UIForms
             // 
             gb_select_exe.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             gb_select_exe.Controls.Add(btn_select_exe);
-            gb_select_exe.Location = new System.Drawing.Point(825, 132);
+            gb_select_exe.Location = new System.Drawing.Point(825, 112);
             gb_select_exe.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_select_exe.Name = "gb_select_exe";
             gb_select_exe.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_select_exe.Size = new System.Drawing.Size(598, 265);
+            gb_select_exe.Size = new System.Drawing.Size(598, 272);
             gb_select_exe.TabIndex = 47;
             gb_select_exe.TabStop = false;
             // 
@@ -123,7 +123,7 @@ namespace DisplayMagician.UIForms
             btn_select_exe.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_select_exe.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
             btn_select_exe.ForeColor = System.Drawing.Color.White;
-            btn_select_exe.Location = new System.Drawing.Point(76, 114);
+            btn_select_exe.Location = new System.Drawing.Point(78, 115);
             btn_select_exe.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_select_exe.Name = "btn_select_exe";
             btn_select_exe.Size = new System.Drawing.Size(440, 36);
@@ -139,7 +139,7 @@ namespace DisplayMagician.UIForms
             lbl_or.BackColor = System.Drawing.Color.Black;
             lbl_or.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_or.ForeColor = System.Drawing.Color.White;
-            lbl_or.Location = new System.Drawing.Point(773, 254);
+            lbl_or.Location = new System.Drawing.Point(773, 232);
             lbl_or.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_or.Name = "lbl_or";
             lbl_or.Size = new System.Drawing.Size(51, 29);
@@ -150,12 +150,12 @@ namespace DisplayMagician.UIForms
             // ilv_installed_apps
             // 
             ilv_installed_apps.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
-            ilv_installed_apps.Location = new System.Drawing.Point(31, 138);
+            ilv_installed_apps.Location = new System.Drawing.Point(31, 118);
             ilv_installed_apps.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ilv_installed_apps.Name = "ilv_installed_apps";
             ilv_installed_apps.PersistentCacheDirectory = "";
             ilv_installed_apps.PersistentCacheSize = 100L;
-            ilv_installed_apps.Size = new System.Drawing.Size(740, 258);
+            ilv_installed_apps.Size = new System.Drawing.Size(740, 266);
             ilv_installed_apps.TabIndex = 49;
             ilv_installed_apps.UseWIC = true;
             ilv_installed_apps.ItemClick += ilv_installed_apps_ItemClick;
@@ -169,7 +169,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1358, 441);
+            btn_back.Location = new System.Drawing.Point(1335, 418);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -182,7 +182,7 @@ namespace DisplayMagician.UIForms
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1460, 482);
+            ClientSize = new System.Drawing.Size(1460, 470);
             Controls.Add(btn_back);
             Controls.Add(ilv_installed_apps);
             Controls.Add(lbl_or);

@@ -131,5 +131,6 @@ namespace DisplayMagician.UIForms
                     TextFormatFlags.LeftAndRightPadding);
             }
         }
+
     }
 }

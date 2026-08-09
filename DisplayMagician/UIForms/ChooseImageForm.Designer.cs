@@ -46,7 +46,7 @@ namespace DisplayMagician.UIForms
             // 
             // lv_icons
             // 
-            lv_icons.Anchor = System.Windows.Forms.AnchorStyles.None;
+            lv_icons.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             lv_icons.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] { columnHeaderName, columnHeaderSize });
             lv_icons.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             lv_icons.Location = new System.Drawing.Point(17, 42);
@@ -72,7 +72,7 @@ namespace DisplayMagician.UIForms
             // 
             // pb_selected_icon
             // 
-            pb_selected_icon.Anchor = System.Windows.Forms.AnchorStyles.None;
+            pb_selected_icon.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             pb_selected_icon.BackColor = System.Drawing.Color.DimGray;
             pb_selected_icon.Location = new System.Drawing.Point(381, 42);
             pb_selected_icon.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -114,7 +114,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_add
             // 
-            btn_add.Anchor = System.Windows.Forms.AnchorStyles.None;
+            btn_add.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_add.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_add.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_add.ForeColor = System.Drawing.Color.White;
@@ -130,7 +130,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_select
             // 
-            btn_select.Anchor = System.Windows.Forms.AnchorStyles.None;
+            btn_select.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_select.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_select.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_select.ForeColor = System.Drawing.Color.White;
@@ -164,7 +164,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_remove
             // 
-            btn_remove.Anchor = System.Windows.Forms.AnchorStyles.None;
+            btn_remove.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_remove.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_remove.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_remove.ForeColor = System.Drawing.Color.White;

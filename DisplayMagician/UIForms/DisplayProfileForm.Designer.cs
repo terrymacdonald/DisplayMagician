@@ -49,7 +49,6 @@ namespace DisplayMagician.UIForms
             txt_profile_save_name = new System.Windows.Forms.TextBox();
             ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
-            label1 = new System.Windows.Forms.Label();
             tt_selected = new System.Windows.Forms.ToolTip(components);
             lbl_save_profile = new System.Windows.Forms.Label();
             btn_save = new System.Windows.Forms.Button();
@@ -59,16 +58,19 @@ namespace DisplayMagician.UIForms
             p_upper = new System.Windows.Forms.Panel();
             btn_donate = new System.Windows.Forms.Button();
             btn_help = new System.Windows.Forms.Button();
-            btn_profile_settings = new System.Windows.Forms.Button();
             dv_profile = new DisplayView();
+            btn_profile_settings = new System.Windows.Forms.Button();
             p_lower = new System.Windows.Forms.Panel();
             btn_update = new System.Windows.Forms.Button();
-            p_fill = new System.Windows.Forms.Panel();
+            p_listview = new System.Windows.Forms.Panel();
+            p_middle = new System.Windows.Forms.Panel();
+            label1 = new System.Windows.Forms.Label();
             cms_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).BeginInit();
             p_upper.SuspendLayout();
             p_lower.SuspendLayout();
-            p_fill.SuspendLayout();
+            p_listview.SuspendLayout();
+            p_middle.SuspendLayout();
             SuspendLayout();
             // 
             // btn_apply
@@ -80,7 +82,7 @@ namespace DisplayMagician.UIForms
             btn_apply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_apply.ForeColor = System.Drawing.Color.White;
-            btn_apply.Location = new System.Drawing.Point(273, 42);
+            btn_apply.Location = new System.Drawing.Point(267, 26);
             btn_apply.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_apply.Name = "btn_apply";
             btn_apply.Size = new System.Drawing.Size(128, 40);
@@ -92,39 +94,42 @@ namespace DisplayMagician.UIForms
             // btn_back
             // 
             btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btn_back.BackColor = System.Drawing.Color.Black;
             btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(930, 80);
+            btn_back.Location = new System.Drawing.Point(918, 64);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(82, 29);
             btn_back.TabIndex = 8;
             btn_back.Text = "&Back";
-            btn_back.UseVisualStyleBackColor = true;
+            btn_back.UseVisualStyleBackColor = false;
             btn_back.Click += Exit_Click;
             // 
             // btn_delete
             // 
             btn_delete.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_delete.BackColor = System.Drawing.Color.Black;
             btn_delete.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_delete.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_delete.ForeColor = System.Drawing.Color.White;
-            btn_delete.Location = new System.Drawing.Point(535, 42);
+            btn_delete.Location = new System.Drawing.Point(529, 26);
             btn_delete.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_delete.Name = "btn_delete";
             btn_delete.Size = new System.Drawing.Size(130, 40);
             btn_delete.TabIndex = 6;
             btn_delete.Text = "&Delete";
-            btn_delete.UseVisualStyleBackColor = true;
+            btn_delete.UseVisualStyleBackColor = false;
             btn_delete.Click += Delete_Click;
             // 
             // cms_profiles
             // 
+            cms_profiles.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cms_profiles.ImageScalingSize = new System.Drawing.Size(32, 32);
             cms_profiles.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { applyToolStripMenuItem, saveProfileToDesktopToolStripMenuItem, sendToClipboardToolStripMenuItem, deleteProfileToolStripMenuItem });
             cms_profiles.Name = "menu_profiles";
@@ -174,7 +179,7 @@ namespace DisplayMagician.UIForms
             btn_view_current.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_view_current.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_view_current.ForeColor = System.Drawing.Color.White;
-            btn_view_current.Location = new System.Drawing.Point(717, 22);
+            btn_view_current.Location = new System.Drawing.Point(705, 22);
             btn_view_current.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_view_current.Name = "btn_view_current";
             btn_view_current.Size = new System.Drawing.Size(290, 35);
@@ -192,7 +197,7 @@ namespace DisplayMagician.UIForms
             btn_save_or_rename.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_save_or_rename.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_save_or_rename.ForeColor = System.Drawing.Color.White;
-            btn_save_or_rename.Location = new System.Drawing.Point(133, 550);
+            btn_save_or_rename.Location = new System.Drawing.Point(124, 11);
             btn_save_or_rename.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save_or_rename.Name = "btn_save_or_rename";
             btn_save_or_rename.Size = new System.Drawing.Size(164, 36);
@@ -206,7 +211,7 @@ namespace DisplayMagician.UIForms
             pb_down_arrow.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             pb_down_arrow.BackColor = System.Drawing.Color.Transparent;
             pb_down_arrow.Image = Properties.Resources.redarrowsdown;
-            pb_down_arrow.Location = new System.Drawing.Point(480, 584);
+            pb_down_arrow.Location = new System.Drawing.Point(475, 44);
             pb_down_arrow.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             pb_down_arrow.Name = "pb_down_arrow";
             pb_down_arrow.Size = new System.Drawing.Size(58, 33);
@@ -233,7 +238,7 @@ namespace DisplayMagician.UIForms
             txt_profile_save_name.BackColor = System.Drawing.Color.White;
             txt_profile_save_name.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             txt_profile_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            txt_profile_save_name.Location = new System.Drawing.Point(297, 550);
+            txt_profile_save_name.Location = new System.Drawing.Point(296, 12);
             txt_profile_save_name.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_profile_save_name.MaxLength = 200;
             txt_profile_save_name.Name = "txt_profile_save_name";
@@ -248,14 +253,16 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.AllowColumnResize = false;
             ilv_saved_profiles.AllowItemReorder = false;
             ilv_saved_profiles.AllowPaneResize = false;
-            ilv_saved_profiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            ilv_saved_profiles.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            ilv_saved_profiles.BackColor = System.Drawing.Color.White;
+            ilv_saved_profiles.Colors = new Manina.Windows.Forms.ImageListViewColor(resources.GetString("ilv_saved_profiles.Colors"));
             ilv_saved_profiles.Location = new System.Drawing.Point(0, 0);
             ilv_saved_profiles.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ilv_saved_profiles.MultiSelect = false;
             ilv_saved_profiles.Name = "ilv_saved_profiles";
             ilv_saved_profiles.PersistentCacheDirectory = "";
             ilv_saved_profiles.PersistentCacheSize = 100L;
-            ilv_saved_profiles.Size = new System.Drawing.Size(1020, 176);
+            ilv_saved_profiles.Size = new System.Drawing.Size(1008, 165);
             ilv_saved_profiles.TabIndex = 21;
             ilv_saved_profiles.UseWIC = true;
             ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -276,21 +283,6 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle.TabIndex = 22;
             lbl_profile_shown_subtitle.Text = "My Display Profile";
             // 
-            // label1
-            // 
-            label1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            label1.AutoSize = true;
-            label1.BackColor = System.Drawing.Color.Black;
-            label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            label1.ForeColor = System.Drawing.Color.White;
-            label1.Location = new System.Drawing.Point(301, 616);
-            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            label1.Name = "label1";
-            label1.Size = new System.Drawing.Size(450, 20);
-            label1.TabIndex = 23;
-            label1.Text = "Saved Profiles (These can be used to create shortcuts)";
-            label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            // 
             // lbl_save_profile
             // 
             lbl_save_profile.Anchor = System.Windows.Forms.AnchorStyles.Top;
@@ -300,7 +292,7 @@ namespace DisplayMagician.UIForms
             lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             lbl_save_profile.ForeColor = System.Drawing.Color.White;
             lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            lbl_save_profile.Location = new System.Drawing.Point(8, 116);
+            lbl_save_profile.Location = new System.Drawing.Point(2, 116);
             lbl_save_profile.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_save_profile.Name = "lbl_save_profile";
             lbl_save_profile.Size = new System.Drawing.Size(1004, 66);
@@ -317,7 +309,7 @@ namespace DisplayMagician.UIForms
             btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_save.ForeColor = System.Drawing.Color.White;
-            btn_save.Location = new System.Drawing.Point(668, 42);
+            btn_save.Location = new System.Drawing.Point(662, 26);
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(228, 40);
@@ -336,18 +328,19 @@ namespace DisplayMagician.UIForms
             // btn_hotkey
             // 
             btn_hotkey.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_hotkey.BackColor = System.Drawing.Color.Black;
             btn_hotkey.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_hotkey.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_hotkey.ForeColor = System.Drawing.Color.White;
-            btn_hotkey.Location = new System.Drawing.Point(138, 42);
+            btn_hotkey.Location = new System.Drawing.Point(132, 26);
             btn_hotkey.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_hotkey.Name = "btn_hotkey";
             btn_hotkey.Size = new System.Drawing.Size(130, 40);
             btn_hotkey.TabIndex = 3;
             btn_hotkey.Text = "&Hotkey";
-            btn_hotkey.UseVisualStyleBackColor = true;
+            btn_hotkey.UseVisualStyleBackColor = false;
             btn_hotkey.Click += btn_hotkey_Click;
             // 
             // lbl_hotkey_assigned
@@ -357,7 +350,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_assigned.BackColor = System.Drawing.Color.Brown;
             lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            lbl_hotkey_assigned.Location = new System.Drawing.Point(4, 3);
+            lbl_hotkey_assigned.Location = new System.Drawing.Point(4, 2);
             lbl_hotkey_assigned.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
             lbl_hotkey_assigned.Size = new System.Drawing.Size(113, 20);
@@ -369,26 +362,20 @@ namespace DisplayMagician.UIForms
             // 
             // p_upper
             // 
-            p_upper.BackColor = System.Drawing.Color.DimGray;
-            p_upper.BackgroundImage = (System.Drawing.Image)resources.GetObject("p_upper.BackgroundImage");
+            p_upper.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_upper.BackColor = System.Drawing.Color.Transparent;
             p_upper.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             p_upper.Controls.Add(lbl_save_profile);
             p_upper.Controls.Add(btn_donate);
             p_upper.Controls.Add(btn_help);
-            p_upper.Controls.Add(txt_profile_save_name);
-            p_upper.Controls.Add(btn_profile_settings);
-            p_upper.Controls.Add(pb_down_arrow);
             p_upper.Controls.Add(btn_view_current);
-            p_upper.Controls.Add(btn_save_or_rename);
-            p_upper.Controls.Add(label1);
             p_upper.Controls.Add(lbl_profile_shown);
             p_upper.Controls.Add(lbl_profile_shown_subtitle);
             p_upper.Controls.Add(dv_profile);
-            p_upper.Dock = System.Windows.Forms.DockStyle.Top;
             p_upper.Location = new System.Drawing.Point(0, 0);
             p_upper.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_upper.Name = "p_upper";
-            p_upper.Size = new System.Drawing.Size(1020, 637);
+            p_upper.Size = new System.Drawing.Size(1008, 582);
             p_upper.TabIndex = 37;
             // 
             // btn_donate
@@ -400,7 +387,7 @@ namespace DisplayMagician.UIForms
             btn_donate.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_donate.ForeColor = System.Drawing.Color.White;
             btn_donate.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_donate.Location = new System.Drawing.Point(842, 78);
+            btn_donate.Location = new System.Drawing.Point(830, 78);
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(78, 29);
@@ -418,7 +405,7 @@ namespace DisplayMagician.UIForms
             btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_help.ForeColor = System.Drawing.Color.White;
             btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_help.Location = new System.Drawing.Point(928, 78);
+            btn_help.Location = new System.Drawing.Point(916, 78);
             btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_help.Name = "btn_help";
             btn_help.Size = new System.Drawing.Size(78, 29);
@@ -426,24 +413,6 @@ namespace DisplayMagician.UIForms
             btn_help.Text = "Hel&p";
             btn_help.UseVisualStyleBackColor = false;
             btn_help.Click += btn_help_Click;
-            // 
-            // btn_profile_settings
-            // 
-            btn_profile_settings.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btn_profile_settings.BackColor = System.Drawing.Color.Black;
-            btn_profile_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_profile_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_profile_settings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_profile_settings.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
-            btn_profile_settings.ForeColor = System.Drawing.Color.White;
-            btn_profile_settings.Location = new System.Drawing.Point(713, 550);
-            btn_profile_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_profile_settings.Name = "btn_profile_settings";
-            btn_profile_settings.Size = new System.Drawing.Size(184, 36);
-            btn_profile_settings.TabIndex = 2;
-            btn_profile_settings.Text = "&Profile Settings";
-            btn_profile_settings.UseVisualStyleBackColor = false;
-            btn_profile_settings.Click += btn_profile_settings_Click;
             // 
             // dv_profile
             // 
@@ -455,12 +424,31 @@ namespace DisplayMagician.UIForms
             dv_profile.Location = new System.Drawing.Point(0, 115);
             dv_profile.Margin = new System.Windows.Forms.Padding(247, 115, 247, 115);
             dv_profile.Name = "dv_profile";
-            dv_profile.Size = new System.Drawing.Size(1020, 428);
+            dv_profile.Size = new System.Drawing.Size(1008, 467);
             dv_profile.TabIndex = 34;
+            // 
+            // btn_profile_settings
+            // 
+            btn_profile_settings.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_profile_settings.BackColor = System.Drawing.Color.Black;
+            btn_profile_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_profile_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_profile_settings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_profile_settings.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
+            btn_profile_settings.ForeColor = System.Drawing.Color.White;
+            btn_profile_settings.Location = new System.Drawing.Point(720, 12);
+            btn_profile_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_profile_settings.Name = "btn_profile_settings";
+            btn_profile_settings.Size = new System.Drawing.Size(184, 36);
+            btn_profile_settings.TabIndex = 2;
+            btn_profile_settings.Text = "&Profile Settings";
+            btn_profile_settings.UseVisualStyleBackColor = false;
+            btn_profile_settings.Click += btn_profile_settings_Click;
             // 
             // p_lower
             // 
-            p_lower.BackgroundImage = (System.Drawing.Image)resources.GetObject("p_lower.BackgroundImage");
+            p_lower.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_lower.BackColor = System.Drawing.Color.Transparent;
             p_lower.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             p_lower.Controls.Add(btn_update);
             p_lower.Controls.Add(lbl_hotkey_assigned);
@@ -469,12 +457,11 @@ namespace DisplayMagician.UIForms
             p_lower.Controls.Add(btn_apply);
             p_lower.Controls.Add(btn_save);
             p_lower.Controls.Add(btn_back);
-            p_lower.Dock = System.Windows.Forms.DockStyle.Bottom;
-            p_lower.Location = new System.Drawing.Point(0, 813);
+            p_lower.Location = new System.Drawing.Point(0, 841);
             p_lower.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_lower.MaximumSize = new System.Drawing.Size(0, 118);
             p_lower.Name = "p_lower";
-            p_lower.Size = new System.Drawing.Size(1020, 118);
+            p_lower.Size = new System.Drawing.Size(1008, 102);
             p_lower.TabIndex = 38;
             // 
             // btn_update
@@ -486,7 +473,7 @@ namespace DisplayMagician.UIForms
             btn_update.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_update.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F);
             btn_update.ForeColor = System.Drawing.Color.White;
-            btn_update.Location = new System.Drawing.Point(403, 42);
+            btn_update.Location = new System.Drawing.Point(397, 26);
             btn_update.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_update.Name = "btn_update";
             btn_update.Size = new System.Drawing.Size(128, 40);
@@ -495,32 +482,62 @@ namespace DisplayMagician.UIForms
             btn_update.UseVisualStyleBackColor = false;
             btn_update.Click += btn_update_Click;
             // 
-            // p_fill
+            // p_listview
             // 
-            p_fill.BackColor = System.Drawing.Color.White;
-            p_fill.Controls.Add(ilv_saved_profiles);
-            p_fill.Dock = System.Windows.Forms.DockStyle.Fill;
-            p_fill.Location = new System.Drawing.Point(0, 637);
-            p_fill.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            p_fill.Name = "p_fill";
-            p_fill.Size = new System.Drawing.Size(1020, 176);
-            p_fill.TabIndex = 39;
+            p_listview.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_listview.BackColor = System.Drawing.Color.White;
+            p_listview.Controls.Add(ilv_saved_profiles);
+            p_listview.Location = new System.Drawing.Point(0, 675);
+            p_listview.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_listview.Name = "p_listview";
+            p_listview.Size = new System.Drawing.Size(1008, 165);
+            p_listview.TabIndex = 39;
+            // 
+            // p_middle
+            // 
+            p_middle.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_middle.BackColor = System.Drawing.Color.Transparent;
+            p_middle.Controls.Add(label1);
+            p_middle.Controls.Add(txt_profile_save_name);
+            p_middle.Controls.Add(btn_save_or_rename);
+            p_middle.Controls.Add(btn_profile_settings);
+            p_middle.Controls.Add(pb_down_arrow);
+            p_middle.Location = new System.Drawing.Point(0, 581);
+            p_middle.Name = "p_middle";
+            p_middle.Size = new System.Drawing.Size(1008, 94);
+            p_middle.TabIndex = 35;
+            // 
+            // label1
+            // 
+            label1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            label1.AutoSize = true;
+            label1.BackColor = System.Drawing.Color.Black;
+            label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            label1.ForeColor = System.Drawing.Color.White;
+            label1.Location = new System.Drawing.Point(279, 74);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(450, 20);
+            label1.TabIndex = 24;
+            label1.Text = "Saved Profiles (These can be used to create shortcuts)";
+            label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // DisplayProfileForm
             // 
             AcceptButton = btn_apply;
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            BackColor = System.Drawing.Color.Black;
-            BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            BackColor = System.Drawing.Color.DimGray;
+            BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
+            BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             CancelButton = btn_back;
-            ClientSize = new System.Drawing.Size(1020, 931);
-            Controls.Add(p_fill);
+            ClientSize = new System.Drawing.Size(1008, 943);
+            Controls.Add(p_middle);
+            Controls.Add(p_listview);
             Controls.Add(p_lower);
             Controls.Add(p_upper);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            MaximizeBox = false;
             MinimumSize = new System.Drawing.Size(1024, 970);
             Name = "DisplayProfileForm";
             ShowIcon = false;
@@ -534,7 +551,9 @@ namespace DisplayMagician.UIForms
             p_upper.PerformLayout();
             p_lower.ResumeLayout(false);
             p_lower.PerformLayout();
-            p_fill.ResumeLayout(false);
+            p_listview.ResumeLayout(false);
+            p_middle.ResumeLayout(false);
+            p_middle.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -553,7 +572,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TextBox txt_profile_save_name;
         private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolTip tt_selected;
         private System.Windows.Forms.Label lbl_save_profile;
         private System.Windows.Forms.Button btn_save;
@@ -563,13 +581,15 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel p_upper;
         private System.Windows.Forms.Button btn_profile_settings;
         private System.Windows.Forms.Panel p_lower;
-        private System.Windows.Forms.Panel p_fill;
+        private System.Windows.Forms.Panel p_listview;
         private System.Windows.Forms.Button btn_help;
         private System.Windows.Forms.ToolStripMenuItem deleteProfileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveProfileToDesktopToolStripMenuItem;
         private System.Windows.Forms.Button btn_donate;
         private System.Windows.Forms.Button btn_update;
         private DisplayView dv_profile;
+        private System.Windows.Forms.Panel p_middle;
+        private System.Windows.Forms.Label label1;
     }
 }
 

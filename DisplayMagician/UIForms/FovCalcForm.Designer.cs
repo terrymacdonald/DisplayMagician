@@ -92,6 +92,7 @@
             // 
             // pnl_fov
             // 
+            pnl_fov.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             pnl_fov.Controls.Add(split_fov);
             pnl_fov.Location = new System.Drawing.Point(2, 148);
             pnl_fov.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -101,7 +102,7 @@
             // 
             // split_fov
             // 
-            split_fov.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            split_fov.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             split_fov.BackColor = System.Drawing.Color.White;
             split_fov.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             split_fov.Location = new System.Drawing.Point(0, 0);
@@ -161,7 +162,7 @@
             llbl_markus_ewert.Location = new System.Drawing.Point(251, 654);
             llbl_markus_ewert.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             llbl_markus_ewert.Name = "llbl_markus_ewert";
-            llbl_markus_ewert.Size = new System.Drawing.Size(347, 15);
+            llbl_markus_ewert.Size = new System.Drawing.Size(358, 15);
             llbl_markus_ewert.TabIndex = 54;
             llbl_markus_ewert.TabStop = true;
             llbl_markus_ewert.Text = "A massive thanks to Markus Ewert for permission to use his code";
@@ -169,6 +170,7 @@
             // 
             // lbl_bezel_thickness_description
             // 
+            lbl_bezel_thickness_description.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_bezel_thickness_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_bezel_thickness_description.ForeColor = System.Drawing.Color.IndianRed;
             lbl_bezel_thickness_description.Location = new System.Drawing.Point(28, 542);
@@ -180,6 +182,7 @@
             // 
             // lbl_distinace_to_screen_tip
             // 
+            lbl_distinace_to_screen_tip.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_distinace_to_screen_tip.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_distinace_to_screen_tip.ForeColor = System.Drawing.Color.Gold;
             lbl_distinace_to_screen_tip.Location = new System.Drawing.Point(28, 432);
@@ -191,6 +194,7 @@
             // 
             // lbl_screen_type
             // 
+            lbl_screen_type.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_screen_type.AutoSize = true;
             lbl_screen_type.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_screen_type.ForeColor = System.Drawing.Color.White;
@@ -203,6 +207,7 @@
             // 
             // lbl_distance_to_screen
             // 
+            lbl_distance_to_screen.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_distance_to_screen.AutoSize = true;
             lbl_distance_to_screen.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_distance_to_screen.ForeColor = System.Drawing.Color.White;
@@ -215,6 +220,7 @@
             // 
             // lbl_distance_to_screen_description
             // 
+            lbl_distance_to_screen_description.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_distance_to_screen_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_distance_to_screen_description.ForeColor = System.Drawing.Color.IndianRed;
             lbl_distance_to_screen_description.Location = new System.Drawing.Point(27, 390);
@@ -226,6 +232,7 @@
             // 
             // lbl_aspect_ratio_description
             // 
+            lbl_aspect_ratio_description.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_aspect_ratio_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_aspect_ratio_description.ForeColor = System.Drawing.Color.IndianRed;
             lbl_aspect_ratio_description.Location = new System.Drawing.Point(28, 275);
@@ -237,6 +244,7 @@
             // 
             // lbl_screen_size_description
             // 
+            lbl_screen_size_description.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_screen_size_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_screen_size_description.ForeColor = System.Drawing.Color.IndianRed;
             lbl_screen_size_description.Location = new System.Drawing.Point(28, 157);
@@ -248,6 +256,7 @@
             // 
             // lbl_screen_type_description
             // 
+            lbl_screen_type_description.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_screen_type_description.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_screen_type_description.ForeColor = System.Drawing.Color.IndianRed;
             lbl_screen_type_description.Location = new System.Drawing.Point(27, 45);
@@ -259,7 +268,7 @@
             // 
             // btn_triple_screens
             // 
-            btn_triple_screens.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_triple_screens.Anchor = System.Windows.Forms.AnchorStyles.Right;
             btn_triple_screens.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_triple_screens.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_triple_screens.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -276,7 +285,7 @@
             // 
             // btn_single_screen
             // 
-            btn_single_screen.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_single_screen.Anchor = System.Windows.Forms.AnchorStyles.Right;
             btn_single_screen.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_single_screen.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_single_screen.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -293,6 +302,7 @@
             // 
             // lbl_bezel_thickness
             // 
+            lbl_bezel_thickness.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_bezel_thickness.AutoSize = true;
             lbl_bezel_thickness.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_bezel_thickness.ForeColor = System.Drawing.Color.White;
@@ -305,6 +315,7 @@
             // 
             // cmb_bezel_thickness
             // 
+            cmb_bezel_thickness.Anchor = System.Windows.Forms.AnchorStyles.Right;
             cmb_bezel_thickness.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_bezel_thickness.FormattingEnabled = true;
             cmb_bezel_thickness.Location = new System.Drawing.Point(646, 542);
@@ -316,6 +327,7 @@
             // 
             // txt_bezel_thickness
             // 
+            txt_bezel_thickness.Anchor = System.Windows.Forms.AnchorStyles.Right;
             txt_bezel_thickness.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_bezel_thickness.Location = new System.Drawing.Point(548, 542);
             txt_bezel_thickness.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -326,6 +338,7 @@
             // 
             // cmb_distance_to_screen
             // 
+            cmb_distance_to_screen.Anchor = System.Windows.Forms.AnchorStyles.Right;
             cmb_distance_to_screen.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_distance_to_screen.FormattingEnabled = true;
             cmb_distance_to_screen.Location = new System.Drawing.Point(646, 390);
@@ -337,6 +350,7 @@
             // 
             // txt_distance_to_screen
             // 
+            txt_distance_to_screen.Anchor = System.Windows.Forms.AnchorStyles.Right;
             txt_distance_to_screen.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_distance_to_screen.Location = new System.Drawing.Point(548, 390);
             txt_distance_to_screen.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -347,6 +361,7 @@
             // 
             // lbl_aspect_ratio
             // 
+            lbl_aspect_ratio.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_aspect_ratio.AutoSize = true;
             lbl_aspect_ratio.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_aspect_ratio.ForeColor = System.Drawing.Color.White;
@@ -359,6 +374,7 @@
             // 
             // lbl_screen_size
             // 
+            lbl_screen_size.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_screen_size.AutoSize = true;
             lbl_screen_size.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_screen_size.ForeColor = System.Drawing.Color.White;
@@ -371,6 +387,7 @@
             // 
             // txt_aspect_ratio_y
             // 
+            txt_aspect_ratio_y.Anchor = System.Windows.Forms.AnchorStyles.Right;
             txt_aspect_ratio_y.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_aspect_ratio_y.Location = new System.Drawing.Point(548, 275);
             txt_aspect_ratio_y.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -381,6 +398,7 @@
             // 
             // txt_aspect_ratio_x
             // 
+            txt_aspect_ratio_x.Anchor = System.Windows.Forms.AnchorStyles.Right;
             txt_aspect_ratio_x.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_aspect_ratio_x.Location = new System.Drawing.Point(456, 275);
             txt_aspect_ratio_x.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -391,6 +409,7 @@
             // 
             // txt_screen_size
             // 
+            txt_screen_size.Anchor = System.Windows.Forms.AnchorStyles.Right;
             txt_screen_size.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             txt_screen_size.Location = new System.Drawing.Point(548, 157);
             txt_screen_size.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -401,6 +420,7 @@
             // 
             // cmb_screen_size_units
             // 
+            cmb_screen_size_units.Anchor = System.Windows.Forms.AnchorStyles.Right;
             cmb_screen_size_units.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_screen_size_units.FormattingEnabled = true;
             cmb_screen_size_units.Location = new System.Drawing.Point(646, 157);
@@ -412,6 +432,7 @@
             // 
             // cmb_aspect_ratio
             // 
+            cmb_aspect_ratio.Anchor = System.Windows.Forms.AnchorStyles.Right;
             cmb_aspect_ratio.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_aspect_ratio.FormattingEnabled = true;
             cmb_aspect_ratio.Location = new System.Drawing.Point(662, 275);
@@ -423,6 +444,7 @@
             // 
             // lbl_aspect_ratio_arrow
             // 
+            lbl_aspect_ratio_arrow.Anchor = System.Windows.Forms.AnchorStyles.Right;
             lbl_aspect_ratio_arrow.AutoSize = true;
             lbl_aspect_ratio_arrow.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_aspect_ratio_arrow.ForeColor = System.Drawing.Color.White;
@@ -435,6 +457,7 @@
             // 
             // lbl_aspect_ratio_separator
             // 
+            lbl_aspect_ratio_separator.Anchor = System.Windows.Forms.AnchorStyles.Right;
             lbl_aspect_ratio_separator.AutoSize = true;
             lbl_aspect_ratio_separator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_aspect_ratio_separator.ForeColor = System.Drawing.Color.White;
@@ -447,6 +470,7 @@
             // 
             // lbl_vresult
             // 
+            lbl_vresult.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             lbl_vresult.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_vresult.ForeColor = System.Drawing.Color.White;
             lbl_vresult.Location = new System.Drawing.Point(436, 627);
@@ -459,6 +483,7 @@
             // 
             // lbl_vtitle
             // 
+            lbl_vtitle.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             lbl_vtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_vtitle.ForeColor = System.Drawing.Color.White;
             lbl_vtitle.Location = new System.Drawing.Point(436, 607);
@@ -471,6 +496,7 @@
             // 
             // lbl_hresult
             // 
+            lbl_hresult.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             lbl_hresult.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             lbl_hresult.ForeColor = System.Drawing.Color.White;
             lbl_hresult.Location = new System.Drawing.Point(46, 627);
@@ -483,6 +509,7 @@
             // 
             // lbl_htitle
             // 
+            lbl_htitle.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             lbl_htitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_htitle.ForeColor = System.Drawing.Color.White;
             lbl_htitle.Location = new System.Drawing.Point(47, 607);
@@ -495,6 +522,7 @@
             // 
             // btn_save
             // 
+            btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_save.BackColor = System.Drawing.Color.Black;
             btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
@@ -512,6 +540,7 @@
             // 
             // lbl_results
             // 
+            lbl_results.Anchor = System.Windows.Forms.AnchorStyles.Top;
             lbl_results.AutoSize = true;
             lbl_results.BackColor = System.Drawing.Color.Black;
             lbl_results.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -526,6 +555,7 @@
             // 
             // rtb_results
             // 
+            rtb_results.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             rtb_results.Location = new System.Drawing.Point(14, 60);
             rtb_results.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rtb_results.Name = "rtb_results";
@@ -576,7 +606,6 @@
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            MaximumSize = new System.Drawing.Size(1534, 927);
             MinimumSize = new System.Drawing.Size(1534, 927);
             Name = "FovCalcForm";
             ShowIcon = false;

@@ -383,7 +383,6 @@
             Controls.Add(ilv_saved_shortcuts);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            MaximizeBox = false;
             MinimumSize = new System.Drawing.Size(950, 652);
             Name = "ShortcutLibraryForm";
             ShowIcon = false;
