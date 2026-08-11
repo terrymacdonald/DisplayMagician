@@ -196,17 +196,24 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            string markdown;
+            string rawContent;
             string htmlDoc;
             try
             {
-                markdown = File.ReadAllText(fullPath);
-                string htmlBody = Markdown.ToHtml(markdown, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
-                htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
+                rawContent = File.ReadAllText(fullPath);
+                if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
+                {
+                    htmlDoc = rawContent;
+                }
+                else
+                {
+                    string htmlBody = Markdown.ToHtml(rawContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
+                }
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to read or parse markdown content (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
+                logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to read or parse content (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
                 lbl_fallback.Text = "This message content could not be loaded.";
                 lbl_fallback.Visible = true;
                 if (webView != null)
@@ -226,15 +233,15 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to render markdown in WebView2 (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
+                    logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to render HTML in WebView2 (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
                     webView.Visible = false;
-                    lbl_fallback.Text = markdown;
+                    lbl_fallback.Text = rawContent;
                     lbl_fallback.Visible = true;
                 }
             }
             else
             {
-                lbl_fallback.Text = markdown;
+                lbl_fallback.Text = rawContent;
                 lbl_fallback.Visible = true;
             }
         }

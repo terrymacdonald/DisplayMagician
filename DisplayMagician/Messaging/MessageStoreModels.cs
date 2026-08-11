@@ -44,6 +44,21 @@ namespace DisplayMagician.Messaging
 
         [JsonProperty("vendors")]
         public List<string> Vendors { get; set; } = new List<string>();
+
+        [JsonProperty("format")]
+        public string Format { get; set; } = string.Empty;
+
+        [JsonProperty("hash")]
+        public string Hash { get; set; } = string.Empty;
+
+        [JsonProperty("showOnStartup")]
+        public bool ShowOnStartup { get; set; }
+
+        [JsonProperty("downloadAttempts")]
+        public int DownloadAttempts { get; set; }
+
+        [JsonProperty("isFaulty")]
+        public bool IsFaulty { get; set; }
     }
 
     public sealed class MessageSyncResult

@@ -95,6 +95,7 @@ namespace DisplayMagician {
         private static readonly SemaphoreSlim _messageSyncSemaphore = new SemaphoreSlim(1, 1);
         private static MessageSyncService _messageSyncService;
         private static System.Timers.Timer _messageSyncTimer;
+        private static System.Timers.Timer _startupMessagePollTimer;
         private static readonly TimeSpan _messageSyncPollInterval = TimeSpan.FromHours(1);
         private const string MessageManifestUrl = "https://displaymagician.littlebitbig.com/messages/manifest.json";
 
@@ -1324,6 +1325,7 @@ namespace DisplayMagician {
                 {
                     await RunMessageSyncAndNotifyUserAsync(force: true);
                     EnsureMessageSyncTimer();
+                    EnsureStartupMessagePollTimer();
                 }
                 catch (Exception ex)
                 {
@@ -1359,6 +1361,83 @@ namespace DisplayMagician {
             };
 
             _messageSyncTimer.Start();
+        }
+
+        private static void EnsureStartupMessagePollTimer()
+        {
+            if (_startupMessagePollTimer != null)
+            {
+                return;
+            }
+
+            _startupMessagePollTimer = new System.Timers.Timer
+            {
+                Interval = TimeSpan.FromMinutes(1).TotalMilliseconds,
+                AutoReset = true,
+                Enabled = true,
+            };
+
+            _startupMessagePollTimer.Elapsed += (_, __) =>
+            {
+                try
+                {
+                    List<LocalMessage> storedMessages = GetStoredMessages();
+                    if (storedMessages == null || !storedMessages.Any(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty))
+                    {
+                        return;
+                    }
+
+                    bool gotLock = AppBackgroundTaskSemaphoreSlim.Wait(0);
+                    if (!gotLock)
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        if (AppMainForm != null && AppMainForm.IsHandleCreated)
+                        {
+                            AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                            {
+                                List<LocalMessage> messagesToShow = GetStoredMessages()
+                                    .Where(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty)
+                                    .OrderBy(m => m.ReceivedUtc)
+                                    .ToList();
+
+                                foreach (LocalMessage message in messagesToShow)
+                                {
+                                    SetMessageReadState(new[] { message.Id }, true);
+
+                                    string fullPath = Path.Combine(AppMessagesPath, message.MarkdownFileName ?? string.Empty);
+                                    if (!File.Exists(fullPath))
+                                    {
+                                        continue;
+                                    }
+
+                                    StartMessageForm myMessageWindow = new StartMessageForm();
+                                    myMessageWindow.MessageMode = message.Format;
+                                    myMessageWindow.Filename = fullPath;
+                                    myMessageWindow.HeadingText = message.Title;
+                                    myMessageWindow.ButtonText = "&Close";
+                                    myMessageWindow.ShowDialog(AppMainForm);
+                                }
+
+                                RefreshMessageIndicators();
+                            });
+                        }
+                    }
+                    finally
+                    {
+                        AppBackgroundTaskSemaphoreSlim.Release();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "Program/StartupMessagePollTimer: Error checking or showing startup messages.");
+                }
+            };
+
+            _startupMessagePollTimer.Start();
         }
 
         private static async Task RunMessageSyncAndNotifyUserAsync(bool force)

@@ -17,6 +17,12 @@ namespace DisplayMagician.Messaging
         private const int CurrentSchemaVersion = 1;
         private const int MaxStoredMessages = 50;
         private static readonly TimeSpan DailyInterval = TimeSpan.FromHours(24);
+        private static readonly HashSet<string> SupportedFormats = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "html",
+            "md",
+            "markdown"
+        };
 
         private readonly HttpClient _httpClient;
         private readonly NLog.Logger _logger;
@@ -129,9 +135,9 @@ namespace DisplayMagician.Messaging
                 return new MessageSyncResult { Success = false, UnreadCount = store.Messages.Count(m => !m.IsRead) };
             }
 
-            if (manifest.SchemaVersion != CurrentSchemaVersion)
+            if (manifest.SchemaVersion > CurrentSchemaVersion)
             {
-                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Unsupported message schema version {manifest.SchemaVersion} (expected={CurrentSchemaVersion}, manifestUrl={_manifestUrl}).");
+                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Unsupported message schema version {manifest.SchemaVersion} (supported up to schema version {CurrentSchemaVersion}, manifestUrl={_manifestUrl}).");
                 return new MessageSyncResult { Success = false, UnreadCount = store.Messages.Count(m => !m.IsRead) };
             }
 
@@ -149,10 +155,62 @@ namespace DisplayMagician.Messaging
                     continue;
                 }
 
-                if (store.Messages.Any(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase)))
+                // Explicit testing of message format for future compatibility
+                string format = entry.Format;
+                if (string.IsNullOrWhiteSpace(format))
                 {
-                    _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping existing message id={entry.Id}.");
+                    string urlToCheck = !string.IsNullOrWhiteSpace(entry.Url) ? entry.Url : entry.MarkdownUrl;
+                    if (!string.IsNullOrWhiteSpace(urlToCheck))
+                    {
+                        if (urlToCheck.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || urlToCheck.EndsWith(".htm", StringComparison.OrdinalIgnoreCase))
+                        {
+                            format = "html";
+                        }
+                        else
+                        {
+                            format = "md";
+                        }
+                    }
+                    else
+                    {
+                        format = "md";
+                    }
+                }
+                format = format.ToLowerInvariant();
+                if (format == "markdown")
+                {
+                    format = "md";
+                }
+
+                if (!SupportedFormats.Contains(format))
+                {
+                    _logger.Warn($"MessageSyncService/SyncMessagesAsync: Skipping message id={entry.Id} due to unsupported format '{format}'. Supported formats are (html, md, markdown).");
                     continue;
+                }
+
+                LocalMessage existing = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    if (existing.IsFaulty)
+                    {
+                        _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping faulty message id={entry.Id}.");
+                        continue;
+                    }
+
+                    // Check if file exists. If it successfully exists, we can skip downloading it.
+                    string checkPath = Path.Combine(_messagesFolderPath, existing.MarkdownFileName);
+                    if (File.Exists(checkPath))
+                    {
+                        _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping existing valid message id={entry.Id}.");
+                        continue;
+                    }
+
+                    if (existing.DownloadAttempts >= 3)
+                    {
+                        existing.IsFaulty = true;
+                        _logger.Warn($"MessageSyncService/SyncMessagesAsync: Missing message file id={entry.Id} but exhausted download attempts. Marked as faulty.");
+                        continue;
+                    }
                 }
 
                 if (!IsEligibleForClient(entry, appVersion, currentVendorIds))
@@ -160,36 +218,125 @@ namespace DisplayMagician.Messaging
                     continue;
                 }
 
-                string markdownContent = await DownloadMarkdownAsync(manifestUri, entry.MarkdownUrl, cancellationToken).ConfigureAwait(false);
-                if (markdownContent == null)
+                string targetUrl = !string.IsNullOrWhiteSpace(entry.Url) ? entry.Url : entry.MarkdownUrl;
+                string content = await DownloadMarkdownAsync(manifestUri, targetUrl, cancellationToken).ConfigureAwait(false);
+
+                // Compute and verify hash if provided in manifest
+                bool isHashValid = true;
+                if (content != null && !string.IsNullOrWhiteSpace(entry.Hash))
                 {
+                    try
+                    {
+                        using (System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create())
+                        {
+                            byte[] contentBytes = Encoding.UTF8.GetBytes(content);
+                            byte[] hashBytes = sha256.ComputeHash(contentBytes);
+                            StringBuilder sb = new StringBuilder(hashBytes.Length * 2);
+                            foreach (byte b in hashBytes)
+                            {
+                                sb.Append(b.ToString("x2"));
+                            }
+                            string computedHash = sb.ToString();
+
+                            if (!computedHash.Equals(entry.Hash.Trim(), StringComparison.OrdinalIgnoreCase))
+                            {
+                                isHashValid = false;
+                                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Hash mismatch for message id={entry.Id}. Expected: '{entry.Hash}', Computed: '{computedHash}'.");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Exception while calculating SHA-256 for message id={entry.Id}.");
+                        isHashValid = false;
+                    }
+                }
+
+                if (content == null || !isHashValid)
+                {
+                    // Track retry attempts
+                    if (existing != null)
+                    {
+                        existing.DownloadAttempts++;
+                        if (existing.DownloadAttempts >= 3)
+                        {
+                            existing.IsFaulty = true;
+                            _logger.Error($"MessageSyncService/SyncMessagesAsync: Message id={entry.Id} failed verification or download after multiple attempts. Marked as faulty.");
+                        }
+                    }
+                    else
+                    {
+                        // Add to database so we track its failed attempts
+                        store.Messages.Add(new LocalMessage
+                        {
+                            Id = entry.Id,
+                            Title = string.IsNullOrWhiteSpace(entry.Title) ? "DisplayMagician Message" : entry.Title,
+                            MarkdownFileName = BuildSafeFileName(entry.Id, format),
+                            SourceMarkdownUrl = targetUrl,
+                            PublishedUtc = entry.PublishedUtc,
+                            ReceivedUtc = DateTime.UtcNow,
+                            IsRead = false,
+                            Vendors = entry.Vendors ?? new List<string>(),
+                            Format = format,
+                            Hash = entry.Hash,
+                            ShowOnStartup = entry.ShowOnStartup,
+                            DownloadAttempts = 1,
+                            IsFaulty = false
+                        });
+                    }
                     continue;
                 }
 
-                string markdownFileName = BuildSafeMarkdownFileName(entry.Id);
-                string markdownFullPath = Path.Combine(_messagesFolderPath, markdownFileName);
+                string safeFileName = BuildSafeFileName(entry.Id, format);
+                string fullPath = Path.Combine(_messagesFolderPath, safeFileName);
                 try
                 {
-                    await File.WriteAllTextAsync(markdownFullPath, markdownContent, cancellationToken).ConfigureAwait(false);
+                    await File.WriteAllTextAsync(fullPath, content, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Failed to write markdown file (messageId={entry.Id}, markdownPath={markdownFullPath}, sourceMarkdownUrl={entry.MarkdownUrl}).");
+                    _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Failed to write message file (messageId={entry.Id}, markdownPath={fullPath}, sourceUrl={targetUrl}).");
+                    if (existing != null)
+                    {
+                        existing.DownloadAttempts++;
+                        if (existing.DownloadAttempts >= 3)
+                        {
+                            existing.IsFaulty = true;
+                        }
+                    }
                     continue;
                 }
 
-                store.Messages.Add(new LocalMessage
+                if (existing != null)
                 {
-                    Id = entry.Id,
-                    Title = string.IsNullOrWhiteSpace(entry.Title) ? "DisplayMagician Message" : entry.Title,
-                    MarkdownFileName = markdownFileName,
-                    SourceMarkdownUrl = entry.MarkdownUrl,
-                    PublishedUtc = entry.PublishedUtc,
-                    ReceivedUtc = DateTime.UtcNow,
-                    IsRead = false,
-                    Vendors = entry.Vendors ?? new List<string>()
-                });
-                newMessages++;
+                    existing.MarkdownFileName = safeFileName;
+                    existing.SourceMarkdownUrl = targetUrl;
+                    existing.Format = format;
+                    existing.Hash = entry.Hash;
+                    existing.ShowOnStartup = entry.ShowOnStartup;
+                    existing.DownloadAttempts = 0;
+                    existing.IsFaulty = false;
+                }
+                else
+                {
+                    store.Messages.Add(new LocalMessage
+                    {
+                        Id = entry.Id,
+                        Title = string.IsNullOrWhiteSpace(entry.Title) ? "DisplayMagician Message" : entry.Title,
+                        MarkdownFileName = safeFileName,
+                        SourceMarkdownUrl = targetUrl,
+                        PublishedUtc = entry.PublishedUtc,
+                        ReceivedUtc = DateTime.UtcNow,
+                        IsRead = false,
+                        Vendors = entry.Vendors ?? new List<string>(),
+                        Format = format,
+                        Hash = entry.Hash,
+                        ShowOnStartup = entry.ShowOnStartup,
+                        DownloadAttempts = 0,
+                        IsFaulty = false
+                    });
+                    newMessages++;
+                }
             }
 
             PruneToMaxMessages(store);
@@ -390,15 +537,22 @@ namespace DisplayMagician.Messaging
             };
         }
 
-        private static string BuildSafeMarkdownFileName(string id)
+        private static string BuildSafeFileName(string id, string format)
         {
-            StringBuilder sb = new StringBuilder(id.Length + 3);
+            StringBuilder sb = new StringBuilder(id.Length + 5);
             foreach (char c in id)
             {
                 sb.Append(char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_');
             }
 
-            sb.Append(".md");
+            if (format.Equals("html", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append(".html");
+            }
+            else
+            {
+                sb.Append(".md");
+            }
             return sb.ToString();
         }
 

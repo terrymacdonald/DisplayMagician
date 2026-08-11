@@ -24,6 +24,18 @@ namespace DisplayMagician.Messaging
         [JsonProperty("markdownUrl")]
         public string MarkdownUrl { get; set; } = string.Empty;
 
+        [JsonProperty("url")]
+        public string Url { get; set; } = string.Empty;
+
+        [JsonProperty("format")]
+        public string Format { get; set; } = string.Empty;
+
+        [JsonProperty("hash")]
+        public string Hash { get; set; } = string.Empty;
+
+        [JsonProperty("showOnStartup")]
+        public bool ShowOnStartup { get; set; }
+
         [JsonProperty("publishedUtc")]
         public DateTime? PublishedUtc { get; set; }
 

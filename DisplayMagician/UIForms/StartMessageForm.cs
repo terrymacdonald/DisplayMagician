@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Net;
+using Microsoft.Web.WebView2.WinForms;
+using Markdig;
 
 namespace DisplayMagician.UIForms
 {
@@ -69,11 +71,11 @@ namespace DisplayMagician.UIForms
                 // Figure out the full path of the filename
                 try
                 {
-                    FullPath = Path.Combine(Application.StartupPath, Filename);
+                    FullPath = Path.IsPathRooted(Filename) ? Filename : Path.Combine(Application.StartupPath, Filename);
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Filename supplied (\"{Filename}\") is not within the Application startup path (\"{Application.StartupPath}\")");
+                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Filename supplied (\"{Filename}\") cannot be resolved as a valid path.");
                     this.Close();
                     return;
                 }
@@ -81,35 +83,69 @@ namespace DisplayMagician.UIForms
                 // Try to load the Filename if it's supplied
                 try
                 {
-                    if (File.Exists(Filename))
+                    if (File.Exists(FullPath))
                     {
                         if (MessageMode == "rtf")
                         {
                             rtb_message.Show();
-                            rtb_message.LoadFile(Filename, RichTextBoxStreamType.RichText);
+                            rtb_message.LoadFile(FullPath, RichTextBoxStreamType.RichText);
                         }
                         else if (MessageMode == "txt")
                         {
                             rtb_message.Show();
-                            rtb_message.LoadFile(Filename, RichTextBoxStreamType.PlainText);
+                            rtb_message.LoadFile(FullPath, RichTextBoxStreamType.PlainText);
+                        }
+                        else if (MessageMode == "html" || MessageMode == "md" || MessageMode == "markdown")
+                        {
+                            try
+                            {
+                                string fileContent = File.ReadAllText(FullPath);
+                                string htmlDoc;
+                                if (MessageMode == "html")
+                                {
+                                    htmlDoc = fileContent;
+                                }
+                                else
+                                {
+                                    string htmlBody = Markdown.ToHtml(fileContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+                                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
+                                }
+
+                                // Designers-backed Form utilizes WebView2 dynamic injection on runtime as a fallback scenario to provide advanced rendering
+                                WebView2 webView = new WebView2
+                                {
+                                    Dock = DockStyle.Fill,
+                                };
+                                pnl_richtextbox.Controls.Add(webView);
+                                webView.BringToFront();
+                                rtb_message.Hide();
+                                webView.NavigateToString(htmlDoc);
+                            }
+                            catch (Exception webEx)
+                            {
+                                logger.Warn(webEx, $"StartMessageForm/StartMessageForm_Load: WebView2 initialization or rendering failed; falling back to rich text display window.");
+                                string rawContent = File.ReadAllText(FullPath);
+                                rtb_message.Show();
+                                rtb_message.Text = rawContent;
+                            }
                         }
                         else
                         {
-                            logger.Error($"StartMessageForm/StartMessageForm_Load: Message from file {Filename} is in an unsupported MessageMode: {MessageMode}");
+                            logger.Error($"StartMessageForm/StartMessageForm_Load: Message from file {FullPath} is in an unsupported MessageMode: {MessageMode}");
                             this.Close();
                             return;
                         }
                     }
                     else
                     {
-                        logger.Error($"StartMessageForm/StartMessageForm_Load: Couldn't find the Filename supplied (\"{Filename}\") and load it into the RichTextBox message object");
+                        logger.Error($"StartMessageForm/StartMessageForm_Load: Couldn't find the Filename supplied (\"{FullPath}\") and load it into the message view");
                         this.Close();
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the Filename supplied (\"{Filename}\") into the RichTextBox message object");
+                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the Filename supplied (\"{FullPath}\") into the message view");
                     this.Close();
                     return;
                 }
