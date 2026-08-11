@@ -155,11 +155,24 @@ namespace DisplayMagician.Messaging
                     continue;
                 }
 
+                // Process retraction and message deletion directly in metadata flow
+                if (entry.Status != null && entry.Status.Equals("deleted", StringComparison.OrdinalIgnoreCase))
+                {
+                    LocalMessage localToRemove = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
+                    if (localToRemove != null)
+                    {
+                        store.Messages.Remove(localToRemove);
+                        TryDeleteMarkdownFile(localToRemove.MarkdownFileName);
+                        _logger.Info($"MessageSyncService/SyncMessagesAsync: Retracted and deleted message id={entry.Id} based on manifest tombstone.");
+                    }
+                    continue;
+                }
+
                 // Explicit testing of message format for future compatibility
                 string format = entry.Format;
                 if (string.IsNullOrWhiteSpace(format))
                 {
-                    string urlToCheck = !string.IsNullOrWhiteSpace(entry.Url) ? entry.Url : entry.MarkdownUrl;
+                    string urlToCheck = entry.Url;
                     if (!string.IsNullOrWhiteSpace(urlToCheck))
                     {
                         if (urlToCheck.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || urlToCheck.EndsWith(".htm", StringComparison.OrdinalIgnoreCase))
@@ -218,12 +231,12 @@ namespace DisplayMagician.Messaging
                     continue;
                 }
 
-                string targetUrl = !string.IsNullOrWhiteSpace(entry.Url) ? entry.Url : entry.MarkdownUrl;
+                string targetUrl = entry.Url;
                 string content = await DownloadMarkdownAsync(manifestUri, targetUrl, cancellationToken).ConfigureAwait(false);
 
                 // Compute and verify hash if provided in manifest
                 bool isHashValid = true;
-                if (content != null && !string.IsNullOrWhiteSpace(entry.Hash))
+                if (content != null && !string.IsNullOrWhiteSpace(entry.Sha256))
                 {
                     try
                     {
@@ -238,10 +251,10 @@ namespace DisplayMagician.Messaging
                             }
                             string computedHash = sb.ToString();
 
-                            if (!computedHash.Equals(entry.Hash.Trim(), StringComparison.OrdinalIgnoreCase))
+                            if (!computedHash.Equals(entry.Sha256.Trim(), StringComparison.OrdinalIgnoreCase))
                             {
                                 isHashValid = false;
-                                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Hash mismatch for message id={entry.Id}. Expected: '{entry.Hash}', Computed: '{computedHash}'.");
+                                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Hash mismatch for message id={entry.Id}. Expected: '{entry.Sha256}', Computed: '{computedHash}'.");
                             }
                         }
                     }
@@ -278,7 +291,7 @@ namespace DisplayMagician.Messaging
                             IsRead = false,
                             Vendors = entry.Vendors ?? new List<string>(),
                             Format = format,
-                            Hash = entry.Hash,
+                            Sha256 = entry.Sha256,
                             ShowOnStartup = entry.ShowOnStartup,
                             DownloadAttempts = 1,
                             IsFaulty = false
@@ -312,7 +325,7 @@ namespace DisplayMagician.Messaging
                     existing.MarkdownFileName = safeFileName;
                     existing.SourceMarkdownUrl = targetUrl;
                     existing.Format = format;
-                    existing.Hash = entry.Hash;
+                    existing.Sha256 = entry.Sha256;
                     existing.ShowOnStartup = entry.ShowOnStartup;
                     existing.DownloadAttempts = 0;
                     existing.IsFaulty = false;
@@ -330,7 +343,7 @@ namespace DisplayMagician.Messaging
                         IsRead = false,
                         Vendors = entry.Vendors ?? new List<string>(),
                         Format = format,
-                        Hash = entry.Hash,
+                        Sha256 = entry.Sha256,
                         ShowOnStartup = entry.ShowOnStartup,
                         DownloadAttempts = 0,
                         IsFaulty = false
@@ -427,7 +440,7 @@ namespace DisplayMagician.Messaging
 
             if (string.IsNullOrWhiteSpace(entry.Id))
             {
-                _logger.Warn($"MessageSyncService/TryValidateEntry: Skipping manifest entry with missing id (title={entry.Title ?? string.Empty}, markdownUrl={entry.MarkdownUrl ?? string.Empty}).");
+                _logger.Warn($"MessageSyncService/TryValidateEntry: Skipping manifest entry with missing id (title={entry.Title ?? string.Empty}).");
                 return false;
             }
 

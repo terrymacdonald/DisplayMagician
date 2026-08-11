@@ -48,8 +48,8 @@ namespace DisplayMagician.Messaging
         [JsonProperty("format")]
         public string Format { get; set; } = string.Empty;
 
-        [JsonProperty("hash")]
-        public string Hash { get; set; } = string.Empty;
+        [JsonProperty("sha256")]
+        public string Sha256 { get; set; } = string.Empty;
 
         [JsonProperty("showOnStartup")]
         public bool ShowOnStartup { get; set; }

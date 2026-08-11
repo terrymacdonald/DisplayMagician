@@ -9,6 +9,9 @@ namespace DisplayMagician.Messaging
         [JsonProperty("schemaVersion")]
         public int SchemaVersion { get; set; }
 
+        [JsonProperty("generatedUtc")]
+        public DateTime? GeneratedUtc { get; set; }
+
         [JsonProperty("messages")]
         public List<MessageManifestEntry> Messages { get; set; } = new List<MessageManifestEntry>();
     }
@@ -18,11 +21,11 @@ namespace DisplayMagician.Messaging
         [JsonProperty("id")]
         public string Id { get; set; } = string.Empty;
 
+        [JsonProperty("status")]
+        public string Status { get; set; } = "published";
+
         [JsonProperty("title")]
         public string Title { get; set; } = string.Empty;
-
-        [JsonProperty("markdownUrl")]
-        public string MarkdownUrl { get; set; } = string.Empty;
 
         [JsonProperty("url")]
         public string Url { get; set; } = string.Empty;
@@ -30,14 +33,17 @@ namespace DisplayMagician.Messaging
         [JsonProperty("format")]
         public string Format { get; set; } = string.Empty;
 
-        [JsonProperty("hash")]
-        public string Hash { get; set; } = string.Empty;
+        [JsonProperty("sha256")]
+        public string Sha256 { get; set; } = string.Empty;
 
         [JsonProperty("showOnStartup")]
         public bool ShowOnStartup { get; set; }
 
         [JsonProperty("publishedUtc")]
         public DateTime? PublishedUtc { get; set; }
+
+        [JsonProperty("deletedUtc")]
+        public DateTime? DeletedUtc { get; set; }
 
         [JsonProperty("minVersion")]
         public string MinVersion { get; set; }
