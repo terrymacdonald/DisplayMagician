@@ -63,8 +63,6 @@ namespace DisplayMagician
         private bool _upgradeEnabled = true;
         private bool _installDesktopContextMenu = true;
         private bool _wakeUpGpus = true;
-        private int _lastMessageIdRead = 0;
-        private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Warn.ToString();
         private string _displayMagicianVersion = null;
         private string _installId = "";
@@ -280,32 +278,6 @@ namespace DisplayMagician
             set
             {
                 _installDesktopContextMenu = value;
-            }
-        }
-
-        [DefaultValue(0)]
-        public int LastMessageIdRead
-        {
-            get
-            {
-                return _lastMessageIdRead;
-            }
-            set
-            {
-                _lastMessageIdRead = value;
-            }
-        }
-
-        [DefaultValue(default(List<int>))]
-        public List<int> MessagesToMonitor
-        {
-            get
-            {
-                return _messagesToMonitor;
-            }
-            set
-            {
-                _messagesToMonitor = value;
             }
         }
 
