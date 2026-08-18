@@ -97,7 +97,7 @@ namespace DisplayMagician {
         private static System.Timers.Timer _messageSyncTimer;
         private static System.Timers.Timer _startupMessagePollTimer;
         private static readonly TimeSpan _messageSyncPollInterval = TimeSpan.FromHours(1);
-        private const string MessageManifestUrl = "https://displaymagician.littlebitbig.com/messages/manifest.json";
+        private const string MessageManifestUrl = "https://www.displaymagician.com/messages/manifest.json";
 
         public enum ERRORLEVEL: int
         {
@@ -1843,7 +1843,7 @@ namespace DisplayMagician {
             AutoUpdater.RemindLaterAt = 7;
             AutoUpdater.InstalledVersion = new Version(AppVersion);
 
-            string connectionUrl = "https://displaymagician.littlebitbig.com/update/update.json";
+            string connectionUrl = "https://www.displaymagician.com/update/update.json";
             connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppVersion)}");
             connectionUrl += ($"&install_id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
             connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");

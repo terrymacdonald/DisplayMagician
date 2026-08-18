@@ -28,7 +28,7 @@
 	  <GenerateResourceDesigner>true</GenerateResourceDesigner>
 	  <EnableWinFormsAnalyzers>true</EnableWinFormsAnalyzers>
 	  <UseWinForms>true</UseWinForms>
-	  <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
 	  <ApplicationVisualStyles>true</ApplicationVisualStyles>
 	  <ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
 	  <ApplicationDefaultFont>Microsoft Sans Serif, 9pt</ApplicationDefaultFont>
