@@ -93,6 +93,7 @@ namespace DisplayMagician.UIForms
         {
             if (lv_messages.SelectedItems.Count == 0)
             {
+                btn_upgrade.Enabled = false;
                 return;
             }
 
@@ -111,6 +112,7 @@ namespace DisplayMagician.UIForms
             {
                 LocalMessage selectedMessage = lv_messages.SelectedItems[0].Tag as LocalMessage;
                 RenderMessage(selectedMessage);
+                btn_upgrade.Enabled = IsApplicableReleaseAnnouncement(selectedMessage);
             }
 
             Program.RefreshMessageIndicators();
@@ -124,6 +126,20 @@ namespace DisplayMagician.UIForms
         private void btn_mark_unread_Click(object sender, EventArgs e)
         {
             ApplyReadStateForSelection(isRead: false);
+        }
+
+        private void btn_upgrade_Click(object sender, EventArgs e)
+        {
+            LocalMessage selectedMessage = lv_messages.SelectedItems.Count == 1
+                ? lv_messages.SelectedItems[0].Tag as LocalMessage
+                : null;
+
+            if (!IsApplicableReleaseAnnouncement(selectedMessage))
+            {
+                return;
+            }
+
+            Program.CheckForUpdates(automatic: false);
         }
 
         private void ApplyReadStateForSelection(bool isRead)
@@ -144,6 +160,21 @@ namespace DisplayMagician.UIForms
             LoadMessagesIntoList();
             RestoreSelection(selectedIds);
             Program.RefreshMessageIndicators();
+        }
+
+        private bool IsApplicableReleaseAnnouncement(LocalMessage message)
+        {
+            if (message == null
+                || !string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(message.UpdateAction, "installIfAvailable", StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(message.ReleaseChannel, Program.AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable", StringComparison.OrdinalIgnoreCase)
+                || !Version.TryParse(message.ReleaseVersion, out Version releaseVersion)
+                || !Version.TryParse(Program.AppVersion, out Version currentVersion))
+            {
+                return false;
+            }
+
+            return releaseVersion > currentVersion;
         }
 
         private void RestoreSelection(List<string> selectedIds)

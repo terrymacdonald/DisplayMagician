@@ -36,6 +36,8 @@ namespace DisplayMagician.UIForms
             lbl_changelog = new System.Windows.Forms.Label();
             lnk_changelog = new System.Windows.Forms.LinkLabel();
             rtb_message = new System.Windows.Forms.RichTextBox();
+            web_release_notes = new Microsoft.Web.WebView2.WinForms.WebView2();
+            ((System.ComponentModel.ISupportInitialize)web_release_notes).BeginInit();
             SuspendLayout();
             // 
             // lbl_title
@@ -142,6 +144,18 @@ namespace DisplayMagician.UIForms
             rtb_message.Size = new System.Drawing.Size(963, 237);
             rtb_message.TabIndex = 41;
             rtb_message.Text = "";
+            //
+            // web_release_notes
+            //
+            web_release_notes.AllowExternalDrop = false;
+            web_release_notes.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            web_release_notes.DefaultBackgroundColor = System.Drawing.Color.White;
+            web_release_notes.Location = new System.Drawing.Point(14, 60);
+            web_release_notes.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            web_release_notes.Name = "web_release_notes";
+            web_release_notes.Size = new System.Drawing.Size(963, 237);
+            web_release_notes.TabIndex = 42;
+            web_release_notes.Visible = false;
             // 
             // UpgradeForm
             // 
@@ -149,6 +163,7 @@ namespace DisplayMagician.UIForms
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             ClientSize = new System.Drawing.Size(992, 468);
+            Controls.Add(web_release_notes);
             Controls.Add(rtb_message);
             Controls.Add(lnk_changelog);
             Controls.Add(lbl_changelog);
@@ -167,6 +182,7 @@ namespace DisplayMagician.UIForms
             Text = "Upgrade DisplayMagician";
             TopMost = true;
             Load += UpgradeForm_Load;
+            ((System.ComponentModel.ISupportInitialize)web_release_notes).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -180,5 +196,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_changelog;
         private System.Windows.Forms.LinkLabel lnk_changelog;
         private System.Windows.Forms.RichTextBox rtb_message;
+        private Microsoft.Web.WebView2.WinForms.WebView2 web_release_notes;
     }
 }

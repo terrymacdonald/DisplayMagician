@@ -13,6 +13,8 @@ namespace DisplayMagician.UIForms
 {
     public partial class UpgradeForm : Form
     {
+        private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public UpgradeForm()
         {
             InitializeComponent();
@@ -28,6 +30,9 @@ namespace DisplayMagician.UIForms
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ChangelogURL { get; set; } = "https://github.com/terrymacdonald/DisplayMagician/releases";
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string ReleaseNotesHtml { get; set; } = string.Empty;
 
         private void btn_skip_Click(object sender, EventArgs e)
         {
@@ -50,17 +55,44 @@ namespace DisplayMagician.UIForms
             this.Close();
         }
 
-        private void UpgradeForm_Load(object sender, EventArgs e)
+        private async void UpgradeForm_Load(object sender, EventArgs e)
         {
-            rtb_message.Rtf = Message;
+            lnk_changelog.Text = ChangelogURL;
+            if (!string.IsNullOrWhiteSpace(ReleaseNotesHtml))
+            {
+                try
+                {
+                    await web_release_notes.EnsureCoreWebView2Async();
+                    web_release_notes.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                    web_release_notes.CoreWebView2.Settings.AreDevToolsEnabled = false;
+                    web_release_notes.NavigateToString(ReleaseNotesHtml);
+                    web_release_notes.Show();
+                    rtb_message.Hide();
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "UpgradeForm/UpgradeForm_Load: WebView2 failed to render release notes; showing fallback text.");
+                    rtb_message.Text = ReleaseNotesHtml;
+                    rtb_message.Show();
+                }
+            }
+            else if (Message.StartsWith(@"{\rtf", StringComparison.OrdinalIgnoreCase))
+            {
+                rtb_message.Rtf = Message;
+                rtb_message.Show();
+            }
+            else
+            {
+                rtb_message.Text = Message;
+                rtb_message.Show();
+            }
+
             CenterToParent();
-            //Utils.CenterOnPrimaryScreen(this);
         }
 
         private void lnk_changelog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/releases";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);    
+            ProcessUtils.StartProcess(ChangelogURL, "", ProcessPriority.Normal);
         }
     }
 }

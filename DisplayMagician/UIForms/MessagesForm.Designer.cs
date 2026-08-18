@@ -34,6 +34,7 @@ namespace DisplayMagician.UIForms
             btn_back = new System.Windows.Forms.Button();
             btn_mark_unread = new System.Windows.Forms.Button();
             btn_mark_read = new System.Windows.Forms.Button();
+            btn_upgrade = new System.Windows.Forms.Button();
             lv_messages = new System.Windows.Forms.ListView();
             panelListHeader = new System.Windows.Forms.Panel();
             lbl_count = new System.Windows.Forms.Label();
@@ -55,10 +56,11 @@ namespace DisplayMagician.UIForms
             splitContainer.Name = "splitContainer";
             // 
             // splitContainer.Panel1
-            // 
+            //
             splitContainer.Panel1.Controls.Add(btn_back);
             splitContainer.Panel1.Controls.Add(btn_mark_unread);
             splitContainer.Panel1.Controls.Add(btn_mark_read);
+            splitContainer.Panel1.Controls.Add(btn_upgrade);
             splitContainer.Panel1.Controls.Add(lv_messages);
             splitContainer.Panel1.Controls.Add(panelListHeader);
             // 
@@ -77,10 +79,10 @@ namespace DisplayMagician.UIForms
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
             btn_back.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_back.Location = new System.Drawing.Point(230, 709);
+            btn_back.Location = new System.Drawing.Point(256, 709);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
-            btn_back.Size = new System.Drawing.Size(88, 27);
+            btn_back.Size = new System.Drawing.Size(78, 27);
             btn_back.TabIndex = 10;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
@@ -94,10 +96,10 @@ namespace DisplayMagician.UIForms
             btn_mark_unread.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_mark_unread.ForeColor = System.Drawing.Color.White;
             btn_mark_unread.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_mark_unread.Location = new System.Drawing.Point(134, 709);
+            btn_mark_unread.Location = new System.Drawing.Point(173, 709);
             btn_mark_unread.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_unread.Name = "btn_mark_unread";
-            btn_mark_unread.Size = new System.Drawing.Size(88, 27);
+            btn_mark_unread.Size = new System.Drawing.Size(78, 27);
             btn_mark_unread.TabIndex = 8;
             btn_mark_unread.Text = "Mark &Unread";
             btn_mark_unread.UseVisualStyleBackColor = true;
@@ -111,15 +113,33 @@ namespace DisplayMagician.UIForms
             btn_mark_read.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_mark_read.ForeColor = System.Drawing.Color.White;
             btn_mark_read.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_mark_read.Location = new System.Drawing.Point(38, 709);
+            btn_mark_read.Location = new System.Drawing.Point(90, 709);
             btn_mark_read.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_read.Name = "btn_mark_read";
-            btn_mark_read.Size = new System.Drawing.Size(88, 27);
+            btn_mark_read.Size = new System.Drawing.Size(78, 27);
             btn_mark_read.TabIndex = 9;
             btn_mark_read.Text = "Mark &Read";
             btn_mark_read.UseVisualStyleBackColor = true;
             btn_mark_read.Click += btn_mark_read_Click;
-            // 
+            //
+            // btn_upgrade
+            //
+            btn_upgrade.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_upgrade.Enabled = false;
+            btn_upgrade.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_upgrade.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_upgrade.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_upgrade.ForeColor = System.Drawing.Color.White;
+            btn_upgrade.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            btn_upgrade.Location = new System.Drawing.Point(7, 709);
+            btn_upgrade.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_upgrade.Name = "btn_upgrade";
+            btn_upgrade.Size = new System.Drawing.Size(78, 27);
+            btn_upgrade.TabIndex = 11;
+            btn_upgrade.Text = "&Upgrade";
+            btn_upgrade.UseVisualStyleBackColor = true;
+            btn_upgrade.Click += btn_upgrade_Click;
+            //
             // lv_messages
             // 
             lv_messages.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
@@ -211,5 +231,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_mark_read;
         private System.Windows.Forms.Button btn_mark_unread;
         private System.Windows.Forms.Button btn_back;
+        private System.Windows.Forms.Button btn_upgrade;
     }
 }

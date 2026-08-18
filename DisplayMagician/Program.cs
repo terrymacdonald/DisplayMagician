@@ -1310,15 +1310,6 @@ namespace DisplayMagician {
             {
                 try
                 {
-                    CheckForUpdates(true);
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic update check failed. DisplayMagician will continue running.");
-                }
-
-                try
-                {
                     await RunMessageSyncAndNotifyUserAsync(force: true);
                     EnsureMessageSyncTimer();
                     EnsureStartupMessagePollTimer();
@@ -1326,6 +1317,15 @@ namespace DisplayMagician {
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic message sync failed (force=true, manifestUrl={MessageManifestUrl}, appVersion={AppVersion}, messagesPath={AppMessagesPath}). DisplayMagician will continue running.");
+                }
+
+                try
+                {
+                    CheckForUpdates(true);
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic update check failed. DisplayMagician will continue running.");
                 }
             });
         }
@@ -1378,7 +1378,7 @@ namespace DisplayMagician {
                 try
                 {
                     List<LocalMessage> storedMessages = GetStoredMessages();
-                    if (storedMessages == null || !storedMessages.Any(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty))
+                    if (storedMessages == null || !storedMessages.Any(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty && string.Equals(m.Kind, "standard", StringComparison.OrdinalIgnoreCase)))
                     {
                         return;
                     }
@@ -1396,7 +1396,7 @@ namespace DisplayMagician {
                             AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
                             {
                                 List<LocalMessage> messagesToShow = GetStoredMessages()
-                                    .Where(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty)
+                                    .Where(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty && string.Equals(m.Kind, "standard", StringComparison.OrdinalIgnoreCase))
                                     .OrderBy(m => m.ReceivedUtc)
                                     .ToList();
 
@@ -2062,6 +2062,39 @@ namespace DisplayMagician {
 
                     upgradeForm.Message = message.ToString();
                     upgradeForm.ChangelogURL = args.ChangelogURL;
+
+                    string updateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
+                    LocalMessage releaseAnnouncement = GetStoredMessages().FirstOrDefault(m =>
+                        string.Equals(m.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(m.ReleaseVersion, args.CurrentVersion, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(m.ReleaseChannel, updateChannel, StringComparison.OrdinalIgnoreCase));
+
+                    if (releaseAnnouncement != null)
+                    {
+                        SetMessageReadState(new[] { releaseAnnouncement.Id }, true);
+                        RefreshMessageIndicators();
+
+                        string releaseNotesPath = Path.Combine(AppMessagesPath, releaseAnnouncement.MarkdownFileName ?? string.Empty);
+                        try
+                        {
+                            if (File.Exists(releaseNotesPath))
+                            {
+                                upgradeForm.ReleaseNotesHtml = File.ReadAllText(releaseNotesPath);
+                            }
+                            else
+                            {
+                                logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent: Release announcement content is missing for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}, fullPath={releaseNotesPath}). Showing the legacy update summary instead.");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"Program/AutoUpdaterOnCheckForUpdateEvent: Failed to load release announcement content for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}). Showing the legacy update summary instead.");
+                        }
+                    }
+                    else
+                    {
+                        logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent: No synchronized release announcement matched the available {updateChannel} update version {args.CurrentVersion}. Showing the legacy update summary instead.");
+                    }
 
                     dialogResult = upgradeForm.ShowDialog(AppMainForm);
 
