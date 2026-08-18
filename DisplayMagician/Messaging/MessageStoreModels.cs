@@ -59,6 +59,21 @@ namespace DisplayMagician.Messaging
 
         [JsonProperty("isFaulty")]
         public bool IsFaulty { get; set; }
+
+        [JsonProperty("kind")]
+        public string Kind { get; set; } = "standard";
+
+        [JsonProperty("releaseVersion")]
+        public string ReleaseVersion { get; set; }
+
+        [JsonProperty("releaseChannel")]
+        public string ReleaseChannel { get; set; }
+
+        [JsonProperty("githubReleaseId")]
+        public long? GithubReleaseId { get; set; }
+
+        [JsonProperty("updateAction")]
+        public string UpdateAction { get; set; }
     }
 
     public sealed class MessageSyncResult

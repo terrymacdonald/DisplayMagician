@@ -201,6 +201,8 @@ namespace DisplayMagician.Messaging
                     continue;
                 }
 
+                string messageKind = GetMessageKind(entry);
+
                 LocalMessage existing = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
                 if (existing != null)
                 {
@@ -210,9 +212,23 @@ namespace DisplayMagician.Messaging
                         continue;
                     }
 
-                    // Check if file exists. If it successfully exists, we can skip downloading it.
+                    string existingSha256 = existing.Sha256;
+                    existing.Title = string.IsNullOrWhiteSpace(entry.Title) ? existing.Title : entry.Title;
+                    existing.SourceMarkdownUrl = entry.Url;
+                    existing.PublishedUtc = entry.PublishedUtc;
+                    existing.Vendors = entry.Vendors ?? new List<string>();
+                    existing.Format = format;
+                    existing.Sha256 = entry.Sha256;
+                    existing.ShowOnStartup = entry.ShowOnStartup;
+                    existing.Kind = messageKind;
+                    existing.ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null;
+                    existing.ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null;
+                    existing.GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null;
+                    existing.UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null;
+
+                    // Check if the local content matches the manifest before skipping a download.
                     string checkPath = Path.Combine(_messagesFolderPath, existing.MarkdownFileName);
-                    if (File.Exists(checkPath))
+                    if (File.Exists(checkPath) && string.Equals(existingSha256?.Trim(), entry.Sha256?.Trim(), StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping existing valid message id={entry.Id}.");
                         continue;
@@ -293,6 +309,11 @@ namespace DisplayMagician.Messaging
                             Format = format,
                             Sha256 = entry.Sha256,
                             ShowOnStartup = entry.ShowOnStartup,
+                            Kind = messageKind,
+                            ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null,
+                            ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null,
+                            GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null,
+                            UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null,
                             DownloadAttempts = 1,
                             IsFaulty = false
                         });
@@ -327,6 +348,11 @@ namespace DisplayMagician.Messaging
                     existing.Format = format;
                     existing.Sha256 = entry.Sha256;
                     existing.ShowOnStartup = entry.ShowOnStartup;
+                    existing.Kind = messageKind;
+                    existing.ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null;
+                    existing.ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null;
+                    existing.GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null;
+                    existing.UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null;
                     existing.DownloadAttempts = 0;
                     existing.IsFaulty = false;
                 }
@@ -345,6 +371,11 @@ namespace DisplayMagician.Messaging
                         Format = format,
                         Sha256 = entry.Sha256,
                         ShowOnStartup = entry.ShowOnStartup,
+                        Kind = messageKind,
+                        ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null,
+                        ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null,
+                        GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null,
+                        UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null,
                         DownloadAttempts = 0,
                         IsFaulty = false
                     });
@@ -512,6 +543,32 @@ namespace DisplayMagician.Messaging
             }
 
             return true;
+        }
+
+        private string GetMessageKind(MessageManifestEntry entry)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Kind) || entry.Kind.Equals("standard", StringComparison.OrdinalIgnoreCase))
+            {
+                return "standard";
+            }
+
+            if (!entry.Kind.Equals("releaseAnnouncement", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.Warn($"MessageSyncService/GetMessageKind: Treating message id={entry.Id} as a standard message because it uses unknown kind '{entry.Kind}'.");
+                return "standard";
+            }
+
+            if (ParseVersion(entry.ReleaseVersion) == null
+                || (entry.ReleaseChannel != "stable" && entry.ReleaseChannel != "prerelease")
+                || !entry.GithubReleaseId.HasValue
+                || entry.GithubReleaseId.Value <= 0
+                || !string.Equals(entry.UpdateAction, "installIfAvailable", StringComparison.Ordinal))
+            {
+                _logger.Warn($"MessageSyncService/GetMessageKind: Treating release announcement id={entry.Id} as a standard message because its release metadata is invalid.");
+                return "standard";
+            }
+
+            return "releaseAnnouncement";
         }
 
         private static Version ParseVersion(string versionText)

@@ -70,11 +70,15 @@ namespace DisplayMagician.UIForms
 
             foreach (LocalMessage message in _messages)
             {
-                ListViewItem item = new ListViewItem(message.Title)
+                bool isReleaseAnnouncement = string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase);
+                ListViewItem item = new ListViewItem(isReleaseAnnouncement ? $"Update: {message.Title}" : message.Title)
                 {
                     Name = message.Id,
                     Tag = message,
                     Font = message.IsRead ? readFont : unreadFont,
+                    ToolTipText = isReleaseAnnouncement
+                        ? $"Release update {message.ReleaseVersion} ({message.ReleaseChannel})"
+                        : message.Title,
                 };
 
                 item.SubItems.Add(message.ReceivedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
@@ -201,14 +205,17 @@ namespace DisplayMagician.UIForms
             try
             {
                 rawContent = File.ReadAllText(fullPath);
+                string releaseBanner = string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
+                    ? $"<div style='margin:0 0 18px;padding:12px 16px;border:1px solid #4f46e5;background:#eef2ff;color:#312e81;border-radius:6px;'><strong>DisplayMagician update {System.Net.WebUtility.HtmlEncode(message.ReleaseVersion)}</strong><br />Release channel: {System.Net.WebUtility.HtmlEncode(message.ReleaseChannel)}</div>"
+                    : string.Empty;
                 if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
                 {
-                    htmlDoc = rawContent;
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{releaseBanner}{rawContent}</body></html>";
                 }
                 else
                 {
                     string htmlBody = Markdown.ToHtml(rawContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
-                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{releaseBanner}{htmlBody}</body></html>";
                 }
             }
             catch (Exception ex)

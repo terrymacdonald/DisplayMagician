@@ -59,5 +59,20 @@ namespace DisplayMagician.Messaging
 
         [JsonProperty("vendors")]
         public List<string> Vendors { get; set; } = new List<string>();
+
+        [JsonProperty("kind")]
+        public string Kind { get; set; } = "standard";
+
+        [JsonProperty("releaseVersion")]
+        public string ReleaseVersion { get; set; }
+
+        [JsonProperty("releaseChannel")]
+        public string ReleaseChannel { get; set; }
+
+        [JsonProperty("githubReleaseId")]
+        public long? GithubReleaseId { get; set; }
+
+        [JsonProperty("updateAction")]
+        public string UpdateAction { get; set; }
     }
 }
