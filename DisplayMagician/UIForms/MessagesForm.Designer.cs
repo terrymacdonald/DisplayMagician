@@ -35,12 +35,15 @@ namespace DisplayMagician.UIForms
             btn_mark_unread = new System.Windows.Forms.Button();
             btn_mark_read = new System.Windows.Forms.Button();
             btn_upgrade = new System.Windows.Forms.Button();
-            lv_messages = new System.Windows.Forms.ListView();
+            dgv_messages = new System.Windows.Forms.DataGridView();
+            col_title = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            col_published = new System.Windows.Forms.DataGridViewTextBoxColumn();
             panelListHeader = new System.Windows.Forms.Panel();
             lbl_count = new System.Windows.Forms.Label();
             rightPanel = new System.Windows.Forms.Panel();
             lbl_fallback = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgv_messages).BeginInit();
             splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
             splitContainer.SuspendLayout();
@@ -61,7 +64,7 @@ namespace DisplayMagician.UIForms
             splitContainer.Panel1.Controls.Add(btn_mark_unread);
             splitContainer.Panel1.Controls.Add(btn_mark_read);
             splitContainer.Panel1.Controls.Add(btn_upgrade);
-            splitContainer.Panel1.Controls.Add(lv_messages);
+            splitContainer.Panel1.Controls.Add(dgv_messages);
             splitContainer.Panel1.Controls.Add(panelListHeader);
             // 
             // splitContainer.Panel2
@@ -140,15 +143,44 @@ namespace DisplayMagician.UIForms
             btn_upgrade.UseVisualStyleBackColor = true;
             btn_upgrade.Click += btn_upgrade_Click;
             //
-            // lv_messages
+            // dgv_messages
             // 
-            lv_messages.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            lv_messages.Location = new System.Drawing.Point(11, 42);
-            lv_messages.Name = "lv_messages";
-            lv_messages.Size = new System.Drawing.Size(321, 655);
-            lv_messages.TabIndex = 1;
-            lv_messages.UseCompatibleStateImageBehavior = false;
-            lv_messages.SelectedIndexChanged += lv_messages_SelectedIndexChanged;
+            dgv_messages.AllowUserToAddRows = false;
+            dgv_messages.AllowUserToDeleteRows = false;
+            dgv_messages.AllowUserToResizeRows = false;
+            dgv_messages.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dgv_messages.AutoGenerateColumns = false;
+            dgv_messages.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            dgv_messages.BackgroundColor = System.Drawing.Color.White;
+            dgv_messages.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            dgv_messages.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgv_messages.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { col_title, col_published });
+            dgv_messages.Location = new System.Drawing.Point(11, 42);
+            dgv_messages.MultiSelect = true;
+            dgv_messages.Name = "dgv_messages";
+            dgv_messages.ReadOnly = true;
+            dgv_messages.RowHeadersVisible = false;
+            dgv_messages.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            dgv_messages.Size = new System.Drawing.Size(321, 655);
+            dgv_messages.TabIndex = 1;
+            dgv_messages.SelectionChanged += dgv_messages_SelectionChanged;
+            //
+            // col_title
+            //
+            col_title.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            col_title.DefaultCellStyle = new System.Windows.Forms.DataGridViewCellStyle { WrapMode = System.Windows.Forms.DataGridViewTriState.True };
+            col_title.HeaderText = "Title";
+            col_title.Name = "col_title";
+            col_title.ReadOnly = true;
+            //
+            // col_published
+            //
+            col_published.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            col_published.HeaderText = "Published";
+            col_published.Name = "col_published";
+            col_published.ReadOnly = true;
+            col_published.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            col_published.Width = 125;
             // 
             // panelListHeader
             // 
@@ -214,6 +246,7 @@ namespace DisplayMagician.UIForms
             splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer).EndInit();
             splitContainer.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgv_messages).EndInit();
             panelListHeader.ResumeLayout(false);
             rightPanel.ResumeLayout(false);
             ResumeLayout(false);
@@ -227,7 +260,9 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_count;
         private System.Windows.Forms.Panel rightPanel;
         private System.Windows.Forms.Label lbl_fallback;
-        private System.Windows.Forms.ListView lv_messages;
+        private System.Windows.Forms.DataGridView dgv_messages;
+        private System.Windows.Forms.DataGridViewTextBoxColumn col_title;
+        private System.Windows.Forms.DataGridViewTextBoxColumn col_published;
         private System.Windows.Forms.Button btn_mark_read;
         private System.Windows.Forms.Button btn_mark_unread;
         private System.Windows.Forms.Button btn_back;

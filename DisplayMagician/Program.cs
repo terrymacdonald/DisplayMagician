@@ -1310,6 +1310,7 @@ namespace DisplayMagician {
 
             Task.Run(async () =>
             {
+                // Start the background message poller
                 try
                 {
                     await RunMessageSyncAndNotifyUserAsync(force: true);
@@ -1321,6 +1322,7 @@ namespace DisplayMagician {
                     logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic message sync failed (force=true, manifestUrl={MessageManifestUrl}, appVersion={AppVersion}, messagesPath={AppMessagesPath}). DisplayMagician will continue running.");
                 }
 
+                // Start the background update poller
                 try
                 {
                     CheckForUpdates(true);
@@ -1809,6 +1811,8 @@ namespace DisplayMagician {
         public static void CheckForUpdates(bool automatic = true)
         {
             _lastUpdateCheckWasAutomatic = automatic;
+            string updateChannel = Program.AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
+            logger.Info($"Program/CheckForUpdates: Starting {(automatic ? "automatic" : "manual")} update check. Installed version is {AppVersion}; selected update channel is {updateChannel}.");
 
             // Firstly check if the user wants to upgrade at all
             // If not, just return
@@ -1849,6 +1853,7 @@ namespace DisplayMagician {
             connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppVersion)}");
             connectionUrl += ($"&install_id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
             connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
+            logger.Info($"Program/CheckForUpdates: Checking the {updateChannel} channel for an update to installed version {AutoUpdater.InstalledVersion}.");
             AutoUpdater.Start(connectionUrl);
         }
 
@@ -1870,6 +1875,7 @@ namespace DisplayMagician {
             {
                 if (Program.AppProgramSettings.UpgradeToPreReleases)
                 {
+                    logger.Info($"Program/AutoUpdaterOnParseUpdateInfoEvent: Update feed contains stable version {json["stable"]["version"]} and prerelease version {json["prerelease"]["version"]}. Pre-release upgrades are enabled, so the prerelease version will be evaluated.");
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the Prerelease info in the received Update JSON file.");
                     args.UpdateInfo = new UpdateInfoEventArgs
                     {
@@ -1901,6 +1907,7 @@ namespace DisplayMagician {
                 }
                 else
                 {
+                    logger.Info($"Program/AutoUpdaterOnParseUpdateInfoEvent: Update feed contains stable version {json["stable"]["version"]} and prerelease version {json["prerelease"]["version"]}. Pre-release upgrades are disabled, so the prerelease version will be skipped and the stable version evaluated.");
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the Stable info in the received Update JSON file.");
                     args.UpdateInfo = new UpdateInfoEventArgs
                     {
@@ -2104,11 +2111,15 @@ namespace DisplayMagician {
                     {
                         try
                         {
-                            logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - Downloading {args.InstalledVersion} update.");
+                            logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - User accepted update from version {args.InstalledVersion} to {args.CurrentVersion}; downloading the update.");
                             if (AutoUpdater.DownloadUpdate(args))
                             {
-                                logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - Restarting to apply {args.InstalledVersion} update.");
+                                logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - Download completed. Restarting to apply update from version {args.InstalledVersion} to {args.CurrentVersion}.");
                                 Application.Exit();
+                            }
+                            else
+                            {
+                                logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent - Update download for version {args.CurrentVersion} did not complete, so DisplayMagician will remain on version {args.InstalledVersion}.");
                             }
                         }
                         catch (Exception ex)
@@ -2171,8 +2182,17 @@ namespace DisplayMagician {
                         };
 
                         AppUpdateRemindLaterTimer.Start();
-                        
+                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - User deferred update from version {args.InstalledVersion} to {args.CurrentVersion}; DisplayMagician remains on version {args.InstalledVersion} until the next reminder.");
                     }
+                    else
+                    {
+                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - User skipped update from version {args.InstalledVersion} to {args.CurrentVersion}; DisplayMagician remains on version {args.InstalledVersion}.");
+                    }
+                }
+                else
+                {
+                    string updateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
+                    logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent: Update check completed. No {updateChannel} update is required; installed version {args.InstalledVersion} is current relative to available version {args.CurrentVersion}.");
                 }
             }
             else

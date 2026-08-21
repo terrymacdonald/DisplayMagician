@@ -4,6 +4,7 @@ using Microsoft.Web.WebView2.WinForms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -18,6 +19,7 @@ namespace DisplayMagician.UIForms
         private readonly bool _selectNewestUnreadOnLoad;
 
         private List<LocalMessage> _messages = new List<LocalMessage>();
+        private bool _isUpdatingList = false;
 
         public MessagesForm() : this(false)
         {
@@ -63,54 +65,73 @@ namespace DisplayMagician.UIForms
         private void LoadMessagesIntoList()
         {
             _messages = Program.GetStoredMessages();
-            lv_messages.Items.Clear();
+            dgv_messages.Rows.Clear();
 
-            Font unreadFont = new Font(lv_messages.Font, FontStyle.Bold);
-            Font readFont = new Font(lv_messages.Font, FontStyle.Regular);
+            Font unreadFont = new Font(dgv_messages.Font, FontStyle.Bold);
+            Font readFont = new Font(dgv_messages.Font, FontStyle.Regular);
 
             foreach (LocalMessage message in _messages)
             {
                 bool isReleaseAnnouncement = string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase);
-                ListViewItem item = new ListViewItem(isReleaseAnnouncement ? $"Update: {message.Title}" : message.Title)
+                DateTime displayUtc = message.PublishedUtc ?? message.ReceivedUtc;
+                DataGridViewRow row = new DataGridViewRow
                 {
-                    Name = message.Id,
                     Tag = message,
-                    Font = message.IsRead ? readFont : unreadFont,
-                    ToolTipText = isReleaseAnnouncement
-                        ? $"Release update {message.ReleaseVersion} ({message.ReleaseChannel})"
-                        : message.Title,
+                    DefaultCellStyle = new DataGridViewCellStyle
+                    {
+                        Font = message.IsRead ? readFont : unreadFont,
+                    },
                 };
 
-                item.SubItems.Add(message.ReceivedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
-                lv_messages.Items.Add(item);
+                row.CreateCells(
+                    dgv_messages,
+                    isReleaseAnnouncement ? $"Update: {message.Title}" : message.Title,
+                    displayUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture));
+                row.Cells[0].ToolTipText = isReleaseAnnouncement
+                    ? $"Release update {message.ReleaseVersion} ({message.ReleaseChannel})"
+                    : message.Title;
+                dgv_messages.Rows.Add(row);
             }
 
             int unreadCount = _messages.Count(m => !m.IsRead);
             lbl_count.Text = $"{_messages.Count} messages ({unreadCount} unread)";
         }
 
-        private void lv_messages_SelectedIndexChanged(object sender, EventArgs e)
+        private void dgv_messages_SelectionChanged(object sender, EventArgs e)
         {
-            if (lv_messages.SelectedItems.Count == 0)
+            if (_isUpdatingList)
+            {
+                return;
+            }
+
+            if (dgv_messages.SelectedRows.Count == 0)
             {
                 btn_upgrade.Enabled = false;
                 return;
             }
 
-            List<string> selectedIds = lv_messages.SelectedItems
-                .Cast<ListViewItem>()
-                .Select(i => i.Name)
+            List<string> selectedIds = dgv_messages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (row.Tag as LocalMessage)?.Id)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            Program.SetMessageReadState(selectedIds, true);
-            LoadMessagesIntoList();
-            RestoreSelection(selectedIds);
-
-            if (lv_messages.SelectedItems.Count > 0)
+            try
             {
-                LocalMessage selectedMessage = lv_messages.SelectedItems[0].Tag as LocalMessage;
+                _isUpdatingList = true;
+                Program.SetMessageReadState(selectedIds, true);
+                LoadMessagesIntoList();
+                RestoreSelection(selectedIds);
+            }
+            finally
+            {
+                _isUpdatingList = false;
+            }
+
+            if (dgv_messages.SelectedRows.Count > 0)
+            {
+                LocalMessage selectedMessage = dgv_messages.SelectedRows[0].Tag as LocalMessage;
                 RenderMessage(selectedMessage);
                 btn_upgrade.Enabled = IsApplicableReleaseAnnouncement(selectedMessage);
             }
@@ -130,8 +151,8 @@ namespace DisplayMagician.UIForms
 
         private void btn_upgrade_Click(object sender, EventArgs e)
         {
-            LocalMessage selectedMessage = lv_messages.SelectedItems.Count == 1
-                ? lv_messages.SelectedItems[0].Tag as LocalMessage
+            LocalMessage selectedMessage = dgv_messages.SelectedRows.Count == 1
+                ? dgv_messages.SelectedRows[0].Tag as LocalMessage
                 : null;
 
             if (!IsApplicableReleaseAnnouncement(selectedMessage))
@@ -144,9 +165,14 @@ namespace DisplayMagician.UIForms
 
         private void ApplyReadStateForSelection(bool isRead)
         {
-            List<string> selectedIds = lv_messages.SelectedItems
-                .Cast<ListViewItem>()
-                .Select(i => i.Name)
+            if (_isUpdatingList)
+            {
+                return;
+            }
+
+            List<string> selectedIds = dgv_messages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (row.Tag as LocalMessage)?.Id)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -156,9 +182,18 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            Program.SetMessageReadState(selectedIds, isRead);
-            LoadMessagesIntoList();
-            RestoreSelection(selectedIds);
+            try
+            {
+                _isUpdatingList = true;
+                Program.SetMessageReadState(selectedIds, isRead);
+                LoadMessagesIntoList();
+                RestoreSelection(selectedIds);
+            }
+            finally
+            {
+                _isUpdatingList = false;
+            }
+
             Program.RefreshMessageIndicators();
         }
 
@@ -179,30 +214,31 @@ namespace DisplayMagician.UIForms
 
         private void RestoreSelection(List<string> selectedIds)
         {
-            foreach (ListViewItem item in lv_messages.Items)
+            foreach (DataGridViewRow row in dgv_messages.Rows)
             {
-                if (selectedIds.Contains(item.Name, StringComparer.OrdinalIgnoreCase))
+                LocalMessage message = row.Tag as LocalMessage;
+                if (message != null && selectedIds.Contains(message.Id, StringComparer.OrdinalIgnoreCase))
                 {
-                    item.Selected = true;
+                    row.Selected = true;
                 }
             }
         }
 
         private void SelectInitialMessageIfNeeded()
         {
-            if (!_selectNewestUnreadOnLoad || lv_messages.Items.Count == 0)
+            if (!_selectNewestUnreadOnLoad || dgv_messages.Rows.Count == 0)
             {
                 return;
             }
 
-            ListViewItem unreadItem = lv_messages.Items
-                .Cast<ListViewItem>()
-                .FirstOrDefault(i => (i.Tag as LocalMessage)?.IsRead == false);
+            DataGridViewRow unreadRow = dgv_messages.Rows
+                .Cast<DataGridViewRow>()
+                .FirstOrDefault(row => (row.Tag as LocalMessage)?.IsRead == false);
 
-            ListViewItem itemToSelect = unreadItem ?? lv_messages.Items[0];
-            itemToSelect.Selected = true;
-            itemToSelect.Focused = true;
-            itemToSelect.EnsureVisible();
+            DataGridViewRow rowToSelect = unreadRow ?? dgv_messages.Rows[0];
+            rowToSelect.Selected = true;
+            dgv_messages.CurrentCell = rowToSelect.Cells[0];
+            dgv_messages.FirstDisplayedScrollingRowIndex = rowToSelect.Index;
         }
 
         private void RenderMessage(LocalMessage message)
