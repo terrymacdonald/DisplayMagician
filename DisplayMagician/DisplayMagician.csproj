@@ -237,6 +237,7 @@
     <EmbeddedResource Include="UIForms\StartMessageForm.resx" />
     <EmbeddedResource Include="UIForms\StartProgramControl.resx" />
     <EmbeddedResource Include="UIForms\StopProgramControl.resx" />
+    <EmbeddedResource Include="UIForms\UpgradeForm.resx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />

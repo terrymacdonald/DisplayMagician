@@ -44,12 +44,12 @@ namespace DisplayMagician.UIForms
             // 
             lbl_title.Anchor = System.Windows.Forms.AnchorStyles.Top;
             lbl_title.AutoSize = true;
-            lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_title.ForeColor = System.Drawing.Color.White;
-            lbl_title.Location = new System.Drawing.Point(259, 10);
-            lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_title.Location = new System.Drawing.Point(476, 26);
+            lbl_title.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_title.Name = "lbl_title";
-            lbl_title.Size = new System.Drawing.Size(475, 33);
+            lbl_title.Size = new System.Drawing.Size(393, 29);
             lbl_title.TabIndex = 31;
             lbl_title.Text = "DisplayMagician Upgrade Available";
             // 
@@ -59,12 +59,12 @@ namespace DisplayMagician.UIForms
             btn_upgrade.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_upgrade.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_upgrade.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_upgrade.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
+            btn_upgrade.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_upgrade.ForeColor = System.Drawing.Color.White;
-            btn_upgrade.Location = new System.Drawing.Point(214, 388);
-            btn_upgrade.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_upgrade.Location = new System.Drawing.Point(1074, 871);
+            btn_upgrade.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_upgrade.Name = "btn_upgrade";
-            btn_upgrade.Size = new System.Drawing.Size(240, 34);
+            btn_upgrade.Size = new System.Drawing.Size(88, 27);
             btn_upgrade.TabIndex = 32;
             btn_upgrade.Text = "&Upgrade now";
             btn_upgrade.UseVisualStyleBackColor = true;
@@ -76,12 +76,12 @@ namespace DisplayMagician.UIForms
             btn_remind_later.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_remind_later.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_remind_later.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_remind_later.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F);
+            btn_remind_later.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_remind_later.ForeColor = System.Drawing.Color.White;
-            btn_remind_later.Location = new System.Drawing.Point(523, 388);
-            btn_remind_later.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_remind_later.Location = new System.Drawing.Point(1170, 871);
+            btn_remind_later.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_remind_later.Name = "btn_remind_later";
-            btn_remind_later.Size = new System.Drawing.Size(257, 34);
+            btn_remind_later.Size = new System.Drawing.Size(121, 27);
             btn_remind_later.TabIndex = 33;
             btn_remind_later.Text = "&Remind me later";
             btn_remind_later.UseVisualStyleBackColor = true;
@@ -95,10 +95,10 @@ namespace DisplayMagician.UIForms
             btn_skip.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_skip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_skip.ForeColor = System.Drawing.Color.White;
-            btn_skip.Location = new System.Drawing.Point(868, 426);
-            btn_skip.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_skip.Location = new System.Drawing.Point(1300, 871);
+            btn_skip.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_skip.Name = "btn_skip";
-            btn_skip.Size = new System.Drawing.Size(110, 29);
+            btn_skip.Size = new System.Drawing.Size(88, 27);
             btn_skip.TabIndex = 34;
             btn_skip.Text = "&Skip";
             btn_skip.UseVisualStyleBackColor = true;
@@ -107,16 +107,16 @@ namespace DisplayMagician.UIForms
             // lbl_changelog
             // 
             lbl_changelog.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            lbl_changelog.BackColor = System.Drawing.Color.Transparent;
+            lbl_changelog.BackColor = System.Drawing.Color.Black;
             lbl_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_changelog.ForeColor = System.Drawing.Color.White;
-            lbl_changelog.Location = new System.Drawing.Point(14, 305);
-            lbl_changelog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_changelog.Location = new System.Drawing.Point(15, 868);
+            lbl_changelog.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_changelog.Name = "lbl_changelog";
-            lbl_changelog.Size = new System.Drawing.Size(963, 37);
+            lbl_changelog.Size = new System.Drawing.Size(928, 34);
             lbl_changelog.TabIndex = 39;
             lbl_changelog.Text = "For more information on what has changed in the new version please visit the changelog: ";
-            lbl_changelog.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            lbl_changelog.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // lnk_changelog
             // 
@@ -124,8 +124,8 @@ namespace DisplayMagician.UIForms
             lnk_changelog.AutoSize = true;
             lnk_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lnk_changelog.LinkColor = System.Drawing.Color.LightSkyBlue;
-            lnk_changelog.Location = new System.Drawing.Point(310, 340);
-            lnk_changelog.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lnk_changelog.Location = new System.Drawing.Point(552, 877);
+            lnk_changelog.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lnk_changelog.Name = "lnk_changelog";
             lnk_changelog.Size = new System.Drawing.Size(371, 16);
             lnk_changelog.TabIndex = 40;
@@ -138,31 +138,36 @@ namespace DisplayMagician.UIForms
             // 
             rtb_message.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             rtb_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            rtb_message.Location = new System.Drawing.Point(14, 60);
-            rtb_message.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            rtb_message.Location = new System.Drawing.Point(15, 73);
+            rtb_message.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             rtb_message.Name = "rtb_message";
-            rtb_message.Size = new System.Drawing.Size(963, 237);
+            rtb_message.Size = new System.Drawing.Size(1373, 780);
             rtb_message.TabIndex = 41;
             rtb_message.Text = "";
-            //
+            // 
             // web_release_notes
-            //
+            // 
             web_release_notes.AllowExternalDrop = false;
             web_release_notes.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            web_release_notes.BackColor = System.Drawing.Color.White;
+            web_release_notes.CreationProperties = null;
             web_release_notes.DefaultBackgroundColor = System.Drawing.Color.White;
-            web_release_notes.Location = new System.Drawing.Point(14, 60);
-            web_release_notes.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            web_release_notes.Location = new System.Drawing.Point(15, 74);
+            web_release_notes.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             web_release_notes.Name = "web_release_notes";
-            web_release_notes.Size = new System.Drawing.Size(963, 237);
+            web_release_notes.Size = new System.Drawing.Size(1373, 779);
             web_release_notes.TabIndex = 42;
             web_release_notes.Visible = false;
+            web_release_notes.ZoomFactor = 1D;
             // 
             // UpgradeForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(992, 468);
+            BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
+            BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            ClientSize = new System.Drawing.Size(1403, 915);
             Controls.Add(web_release_notes);
             Controls.Add(rtb_message);
             Controls.Add(lnk_changelog);
@@ -171,12 +176,11 @@ namespace DisplayMagician.UIForms
             Controls.Add(btn_remind_later);
             Controls.Add(btn_upgrade);
             Controls.Add(lbl_title);
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
-            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             MaximizeBox = false;
             MinimizeBox = false;
-            MinimumSize = new System.Drawing.Size(820, 420);
+            MinimumSize = new System.Drawing.Size(1419, 954);
             Name = "UpgradeForm";
             ShowIcon = false;
             Text = "Upgrade DisplayMagician";
