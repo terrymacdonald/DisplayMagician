@@ -29,6 +29,7 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MessagesForm));
             splitContainer = new System.Windows.Forms.SplitContainer();
             btn_back = new System.Windows.Forms.Button();
@@ -43,10 +44,10 @@ namespace DisplayMagician.UIForms
             rightPanel = new System.Windows.Forms.Panel();
             lbl_fallback = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)dgv_messages).BeginInit();
             splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
             splitContainer.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_messages).BeginInit();
             panelListHeader.SuspendLayout();
             rightPanel.SuspendLayout();
             SuspendLayout();
@@ -70,8 +71,8 @@ namespace DisplayMagician.UIForms
             // splitContainer.Panel2
             // 
             splitContainer.Panel2.Controls.Add(rightPanel);
-            splitContainer.Size = new System.Drawing.Size(1120, 760);
-            splitContainer.SplitterDistance = 350;
+            splitContainer.Size = new System.Drawing.Size(1295, 760);
+            splitContainer.SplitterDistance = 490;
             splitContainer.TabIndex = 0;
             // 
             // btn_back
@@ -82,7 +83,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
             btn_back.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_back.Location = new System.Drawing.Point(256, 709);
+            btn_back.Location = new System.Drawing.Point(394, 709);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(78, 27);
@@ -99,10 +100,10 @@ namespace DisplayMagician.UIForms
             btn_mark_unread.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_mark_unread.ForeColor = System.Drawing.Color.White;
             btn_mark_unread.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_mark_unread.Location = new System.Drawing.Point(173, 709);
+            btn_mark_unread.Location = new System.Drawing.Point(243, 709);
             btn_mark_unread.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_unread.Name = "btn_mark_unread";
-            btn_mark_unread.Size = new System.Drawing.Size(78, 27);
+            btn_mark_unread.Size = new System.Drawing.Size(90, 27);
             btn_mark_unread.TabIndex = 8;
             btn_mark_unread.Text = "Mark &Unread";
             btn_mark_unread.UseVisualStyleBackColor = true;
@@ -116,7 +117,7 @@ namespace DisplayMagician.UIForms
             btn_mark_read.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_mark_read.ForeColor = System.Drawing.Color.White;
             btn_mark_read.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_mark_read.Location = new System.Drawing.Point(90, 709);
+            btn_mark_read.Location = new System.Drawing.Point(160, 709);
             btn_mark_read.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_read.Name = "btn_mark_read";
             btn_mark_read.Size = new System.Drawing.Size(78, 27);
@@ -134,12 +135,12 @@ namespace DisplayMagician.UIForms
             btn_upgrade.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_upgrade.ForeColor = System.Drawing.Color.White;
             btn_upgrade.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_upgrade.Location = new System.Drawing.Point(7, 709);
+            btn_upgrade.Location = new System.Drawing.Point(59, 709);
             btn_upgrade.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_upgrade.Name = "btn_upgrade";
-            btn_upgrade.Size = new System.Drawing.Size(78, 27);
+            btn_upgrade.Size = new System.Drawing.Size(96, 27);
             btn_upgrade.TabIndex = 11;
-            btn_upgrade.Text = "&Upgrade";
+            btn_upgrade.Text = "&Upgrade Now";
             btn_upgrade.UseVisualStyleBackColor = true;
             btn_upgrade.Click += btn_upgrade_Click;
             //
@@ -149,27 +150,26 @@ namespace DisplayMagician.UIForms
             dgv_messages.AllowUserToDeleteRows = false;
             dgv_messages.AllowUserToResizeRows = false;
             dgv_messages.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            dgv_messages.AutoGenerateColumns = false;
             dgv_messages.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
             dgv_messages.BackgroundColor = System.Drawing.Color.White;
-            dgv_messages.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            dgv_messages.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgv_messages.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgv_messages.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { col_title, col_published });
+            dgv_messages.EnableHeadersVisualStyles = false;
             dgv_messages.Location = new System.Drawing.Point(11, 42);
-            dgv_messages.MultiSelect = true;
+            dgv_messages.MultiSelect = false;
             dgv_messages.Name = "dgv_messages";
             dgv_messages.ReadOnly = true;
             dgv_messages.RowHeadersVisible = false;
             dgv_messages.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            dgv_messages.Size = new System.Drawing.Size(321, 655);
+            dgv_messages.Size = new System.Drawing.Size(461, 655);
             dgv_messages.TabIndex = 1;
             dgv_messages.SelectionChanged += dgv_messages_SelectionChanged;
             //
             // col_title
             //
             col_title.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            col_title.DefaultCellStyle = new System.Windows.Forms.DataGridViewCellStyle { WrapMode = System.Windows.Forms.DataGridViewTriState.True };
-            col_title.HeaderText = "Title";
+            col_title.HeaderText = "Message";
             col_title.Name = "col_title";
             col_title.ReadOnly = true;
             //
@@ -189,16 +189,16 @@ namespace DisplayMagician.UIForms
             panelListHeader.Dock = System.Windows.Forms.DockStyle.Top;
             panelListHeader.Location = new System.Drawing.Point(0, 0);
             panelListHeader.Name = "panelListHeader";
-            panelListHeader.Size = new System.Drawing.Size(348, 36);
+            panelListHeader.Size = new System.Drawing.Size(488, 36);
             panelListHeader.TabIndex = 0;
             // 
             // lbl_count
             // 
             lbl_count.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            lbl_count.Location = new System.Drawing.Point(0, 0);
+            lbl_count.Location = new System.Drawing.Point(70, 0);
             lbl_count.Name = "lbl_count";
             lbl_count.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            lbl_count.Size = new System.Drawing.Size(384, 36);
+            lbl_count.Size = new System.Drawing.Size(350, 36);
             lbl_count.TabIndex = 0;
             lbl_count.Text = "0 messages";
             lbl_count.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -210,7 +210,7 @@ namespace DisplayMagician.UIForms
             rightPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             rightPanel.Location = new System.Drawing.Point(0, 0);
             rightPanel.Name = "rightPanel";
-            rightPanel.Size = new System.Drawing.Size(764, 758);
+            rightPanel.Size = new System.Drawing.Size(799, 758);
             rightPanel.TabIndex = 0;
             // 
             // lbl_fallback
@@ -220,7 +220,7 @@ namespace DisplayMagician.UIForms
             lbl_fallback.ForeColor = System.Drawing.Color.Black;
             lbl_fallback.Location = new System.Drawing.Point(0, 0);
             lbl_fallback.Name = "lbl_fallback";
-            lbl_fallback.Size = new System.Drawing.Size(764, 758);
+            lbl_fallback.Size = new System.Drawing.Size(799, 758);
             lbl_fallback.TabIndex = 0;
             lbl_fallback.Text = "Select a message to view its content.";
             lbl_fallback.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -230,7 +230,7 @@ namespace DisplayMagician.UIForms
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1120, 760);
+            ClientSize = new System.Drawing.Size(1295, 760);
             Controls.Add(splitContainer);
             Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             ForeColor = System.Drawing.Color.White;

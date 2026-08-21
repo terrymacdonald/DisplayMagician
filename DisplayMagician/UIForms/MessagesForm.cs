@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -29,17 +30,37 @@ namespace DisplayMagician.UIForms
         {
             _selectNewestUnreadOnLoad = selectNewestUnreadOnLoad;
             InitializeComponent();
+            dgv_messages.DefaultCellStyle.BackColor = Color.White;
+            dgv_messages.DefaultCellStyle.ForeColor = Color.Black;
+            dgv_messages.DefaultCellStyle.SelectionBackColor = SystemColors.Highlight;
+            dgv_messages.DefaultCellStyle.SelectionForeColor = SystemColors.HighlightText;
+            dgv_messages.ColumnHeadersDefaultCellStyle.BackColor = Color.Gainsboro;
+            dgv_messages.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            dgv_messages.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.Gainsboro;
+            dgv_messages.ColumnHeadersDefaultCellStyle.SelectionForeColor = Color.Black;
+            dgv_messages.ColumnHeadersDefaultCellStyle.Font = new Font(dgv_messages.Font, FontStyle.Bold);
+            col_title.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
         }
 
-        protected override void OnLoad(EventArgs e)
+        protected override async void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            LoadMessagesIntoList();
-            InitializeWebViewIfNeeded();
+            _isUpdatingList = true;
+            try
+            {
+                LoadMessagesIntoList();
+                await InitializeWebViewIfNeededAsync();
+            }
+            finally
+            {
+                _isUpdatingList = false;
+            }
+
+            dgv_messages.ClearSelection();
             SelectInitialMessageIfNeeded();
         }
 
-        private void InitializeWebViewIfNeeded()
+        private async Task InitializeWebViewIfNeededAsync()
         {
             if (webView != null)
             {
@@ -55,9 +76,12 @@ namespace DisplayMagician.UIForms
                 };
                 rightPanel.Controls.Add(webView);
                 webView.BringToFront();
+                await webView.EnsureCoreWebView2Async();
             }
             catch (Exception ex)
             {
+                webView?.Dispose();
+                webView = null;
                 logger.Warn(ex, "MessagesForm/InitializeWebViewIfNeeded: WebView2 failed to initialise; fallback label will be used.");
             }
         }
@@ -79,7 +103,11 @@ namespace DisplayMagician.UIForms
                     Tag = message,
                     DefaultCellStyle = new DataGridViewCellStyle
                     {
+                        BackColor = Color.White,
                         Font = message.IsRead ? readFont : unreadFont,
+                        ForeColor = Color.Black,
+                        SelectionBackColor = SystemColors.Highlight,
+                        SelectionForeColor = SystemColors.HighlightText,
                     },
                 };
 
