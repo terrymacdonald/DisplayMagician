@@ -59,14 +59,14 @@ namespace DisplayMagician.UIForms
             btn_upgrade.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_upgrade.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_upgrade.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_upgrade.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_upgrade.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             btn_upgrade.ForeColor = System.Drawing.Color.White;
-            btn_upgrade.Location = new System.Drawing.Point(1074, 871);
+            btn_upgrade.Location = new System.Drawing.Point(540, 871);
             btn_upgrade.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_upgrade.Name = "btn_upgrade";
-            btn_upgrade.Size = new System.Drawing.Size(88, 27);
+            btn_upgrade.Size = new System.Drawing.Size(148, 38);
             btn_upgrade.TabIndex = 32;
-            btn_upgrade.Text = "&Upgrade now";
+            btn_upgrade.Text = "&Upgrade Now";
             btn_upgrade.UseVisualStyleBackColor = true;
             btn_upgrade.Click += btn_upgrade_Click;
             // 
@@ -76,12 +76,12 @@ namespace DisplayMagician.UIForms
             btn_remind_later.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_remind_later.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_remind_later.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_remind_later.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_remind_later.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             btn_remind_later.ForeColor = System.Drawing.Color.White;
-            btn_remind_later.Location = new System.Drawing.Point(1170, 871);
+            btn_remind_later.Location = new System.Drawing.Point(715, 871);
             btn_remind_later.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_remind_later.Name = "btn_remind_later";
-            btn_remind_later.Size = new System.Drawing.Size(121, 27);
+            btn_remind_later.Size = new System.Drawing.Size(148, 38);
             btn_remind_later.TabIndex = 33;
             btn_remind_later.Text = "&Remind me later";
             btn_remind_later.UseVisualStyleBackColor = true;
@@ -95,7 +95,7 @@ namespace DisplayMagician.UIForms
             btn_skip.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_skip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_skip.ForeColor = System.Drawing.Color.White;
-            btn_skip.Location = new System.Drawing.Point(1300, 871);
+            btn_skip.Location = new System.Drawing.Point(1300, 882);
             btn_skip.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_skip.Name = "btn_skip";
             btn_skip.Size = new System.Drawing.Size(88, 27);
@@ -110,7 +110,7 @@ namespace DisplayMagician.UIForms
             lbl_changelog.BackColor = System.Drawing.Color.Black;
             lbl_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_changelog.ForeColor = System.Drawing.Color.White;
-            lbl_changelog.Location = new System.Drawing.Point(15, 868);
+            lbl_changelog.Location = new System.Drawing.Point(234, 829);
             lbl_changelog.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_changelog.Name = "lbl_changelog";
             lbl_changelog.Size = new System.Drawing.Size(928, 34);
@@ -124,7 +124,7 @@ namespace DisplayMagician.UIForms
             lnk_changelog.AutoSize = true;
             lnk_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lnk_changelog.LinkColor = System.Drawing.Color.LightSkyBlue;
-            lnk_changelog.Location = new System.Drawing.Point(552, 877);
+            lnk_changelog.Location = new System.Drawing.Point(771, 838);
             lnk_changelog.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lnk_changelog.Name = "lnk_changelog";
             lnk_changelog.Size = new System.Drawing.Size(371, 16);
@@ -141,7 +141,7 @@ namespace DisplayMagician.UIForms
             rtb_message.Location = new System.Drawing.Point(15, 73);
             rtb_message.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             rtb_message.Name = "rtb_message";
-            rtb_message.Size = new System.Drawing.Size(1373, 780);
+            rtb_message.Size = new System.Drawing.Size(1373, 751);
             rtb_message.TabIndex = 41;
             rtb_message.Text = "";
             // 
@@ -155,7 +155,7 @@ namespace DisplayMagician.UIForms
             web_release_notes.Location = new System.Drawing.Point(15, 74);
             web_release_notes.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             web_release_notes.Name = "web_release_notes";
-            web_release_notes.Size = new System.Drawing.Size(1373, 779);
+            web_release_notes.Size = new System.Drawing.Size(1373, 750);
             web_release_notes.TabIndex = 42;
             web_release_notes.Visible = false;
             web_release_notes.ZoomFactor = 1D;
@@ -167,7 +167,7 @@ namespace DisplayMagician.UIForms
             BackColor = System.Drawing.Color.Black;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(1403, 915);
+            ClientSize = new System.Drawing.Size(1403, 926);
             Controls.Add(web_release_notes);
             Controls.Add(rtb_message);
             Controls.Add(lnk_changelog);

@@ -127,10 +127,10 @@ namespace DisplayMagician {
 
 
 
-        private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
-        {
-            // "CurrentProfile",
-        };
+        //private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
+        //{
+        //    // "CurrentProfile",
+        //};
 
         /// <summary>
         ///     The main entry point for the application.
@@ -229,46 +229,46 @@ namespace DisplayMagician {
             // SINGLE INSTANCE MODE CHECKS
             // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
             // then skip the single instance mode tests. This is important for commands used in powershell
-            logger.Trace($"Program/Main: Checking if the user has provided a command that bypasses single instance mode.");
-            if (args.Length > 0 && _commandsThatBypassSingleInstanceMode.Contains(args[0]))
-            {
-                logger.Trace($"Program/Main: The user has provided a command that bypasses single instance mode. We have enabled bypass single instance mode.");
-                _bypassSingleInstanceMode = true;
-            }
+            //logger.Trace($"Program/Main: Checking if the user has provided a command that bypasses single instance mode.");
+            //if (args.Length > 0 && _commandsThatBypassSingleInstanceMode.Contains(args[0]))
+            //{
+            //    logger.Trace($"Program/Main: The user has provided a command that bypasses single instance mode. We have enabled bypass single instance mode.");
+            //    _bypassSingleInstanceMode = true;
+            //}
 
             // If we're not bypassing single instance mode, then we need to check if we're the single instance, and if we're the second instance then
             // we need to pass the command to the single instance and shutdown.
-            if (!_bypassSingleInstanceMode)
-            {
-                logger.Trace($"Program/Main: We're not bypassing single instance mode so we need to check if we're the only instance, otherwise we have to shutdown and send that first instance our command.");
+            //if (!_bypassSingleInstanceMode)
+            //{
+            //logger.Trace($"Program/Main: We're not bypassing single instance mode so we need to check if we're the only instance, otherwise we have to shutdown and send that first instance our command.");
 
-                // Create the remote server if we're first instance, or
-                // If we're a subsequent instance, pass the command line parameters to the first instance and then 
-                logger.Trace($"Program/Main: Running the SingleInstance.LaunchOrReturn function to act as either the first or subsequent instances.");
-                bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
-                if (isFirstInstance)
+
+            // Check if we're the single instance, and if we're the second instance then we need to pass the command to the single instance and shutdown.
+            // Create the remote server if we're first instance, or If we're a subsequent instance, pass the command line parameters to the first instance and then 
+            logger.Trace($"Program/Main: Running the SingleInstance.LaunchOrReturn function to act as either the first or subsequent instances.");
+            bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
+            if (isFirstInstance)
+            {
+                logger.Trace($"Program/Main: We are the first DisplayMagician to start, so will be the one to actually perform the actions if we ever get sent any.");
+            }
+            else
+            {
+                // if we're the second instance of DisplayMagician, then                   
+                // lets close down as the first instance will continue with what we wanted to do.
+                logger.Trace($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of DisplayMagician.");
+                if (Application.MessageLoop)
                 {
-                    logger.Trace($"Program/Main: We are the first DisplayMagician to start, so will be the one to actually perform the actions.");
+                    // WinForms have loaded
+                    Application.Exit();
                 }
                 else
                 {
-
-                    // if we're the second instance of DisplayMagician, then                   
-                    // lets close down as the first instance will continue with what we wanted to do.
-                    logger.Trace($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of DisplayMagician.");
-                    if (Application.MessageLoop)
-                    {
-                        // WinForms have loaded
-                        Application.Exit();
-                    }
-                    else
-                    {
-                        // Console app
-                        Environment.Exit(1);
-                    }
-
+                    // Console app
+                    Environment.Exit(1);
                 }
+
             }
+            //}
 
 
             // If we get here, then we're the first instance!
