@@ -91,7 +91,6 @@ namespace DisplayMagician.UIForms
             // btn_update_audio_profile
             // 
             btn_update_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            btn_update_audio_profile.Enabled = false;
             btn_update_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_update_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_update_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -109,7 +108,6 @@ namespace DisplayMagician.UIForms
             // btn_apply_audio_profile
             // 
             btn_apply_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            btn_apply_audio_profile.Enabled = false;
             btn_apply_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_apply_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_apply_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -127,7 +125,6 @@ namespace DisplayMagician.UIForms
             // btn_rename_audio_profile
             // 
             btn_rename_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            btn_rename_audio_profile.Enabled = false;
             btn_rename_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_rename_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_rename_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -145,7 +142,6 @@ namespace DisplayMagician.UIForms
             // btn_delete_audio_profile
             // 
             btn_delete_audio_profile.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            btn_delete_audio_profile.Enabled = false;
             btn_delete_audio_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_delete_audio_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_delete_audio_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -189,7 +185,7 @@ namespace DisplayMagician.UIForms
             txt_audio_profile_settings.Name = "txt_audio_profile_settings";
             txt_audio_profile_settings.ReadOnly = true;
             txt_audio_profile_settings.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txt_audio_profile_settings.Size = new System.Drawing.Size(728, 517);
+            txt_audio_profile_settings.Size = new System.Drawing.Size(723, 517);
             txt_audio_profile_settings.TabIndex = 0;
             // 
             // btn_back

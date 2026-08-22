@@ -36,11 +36,11 @@ namespace DisplayMagician.UIForms
         private void UpdateSelectionState()
         {
             bool hasSelection = _selectedAudioProfile != null;
-            btn_update_audio_profile.Enabled = hasSelection;
-            btn_delete_audio_profile.Enabled = hasSelection;
-            btn_rename_audio_profile.Enabled = hasSelection;
-            btn_apply_audio_profile.Enabled = hasSelection;
-            gb_selected_audio_settings.Enabled = hasSelection;
+            btn_update_audio_profile.Visible = hasSelection;
+            btn_delete_audio_profile.Visible = hasSelection;
+            btn_rename_audio_profile.Visible = hasSelection;
+            btn_apply_audio_profile.Visible = hasSelection;
+            //gb_selected_audio_settings.Visible = hasSelection;
 
             if (hasSelection && _selectedAudioProfile.WindowsAudioConfig != null)
             {
