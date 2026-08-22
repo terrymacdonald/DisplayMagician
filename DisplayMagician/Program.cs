@@ -1956,9 +1956,11 @@ namespace DisplayMagician {
 
         private static void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
         {
-            if (args.Error == null && args.IsUpdateAvailable && _mainSynchronizationContext != null && SynchronizationContext.Current != _mainSynchronizationContext)
+            // AutoUpdater.Net raises this event on a ThreadPool thread. The update dialog and
+            // its MainForm owner must be created on the WinForms UI thread.
+            if (AppMainForm != null && AppMainForm.IsHandleCreated && AppMainForm.InvokeRequired)
             {
-                _mainSynchronizationContext.Post(_ => AutoUpdaterOnCheckForUpdateEvent(args), null);
+                AppMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)(() => AutoUpdaterOnCheckForUpdateEvent(args)));
                 return;
             }
 
@@ -1969,7 +1971,9 @@ namespace DisplayMagician {
 
             if (args.Error == null)
             {
-                if (args.IsUpdateAvailable)
+                // TODO: FIX THIS BEFORE RELEASE AS THIS IS A TESTING HACK TO FORCE AN UPDATE TO BE AVAILABLE FOR TESTING PURPOSES. REMOVE THIS BEFORE RELEASE.
+                //if (args.IsUpdateAvailable)
+                if (true)
                 {
                     // Shut down the splash screen
                     if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
