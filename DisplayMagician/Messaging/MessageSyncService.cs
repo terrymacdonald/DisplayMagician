@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagicianShared.Windows;
@@ -23,6 +24,7 @@ namespace DisplayMagician.Messaging
             "md",
             "markdown"
         };
+        private static readonly Regex MessageMediaUrlPattern = new Regex(@"(?<url>(?:https?://[^\s\""'<>\)\]]+)?/messages/media/(?<id>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly HttpClient _httpClient;
         private readonly NLog.Logger _logger;
@@ -230,6 +232,16 @@ namespace DisplayMagician.Messaging
                     string checkPath = Path.Combine(_messagesFolderPath, existing.MarkdownFileName);
                     if (File.Exists(checkPath) && string.Equals(existingSha256?.Trim(), entry.Sha256?.Trim(), StringComparison.OrdinalIgnoreCase))
                     {
+                        try
+                        {
+                            string existingContent = await File.ReadAllTextAsync(checkPath, cancellationToken).ConfigureAwait(false);
+                            await SyncMessageMediaAsync(manifestUri, existingContent, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Failed to backfill media for existing message id={entry.Id}.");
+                        }
+
                         _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping existing valid message id={entry.Id}.");
                         continue;
                     }
@@ -326,6 +338,7 @@ namespace DisplayMagician.Messaging
                 try
                 {
                     await File.WriteAllTextAsync(fullPath, content, cancellationToken).ConfigureAwait(false);
+                    await SyncMessageMediaAsync(manifestUri, content, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -543,6 +556,56 @@ namespace DisplayMagician.Messaging
             }
 
             return true;
+        }
+
+        private async Task SyncMessageMediaAsync(Uri manifestUri, string content, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return;
+            }
+
+            string mediaFolderPath = Path.Combine(_messagesFolderPath, "media");
+            Directory.CreateDirectory(mediaFolderPath);
+            foreach (Match match in MessageMediaUrlPattern.Matches(content))
+            {
+                string mediaId = match.Groups["id"].Value;
+                if (Directory.EnumerateFiles(mediaFolderPath, mediaId + ".*").Any())
+                {
+                    continue;
+                }
+
+                try
+                {
+                    string mediaUrl = match.Groups["url"].Value;
+                    Uri mediaUri = Uri.TryCreate(mediaUrl, UriKind.Absolute, out Uri absolute)
+                        ? absolute
+                        : new Uri(manifestUri, mediaUrl);
+                    using HttpResponseMessage response = await _httpClient.GetAsync(mediaUri, cancellationToken).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        _logger.Warn($"MessageSyncService/SyncMessageMediaAsync: Media request failed (mediaUrl={mediaUri}, statusCode={(int)response.StatusCode}, reason={response.ReasonPhrase}).");
+                        continue;
+                    }
+
+                    string extension = response.Content.Headers.ContentType?.MediaType?.ToLowerInvariant() switch
+                    {
+                        "image/jpeg" => ".jpg",
+                        "image/gif" => ".gif",
+                        "image/webp" => ".webp",
+                        "image/svg+xml" => ".svg",
+                        _ => ".png",
+                    };
+                    byte[] mediaBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                    string mediaFilePath = Path.Combine(mediaFolderPath, mediaId + extension);
+                    await File.WriteAllBytesAsync(mediaFilePath, mediaBytes, cancellationToken).ConfigureAwait(false);
+                    _logger.Trace($"MessageSyncService/SyncMessageMediaAsync: Stored media locally (mediaUrl={mediaUri}, mediaPath={mediaFilePath}).");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex, $"MessageSyncService/SyncMessageMediaAsync: Failed to download media id={mediaId}.");
+                }
+            }
         }
 
         private string GetMessageKind(MessageManifestEntry entry)

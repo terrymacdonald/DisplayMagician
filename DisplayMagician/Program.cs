@@ -99,7 +99,7 @@ namespace DisplayMagician {
         private static System.Timers.Timer _messageSyncTimer;
         private static System.Timers.Timer _startupMessagePollTimer;
         private static readonly TimeSpan _messageSyncPollInterval = TimeSpan.FromHours(1);
-        private const string MessageManifestUrl = "http://www.displaymagician.com:8787/messages/manifest.json";
+        internal const string MessageManifestUrl = "http://www.displaymagician.com:8787/messages/manifest.json";
 
         private const string UpdateUrl = "http://www.displaymagician.com:8787/update/update.json";
 

@@ -1,6 +1,7 @@
 using DisplayMagician.Messaging;
 using Markdig;
 using Microsoft.Web.WebView2.WinForms;
+using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,6 +16,7 @@ namespace DisplayMagician.UIForms
     public partial class MessagesForm : Form
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private const string MessagesVirtualHost = "displaymagician-messages.local";
 
         private WebView2 webView;
         private readonly bool _selectNewestUnreadOnLoad;
@@ -77,6 +79,7 @@ namespace DisplayMagician.UIForms
                 message_content_panel.Controls.Add(webView);
                 webView.BringToFront();
                 await webView.EnsureCoreWebView2Async();
+                webView.CoreWebView2.SetVirtualHostNameToFolderMapping(MessagesVirtualHost, Program.AppMessagesPath, CoreWebView2HostResourceAccessKind.DenyCors);
             }
             catch (Exception ex)
             {
@@ -333,14 +336,27 @@ namespace DisplayMagician.UIForms
             try
             {
                 rawContent = File.ReadAllText(fullPath);
+                string mediaFolderPath = Path.Combine(Program.AppMessagesPath, "media");
+                rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"(?<url>(?:https?://[^\s\""'<>\)\]]+)?/messages/media/(?<id>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))", match =>
+                {
+                    string mediaId = match.Groups["id"].Value;
+                    string localMediaPath = Directory.Exists(mediaFolderPath)
+                        ? Directory.EnumerateFiles(mediaFolderPath, mediaId + ".*").FirstOrDefault()
+                        : null;
+                    return localMediaPath == null
+                        ? match.Value
+                        : $"https://{MessagesVirtualHost}/media/{Path.GetFileName(localMediaPath)}";
+                }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                Uri manifestUri = new Uri(Program.MessageManifestUrl, UriKind.Absolute);
+                string messageBaseUrl = System.Net.WebUtility.HtmlEncode(manifestUri.GetLeftPart(UriPartial.Authority) + "/");
                 if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
                 {
-                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{rawContent}</body></html>";
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='{messageBaseUrl}' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{rawContent}</body></html>";
                 }
                 else
                 {
                     string htmlBody = Markdown.ToHtml(rawContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
-                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='{messageBaseUrl}' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
                 }
             }
             catch (Exception ex)
