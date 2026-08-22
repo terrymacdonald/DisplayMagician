@@ -59,7 +59,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(545, 402);
+            btn_back.Location = new System.Drawing.Point(541, 398);
             btn_back.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -70,18 +70,18 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
-            gb_general.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            gb_general.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gb_general.Controls.Add(lbl_wallpaper_mode);
             gb_general.Controls.Add(cmb_wallpaper_mode);
             gb_general.Controls.Add(lbl_wallpaper_bg_type_label);
             gb_general.Controls.Add(lbl_wallpaper_bg_type);
             gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_general.ForeColor = System.Drawing.Color.White;
-            gb_general.Location = new System.Drawing.Point(16, 13);
+            gb_general.Location = new System.Drawing.Point(16, 8);
             gb_general.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             gb_general.Name = "gb_general";
             gb_general.Padding = new System.Windows.Forms.Padding(55, 19, 55, 19);
-            gb_general.Size = new System.Drawing.Size(617, 144);
+            gb_general.Size = new System.Drawing.Size(613, 144);
             gb_general.TabIndex = 11;
             gb_general.TabStop = false;
             gb_general.Text = "Wallpaper Settings";
@@ -138,7 +138,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_multiple_applies
             // 
-            gb_multiple_applies.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            gb_multiple_applies.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gb_multiple_applies.Controls.Add(label2);
             gb_multiple_applies.Controls.Add(cb_force_restart_explorer);
             gb_multiple_applies.Controls.Add(nud_apply_profile_delay);
@@ -148,11 +148,11 @@ namespace DisplayMagician.UIForms
             gb_multiple_applies.Controls.Add(lbl_seconds);
             gb_multiple_applies.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_multiple_applies.ForeColor = System.Drawing.Color.White;
-            gb_multiple_applies.Location = new System.Drawing.Point(16, 169);
+            gb_multiple_applies.Location = new System.Drawing.Point(16, 170);
             gb_multiple_applies.Margin = new System.Windows.Forms.Padding(41, 19, 41, 19);
             gb_multiple_applies.Name = "gb_multiple_applies";
             gb_multiple_applies.Padding = new System.Windows.Forms.Padding(41, 19, 41, 19);
-            gb_multiple_applies.Size = new System.Drawing.Size(617, 221);
+            gb_multiple_applies.Size = new System.Drawing.Size(613, 211);
             gb_multiple_applies.TabIndex = 12;
             gb_multiple_applies.TabStop = false;
             gb_multiple_applies.Text = "Profile Settings";
@@ -238,7 +238,7 @@ namespace DisplayMagician.UIForms
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(650, 443);
+            ClientSize = new System.Drawing.Size(646, 439);
             Controls.Add(gb_multiple_applies);
             Controls.Add(gb_general);
             Controls.Add(btn_back);
@@ -247,6 +247,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             MaximizeBox = false;
             MinimizeBox = false;
+            MinimumSize = new System.Drawing.Size(662, 478);
             Name = "ProfileSettingsForm";
             ShowIcon = false;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
