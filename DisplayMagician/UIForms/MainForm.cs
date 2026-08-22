@@ -434,6 +434,10 @@ namespace DisplayMagician.UIForms
             btn_messages.Text = unreadCount > 0
                 ? $"Messages ({unreadCount})"
                 : "Messages";
+            btn_messages.UseVisualStyleBackColor = false;
+            btn_messages.BackColor = unreadCount > 0
+                ? btn_messages.FlatAppearance.MouseOverBackColor
+                : Color.Black;
         }
 
         private void EnableShortcutButtonIfProfiles()
