@@ -268,11 +268,11 @@ namespace DisplayMagician.UIForms
                 && Version.TryParse(Program.AppVersion, out Version currentVersion)
                 && releaseVersion == currentVersion)
             {
-                lbl_update_status.Text = "Version currently installed";
+                lbl_update_status.Text = "This version currently installed";
             }
             else
             {
-                lbl_update_status.Text = "Newer version installed";
+                lbl_update_status.Text = "Newer version already installed";
             }
         }
 
