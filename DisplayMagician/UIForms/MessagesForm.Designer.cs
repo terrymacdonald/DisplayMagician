@@ -46,6 +46,7 @@ namespace DisplayMagician.UIForms
             panel_release_header = new System.Windows.Forms.Panel();
             lbl_release_heading = new System.Windows.Forms.Label();
             btn_update_now = new System.Windows.Forms.Button();
+            lbl_update_status = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
             splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
@@ -227,6 +228,7 @@ namespace DisplayMagician.UIForms
             panel_release_header.BackColor = System.Drawing.Color.FromArgb(238, 242, 255);
             panel_release_header.Controls.Add(lbl_release_heading);
             panel_release_header.Controls.Add(btn_update_now);
+            panel_release_header.Controls.Add(lbl_update_status);
             panel_release_header.Dock = System.Windows.Forms.DockStyle.Top;
             panel_release_header.Location = new System.Drawing.Point(0, 0);
             panel_release_header.Name = "panel_release_header";
@@ -259,6 +261,18 @@ namespace DisplayMagician.UIForms
             btn_update_now.Text = "&Update Now";
             btn_update_now.UseVisualStyleBackColor = false;
             btn_update_now.Click += btn_update_now_Click;
+            //
+            // lbl_update_status
+            //
+            lbl_update_status.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            lbl_update_status.ForeColor = System.Drawing.Color.FromArgb(49, 46, 129);
+            lbl_update_status.Location = new System.Drawing.Point(625, 12);
+            lbl_update_status.Name = "lbl_update_status";
+            lbl_update_status.Size = new System.Drawing.Size(158, 28);
+            lbl_update_status.TabIndex = 2;
+            lbl_update_status.Text = "Newer version installed";
+            lbl_update_status.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            lbl_update_status.Visible = false;
             // 
             // MessagesForm
             // 
@@ -307,5 +321,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel panel_release_header;
         private System.Windows.Forms.Label lbl_release_heading;
         private System.Windows.Forms.Button btn_update_now;
+        private System.Windows.Forms.Label lbl_update_status;
     }
 }

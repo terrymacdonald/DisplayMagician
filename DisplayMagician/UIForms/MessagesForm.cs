@@ -259,6 +259,18 @@ namespace DisplayMagician.UIForms
             btn_update_now.Visible = canInstall;
             btn_update_now.Enabled = canInstall;
             btn_update_now.Text = "&Update Now";
+            lbl_update_status.Visible = !canInstall;
+            if (!canInstall
+                && Version.TryParse(message.ReleaseVersion, out Version releaseVersion)
+                && Version.TryParse(Program.AppVersion, out Version currentVersion)
+                && releaseVersion == currentVersion)
+            {
+                lbl_update_status.Text = "Version currently installed";
+            }
+            else
+            {
+                lbl_update_status.Text = "Newer version installed";
+            }
         }
 
         private void RestoreSelection(List<string> selectedIds)
