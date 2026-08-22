@@ -999,6 +999,7 @@ namespace DisplayMagician
             _category = ShortcutCategory.NoGame;
             _profileToUse = profile;
             _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1084,6 +1085,7 @@ namespace DisplayMagician
             _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _processPriority = game.ProcessPriority;
             _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1160,6 +1162,7 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
             _processPriority = executable.ProcessPriority;
             _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1241,6 +1244,7 @@ namespace DisplayMagician
             _processNameToMonitorUsesExecutable = app.ProcessNameToMonitorUsesExecutable;
             _processPriority = app.ProcessPriority;
             _audioProfileToUse = audioProfileToUse;
+            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
