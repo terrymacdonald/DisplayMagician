@@ -176,16 +176,16 @@ namespace DisplayMagician.UIForms
             // 
             txt_audio_profile_settings.AcceptsReturn = true;
             txt_audio_profile_settings.AcceptsTab = true;
-            txt_audio_profile_settings.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             txt_audio_profile_settings.BackColor = System.Drawing.Color.White;
+            txt_audio_profile_settings.Dock = System.Windows.Forms.DockStyle.Fill;
             txt_audio_profile_settings.ForeColor = System.Drawing.Color.Black;
-            txt_audio_profile_settings.Location = new System.Drawing.Point(6, 22);
+            txt_audio_profile_settings.Location = new System.Drawing.Point(6, 26);
             txt_audio_profile_settings.Margin = new System.Windows.Forms.Padding(6);
             txt_audio_profile_settings.Multiline = true;
             txt_audio_profile_settings.Name = "txt_audio_profile_settings";
             txt_audio_profile_settings.ReadOnly = true;
             txt_audio_profile_settings.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txt_audio_profile_settings.Size = new System.Drawing.Size(723, 517);
+            txt_audio_profile_settings.Size = new System.Drawing.Size(722, 512);
             txt_audio_profile_settings.TabIndex = 0;
             // 
             // btn_back

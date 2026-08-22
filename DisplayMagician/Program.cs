@@ -82,7 +82,7 @@ namespace DisplayMagician {
         private static SharedLogger sharedLogger;        
         
         private static bool _tempShortcutRegistered = false;
-        private static bool _bypassSingleInstanceMode = false;
+        //private static bool _bypassSingleInstanceMode = false;
         public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
         private static NLog.LogLevel _userWantedLogLevel = NLog.LogLevel.Info; // Default log level is Info, but can be changed later based on user settings
         private static bool _userOverrodeLogLevel = false; // Used to track if the user has overridden the log level via command line options
