@@ -90,6 +90,8 @@ namespace DisplayMagician {
         private static bool _packageIdentityWarningNeeded = false;
         private static bool _autoUpdaterEventsRegistered = false;
         private static bool _lastUpdateCheckWasAutomatic = true;
+        private static string _requestedMessageUpdateVersion;
+        private static string _requestedMessageUpdateChannel;
         private static bool _startupBackgroundTasksQueued = false;
         private static SynchronizationContext _mainSynchronizationContext;
         private static readonly SemaphoreSlim _messageSyncSemaphore = new SemaphoreSlim(1, 1);
@@ -1808,9 +1810,11 @@ namespace DisplayMagician {
             return registration;
         }
 
-        public static void CheckForUpdates(bool automatic = true)
+        public static void CheckForUpdates(bool automatic = true, string requestedMessageUpdateVersion = null, string requestedMessageUpdateChannel = null)
         {
             _lastUpdateCheckWasAutomatic = automatic;
+            _requestedMessageUpdateVersion = requestedMessageUpdateVersion;
+            _requestedMessageUpdateChannel = requestedMessageUpdateChannel;
             string updateChannel = Program.AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
             logger.Info($"Program/CheckForUpdates: Starting {(automatic ? "automatic" : "manual")} update check. Installed version is {AppVersion}; selected update channel is {updateChannel}.");
 
@@ -1818,6 +1822,8 @@ namespace DisplayMagician {
             // If not, just return
             if (!Program.AppProgramSettings.UpgradeEnabled)
             {
+                _requestedMessageUpdateVersion = null;
+                _requestedMessageUpdateChannel = null;
                 logger.Warn($"Program/CheckForUpdates: User has set the Program Settings to ignore any DisplayMagician updates. Skipping the auto update.");
                 return;
             }
@@ -1829,6 +1835,8 @@ namespace DisplayMagician {
 
                 if (!NetworkInterface.GetIsNetworkAvailable())
                 {
+                    _requestedMessageUpdateVersion = null;
+                    _requestedMessageUpdateChannel = null;
                     logger.Warn($"Program/CheckForUpdates: No internet detected. Skipping the auto update.");
                     return;
                 }
@@ -1873,7 +1881,10 @@ namespace DisplayMagician {
             logger.Trace($"Program/AutoUpdaterOnParseUpdateInfoEvent: Received the following Update JSON file from {AutoUpdater.AppCastURL}: {args.RemoteData}");
             try
             {
-                if (Program.AppProgramSettings.UpgradeToPreReleases)
+                bool usePrerelease = !string.IsNullOrWhiteSpace(_requestedMessageUpdateChannel)
+                    ? string.Equals(_requestedMessageUpdateChannel, "prerelease", StringComparison.OrdinalIgnoreCase)
+                    : Program.AppProgramSettings.UpgradeToPreReleases;
+                if (usePrerelease)
                 {
                     logger.Info($"Program/AutoUpdaterOnParseUpdateInfoEvent: Update feed contains stable version {json["stable"]["version"]} and prerelease version {json["prerelease"]["version"]}. Pre-release upgrades are enabled, so the prerelease version will be evaluated.");
                     logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the Prerelease info in the received Update JSON file.");
@@ -1951,6 +1962,11 @@ namespace DisplayMagician {
                 return;
             }
 
+            string requestedMessageUpdateVersion = _requestedMessageUpdateVersion;
+            string requestedMessageUpdateChannel = _requestedMessageUpdateChannel;
+            _requestedMessageUpdateVersion = null;
+            _requestedMessageUpdateChannel = null;
+
             if (args.Error == null)
             {
                 if (args.IsUpdateAvailable)
@@ -1960,6 +1976,46 @@ namespace DisplayMagician {
                         Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
                     logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
+
+                    string selectedUpdateChannel = !string.IsNullOrWhiteSpace(requestedMessageUpdateChannel)
+                        ? requestedMessageUpdateChannel
+                        : AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
+                    bool shouldInstallRequestedMessageUpdate = !string.IsNullOrWhiteSpace(requestedMessageUpdateVersion)
+                        && string.Equals(requestedMessageUpdateChannel, selectedUpdateChannel, StringComparison.OrdinalIgnoreCase)
+                        && Version.TryParse(requestedMessageUpdateVersion, out Version requestedVersion)
+                        && Version.TryParse(args.CurrentVersion, out Version availableVersion)
+                        && availableVersion >= requestedVersion;
+                    if (shouldInstallRequestedMessageUpdate)
+                    {
+                        try
+                        {
+                            logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - User requested installation from message version {requestedMessageUpdateVersion}; downloading available version {args.CurrentVersion}.");
+                            if (AutoUpdater.DownloadUpdate(args))
+                            {
+                                logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - Download completed. Restarting to apply update version {args.CurrentVersion}.");
+                                Application.Exit();
+                            }
+                            else
+                            {
+                                logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent - Update download for requested message version {requestedMessageUpdateVersion} did not complete.");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"Program/AutoUpdaterOnCheckForUpdateEvent - Exception downloading requested message update version {requestedMessageUpdateVersion}.");
+                            MessageBox.Show(ex.Message, ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+
+                        return;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(requestedMessageUpdateVersion))
+                    {
+                        logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent - The update available from the selected channel does not match requested message version {requestedMessageUpdateVersion}; not downloading it.");
+                        MessageBox.Show("The update referenced by this message is no longer available from the selected update channel.", "Update unavailable", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
                     DialogResult dialogResult;
                     UpgradeForm upgradeForm = new UpgradeForm();
 
@@ -2193,6 +2249,10 @@ namespace DisplayMagician {
                 {
                     string updateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
                     logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent: Update check completed. No {updateChannel} update is required; installed version {args.InstalledVersion} is current relative to available version {args.CurrentVersion}.");
+                    if (!string.IsNullOrWhiteSpace(requestedMessageUpdateVersion))
+                    {
+                        MessageBox.Show("This update is no longer available from the selected update channel.", "Update unavailable", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
                 }
             }
             else

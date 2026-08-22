@@ -35,14 +35,17 @@ namespace DisplayMagician.UIForms
             btn_back = new System.Windows.Forms.Button();
             btn_mark_unread = new System.Windows.Forms.Button();
             btn_mark_read = new System.Windows.Forms.Button();
-            btn_upgrade = new System.Windows.Forms.Button();
             dgv_messages = new System.Windows.Forms.DataGridView();
             col_title = new System.Windows.Forms.DataGridViewTextBoxColumn();
             col_published = new System.Windows.Forms.DataGridViewTextBoxColumn();
             panelListHeader = new System.Windows.Forms.Panel();
             lbl_count = new System.Windows.Forms.Label();
             rightPanel = new System.Windows.Forms.Panel();
+            message_content_panel = new System.Windows.Forms.Panel();
             lbl_fallback = new System.Windows.Forms.Label();
+            panel_release_header = new System.Windows.Forms.Panel();
+            lbl_release_heading = new System.Windows.Forms.Label();
+            btn_update_now = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
             splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
@@ -50,6 +53,8 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)dgv_messages).BeginInit();
             panelListHeader.SuspendLayout();
             rightPanel.SuspendLayout();
+            message_content_panel.SuspendLayout();
+            panel_release_header.SuspendLayout();
             SuspendLayout();
             // 
             // splitContainer
@@ -60,11 +65,10 @@ namespace DisplayMagician.UIForms
             splitContainer.Name = "splitContainer";
             // 
             // splitContainer.Panel1
-            //
+            // 
             splitContainer.Panel1.Controls.Add(btn_back);
             splitContainer.Panel1.Controls.Add(btn_mark_unread);
             splitContainer.Panel1.Controls.Add(btn_mark_read);
-            splitContainer.Panel1.Controls.Add(btn_upgrade);
             splitContainer.Panel1.Controls.Add(dgv_messages);
             splitContainer.Panel1.Controls.Add(panelListHeader);
             // 
@@ -125,25 +129,7 @@ namespace DisplayMagician.UIForms
             btn_mark_read.Text = "Mark &Read";
             btn_mark_read.UseVisualStyleBackColor = true;
             btn_mark_read.Click += btn_mark_read_Click;
-            //
-            // btn_upgrade
-            //
-            btn_upgrade.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btn_upgrade.Enabled = false;
-            btn_upgrade.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_upgrade.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_upgrade.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_upgrade.ForeColor = System.Drawing.Color.White;
-            btn_upgrade.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_upgrade.Location = new System.Drawing.Point(59, 709);
-            btn_upgrade.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_upgrade.Name = "btn_upgrade";
-            btn_upgrade.Size = new System.Drawing.Size(96, 27);
-            btn_upgrade.TabIndex = 11;
-            btn_upgrade.Text = "&Upgrade Now";
-            btn_upgrade.UseVisualStyleBackColor = true;
-            btn_upgrade.Click += btn_upgrade_Click;
-            //
+            // 
             // dgv_messages
             // 
             dgv_messages.AllowUserToAddRows = false;
@@ -165,16 +151,16 @@ namespace DisplayMagician.UIForms
             dgv_messages.Size = new System.Drawing.Size(461, 655);
             dgv_messages.TabIndex = 1;
             dgv_messages.SelectionChanged += dgv_messages_SelectionChanged;
-            //
+            // 
             // col_title
-            //
+            // 
             col_title.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             col_title.HeaderText = "Message";
             col_title.Name = "col_title";
             col_title.ReadOnly = true;
-            //
+            // 
             // col_published
-            //
+            // 
             col_published.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             col_published.HeaderText = "Published";
             col_published.Name = "col_published";
@@ -206,12 +192,23 @@ namespace DisplayMagician.UIForms
             // rightPanel
             // 
             rightPanel.BackColor = System.Drawing.Color.White;
-            rightPanel.Controls.Add(lbl_fallback);
+            rightPanel.Controls.Add(message_content_panel);
+            rightPanel.Controls.Add(panel_release_header);
             rightPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             rightPanel.Location = new System.Drawing.Point(0, 0);
             rightPanel.Name = "rightPanel";
             rightPanel.Size = new System.Drawing.Size(799, 758);
             rightPanel.TabIndex = 0;
+            // 
+            // message_content_panel
+            // 
+            message_content_panel.BackColor = System.Drawing.Color.White;
+            message_content_panel.Controls.Add(lbl_fallback);
+            message_content_panel.Dock = System.Windows.Forms.DockStyle.Fill;
+            message_content_panel.Location = new System.Drawing.Point(0, 52);
+            message_content_panel.Name = "message_content_panel";
+            message_content_panel.Size = new System.Drawing.Size(799, 706);
+            message_content_panel.TabIndex = 0;
             // 
             // lbl_fallback
             // 
@@ -220,10 +217,48 @@ namespace DisplayMagician.UIForms
             lbl_fallback.ForeColor = System.Drawing.Color.Black;
             lbl_fallback.Location = new System.Drawing.Point(0, 0);
             lbl_fallback.Name = "lbl_fallback";
-            lbl_fallback.Size = new System.Drawing.Size(799, 758);
+            lbl_fallback.Size = new System.Drawing.Size(799, 706);
             lbl_fallback.TabIndex = 0;
             lbl_fallback.Text = "Select a message to view its content.";
             lbl_fallback.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // panel_release_header
+            // 
+            panel_release_header.BackColor = System.Drawing.Color.FromArgb(238, 242, 255);
+            panel_release_header.Controls.Add(lbl_release_heading);
+            panel_release_header.Controls.Add(btn_update_now);
+            panel_release_header.Dock = System.Windows.Forms.DockStyle.Top;
+            panel_release_header.Location = new System.Drawing.Point(0, 0);
+            panel_release_header.Name = "panel_release_header";
+            panel_release_header.Size = new System.Drawing.Size(799, 52);
+            panel_release_header.TabIndex = 1;
+            panel_release_header.Visible = false;
+            // 
+            // lbl_release_heading
+            // 
+            lbl_release_heading.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            lbl_release_heading.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_release_heading.ForeColor = System.Drawing.Color.FromArgb(49, 46, 129);
+            lbl_release_heading.Location = new System.Drawing.Point(14, 5);
+            lbl_release_heading.Name = "lbl_release_heading";
+            lbl_release_heading.Size = new System.Drawing.Size(614, 39);
+            lbl_release_heading.TabIndex = 0;
+            lbl_release_heading.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // btn_update_now
+            // 
+            btn_update_now.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btn_update_now.BackColor = System.Drawing.Color.FromArgb(79, 70, 229);
+            btn_update_now.FlatAppearance.BorderSize = 0;
+            btn_update_now.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_update_now.ForeColor = System.Drawing.Color.White;
+            btn_update_now.Location = new System.Drawing.Point(662, 11);
+            btn_update_now.Name = "btn_update_now";
+            btn_update_now.Size = new System.Drawing.Size(126, 28);
+            btn_update_now.TabIndex = 1;
+            btn_update_now.Text = "&Update Now";
+            btn_update_now.UseVisualStyleBackColor = false;
+            btn_update_now.Click += btn_update_now_Click;
             // 
             // MessagesForm
             // 
@@ -249,6 +284,8 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)dgv_messages).EndInit();
             panelListHeader.ResumeLayout(false);
             rightPanel.ResumeLayout(false);
+            message_content_panel.ResumeLayout(false);
+            panel_release_header.ResumeLayout(false);
             ResumeLayout(false);
 
         }
@@ -259,6 +296,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel panelListHeader;
         private System.Windows.Forms.Label lbl_count;
         private System.Windows.Forms.Panel rightPanel;
+        private System.Windows.Forms.Panel message_content_panel;
         private System.Windows.Forms.Label lbl_fallback;
         private System.Windows.Forms.DataGridView dgv_messages;
         private System.Windows.Forms.DataGridViewTextBoxColumn col_title;
@@ -266,6 +304,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_mark_read;
         private System.Windows.Forms.Button btn_mark_unread;
         private System.Windows.Forms.Button btn_back;
-        private System.Windows.Forms.Button btn_upgrade;
+        private System.Windows.Forms.Panel panel_release_header;
+        private System.Windows.Forms.Label lbl_release_heading;
+        private System.Windows.Forms.Button btn_update_now;
     }
 }

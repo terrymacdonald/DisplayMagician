@@ -74,7 +74,7 @@ namespace DisplayMagician.UIForms
                     Dock = DockStyle.Fill,
                     Visible = false,
                 };
-                rightPanel.Controls.Add(webView);
+                message_content_panel.Controls.Add(webView);
                 webView.BringToFront();
                 await webView.EnsureCoreWebView2Async();
             }
@@ -134,7 +134,7 @@ namespace DisplayMagician.UIForms
 
             if (dgv_messages.SelectedRows.Count == 0)
             {
-                btn_upgrade.Enabled = false;
+                panel_release_header.Visible = false;
                 return;
             }
 
@@ -160,8 +160,8 @@ namespace DisplayMagician.UIForms
             if (dgv_messages.SelectedRows.Count > 0)
             {
                 LocalMessage selectedMessage = dgv_messages.SelectedRows[0].Tag as LocalMessage;
+                ConfigureReleaseHeader(selectedMessage);
                 RenderMessage(selectedMessage);
-                btn_upgrade.Enabled = IsApplicableReleaseAnnouncement(selectedMessage);
             }
 
             Program.RefreshMessageIndicators();
@@ -177,7 +177,7 @@ namespace DisplayMagician.UIForms
             ApplyReadStateForSelection(isRead: false);
         }
 
-        private void btn_upgrade_Click(object sender, EventArgs e)
+        private void btn_update_now_Click(object sender, EventArgs e)
         {
             LocalMessage selectedMessage = dgv_messages.SelectedRows.Count == 1
                 ? dgv_messages.SelectedRows[0].Tag as LocalMessage
@@ -188,7 +188,12 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            Program.CheckForUpdates(automatic: false);
+            btn_update_now.Enabled = false;
+            btn_update_now.Text = "Starting update...";
+            Program.CheckForUpdates(
+                automatic: false,
+                requestedMessageUpdateVersion: selectedMessage.ReleaseVersion,
+                requestedMessageUpdateChannel: selectedMessage.ReleaseChannel);
         }
 
         private void ApplyReadStateForSelection(bool isRead)
@@ -230,7 +235,6 @@ namespace DisplayMagician.UIForms
             if (message == null
                 || !string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(message.UpdateAction, "installIfAvailable", StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(message.ReleaseChannel, Program.AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable", StringComparison.OrdinalIgnoreCase)
                 || !Version.TryParse(message.ReleaseVersion, out Version releaseVersion)
                 || !Version.TryParse(Program.AppVersion, out Version currentVersion))
             {
@@ -238,6 +242,23 @@ namespace DisplayMagician.UIForms
             }
 
             return releaseVersion > currentVersion;
+        }
+
+        private void ConfigureReleaseHeader(LocalMessage message)
+        {
+            bool isReleaseAnnouncement = message != null
+                && string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase);
+            panel_release_header.Visible = isReleaseAnnouncement;
+            if (!isReleaseAnnouncement)
+            {
+                return;
+            }
+
+            lbl_release_heading.Text = $"DisplayMagician update {message.ReleaseVersion} is available";
+            bool canInstall = IsApplicableReleaseAnnouncement(message);
+            btn_update_now.Visible = canInstall;
+            btn_update_now.Enabled = canInstall;
+            btn_update_now.Text = "&Update Now";
         }
 
         private void RestoreSelection(List<string> selectedIds)
@@ -300,17 +321,14 @@ namespace DisplayMagician.UIForms
             try
             {
                 rawContent = File.ReadAllText(fullPath);
-                string releaseBanner = string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
-                    ? $"<div style='margin:0 0 18px;padding:12px 16px;border:1px solid #4f46e5;background:#eef2ff;color:#312e81;border-radius:6px;'><strong>DisplayMagician update {System.Net.WebUtility.HtmlEncode(message.ReleaseVersion)}</strong><br />Release channel: {System.Net.WebUtility.HtmlEncode(message.ReleaseChannel)}</div>"
-                    : string.Empty;
                 if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
                 {
-                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{releaseBanner}{rawContent}</body></html>";
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{rawContent}</body></html>";
                 }
                 else
                 {
                     string htmlBody = Markdown.ToHtml(rawContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
-                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{releaseBanner}{htmlBody}</body></html>";
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
                 }
             }
             catch (Exception ex)
