@@ -6,6 +6,10 @@
     "DM ChangeProfile": {
       "commandName": "Project",
       "commandLineArgs": "ChangeProfile 8d6c437c-1fab-4935-878a-96c9f899bc30 --trace"
+    },
+    "DM Test Update Feed": {
+      "commandName": "Project",
+      "commandLineArgs": "--test-update-feed"
     }
   }
 }

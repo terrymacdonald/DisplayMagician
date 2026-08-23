@@ -225,6 +225,7 @@ namespace DisplayMagician {
             // Start the Log file
             logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
 
+            // Check for the --test-update-feed to check for the test update feed instead of the normal update feed. This is useful for testing the update feed without having to change the code.
             if (args.Any(argument => string.Equals(argument, TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase)))
             {
                 EnableTestUpdateFeed("the startup command line", checkForUpdatesNow: false);
@@ -1882,6 +1883,7 @@ namespace DisplayMagician {
             AutoUpdater.RemindLaterAt = 7;
             AutoUpdater.InstalledVersion = new Version(AppVersion);
 
+            // Use the test update feed if it has been enabled, otherwise use the normal update feed
             string connectionUrl = _useTestUpdateFeed ? TestUpdateUrl : UpdateUrl;
             if (_useTestUpdateFeed)
             {
