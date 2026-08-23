@@ -45,7 +45,7 @@
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(277, 29);
-            lbl_title.TabIndex = 21;
+            lbl_title.TabIndex = 0;
             lbl_title.Text = "Shortcut errors detected!";
             lbl_title.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -61,7 +61,7 @@
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(140, 38);
-            btn_save.TabIndex = 22;
+            btn_save.TabIndex = 1;
             btn_save.Text = "&OK";
             btn_save.UseVisualStyleBackColor = true;
             btn_save.Click += btn_save_Click;
@@ -75,7 +75,7 @@
             txt_errors.Multiline = true;
             txt_errors.Name = "txt_errors";
             txt_errors.Size = new System.Drawing.Size(906, 380);
-            txt_errors.TabIndex = 23;
+            txt_errors.TabIndex = 0;
             // 
             // ShortcutErrorForm
             // 

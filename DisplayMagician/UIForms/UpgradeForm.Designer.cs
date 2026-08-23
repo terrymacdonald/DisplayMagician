@@ -53,7 +53,7 @@ namespace DisplayMagician.UIForms
             lbl_title.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(393, 29);
-            lbl_title.TabIndex = 31;
+            lbl_title.TabIndex = 0;
             lbl_title.Text = "DisplayMagician Upgrade Available";
             // 
             // btn_upgrade
@@ -68,7 +68,7 @@ namespace DisplayMagician.UIForms
             btn_upgrade.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_upgrade.Name = "btn_upgrade";
             btn_upgrade.Size = new System.Drawing.Size(148, 38);
-            btn_upgrade.TabIndex = 1;
+            btn_upgrade.TabIndex = 2;
             btn_upgrade.Text = "&Upgrade Now";
             btn_upgrade.UseVisualStyleBackColor = true;
             btn_upgrade.Click += btn_upgrade_Click;
@@ -85,7 +85,7 @@ namespace DisplayMagician.UIForms
             btn_remind_later.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_remind_later.Name = "btn_remind_later";
             btn_remind_later.Size = new System.Drawing.Size(148, 38);
-            btn_remind_later.TabIndex = 2;
+            btn_remind_later.TabIndex = 3;
             btn_remind_later.Text = "&Remind in 7 days";
             btn_remind_later.UseVisualStyleBackColor = true;
             btn_remind_later.Click += btn_remind_later_Click;
@@ -102,7 +102,7 @@ namespace DisplayMagician.UIForms
             btn_skip.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             btn_skip.Name = "btn_skip";
             btn_skip.Size = new System.Drawing.Size(117, 27);
-            btn_skip.TabIndex = 3;
+            btn_skip.TabIndex = 4;
             btn_skip.Text = "&Ignore Upgrade";
             btn_skip.UseVisualStyleBackColor = true;
             btn_skip.Click += btn_skip_Click;
@@ -117,7 +117,7 @@ namespace DisplayMagician.UIForms
             lbl_changelog.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_changelog.Name = "lbl_changelog";
             lbl_changelog.Size = new System.Drawing.Size(928, 34);
-            lbl_changelog.TabIndex = 39;
+            lbl_changelog.TabIndex = 0;
             lbl_changelog.Text = "For more information on what has changed in the new version please visit the changelog: ";
             lbl_changelog.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -159,7 +159,7 @@ namespace DisplayMagician.UIForms
             web_release_notes.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             web_release_notes.Name = "web_release_notes";
             web_release_notes.Size = new System.Drawing.Size(1373, 699);
-            web_release_notes.TabIndex = 4;
+            web_release_notes.TabIndex = 1;
             web_release_notes.Visible = false;
             web_release_notes.ZoomFactor = 1D;
             // 

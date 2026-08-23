@@ -89,7 +89,7 @@
             btn_delete.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_delete.Name = "btn_delete";
             btn_delete.Size = new System.Drawing.Size(128, 40);
-            btn_delete.TabIndex = 26;
+            btn_delete.TabIndex = 3;
             btn_delete.Text = "&Delete";
             btn_delete.UseVisualStyleBackColor = true;
             btn_delete.Click += btn_delete_Click;
@@ -107,7 +107,7 @@
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
-            btn_back.TabIndex = 27;
+            btn_back.TabIndex = 7;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
@@ -125,7 +125,7 @@
             btn_run.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_run.Name = "btn_run";
             btn_run.Size = new System.Drawing.Size(128, 40);
-            btn_run.TabIndex = 25;
+            btn_run.TabIndex = 5;
             btn_run.Text = "&Run";
             btn_run.UseVisualStyleBackColor = false;
             btn_run.Click += btn_run_Click;
@@ -143,7 +143,7 @@
             btn_edit.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_edit.Name = "btn_edit";
             btn_edit.Size = new System.Drawing.Size(128, 40);
-            btn_edit.TabIndex = 28;
+            btn_edit.TabIndex = 2;
             btn_edit.Text = "&Edit";
             btn_edit.UseVisualStyleBackColor = false;
             btn_edit.Click += btn_edit_Click;
@@ -161,7 +161,7 @@
             btn_new.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_new.Name = "btn_new";
             btn_new.Size = new System.Drawing.Size(128, 40);
-            btn_new.TabIndex = 29;
+            btn_new.TabIndex = 1;
             btn_new.Text = "&New";
             btn_new.UseVisualStyleBackColor = false;
             btn_new.Click += btn_new_Click;
@@ -179,7 +179,7 @@
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(228, 40);
-            btn_save.TabIndex = 30;
+            btn_save.TabIndex = 6;
             btn_save.Text = "&Save to Desktop";
             btn_save.UseVisualStyleBackColor = false;
             btn_save.Click += btn_save_Click;
@@ -201,7 +201,7 @@
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(309, 33);
-            label1.TabIndex = 31;
+            label1.TabIndex = 0;
             label1.Text = "Game Shortcut Library";
             // 
             // lbl_create_shortcut
@@ -217,7 +217,7 @@
             lbl_create_shortcut.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_create_shortcut.Name = "lbl_create_shortcut";
             lbl_create_shortcut.Size = new System.Drawing.Size(304, 22);
-            lbl_create_shortcut.TabIndex = 32;
+            lbl_create_shortcut.TabIndex = 0;
             lbl_create_shortcut.Text = "Click the 'New' button to create a shortcut";
             // 
             // cms_shortcuts
@@ -280,7 +280,7 @@
             lbl_mask.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_mask.Name = "lbl_mask";
             lbl_mask.Size = new System.Drawing.Size(182, 8);
-            lbl_mask.TabIndex = 33;
+            lbl_mask.TabIndex = 0;
             lbl_mask.Text = "lbl_masked_form";
             lbl_mask.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lbl_mask.Visible = false;
@@ -298,7 +298,7 @@
             btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_help.Name = "btn_help";
             btn_help.Size = new System.Drawing.Size(88, 27);
-            btn_help.TabIndex = 34;
+            btn_help.TabIndex = 9;
             btn_help.Text = "&Help";
             btn_help.UseVisualStyleBackColor = true;
             btn_help.Click += btn_help_Click;
@@ -316,7 +316,7 @@
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(88, 27);
-            btn_donate.TabIndex = 35;
+            btn_donate.TabIndex = 8;
             btn_donate.Text = "D&onate";
             btn_donate.UseVisualStyleBackColor = true;
             btn_donate.Click += btn_donate_Click;
@@ -334,7 +334,7 @@
             btn_copy.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_copy.Name = "btn_copy";
             btn_copy.Size = new System.Drawing.Size(128, 40);
-            btn_copy.TabIndex = 36;
+            btn_copy.TabIndex = 4;
             btn_copy.Text = "&Copy";
             btn_copy.UseVisualStyleBackColor = false;
             btn_copy.Click += btn_copy_Click;
@@ -353,7 +353,7 @@
             btn_cancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_cancel.Name = "btn_cancel";
             btn_cancel.Size = new System.Drawing.Size(140, 42);
-            btn_cancel.TabIndex = 37;
+            btn_cancel.TabIndex = 10;
             btn_cancel.Text = "&Cancel";
             btn_cancel.UseVisualStyleBackColor = false;
             btn_cancel.Visible = false;

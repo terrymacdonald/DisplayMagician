@@ -66,7 +66,7 @@ namespace DisplayMagician.UIForms
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(91, 26);
-            btn_save.TabIndex = 3;
+            btn_save.TabIndex = 2;
             btn_save.Text = "&Add";
             btn_save.UseVisualStyleBackColor = false;
             btn_save.Click += btn_apply_Click;
@@ -98,7 +98,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_heading.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_heading.Name = "lbl_hotkey_heading";
             lbl_hotkey_heading.Size = new System.Drawing.Size(326, 20);
-            lbl_hotkey_heading.TabIndex = 7;
+            lbl_hotkey_heading.TabIndex = 0;
             lbl_hotkey_heading.Text = "Choose a Hotkey for this Display Profile";
             lbl_hotkey_heading.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -127,7 +127,7 @@ namespace DisplayMagician.UIForms
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
-            btn_back.TabIndex = 8;
+            btn_back.TabIndex = 4;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
@@ -139,7 +139,7 @@ namespace DisplayMagician.UIForms
             lv_hotkeys.Name = "lv_hotkeys";
             lv_hotkeys.ShowGroups = false;
             lv_hotkeys.Size = new System.Drawing.Size(519, 119);
-            lv_hotkeys.TabIndex = 9;
+            lv_hotkeys.TabIndex = 5;
             lv_hotkeys.UseCompatibleStateImageBehavior = false;
             lv_hotkeys.MouseClick += lv_hotkeys_MouseClick;
             // 
@@ -156,7 +156,7 @@ namespace DisplayMagician.UIForms
             btn_clear.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_clear.Name = "btn_clear";
             btn_clear.Size = new System.Drawing.Size(91, 26);
-            btn_clear.TabIndex = 10;
+            btn_clear.TabIndex = 3;
             btn_clear.Text = "&Clear";
             btn_clear.UseVisualStyleBackColor = false;
             btn_clear.Click += btn_clear_Click;
@@ -170,7 +170,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_selector.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_selector.Name = "lbl_hotkey_selector";
             lbl_hotkey_selector.Size = new System.Drawing.Size(420, 59);
-            lbl_hotkey_selector.TabIndex = 2;
+            lbl_hotkey_selector.TabIndex = 0;
             lbl_hotkey_selector.Text = "Hold down the keys or buttons you'd like to use as a Hotkey, then release them. Selected keys or buttons will clear automatically in 10 seconds or you can clear them yourself with the Clear button.";
             lbl_hotkey_selector.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 

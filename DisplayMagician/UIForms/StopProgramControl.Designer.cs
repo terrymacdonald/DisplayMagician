@@ -87,7 +87,7 @@ namespace DisplayMagician.UIForms
             txt_stop_program.Location = new System.Drawing.Point(275, 16);
             txt_stop_program.Name = "txt_stop_program";
             txt_stop_program.Size = new System.Drawing.Size(472, 26);
-            txt_stop_program.TabIndex = 4;
+            txt_stop_program.TabIndex = 1;
             txt_stop_program.TextChanged += txt_stop_program_TextChanged;
             // 
             // btn_stop_program
@@ -99,7 +99,7 @@ namespace DisplayMagician.UIForms
             btn_stop_program.Location = new System.Drawing.Point(753, 16);
             btn_stop_program.Name = "btn_stop_program";
             btn_stop_program.Size = new System.Drawing.Size(85, 27);
-            btn_stop_program.TabIndex = 5;
+            btn_stop_program.TabIndex = 2;
             btn_stop_program.Text = "Choose";
             btn_stop_program.UseVisualStyleBackColor = true;
             btn_stop_program.Click += btn_stop_program_Click;
@@ -126,7 +126,7 @@ namespace DisplayMagician.UIForms
             chk_restart_afterwards.Location = new System.Drawing.Point(161, 50);
             chk_restart_afterwards.Name = "chk_restart_afterwards";
             chk_restart_afterwards.Size = new System.Drawing.Size(288, 24);
-            chk_restart_afterwards.TabIndex = 7;
+            chk_restart_afterwards.TabIndex = 3;
             chk_restart_afterwards.Text = "Restart program when game finishes";
             chk_restart_afterwards.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             chk_restart_afterwards.UseVisualStyleBackColor = true;
@@ -155,7 +155,7 @@ namespace DisplayMagician.UIForms
             cbx_restart_priority.Location = new System.Drawing.Point(659, 50);
             cbx_restart_priority.Name = "cbx_restart_priority";
             cbx_restart_priority.Size = new System.Drawing.Size(179, 28);
-            cbx_restart_priority.TabIndex = 9;
+            cbx_restart_priority.TabIndex = 4;
             cbx_restart_priority.SelectedIndexChanged += cbx_restart_priority_SelectedIndexChanged;
             // 
             // chk_run_as_admin
@@ -167,7 +167,7 @@ namespace DisplayMagician.UIForms
             chk_run_as_admin.Location = new System.Drawing.Point(161, 83);
             chk_run_as_admin.Name = "chk_run_as_admin";
             chk_run_as_admin.Size = new System.Drawing.Size(288, 24);
-            chk_run_as_admin.TabIndex = 10;
+            chk_run_as_admin.TabIndex = 5;
             chk_run_as_admin.Text = "Run as administrator when restarting";
             chk_run_as_admin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             chk_run_as_admin.UseVisualStyleBackColor = true;
@@ -183,7 +183,7 @@ namespace DisplayMagician.UIForms
             btn_delete.Location = new System.Drawing.Point(868, 3);
             btn_delete.Name = "btn_delete";
             btn_delete.Size = new System.Drawing.Size(29, 27);
-            btn_delete.TabIndex = 11;
+            btn_delete.TabIndex = 7;
             btn_delete.Text = "X";
             btn_delete.UseVisualStyleBackColor = true;
             btn_delete.Click += btn_delete_Click;

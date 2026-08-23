@@ -48,7 +48,7 @@ namespace DisplayMagician.UIForms
             lbl_heading_text.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_heading_text.Name = "lbl_heading_text";
             lbl_heading_text.Size = new System.Drawing.Size(400, 29);
-            lbl_heading_text.TabIndex = 20;
+            lbl_heading_text.TabIndex = 0;
             lbl_heading_text.Text = "Important DisplayMagician Message";
             lbl_heading_text.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -62,7 +62,7 @@ namespace DisplayMagician.UIForms
             rtb_message.Name = "rtb_message";
             rtb_message.ReadOnly = true;
             rtb_message.Size = new System.Drawing.Size(1323, 730);
-            rtb_message.TabIndex = 21;
+            rtb_message.TabIndex = 1;
             rtb_message.Text = "";
             // 
             // btn_back
@@ -77,7 +77,7 @@ namespace DisplayMagician.UIForms
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
-            btn_back.TabIndex = 22;
+            btn_back.TabIndex = 3;
             btn_back.Text = "&Close";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
@@ -93,7 +93,7 @@ namespace DisplayMagician.UIForms
             pnl_richtextbox.Name = "pnl_richtextbox";
             pnl_richtextbox.Padding = new System.Windows.Forms.Padding(23);
             pnl_richtextbox.Size = new System.Drawing.Size(1373, 780);
-            pnl_richtextbox.TabIndex = 23;
+            pnl_richtextbox.TabIndex = 2;
             // 
             // StartMessageForm
             // 

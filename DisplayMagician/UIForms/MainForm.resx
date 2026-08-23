@@ -158,7 +158,7 @@
     <value>104, 29</value>
   </data>
   <data name="btn_audio.TabIndex" type="System.Int32, mscorlib">
-    <value>13</value>
+    <value>6</value>
   </data>
   <data name="btn_audio.Text" xml:space="preserve">
     <value>&amp;Audio Profiles</value>
@@ -197,7 +197,7 @@
     <value>104, 29</value>
   </data>
   <data name="btn_messages.TabIndex" type="System.Int32, mscorlib">
-    <value>12</value>
+    <value>7</value>
   </data>
   <data name="btn_messages.Text" xml:space="preserve">
     <value>&amp;Messages</value>
@@ -233,7 +233,7 @@
     <value>387, 22</value>
   </data>
   <data name="lbl_donate.TabIndex" type="System.Int32, mscorlib">
-    <value>11</value>
+    <value>0</value>
   </data>
   <data name="lbl_donate.Text" xml:space="preserve">
     <value>You've used DisplayMagician X times.</value>
@@ -275,7 +275,7 @@
     <value>82, 29</value>
   </data>
   <data name="btn_fov_calc.TabIndex" type="System.Int32, mscorlib">
-    <value>10</value>
+    <value>8</value>
   </data>
   <data name="btn_fov_calc.Text" xml:space="preserve">
     <value>&amp;FOV Calc</value>
@@ -353,7 +353,7 @@
     <value>90, 29</value>
   </data>
   <data name="btn_donate.TabIndex" type="System.Int32, mscorlib">
-    <value>8</value>
+    <value>10</value>
   </data>
   <data name="btn_donate.Text" xml:space="preserve">
     <value>D&amp;onate</value>
@@ -392,7 +392,7 @@
     <value>87, 29</value>
   </data>
   <data name="btn_settings.TabIndex" type="System.Int32, mscorlib">
-    <value>7</value>
+    <value>5</value>
   </data>
   <data name="btn_settings.Text" xml:space="preserve">
     <value>&amp;Settings</value>
@@ -428,7 +428,7 @@
     <value>316, 22</value>
   </data>
   <data name="lbl_create_profile.TabIndex" type="System.Int32, mscorlib">
-    <value>6</value>
+    <value>0</value>
   </data>
   <data name="lbl_create_profile.Text" xml:space="preserve">
     <value>Save at least one display profile to continue</value>
@@ -10974,7 +10974,7 @@
     <value>NoControl</value>
   </data>
   <data name="lbl_create_shortcut.Location" type="System.Drawing.Point, System.Drawing">
-    <value>301, 254</value>
+    <value>301, 255</value>
   </data>
   <data name="lbl_create_shortcut.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>6, 0, 6, 0</value>
@@ -10983,7 +10983,7 @@
     <value>222, 22</value>
   </data>
   <data name="lbl_create_shortcut.TabIndex" type="System.Int32, mscorlib">
-    <value>7</value>
+    <value>0</value>
   </data>
   <data name="lbl_create_shortcut.Text" xml:space="preserve">
     <value>Click here to create a shortcut</value>
@@ -11019,7 +11019,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_minimise_notification_area.Location" type="System.Drawing.Point, System.Drawing">
-    <value>199, 397</value>
+    <value>199, 399</value>
   </data>
   <data name="cb_minimise_notification_area.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>6, 6, 6, 6</value>
@@ -11028,7 +11028,7 @@
     <value>459, 20</value>
   </data>
   <data name="cb_minimise_notification_area.TabIndex" type="System.Int32, mscorlib">
-    <value>5</value>
+    <value>3</value>
   </data>
   <data name="cb_minimise_notification_area.Text" xml:space="preserve">
     <value>Start DisplayMagician minimised in notification area when computer starts</value>
@@ -11055,7 +11055,7 @@
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
   <data name="lbl_version.Location" type="System.Drawing.Point, System.Drawing">
-    <value>16, 400</value>
+    <value>16, 402</value>
   </data>
   <data name="lbl_version.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>6, 0, 6, 0</value>
@@ -11064,7 +11064,7 @@
     <value>24, 16</value>
   </data>
   <data name="lbl_version.TabIndex" type="System.Int32, mscorlib">
-    <value>2</value>
+    <value>0</value>
   </data>
   <data name="lbl_version.Text" xml:space="preserve">
     <value>{0}</value>
@@ -11094,7 +11094,7 @@
     <value>Microsoft Sans Serif, 21.75pt</value>
   </data>
   <data name="btn_setup_game_shortcuts.Location" type="System.Drawing.Point, System.Drawing">
-    <value>191, 184</value>
+    <value>191, 185</value>
   </data>
   <data name="btn_setup_game_shortcuts.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>6, 6, 6, 6</value>
@@ -11103,7 +11103,7 @@
     <value>450, 58</value>
   </data>
   <data name="btn_setup_game_shortcuts.TabIndex" type="System.Int32, mscorlib">
-    <value>4</value>
+    <value>2</value>
   </data>
   <data name="btn_setup_game_shortcuts.Text" xml:space="preserve">
     <value>&amp;Game Shortcuts</value>
@@ -11133,7 +11133,7 @@
     <value>NoControl</value>
   </data>
   <data name="btn_exit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>693, 388</value>
+    <value>693, 390</value>
   </data>
   <data name="btn_exit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>6, 6, 6, 6</value>
@@ -11142,7 +11142,7 @@
     <value>84, 29</value>
   </data>
   <data name="btn_exit.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="btn_exit.Text" xml:space="preserve">
     <value>E&amp;xit</value>

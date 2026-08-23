@@ -56,7 +56,7 @@ namespace DisplayMagician.UIForms
             cb_dont_start_if_running.Location = new System.Drawing.Point(160, 112);
             cb_dont_start_if_running.Name = "cb_dont_start_if_running";
             cb_dont_start_if_running.Size = new System.Drawing.Size(289, 24);
-            cb_dont_start_if_running.TabIndex = 26;
+            cb_dont_start_if_running.TabIndex = 7;
             cb_dont_start_if_running.Text = "Don't start if program already running";
             cb_dont_start_if_running.UseVisualStyleBackColor = true;
             cb_dont_start_if_running.CheckedChanged += cb_dont_start_if_running_CheckedChanged;
@@ -70,7 +70,7 @@ namespace DisplayMagician.UIForms
             txt_start_program.Location = new System.Drawing.Point(275, 16);
             txt_start_program.Name = "txt_start_program";
             txt_start_program.Size = new System.Drawing.Size(472, 26);
-            txt_start_program.TabIndex = 25;
+            txt_start_program.TabIndex = 1;
             txt_start_program.TextChanged += txt_start_program_TextChanged;
             // 
             // cb_start_program_close
@@ -83,7 +83,7 @@ namespace DisplayMagician.UIForms
             cb_start_program_close.Location = new System.Drawing.Point(497, 123);
             cb_start_program_close.Name = "cb_start_program_close";
             cb_start_program_close.Size = new System.Drawing.Size(305, 44);
-            cb_start_program_close.TabIndex = 24;
+            cb_start_program_close.TabIndex = 9;
             cb_start_program_close.Text = "Close started program when finished (unless already running)";
             cb_start_program_close.UseVisualStyleBackColor = true;
             cb_start_program_close.CheckedChanged += cb_start_program_close_CheckedChanged;
@@ -97,7 +97,7 @@ namespace DisplayMagician.UIForms
             btn_start_program.Location = new System.Drawing.Point(753, 16);
             btn_start_program.Name = "btn_start_program";
             btn_start_program.Size = new System.Drawing.Size(85, 27);
-            btn_start_program.TabIndex = 23;
+            btn_start_program.TabIndex = 2;
             btn_start_program.Text = "Choose";
             btn_start_program.UseVisualStyleBackColor = true;
             btn_start_program.Click += btn_start_program_Click;
@@ -111,7 +111,7 @@ namespace DisplayMagician.UIForms
             txt_start_program_args.Location = new System.Drawing.Point(441, 49);
             txt_start_program_args.Name = "txt_start_program_args";
             txt_start_program_args.Size = new System.Drawing.Size(397, 26);
-            txt_start_program_args.TabIndex = 22;
+            txt_start_program_args.TabIndex = 4;
             txt_start_program_args.TextChanged += txt_start_program_args_TextChanged;
             // 
             // cb_start_program_pass_args
@@ -122,7 +122,7 @@ namespace DisplayMagician.UIForms
             cb_start_program_pass_args.Location = new System.Drawing.Point(160, 49);
             cb_start_program_pass_args.Name = "cb_start_program_pass_args";
             cb_start_program_pass_args.Size = new System.Drawing.Size(228, 24);
-            cb_start_program_pass_args.TabIndex = 21;
+            cb_start_program_pass_args.TabIndex = 3;
             cb_start_program_pass_args.Text = "Pass arguments to program:";
             cb_start_program_pass_args.UseVisualStyleBackColor = true;
             cb_start_program_pass_args.CheckedChanged += cb_start_program_pass_args_CheckedChanged;
@@ -136,7 +136,7 @@ namespace DisplayMagician.UIForms
             btn_delete.Location = new System.Drawing.Point(868, 3);
             btn_delete.Name = "btn_delete";
             btn_delete.Size = new System.Drawing.Size(29, 27);
-            btn_delete.TabIndex = 27;
+            btn_delete.TabIndex = 10;
             btn_delete.Text = "X";
             btn_delete.UseVisualStyleBackColor = true;
             btn_delete.Click += btn_delete_Click;
@@ -149,7 +149,7 @@ namespace DisplayMagician.UIForms
             cb_disable_start_program.Location = new System.Drawing.Point(159, 143);
             cb_disable_start_program.Name = "cb_disable_start_program";
             cb_disable_start_program.Size = new System.Drawing.Size(312, 24);
-            cb_disable_start_program.TabIndex = 28;
+            cb_disable_start_program.TabIndex = 8;
             cb_disable_start_program.Text = "Temporarily disable starting this program";
             cb_disable_start_program.UseVisualStyleBackColor = true;
             cb_disable_start_program.CheckedChanged += cb_start_program_CheckedChanged;
@@ -210,7 +210,7 @@ namespace DisplayMagician.UIForms
             cbx_start_program_priority.Location = new System.Drawing.Point(659, 82);
             cbx_start_program_priority.Name = "cbx_start_program_priority";
             cbx_start_program_priority.Size = new System.Drawing.Size(179, 28);
-            cbx_start_program_priority.TabIndex = 34;
+            cbx_start_program_priority.TabIndex = 6;
             cbx_start_program_priority.SelectedIndexChanged += cbx_start_program_priority_SelectedIndexChanged;
             // 
             // lbl_start_program_priority
@@ -233,7 +233,7 @@ namespace DisplayMagician.UIForms
             cb_run_as_administrator.Location = new System.Drawing.Point(160, 80);
             cb_run_as_administrator.Name = "cb_run_as_administrator";
             cb_run_as_administrator.Size = new System.Drawing.Size(238, 24);
-            cb_run_as_administrator.TabIndex = 35;
+            cb_run_as_administrator.TabIndex = 5;
             cb_run_as_administrator.Text = "Run program as administrator";
             cb_run_as_administrator.UseVisualStyleBackColor = true;
             cb_run_as_administrator.CheckedChanged += cb_run_as_administrator_CheckedChanged;

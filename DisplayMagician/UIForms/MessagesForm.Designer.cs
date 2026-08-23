@@ -92,7 +92,7 @@ namespace DisplayMagician.UIForms
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(78, 27);
-            btn_back.TabIndex = 10;
+            btn_back.TabIndex = 4;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
@@ -109,7 +109,7 @@ namespace DisplayMagician.UIForms
             btn_mark_unread.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_unread.Name = "btn_mark_unread";
             btn_mark_unread.Size = new System.Drawing.Size(90, 27);
-            btn_mark_unread.TabIndex = 8;
+            btn_mark_unread.TabIndex = 3;
             btn_mark_unread.Text = "Mark &Unread";
             btn_mark_unread.UseVisualStyleBackColor = true;
             btn_mark_unread.Click += btn_mark_unread_Click;
@@ -126,7 +126,7 @@ namespace DisplayMagician.UIForms
             btn_mark_read.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_read.Name = "btn_mark_read";
             btn_mark_read.Size = new System.Drawing.Size(78, 27);
-            btn_mark_read.TabIndex = 9;
+            btn_mark_read.TabIndex = 2;
             btn_mark_read.Text = "Mark &Read";
             btn_mark_read.UseVisualStyleBackColor = true;
             btn_mark_read.Click += btn_mark_read_Click;
@@ -233,7 +233,7 @@ namespace DisplayMagician.UIForms
             panel_release_header.Location = new System.Drawing.Point(0, 0);
             panel_release_header.Name = "panel_release_header";
             panel_release_header.Size = new System.Drawing.Size(799, 52);
-            panel_release_header.TabIndex = 1;
+            panel_release_header.TabIndex = 0;
             panel_release_header.Visible = false;
             // 
             // lbl_release_heading
@@ -257,19 +257,19 @@ namespace DisplayMagician.UIForms
             btn_update_now.Location = new System.Drawing.Point(662, 11);
             btn_update_now.Name = "btn_update_now";
             btn_update_now.Size = new System.Drawing.Size(126, 28);
-            btn_update_now.TabIndex = 1;
+            btn_update_now.TabIndex = 5;
             btn_update_now.Text = "&Update Now";
             btn_update_now.UseVisualStyleBackColor = false;
             btn_update_now.Click += btn_update_now_Click;
-            //
+            // 
             // lbl_update_status
-            //
+            // 
             lbl_update_status.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             lbl_update_status.ForeColor = System.Drawing.Color.FromArgb(49, 46, 129);
             lbl_update_status.Location = new System.Drawing.Point(625, 12);
             lbl_update_status.Name = "lbl_update_status";
             lbl_update_status.Size = new System.Drawing.Size(158, 28);
-            lbl_update_status.TabIndex = 2;
+            lbl_update_status.TabIndex = 0;
             lbl_update_status.Text = "Newer version installed";
             lbl_update_status.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             lbl_update_status.Visible = false;

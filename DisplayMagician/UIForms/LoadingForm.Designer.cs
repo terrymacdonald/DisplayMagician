@@ -44,7 +44,7 @@ namespace DisplayMagician.UIForms
             lbl_title.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(554, 60);
-            lbl_title.TabIndex = 2;
+            lbl_title.TabIndex = 0;
             lbl_title.Text = "DisplayMagician is loading...";
             lbl_title.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lbl_title.UseWaitCursor = true;
@@ -58,7 +58,7 @@ namespace DisplayMagician.UIForms
             lbl_description.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_description.Name = "lbl_description";
             lbl_description.Size = new System.Drawing.Size(554, 75);
-            lbl_description.TabIndex = 3;
+            lbl_description.TabIndex = 0;
             lbl_description.Text = "Please wait. We should have everything configured and ready for you to use in just a few moments.";
             lbl_description.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lbl_description.UseWaitCursor = true;
@@ -69,7 +69,7 @@ namespace DisplayMagician.UIForms
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(624, 213);
+            ClientSize = new System.Drawing.Size(620, 213);
             ControlBox = false;
             Controls.Add(lbl_description);
             Controls.Add(lbl_title);
