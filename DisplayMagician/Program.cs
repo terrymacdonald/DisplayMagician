@@ -100,8 +100,11 @@ namespace DisplayMagician {
         private static System.Timers.Timer _startupMessagePollTimer;
         private static readonly TimeSpan _messageSyncPollInterval = TimeSpan.FromHours(1);
         internal const string MessageManifestUrl = "http://www.displaymagician.com:8787/messages/manifest.json";
+        internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
 
         private const string UpdateUrl = "http://www.displaymagician.com:8787/update/update.json";
+        private const string TestUpdateUrl = "http://www.displaymagician.com:8787/update/test_update.json";
+        private static volatile bool _useTestUpdateFeed;
 
         public enum ERRORLEVEL: int
         {
@@ -221,6 +224,11 @@ namespace DisplayMagician {
 
             // Start the Log file
             logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
+
+            if (args.Any(argument => string.Equals(argument, TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                EnableTestUpdateFeed("the startup command line", checkForUpdatesNow: false);
+            }
 
 
             // PACKAGE IDENTITY INITIALIZATION AND CHECKS
@@ -829,7 +837,10 @@ namespace DisplayMagician {
 
                 logger.Debug($"Executing the app.execute commandline processing to start parsing the command line options");
                 // This begins the actual execution of the application
-                errorLevelToReturnToOS = app.Execute(args);
+                string[] commandLineArguments = args
+                    .Where(argument => !string.Equals(argument, TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+                errorLevelToReturnToOS = app.Execute(commandLineArguments);
             }
             catch (CommandParsingException ex)
             {
@@ -1810,6 +1821,20 @@ namespace DisplayMagician {
             return registration;
         }
 
+        internal static void EnableTestUpdateFeed(string source, bool checkForUpdatesNow)
+        {
+            bool wasAlreadyEnabled = _useTestUpdateFeed;
+            _useTestUpdateFeed = true;
+
+            logger.Warn($"Program/EnableTestUpdateFeed: TEST UPDATE MODE {(wasAlreadyEnabled ? "is already" : "has been")} enabled from {source}. This session will use {TestUpdateUrl} instead of {UpdateUrl}.");
+
+            if (checkForUpdatesNow)
+            {
+                logger.Warn($"Program/EnableTestUpdateFeed: Starting an immediate test-feed update check requested from {source}.");
+                CheckForUpdates(automatic: false);
+            }
+        }
+
         public static void CheckForUpdates(bool automatic = true, string requestedMessageUpdateVersion = null, string requestedMessageUpdateChannel = null)
         {
             _lastUpdateCheckWasAutomatic = automatic;
@@ -1857,7 +1882,11 @@ namespace DisplayMagician {
             AutoUpdater.RemindLaterAt = 7;
             AutoUpdater.InstalledVersion = new Version(AppVersion);
 
-            string connectionUrl = Program.UpdateUrl;
+            string connectionUrl = _useTestUpdateFeed ? TestUpdateUrl : UpdateUrl;
+            if (_useTestUpdateFeed)
+            {
+                logger.Warn($"Program/CheckForUpdates: TEST UPDATE MODE is active. Checking {connectionUrl}.");
+            }
             connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppVersion)}");
             connectionUrl += ($"&install_id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
             connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
@@ -1971,9 +2000,7 @@ namespace DisplayMagician {
 
             if (args.Error == null)
             {
-                // TODO: FIX THIS BEFORE RELEASE AS THIS IS A TESTING HACK TO FORCE AN UPDATE TO BE AVAILABLE FOR TESTING PURPOSES. REMOVE THIS BEFORE RELEASE.
-                //if (args.IsUpdateAvailable)
-                if (true)
+                if (args.IsUpdateAvailable)
                 {
                     // Shut down the splash screen
                     if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)

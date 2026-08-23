@@ -1,4 +1,4 @@
-﻿using DisplayMagician.UIForms;
+using DisplayMagician.UIForms;
 using DisplayMagicianShared;
 using System;
 using System.Collections.Generic;
@@ -54,6 +54,13 @@ namespace DisplayMagician
             }
 
             logger.Trace($"SingleInstance/executeAnActionCallback: Received data from another DisplayMagician instance: {String.Join(" ",args)}");
+
+            if (args.Any(argument => string.Equals(argument, Program.TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                Program.EnableTestUpdateFeed("a forwarded command line from another DisplayMagician instance", checkForUpdatesNow: true);
+                return;
+            }
+
             int commandIndex = FindCommandIndex(args);
 
             if (commandIndex >= 0)
