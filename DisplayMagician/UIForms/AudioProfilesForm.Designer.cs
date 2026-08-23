@@ -167,7 +167,7 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.Name = "gb_selected_audio_settings";
             gb_selected_audio_settings.Padding = new System.Windows.Forms.Padding(6);
             gb_selected_audio_settings.Size = new System.Drawing.Size(734, 544);
-            gb_selected_audio_settings.TabIndex = 1;
+            gb_selected_audio_settings.TabIndex = 0;
             gb_selected_audio_settings.TabStop = false;
             gb_selected_audio_settings.Text = "Selected Audio Profile Settings";
             gb_selected_audio_settings.Paint += groupbox_Paint;
@@ -216,7 +216,7 @@ namespace DisplayMagician.UIForms
             lbl_heading_text.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_heading_text.Name = "lbl_heading_text";
             lbl_heading_text.Size = new System.Drawing.Size(308, 29);
-            lbl_heading_text.TabIndex = 21;
+            lbl_heading_text.TabIndex = 0;
             lbl_heading_text.Text = "Manage your Audio Profiles";
             lbl_heading_text.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 

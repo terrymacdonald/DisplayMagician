@@ -48,7 +48,7 @@ namespace DisplayMagician.UIForms
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(547, 35);
-            lbl_title.TabIndex = 2;
+            lbl_title.TabIndex = 0;
             lbl_title.Text = "You've used DisplayMagician X times!";
             lbl_title.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -61,7 +61,7 @@ namespace DisplayMagician.UIForms
             lbl_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_description.Name = "lbl_description";
             lbl_description.Size = new System.Drawing.Size(411, 31);
-            lbl_description.TabIndex = 3;
+            lbl_description.TabIndex = 0;
             lbl_description.Text = "Has DisplayMagician made your life better?";
             lbl_description.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -79,7 +79,7 @@ namespace DisplayMagician.UIForms
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(161, 53);
-            btn_donate.TabIndex = 12;
+            btn_donate.TabIndex = 1;
             btn_donate.Text = "D&onate now";
             btn_donate.UseVisualStyleBackColor = false;
             btn_donate.Click += btn_donate_Click;
@@ -93,7 +93,7 @@ namespace DisplayMagician.UIForms
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(411, 37);
-            label1.TabIndex = 13;
+            label1.TabIndex = 0;
             label1.Text = "Has it simplified your gaming routine?";
             label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -107,7 +107,7 @@ namespace DisplayMagician.UIForms
             label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(411, 37);
-            label2.TabIndex = 14;
+            label2.TabIndex = 0;
             label2.Text = "Donating to the DisplayMagician team is the best way to keep this project going.";
             label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -120,11 +120,11 @@ namespace DisplayMagician.UIForms
             btn_exit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_exit.ForeColor = System.Drawing.Color.White;
             btn_exit.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_exit.Location = new System.Drawing.Point(530, 310);
+            btn_exit.Location = new System.Drawing.Point(540, 343);
             btn_exit.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_exit.Name = "btn_exit";
             btn_exit.Size = new System.Drawing.Size(88, 27);
-            btn_exit.TabIndex = 15;
+            btn_exit.TabIndex = 2;
             btn_exit.Text = "C&lose";
             btn_exit.UseVisualStyleBackColor = false;
             btn_exit.Click += btn_exit_Click;
@@ -136,7 +136,7 @@ namespace DisplayMagician.UIForms
             BackColor = System.Drawing.SystemColors.Control;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            ClientSize = new System.Drawing.Size(631, 349);
+            ClientSize = new System.Drawing.Size(641, 382);
             ControlBox = false;
             Controls.Add(btn_exit);
             Controls.Add(label2);

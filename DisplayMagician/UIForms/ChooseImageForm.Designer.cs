@@ -55,7 +55,7 @@ namespace DisplayMagician.UIForms
             lv_icons.Name = "lv_icons";
             lv_icons.ShowGroups = false;
             lv_icons.Size = new System.Drawing.Size(344, 230);
-            lv_icons.TabIndex = 0;
+            lv_icons.TabIndex = 1;
             lv_icons.UseCompatibleStateImageBehavior = false;
             lv_icons.View = System.Windows.Forms.View.Details;
             lv_icons.SelectedIndexChanged += lv_icons_SelectedIndexChanged;
@@ -93,7 +93,7 @@ namespace DisplayMagician.UIForms
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(137, 16);
-            label1.TabIndex = 2;
+            label1.TabIndex = 0;
             label1.Text = "Choose image to use:";
             label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -108,7 +108,7 @@ namespace DisplayMagician.UIForms
             label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(105, 16);
-            label2.TabIndex = 3;
+            label2.TabIndex = 0;
             label2.Text = "Selected image:";
             label2.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -123,7 +123,7 @@ namespace DisplayMagician.UIForms
             btn_add.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_add.Name = "btn_add";
             btn_add.Size = new System.Drawing.Size(100, 35);
-            btn_add.TabIndex = 39;
+            btn_add.TabIndex = 2;
             btn_add.Text = "Add images";
             btn_add.UseVisualStyleBackColor = true;
             btn_add.Click += btn_add_Click;
@@ -138,7 +138,7 @@ namespace DisplayMagician.UIForms
             btn_select.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_select.Name = "btn_select";
             btn_select.Size = new System.Drawing.Size(208, 35);
-            btn_select.TabIndex = 40;
+            btn_select.TabIndex = 4;
             btn_select.Text = "Save and use selected image";
             btn_select.UseVisualStyleBackColor = true;
             btn_select.Click += btn_select_Click;
@@ -153,7 +153,7 @@ namespace DisplayMagician.UIForms
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
-            btn_back.TabIndex = 41;
+            btn_back.TabIndex = 5;
             btn_back.Text = "Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
@@ -172,7 +172,7 @@ namespace DisplayMagician.UIForms
             btn_remove.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_remove.Name = "btn_remove";
             btn_remove.Size = new System.Drawing.Size(132, 35);
-            btn_remove.TabIndex = 42;
+            btn_remove.TabIndex = 3;
             btn_remove.Text = "Remove image";
             btn_remove.UseVisualStyleBackColor = true;
             btn_remove.Click += btn_remove_Click;

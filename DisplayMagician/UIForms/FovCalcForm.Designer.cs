@@ -85,7 +85,7 @@
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
-            btn_back.TabIndex = 6;
+            btn_back.TabIndex = 15;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
@@ -163,7 +163,7 @@
             llbl_markus_ewert.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             llbl_markus_ewert.Name = "llbl_markus_ewert";
             llbl_markus_ewert.Size = new System.Drawing.Size(358, 15);
-            llbl_markus_ewert.TabIndex = 54;
+            llbl_markus_ewert.TabIndex = 12;
             llbl_markus_ewert.TabStop = true;
             llbl_markus_ewert.Text = "A massive thanks to Markus Ewert for permission to use his code";
             llbl_markus_ewert.LinkClicked += llbl_markus_ewert_LinkClicked;
@@ -177,7 +177,7 @@
             lbl_bezel_thickness_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_bezel_thickness_description.Name = "lbl_bezel_thickness_description";
             lbl_bezel_thickness_description.Size = new System.Drawing.Size(407, 58);
-            lbl_bezel_thickness_description.TabIndex = 51;
+            lbl_bezel_thickness_description.TabIndex = 0;
             lbl_bezel_thickness_description.Text = "Lastly, if you are using triple screens, you need to measure the width of your bezels at the sides of your screens. This is so that we can take account of how they affect the field of view.";
             // 
             // lbl_distinace_to_screen_tip
@@ -189,7 +189,7 @@
             lbl_distinace_to_screen_tip.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_distinace_to_screen_tip.Name = "lbl_distinace_to_screen_tip";
             lbl_distinace_to_screen_tip.Size = new System.Drawing.Size(408, 59);
-            lbl_distinace_to_screen_tip.TabIndex = 50;
+            lbl_distinace_to_screen_tip.TabIndex = 0;
             lbl_distinace_to_screen_tip.Text = "(TIP: Try and place your screens as close to your eyes as your simracing rig will allow. This will let you see more of what is happening around you)";
             // 
             // lbl_screen_type
@@ -202,7 +202,7 @@
             lbl_screen_type.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_screen_type.Name = "lbl_screen_type";
             lbl_screen_type.Size = new System.Drawing.Size(295, 20);
-            lbl_screen_type.TabIndex = 7;
+            lbl_screen_type.TabIndex = 0;
             lbl_screen_type.Text = "1. Single Screen or Triple Screen layout?";
             // 
             // lbl_distance_to_screen
@@ -215,7 +215,7 @@
             lbl_distance_to_screen.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_distance_to_screen.Name = "lbl_distance_to_screen";
             lbl_distance_to_screen.Size = new System.Drawing.Size(314, 20);
-            lbl_distance_to_screen.TabIndex = 12;
+            lbl_distance_to_screen.TabIndex = 0;
             lbl_distance_to_screen.Text = "4. How far are your eyes from the Screens?";
             // 
             // lbl_distance_to_screen_description
@@ -227,7 +227,7 @@
             lbl_distance_to_screen_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_distance_to_screen_description.Name = "lbl_distance_to_screen_description";
             lbl_distance_to_screen_description.Size = new System.Drawing.Size(408, 42);
-            lbl_distance_to_screen_description.TabIndex = 49;
+            lbl_distance_to_screen_description.TabIndex = 0;
             lbl_distance_to_screen_description.Text = "Now, you need to measure how far your eyes are away from the center of the middle screen. I use a tape measure for this.";
             // 
             // lbl_aspect_ratio_description
@@ -239,7 +239,7 @@
             lbl_aspect_ratio_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_aspect_ratio_description.Name = "lbl_aspect_ratio_description";
             lbl_aspect_ratio_description.Size = new System.Drawing.Size(407, 60);
-            lbl_aspect_ratio_description.TabIndex = 48;
+            lbl_aspect_ratio_description.TabIndex = 0;
             lbl_aspect_ratio_description.Text = "Next, select the aspect ratio your of your screens. Check your display manual if you are unsure, or visit https://whatismyresolution.com/";
             // 
             // lbl_screen_size_description
@@ -251,7 +251,7 @@
             lbl_screen_size_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_screen_size_description.Name = "lbl_screen_size_description";
             lbl_screen_size_description.Size = new System.Drawing.Size(407, 67);
-            lbl_screen_size_description.TabIndex = 47;
+            lbl_screen_size_description.TabIndex = 0;
             lbl_screen_size_description.Text = "Next, measure the visible diagonal area of a single screen, ignoring the bezels around the screen. Measure from the top left to the bottom right.";
             // 
             // lbl_screen_type_description
@@ -263,7 +263,7 @@
             lbl_screen_type_description.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_screen_type_description.Name = "lbl_screen_type_description";
             lbl_screen_type_description.Size = new System.Drawing.Size(408, 58);
-            lbl_screen_type_description.TabIndex = 46;
+            lbl_screen_type_description.TabIndex = 0;
             lbl_screen_type_description.Text = "First step is to choose whether you wish to use a Single Screen, or a Triple Screen. Choose Single Screen if the game requires NVIDIA Surround or AMD Eyefinity.";
             // 
             // btn_triple_screens
@@ -278,7 +278,7 @@
             btn_triple_screens.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_triple_screens.Name = "btn_triple_screens";
             btn_triple_screens.Size = new System.Drawing.Size(162, 38);
-            btn_triple_screens.TabIndex = 45;
+            btn_triple_screens.TabIndex = 2;
             btn_triple_screens.Text = "Triple Screens";
             btn_triple_screens.UseVisualStyleBackColor = true;
             btn_triple_screens.Click += btn_triple_screens_Click;
@@ -295,7 +295,7 @@
             btn_single_screen.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_single_screen.Name = "btn_single_screen";
             btn_single_screen.Size = new System.Drawing.Size(162, 38);
-            btn_single_screen.TabIndex = 44;
+            btn_single_screen.TabIndex = 1;
             btn_single_screen.Text = "Single Screen";
             btn_single_screen.UseVisualStyleBackColor = true;
             btn_single_screen.Click += btn_single_screen_Click;
@@ -310,7 +310,7 @@
             lbl_bezel_thickness.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_bezel_thickness.Name = "lbl_bezel_thickness";
             lbl_bezel_thickness.Size = new System.Drawing.Size(150, 20);
-            lbl_bezel_thickness.TabIndex = 15;
+            lbl_bezel_thickness.TabIndex = 0;
             lbl_bezel_thickness.Text = "5. Bezel Thickness?";
             // 
             // cmb_bezel_thickness
@@ -322,7 +322,7 @@
             cmb_bezel_thickness.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_bezel_thickness.Name = "cmb_bezel_thickness";
             cmb_bezel_thickness.Size = new System.Drawing.Size(154, 28);
-            cmb_bezel_thickness.TabIndex = 14;
+            cmb_bezel_thickness.TabIndex = 11;
             cmb_bezel_thickness.SelectedIndexChanged += cmb_bezel_thickness_SelectedIndexChanged;
             // 
             // txt_bezel_thickness
@@ -333,7 +333,7 @@
             txt_bezel_thickness.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_bezel_thickness.Name = "txt_bezel_thickness";
             txt_bezel_thickness.Size = new System.Drawing.Size(90, 26);
-            txt_bezel_thickness.TabIndex = 13;
+            txt_bezel_thickness.TabIndex = 10;
             txt_bezel_thickness.TextChanged += txt_bezel_thickness_TextChanged;
             // 
             // cmb_distance_to_screen
@@ -345,7 +345,7 @@
             cmb_distance_to_screen.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_distance_to_screen.Name = "cmb_distance_to_screen";
             cmb_distance_to_screen.Size = new System.Drawing.Size(154, 28);
-            cmb_distance_to_screen.TabIndex = 11;
+            cmb_distance_to_screen.TabIndex = 9;
             cmb_distance_to_screen.SelectedIndexChanged += cmb_distance_to_screen_SelectedIndexChanged;
             // 
             // txt_distance_to_screen
@@ -356,7 +356,7 @@
             txt_distance_to_screen.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_distance_to_screen.Name = "txt_distance_to_screen";
             txt_distance_to_screen.Size = new System.Drawing.Size(90, 26);
-            txt_distance_to_screen.TabIndex = 10;
+            txt_distance_to_screen.TabIndex = 8;
             txt_distance_to_screen.TextChanged += txt_distance_to_screen_TextChanged;
             // 
             // lbl_aspect_ratio
@@ -369,7 +369,7 @@
             lbl_aspect_ratio.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_aspect_ratio.Name = "lbl_aspect_ratio";
             lbl_aspect_ratio.Size = new System.Drawing.Size(286, 20);
-            lbl_aspect_ratio.TabIndex = 9;
+            lbl_aspect_ratio.TabIndex = 0;
             lbl_aspect_ratio.Text = "3. What Aspect Ratio are the Screens?";
             // 
             // lbl_screen_size
@@ -382,7 +382,7 @@
             lbl_screen_size.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_screen_size.Name = "lbl_screen_size";
             lbl_screen_size.Size = new System.Drawing.Size(266, 20);
-            lbl_screen_size.TabIndex = 8;
+            lbl_screen_size.TabIndex = 0;
             lbl_screen_size.Text = "2. What sized Screens do you have?";
             // 
             // txt_aspect_ratio_y
@@ -415,7 +415,7 @@
             txt_screen_size.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             txt_screen_size.Name = "txt_screen_size";
             txt_screen_size.Size = new System.Drawing.Size(90, 26);
-            txt_screen_size.TabIndex = 4;
+            txt_screen_size.TabIndex = 3;
             txt_screen_size.TextChanged += txt_screen_size_TextChanged;
             // 
             // cmb_screen_size_units
@@ -427,7 +427,7 @@
             cmb_screen_size_units.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_screen_size_units.Name = "cmb_screen_size_units";
             cmb_screen_size_units.Size = new System.Drawing.Size(154, 28);
-            cmb_screen_size_units.TabIndex = 3;
+            cmb_screen_size_units.TabIndex = 4;
             cmb_screen_size_units.SelectedIndexChanged += cmb_screen_size_units_SelectedIndexChanged;
             // 
             // cmb_aspect_ratio
@@ -439,7 +439,7 @@
             cmb_aspect_ratio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_aspect_ratio.Name = "cmb_aspect_ratio";
             cmb_aspect_ratio.Size = new System.Drawing.Size(139, 28);
-            cmb_aspect_ratio.TabIndex = 2;
+            cmb_aspect_ratio.TabIndex = 7;
             cmb_aspect_ratio.SelectedIndexChanged += cmb_aspect_ratio_SelectedIndexChanged;
             // 
             // lbl_aspect_ratio_arrow
@@ -452,7 +452,7 @@
             lbl_aspect_ratio_arrow.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_aspect_ratio_arrow.Name = "lbl_aspect_ratio_arrow";
             lbl_aspect_ratio_arrow.Size = new System.Drawing.Size(23, 20);
-            lbl_aspect_ratio_arrow.TabIndex = 52;
+            lbl_aspect_ratio_arrow.TabIndex = 0;
             lbl_aspect_ratio_arrow.Text = "<-";
             // 
             // lbl_aspect_ratio_separator
@@ -465,7 +465,7 @@
             lbl_aspect_ratio_separator.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_aspect_ratio_separator.Name = "lbl_aspect_ratio_separator";
             lbl_aspect_ratio_separator.Size = new System.Drawing.Size(13, 20);
-            lbl_aspect_ratio_separator.TabIndex = 53;
+            lbl_aspect_ratio_separator.TabIndex = 0;
             lbl_aspect_ratio_separator.Text = ":";
             // 
             // lbl_vresult
@@ -477,7 +477,7 @@
             lbl_vresult.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_vresult.Name = "lbl_vresult";
             lbl_vresult.Size = new System.Drawing.Size(200, 40);
-            lbl_vresult.TabIndex = 27;
+            lbl_vresult.TabIndex = 0;
             lbl_vresult.Text = "33.9";
             lbl_vresult.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -490,7 +490,7 @@
             lbl_vtitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_vtitle.Name = "lbl_vtitle";
             lbl_vtitle.Size = new System.Drawing.Size(200, 27);
-            lbl_vtitle.TabIndex = 26;
+            lbl_vtitle.TabIndex = 0;
             lbl_vtitle.Text = "Vertical FOV Degrees";
             lbl_vtitle.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -503,7 +503,7 @@
             lbl_hresult.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hresult.Name = "lbl_hresult";
             lbl_hresult.Size = new System.Drawing.Size(200, 40);
-            lbl_hresult.TabIndex = 25;
+            lbl_hresult.TabIndex = 0;
             lbl_hresult.Text = "160.5";
             lbl_hresult.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -516,7 +516,7 @@
             lbl_htitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_htitle.Name = "lbl_htitle";
             lbl_htitle.Size = new System.Drawing.Size(200, 27);
-            lbl_htitle.TabIndex = 24;
+            lbl_htitle.TabIndex = 0;
             lbl_htitle.Text = "Horizontal FOV Degrees";
             lbl_htitle.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -533,7 +533,7 @@
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(107, 38);
-            btn_save.TabIndex = 23;
+            btn_save.TabIndex = 14;
             btn_save.Text = "&Save";
             btn_save.UseVisualStyleBackColor = false;
             btn_save.Click += btn_save_Click;
@@ -549,7 +549,7 @@
             lbl_results.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_results.Name = "lbl_results";
             lbl_results.Size = new System.Drawing.Size(226, 29);
-            lbl_results.TabIndex = 21;
+            lbl_results.TabIndex = 0;
             lbl_results.Text = "Game FOV Settings";
             lbl_results.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -559,8 +559,8 @@
             rtb_results.Location = new System.Drawing.Point(14, 60);
             rtb_results.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rtb_results.Name = "rtb_results";
-            rtb_results.Size = new System.Drawing.Size(653, 535);
-            rtb_results.TabIndex = 0;
+            rtb_results.Size = new System.Drawing.Size(652, 535);
+            rtb_results.TabIndex = 13;
             rtb_results.Text = "";
             // 
             // lbl_title
@@ -574,7 +574,7 @@
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(338, 29);
-            lbl_title.TabIndex = 20;
+            lbl_title.TabIndex = 0;
             lbl_title.Text = "Field of View (FOV) Calculator";
             lbl_title.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -587,7 +587,7 @@
             lbl_about_fov.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_about_fov.Name = "lbl_about_fov";
             lbl_about_fov.Size = new System.Drawing.Size(1392, 59);
-            lbl_about_fov.TabIndex = 21;
+            lbl_about_fov.TabIndex = 0;
             lbl_about_fov.Text = resources.GetString("lbl_about_fov.Text");
             lbl_about_fov.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 

@@ -54,7 +54,7 @@ namespace DisplayMagician.UIForms
             btn_select_app.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_select_app.Name = "btn_select_app";
             btn_select_app.Size = new System.Drawing.Size(411, 37);
-            btn_select_app.TabIndex = 40;
+            btn_select_app.TabIndex = 2;
             btn_select_app.Text = "Select Application from List";
             btn_select_app.UseVisualStyleBackColor = true;
             btn_select_app.Click += btn_select_app_Click;
@@ -73,7 +73,7 @@ namespace DisplayMagician.UIForms
             lbl_installed_apps.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_installed_apps.Name = "lbl_installed_apps";
             lbl_installed_apps.Size = new System.Drawing.Size(406, 20);
-            lbl_installed_apps.TabIndex = 2;
+            lbl_installed_apps.TabIndex = 0;
             lbl_installed_apps.Text = "Select the Application you wish to use from the list below";
             lbl_installed_apps.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -87,7 +87,7 @@ namespace DisplayMagician.UIForms
             lbl_title.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_title.Name = "lbl_title";
             lbl_title.Size = new System.Drawing.Size(375, 33);
-            lbl_title.TabIndex = 44;
+            lbl_title.TabIndex = 0;
             lbl_title.Text = "Select an Executable to use";
             // 
             // lbl_select_exe
@@ -101,7 +101,7 @@ namespace DisplayMagician.UIForms
             lbl_select_exe.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_select_exe.Name = "lbl_select_exe";
             lbl_select_exe.Size = new System.Drawing.Size(438, 20);
-            lbl_select_exe.TabIndex = 45;
+            lbl_select_exe.TabIndex = 0;
             lbl_select_exe.Text = "Or, choose an executable from somewhere on your computer";
             lbl_select_exe.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
@@ -114,7 +114,7 @@ namespace DisplayMagician.UIForms
             gb_select_exe.Name = "gb_select_exe";
             gb_select_exe.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_select_exe.Size = new System.Drawing.Size(598, 272);
-            gb_select_exe.TabIndex = 47;
+            gb_select_exe.TabIndex = 0;
             gb_select_exe.TabStop = false;
             // 
             // btn_select_exe
@@ -127,7 +127,7 @@ namespace DisplayMagician.UIForms
             btn_select_exe.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_select_exe.Name = "btn_select_exe";
             btn_select_exe.Size = new System.Drawing.Size(440, 36);
-            btn_select_exe.TabIndex = 41;
+            btn_select_exe.TabIndex = 3;
             btn_select_exe.Text = "Choose Exe from your Computer";
             btn_select_exe.UseVisualStyleBackColor = true;
             btn_select_exe.Click += btn_select_exe_Click;
@@ -156,7 +156,7 @@ namespace DisplayMagician.UIForms
             ilv_installed_apps.PersistentCacheDirectory = "";
             ilv_installed_apps.PersistentCacheSize = 100L;
             ilv_installed_apps.Size = new System.Drawing.Size(740, 266);
-            ilv_installed_apps.TabIndex = 49;
+            ilv_installed_apps.TabIndex = 1;
             ilv_installed_apps.UseWIC = true;
             ilv_installed_apps.ItemClick += ilv_installed_apps_ItemClick;
             ilv_installed_apps.VisibleChanged += ilv_installed_apps_VisibleChanged;
@@ -173,7 +173,7 @@ namespace DisplayMagician.UIForms
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
-            btn_back.TabIndex = 50;
+            btn_back.TabIndex = 4;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             // 

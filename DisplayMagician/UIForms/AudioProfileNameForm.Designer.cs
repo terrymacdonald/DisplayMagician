@@ -45,7 +45,7 @@ namespace DisplayMagician.UIForms
             lbl_validation.Margin = new System.Windows.Forms.Padding(41, 0, 41, 0);
             lbl_validation.Name = "lbl_validation";
             lbl_validation.Size = new System.Drawing.Size(36, 16);
-            lbl_validation.TabIndex = 4;
+            lbl_validation.TabIndex = 0;
             lbl_validation.Text = "Error";
             lbl_validation.Visible = false;
             // 

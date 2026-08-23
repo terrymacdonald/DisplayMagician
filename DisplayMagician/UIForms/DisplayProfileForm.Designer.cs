@@ -86,7 +86,7 @@ namespace DisplayMagician.UIForms
             btn_apply.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_apply.Name = "btn_apply";
             btn_apply.Size = new System.Drawing.Size(128, 40);
-            btn_apply.TabIndex = 4;
+            btn_apply.TabIndex = 9;
             btn_apply.Text = "&Apply";
             btn_apply.UseVisualStyleBackColor = false;
             btn_apply.Click += Apply_Click;
@@ -104,7 +104,7 @@ namespace DisplayMagician.UIForms
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(82, 29);
-            btn_back.TabIndex = 8;
+            btn_back.TabIndex = 13;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = false;
             btn_back.Click += Exit_Click;
@@ -122,7 +122,7 @@ namespace DisplayMagician.UIForms
             btn_delete.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_delete.Name = "btn_delete";
             btn_delete.Size = new System.Drawing.Size(130, 40);
-            btn_delete.TabIndex = 6;
+            btn_delete.TabIndex = 11;
             btn_delete.Text = "&Delete";
             btn_delete.UseVisualStyleBackColor = false;
             btn_delete.Click += Delete_Click;
@@ -183,7 +183,7 @@ namespace DisplayMagician.UIForms
             btn_view_current.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_view_current.Name = "btn_view_current";
             btn_view_current.Size = new System.Drawing.Size(290, 35);
-            btn_view_current.TabIndex = 9;
+            btn_view_current.TabIndex = 1;
             btn_view_current.Text = "View &Current Display";
             btn_view_current.UseVisualStyleBackColor = false;
             btn_view_current.Click += btn_view_current_Click;
@@ -201,7 +201,7 @@ namespace DisplayMagician.UIForms
             btn_save_or_rename.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save_or_rename.Name = "btn_save_or_rename";
             btn_save_or_rename.Size = new System.Drawing.Size(164, 36);
-            btn_save_or_rename.TabIndex = 1;
+            btn_save_or_rename.TabIndex = 4;
             btn_save_or_rename.Text = "&Save";
             btn_save_or_rename.UseVisualStyleBackColor = false;
             btn_save_or_rename.Click += btn_save_as_Click;
@@ -229,7 +229,7 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_profile_shown.Name = "lbl_profile_shown";
             lbl_profile_shown.Size = new System.Drawing.Size(205, 29);
-            lbl_profile_shown.TabIndex = 19;
+            lbl_profile_shown.TabIndex = 0;
             lbl_profile_shown.Text = "My Display Profile";
             // 
             // txt_profile_save_name
@@ -243,7 +243,7 @@ namespace DisplayMagician.UIForms
             txt_profile_save_name.MaxLength = 200;
             txt_profile_save_name.Name = "txt_profile_save_name";
             txt_profile_save_name.Size = new System.Drawing.Size(416, 35);
-            txt_profile_save_name.TabIndex = 20;
+            txt_profile_save_name.TabIndex = 5;
             txt_profile_save_name.KeyDown += txt_profile_save_name_KeyDown;
             // 
             // ilv_saved_profiles
@@ -263,7 +263,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.PersistentCacheDirectory = "";
             ilv_saved_profiles.PersistentCacheSize = 100L;
             ilv_saved_profiles.Size = new System.Drawing.Size(1008, 165);
-            ilv_saved_profiles.TabIndex = 21;
+            ilv_saved_profiles.TabIndex = 7;
             ilv_saved_profiles.UseWIC = true;
             ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
             ilv_saved_profiles.ItemClick += ilv_saved_profiles_ItemClick;
@@ -280,7 +280,7 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
             lbl_profile_shown_subtitle.Size = new System.Drawing.Size(132, 20);
-            lbl_profile_shown_subtitle.TabIndex = 22;
+            lbl_profile_shown_subtitle.TabIndex = 0;
             lbl_profile_shown_subtitle.Text = "My Display Profile";
             // 
             // lbl_save_profile
@@ -296,7 +296,7 @@ namespace DisplayMagician.UIForms
             lbl_save_profile.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_save_profile.Name = "lbl_save_profile";
             lbl_save_profile.Size = new System.Drawing.Size(1004, 66);
-            lbl_save_profile.TabIndex = 33;
+            lbl_save_profile.TabIndex = 0;
             lbl_save_profile.Text = resources.GetString("lbl_save_profile.Text");
             lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -313,7 +313,7 @@ namespace DisplayMagician.UIForms
             btn_save.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_save.Name = "btn_save";
             btn_save.Size = new System.Drawing.Size(228, 40);
-            btn_save.TabIndex = 7;
+            btn_save.TabIndex = 12;
             btn_save.Text = "Save to Desk&top";
             btn_save.UseVisualStyleBackColor = false;
             btn_save.Click += Save_Click;
@@ -338,7 +338,7 @@ namespace DisplayMagician.UIForms
             btn_hotkey.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_hotkey.Name = "btn_hotkey";
             btn_hotkey.Size = new System.Drawing.Size(130, 40);
-            btn_hotkey.TabIndex = 3;
+            btn_hotkey.TabIndex = 8;
             btn_hotkey.Text = "&Hotkey";
             btn_hotkey.UseVisualStyleBackColor = false;
             btn_hotkey.Click += btn_hotkey_Click;
@@ -354,7 +354,7 @@ namespace DisplayMagician.UIForms
             lbl_hotkey_assigned.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
             lbl_hotkey_assigned.Size = new System.Drawing.Size(113, 20);
-            lbl_hotkey_assigned.TabIndex = 36;
+            lbl_hotkey_assigned.TabIndex = 0;
             lbl_hotkey_assigned.Text = "Hotkeys: None";
             lbl_hotkey_assigned.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             lbl_hotkey_assigned.Visible = false;
@@ -391,7 +391,7 @@ namespace DisplayMagician.UIForms
             btn_donate.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_donate.Name = "btn_donate";
             btn_donate.Size = new System.Drawing.Size(78, 29);
-            btn_donate.TabIndex = 11;
+            btn_donate.TabIndex = 2;
             btn_donate.Text = "D&onate";
             btn_donate.UseVisualStyleBackColor = false;
             btn_donate.Click += btn_donate_Click;
@@ -409,7 +409,7 @@ namespace DisplayMagician.UIForms
             btn_help.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_help.Name = "btn_help";
             btn_help.Size = new System.Drawing.Size(78, 29);
-            btn_help.TabIndex = 10;
+            btn_help.TabIndex = 3;
             btn_help.Text = "Hel&p";
             btn_help.UseVisualStyleBackColor = false;
             btn_help.Click += btn_help_Click;
@@ -425,7 +425,7 @@ namespace DisplayMagician.UIForms
             dv_profile.Margin = new System.Windows.Forms.Padding(247, 115, 247, 115);
             dv_profile.Name = "dv_profile";
             dv_profile.Size = new System.Drawing.Size(1008, 467);
-            dv_profile.TabIndex = 34;
+            dv_profile.TabIndex = 0;
             // 
             // btn_profile_settings
             // 
@@ -440,7 +440,7 @@ namespace DisplayMagician.UIForms
             btn_profile_settings.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_profile_settings.Name = "btn_profile_settings";
             btn_profile_settings.Size = new System.Drawing.Size(184, 36);
-            btn_profile_settings.TabIndex = 2;
+            btn_profile_settings.TabIndex = 6;
             btn_profile_settings.Text = "&Profile Settings";
             btn_profile_settings.UseVisualStyleBackColor = false;
             btn_profile_settings.Click += btn_profile_settings_Click;
@@ -462,7 +462,7 @@ namespace DisplayMagician.UIForms
             p_lower.MaximumSize = new System.Drawing.Size(0, 118);
             p_lower.Name = "p_lower";
             p_lower.Size = new System.Drawing.Size(1008, 102);
-            p_lower.TabIndex = 38;
+            p_lower.TabIndex = 0;
             // 
             // btn_update
             // 
@@ -477,7 +477,7 @@ namespace DisplayMagician.UIForms
             btn_update.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_update.Name = "btn_update";
             btn_update.Size = new System.Drawing.Size(128, 40);
-            btn_update.TabIndex = 5;
+            btn_update.TabIndex = 10;
             btn_update.Text = "&Update";
             btn_update.UseVisualStyleBackColor = false;
             btn_update.Click += btn_update_Click;
@@ -505,7 +505,7 @@ namespace DisplayMagician.UIForms
             p_middle.Location = new System.Drawing.Point(0, 581);
             p_middle.Name = "p_middle";
             p_middle.Size = new System.Drawing.Size(1008, 94);
-            p_middle.TabIndex = 35;
+            p_middle.TabIndex = 0;
             // 
             // label1
             // 
@@ -518,7 +518,7 @@ namespace DisplayMagician.UIForms
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(450, 20);
-            label1.TabIndex = 24;
+            label1.TabIndex = 0;
             label1.Text = "Saved Profiles (These can be used to create shortcuts)";
             label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
