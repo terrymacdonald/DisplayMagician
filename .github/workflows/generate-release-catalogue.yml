@@ -1,0 +1,77 @@
+name: Generate DisplayMagician release catalogue
+
+on:
+  release:
+    types: [published, edited]
+  workflow_dispatch:
+
+# The workflow creates only a generated-catalogue PR into main. It does not
+# require Cloudflare credentials and never pushes directly to protected main.
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: displaymagician-release-catalogue
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      # Release and workflow_dispatch triggers require this workflow file to
+      # live on the repository default branch (develop). The catalogue itself
+      # belongs on main, the only permitted release branch.
+      - name: Check out the default branch workflow source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Verify the published release is from main
+        if: github.event_name == 'release'
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git fetch origin main --tags --force
+          git merge-base --is-ancestor "refs/tags/$RELEASE_TAG" origin/main
+
+      - name: Generate catalogue and installer checksums
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OUTPUT_PATH: ${{ runner.temp }}/release-catalogue.json
+        run: node .github/scripts/generate-release-catalogue.mjs
+
+      - name: Check out main for the generated catalogue PR
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Create or update the catalogue pull request branch
+        run: |
+          mkdir -p .displaymagician
+          cp "$RUNNER_TEMP/release-catalogue.json" .displaymagician/release-catalogue.json
+          if git diff --quiet -- .displaymagician/release-catalogue.json; then
+            echo "Catalogue is already current on main."
+            exit 0
+          fi
+          git switch -C automation/release-catalogue
+          git config user.name "displaymagician-release-catalogue[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .displaymagician/release-catalogue.json
+          git commit -m "chore: refresh release catalogue"
+          git push --force origin HEAD:automation/release-catalogue
+
+      - name: Create or update the catalogue pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet main -- .displaymagician/release-catalogue.json; then
+            exit 0
+          fi
+          pr_number="$(gh pr list --base main --head automation/release-catalogue --state open --json number --jq '.[0].number')"
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" --title "chore: refresh release catalogue" --body "Generated after a GitHub Release was published or edited. Review the generated catalogue, then merge this PR."
+          else
+            gh pr create --base main --head automation/release-catalogue --title "chore: refresh release catalogue" --body "Generated after a GitHub Release was published or edited. Review the generated catalogue, then merge this PR."
+          fi
