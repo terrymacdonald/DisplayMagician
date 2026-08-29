@@ -437,7 +437,7 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            if (MessageBox.Show($"Are you sure you want to delete the '{_selectedShortcut.Name}' Shortcut?", $"Delete '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+            if (MessageBox.Show($"Are you sure you want to delete the '{_selectedShortcut.Name}' Shortcut? This cannot be undone.", $"Delete '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
                 return;
 
             // remove the profile from the imagelistview

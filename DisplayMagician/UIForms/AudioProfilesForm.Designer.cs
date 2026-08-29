@@ -118,7 +118,7 @@ namespace DisplayMagician.UIForms
             btn_apply_audio_profile.Name = "btn_apply_audio_profile";
             btn_apply_audio_profile.Size = new System.Drawing.Size(386, 46);
             btn_apply_audio_profile.TabIndex = 4;
-            btn_apply_audio_profile.Text = "&Apply Selected Profile";
+            btn_apply_audio_profile.Text = "&Apply Selected Profile Now";
             btn_apply_audio_profile.UseVisualStyleBackColor = true;
             btn_apply_audio_profile.Click += btn_apply_audio_profile_Click;
             // 

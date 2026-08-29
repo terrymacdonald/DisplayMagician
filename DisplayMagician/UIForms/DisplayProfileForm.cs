@@ -150,7 +150,7 @@ namespace DisplayMagician.UIForms
             if (_selectedProfile == null)
                 return;
 
-            if (MessageBox.Show($"Are you sure you want to delete the '{_selectedProfile.Name}' Display Profile?", $"Delete '{_selectedProfile.Name}' Display Profile?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+            if (MessageBox.Show($"Are you sure you want to delete the '{_selectedProfile.Name}' Display Profile? This cannot be undone.", $"Delete '{_selectedProfile.Name}' Display Profile?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
                 return;
 
             // remove the profile from the imagelistview

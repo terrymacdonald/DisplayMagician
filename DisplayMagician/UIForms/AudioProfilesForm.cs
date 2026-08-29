@@ -94,6 +94,15 @@ namespace DisplayMagician.UIForms
             if (selected == null)
                 return;
 
+            if (MessageBox.Show(this,
+                $"Do you really want to overwrite the audio settings in the '{selected.Name}' Audio Profile with the audio settings currently in use? This cannot be undone.",
+                "Update Audio Profile settings?",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning) != DialogResult.Yes)
+            {
+                return;
+            }
+
             if (selected.CreateProfileFromCurrentAudioSettings())
             {
                 AudioProfileRepository.SaveAudioProfiles();
@@ -139,7 +148,7 @@ namespace DisplayMagician.UIForms
                 return;
 
             DialogResult result = MessageBox.Show(this,
-                $"Delete the Audio Profile '{selected.Name}'?",
+                $"Delete the Audio Profile '{selected.Name}'? This cannot be undone.",
                 "Delete Audio Profile",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
