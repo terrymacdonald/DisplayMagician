@@ -94,16 +94,15 @@ namespace DisplayMagician {
         private static string _requestedMessageUpdateChannel;
         private static bool _startupBackgroundTasksQueued = false;
         private static SynchronizationContext _mainSynchronizationContext;
-        private static readonly SemaphoreSlim _messageSyncSemaphore = new SemaphoreSlim(1, 1);
         private static MessageSyncService _messageSyncService;
-        private static System.Timers.Timer _messageSyncTimer;
+        private static ClientSyncService _clientSyncService;
+        private static System.Timers.Timer _clientSyncTimer;
         private static System.Timers.Timer _startupMessagePollTimer;
-        private static readonly TimeSpan _messageSyncPollInterval = TimeSpan.FromHours(1);
-        internal const string MessageManifestUrl = "http://www.displaymagician.com:8787/messages/manifest.json";
+        internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
+        private const string UpdateUrl = ClientSyncUrl;
+        private const string TestUpdateUrl = "https://sync.displaymagician.com/sync/test-client-sync.json";
 
-        private const string UpdateUrl = "http://www.displaymagician.com:8787/update/update.json";
-        private const string TestUpdateUrl = "http://www.displaymagician.com:8787/update/test_update.json";
         private static volatile bool _useTestUpdateFeed;
 
         public enum ERRORLEVEL: int
@@ -344,14 +343,18 @@ namespace DisplayMagician {
                 }
             }
 
-            //UpdateStartupModeFromSettings(legacyLastVersionString);
-
-            //logger.Trace($"Program/Main: Ensuring Install Identity by setting install id and install date");
-            //if (AppProgramSettings.EnsureInstallIdentity(AppNewInstall))
-            //{
-            //    logger.Trace($"Program/Main: Saving Program Settings to write new install identity.");
-            //    AppProgramSettings.SaveSettings();
-            //}
+            bool settingsChanged = AppProgramSettings.EnsureInstallIdentity(false);
+            if (!AppProgramSettings.NextClientSyncUtc.HasValue)
+            {
+                AppProgramSettings.NextClientSyncUtc = DateTime.UtcNow.AddMinutes(Random.Shared.Next(0, 12 * 60 + 1));
+                settingsChanged = true;
+            }
+            AppProgramSettings.TotalAnonymousMetricLaunches++;
+            settingsChanged = true;
+            if (settingsChanged)
+            {
+                AppProgramSettings.SaveSettings();
+            }
 
             // Load the Donation Settings and update the number of times run and number of starts since last donation form and button animation, and save the settings back to the file
             logger.Trace($"Program/Main: Loading Donation Settings.");
@@ -870,9 +873,9 @@ namespace DisplayMagician {
             ToastNotificationManagerCompat.History.Clear();
 
             logger.Trace($"Program/Main: Stopping message sync timer.");
-            _messageSyncTimer?.Stop();
-            _messageSyncTimer?.Dispose();
-            _messageSyncTimer = null;
+            _clientSyncTimer?.Stop();
+            _clientSyncTimer?.Dispose();
+            _clientSyncTimer = null;
 
             logger.Trace($"Program/Main: Disposing the DirectInput manager.");
             AppDirectInputManager?.Dispose();
@@ -1324,57 +1327,46 @@ namespace DisplayMagician {
 
             Task.Run(async () =>
             {
-                // Start the background message poller
                 try
                 {
-                    await RunMessageSyncAndNotifyUserAsync(force: true);
-                    EnsureMessageSyncTimer();
+                    await RunClientSyncAndNotifyUserAsync(manual: false);
+                    EnsureClientSyncTimer();
                     EnsureStartupMessagePollTimer();
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic message sync failed (force=true, manifestUrl={MessageManifestUrl}, appVersion={AppVersion}, messagesPath={AppMessagesPath}). DisplayMagician will continue running.");
-                }
-
-                // Start the background update poller
-                try
-                {
-                    CheckForUpdates(true);
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"Program/QueueStartupBackgroundTasks: Automatic update check failed. DisplayMagician will continue running.");
+                    logger.Warn(ex, "Program/QueueStartupBackgroundTasks: Scheduled client sync failed. DisplayMagician will continue running.");
                 }
             });
         }
 
-        private static void EnsureMessageSyncTimer()
+        private static void EnsureClientSyncTimer()
         {
-            if (_messageSyncTimer != null)
+            if (_clientSyncTimer != null)
             {
                 return;
             }
 
-            _messageSyncTimer = new System.Timers.Timer
+            _clientSyncTimer = new System.Timers.Timer
             {
-                Interval = _messageSyncPollInterval.TotalMilliseconds,
+                Interval = TimeSpan.FromHours(1).TotalMilliseconds,
                 AutoReset = true,
                 Enabled = true,
             };
 
-            _messageSyncTimer.Elapsed += async (_, __) =>
+            _clientSyncTimer.Elapsed += async (_, __) =>
             {
                 try
                 {
-                    await RunMessageSyncAndNotifyUserAsync(force: false);
+                    await RunClientSyncAndNotifyUserAsync(manual: false);
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"Program/EnsureMessageSyncTimer: Periodic message sync failed (force=false, intervalHours={_messageSyncPollInterval.TotalHours}, manifestUrl={MessageManifestUrl}, appVersion={AppVersion}).");
+                    logger.Warn(ex, "Program/EnsureClientSyncTimer: Scheduled client sync failed.");
                 }
             };
 
-            _messageSyncTimer.Start();
+            _clientSyncTimer.Start();
         }
 
         private static void EnsureStartupMessagePollTimer()
@@ -1454,63 +1446,68 @@ namespace DisplayMagician {
             _startupMessagePollTimer.Start();
         }
 
-        private static async Task RunMessageSyncAndNotifyUserAsync(bool force)
+        private static async Task RunClientSyncAndNotifyUserAsync(bool manual)
+        {
+            ClientSyncResult syncResult = await EnsureClientSyncService().RunAsync(manual, AppVersion, CancellationToken.None).ConfigureAwait(false);
+            if (!syncResult.Success || !syncResult.WasDue)
+            {
+                return;
+            }
+
+            if (syncResult.MessageResult?.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
+            {
+                ShowNewMessagesToast(syncResult.MessageResult.NewMessagesCount);
+            }
+            RefreshMessageIndicators();
+            if (syncResult.SelectedUpdate != null)
+            {
+                ShowClientSyncUpdate(syncResult.SelectedUpdate, manual);
+            }
+        }
+
+        private static ClientSyncService EnsureClientSyncService()
         {
             if (_messageSyncService == null)
             {
-                _messageSyncService = new MessageSyncService(AppHttpClient, logger, MessageManifestUrl, AppMessagesPath);
+                _messageSyncService = new MessageSyncService(AppHttpClient, logger, ClientSyncUrl, AppMessagesPath);
                 _messageSyncService.EnsureStorage();
             }
 
-            if (!force && !_messageSyncService.IsDailyCheckDue())
+            if (_clientSyncService == null)
             {
-                logger.Trace($"Program/RunMessageSyncAndNotifyUserAsync: Skipping sync because daily check is not due yet (force={force}).");
+                _clientSyncService = new ClientSyncService(AppHttpClient, logger, _messageSyncService, AppProgramSettings, _useTestUpdateFeed);
+            }
+            return _clientSyncService;
+        }
+
+        public static async Task CheckForNewMessagesAsync(Form owner)
+        {
+            ClientSyncResult result = await EnsureClientSyncService().RunAsync(true, AppVersion, CancellationToken.None);
+            if (!result.Success)
+            {
+                MessageBox.Show(owner, "DisplayMagician could not check for new messages. Please try again later.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-
-            if (!await _messageSyncSemaphore.WaitAsync(0).ConfigureAwait(false))
-            {
-                logger.Warn($"Program/RunMessageSyncAndNotifyUserAsync: Skipping sync because another message sync is already in progress (force={force}).");
-                return;
-            }
-
-            try
-            {
-                MessageSyncResult syncResult = await _messageSyncService.SyncMessagesAsync(AppVersion, CancellationToken.None).ConfigureAwait(false);
-                if (!syncResult.Success)
-                {
-                    logger.Warn($"Program/RunMessageSyncAndNotifyUserAsync: Sync completed with failure (force={force}, appVersion={AppVersion}, unreadCount={syncResult.UnreadCount}).");
-                    return;
-                }
-
-                logger.Info($"Program/RunMessageSyncAndNotifyUserAsync: Sync completed successfully (force={force}, newMessages={syncResult.NewMessagesCount}, unreadCount={syncResult.UnreadCount}).");
-
-                if (syncResult.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
-                {
-                    ShowNewMessagesToast(syncResult.NewMessagesCount);
-                }
-                else if (syncResult.NewMessagesCount > 0)
-                {
-                    logger.Info($"Program/RunMessageSyncAndNotifyUserAsync: New messages were synced but message toasts are disabled in settings.");
-                }
-
-                RefreshMessageIndicators();
-            }
-            finally
-            {
-                _messageSyncSemaphore.Release();
-            }
+            RefreshMessageIndicators();
+            MessageBox.Show(owner, "DisplayMagician has checked for new messages.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private static MessageSyncService EnsureMessageSyncService()
         {
             if (_messageSyncService == null)
             {
-                _messageSyncService = new MessageSyncService(AppHttpClient, logger, MessageManifestUrl, AppMessagesPath);
+                _messageSyncService = new MessageSyncService(AppHttpClient, logger, ClientSyncUrl, AppMessagesPath);
                 _messageSyncService.EnsureStorage();
             }
-
             return _messageSyncService;
+        }
+
+        /*
+         * The legacy message polling method was replaced by RunClientSyncAndNotifyUserAsync.
+         */
+        private static async Task RunMessageSyncAndNotifyUserAsync(bool force)
+        {
+            await RunClientSyncAndNotifyUserAsync(force).ConfigureAwait(false);
         }
 
         public static List<LocalMessage> GetStoredMessages()
@@ -1838,6 +1835,9 @@ namespace DisplayMagician {
 
         public static void CheckForUpdates(bool automatic = true, string requestedMessageUpdateVersion = null, string requestedMessageUpdateChannel = null)
         {
+            Task.Run(() => RunClientSyncAndNotifyUserAsync(manual: !automatic));
+            return;
+
             _lastUpdateCheckWasAutomatic = automatic;
             _requestedMessageUpdateVersion = requestedMessageUpdateVersion;
             _requestedMessageUpdateChannel = requestedMessageUpdateChannel;
@@ -1983,6 +1983,43 @@ namespace DisplayMagician {
             {
                 logger.Error(ex, $"Program/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
             }
+        }
+
+        private static void ShowClientSyncUpdate(ClientSyncUpdate update, bool automatic)
+        {
+            if (!AppProgramSettings.UpgradeEnabled || !Version.TryParse(update.Version, out Version availableVersion) || !Version.TryParse(AppVersion, out Version installedVersion))
+            {
+                return;
+            }
+
+            _lastUpdateCheckWasAutomatic = automatic;
+            RegisterAutoUpdaterEvents();
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
+            AutoUpdater.RemindLaterTimeSpan = RemindLaterFormat.Days;
+            AutoUpdater.RemindLaterAt = 7;
+            AutoUpdater.InstalledVersion = installedVersion;
+            AppUpgradeExtraDetails = new UpgradeExtraDetails();
+
+            AutoUpdaterOnCheckForUpdateEvent(new UpdateInfoEventArgs
+            {
+                CurrentVersion = update.Version,
+                InstalledVersion = installedVersion,
+                DownloadURL = update.Url,
+                ChangelogURL = update.Changelog,
+                IsUpdateAvailable = availableVersion > installedVersion,
+                Mandatory = new Mandatory
+                {
+                    Value = update.Mandatory.Value,
+                    UpdateMode = (Mode)update.Mandatory.Mode,
+                    MinimumVersion = update.Mandatory.MinVersion
+                },
+                CheckSum = new CheckSum
+                {
+                    Value = update.Checksum.Value,
+                    HashingAlgorithm = update.Checksum.HashingAlgorithm
+                }
+            });
         }
 
         private static void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)

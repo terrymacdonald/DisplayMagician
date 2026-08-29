@@ -347,7 +347,12 @@ namespace DisplayMagician.UIForms
                         ? match.Value
                         : $"https://{MessagesVirtualHost}/media/{Path.GetFileName(localMediaPath)}";
                 }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                Uri manifestUri = new Uri(Program.MessageManifestUrl, UriKind.Absolute);
+                rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"/sync/media/(?<hash>[a-fA-F0-9]{64})\.(?<extension>png|jpe?g|gif|webp)", match =>
+                {
+                    string localMediaPath = Path.Combine(mediaFolderPath, match.Groups["hash"].Value.ToLowerInvariant() + "." + (match.Groups["extension"].Value.Equals("jpeg", StringComparison.OrdinalIgnoreCase) ? "jpg" : match.Groups["extension"].Value));
+                    return File.Exists(localMediaPath) ? $"https://{MessagesVirtualHost}/media/{Path.GetFileName(localMediaPath)}" : match.Value;
+                }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                Uri manifestUri = new Uri(Program.ClientSyncUrl, UriKind.Absolute);
                 string messageBaseUrl = System.Net.WebUtility.HtmlEncode(manifestUri.GetLeftPart(UriPartial.Authority) + "/");
                 if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
                 {
@@ -397,6 +402,20 @@ namespace DisplayMagician.UIForms
         private void btn_back_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private async void btn_check_for_new_messages_Click(object sender, EventArgs e)
+        {
+            btn_check_for_new_messages.Enabled = false;
+            try
+            {
+                await Program.CheckForNewMessagesAsync(this);
+                LoadMessagesIntoList();
+            }
+            finally
+            {
+                btn_check_for_new_messages.Enabled = true;
+            }
         }
     }
 }

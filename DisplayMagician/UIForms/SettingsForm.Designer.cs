@@ -38,6 +38,8 @@ namespace DisplayMagician.UIForms
             label6 = new System.Windows.Forms.Label();
             cmb_notify_icon_double_click = new System.Windows.Forms.ComboBox();
             cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
+            cb_share_anonymous_usage_metrics = new System.Windows.Forms.CheckBox();
+            lbl_anonymous_metrics = new System.Windows.Forms.Label();
             btn_context_menu_reinstall = new System.Windows.Forms.Button();
             cb_show_status_action = new System.Windows.Forms.CheckBox();
             cb_show_message_toasts = new System.Windows.Forms.CheckBox();
@@ -101,6 +103,8 @@ namespace DisplayMagician.UIForms
             gb_general.Controls.Add(label6);
             gb_general.Controls.Add(cmb_notify_icon_double_click);
             gb_general.Controls.Add(cb_wake_up_gpus);
+            gb_general.Controls.Add(lbl_anonymous_metrics);
+            gb_general.Controls.Add(cb_share_anonymous_usage_metrics);
             gb_general.Controls.Add(btn_context_menu_reinstall);
             gb_general.Controls.Add(cb_show_status_action);
             gb_general.Controls.Add(cb_show_message_toasts);
@@ -192,6 +196,26 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus.TabIndex = 7;
             cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable";
             cb_wake_up_gpus.UseVisualStyleBackColor = true;
+            // 
+            // cb_share_anonymous_usage_metrics
+            // 
+            cb_share_anonymous_usage_metrics.AutoSize = true;
+            cb_share_anonymous_usage_metrics.ForeColor = System.Drawing.Color.White;
+            cb_share_anonymous_usage_metrics.Location = new System.Drawing.Point(32, 340);
+            cb_share_anonymous_usage_metrics.Name = "cb_share_anonymous_usage_metrics";
+            cb_share_anonymous_usage_metrics.Size = new System.Drawing.Size(207, 20);
+            cb_share_anonymous_usage_metrics.TabIndex = 50;
+            cb_share_anonymous_usage_metrics.Text = "Share anonymous usage metrics";
+            cb_share_anonymous_usage_metrics.UseVisualStyleBackColor = true;
+            // 
+            // lbl_anonymous_metrics
+            // 
+            lbl_anonymous_metrics.ForeColor = System.Drawing.Color.White;
+            lbl_anonymous_metrics.Location = new System.Drawing.Point(32, 364);
+            lbl_anonymous_metrics.Name = "lbl_anonymous_metrics";
+            lbl_anonymous_metrics.Size = new System.Drawing.Size(544, 48);
+            lbl_anonymous_metrics.TabIndex = 51;
+            lbl_anonymous_metrics.Text = "Help improve DisplayMagician by sharing anonymous usage metrics. This information is used only to understand how DisplayMagician is used and to guide future development. It is anonymised before it is stored.";
             // 
             // btn_context_menu_reinstall
             // 
@@ -699,6 +723,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_hotkey_exit;
         private System.Windows.Forms.Button btn_hotkey_exit;
         private System.Windows.Forms.CheckBox cb_wake_up_gpus;
+        private System.Windows.Forms.CheckBox cb_share_anonymous_usage_metrics;
+        private System.Windows.Forms.Label lbl_anonymous_metrics;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ComboBox cmb_notify_icon_double_click;
         private System.Windows.Forms.Label label5;

@@ -159,11 +159,14 @@ namespace DisplayMagician.UIForms
                 cb_upgrade_enabled.Checked = true;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to true");
             }
+
             else
             {
                 cb_upgrade_enabled.Checked = false;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to false");
             }
+
+            cb_share_anonymous_usage_metrics.Checked = Program.AppProgramSettings.ShareAnonymousUsageMetrics;
 
             // Set the AudioDeviceWaitSecs numeric up down control to the value from the settings
             nud_audio_device_wait.Value = Program.AppProgramSettings.AudioDeviceWaitSecs;
@@ -311,6 +314,9 @@ namespace DisplayMagician.UIForms
             else
                 Program.AppProgramSettings.ShowMessageToasts = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowMessageToasts as {Program.AppProgramSettings.ShowMessageToasts}");
+
+            Program.AppProgramSettings.ShareAnonymousUsageMetrics = cb_share_anonymous_usage_metrics.Checked;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShareAnonymousUsageMetrics as {Program.AppProgramSettings.ShareAnonymousUsageMetrics}");
 
             // save the wakeupgpus setting that controls loading the DLLs that keep NVIDIA and AMD from turning off their dGPUs in gaming laptops
             if (cb_wake_up_gpus.Checked == true)

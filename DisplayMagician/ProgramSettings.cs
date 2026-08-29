@@ -44,7 +44,7 @@ namespace DisplayMagician
     {
         #region Class Variables
         // Other constants that are useful
-        public const string CurrentProgramSettingsFileVersion = "5";
+        public const string CurrentProgramSettingsFileVersion = "6";
         public const string ProgramSettingsStorageJsonFileName = "Settings.json";
         public static string ProgramSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, ProgramSettingsStorageJsonFileName);
         public static string _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
@@ -67,6 +67,14 @@ namespace DisplayMagician
         private string _displayMagicianVersion = null;
         private string _installId = "";
         private DateTime _installDate = DateTime.UtcNow;
+        private DateTime? _nextClientSyncUtc;
+        private DateTime? _lastSuccessfulClientSyncUtc;
+        private int _consecutiveClientSyncFailures;
+        private DateTime? _nextMetricsHeartbeatUtc;
+        private string _lastMetricsReportedVersion;
+        private bool _shareAnonymousUsageMetrics = true;
+        private long _totalAnonymousMetricLaunches;
+        private long _totalAnonymousMetricActiveMinutes;
         private List<HotkeyKeyboard> _keyboardHotkeys = new List<HotkeyKeyboard>();
         private List<HotkeyJoystick> _joystickHotkeys = new List<HotkeyJoystick>();
         private ScreenLayout _fovCalcScreenLayout = ScreenLayout.TripleScreen;
@@ -138,6 +146,16 @@ namespace DisplayMagician
                 _installDate = value;
             }
         }
+
+        public DateTime? NextClientSyncUtc { get => _nextClientSyncUtc; set => _nextClientSyncUtc = value?.ToUniversalTime(); }
+        public DateTime? LastSuccessfulClientSyncUtc { get => _lastSuccessfulClientSyncUtc; set => _lastSuccessfulClientSyncUtc = value?.ToUniversalTime(); }
+        public int ConsecutiveClientSyncFailures { get => _consecutiveClientSyncFailures; set => _consecutiveClientSyncFailures = Math.Max(0, value); }
+        public DateTime? NextMetricsHeartbeatUtc { get => _nextMetricsHeartbeatUtc; set => _nextMetricsHeartbeatUtc = value?.ToUniversalTime(); }
+        public string LastMetricsReportedVersion { get => _lastMetricsReportedVersion; set => _lastMetricsReportedVersion = value; }
+        [DefaultValue(true)]
+        public bool ShareAnonymousUsageMetrics { get => _shareAnonymousUsageMetrics; set => _shareAnonymousUsageMetrics = value; }
+        public long TotalAnonymousMetricLaunches { get => _totalAnonymousMetricLaunches; set => _totalAnonymousMetricLaunches = Math.Max(0, value); }
+        public long TotalAnonymousMetricActiveMinutes { get => _totalAnonymousMetricActiveMinutes; set => _totalAnonymousMetricActiveMinutes = Math.Max(0, value); }
 
         [DefaultValue(false)]
         public bool StartOnBootUp
@@ -757,7 +775,10 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    File.WriteAllText(_programSettingsStorageJsonFullFileName, json, Encoding.Unicode);
+                    string tempFileName = _programSettingsStorageJsonFullFileName + ".tmp";
+                    File.WriteAllText(tempFileName, json, Encoding.Unicode);
+                    File.Copy(tempFileName, _programSettingsStorageJsonFullFileName, true);
+                    File.Delete(tempFileName);
                     return true;
                 }
             }

@@ -12,7 +12,8 @@ namespace DisplayMagician
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static readonly List<IConfigMigrationRule> MigrationRules = new List<IConfigMigrationRule>
         {
-            new SettingsV4ToV5DonationSplitMigration()
+            new SettingsV4ToV5DonationSplitMigration(),
+            new SettingsV5ToV6ClientSyncMigration()
         };
 
         public enum MigrationStatus
@@ -254,7 +255,7 @@ namespace DisplayMagician
 
                     WriteJsonObject(context.DonationSettingsFileName, donationSettingsFile);
 
-                    context.SettingsFile["SettingsFileVersion"] = ProgramSettings.CurrentProgramSettingsFileVersion;
+                    context.SettingsFile["SettingsFileVersion"] = "5";
                     context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
                     context.MarkSettingsFileChanged();
 
@@ -299,6 +300,45 @@ namespace DisplayMagician
                     MissingMemberHandling = MissingMemberHandling.Ignore,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                 };
+            }
+        }
+
+        private sealed class SettingsV5ToV6ClientSyncMigration : IConfigMigrationRule
+        {
+            public string Name => "Settings v5 to v6 client sync and anonymous metrics";
+
+            public bool Applies(MigrationContext context)
+            {
+                return string.Equals(context.GetSettingsFileVersion(), "5", StringComparison.OrdinalIgnoreCase);
+            }
+
+            public bool Apply(MigrationContext context)
+            {
+                try
+                {
+                    string backupFileName = CreateBackup(context.SettingsFileName, "v5-to-v6");
+                    logger.Info($"ConfigMigrationRunner/{nameof(SettingsV5ToV6ClientSyncMigration)}: Created Settings.json backup at {backupFileName}.");
+                    JObject settings = context.GetSettingsObject();
+                    if (settings == null)
+                    {
+                        return false;
+                    }
+
+                    if (settings.Property("ShareAnonymousUsageMetrics") == null)
+                    {
+                        settings["ShareAnonymousUsageMetrics"] = true;
+                    }
+
+                    context.SettingsFile["SettingsFileVersion"] = ProgramSettings.CurrentProgramSettingsFileVersion;
+                    context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
+                    context.MarkSettingsFileChanged();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ConfigMigrationRunner/{nameof(SettingsV5ToV6ClientSyncMigration)}: Failed to migrate Settings.json.");
+                    return false;
+                }
             }
         }
     }

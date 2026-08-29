@@ -33,6 +33,7 @@ namespace DisplayMagician.UIForms
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MessagesForm));
             splitContainer = new System.Windows.Forms.SplitContainer();
             btn_back = new System.Windows.Forms.Button();
+            btn_check_for_new_messages = new System.Windows.Forms.Button();
             btn_mark_unread = new System.Windows.Forms.Button();
             btn_mark_read = new System.Windows.Forms.Button();
             dgv_messages = new System.Windows.Forms.DataGridView();
@@ -68,6 +69,7 @@ namespace DisplayMagician.UIForms
             // splitContainer.Panel1
             // 
             splitContainer.Panel1.Controls.Add(btn_back);
+            splitContainer.Panel1.Controls.Add(btn_check_for_new_messages);
             splitContainer.Panel1.Controls.Add(btn_mark_unread);
             splitContainer.Panel1.Controls.Add(btn_mark_read);
             splitContainer.Panel1.Controls.Add(dgv_messages);
@@ -96,6 +98,19 @@ namespace DisplayMagician.UIForms
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
+            // 
+            // btn_check_for_new_messages
+            // 
+            btn_check_for_new_messages.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_check_for_new_messages.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_check_for_new_messages.ForeColor = System.Drawing.Color.White;
+            btn_check_for_new_messages.Location = new System.Drawing.Point(11, 709);
+            btn_check_for_new_messages.Name = "btn_check_for_new_messages";
+            btn_check_for_new_messages.Size = new System.Drawing.Size(143, 27);
+            btn_check_for_new_messages.TabIndex = 5;
+            btn_check_for_new_messages.Text = "Check for new messages";
+            btn_check_for_new_messages.UseVisualStyleBackColor = true;
+            btn_check_for_new_messages.Click += btn_check_for_new_messages_Click;
             // 
             // btn_mark_unread
             // 
@@ -318,6 +333,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_mark_read;
         private System.Windows.Forms.Button btn_mark_unread;
         private System.Windows.Forms.Button btn_back;
+        private System.Windows.Forms.Button btn_check_for_new_messages;
         private System.Windows.Forms.Panel panel_release_header;
         private System.Windows.Forms.Label lbl_release_heading;
         private System.Windows.Forms.Button btn_update_now;

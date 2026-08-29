@@ -122,7 +122,7 @@ namespace DisplayMagician.Messaging
             return changed;
         }
 
-        public async Task<MessageSyncResult> SyncMessagesAsync(string appVersion, CancellationToken cancellationToken)
+        public async Task<MessageSyncResult> SyncMessagesAsync(string appVersion, CancellationToken cancellationToken, MessageManifestDocument suppliedManifest = null, Uri suppliedManifestUri = null)
         {
             MessageStoreDocument store = LoadStore();
             store.LastAttemptCheckUtc = DateTime.UtcNow;
@@ -130,7 +130,7 @@ namespace DisplayMagician.Messaging
 
             _logger.Trace($"MessageSyncService/SyncMessagesAsync: Starting sync (manifestUrl={_manifestUrl}, appVersion={appVersion}, existingMessages={store.Messages.Count}).");
 
-            MessageManifestDocument manifest = await DownloadManifestAsync(cancellationToken).ConfigureAwait(false);
+            MessageManifestDocument manifest = suppliedManifest ?? await DownloadManifestAsync(cancellationToken).ConfigureAwait(false);
             if (manifest == null)
             {
                 _logger.Warn($"MessageSyncService/SyncMessagesAsync: Manifest download/parsing returned null (manifestUrl={_manifestUrl}).");
@@ -145,7 +145,7 @@ namespace DisplayMagician.Messaging
 
             HashSet<string> seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             HashSet<string> currentVendorIds = GetCurrentVendorIds();
-            Uri manifestUri = new Uri(_manifestUrl, UriKind.Absolute);
+            Uri manifestUri = suppliedManifestUri ?? new Uri(_manifestUrl, UriKind.Absolute);
             int newMessages = 0;
 
             foreach (MessageManifestEntry entry in manifest.Messages ?? new List<MessageManifestEntry>())
@@ -236,6 +236,7 @@ namespace DisplayMagician.Messaging
                         {
                             string existingContent = await File.ReadAllTextAsync(checkPath, cancellationToken).ConfigureAwait(false);
                             await SyncMessageMediaAsync(manifestUri, existingContent, cancellationToken).ConfigureAwait(false);
+                            await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {
@@ -339,6 +340,7 @@ namespace DisplayMagician.Messaging
                 {
                     await File.WriteAllTextAsync(fullPath, content, cancellationToken).ConfigureAwait(false);
                     await SyncMessageMediaAsync(manifestUri, content, cancellationToken).ConfigureAwait(false);
+                    await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -606,6 +608,85 @@ namespace DisplayMagician.Messaging
                     _logger.Warn(ex, $"MessageSyncService/SyncMessageMediaAsync: Failed to download media id={mediaId}.");
                 }
             }
+        }
+
+        private async Task SyncDeclaredMessageMediaAsync(Uri manifestUri, IEnumerable<MessageManifestMedia> mediaEntries, CancellationToken cancellationToken)
+        {
+            if (mediaEntries == null)
+            {
+                return;
+            }
+
+            string mediaFolderPath = Path.Combine(_messagesFolderPath, "media");
+            Directory.CreateDirectory(mediaFolderPath);
+            foreach (MessageManifestMedia media in mediaEntries)
+            {
+                if (media == null || !IsSha256(media.Sha256) || !TryGetMediaExtension(media.ContentType, out string extension))
+                {
+                    _logger.Warn("MessageSyncService/SyncDeclaredMessageMediaAsync: Skipping invalid static media entry.");
+                    continue;
+                }
+
+                string mediaFilePath = Path.Combine(mediaFolderPath, media.Sha256.ToLowerInvariant() + extension);
+                if (File.Exists(mediaFilePath) && await IsFileHashValidAsync(mediaFilePath, media.Sha256, cancellationToken).ConfigureAwait(false))
+                {
+                    continue;
+                }
+
+                Uri mediaUri = Uri.TryCreate(media.Url, UriKind.Absolute, out Uri absolute) ? absolute : new Uri(manifestUri, media.Url);
+                try
+                {
+                    using HttpResponseMessage response = await _httpClient.GetAsync(mediaUri, cancellationToken).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        _logger.Warn($"MessageSyncService/SyncDeclaredMessageMediaAsync: Media request failed (statusCode={(int)response.StatusCode}).");
+                        continue;
+                    }
+
+                    byte[] mediaBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                    if (!string.Equals(ComputeSha256(mediaBytes), media.Sha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.Warn("MessageSyncService/SyncDeclaredMessageMediaAsync: Static media hash verification failed.");
+                        continue;
+                    }
+
+                    string temporaryPath = mediaFilePath + ".tmp";
+                    await File.WriteAllBytesAsync(temporaryPath, mediaBytes, cancellationToken).ConfigureAwait(false);
+                    File.Copy(temporaryPath, mediaFilePath, true);
+                    File.Delete(temporaryPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex, "MessageSyncService/SyncDeclaredMessageMediaAsync: Failed to download static media.");
+                }
+            }
+        }
+
+        private static bool IsSha256(string value) => !string.IsNullOrWhiteSpace(value) && Regex.IsMatch(value, "^[a-fA-F0-9]{64}$");
+
+        private static bool TryGetMediaExtension(string contentType, out string extension)
+        {
+            extension = contentType?.ToLowerInvariant() switch
+            {
+                "image/png" => ".png",
+                "image/jpeg" => ".jpg",
+                "image/gif" => ".gif",
+                "image/webp" => ".webp",
+                _ => null,
+            };
+            return extension != null;
+        }
+
+        private static string ComputeSha256(byte[] bytes)
+        {
+            using System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
+            return BitConverter.ToString(sha256.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
+        }
+
+        private static async Task<bool> IsFileHashValidAsync(string filePath, string expectedHash, CancellationToken cancellationToken)
+        {
+            byte[] bytes = await File.ReadAllBytesAsync(filePath, cancellationToken).ConfigureAwait(false);
+            return string.Equals(ComputeSha256(bytes), expectedHash, StringComparison.OrdinalIgnoreCase);
         }
 
         private string GetMessageKind(MessageManifestEntry entry)
