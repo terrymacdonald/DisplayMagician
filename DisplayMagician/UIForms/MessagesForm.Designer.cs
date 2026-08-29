@@ -94,7 +94,7 @@ namespace DisplayMagician.UIForms
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(78, 27);
-            btn_back.TabIndex = 4;
+            btn_back.TabIndex = 5;
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
@@ -104,11 +104,11 @@ namespace DisplayMagician.UIForms
             btn_check_for_new_messages.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_check_for_new_messages.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_check_for_new_messages.ForeColor = System.Drawing.Color.White;
-            btn_check_for_new_messages.Location = new System.Drawing.Point(11, 709);
+            btn_check_for_new_messages.Location = new System.Drawing.Point(36, 709);
             btn_check_for_new_messages.Name = "btn_check_for_new_messages";
             btn_check_for_new_messages.Size = new System.Drawing.Size(143, 27);
-            btn_check_for_new_messages.TabIndex = 5;
-            btn_check_for_new_messages.Text = "Check for new messages";
+            btn_check_for_new_messages.TabIndex = 2;
+            btn_check_for_new_messages.Text = "&Check new messages";
             btn_check_for_new_messages.UseVisualStyleBackColor = true;
             btn_check_for_new_messages.Click += btn_check_for_new_messages_Click;
             // 
@@ -120,11 +120,11 @@ namespace DisplayMagician.UIForms
             btn_mark_unread.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_mark_unread.ForeColor = System.Drawing.Color.White;
             btn_mark_unread.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_mark_unread.Location = new System.Drawing.Point(243, 709);
+            btn_mark_unread.Location = new System.Drawing.Point(268, 709);
             btn_mark_unread.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_unread.Name = "btn_mark_unread";
             btn_mark_unread.Size = new System.Drawing.Size(90, 27);
-            btn_mark_unread.TabIndex = 3;
+            btn_mark_unread.TabIndex = 4;
             btn_mark_unread.Text = "Mark &Unread";
             btn_mark_unread.UseVisualStyleBackColor = true;
             btn_mark_unread.Click += btn_mark_unread_Click;
@@ -137,11 +137,11 @@ namespace DisplayMagician.UIForms
             btn_mark_read.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_mark_read.ForeColor = System.Drawing.Color.White;
             btn_mark_read.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            btn_mark_read.Location = new System.Drawing.Point(160, 709);
+            btn_mark_read.Location = new System.Drawing.Point(185, 709);
             btn_mark_read.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_mark_read.Name = "btn_mark_read";
             btn_mark_read.Size = new System.Drawing.Size(78, 27);
-            btn_mark_read.TabIndex = 2;
+            btn_mark_read.TabIndex = 3;
             btn_mark_read.Text = "Mark &Read";
             btn_mark_read.UseVisualStyleBackColor = true;
             btn_mark_read.Click += btn_mark_read_Click;
@@ -272,7 +272,7 @@ namespace DisplayMagician.UIForms
             btn_update_now.Location = new System.Drawing.Point(662, 11);
             btn_update_now.Name = "btn_update_now";
             btn_update_now.Size = new System.Drawing.Size(126, 28);
-            btn_update_now.TabIndex = 5;
+            btn_update_now.TabIndex = 6;
             btn_update_now.Text = "&Update Now";
             btn_update_now.UseVisualStyleBackColor = false;
             btn_update_now.Click += btn_update_now_Click;

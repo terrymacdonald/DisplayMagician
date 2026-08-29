@@ -38,8 +38,8 @@ namespace DisplayMagician.UIForms
             label6 = new System.Windows.Forms.Label();
             cmb_notify_icon_double_click = new System.Windows.Forms.ComboBox();
             cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
-            cb_share_anonymous_usage_metrics = new System.Windows.Forms.CheckBox();
             lbl_anonymous_metrics = new System.Windows.Forms.Label();
+            cb_share_anonymous_usage_metrics = new System.Windows.Forms.CheckBox();
             btn_context_menu_reinstall = new System.Windows.Forms.Button();
             cb_show_status_action = new System.Windows.Forms.CheckBox();
             cb_show_message_toasts = new System.Windows.Forms.CheckBox();
@@ -85,7 +85,7 @@ namespace DisplayMagician.UIForms
             btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_back.ForeColor = System.Drawing.Color.White;
-            btn_back.Location = new System.Drawing.Point(1396, 709);
+            btn_back.Location = new System.Drawing.Point(1396, 737);
             btn_back.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_back.Name = "btn_back";
             btn_back.Size = new System.Drawing.Size(88, 27);
@@ -103,8 +103,6 @@ namespace DisplayMagician.UIForms
             gb_general.Controls.Add(label6);
             gb_general.Controls.Add(cmb_notify_icon_double_click);
             gb_general.Controls.Add(cb_wake_up_gpus);
-            gb_general.Controls.Add(lbl_anonymous_metrics);
-            gb_general.Controls.Add(cb_share_anonymous_usage_metrics);
             gb_general.Controls.Add(btn_context_menu_reinstall);
             gb_general.Controls.Add(cb_show_status_action);
             gb_general.Controls.Add(cb_show_message_toasts);
@@ -118,7 +116,7 @@ namespace DisplayMagician.UIForms
             gb_general.Controls.Add(cb_minimise_notification_area);
             gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_general.ForeColor = System.Drawing.Color.White;
-            gb_general.Location = new System.Drawing.Point(31, 24);
+            gb_general.Location = new System.Drawing.Point(31, 25);
             gb_general.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_general.Name = "gb_general";
             gb_general.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -197,25 +195,28 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable";
             cb_wake_up_gpus.UseVisualStyleBackColor = true;
             // 
+            // lbl_anonymous_metrics
+            // 
+            lbl_anonymous_metrics.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_anonymous_metrics.ForeColor = System.Drawing.Color.White;
+            lbl_anonymous_metrics.Location = new System.Drawing.Point(49, 150);
+            lbl_anonymous_metrics.Name = "lbl_anonymous_metrics";
+            lbl_anonymous_metrics.Size = new System.Drawing.Size(553, 48);
+            lbl_anonymous_metrics.TabIndex = 51;
+            lbl_anonymous_metrics.Text = resources.GetString("lbl_anonymous_metrics.Text");
+            // 
             // cb_share_anonymous_usage_metrics
             // 
             cb_share_anonymous_usage_metrics.AutoSize = true;
+            cb_share_anonymous_usage_metrics.Checked = true;
+            cb_share_anonymous_usage_metrics.CheckState = System.Windows.Forms.CheckState.Checked;
             cb_share_anonymous_usage_metrics.ForeColor = System.Drawing.Color.White;
-            cb_share_anonymous_usage_metrics.Location = new System.Drawing.Point(32, 340);
+            cb_share_anonymous_usage_metrics.Location = new System.Drawing.Point(30, 127);
             cb_share_anonymous_usage_metrics.Name = "cb_share_anonymous_usage_metrics";
-            cb_share_anonymous_usage_metrics.Size = new System.Drawing.Size(207, 20);
+            cb_share_anonymous_usage_metrics.Size = new System.Drawing.Size(222, 20);
             cb_share_anonymous_usage_metrics.TabIndex = 50;
             cb_share_anonymous_usage_metrics.Text = "Share anonymous usage metrics";
             cb_share_anonymous_usage_metrics.UseVisualStyleBackColor = true;
-            // 
-            // lbl_anonymous_metrics
-            // 
-            lbl_anonymous_metrics.ForeColor = System.Drawing.Color.White;
-            lbl_anonymous_metrics.Location = new System.Drawing.Point(32, 364);
-            lbl_anonymous_metrics.Name = "lbl_anonymous_metrics";
-            lbl_anonymous_metrics.Size = new System.Drawing.Size(544, 48);
-            lbl_anonymous_metrics.TabIndex = 51;
-            lbl_anonymous_metrics.Text = "Help improve DisplayMagician by sharing anonymous usage metrics. This information is used only to understand how DisplayMagician is used and to guide future development. It is anonymised before it is stored.";
             // 
             // btn_context_menu_reinstall
             // 
@@ -391,7 +392,7 @@ namespace DisplayMagician.UIForms
             gb_hotkeys.Controls.Add(btn_hotkey_main_window);
             gb_hotkeys.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_hotkeys.ForeColor = System.Drawing.Color.White;
-            gb_hotkeys.Location = new System.Drawing.Point(681, 24);
+            gb_hotkeys.Location = new System.Drawing.Point(681, 25);
             gb_hotkeys.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_hotkeys.Name = "gb_hotkeys";
             gb_hotkeys.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -555,13 +556,15 @@ namespace DisplayMagician.UIForms
             gb_upgrades.Controls.Add(cb_upgrade_enabled);
             gb_upgrades.Controls.Add(label2);
             gb_upgrades.Controls.Add(cb_upgrade_prerelease);
+            gb_upgrades.Controls.Add(cb_share_anonymous_usage_metrics);
+            gb_upgrades.Controls.Add(lbl_anonymous_metrics);
             gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_upgrades.ForeColor = System.Drawing.Color.White;
-            gb_upgrades.Location = new System.Drawing.Point(31, 555);
+            gb_upgrades.Location = new System.Drawing.Point(31, 556);
             gb_upgrades.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_upgrades.Name = "gb_upgrades";
             gb_upgrades.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_upgrades.Size = new System.Drawing.Size(612, 177);
+            gb_upgrades.Size = new System.Drawing.Size(612, 208);
             gb_upgrades.TabIndex = 0;
             gb_upgrades.TabStop = false;
             gb_upgrades.Text = "Upgrade Settings";
@@ -575,7 +578,7 @@ namespace DisplayMagician.UIForms
             cb_upgrade_enabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_upgrade_enabled.ForeColor = System.Drawing.Color.White;
             cb_upgrade_enabled.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_upgrade_enabled.Location = new System.Drawing.Point(33, 46);
+            cb_upgrade_enabled.Location = new System.Drawing.Point(33, 36);
             cb_upgrade_enabled.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_upgrade_enabled.Name = "cb_upgrade_enabled";
             cb_upgrade_enabled.Size = new System.Drawing.Size(399, 20);
@@ -587,7 +590,7 @@ namespace DisplayMagician.UIForms
             // 
             label2.AutoSize = true;
             label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label2.Location = new System.Drawing.Point(50, 114);
+            label2.Location = new System.Drawing.Point(49, 100);
             label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(410, 13);
@@ -601,7 +604,7 @@ namespace DisplayMagician.UIForms
             cb_upgrade_prerelease.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cb_upgrade_prerelease.ForeColor = System.Drawing.Color.White;
             cb_upgrade_prerelease.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cb_upgrade_prerelease.Location = new System.Drawing.Point(33, 89);
+            cb_upgrade_prerelease.Location = new System.Drawing.Point(32, 75);
             cb_upgrade_prerelease.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cb_upgrade_prerelease.Name = "cb_upgrade_prerelease";
             cb_upgrade_prerelease.Size = new System.Drawing.Size(410, 20);
@@ -616,11 +619,11 @@ namespace DisplayMagician.UIForms
             gb_support.Controls.Add(label3);
             gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_support.ForeColor = System.Drawing.Color.White;
-            gb_support.Location = new System.Drawing.Point(681, 555);
+            gb_support.Location = new System.Drawing.Point(681, 556);
             gb_support.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_support.Name = "gb_support";
             gb_support.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_support.Size = new System.Drawing.Size(803, 116);
+            gb_support.Size = new System.Drawing.Size(803, 121);
             gb_support.TabIndex = 0;
             gb_support.TabStop = false;
             gb_support.Text = "Support Settings";
@@ -633,7 +636,7 @@ namespace DisplayMagician.UIForms
             btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_create_support_package.ForeColor = System.Drawing.Color.White;
-            btn_create_support_package.Location = new System.Drawing.Point(292, 26);
+            btn_create_support_package.Location = new System.Drawing.Point(292, 24);
             btn_create_support_package.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_create_support_package.Name = "btn_create_support_package";
             btn_create_support_package.Size = new System.Drawing.Size(214, 38);
@@ -645,7 +648,7 @@ namespace DisplayMagician.UIForms
             // label3
             // 
             label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label3.Location = new System.Drawing.Point(180, 66);
+            label3.Location = new System.Drawing.Point(180, 69);
             label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(441, 37);
@@ -658,7 +661,7 @@ namespace DisplayMagician.UIForms
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
-            ClientSize = new System.Drawing.Size(1528, 767);
+            ClientSize = new System.Drawing.Size(1528, 795);
             Controls.Add(gb_support);
             Controls.Add(gb_upgrades);
             Controls.Add(gb_hotkeys);
@@ -669,7 +672,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
-            MinimumSize = new System.Drawing.Size(1544, 806);
+            MinimumSize = new System.Drawing.Size(1544, 834);
             Name = "SettingsForm";
             ShowIcon = false;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
