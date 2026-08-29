@@ -96,6 +96,8 @@ namespace DisplayMagician {
         private static SynchronizationContext _mainSynchronizationContext;
         private static MessageSyncService _messageSyncService;
         private static ClientSyncService _clientSyncService;
+        private static AnonymousMetricsService _anonymousMetricsService;
+        private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
         private static System.Timers.Timer _clientSyncTimer;
         private static System.Timers.Timer _startupMessagePollTimer;
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
@@ -347,6 +349,12 @@ namespace DisplayMagician {
             if (!AppProgramSettings.NextClientSyncUtc.HasValue)
             {
                 AppProgramSettings.NextClientSyncUtc = DateTime.UtcNow.AddMinutes(Random.Shared.Next(0, 12 * 60 + 1));
+                settingsChanged = true;
+            }
+            if (!AppProgramSettings.NextMetricsHeartbeatUtc.HasValue)
+            {
+                AppProgramSettings.NextMetricsHeartbeatUtc = DateTime.UtcNow.AddDays(7).AddHours(Random.Shared.Next(0, 7));
+                AppProgramSettings.LastMetricsReportedVersion = AppVersion;
                 settingsChanged = true;
             }
             AppProgramSettings.TotalAnonymousMetricLaunches++;
@@ -1359,6 +1367,7 @@ namespace DisplayMagician {
                 try
                 {
                     await RunClientSyncAndNotifyUserAsync(manual: false);
+                    await TrySendAnonymousMetricsAsync();
                 }
                 catch (Exception ex)
                 {
@@ -1477,6 +1486,10 @@ namespace DisplayMagician {
             {
                 _clientSyncService = new ClientSyncService(AppHttpClient, logger, _messageSyncService, AppProgramSettings, _useTestUpdateFeed);
             }
+            if (_anonymousMetricsService == null)
+            {
+                _anonymousMetricsService = new AnonymousMetricsService(AppHttpClient, AppProgramSettings, logger, _useTestUpdateFeed);
+            }
             return _clientSyncService;
         }
 
@@ -1490,6 +1503,12 @@ namespace DisplayMagician {
             }
             RefreshMessageIndicators();
             MessageBox.Show(owner, "DisplayMagician has checked for new messages.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private static async Task TrySendAnonymousMetricsAsync()
+        {
+            EnsureClientSyncService();
+            await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, CancellationToken.None).ConfigureAwait(false);
         }
 
         private static MessageSyncService EnsureMessageSyncService()
