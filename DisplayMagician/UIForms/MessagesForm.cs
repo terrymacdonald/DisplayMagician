@@ -91,41 +91,50 @@ namespace DisplayMagician.UIForms
 
         private void LoadMessagesIntoList()
         {
-            _messages = Program.GetStoredMessages();
-            dgv_messages.Rows.Clear();
-
-            Font unreadFont = new Font(dgv_messages.Font, FontStyle.Bold);
-            Font readFont = new Font(dgv_messages.Font, FontStyle.Regular);
-
-            foreach (LocalMessage message in _messages)
+            bool wasUpdatingList = _isUpdatingList;
+            _isUpdatingList = true;
+            try
             {
-                bool isReleaseAnnouncement = string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase);
-                DateTime displayUtc = message.PublishedUtc ?? message.ReceivedUtc;
-                DataGridViewRow row = new DataGridViewRow
+                _messages = Program.GetStoredMessages();
+                dgv_messages.Rows.Clear();
+
+                Font unreadFont = new Font(dgv_messages.Font, FontStyle.Bold);
+                Font readFont = new Font(dgv_messages.Font, FontStyle.Regular);
+
+                foreach (LocalMessage message in _messages)
                 {
-                    Tag = message,
-                    DefaultCellStyle = new DataGridViewCellStyle
+                    bool isReleaseAnnouncement = string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase);
+                    DateTime displayUtc = message.PublishedUtc ?? message.ReceivedUtc;
+                    DataGridViewRow row = new DataGridViewRow
                     {
-                        BackColor = Color.White,
-                        Font = message.IsRead ? readFont : unreadFont,
-                        ForeColor = Color.Black,
-                        SelectionBackColor = SystemColors.Highlight,
-                        SelectionForeColor = SystemColors.HighlightText,
-                    },
-                };
+                        Tag = message,
+                        DefaultCellStyle = new DataGridViewCellStyle
+                        {
+                            BackColor = Color.White,
+                            Font = message.IsRead ? readFont : unreadFont,
+                            ForeColor = Color.Black,
+                            SelectionBackColor = SystemColors.Highlight,
+                            SelectionForeColor = SystemColors.HighlightText,
+                        },
+                    };
 
-                row.CreateCells(
-                    dgv_messages,
-                    isReleaseAnnouncement ? $"Update: {message.Title}" : message.Title,
-                    displayUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture));
-                row.Cells[0].ToolTipText = isReleaseAnnouncement
-                    ? $"Release update {message.ReleaseVersion} ({message.ReleaseChannel})"
-                    : message.Title;
-                dgv_messages.Rows.Add(row);
+                    row.CreateCells(
+                        dgv_messages,
+                        isReleaseAnnouncement ? $"Update: {message.Title}" : message.Title,
+                        displayUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture));
+                    row.Cells[0].ToolTipText = isReleaseAnnouncement
+                        ? $"Release update {message.ReleaseVersion} ({message.ReleaseChannel})"
+                        : message.Title;
+                    dgv_messages.Rows.Add(row);
+                }
+
+                int unreadCount = _messages.Count(m => !m.IsRead);
+                lbl_count.Text = $"{_messages.Count} messages ({unreadCount} unread)";
             }
-
-            int unreadCount = _messages.Count(m => !m.IsRead);
-            lbl_count.Text = $"{_messages.Count} messages ({unreadCount} unread)";
+            finally
+            {
+                _isUpdatingList = wasUpdatingList;
+            }
         }
 
         private void dgv_messages_SelectionChanged(object sender, EventArgs e)
@@ -290,19 +299,27 @@ namespace DisplayMagician.UIForms
 
         private void SelectInitialMessageIfNeeded()
         {
-            if (!_selectNewestUnreadOnLoad || dgv_messages.Rows.Count == 0)
+            if (dgv_messages.Rows.Count == 0)
             {
                 return;
             }
 
-            DataGridViewRow unreadRow = dgv_messages.Rows
-                .Cast<DataGridViewRow>()
-                .FirstOrDefault(row => (row.Tag as LocalMessage)?.IsRead == false);
-
-            DataGridViewRow rowToSelect = unreadRow ?? dgv_messages.Rows[0];
-            rowToSelect.Selected = true;
-            dgv_messages.CurrentCell = rowToSelect.Cells[0];
-            dgv_messages.FirstDisplayedScrollingRowIndex = rowToSelect.Index;
+            DataGridViewRow rowToSelect = dgv_messages.Rows[0];
+            bool wasUpdatingList = _isUpdatingList;
+            _isUpdatingList = true;
+            try
+            {
+                rowToSelect.Selected = true;
+                dgv_messages.CurrentCell = rowToSelect.Cells[0];
+                dgv_messages.FirstDisplayedScrollingRowIndex = rowToSelect.Index;
+                LocalMessage messageToRender = rowToSelect.Tag as LocalMessage;
+                ConfigureReleaseHeader(messageToRender);
+                RenderMessage(messageToRender);
+            }
+            finally
+            {
+                _isUpdatingList = wasUpdatingList;
+            }
         }
 
         private void RenderMessage(LocalMessage message)
@@ -411,6 +428,15 @@ namespace DisplayMagician.UIForms
             {
                 await Program.CheckForNewMessagesAsync(this);
                 LoadMessagesIntoList();
+                if (dgv_messages.Rows.Count > 0)
+                {
+                    DataGridViewRow firstRow = dgv_messages.Rows[0];
+                    firstRow.Selected = true;
+                    dgv_messages.CurrentCell = firstRow.Cells[0];
+                    LocalMessage firstMessage = firstRow.Tag as LocalMessage;
+                    ConfigureReleaseHeader(firstMessage);
+                    RenderMessage(firstMessage);
+                }
             }
             finally
             {

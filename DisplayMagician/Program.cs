@@ -1500,7 +1500,11 @@ namespace DisplayMagician {
                 return;
             }
             RefreshMessageIndicators();
-            MessageBox.Show(owner, "DisplayMagician has checked for new messages.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            int newMessagesCount = result.MessageResult?.NewMessagesCount ?? 0;
+            string completionMessage = newMessagesCount == 1
+                ? "DisplayMagician found 1 new message."
+                : $"DisplayMagician found {newMessagesCount} new messages.";
+            MessageBox.Show(owner, completionMessage, "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private static async Task TrySendAnonymousMetricsAsync()
