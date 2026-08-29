@@ -80,7 +80,7 @@ namespace DisplayMagician.Messaging
                     GeneratedUtc = document.PublishedUtc,
                     Messages = document.Messages
                 };
-                MessageSyncResult messageResult = await _messageSyncService.SyncMessagesAsync(appVersion, cancellationToken, messageDocument, new Uri("https://sync.displaymagician.com/")).ConfigureAwait(false);
+                MessageSyncResult messageResult = await _messageSyncService.SyncMessagesAsync(appVersion, cancellationToken, messageDocument, new Uri("https://sync.displaymagician.com/"), authoritativeSnapshot: true).ConfigureAwait(false);
                 if (!messageResult.Success)
                 {
                     return HandleFailure("Message content could not be processed.");

@@ -248,3 +248,4 @@ ModelManifest.xml
 
 # VSCode files
 *.lscache
+.codex-build/

@@ -122,7 +122,7 @@ namespace DisplayMagician.Messaging
             return changed;
         }
 
-        public async Task<MessageSyncResult> SyncMessagesAsync(string appVersion, CancellationToken cancellationToken, MessageManifestDocument suppliedManifest = null, Uri suppliedManifestUri = null)
+        public async Task<MessageSyncResult> SyncMessagesAsync(string appVersion, CancellationToken cancellationToken, MessageManifestDocument suppliedManifest = null, Uri suppliedManifestUri = null, bool authoritativeSnapshot = false)
         {
             MessageStoreDocument store = LoadStore();
             store.LastAttemptCheckUtc = DateTime.UtcNow;
@@ -147,6 +147,22 @@ namespace DisplayMagician.Messaging
             HashSet<string> currentVendorIds = GetCurrentVendorIds();
             Uri manifestUri = suppliedManifestUri ?? new Uri(_manifestUrl, UriKind.Absolute);
             int newMessages = 0;
+
+            if (authoritativeSnapshot)
+            {
+                HashSet<string> snapshotIds = new HashSet<string>(
+                    (manifest.Messages ?? new List<MessageManifestEntry>())
+                        .Where(entry => entry != null && Guid.TryParse(entry.Id, out _))
+                        .Select(entry => entry.Id),
+                    StringComparer.OrdinalIgnoreCase);
+
+                foreach (LocalMessage localMessage in store.Messages.Where(message => !snapshotIds.Contains(message.Id)).ToList())
+                {
+                    store.Messages.Remove(localMessage);
+                    TryDeleteMarkdownFile(localMessage.MarkdownFileName);
+                    _logger.Info($"MessageSyncService/SyncMessagesAsync: Removed message id={localMessage.Id} because it is absent from the authoritative client sync snapshot.");
+                }
+            }
 
             foreach (MessageManifestEntry entry in manifest.Messages ?? new List<MessageManifestEntry>())
             {
