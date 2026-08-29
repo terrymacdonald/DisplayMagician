@@ -139,7 +139,51 @@ namespace DisplayMagician.Messaging
                 return false;
             }
 
+            document.Messages = (document.Messages ?? new List<MessageManifestEntry>())
+                .Where(IsValidMessageEntry)
+                .ToList();
+
             return true;
+        }
+
+        private static bool IsValidMessageEntry(MessageManifestEntry entry)
+        {
+            if (entry == null || !Guid.TryParse(entry.Id, out _))
+            {
+                return false;
+            }
+            if (string.Equals(entry.Status, "deleted", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            if (!string.Equals(entry.Status, "published", StringComparison.OrdinalIgnoreCase)
+                || !Sha256Pattern.IsMatch(entry.Sha256 ?? string.Empty)
+                || !(string.Equals(entry.Format, "html", StringComparison.OrdinalIgnoreCase) || string.Equals(entry.Format, "md", StringComparison.OrdinalIgnoreCase))
+                || !IsStaticArtifactUrl(entry.Url, "/sync/messages/"))
+            {
+                return false;
+            }
+            return (entry.Media ?? new List<MessageManifestMedia>()).All(media => media != null
+                && Sha256Pattern.IsMatch(media.Sha256 ?? string.Empty)
+                && IsStaticArtifactUrl(media.Url, "/sync/media/")
+                && (media.ContentType == "image/png" || media.ContentType == "image/jpeg" || media.ContentType == "image/gif" || media.ContentType == "image/webp"));
+        }
+
+        private static bool IsStaticArtifactUrl(string value, string expectedPathPrefix)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Contains("..", StringComparison.Ordinal) || value.Contains('@'))
+            {
+                return false;
+            }
+            if (value.StartsWith("/", StringComparison.Ordinal))
+            {
+                return value.StartsWith(expectedPathPrefix, StringComparison.Ordinal);
+            }
+            return Uri.TryCreate(value, UriKind.Absolute, out Uri uri)
+                && uri.Scheme == Uri.UriSchemeHttps
+                && string.Equals(uri.Host, "sync.displaymagician.com", StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrEmpty(uri.UserInfo)
+                && uri.AbsolutePath.StartsWith(expectedPathPrefix, StringComparison.Ordinal);
         }
 
         private static bool IsValidUpdate(ClientSyncUpdate update)

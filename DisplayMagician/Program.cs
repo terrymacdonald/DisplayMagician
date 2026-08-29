@@ -102,8 +102,6 @@ namespace DisplayMagician {
         private static System.Timers.Timer _startupMessagePollTimer;
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
-        private const string UpdateUrl = ClientSyncUrl;
-        private const string TestUpdateUrl = "https://sync.displaymagician.com/sync/test-client-sync.json";
 
         private static volatile bool _useTestUpdateFeed;
 
@@ -1843,7 +1841,7 @@ namespace DisplayMagician {
             bool wasAlreadyEnabled = _useTestUpdateFeed;
             _useTestUpdateFeed = true;
 
-            logger.Warn($"Program/EnableTestUpdateFeed: TEST UPDATE MODE {(wasAlreadyEnabled ? "is already" : "has been")} enabled from {source}. This session will use {TestUpdateUrl} instead of {UpdateUrl}.");
+            logger.Warn($"Program/EnableTestUpdateFeed: TEST UPDATE MODE {(wasAlreadyEnabled ? "is already" : "has been")} enabled from {source}. This session will use the static test client sync document.");
 
             if (checkForUpdatesNow)
             {
@@ -1854,65 +1852,11 @@ namespace DisplayMagician {
 
         public static void CheckForUpdates(bool automatic = true, string requestedMessageUpdateVersion = null, string requestedMessageUpdateChannel = null)
         {
-            Task.Run(() => RunClientSyncAndNotifyUserAsync(manual: !automatic));
-            return;
-
             _lastUpdateCheckWasAutomatic = automatic;
             _requestedMessageUpdateVersion = requestedMessageUpdateVersion;
             _requestedMessageUpdateChannel = requestedMessageUpdateChannel;
-            string updateChannel = Program.AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
-            logger.Info($"Program/CheckForUpdates: Starting {(automatic ? "automatic" : "manual")} update check. Installed version is {AppVersion}; selected update channel is {updateChannel}.");
-
-            // Firstly check if the user wants to upgrade at all
-            // If not, just return
-            if (!Program.AppProgramSettings.UpgradeEnabled)
-            {
-                _requestedMessageUpdateVersion = null;
-                _requestedMessageUpdateChannel = null;
-                logger.Warn($"Program/CheckForUpdates: User has set the Program Settings to ignore any DisplayMagician updates. Skipping the auto update.");
-                return;
-            }
-
-            // Second of all, check to see if there is any way to get to the internet on this computer.
-            // If not, then why bother!
-            try
-            {              
-
-                if (!NetworkInterface.GetIsNetworkAvailable())
-                {
-                    _requestedMessageUpdateVersion = null;
-                    _requestedMessageUpdateChannel = null;
-                    logger.Warn($"Program/CheckForUpdates: No internet detected. Skipping the auto update.");
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"Program/CheckForUpdates: Exception while trying to get all the network interfaces to make sure we have internet connectivity. Attempting to auto update anyway.");
-            }
-
-
-            //Run the AutoUpdater to see if there are any updates available.
-            //FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(Application.ExecutablePath);
-            //AutoUpdater.InstalledVersion = new Version(fvi.FileVersion);
-            RegisterAutoUpdaterEvents();
-            AutoUpdater.RunUpdateAsAdmin = true;
-            AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
-            AutoUpdater.RemindLaterTimeSpan = RemindLaterFormat.Days;
-            AutoUpdater.RemindLaterAt = 7;
-            AutoUpdater.InstalledVersion = new Version(AppVersion);
-
-            // Use the test update feed if it has been enabled, otherwise use the normal update feed
-            string connectionUrl = _useTestUpdateFeed ? TestUpdateUrl : UpdateUrl;
-            if (_useTestUpdateFeed)
-            {
-                logger.Warn($"Program/CheckForUpdates: TEST UPDATE MODE is active. Checking {connectionUrl}.");
-            }
-            connectionUrl += ($"?version={HttpUtility.UrlEncode(Program.AppVersion)}");
-            connectionUrl += ($"&install_id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
-            connectionUrl += ($"&id={HttpUtility.UrlEncode(Program.AppProgramSettings.InstallId)}");
-            logger.Info($"Program/CheckForUpdates: Checking the {updateChannel} channel for an update to installed version {AutoUpdater.InstalledVersion}.");
-            AutoUpdater.Start(connectionUrl);
+            logger.Info($"Program/CheckForUpdates: Starting {(automatic ? "automatic" : "manual")} combined client sync.");
+            Task.Run(() => RunClientSyncAndNotifyUserAsync(manual: !automatic));
         }
 
         private static void RegisterAutoUpdaterEvents()
