@@ -21,6 +21,10 @@ namespace DisplayMagician.UIForms
         private void AudioProfilesForm_Load(object sender, EventArgs e)
         {
             RefreshAudioProfilesList();
+            if (lb_audio_profiles.Items.Count > 0)
+            {
+                lb_audio_profiles.SelectedIndex = 0;
+            }
             UpdateSelectionState();
         }
 
