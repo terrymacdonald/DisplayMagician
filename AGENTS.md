@@ -46,3 +46,4 @@
 - Before adding new code, search for an existing repository, service, helper, or form that already owns the behaviour and extend it where practical.
 - Keep public APIs and serialized member names stable unless an explicit migration or compatibility change accompanies them.
 - Build the affected project or solution after changes, and run the most relevant existing verification available.
+- Use CRLF (`\r\n`) line endings for text files changed or created in this Windows repository.
