@@ -25,7 +25,7 @@ namespace DisplayMagician.Messaging
             _testMode = testMode;
         }
 
-        public async Task TrySendAsync(TimeSpan activeRuntime, CancellationToken cancellationToken)
+        public async Task TrySendAsync(TimeSpan activeRuntime, bool allowInitialHeartbeat, CancellationToken cancellationToken)
         {
             if (_testMode || !_settings.ShareAnonymousUsageMetrics)
             {
@@ -40,7 +40,13 @@ namespace DisplayMagician.Messaging
                 _settings.SaveSettings();
             }
             DateTime now = DateTime.UtcNow;
-            bool versionChanged = !string.Equals(_settings.LastMetricsReportedVersion, Program.AppVersion, StringComparison.OrdinalIgnoreCase);
+            bool isInitialHeartbeat = string.IsNullOrWhiteSpace(_settings.LastMetricsReportedVersion);
+            if (isInitialHeartbeat && !allowInitialHeartbeat)
+            {
+                return;
+            }
+
+            bool versionChanged = !isInitialHeartbeat && !string.Equals(_settings.LastMetricsReportedVersion, Program.AppVersion, StringComparison.OrdinalIgnoreCase);
             if (!versionChanged && _settings.NextMetricsHeartbeatUtc.HasValue && now < _settings.NextMetricsHeartbeatUtc.Value)
             {
                 return;

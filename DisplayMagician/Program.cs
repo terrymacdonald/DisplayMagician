@@ -351,8 +351,7 @@ namespace DisplayMagician {
             }
             if (!AppProgramSettings.NextMetricsHeartbeatUtc.HasValue)
             {
-                AppProgramSettings.NextMetricsHeartbeatUtc = DateTime.UtcNow.AddDays(7).AddHours(Random.Shared.Next(0, 7));
-                AppProgramSettings.LastMetricsReportedVersion = AppVersion;
+                AppProgramSettings.NextMetricsHeartbeatUtc = DateTime.UtcNow;
                 settingsChanged = true;
             }
             AppProgramSettings.TotalAnonymousMetricLaunches++;
@@ -877,6 +876,17 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
+
+            try
+            {
+                using CancellationTokenSource initialMetricsCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                EnsureClientSyncService();
+                _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: true, initialMetricsCancellation.Token).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/Main: Initial anonymous metrics heartbeat did not complete during orderly shutdown.");
+            }
 
             logger.Trace($"Program/Main: Stopping message sync timer.");
             _clientSyncTimer?.Stop();
@@ -1510,7 +1520,7 @@ namespace DisplayMagician {
         private static async Task TrySendAnonymousMetricsAsync()
         {
             EnsureClientSyncService();
-            await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, CancellationToken.None).ConfigureAwait(false);
+            await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: false, CancellationToken.None).ConfigureAwait(false);
         }
 
         private static MessageSyncService EnsureMessageSyncService()
