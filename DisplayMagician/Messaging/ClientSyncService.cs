@@ -215,10 +215,10 @@ namespace DisplayMagician.Messaging
         {
             _settings.LastSuccessfulClientSyncUtc = now;
             _settings.ConsecutiveClientSyncFailures = 0;
-            _settings.NextClientSyncUtc = now.AddHours(24 + GetStableJitterHours(_settings.InstallId, 12));
+            _settings.NextClientSyncUtc = now.AddMinutes((24 * 60) + GetStableJitterMinutes(_settings.InstallId));
         }
 
-        private static int GetStableJitterHours(string installId, int upperInclusive)
+        private static int GetStableJitterMinutes(string installId)
         {
             unchecked
             {
@@ -227,7 +227,7 @@ namespace DisplayMagician.Messaging
                 {
                     hash = (hash * 31) + character;
                 }
-                return Math.Abs(hash % (upperInclusive + 1));
+                return (int)((uint)hash % (12 * 60 + 1));
             }
         }
     }

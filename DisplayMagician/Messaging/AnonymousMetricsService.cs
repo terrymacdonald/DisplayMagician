@@ -72,7 +72,7 @@ namespace DisplayMagician.Messaging
                 if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
                     _settings.LastMetricsReportedVersion = Program.AppVersion;
-                    _settings.NextMetricsHeartbeatUtc = now.AddDays(7).AddHours(GetStableJitterHours(_settings.InstallId));
+                    _settings.NextMetricsHeartbeatUtc = GetNextWeeklyHeartbeatUtc(now, _settings.InstallId);
                     _settings.SaveSettings();
                 }
                 else
@@ -107,13 +107,23 @@ namespace DisplayMagician.Messaging
             return $"{version.Major}.{version.Minor}.{version.Build}";
         }
 
-        private static int GetStableJitterHours(string installId)
+        private static DateTime GetNextWeeklyHeartbeatUtc(DateTime now, string installId)
         {
             unchecked
             {
                 int hash = 17;
                 foreach (char character in installId ?? string.Empty) hash = (hash * 31) + character;
-                return Math.Abs(hash % 7);
+                int positiveHash = Math.Abs(hash);
+                int daySlot = positiveHash % 7;
+                int hourOffset = Math.Abs((positiveHash / 7) % 7);
+                DateTime earliestUtc = now.AddDays(7);
+                DateTime weekStartUtc = earliestUtc.Date.AddDays(-(int)earliestUtc.DayOfWeek);
+                DateTime scheduledUtc = weekStartUtc.AddDays(daySlot).AddHours(hourOffset);
+                while (scheduledUtc < earliestUtc)
+                {
+                    scheduledUtc = scheduledUtc.AddDays(7);
+                }
+                return scheduledUtc;
             }
         }
     }

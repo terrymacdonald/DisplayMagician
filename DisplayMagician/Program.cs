@@ -99,6 +99,7 @@ namespace DisplayMagician {
         private static AnonymousMetricsService _anonymousMetricsService;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
         private static System.Timers.Timer _clientSyncTimer;
+        private static System.Timers.Timer _metricsHeartbeatTimer;
         private static System.Timers.Timer _startupMessagePollTimer;
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
@@ -892,6 +893,9 @@ namespace DisplayMagician {
             _clientSyncTimer?.Stop();
             _clientSyncTimer?.Dispose();
             _clientSyncTimer = null;
+            _metricsHeartbeatTimer?.Stop();
+            _metricsHeartbeatTimer?.Dispose();
+            _metricsHeartbeatTimer = null;
 
             logger.Trace($"Program/Main: Disposing the DirectInput manager.");
             AppDirectInputManager?.Dispose();
@@ -1347,6 +1351,7 @@ namespace DisplayMagician {
                 {
                     await RunClientSyncAndNotifyUserAsync(manual: false);
                     EnsureClientSyncTimer();
+                    EnsureMetricsHeartbeatTimer();
                     EnsureStartupMessagePollTimer();
                 }
                 catch (Exception ex)
@@ -1358,32 +1363,76 @@ namespace DisplayMagician {
 
         private static void EnsureClientSyncTimer()
         {
-            if (_clientSyncTimer != null)
+            if (_clientSyncTimer == null)
+            {
+                _clientSyncTimer = new System.Timers.Timer { AutoReset = false };
+                _clientSyncTimer.Elapsed += async (_, __) =>
+                {
+                    try
+                    {
+                        await RunClientSyncAndNotifyUserAsync(manual: false);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, "Program/EnsureClientSyncTimer: Scheduled client sync failed.");
+                    }
+                    finally
+                    {
+                        ScheduleClientSyncTimer();
+                    }
+                };
+            }
+
+            ScheduleClientSyncTimer();
+        }
+
+        private static void ScheduleClientSyncTimer()
+        {
+            if (_clientSyncTimer == null || AppProgramSettings?.NextClientSyncUtc == null)
             {
                 return;
             }
 
-            _clientSyncTimer = new System.Timers.Timer
-            {
-                Interval = TimeSpan.FromHours(1).TotalMilliseconds,
-                AutoReset = true,
-                Enabled = true,
-            };
-
-            _clientSyncTimer.Elapsed += async (_, __) =>
-            {
-                try
-                {
-                    await RunClientSyncAndNotifyUserAsync(manual: false);
-                    await TrySendAnonymousMetricsAsync();
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, "Program/EnsureClientSyncTimer: Scheduled client sync failed.");
-                }
-            };
-
+            _clientSyncTimer.Stop();
+            _clientSyncTimer.Interval = Math.Max(1, (AppProgramSettings.NextClientSyncUtc.Value - DateTime.UtcNow).TotalMilliseconds);
             _clientSyncTimer.Start();
+        }
+
+        private static void EnsureMetricsHeartbeatTimer()
+        {
+            if (_metricsHeartbeatTimer == null)
+            {
+                _metricsHeartbeatTimer = new System.Timers.Timer { AutoReset = false };
+                _metricsHeartbeatTimer.Elapsed += async (_, __) =>
+                {
+                    try
+                    {
+                        await TrySendAnonymousMetricsAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, "Program/EnsureMetricsHeartbeatTimer: Scheduled anonymous metrics heartbeat failed.");
+                    }
+                    finally
+                    {
+                        ScheduleMetricsHeartbeatTimer();
+                    }
+                };
+            }
+
+            ScheduleMetricsHeartbeatTimer();
+        }
+
+        private static void ScheduleMetricsHeartbeatTimer()
+        {
+            if (_metricsHeartbeatTimer == null || AppProgramSettings?.NextMetricsHeartbeatUtc == null || string.IsNullOrWhiteSpace(AppProgramSettings.LastMetricsReportedVersion))
+            {
+                return;
+            }
+
+            _metricsHeartbeatTimer.Stop();
+            _metricsHeartbeatTimer.Interval = Math.Max(1, (AppProgramSettings.NextMetricsHeartbeatUtc.Value - DateTime.UtcNow).TotalMilliseconds);
+            _metricsHeartbeatTimer.Start();
         }
 
         private static void EnsureStartupMessagePollTimer()
@@ -1510,6 +1559,7 @@ namespace DisplayMagician {
                 return;
             }
             RefreshMessageIndicators();
+            ScheduleClientSyncTimer();
             int newMessagesCount = result.MessageResult?.NewMessagesCount ?? 0;
             string completionMessage = newMessagesCount == 1
                 ? "DisplayMagician found 1 new message."
