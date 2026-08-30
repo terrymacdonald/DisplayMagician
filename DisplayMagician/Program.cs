@@ -1156,8 +1156,12 @@ namespace DisplayMagician {
         
         
 
-        //public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)
+        {
+            return RunShortcutTaskAsync(shortcutToUse).GetAwaiter().GetResult();
+        }
+
+        public static async Task<RunShortcutResult> RunShortcutTaskAsync(ShortcutItem shortcutToUse)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
             //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
@@ -1185,9 +1189,8 @@ namespace DisplayMagician {
                 CancellationToken cancelToken = AppCancellationTokenSource.Token;
                 // Start the RunShortcut Task in a new thread
                 Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, cancelToken), cancelToken);
-                // Wait for the task to complete (RunShortcut runs on a background thread)
-                output.Wait(cancelToken);
-                result = output.Result;
+                // Awaiting keeps a WinForms caller's message loop available for shortcut prompts.
+                result = await output;
             }
             catch (OperationCanceledException ex)
             {

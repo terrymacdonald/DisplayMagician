@@ -465,7 +465,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_run_Click(object sender, EventArgs e)
+        private async void btn_run_Click(object sender, EventArgs e)
         {
             logger.Trace($"ShortcutLibraryForm/btn_run_Click: User clicked on the Run button.");
             if (_selectedShortcut == null)
@@ -531,7 +531,7 @@ namespace DisplayMagician.UIForms
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                result = Program.RunShortcutTask(_selectedShortcut);
+                result = await Program.RunShortcutTaskAsync(_selectedShortcut);
             }
             catch (OperationCanceledException ex)
             {

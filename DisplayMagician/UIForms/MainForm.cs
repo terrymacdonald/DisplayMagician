@@ -600,7 +600,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void runShortcutToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void runShortcutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var menuItem = sender as ToolStripMenuItem;
             ShortcutItem shortcutToRun = null;
@@ -618,7 +618,7 @@ namespace DisplayMagician.UIForms
                 // Run the shortcut if it's still there
                 if (shortcutToRun != null)
                     //ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
-                    Program.RunShortcutTask(shortcutToRun);
+                    await Program.RunShortcutTaskAsync(shortcutToRun);
 
                 // Also refresh the right-click menu (if we have a main form loaded)
                 if (Program.AppMainForm is Form)

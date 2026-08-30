@@ -434,7 +434,6 @@ namespace DisplayMagician.AppLibraries
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
             processesStarted = new List<Process>();
-            Process process = null;
             
             if (LocalAppType == InstalledAppType.InstalledProgram)
             {
@@ -442,11 +441,11 @@ namespace DisplayMagician.AppLibraries
                 if (processesStarted.Count > 0)
                 {
                     logger.Trace($"LocalApp/Start: Started LocalApp installed program {Name} with {processesStarted.Count} processes.");
+                    return true;
                 }
-                else
-                {
-                    logger.Error($"LocalApp/Start: Unable to start LocalApp installed program {Name} as no processes were created!");
-                }
+
+                logger.Error($"LocalApp/Start: Unable to start LocalApp installed program {Name} as no processes were created!");
+                return false;
             }
             else if (LocalAppType == InstalledAppType.UWP)
             {
@@ -501,15 +500,6 @@ namespace DisplayMagician.AppLibraries
             else
             {
                 logger.Error($"LocalApp/Start: Unable to start LocalApp as the App is of an unknown type!");
-            }
-                        
-            if (process != null)
-            {
-                processesStarted.Add(process);
-                return true;
-            }
-            else
-            {
                 return false;
             }
         }        
