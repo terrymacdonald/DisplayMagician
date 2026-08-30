@@ -46,11 +46,17 @@ jobs:
         # Nerdbank.GitVersioning calculates version height from repository history.
         fetch-depth: 0
 
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: global.json
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
+        build-mode: manual
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
@@ -59,10 +65,21 @@ jobs:
         # queries: security-extended,security-and-quality
 
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, Go, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v4
+    - name: Add Visual Studio MSBuild to PATH
+      shell: pwsh
+      run: |
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+        if (-not $msbuild) { throw 'Visual Studio MSBuild was not found on the GitHub-hosted runner.' }
+        [System.IO.Path]::GetDirectoryName($msbuild) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Build C# projects for CodeQL
+      shell: pwsh
+      run: |
+        msbuild DisplayMagician\DisplayMagician.csproj /t:Restore /p:Configuration=Debug /p:Platform=AnyCPU /m /nologo
+        msbuild DisplayMagician\DisplayMagician.csproj /t:Build /p:Configuration=Debug /p:Platform=AnyCPU /m /nologo
+        msbuild DisplayMagicianConsole\DisplayMagicianConsole.csproj /t:Restore /p:Configuration=Debug /p:Platform=AnyCPU /m /nologo
+        msbuild DisplayMagicianConsole\DisplayMagicianConsole.csproj /t:Build /p:Configuration=Debug /p:Platform=AnyCPU /m /nologo
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
