@@ -518,8 +518,7 @@
         </member>
         <member name="M:WindowsAudioWrapper.Providers.SystemAudioProvider.SetMonoAudio(System.Boolean)">
             <summary>
-            Sets the mono audio state in the registry. 
-            Note: Changes to this registry key may require restarting the Windows audio service or logging out/in to fully apply across all applications.
+            Sets the mono audio state in the registry and notifies running applications of the setting change.
             </summary>
         </member>
         <member name="T:WindowsAudioWrapper.WindowsAudioController">
