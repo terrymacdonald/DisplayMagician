@@ -157,10 +157,25 @@ jobs:
           github-artifact-id: ${{ steps.unsigned-bundle.outputs.artifact-id }}
           output-artifact-directory: signed-bundle
 
+      - name: Determine signed test installer artifact name
+        id: signed_test_installer
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem signed-bundle -Filter 'DisplayMagicianSetup_v*.exe' -Recurse -File)
+          if ($installers.Count -ne 1) {
+            throw "Expected exactly one signed DisplayMagician setup EXE, but found $($installers.Count)."
+          }
+
+          if ($installers[0].BaseName -notmatch '^DisplayMagicianSetup_(v\d+\.\d+\.\d+\.\d+)$') {
+            throw "Could not determine the version from '$($installers[0].Name)'."
+          }
+
+          "artifact_name=DisplayMagicianSetup-SignPath-Test-$($Matches[1])" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
       - name: Publish signed test installer
         uses: actions/upload-artifact@v7
         with:
-          name: DisplayMagician-SignPath-test-${{ github.run_number }}
+          name: ${{ steps.signed_test_installer.outputs.artifact_name }}
           path: signed-bundle/**/*.exe
           if-no-files-found: error
           retention-days: 14
