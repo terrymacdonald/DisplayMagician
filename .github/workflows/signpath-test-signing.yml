@@ -119,6 +119,18 @@ jobs:
           if ($null -eq $signedMsi) { throw 'SignPath did not return DisplayMagicianPackage.msi.' }
           Copy-Item -LiteralPath $signedMsi.FullName -Destination DisplayMagicianPackage\bin\x64\Release\en-US\DisplayMagicianPackage.msi -Force
 
+      - name: Download the bundled .NET Desktop Runtime
+        shell: pwsh
+        run: |
+          $runtimeVersion = '10.0.7'
+          $runtimeName = "windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
+          $runtimePath = Join-Path $env:GITHUB_WORKSPACE "DisplayMagicianBundle\Packages\$runtimeName"
+          New-Item -ItemType Directory -Force -Path (Split-Path -Parent $runtimePath) | Out-Null
+          Invoke-WebRequest -Uri "https://aka.ms/dotnet/$runtimeVersion/windowsdesktop-runtime-win-x64.exe" -OutFile $runtimePath
+          if (-not (Test-Path $runtimePath) -or (Get-Item $runtimePath).Length -eq 0) {
+            throw "The .NET Desktop Runtime installer was not downloaded to $runtimePath."
+          }
+
       - name: Build the WiX bundle around the signed MSI
         shell: pwsh
         run: |
