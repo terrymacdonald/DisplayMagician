@@ -932,7 +932,7 @@ namespace DisplayMagician
                         try
                         {
                             logger.Info($"ShortcutRepository/RunShortcut: Restarting '{sp.Executable}' during cleanup.");
-                            ProcessUtils.StartProcess(sp.Executable, "", sp.RestartProcessPriority, 10, sp.RunAsAdministrator);
+                            ProcessUtils.StartProcessAndForget(sp.Executable, "", sp.RestartProcessPriority, 10, sp.RunAsAdministrator);
                         }
                         catch (Exception ex)
                         {
@@ -963,6 +963,40 @@ namespace DisplayMagician
                 }
 
                 SetTrayText(myMainForm, $"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
+            }
+
+            bool AskToContinue(string message, string title)
+            {
+                if (cancelToken.IsCancellationRequested || myMainForm == null || myMainForm.IsDisposed)
+                    return false;
+
+                try
+                {
+                    if (!myMainForm.InvokeRequired)
+                    {
+                        return MessageBox.Show(myMainForm, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
+                    }
+
+                    TaskCompletionSource<DialogResult> dialogResult = new TaskCompletionSource<DialogResult>();
+                    myMainForm.BeginInvoke((MethodInvoker)delegate
+                    {
+                        try
+                        {
+                            dialogResult.TrySetResult(MessageBox.Show(myMainForm, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning));
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ShortcutRepository/RunShortcut: Could not show '{title}' confirmation dialog.");
+                            dialogResult.TrySetResult(DialogResult.No);
+                        }
+                    });
+                    return dialogResult.Task.GetAwaiter().GetResult() == DialogResult.Yes;
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Could not queue '{title}' confirmation dialog.");
+                    return false;
+                }
             }
 
             if (shortcutToUse.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
@@ -1003,17 +1037,9 @@ namespace DisplayMagician
                 else
                 {
                     logger.Warn($"ShortcutRepository/RunShortcut: Display profile change timed out after 30 seconds.");
-                    bool continueAnyway = false;
-                    myMainForm.Invoke((MethodInvoker)delegate
-                    {
-                        DialogResult dr = MessageBox.Show(
-                            myMainForm,
-                            $"The display change is taking a long time. Do you want to continue waiting/running the shortcut anyway?",
-                            "Display Change Timeout",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Warning);
-                        continueAnyway = (dr == DialogResult.Yes);
-                    });
+                    bool continueAnyway = AskToContinue(
+                        "The display change is taking a long time. Do you want to continue waiting/running the shortcut anyway?",
+                        "Display Change Timeout");
 
                     if (!continueAnyway)
                     {
@@ -1087,17 +1113,9 @@ namespace DisplayMagician
 
                         logger.Warn($"ShortcutRepository/RunShortcut: Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. {missingDevicesText}");
                         
-                        bool continueAnyway = false;
-                        myMainForm.Invoke((MethodInvoker)delegate
-                        {
-                            DialogResult dr = MessageBox.Show(
-                                myMainForm,
-                                $"Could not set the '{shortcutToUse.AudioProfileToUse.Name}' audio profile in time.{missingDevicesText}\n\nDo you want to continue running the shortcut anyway?",
-                                "Audio Profile Timeout",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Warning);
-                            continueAnyway = (dr == DialogResult.Yes);
-                        });
+                        bool continueAnyway = AskToContinue(
+                            $"Could not set the '{shortcutToUse.AudioProfileToUse.Name}' audio profile in time.{missingDevicesText}\n\nDo you want to continue running the shortcut anyway?",
+                            "Audio Profile Timeout");
 
                         if (!continueAnyway)
                         {
@@ -1148,17 +1166,9 @@ namespace DisplayMagician
                             if (!ProcessUtils.StopProcess(runningProcesses.ToList()))
                             {
                                 logger.Warn($"ShortcutRepository/RunShortcut: One or more instances of '{processName}' could not be stopped.");
-                                bool continueAnyway = false;
-                                myMainForm.Invoke((MethodInvoker)delegate
-                                {
-                                    DialogResult dr = MessageBox.Show(
-                                        myMainForm,
-                                        $"The stop program '{processName}' was running but failed to stop.\n\nDo you want to continue running the shortcut?",
-                                        "Stop Program Failed",
-                                        MessageBoxButtons.YesNo,
-                                        MessageBoxIcon.Warning);
-                                    continueAnyway = (dr == DialogResult.Yes);
-                                });
+                                bool continueAnyway = AskToContinue(
+                                    $"The stop program '{processName}' was running but failed to stop.\n\nDo you want to continue running the shortcut?",
+                                    "Stop Program Failed");
 
                                 if (!continueAnyway)
                                 {
@@ -1175,17 +1185,9 @@ namespace DisplayMagician
                         catch (Exception ex)
                         {
                             logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping program '{stopProgramEntry.Executable}'.");
-                            bool continueAnyway = false;
-                            myMainForm.Invoke((MethodInvoker)delegate
-                            {
-                                DialogResult dr = MessageBox.Show(
-                                    myMainForm,
-                                    $"An exception occurred while trying to stop the program '{stopProgramEntry.Executable}': {ex.Message}\n\nDo you want to continue running the shortcut?",
-                                    "Stop Program Failed",
-                                    MessageBoxButtons.YesNo,
-                                    MessageBoxIcon.Warning);
-                                continueAnyway = (dr == DialogResult.Yes);
-                            });
+                            bool continueAnyway = AskToContinue(
+                                $"An exception occurred while trying to stop the program '{stopProgramEntry.Executable}': {ex.Message}\n\nDo you want to continue running the shortcut?",
+                                "Stop Program Failed");
 
                             if (!continueAnyway)
                             {
@@ -1299,17 +1301,9 @@ namespace DisplayMagician
 
                         if (startFailed)
                         {
-                            bool continueAnyway = false;
-                            myMainForm.Invoke((MethodInvoker)delegate
-                            {
-                                DialogResult dr = MessageBox.Show(
-                                    myMainForm,
-                                    $"The start program '{Path.GetFileName(processToStart.Executable)}' failed to start.\nReason: {failReason}\n\nDo you want to continue running the shortcut?",
-                                    "Start Program Failed",
-                                    MessageBoxButtons.YesNo,
-                                    MessageBoxIcon.Warning);
-                                continueAnyway = (dr == DialogResult.Yes);
-                            });
+                            bool continueAnyway = AskToContinue(
+                                $"The start program '{Path.GetFileName(processToStart.Executable)}' failed to start.\nReason: {failReason}\n\nDo you want to continue running the shortcut?",
+                                "Start Program Failed");
 
                             if (!continueAnyway)
                             {
@@ -1391,17 +1385,9 @@ namespace DisplayMagician
 
                 if (appStartFailed)
                 {
-                    bool continueAnyway = false;
-                    myMainForm.Invoke((MethodInvoker)delegate
-                    {
-                        DialogResult dr = MessageBox.Show(
-                            myMainForm,
-                            $"Unable to launch application '{shortcutToUse.ApplicationName}'.\n\nDo you want to continue running the shortcut anyway?",
-                            "Application Failed to Start",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Warning);
-                        continueAnyway = (dr == DialogResult.Yes);
-                    });
+                    bool continueAnyway = AskToContinue(
+                        $"Unable to launch application '{shortcutToUse.ApplicationName}'.\n\nDo you want to continue running the shortcut anyway?",
+                        "Application Failed to Start");
 
                     if (!continueAnyway)
                     {
@@ -1579,17 +1565,9 @@ namespace DisplayMagician
                     }
                     else
                     {
-                        bool continueAnyway = false;
-                        myMainForm.Invoke((MethodInvoker)delegate
-                        {
-                            DialogResult dr = MessageBox.Show(
-                                myMainForm,
-                                $"The application process '{shortcutToUse.DifferentExecutableToMonitor}' was not detected as running.\n\nDo you want to continue running the shortcut anyway?",
-                                "Application Process Missing",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Warning);
-                            continueAnyway = (dr == DialogResult.Yes);
-                        });
+                        bool continueAnyway = AskToContinue(
+                            $"The application process '{shortcutToUse.DifferentExecutableToMonitor}' was not detected as running.\n\nDo you want to continue running the shortcut anyway?",
+                            "Application Process Missing");
 
                         if (!continueAnyway)
                         {
@@ -1694,17 +1672,9 @@ namespace DisplayMagician
 
                 if (exeStartFailed || (shortcutToUse.ProcessNameToMonitorUsesExecutable && processesCreated.Count == 0))
                 {
-                    bool continueAnyway = false;
-                    myMainForm.Invoke((MethodInvoker)delegate
-                    {
-                        DialogResult dr = MessageBox.Show(
-                            myMainForm,
-                            $"The executable '{Path.GetFileName(shortcutToUse.ExecutableNameAndPath)}' did not start or couldn't be detected.\n\nDo you want to continue running the shortcut anyway?",
-                            "Executable Failed to Start",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Warning);
-                        continueAnyway = (dr == DialogResult.Yes);
-                    });
+                    bool continueAnyway = AskToContinue(
+                        $"The executable '{Path.GetFileName(shortcutToUse.ExecutableNameAndPath)}' did not start or couldn't be detected.\n\nDo you want to continue running the shortcut anyway?",
+                        "Executable Failed to Start");
 
                     if (!continueAnyway)
                     {
@@ -1967,17 +1937,9 @@ namespace DisplayMagician
 
                     if (!libraryRunning)
                     {
-                        bool continueAnyway = false;
-                        myMainForm.Invoke((MethodInvoker)delegate
-                        {
-                            DialogResult dr = MessageBox.Show(
-                                myMainForm,
-                                $"The Game Library '{gameToRun.GameLibrary.GameLibraryName}' took a long time to start (timeout exceeded).\n\nDo you want to continue waiting/running the shortcut?",
-                                "Game Library Launch Timeout",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Warning);
-                            continueAnyway = (dr == DialogResult.Yes);
-                        });
+                        bool continueAnyway = AskToContinue(
+                            $"The Game Library '{gameToRun.GameLibrary.GameLibraryName}' took a long time to start (timeout exceeded).\n\nDo you want to continue waiting/running the shortcut?",
+                            "Game Library Launch Timeout");
 
                         if (!continueAnyway)
                         {
@@ -1991,17 +1953,9 @@ namespace DisplayMagician
                     // detect game library updates if I can find a way of developing them per library in the future.
                     if (gameToRun.GameLibrary.IsUpdating)
                     {
-                        bool continueUpdating = false;
-                        myMainForm.Invoke((MethodInvoker)delegate
-                        {
-                            DialogResult dr = MessageBox.Show(
-                                myMainForm,
-                                $"The Game Library '{gameToRun.GameLibrary.GameLibraryName}' is currently updating.\n\nDo you want to continue waiting?",
-                                "Game Library Updating",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Warning);
-                            continueUpdating = (dr == DialogResult.Yes);
-                        });
+                        bool continueUpdating = AskToContinue(
+                            $"The Game Library '{gameToRun.GameLibrary.GameLibraryName}' is currently updating.\n\nDo you want to continue waiting?",
+                            "Game Library Updating");
 
                         if (!continueUpdating)
                         {
@@ -2054,17 +2008,9 @@ namespace DisplayMagician
                     // detect game library updates if I can find a way of developing them per library in the future.
                     if (gameToRun.IsUpdating)
                     {
-                        bool continueUpdating = false;
-                        myMainForm.Invoke((MethodInvoker)delegate
-                        {
-                            DialogResult dr = MessageBox.Show(
-                                myMainForm,
-                                $"The Game '{gameToRun.Name}' is currently updating.\n\nDo you want to continue waiting?",
-                                "Game Updating",
-                                MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Warning);
-                            continueUpdating = (dr == DialogResult.Yes);
-                        });
+                        bool continueUpdating = AskToContinue(
+                            $"The Game '{gameToRun.Name}' is currently updating.\n\nDo you want to continue waiting?",
+                            "Game Updating");
 
                         if (!continueUpdating)
                         {
@@ -2166,17 +2112,9 @@ namespace DisplayMagician
                                 logger.Error($"ShortcutRepository/RunShortcut: The Game {gameToRun.Name} didn't start for some reason (or the game uses a starter exe that launches the game itself)! so reverting changes back if needed...");
                                 logger.Warn($"ShortcutRepository/RunShortcut: We were monitoring {gameToRun.ExePath}. You may need to manually add an alternative game executable to monitor - please run the game manually and check if another executable in {Path.GetDirectoryName(gameToRun.ExePath)} is run, and then monitor that instead.");
 
-                                bool continueWaiting = false;
-                                myMainForm.Invoke((MethodInvoker)delegate
-                                {
-                                    DialogResult dr = MessageBox.Show(
-                                        myMainForm,
-                                        $"The game '{gameToRun.Name}' took a long time to start (timeout exceeded).\n\nDo you want to continue waiting/running the shortcut?",
-                                        "Game Launch Timeout",
-                                        MessageBoxButtons.YesNo,
-                                        MessageBoxIcon.Warning);
-                                    continueWaiting = (dr == DialogResult.Yes);
-                                });
+                                bool continueWaiting = AskToContinue(
+                                    $"The game '{gameToRun.Name}' took a long time to start (timeout exceeded).\n\nDo you want to continue waiting/running the shortcut?",
+                                    "Game Launch Timeout");
 
                                 if (!continueWaiting)
                                 {
@@ -2407,17 +2345,9 @@ namespace DisplayMagician
                             logger.Error($"ShortcutRepository/RunShortcut: The Game {gameToRun.Name} didn't start for some reason (or the game uses a starter exe that launches the game itself)! so reverting changes back if needed...");
                             logger.Warn($"ShortcutRepository/RunShortcut: We were monitoring {gameToRun.ExePath}. You may need to manually add an alternative game executable to monitor - please run the game manually and check if another executable in {Path.GetDirectoryName(gameToRun.ExePath)} is run, and then monitor that instead.");
 
-                            bool continueWaiting = false;
-                            myMainForm.Invoke((MethodInvoker)delegate
-                            {
-                                DialogResult dr = MessageBox.Show(
-                                    myMainForm,
-                                    $"The game '{gameToRun.Name}' took a long time to start (timeout exceeded).\n\nDo you want to continue waiting/running the shortcut?",
-                                    "Game Launch Timeout",
-                                    MessageBoxButtons.YesNo,
-                                    MessageBoxIcon.Warning);
-                                continueWaiting = (dr == DialogResult.Yes);
-                            });
+                            bool continueWaiting = AskToContinue(
+                                $"The game '{gameToRun.Name}' took a long time to start (timeout exceeded).\n\nDo you want to continue waiting/running the shortcut?",
+                                "Game Launch Timeout");
 
                             if (!continueWaiting)
                             {
@@ -2559,8 +2489,15 @@ namespace DisplayMagician
                         {
                             logger.Info($"ShortcutRepository/RunShortcut: Restarting '{action.ToRestart.Executable}'.");
                             List<Process> restartedProcesses = ProcessUtils.StartProcess(action.ToRestart.Executable, "", action.ToRestart.RestartProcessPriority, 10, action.ToRestart.RunAsAdministrator);
-                            if (restartedProcesses.Count == 0)
-                                logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when restarting '{action.ToRestart.Executable}'.");
+                            try
+                            {
+                                if (restartedProcesses.Count == 0)
+                                    logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when restarting '{action.ToRestart.Executable}'.");
+                            }
+                            finally
+                            {
+                                ProcessUtils.DisposeProcesses(restartedProcesses);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -2680,7 +2617,7 @@ namespace DisplayMagician
                                 else
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable} as no other processes running");
-                                    if (ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator).Count == 0)
+                                    if (!ProcessUtils.StartProcessAndForget(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator))
                                         logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when starting After Program '{stopProg.Executable}'.");
                                 }
 
@@ -2688,7 +2625,7 @@ namespace DisplayMagician
                             else
                             {
                                 logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable}.");
-                                if (ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator).Count == 0)
+                                if (!ProcessUtils.StartProcessAndForget(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator))
                                     logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when starting After Program '{stopProg.Executable}'.");
                             }
                         }    

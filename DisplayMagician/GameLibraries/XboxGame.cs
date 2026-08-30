@@ -228,7 +228,7 @@ namespace DisplayMagician.GameLibraries
                 logger.Info($"XboxGame/Start: Launching sandboxed application container via Shell AUMID wrapper: {launchArgs}");
                 
                 // This fires the call to the shell environment
-                ProcessUtils.StartProcess(explorerExe, launchArgs, priority, timeout, runExeAsAdmin);
+                ProcessUtils.StartProcessAndForget(explorerExe, launchArgs, priority, timeout, runExeAsAdmin);
             }
             // CASE 2: Fall back to unsealed Win32 runtime executable pathway if no AUMID is resolved
             else

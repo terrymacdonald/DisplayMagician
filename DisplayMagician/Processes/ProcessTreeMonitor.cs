@@ -130,16 +130,23 @@ namespace DisplayMagician.Processes
             if (monitor == null)
                 return startedProcesses;
 
-            List<Process> trackedProcesses = monitor.GetTrackedProcesses();
-            monitor.Dispose();
-            if (trackedProcesses.Count == 0)
-                return startedProcesses;
+            try
+            {
+                while (!monitor.HasObservedExpectedProcess && DateTime.UtcNow < monitor._deadlineUtc)
+                    Thread.Sleep(50);
 
-            foreach (Process process in startedProcesses)
-                process.Dispose();
+                List<Process> trackedProcesses = monitor.GetTrackedProcesses();
+                if (trackedProcesses.Count == 0)
+                    return startedProcesses;
 
-            logger.Info($"ProcessTreeMonitor/StartAndCapture: Tracking {trackedProcesses.Count} process(es) for {executable}.");
-            return trackedProcesses;
+                ProcessUtils.DisposeProcesses(startedProcesses);
+                logger.Info($"ProcessTreeMonitor/StartAndCapture: Tracking {trackedProcesses.Count} process(es) for {executable}.");
+                return trackedProcesses;
+            }
+            finally
+            {
+                monitor.Dispose();
+            }
         }
 
         private void Start()

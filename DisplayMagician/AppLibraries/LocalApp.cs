@@ -179,48 +179,41 @@ namespace DisplayMagician.AppLibraries
                 if (LocalAppType == InstalledAppType.InstalledProgram)
                 {
                     int numAppProcesses = 0;
-                    _LocalAppProcesses = Process.GetProcessesByName(_LocalAppProcessName).ToList();
-                    foreach (Process AppProcess in _LocalAppProcesses)
+                    List<Process> appProcesses = Process.GetProcessesByName(_LocalAppProcessName).ToList();
+                    try
                     {
-                        try
+                        foreach (Process AppProcess in appProcesses)
                         {
-                            if (AppProcess.ProcessName.Equals(_LocalAppProcessName))
-                                numAppProcesses++;
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Debug(ex, $"LocalApp/IsRunning: Accessing Process.ProcessName caused exception. Trying AppProcess.MainModule.FileName instead");
-                            // If there is a race condition where MainModule isn't available, then we 
-                            // instead try the much slower MainModule.FileName (which does the same thing)
-                            string filePath = null;
                             try
                             {
-                                filePath = AppProcess.MainModule.FileName;
+                                if (AppProcess.ProcessName.Equals(_LocalAppProcessName))
+                                    numAppProcesses++;
                             }
-                            catch (Exception ex2)
+                            catch (Exception ex)
                             {
-                                logger.Debug(ex2, $"LocalApp/IsRunning: Accessing AppProcess.MainModule.FileName also caused exception. Assuming it is a matching App process.");
-                            }
-                            if (filePath == null)
-                            {
-                                // if we hit this bit then MainModule.FileName failed,
-                                // so we just assume that the process is a App process
-                                // as it matched the process search
-                                numAppProcesses++;
-                                continue;
-                            }
-                            else
-                            {
-                                if (filePath.StartsWith(_LocalAppExePath))
+                                logger.Debug(ex, $"LocalApp/IsRunning: Accessing Process.ProcessName caused exception. Trying AppProcess.MainModule.FileName instead");
+                                string filePath = null;
+                                try
+                                {
+                                    filePath = AppProcess.MainModule.FileName;
+                                }
+                                catch (Exception ex2)
+                                {
+                                    logger.Debug(ex2, $"LocalApp/IsRunning: Accessing AppProcess.MainModule.FileName also caused exception. Assuming it is a matching App process.");
+                                }
+                                if (filePath == null)
+                                    numAppProcesses++;
+                                else if (filePath.StartsWith(_LocalAppExePath))
                                     numAppProcesses++;
                             }
                         }
                     }
+                    finally
+                    {
+                        ProcessUtils.DisposeProcesses(appProcesses);
+                    }
 
-                    if (numAppProcesses > 0)
-                        return true;
-                    else
-                        return false;
+                    return numAppProcesses > 0;
                 }
                 else if (LocalAppType == InstalledAppType.UWP)
                 {

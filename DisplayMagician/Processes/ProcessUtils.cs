@@ -53,63 +53,32 @@ namespace DisplayMagician.Processes
         public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
         {
             List<Process> returnedProcesses = new List<Process>();
-
-            // TODO: startTimeout (seconds) is intended to gate how long DM waits for the process to be
-            // detected as running, but that detection loop is not yet implemented here. The 4-second
-            // launcher-detection WaitForExit below is a separate, unrelated mechanism.
             ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
             Process processCreated = TryExecute(executable, arguments, runAsAdministrator, wantedPriority);
 
             if (processCreated != null)
             {
+                if (!File.Exists(executable))
+                {
+                    // Shell targets such as URLs do not have a meaningful process to monitor.
+                    processCreated.Dispose();
+                    return returnedProcesses;
+                }
+
                 logger.Info($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by Process.Start (Process ID: {processCreated.Id})");
                 try
                 {
-                    processCreated.WaitForExit(4000);
-
-                    if (processCreated.HasExited)
+                    if (!processCreated.HasExited && processCreated.PriorityClass != wantedPriority)
                     {
-                        logger.Info($"ProcessUtils/StartProcess: {executable} {arguments} has exited within 4 seconds. It is probable that it is a game or app launcher, so we'll try to see if process ID {processCreated.Id} launched any child processes, and monitor them instead!");
-
-                        // If the process has exited, then it's likely to be a launcher, so we try to find the children processes
-                        List<Process> childProcesses = GetChildProcesses(processCreated);
-                        if (childProcesses.Count > 0)
-                        {
-                            logger.Trace($"ProcessUtils/StartProcess: Yay! We found {childProcesses.Count} child processes were launched when we started {executable} {arguments}, so we'll monitor them instead!");
-                            returnedProcesses.AddRange(childProcesses);
-                        }
-                        else
-                        {
-                            logger.Trace($"ProcessUtils/StartProcess: Oh no! We couldn't find any child processes after we started {executable} {arguments} and it closed itself. Nothing to monitor! It's possible that there is a problem with the {executable} program. Try running it yourself manually to see if you can see a problem with it.");
-                            // We need to try and find if there were any child processes another way
-                            // For example, this is where we land when Explorer launches a UWP program using ShellAppsFolder 
-                            // Explorer runs the UWP program, and then closes the application process, as it seems to communicate with 
-                            // svchost.exe thorough the backend.
-                        }
-                        // The launcher process has already exited; release its handle.
-                        processCreated.Dispose();
+                        processCreated.PriorityClass = wantedPriority;
+                        logger.Trace($"ProcessUtils/StartProcess: Successfully set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
                     }
-                    else
-                    {
-                        // If we're here then the process was created and hasn't exited!
-                        try
-                        {
-                            if (processCreated.PriorityClass != wantedPriority)
-                            {
-                                processCreated.PriorityClass = wantedPriority;
-                                logger.Trace($"ProcessUtils/StartProcess: Successfully set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Warn(ex, $"ProcessUtils/StartProcess: Exception while trying to set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
-                        }
-                        returnedProcesses.Add(processCreated);
-                    }
+                    returnedProcesses.Add(processCreated);
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ProcessUtils/StartProcess: Exception while trying to get the process information from {executable} after we started it. It is possible there was a problem with the executable.");
+                    logger.Warn(ex, $"ProcessUtils/StartProcess: Could not set the priority for {executable}; retaining its process handle for the caller.");
+                    returnedProcesses.Add(processCreated);
                 }
             }
             else
@@ -119,6 +88,19 @@ namespace DisplayMagician.Processes
 
             return returnedProcesses;
         }        
+
+        public static bool StartProcessAndForget(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
+        {
+            List<Process> startedProcesses = StartProcess(executable, arguments, processPriority, startTimeout, runAsAdministrator);
+            try
+            {
+                return startedProcesses.Count > 0;
+            }
+            finally
+            {
+                DisposeProcesses(startedProcesses);
+            }
+        }
 
         public static List<Process> GetChildProcesses(Process process)
         {
