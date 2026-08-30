@@ -75,6 +75,11 @@
     </ItemGroup>
     <Copy SourceFiles="@(_AssetFiles)" DestinationFolder="$(_MsixStagingDir)Assets\" />
 
+    <!-- Test-only publisher override used by the SignPath test certificate in CI. -->
+    <Exec Condition="'$(IdentityPackagePublisherOverride)' != '' and Exists('$(_DmExePath)')"
+          Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)PatchMsixVersion.ps1&quot; -ExePath &quot;$(_DmExePath)&quot; -ManifestPath &quot;$(_MsixStagingDir)AppxManifest.xml&quot; -Publisher &quot;$(IdentityPackagePublisherOverride)&quot;"
+          ConsoleToMsBuild="true" />
+
     <!-- Pack the sparse MSIX from the clean staging directory -->
     <Exec Command="&quot;$(MakeAppxExe)&quot; pack /o /d &quot;$(_MsixStagingDir.TrimEnd('\'))&quot; /p &quot;$(IdentityMsixPath)&quot; /nv"
           ConsoleToMsBuild="true" />

@@ -1,0 +1,141 @@
+name: SignPath test signing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  sign-test-installer:
+    name: Build and SignPath-sign test installer
+    runs-on: windows-latest
+    env:
+      CONFIGURATION: Release
+      PLATFORM: x64
+      SIGNPATH_ORGANIZATION_ID: 7d8563da-0103-4716-ad87-b3633f63f1b2
+      SIGNPATH_PROJECT_SLUG: DisplayMagician
+      SIGNPATH_POLICY_SLUG: test-signing
+      SIGNPATH_TEST_PUBLISHER: "CN=Test certificate for 'DisplayMagician [OSS]'"
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Set up Visual Studio MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Verify the local PFX configuration is absent
+        shell: pwsh
+        run: |
+          if (Test-Path SigningConfig.props) {
+            throw 'SigningConfig.props must not exist in a SignPath CI build.'
+          }
+
+      - name: Restore and build the application
+        shell: pwsh
+        run: |
+          msbuild DisplayMagician\DisplayMagician.csproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:Platform="Any CPU" /m /nologo
+
+      - name: Build the test identity MSIX
+        shell: pwsh
+        run: |
+          msbuild DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:IdentityPackagePublisherOverride="$env:SIGNPATH_TEST_PUBLISHER" /m /nologo
+
+      - name: Upload unsigned identity MSIX
+        id: unsigned-msix
+        uses: actions/upload-artifact@v7
+        with:
+          name: signpath-unsigned-msix-${{ github.run_id }}
+          path: DisplayMagicianPackage/Packages/DisplayMagicianIdentityPkg.msix
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Sign identity MSIX with SignPath test certificate
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: package-identity-msix-signing
+          github-artifact-id: ${{ steps.unsigned-msix.outputs.artifact-id }}
+          output-artifact-directory: signed-msix
+
+      - name: Stage signed identity MSIX
+        shell: pwsh
+        run: |
+          $signedMsix = Get-ChildItem signed-msix -Filter DisplayMagicianIdentityPkg.msix -Recurse | Select-Object -First 1
+          if ($null -eq $signedMsix) { throw 'SignPath did not return DisplayMagicianIdentityPkg.msix.' }
+          Copy-Item -LiteralPath $signedMsix.FullName -Destination DisplayMagicianPackage\Packages\DisplayMagicianIdentityPkg.msix -Force
+
+      - name: Build the MSI around the signed identity package
+        shell: pwsh
+        run: |
+          msbuild DisplayMagicianPackage\DisplayMagicianPackage.wixproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingIdentityPackage=true /m /nologo
+
+      - name: Upload unsigned MSI
+        id: unsigned-msi
+        uses: actions/upload-artifact@v7
+        with:
+          name: signpath-unsigned-msi-${{ github.run_id }}
+          path: DisplayMagicianPackage/bin/x64/Release/en-US/DisplayMagicianPackage.msi
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Sign MSI with SignPath test certificate
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: installer-msi-signing
+          github-artifact-id: ${{ steps.unsigned-msi.outputs.artifact-id }}
+          output-artifact-directory: signed-msi
+
+      - name: Stage signed MSI
+        shell: pwsh
+        run: |
+          $signedMsi = Get-ChildItem signed-msi -Filter DisplayMagicianPackage.msi -Recurse | Select-Object -First 1
+          if ($null -eq $signedMsi) { throw 'SignPath did not return DisplayMagicianPackage.msi.' }
+          Copy-Item -LiteralPath $signedMsi.FullName -Destination DisplayMagicianPackage\bin\x64\Release\en-US\DisplayMagicianPackage.msi -Force
+
+      - name: Build the WiX bundle around the signed MSI
+        shell: pwsh
+        run: |
+          msbuild DisplayMagicianBundle\DisplayMagicianBundle.wixproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingMsiPackage=true /m /nologo
+
+      - name: Upload unsigned setup bundle
+        id: unsigned-bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: signpath-unsigned-bundle-${{ github.run_id }}
+          path: DisplayMagicianBundle/bin/x64/Release/DisplayMagicianSetup_v*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Sign WiX bundle with SignPath test certificate
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: bundle-exe-signing
+          github-artifact-id: ${{ steps.unsigned-bundle.outputs.artifact-id }}
+          output-artifact-directory: signed-bundle
+
+      - name: Publish signed test installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: DisplayMagician-SignPath-test-${{ github.run_number }}
+          path: signed-bundle/**/*.exe
+          if-no-files-found: error
+          retention-days: 14

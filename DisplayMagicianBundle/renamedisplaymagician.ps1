@@ -1,13 +1,14 @@
 param (
     # Path passed as a parameter from the command line, defaulting to the current directory if not provided
-    [string]$outputDir = (Get-Location)
+    [string]$outputDir = (Get-Location),
+    [string]$Configuration = "Debug"
 )
 
 # Get the current directory (where the script is being run)
 $currentDir = Get-Location
 
 # Path to the DisplayMagician assembly (DLL) containing the version info, using a relative path
-$relativeAssemblyPath = "..\DisplayMagician\bin\Debug\DisplayMagician.dll"
+$relativeAssemblyPath = "..\DisplayMagician\bin\$Configuration\DisplayMagician.dll"
 $assemblyPath = Join-Path -Path $currentDir -ChildPath $relativeAssemblyPath
 
 # Get the Version from the file

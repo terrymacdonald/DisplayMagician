@@ -3,6 +3,8 @@
     <OutputType>Bundle</OutputType>
     <OutputName>DisplayMagicianSetup</OutputName>
     <AcceptEula>wix7</AcceptEula>
+    <DmPackageDir>$(MSBuildThisFileDirectory)..\DisplayMagicianPackage\bin\$(Platform)\$(Configuration)\en-US\</DmPackageDir>
+    <DefineConstants>DmPackageDir=$(DmPackageDir)</DefineConstants>
     <!-- Suppress ICE validation to avoid WIX1105 warning when not running as admin -->
     <SuppressValidation>true</SuppressValidation>
   </PropertyGroup>
@@ -13,7 +15,8 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Ensure DisplayMagicianPackage MSI is built before this Bundle -->
-    <ProjectReference Include="..\DisplayMagicianPackage\DisplayMagicianPackage.wixproj" />
+    <!-- CI reuses the SignPath-signed MSI rather than rebuilding it. -->
+    <ProjectReference Include="..\DisplayMagicianPackage\DisplayMagicianPackage.wixproj" Condition="'$(UseExistingMsiPackage)' != 'true'" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="WixToolset.Bal.wixext" Version="7.0.0" />
@@ -21,7 +24,7 @@
   </ItemGroup>
   <Target Name="RenameBundleFile" AfterTargets="Build">
     <!-- Use PowerShell to rename the bundle output file after the build -->
-    <Exec Command="powershell -ExecutionPolicy Bypass -File .\renamedisplaymagician.ps1 -outputDir $(ProjectDir)$(OutputPath)" />
+    <Exec Command="powershell -ExecutionPolicy Bypass -File .\renamedisplaymagician.ps1 -outputDir $(ProjectDir)$(OutputPath) -Configuration $(Configuration)" />
   </Target>
   <!-- Added as workaround for FireGiant HeatWave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
   <Target Name="CollectSuggestedVisualStudioComponentIds" />

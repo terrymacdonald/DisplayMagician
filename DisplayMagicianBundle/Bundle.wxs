@@ -9,7 +9,7 @@
 
 	<Chain>
 		<PackageGroupRef Id="DotNetDesktopRedist" />
-		<MsiPackage Id="DisplayMagicianPackage" SourceFile="..\DisplayMagicianPackage\bin\$(var.Configuration)\en-US\DisplayMagicianPackage.msi" Vital="yes">
+		<MsiPackage Id="DisplayMagicianPackage" SourceFile="$(var.DmPackageDir)DisplayMagicianPackage.msi" Vital="yes">
 			<MsiProperty Name="REMOVE_USER_DATA" Value="[RemoveUserData]" />
 		</MsiPackage>
 	</Chain>
