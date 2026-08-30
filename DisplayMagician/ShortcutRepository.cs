@@ -1207,7 +1207,7 @@ namespace DisplayMagician
                         string failReason = "";
                         try
                         {
-                            processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+                            processesCreated = ProcessTreeMonitor.StartAndCapture(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
 
                             // Record the program we started so we can close it later (if we have any!)
                             if (processesCreated.Count > 0)
@@ -1632,7 +1632,7 @@ namespace DisplayMagician
                 bool exeStartFailed = false;
                 try
                 {
-                    processesCreated = ProcessUtils.StartProcessAndTrackDescendants(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    processesCreated = ProcessTreeMonitor.StartAndCapture(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
 
                     // Record the program we started so we can close it later
                     foreach (Process p in processesCreated)

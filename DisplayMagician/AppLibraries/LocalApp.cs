@@ -437,7 +437,7 @@ namespace DisplayMagician.AppLibraries
             
             if (LocalAppType == InstalledAppType.InstalledProgram)
             {
-                processesStarted = ProcessUtils.StartProcessAndTrackDescendants(ExePath, Arguments, priority, timeout, runExeAsAdmin);
+                processesStarted = ProcessTreeMonitor.StartAndCapture(ExePath, Arguments, priority, timeout, runExeAsAdmin);
                 if (processesStarted.Count > 0)
                 {
                     logger.Trace($"LocalApp/Start: Started LocalApp installed program {Name} with {processesStarted.Count} processes.");

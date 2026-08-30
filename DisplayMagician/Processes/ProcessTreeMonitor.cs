@@ -84,6 +84,35 @@ namespace DisplayMagician.Processes
             }
         }
 
+        public List<Process> GetTrackedProcesses()
+        {
+            List<Process> processes = new List<Process>();
+            int[] processIds;
+            lock (_syncRoot)
+                processIds = new List<int>(_trackedProcessIds).ToArray();
+
+            foreach (int processId in processIds)
+            {
+                try
+                {
+                    Process process = Process.GetProcessById(processId);
+                    if (!process.HasExited)
+                        processes.Add(process);
+                    else
+                        process.Dispose();
+                }
+                catch (ArgumentException)
+                {
+                    // The process has exited.
+                }
+                catch (Exception ex)
+                {
+                    logger.Trace(ex, $"ProcessTreeMonitor/GetTrackedProcesses: Could not query tracked PID {processId}.");
+                }
+            }
+            return processes;
+        }
+
         public static ProcessTreeMonitor BeginWatching(string expectedExecutablePath, int startTimeout)
         {
             if (string.IsNullOrWhiteSpace(expectedExecutablePath) || !File.Exists(expectedExecutablePath))
@@ -92,6 +121,25 @@ namespace DisplayMagician.Processes
             ProcessTreeMonitor monitor = new ProcessTreeMonitor(expectedExecutablePath, startTimeout);
             monitor.Start();
             return monitor;
+        }
+
+        public static List<Process> StartAndCapture(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
+        {
+            ProcessTreeMonitor monitor = BeginWatching(executable, startTimeout);
+            List<Process> startedProcesses = ProcessUtils.StartProcess(executable, arguments, processPriority, startTimeout, runAsAdministrator);
+            if (monitor == null)
+                return startedProcesses;
+
+            List<Process> trackedProcesses = monitor.GetTrackedProcesses();
+            monitor.Dispose();
+            if (trackedProcesses.Count == 0)
+                return startedProcesses;
+
+            foreach (Process process in startedProcesses)
+                process.Dispose();
+
+            logger.Info($"ProcessTreeMonitor/StartAndCapture: Tracking {trackedProcesses.Count} process(es) for {executable}.");
+            return trackedProcesses;
         }
 
         private void Start()
