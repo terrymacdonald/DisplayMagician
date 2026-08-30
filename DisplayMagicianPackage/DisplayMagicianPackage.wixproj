@@ -3,11 +3,6 @@
   <!-- Import local signing config (copy SigningConfig.props.example to SigningConfig.props and fill in values) -->
   <Import Project="..\SigningConfig.props" Condition="Exists('..\SigningConfig.props')" />
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-	<BindFiles>false</BindFiles>
-	<OutputPath>bin\Debug\</OutputPath>
-  </PropertyGroup>
-
   <PropertyGroup>
 	<OutputName>DisplayMagicianPackage</OutputName>
 	<AcceptEula>wix7</AcceptEula>
