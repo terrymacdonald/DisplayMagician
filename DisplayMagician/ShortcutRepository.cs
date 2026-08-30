@@ -1394,7 +1394,20 @@ namespace DisplayMagician
                 {
                     try
                     {
-                        if (appToUse.IsRunning)
+                        if (appToUse is LocalApp localApp && localApp.LocalAppType == InstalledAppType.InstalledProgram && processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Waiting for {processesCreated.Count} tracked process(es) started by {shortcutToUse.ApplicationName} to exit.");
+                            while (!ProcessUtils.ProcessExited(processesCreated))
+                            {
+                                if (cancelToken.IsCancellationRequested)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting for {shortcutToUse.ApplicationName} to close.");
+                                    break;
+                                }
+                                Thread.Sleep(1000);
+                            }
+                        }
+                        else if (appToUse.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: Found that {shortcutToUse.ApplicationName} ({shortcutToUse.ApplicationId}) application was running");
 
@@ -1619,7 +1632,7 @@ namespace DisplayMagician
                 bool exeStartFailed = false;
                 try
                 {
-                    processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    processesCreated = ProcessUtils.StartProcessAndTrackDescendants(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
 
                     // Record the program we started so we can close it later
                     foreach (Process p in processesCreated)

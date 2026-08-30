@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Threading;
 
 namespace DisplayMagician.Processes
 {
@@ -119,6 +120,110 @@ namespace DisplayMagician.Processes
 
             return returnedProcesses;
         }        
+
+        public static List<Process> StartProcessAndTrackDescendants(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
+        {
+            List<Process> trackedProcesses = new List<Process>();
+            ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
+            Process processCreated = TryExecute(executable, arguments, runAsAdministrator, wantedPriority);
+            if (processCreated == null)
+            {
+                logger.Warn($"ProcessUtils/StartProcessAndTrackDescendants: DisplayMagician was unable to start {executable} {arguments}.");
+                return trackedProcesses;
+            }
+
+            trackedProcesses.Add(processCreated);
+            logger.Info($"ProcessUtils/StartProcessAndTrackDescendants: {executable} {arguments} was started by Process.Start (PID {processCreated.Id}).");
+
+            try
+            {
+                if (!processCreated.HasExited && processCreated.PriorityClass != wantedPriority)
+                {
+                    processCreated.PriorityClass = wantedPriority;
+                    logger.Trace($"ProcessUtils/StartProcessAndTrackDescendants: Set the priority class to {wantedPriority:G} for {executable}.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ProcessUtils/StartProcessAndTrackDescendants: Exception while setting the priority class to {wantedPriority:G} for {executable}.");
+            }
+
+            HashSet<int> trackedProcessIds = new HashSet<int> { processCreated.Id };
+            int timeoutSeconds = Math.Clamp(startTimeout, 1, 30);
+            DateTime discoveryDeadline = DateTime.UtcNow.AddSeconds(timeoutSeconds);
+            DateTime minimumDetectionDeadline = DateTime.UtcNow.AddSeconds(Math.Min(timeoutSeconds, 4));
+            int stableSnapshots = 0;
+
+            while (DateTime.UtcNow < discoveryDeadline)
+            {
+                bool foundDescendant = false;
+                try
+                {
+                    Dictionary<int, int> processParents = GetProcessParents();
+                    bool addedProcess;
+                    do
+                    {
+                        addedProcess = false;
+                        foreach (KeyValuePair<int, int> processParent in processParents)
+                        {
+                            if (!trackedProcessIds.Contains(processParent.Value) || !trackedProcessIds.Add(processParent.Key))
+                                continue;
+
+                            try
+                            {
+                                Process childProcess = Process.GetProcessById(processParent.Key);
+                                childProcess.EnableRaisingEvents = true;
+                                trackedProcesses.Add(childProcess);
+                                foundDescendant = true;
+                                addedProcess = true;
+                                logger.Debug($"ProcessUtils/StartProcessAndTrackDescendants: Tracking descendant process {childProcess.ProcessName} (PID {childProcess.Id}) launched by {executable}.");
+                            }
+                            catch (ArgumentException)
+                            {
+                                logger.Trace($"ProcessUtils/StartProcessAndTrackDescendants: Descendant PID {processParent.Key} exited before it could be tracked.");
+                            }
+                        }
+                    } while (addedProcess);
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ProcessUtils/StartProcessAndTrackDescendants: Exception while looking for descendants of {executable}.");
+                }
+
+                stableSnapshots = foundDescendant ? 0 : stableSnapshots + 1;
+                if (DateTime.UtcNow >= minimumDetectionDeadline && stableSnapshots >= 4 && (!ProcessExited(processCreated) || trackedProcesses.Count > 1))
+                    break;
+
+                Thread.Sleep(250);
+            }
+
+            logger.Info($"ProcessUtils/StartProcessAndTrackDescendants: Tracking {trackedProcesses.Count} process(es) for {executable} after launch detection.");
+            return trackedProcesses;
+        }
+
+        private static Dictionary<int, int> GetProcessParents()
+        {
+            Dictionary<int, int> processParents = new Dictionary<int, int>();
+            using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT ProcessId, ParentProcessId FROM Win32_Process"))
+            using (ManagementObjectCollection processes = searcher.Get())
+            {
+                foreach (ManagementObject process in processes)
+                {
+                    using (process)
+                    {
+                        try
+                        {
+                            processParents[Convert.ToInt32(process["ProcessId"])] = Convert.ToInt32(process["ParentProcessId"]);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Trace(ex, "ProcessUtils/GetProcessParents: Could not read a process identifier from the process snapshot.");
+                        }
+                    }
+                }
+            }
+            return processParents;
+        }
 
         public static List<Process> GetChildProcesses(Process process)
         {
