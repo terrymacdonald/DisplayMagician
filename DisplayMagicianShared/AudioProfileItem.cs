@@ -362,6 +362,11 @@ namespace DisplayMagicianShared
             settings += "\tPlayback Console Device: " + WindowsAudioConfig.Playback.ConsoleDevice.FriendlyName + Environment.NewLine;
             settings += "\tPlayback Volume: " + WindowsAudioConfig.Playback.VolumePercent + Environment.NewLine;
             settings += "\tPlayback Mute: " + WindowsAudioConfig.Playback.IsMuted + Environment.NewLine;
+            if (WindowsAudioConfig.Playback.SpeakerConfiguration?.IsConfigured == true)
+            {
+                settings += "\tPlayback Speaker Channel Mask: 0x" + WindowsAudioConfig.Playback.SpeakerConfiguration.ChannelMask.ToString("X") + Environment.NewLine;
+                settings += "\tPlayback Full-Range Speaker Mask: 0x" + WindowsAudioConfig.Playback.SpeakerConfiguration.FullRangeSpeakersMask.ToString("X") + Environment.NewLine;
+            }
             settings += Environment.NewLine + "Microphone Settings:" + Environment.NewLine;
             settings += "\tRecording Multimedia Device: " + WindowsAudioConfig.Recording.MultimediaDevice.FriendlyName + Environment.NewLine;
             settings += "\tRecording Communication Device: " + WindowsAudioConfig.Recording.CommunicationsDevice.FriendlyName + Environment.NewLine;

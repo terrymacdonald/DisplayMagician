@@ -311,9 +311,6 @@
         <member name="P:WindowsAudioWrapper.Models.AudioProfile.Recording">
             <summary>Gets or sets the settings associated with recording (Capture) devices.</summary>
         </member>
-        <member name="P:WindowsAudioWrapper.Models.AudioProfile.System">
-            <summary>Gets or sets the system-wide audio settings.</summary>
-        </member>
         <member name="P:WindowsAudioWrapper.Models.AudioProfile.EndpointVisibilities">
             <summary>Gets or sets the captured visibility state for all known audio endpoints.</summary>
         </member>
@@ -398,6 +395,9 @@
         <member name="P:WindowsAudioWrapper.Models.PlaybackAudioProfile.StreamFormat">
             <summary>Gets or sets the stream layout sample frequencies and layouts.</summary>
         </member>
+        <member name="P:WindowsAudioWrapper.Models.PlaybackAudioProfile.SpeakerConfiguration">
+            <summary>Gets or sets the Windows speaker configuration for the playback endpoint.</summary>
+        </member>
         <member name="P:WindowsAudioWrapper.Models.PlaybackAudioProfile.AudioEnhancements">
             <summary>Gets or sets APO system enhancement profiles.</summary>
         </member>
@@ -427,6 +427,9 @@
         </member>
         <member name="P:WindowsAudioWrapper.Models.PlaybackAudioProfile.IsFormatEnabled">
             <summary>Gets or sets a telemetry flag stating if device format arrays are readable. Ignored in JSON.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.PlaybackAudioProfile.IsSpeakerConfigurationEnabled">
+            <summary>Gets or sets a telemetry flag stating if speaker configuration changes are active. Ignored in JSON.</summary>
         </member>
         <member name="P:WindowsAudioWrapper.Models.PlaybackAudioProfile.IsAudioEnhancementsEnabled">
             <summary>Gets or sets a telemetry flag stating if device APO switches are active. Ignored in JSON.</summary>
@@ -499,22 +502,19 @@
         <member name="M:WindowsAudioWrapper.Models.RecordingAudioProfile.EnsureDefaults">
             <summary>Ensures sub-elements avoid object ref fault allocations post serialization.</summary>
         </member>
-        <member name="T:WindowsAudioWrapper.Models.SystemAudioProfile">
+        <member name="T:WindowsAudioWrapper.Models.SpeakerConfigurationProfile">
             <summary>
-            Represents global system audio settings that apply across all devices.
+            Represents the Windows speaker configuration for a playback endpoint.
             </summary>
         </member>
-        <member name="P:WindowsAudioWrapper.Models.SystemAudioProfile.IsSystemAudioEnabled">
-            <summary>Gets or sets whether system audio settings should be evaluated and applied.</summary>
+        <member name="P:WindowsAudioWrapper.Models.SpeakerConfigurationProfile.ChannelMask">
+            <summary>Gets or sets the active speaker channel mask.</summary>
         </member>
-        <member name="P:WindowsAudioWrapper.Models.SystemAudioProfile.IsMonoAudioEnabled">
-            <summary>Gets or sets whether the Mono Audio setting should be changed.</summary>
+        <member name="P:WindowsAudioWrapper.Models.SpeakerConfigurationProfile.FullRangeSpeakersMask">
+            <summary>Gets or sets the speakers marked as full-range in Windows speaker setup.</summary>
         </member>
-        <member name="P:WindowsAudioWrapper.Models.SystemAudioProfile.MonoAudio">
-            <summary>Gets or sets the desired Mono Audio state.</summary>
-        </member>
-        <member name="M:WindowsAudioWrapper.Models.SystemAudioProfile.EnsureDefaults">
-            <summary>Ensures all nested objects are instantiated properly after deserialization.</summary>
+        <member name="P:WindowsAudioWrapper.Models.SpeakerConfigurationProfile.IsConfigured">
+            <summary>Gets whether the profile contains a speaker configuration.</summary>
         </member>
         <member name="M:WindowsAudioWrapper.Providers.SystemAudioProvider.SetMonoAudio(System.Boolean)">
             <summary>

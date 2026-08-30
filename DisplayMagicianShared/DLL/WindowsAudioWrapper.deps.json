@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v10.0": {
-      "WindowsAudioWrapper/1.0.50": {
+      "WindowsAudioWrapper/1.0.52": {
         "dependencies": {
           "Newtonsoft.Json": "13.0.3",
           "runtimepack.Microsoft.Windows.SDK.NET.Ref": "10.0.22000.57"
@@ -38,7 +38,7 @@
     }
   },
   "libraries": {
-    "WindowsAudioWrapper/1.0.50": {
+    "WindowsAudioWrapper/1.0.52": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
