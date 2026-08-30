@@ -1,0 +1,194 @@
+name: SignPath production release signing (draft)
+
+# This workflow is intentionally manual-only. Run it against an existing GitHub
+# draft release after SignPath has issued the production certificate.
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing draft GitHub Release tag to build and sign (for example v3.0.0.207)
+        required: true
+        type: string
+      confirm_production_signing:
+        description: Confirm that this is an intentional production signing request
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  sign-production-release:
+    name: Build and SignPath-sign production release
+    if: inputs.confirm_production_signing == true
+    runs-on: windows-latest
+    env:
+      CONFIGURATION: Release
+      PLATFORM: x64
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      SIGNPATH_ORGANIZATION_ID: 7d8563da-0103-4716-ad87-b3633f63f1b2
+      SIGNPATH_PROJECT_SLUG: DisplayMagician
+      SIGNPATH_POLICY_SLUG: release-signing
+      # Replace this with the exact Subject/CN of the SignPath production certificate.
+      SIGNPATH_RELEASE_PUBLISHER: CN=REPLACE_WITH_SIGNPATH_PRODUCTION_CERTIFICATE_SUBJECT
+
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ inputs.release_tag }}
+          fetch-depth: 0
+
+      - name: Verify the release is a draft from main
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $isDraft = gh release view $env:RELEASE_TAG --json isDraft --jq '.isDraft'
+          if ($isDraft -ne 'true') { throw "Release '$env:RELEASE_TAG' must remain a GitHub draft until its signed installer has been attached." }
+          git fetch origin main --tags --force
+          git merge-base --is-ancestor "refs/tags/$env:RELEASE_TAG" origin/main
+
+      - name: Verify production certificate details are configured
+        shell: pwsh
+        run: |
+          if ($env:SIGNPATH_RELEASE_PUBLISHER -match 'REPLACE_WITH') {
+            throw 'Set SIGNPATH_RELEASE_PUBLISHER to the exact Subject/CN of the issued SignPath production certificate before production signing.'
+          }
+          if (Test-Path SigningConfig.props) {
+            throw 'SigningConfig.props must not exist in a SignPath CI build.'
+          }
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Add Visual Studio MSBuild to PATH
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+          if (-not $msbuild) { throw 'Visual Studio MSBuild was not found on the GitHub-hosted runner.' }
+          [System.IO.Path]::GetDirectoryName($msbuild) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Restore and build the application
+        shell: pwsh
+        run: |
+          msbuild DisplayMagician\DisplayMagician.csproj /t:Restore /p:Configuration=$env:CONFIGURATION /p:Platform=AnyCPU /m /nologo
+          msbuild DisplayMagician\DisplayMagician.csproj /t:Build /p:Configuration=$env:CONFIGURATION /p:Platform=AnyCPU /m /nologo
+
+      - name: Build the production identity MSIX
+        shell: pwsh
+        run: |
+          msbuild DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj /t:Restore /p:Configuration=$env:CONFIGURATION /m /nologo
+          msbuild DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj /t:Build /p:Configuration=$env:CONFIGURATION /p:IdentityPackagePublisherOverride="$env:SIGNPATH_RELEASE_PUBLISHER" /m /nologo
+
+      - name: Upload unsigned identity MSIX
+        id: unsigned_msix
+        uses: actions/upload-artifact@v7
+        with:
+          name: signpath-production-unsigned-msix-${{ github.run_id }}
+          path: DisplayMagicianPackage/Packages/DisplayMagicianIdentityPkg.msix
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Sign identity MSIX with SignPath production certificate
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: package-identity-msix-signing
+          github-artifact-id: ${{ steps.unsigned_msix.outputs.artifact-id }}
+          output-artifact-directory: signed-msix
+
+      - name: Stage signed identity MSIX
+        shell: pwsh
+        run: |
+          $signedMsix = Get-ChildItem signed-msix -Filter DisplayMagicianIdentityPkg.msix -Recurse -File | Select-Object -First 1
+          if ($null -eq $signedMsix) { throw 'SignPath did not return DisplayMagicianIdentityPkg.msix.' }
+          Copy-Item -LiteralPath $signedMsix.FullName -Destination DisplayMagicianPackage\Packages\DisplayMagicianIdentityPkg.msix -Force
+
+      - name: Build the MSI around the signed identity package
+        shell: pwsh
+        run: |
+          msbuild DisplayMagicianPackage\DisplayMagicianPackage.wixproj /t:Restore /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /m /nologo
+          msbuild DisplayMagicianPackage\DisplayMagicianPackage.wixproj /t:Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingIdentityPackage=true /m /nologo
+
+      - name: Upload unsigned MSI
+        id: unsigned_msi
+        uses: actions/upload-artifact@v7
+        with:
+          name: signpath-production-unsigned-msi-${{ github.run_id }}
+          path: DisplayMagicianPackage/bin/x64/Release/en-US/DisplayMagicianPackage.msi
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Sign MSI with SignPath production certificate
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: installer-msi-signing
+          github-artifact-id: ${{ steps.unsigned_msi.outputs.artifact-id }}
+          output-artifact-directory: signed-msi
+
+      - name: Stage signed MSI
+        shell: pwsh
+        run: |
+          $signedMsi = Get-ChildItem signed-msi -Filter DisplayMagicianPackage.msi -Recurse -File | Select-Object -First 1
+          if ($null -eq $signedMsi) { throw 'SignPath did not return DisplayMagicianPackage.msi.' }
+          Copy-Item -LiteralPath $signedMsi.FullName -Destination DisplayMagicianPackage\bin\x64\Release\en-US\DisplayMagicianPackage.msi -Force
+
+      - name: Download the bundled .NET Desktop Runtime
+        shell: pwsh
+        run: |
+          $runtimeVersion = '10.0.7'
+          $runtimeName = "windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
+          $runtimePath = Join-Path $env:GITHUB_WORKSPACE "DisplayMagicianBundle\Packages\$runtimeName"
+          New-Item -ItemType Directory -Force -Path (Split-Path -Parent $runtimePath) | Out-Null
+          Invoke-WebRequest -Uri "https://aka.ms/dotnet/$runtimeVersion/windowsdesktop-runtime-win-x64.exe" -OutFile $runtimePath
+          if (-not (Test-Path $runtimePath) -or (Get-Item $runtimePath).Length -eq 0) {
+            throw "The .NET Desktop Runtime installer was not downloaded to $runtimePath."
+          }
+
+      - name: Build the WiX bundle around the signed MSI
+        shell: pwsh
+        run: |
+          msbuild DisplayMagicianBundle\DisplayMagicianBundle.wixproj /t:Restore /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /m /nologo
+          msbuild DisplayMagicianBundle\DisplayMagicianBundle.wixproj /t:Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingMsiPackage=true /m /nologo
+
+      - name: Upload unsigned setup bundle
+        id: unsigned_bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: signpath-production-unsigned-bundle-${{ github.run_id }}
+          path: DisplayMagicianBundle/bin/x64/Release/DisplayMagicianSetup_v*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Sign WiX bundle with SignPath production certificate
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: bundle-exe-signing
+          github-artifact-id: ${{ steps.unsigned_bundle.outputs.artifact-id }}
+          output-artifact-directory: signed-bundle
+
+      - name: Attach signed installer to the draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $installers = @(Get-ChildItem signed-bundle -Filter 'DisplayMagicianSetup_v*.exe' -Recurse -File)
+          if ($installers.Count -ne 1) { throw "Expected exactly one signed DisplayMagician setup EXE, but found $($installers.Count)." }
+          gh release upload $env:RELEASE_TAG $installers[0].FullName --clobber
