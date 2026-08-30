@@ -101,6 +101,8 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                if (IsProcessTreeMonitorActive)
+                    return IsProcessTreeRunning;
                 //int numGameProcesses = 0;
                 return !ProcessUtils.ProcessExited(_steamGameProcessName);
                 /*_steamGameProcesses = Process.GetProcessesByName(_steamGameProcessName).ToList();
@@ -229,6 +231,7 @@ namespace DisplayMagician.GameLibraries
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
             processesStarted = new List<Process>();
+            BeginProcessTreeMonitoring(timeout);
 
             // CASE 1: Custom arguments provided -> Use steam.exe command-line launch sequence
             if (!string.IsNullOrWhiteSpace(gameArguments))

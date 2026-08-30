@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Text.RegularExpressions;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -12,6 +13,7 @@ namespace DisplayMagician.GameLibraries
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private ProcessTreeMonitor _processTreeMonitor;
 
         public Game()
         {
@@ -83,6 +85,16 @@ namespace DisplayMagician.GameLibraries
         {
             return true;
         }
+
+        protected void BeginProcessTreeMonitoring(int timeout)
+        {
+            _processTreeMonitor?.Dispose();
+            _processTreeMonitor = ProcessTreeMonitor.BeginWatching(ExePath, timeout);
+        }
+
+        protected bool IsProcessTreeMonitorActive => _processTreeMonitor != null;
+
+        protected bool IsProcessTreeRunning => _processTreeMonitor != null && _processTreeMonitor.IsRunning;
 
         #endregion
     }

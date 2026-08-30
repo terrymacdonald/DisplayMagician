@@ -102,6 +102,8 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                if (IsProcessTreeMonitorActive)
+                    return IsProcessTreeRunning;
                 return !ProcessUtils.ProcessExited(_gogGameProcessName);
                 /*int numGameProcesses = 0;
                 _gogGameProcesses = Process.GetProcessesByName(_gogGameProcessName).ToList();
@@ -199,6 +201,7 @@ namespace DisplayMagician.GameLibraries
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
             processesStarted = new List<Process>();
+            BeginProcessTreeMonitoring(timeout);
 
             // CASE 1: Custom arguments provided -> Bypass launcher and run DRM-free executable directly
             if (!string.IsNullOrWhiteSpace(gameArguments))

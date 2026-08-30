@@ -105,6 +105,8 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                if (IsProcessTreeMonitorActive)
+                    return IsProcessTreeRunning;
                 //int numGameProcesses = 0;
                 return !ProcessUtils.ProcessExited(_xboxGameProcessName);
                 /*_xboxGameProcesses = Process.GetProcessesByName(_xboxGameProcessName).ToList();
@@ -231,6 +233,7 @@ namespace DisplayMagician.GameLibraries
             // CASE 2: Fall back to unsealed Win32 runtime executable pathway if no AUMID is resolved
             else
             {
+                BeginProcessTreeMonitoring(timeout);
                 logger.Info($"XboxGame/Start: No AUMID discovered. Attemping direct fallback execution sequence for target path: {ExePath}");
                 var directProcesses = ProcessUtils.StartProcess(ExePath, gameArguments, priority, timeout, runExeAsAdmin);
                 if (directProcesses != null && directProcesses.Count > 0)

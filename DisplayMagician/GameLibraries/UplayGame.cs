@@ -100,6 +100,8 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                if (IsProcessTreeMonitorActive)
+                    return IsProcessTreeRunning;
                 return !ProcessUtils.ProcessExited(_uplayGameProcessName);
                 /*int numGameProcesses = 0;
                 _uplayGameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
@@ -197,6 +199,7 @@ namespace DisplayMagician.GameLibraries
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
             processesStarted = new List<Process>();
+            BeginProcessTreeMonitoring(timeout);
 
             // CASE 1: Custom arguments provided -> Bypass protocol and execute game binary directly
             if (!string.IsNullOrWhiteSpace(gameArguments))

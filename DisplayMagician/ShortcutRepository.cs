@@ -1863,6 +1863,10 @@ namespace DisplayMagician
                         processToMonitorName = gameToRun.ExePath;
                     }
 
+                    ProcessTreeMonitor alternativeGameProcessMonitor = shortcutToUse.MonitorDifferentGameExe
+                        ? ProcessTreeMonitor.BeginWatching(shortcutToUse.DifferentGameExeToMonitor, shortcutToUse.StartTimeout)
+                        : null;
+
                     // Add a status notification icon in the status area
                     SetTrayText(myMainForm, $"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
 
@@ -1883,7 +1887,7 @@ namespace DisplayMagician
                     // NOTE: We now have to try and find the processes, as the game library will start to run the game itself, and we have no idea what process it is
                     // We'll have to look for the game exe later on in this process...
                     List<Process> gameProcesses;
-                    if (gameToRun.Start(out gameProcesses, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority))
+                    if (gameToRun.Start(out gameProcesses, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                     {
                         logger.Debug($"ShortcutRepository/RunShortcut: Starting the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
                     }
@@ -2073,26 +2077,17 @@ namespace DisplayMagician
 
                         // Now look for the thing we're supposed to monitor
                         // and wait until it starts up
-                        List<Process> processesToMonitor = new List<Process>();
                         for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            // Look for the processes with the ProcessName we sorted out earlier
-                            processesToMonitor = Process.GetProcessesByName(altGameProcessToMonitor).ToList();
-
-                            // If we have found one or more processes then we should be good to go
-                            // so let's break
-                            if (processesToMonitor.Count > 0)
+                            if (alternativeGameProcessMonitor != null && alternativeGameProcessMonitor.HasObservedExpectedProcess)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut: Found {processesToMonitor.Count} '{altGameProcessToMonitor}' processes to monitor");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found the new alternative game executable '{altGameProcessToMonitor}' and its process tree.");
                                 break;
                             }
-
-                            // Let's wait a little while if we couldn't find
-                            // any processes yet
                             Thread.Sleep(500);
                         }
                         //  if none of the different game exe files are running, then we need a fallback
-                        if (processesToMonitor.Count == 0)
+                        if (alternativeGameProcessMonitor == null || !alternativeGameProcessMonitor.HasObservedExpectedProcess)
                         {
                             // if we didn't find an alternative game exectuable to monitor, then we need to go for the game executable itself as a fall back
                             logger.Error($"ShortcutRepository/RunShortcut: No Alternative Game Executable '{altGameProcessToMonitor}' processes found before waiting timeout. DisplayMagician was unable to find any alternative processes before the {shortcutToUse.StartTimeout} second timeout");
@@ -2244,7 +2239,7 @@ namespace DisplayMagician
                         {
                             // Otherwise we did find the alternative game executables supplied by the user, so we should monitor them
                             logger.Debug($"ShortcutRepository/RunShortcut: Waiting for alternative game proocess {altGameProcessToMonitor} to exit.");
-                            logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} Alternative Game Executable '{altGameProcessToMonitor}' processes are still running");
+                            logger.Debug($"ShortcutRepository/RunShortcut: The new Alternative Game Executable '{altGameProcessToMonitor}' process tree is still running.");
 
                             if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                             {
@@ -2264,10 +2259,7 @@ namespace DisplayMagician
 
                             while (true)
                             {
-                                processesToMonitor = Process.GetProcessesByName(altGameProcessToMonitor).ToList();
-
-                                // If we have no more processes left then we're done!
-                                if (processesToMonitor.Count == 0)
+                                if (!alternativeGameProcessMonitor.IsRunning)
                                 {
                                     logger.Debug($"ShortcutRepository/RunShortcut: No more '{altGameProcessToMonitor}' processes are still running");
                                     break;

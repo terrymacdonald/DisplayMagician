@@ -101,6 +101,8 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                if (IsProcessTreeMonitorActive)
+                    return IsProcessTreeRunning;
                 return !ProcessUtils.ProcessExited(_originGameProcessName);
                 /*int numGameProcesses = 0;
                 _originGameProcesses = Process.GetProcessesByName(_originGameProcessName).ToList();
@@ -198,6 +200,7 @@ namespace DisplayMagician.GameLibraries
         public override bool Start(out List<Process> processesStarted, string gameArguments = "", ProcessPriority priority = ProcessPriority.Normal, int timeout = 20, bool runExeAsAdmin = false)
         {
             processesStarted = new List<Process>();
+            BeginProcessTreeMonitoring(timeout);
 
             // Construct the base launch URL
             string address = $"origin2://game/launch?offerIds={Id}";
