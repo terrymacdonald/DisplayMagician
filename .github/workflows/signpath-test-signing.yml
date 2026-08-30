@@ -48,12 +48,16 @@ jobs:
       - name: Restore and build the application
         shell: pwsh
         run: |
-          msbuild DisplayMagician\DisplayMagician.csproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:Platform="Any CPU" /m /nologo
+          # The app project defines its Release settings under the Visual Studio solution platform "AnyCPU".
+          # That setting itself targets x64 and writes to DisplayMagician\bin\Release, which the MSIX project consumes.
+          msbuild DisplayMagician\DisplayMagician.csproj /t:Restore /p:Configuration=$env:CONFIGURATION /p:Platform=AnyCPU /m /nologo
+          msbuild DisplayMagician\DisplayMagician.csproj /t:Build /p:Configuration=$env:CONFIGURATION /p:Platform=AnyCPU /m /nologo
 
       - name: Build the test identity MSIX
         shell: pwsh
         run: |
-          msbuild DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:IdentityPackagePublisherOverride="$env:SIGNPATH_TEST_PUBLISHER" /m /nologo
+          msbuild DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj /t:Restore /p:Configuration=$env:CONFIGURATION /m /nologo
+          msbuild DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj /t:Build /p:Configuration=$env:CONFIGURATION /p:IdentityPackagePublisherOverride="$env:SIGNPATH_TEST_PUBLISHER" /m /nologo
 
       - name: Upload unsigned identity MSIX
         id: unsigned-msix
@@ -85,7 +89,8 @@ jobs:
       - name: Build the MSI around the signed identity package
         shell: pwsh
         run: |
-          msbuild DisplayMagicianPackage\DisplayMagicianPackage.wixproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingIdentityPackage=true /m /nologo
+          msbuild DisplayMagicianPackage\DisplayMagicianPackage.wixproj /t:Restore /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /m /nologo
+          msbuild DisplayMagicianPackage\DisplayMagicianPackage.wixproj /t:Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingIdentityPackage=true /m /nologo
 
       - name: Upload unsigned MSI
         id: unsigned-msi
@@ -117,7 +122,8 @@ jobs:
       - name: Build the WiX bundle around the signed MSI
         shell: pwsh
         run: |
-          msbuild DisplayMagicianBundle\DisplayMagicianBundle.wixproj /t:Restore,Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingMsiPackage=true /m /nologo
+          msbuild DisplayMagicianBundle\DisplayMagicianBundle.wixproj /t:Restore /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /m /nologo
+          msbuild DisplayMagicianBundle\DisplayMagicianBundle.wixproj /t:Build /p:Configuration=$env:CONFIGURATION /p:Platform=$env:PLATFORM /p:UseExistingMsiPackage=true /m /nologo
 
       - name: Upload unsigned setup bundle
         id: unsigned-bundle
