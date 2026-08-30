@@ -1,4 +1,4 @@
-name: SignPath test signing
+name: Build Setup w/ test cert
 
 on:
   workflow_dispatch:

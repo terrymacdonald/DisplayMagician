@@ -1,4 +1,4 @@
-name: Generate DisplayMagician release catalogue
+name: Update DM release catalogue
 
 on:
   release:
