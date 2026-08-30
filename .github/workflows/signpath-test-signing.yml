@@ -28,8 +28,13 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Set up Visual Studio MSBuild
-        uses: microsoft/setup-msbuild@v2
+      - name: Add Visual Studio MSBuild to PATH
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+          if (-not $msbuild) { throw 'Visual Studio MSBuild was not found on the GitHub-hosted runner.' }
+          [System.IO.Path]::GetDirectoryName($msbuild) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Verify the local PFX configuration is absent
         shell: pwsh
