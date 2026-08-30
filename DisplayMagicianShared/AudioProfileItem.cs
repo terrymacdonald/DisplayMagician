@@ -368,12 +368,6 @@ namespace DisplayMagicianShared
             settings += "\tRecording Console Device: " + WindowsAudioConfig.Recording.ConsoleDevice.FriendlyName + Environment.NewLine;
             settings += "\tRecording Volume: " + WindowsAudioConfig.Recording.VolumePercent + Environment.NewLine;
             settings += "\tRecording Mute: " + WindowsAudioConfig.Recording.IsMuted + Environment.NewLine;
-            settings += Environment.NewLine + "System Settings:" + Environment.NewLine;
-            settings += "\tMono Audio: " + (WindowsAudioConfig.System.IsMonoAudioEnabled
-                ? (WindowsAudioConfig.System.MonoAudio ? "On" : "Off")
-                : "Not captured") + Environment.NewLine;
-            settings += "\tSystem Audio Enabled: " + WindowsAudioConfig.System.IsSystemAudioEnabled + Environment.NewLine;
-
             return settings;
         }
 
