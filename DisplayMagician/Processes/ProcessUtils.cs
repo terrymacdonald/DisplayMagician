@@ -204,7 +204,15 @@ namespace DisplayMagician.Processes
 
         public static bool ProcessExited(string executable)
         {
-            return ProcessExited(Process.GetProcessesByName(GetProcessName(executable)).ToList());
+            List<Process> processes = Process.GetProcessesByName(GetProcessName(executable)).ToList();
+            try
+            {
+                return ProcessExited(processes);
+            }
+            finally
+            {
+                DisposeProcesses(processes);
+            }
         }
 
         public static bool ProcessExited(int processId)
@@ -220,7 +228,14 @@ namespace DisplayMagician.Processes
                 return true;
             }
 
-            return ProcessExited(process);
+            try
+            {
+                return ProcessExited(process);
+            }
+            finally
+            {
+                process.Dispose();
+            }
         }
 
         public static bool ProcessExited(List<Process> processes)
@@ -231,6 +246,24 @@ namespace DisplayMagician.Processes
                 return true;
             }
             return processes.All(p => ProcessExited(p));
+        }
+
+        public static void DisposeProcesses(IEnumerable<Process> processes)
+        {
+            if (processes == null)
+                return;
+
+            foreach (Process process in processes)
+            {
+                try
+                {
+                    process?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    logger.Trace(ex, "ProcessUtils/DisposeProcesses: Could not release a process handle.");
+                }
+            }
         }
 
         public static bool StopProcess(Process processToStop)

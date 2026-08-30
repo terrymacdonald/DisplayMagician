@@ -884,11 +884,34 @@ namespace DisplayMagician
             // Run pre-game start/stop programs in UI Priority order (interleaved)
             List<(int Priority, List<Process> Processes)> startedProgramsForCleanup = new List<(int Priority, List<Process> Processes)>();
             List<StopProgram> stopProgramsToRestart = new List<StopProgram>();
+            List<Process> monitoredProcessHandles = new List<Process>();
+            List<Action> monitorCleanupActions = new List<Action>();
+
+            void ReleaseMonitoringResources()
+            {
+                foreach (Action cleanupAction in monitorCleanupActions)
+                {
+                    try
+                    {
+                        cleanupAction();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Trace(ex, "ShortcutRepository/RunShortcut: Could not stop a process monitor during cleanup.");
+                    }
+                }
+                monitorCleanupActions.Clear();
+
+                ProcessUtils.DisposeProcesses(monitoredProcessHandles);
+                monitoredProcessHandles.Clear();
+            }
 
             // Create a local function to revert any changes we've made if the user cancels the shortcut run
             // This allows us to reuse code easily in multiple places in this function.
             void RevertAndCleanup()
             {
+                ReleaseMonitoringResources();
+
                 if (startedProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Performing started/stopped programs cleanup during cancellation revert.");
@@ -1226,6 +1249,7 @@ namespace DisplayMagician
                                     {
                                         logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.ProcessName} (PID {p.Id}) after the main game or executable is closed, so we'll just leave it running");
                                     }
+                                    monitoredProcessHandles.AddRange(processesCreated);
                                 }
                             }
                             else
@@ -1363,6 +1387,8 @@ namespace DisplayMagician
                     appStartFailed = true;
                 }
 
+                monitoredProcessHandles.AddRange(processesCreated);
+
                 if (appStartFailed)
                 {
                     bool continueAnyway = false;
@@ -1478,6 +1504,7 @@ namespace DisplayMagician
                         // Wait 10 seconds for the different executable to start up. If there is a loader involved we want to give it a good amount of time to load.
                         Task.Delay(10000).Wait(cancelToken);
                         processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
+                        monitoredProcessHandles.AddRange(processesToMonitor);
                         if (processesToMonitor.Count > 0)
                         {
                             logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
@@ -1585,7 +1612,9 @@ namespace DisplayMagician
 
                         }
                     }
-                }                
+                }
+
+                ReleaseMonitoringResources();
 
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Executable))
@@ -1633,6 +1662,7 @@ namespace DisplayMagician
                 try
                 {
                     processesCreated = ProcessTreeMonitor.StartAndCapture(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    monitoredProcessHandles.AddRange(processesCreated);
 
                     // Record the program we started so we can close it later
                     foreach (Process p in processesCreated)
@@ -1709,6 +1739,7 @@ namespace DisplayMagician
                     try
                     {
                         processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
+                        monitoredProcessHandles.AddRange(processesToMonitor);
                         if (processesToMonitor.Count > 0)
                         {
                             logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
@@ -1838,6 +1869,8 @@ namespace DisplayMagician
                     }
                 }
 
+                ReleaseMonitoringResources();
+
 
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Game))
@@ -1866,6 +1899,8 @@ namespace DisplayMagician
                     ProcessTreeMonitor alternativeGameProcessMonitor = shortcutToUse.MonitorDifferentGameExe
                         ? ProcessTreeMonitor.BeginWatching(shortcutToUse.DifferentGameExeToMonitor, shortcutToUse.StartTimeout)
                         : null;
+                    if (alternativeGameProcessMonitor != null)
+                        monitorCleanupActions.Add(alternativeGameProcessMonitor.Dispose);
 
                     // Add a status notification icon in the status area
                     SetTrayText(myMainForm, $"DisplayMagician: Starting {gameToRun.GameLibrary.GameLibraryName}...");
@@ -1887,6 +1922,7 @@ namespace DisplayMagician
                     // NOTE: We now have to try and find the processes, as the game library will start to run the game itself, and we have no idea what process it is
                     // We'll have to look for the game exe later on in this process...
                     List<Process> gameProcesses;
+                    monitorCleanupActions.Add(gameToRun.EndProcessTreeMonitoring);
                     if (gameToRun.Start(out gameProcesses, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                     {
                         logger.Debug($"ShortcutRepository/RunShortcut: Starting the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
@@ -1895,6 +1931,7 @@ namespace DisplayMagician
                     {
                         logger.Error($"ShortcutRepository/RunShortcut: Unable to start the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
                     }
+                    monitoredProcessHandles.AddRange(gameProcesses);
 
                     // Delay 500ms
                     Thread.Sleep(500);
@@ -2463,6 +2500,8 @@ namespace DisplayMagician
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: Error starting the {gameToRun.Name} {gameToRun.GameLibraryType} Game as the game wasn't found.");
                 }
+
+                ReleaseMonitoringResources();
             }
 
             // Only replace the notification if we're minimised

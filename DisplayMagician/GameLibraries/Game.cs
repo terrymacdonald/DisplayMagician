@@ -96,6 +96,12 @@ namespace DisplayMagician.GameLibraries
 
         protected bool IsProcessTreeRunning => _processTreeMonitor != null && _processTreeMonitor.IsRunning;
 
+        public void EndProcessTreeMonitoring()
+        {
+            _processTreeMonitor?.Dispose();
+            _processTreeMonitor = null;
+        }
+
         #endregion
     }
 }
