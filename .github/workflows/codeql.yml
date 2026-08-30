@@ -12,6 +12,7 @@
 name: Check code quality
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
