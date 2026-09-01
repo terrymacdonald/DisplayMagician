@@ -988,6 +988,24 @@ namespace DisplayMagician
                 return false;
             }
 
+            bool RestoreOriginalAudioProfile()
+            {
+                try
+                {
+                    List<string> missingAudioDeviceNames;
+                    int rollbackAudioTimeoutInMs = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
+                    bool rollbackResult = rollbackAudioProfile.TrySetActive(rollbackAudioTimeoutInMs, 500, out missingAudioDeviceNames);
+                    if (!rollbackResult)
+                        logger.Warn($"ShortcutRepository/RunShortcut: Could not fully restore the original '{rollbackAudioProfile.Name}' audio profile.");
+                    return rollbackResult;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception restoring the original '{rollbackAudioProfile.Name}' audio profile.");
+                    return false;
+                }
+            }
+
             bool AskToContinue(string message, string title)
             {
                 if (cancelToken.IsCancellationRequested)
@@ -1075,6 +1093,57 @@ namespace DisplayMagician
                 {
                     logger.Warn(ex, "ShortcutRepository/RunShortcut: Could not queue the display profile recovery dialog.");
                     return DisplayApplyFailureAction.Cancel;
+                }
+            }
+
+            AudioApplyFailureAction AskAudioApplyFailureAction(List<string> missingAudioDeviceNames)
+            {
+                if (cancelToken.IsCancellationRequested)
+                    return AudioApplyFailureAction.Cancel;
+
+                try
+                {
+                    if (myMainForm == null || myMainForm.IsDisposed)
+                    {
+                        using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(shortcutToUse.AudioProfileToUse.Name, missingAudioDeviceNames))
+                        {
+                            failureForm.ShowDialog();
+                            return failureForm.SelectedAction;
+                        }
+                    }
+
+                    if (!myMainForm.InvokeRequired)
+                    {
+                        using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(shortcutToUse.AudioProfileToUse.Name, missingAudioDeviceNames))
+                        {
+                            failureForm.ShowDialog(myMainForm);
+                            return failureForm.SelectedAction;
+                        }
+                    }
+
+                    TaskCompletionSource<AudioApplyFailureAction> dialogResult = new TaskCompletionSource<AudioApplyFailureAction>();
+                    myMainForm.BeginInvoke((MethodInvoker)delegate
+                    {
+                        try
+                        {
+                            using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(shortcutToUse.AudioProfileToUse.Name, missingAudioDeviceNames))
+                            {
+                                failureForm.ShowDialog(myMainForm);
+                                dialogResult.TrySetResult(failureForm.SelectedAction);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, "ShortcutRepository/RunShortcut: Could not show the audio profile recovery dialog.");
+                            dialogResult.TrySetResult(AudioApplyFailureAction.Cancel);
+                        }
+                    });
+                    return dialogResult.Task.GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "ShortcutRepository/RunShortcut: Could not queue the audio profile recovery dialog.");
+                    return AudioApplyFailureAction.Cancel;
                 }
             }
 
@@ -1210,30 +1279,42 @@ namespace DisplayMagician
                     // Figure out the max audio delay
                     int maxAudioDelay = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
                     int maxProfileDelay = shortcutToUse.ProfileToUse != null ? shortcutToUse.ProfileToUse.ApplyProfileDelay : 0;
-                    // Apply the Audio Profile!
-                    List<string> missingAudioDeviceNames;
-                    bool result = shortcutToUse.AudioProfileToUse.TrySetActive(maxAudioDelay, maxProfileDelay, out missingAudioDeviceNames);
-                    if (!result)
+                    while (true)
                     {
-                        string missingDevicesText = (missingAudioDeviceNames != null && missingAudioDeviceNames.Count > 0)
+                        List<string> missingAudioDeviceNames;
+                        bool result = shortcutToUse.AudioProfileToUse.TrySetActive(maxAudioDelay, maxProfileDelay, out missingAudioDeviceNames);
+                        if (result)
+                        {
+                            logger.Trace($"ShortcutRepository/RunShortcut: Applied '{shortcutToUse.AudioProfileToUse.Name}' audio profile successfully!");
+                            break;
+                        }
+
+                        string missingDevicesText = missingAudioDeviceNames != null && missingAudioDeviceNames.Count > 0
                             ? $" Missing audio devices: {string.Join(", ", missingAudioDeviceNames)}."
                             : string.Empty;
-
                         logger.Warn($"ShortcutRepository/RunShortcut: Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. {missingDevicesText}");
 
-                        bool continueAnyway = AskToContinue(
-                            $"Your shortcut may not run as expected:{Environment.NewLine}{Environment.NewLine}• Audio profile '{shortcutToUse.AudioProfileToUse.Name}' could not be set in time.{missingDevicesText}{Environment.NewLine}{Environment.NewLine}You can still run the shortcut if you want to, but it may not work as expected.",
-                            "Shortcut Warnings");
+                        AudioApplyFailureAction action = AskAudioApplyFailureAction(missingAudioDeviceNames);
+                        if (action == AudioApplyFailureAction.Retry)
+                            continue;
 
-                        if (!continueAnyway)
+                        if (action == AudioApplyFailureAction.Cancel)
                         {
+                            RestoreOriginalAudioProfile();
+                            needToChangeAudioProfiles = false;
                             RevertAndCleanup();
                             return RunShortcutResult.Cancelled;
                         }
-                    }
-                    else
-                    {
-                        logger.Trace($"ShortcutRepository/RunShortcut: Applied '{shortcutToUse.AudioProfileToUse.Name}' audio profile successfully!");
+
+                        if (!RestoreOriginalAudioProfile() && !AskToContinue("DisplayMagician could not restore your original audio profile. Do you want to run the shortcut anyway?", "Audio Restore Failed"))
+                        {
+                            needToChangeAudioProfiles = false;
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
+                        }
+
+                        needToChangeAudioProfiles = false;
+                        break;
                     }
                 }
                 catch (Exception ex)
