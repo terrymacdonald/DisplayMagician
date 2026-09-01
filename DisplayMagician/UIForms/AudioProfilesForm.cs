@@ -1,6 +1,8 @@
-using System;
+﻿using System;
 using System.Drawing;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using DisplayMagicianShared;
@@ -176,15 +178,38 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_apply_audio_profile_Click(object sender, EventArgs e)
+        private async void btn_apply_audio_profile_Click(object sender, EventArgs e)
         {
             AudioProfileItem selected = lb_audio_profiles.SelectedItem as AudioProfileItem;
             if (selected == null)
                 return;
 
-            if (!selected.SetActive())
+            btn_apply_audio_profile.Enabled = false;
+            try
             {
-                MessageBox.Show(this, $"Unable to apply the Audio Profile '{selected.Name}'.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                int audioDeviceWaitMilliseconds = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
+                while (true)
+                {
+                    List<string> missingAudioDeviceNames = null;
+                    bool applied = await Task.Run(() => selected.TrySetActive(audioDeviceWaitMilliseconds, 500, out missingAudioDeviceNames));
+                    if (applied)
+                    {
+                        AudioProfileRepository.UpdateActiveAudioProfile();
+                        logger.Trace($"AudioProfilesForm/btn_apply_audio_profile_Click: Applied '{selected.Name}' audio profile successfully.");
+                        return;
+                    }
+
+                    logger.Warn($"AudioProfilesForm/btn_apply_audio_profile_Click: Could not apply '{selected.Name}' audio profile. Missing audio devices: {String.Join(", ", missingAudioDeviceNames ?? new List<string>())}.");
+                    using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(selected.Name, missingAudioDeviceNames, AudioApplyFailureContext.AudioProfile))
+                    {
+                        if (failureForm.ShowDialog(this) != DialogResult.Retry || failureForm.SelectedAction != AudioApplyFailureAction.Retry)
+                            return;
+                    }
+                }
+            }
+            finally
+            {
+                btn_apply_audio_profile.Enabled = true;
             }
         }
 
