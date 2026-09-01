@@ -1502,14 +1502,59 @@ namespace DisplayMagician
 
                 if (appStartFailed)
                 {
-                    bool continueAnyway = AskToContinue(
-                        $"Unable to launch application '{shortcutToUse.ApplicationName}'.\n\nDo you want to continue running the shortcut anyway?",
-                        "Application Failed to Start");
-
-                    if (!continueAnyway)
+                    while (appStartFailed)
                     {
-                        RevertAndCleanup();
-                        return RunShortcutResult.Cancelled;
+                        bool continueAnyway = AskToContinue(
+                            $"Unable to launch application '{shortcutToUse.ApplicationName}'. Start it manually if needed, then select Continue to wait for it.\n\nDo you want to continue?",
+                            "Application Failed to Start");
+
+                        if (!continueAnyway)
+                        {
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
+                        }
+
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+                            if (appToUse != null && appToUse.IsRunning)
+                            {
+                                appStartFailed = false;
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found manually started application '{appToUse.Name}'.");
+                                break;
+                            }
+
+                            Thread.Sleep(500);
+                        }
+                    }
+                }
+
+                if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
+                {
+                    bool applicationDetected = processesCreated.Any(process => !ProcessUtils.ProcessExited(process)) ||
+                        (appToUse != null && appToUse.IsRunning);
+                    while (!applicationDetected)
+                    {
+                        bool continueAnyway = AskToContinue(
+                            $"The application '{shortcutToUse.ApplicationName}' was not detected. Start it manually if needed, then select Continue to wait for it.\n\nDo you want to continue?",
+                            "Application Process Missing");
+
+                        if (!continueAnyway)
+                        {
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
+                        }
+
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+                            if ((appToUse != null && appToUse.IsRunning) || processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
+                            {
+                                applicationDetected = true;
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found manually started application '{shortcutToUse.ApplicationName}'.");
+                                break;
+                            }
+
+                            Thread.Sleep(500);
+                        }
                     }
                 }
 
@@ -1602,10 +1647,12 @@ namespace DisplayMagician
                 else
                 {
                     // We use the a user supplied executable as the thing we're monitoring instead!
+                RetryApplicationAlternativeMonitorDetection:
                     try
                     {
-                        // Wait 10 seconds for the different executable to start up. If there is a loader involved we want to give it a good amount of time to load.
-                        Task.Delay(10000).Wait(cancelToken);
+                        // Wait for the configured startup period so launchers have time to
+                        // start the alternate executable before we ask the user what to do.
+                        Task.Delay(shortcutToUse.StartTimeout * 1000).Wait(cancelToken);
                         processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
                         monitoredProcessHandles.AddRange(processesToMonitor);
                         if (processesToMonitor.Count > 0)
@@ -1683,7 +1730,7 @@ namespace DisplayMagician
                     else
                     {
                         bool continueAnyway = AskToContinue(
-                            $"The application process '{shortcutToUse.DifferentExecutableToMonitor}' was not detected as running.\n\nDo you want to continue running the shortcut anyway?",
+                            $"The application process '{shortcutToUse.DifferentExecutableToMonitor}' was not detected. Start it manually if needed, then select Continue to wait for it.\n\nDo you want to continue?",
                             "Application Process Missing");
 
                         if (!continueAnyway)
@@ -1692,20 +1739,7 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
 
-                        if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
-                        {
-                            // The program was closed normally
-                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.DifferentExecutableToMonitor} couldn't be detected.");
-                            // Tell the user that the differnt executable couldn't be detected as running
-                            // Construct the toast content
-                            tcBuilder = new ToastContentBuilder()
-                                .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} not detected", hintMaxLines: 1)
-                                .AddText($"A different executable {shortcutToUse.DifferentExecutableToMonitor} process couldn't be detected. Stopping monitoring.")
-                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                .SetToastDuration(ToastDuration.Short);
-                            ShowStatusToast(tcBuilder);
-
-                        }
+                        goto RetryApplicationAlternativeMonitorDetection;
                     }
                 }
 
@@ -1804,6 +1838,7 @@ namespace DisplayMagician
                 //Thread.Sleep(2000);
 
                 // Now we need to decide what we are monitoring. If the user has supplied an alternative process to monitor, then we monitor that instead!
+            RetryExecutableProcessDetection:
                 bool foundSomethingToMonitor = false;
                 List<Process> processesToMonitor = new List<Process>();
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
@@ -1817,7 +1852,9 @@ namespace DisplayMagician
                     else
                     {
                         logger.Warn($"ShortcutRepository/RunShortcut: No '{processToMonitorName}' processes were created to monitor, so we didn't find anything to monitor!");
-                        foundSomethingToMonitor = false;
+                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)));
+                        monitoredProcessHandles.AddRange(processesToMonitor);
+                        foundSomethingToMonitor = processesToMonitor.Count > 0;
                     }
                 }
                 else
@@ -1924,36 +1961,25 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                    bool continueAnyway = AskToContinue(
+                        $"The executable '{Path.GetFileName(processToMonitorName)}' was not detected. Start it manually if needed, then select Continue to wait for it.\n\nDo you want to continue?",
+                        "Executable Process Missing");
+
+                    if (!continueAnyway)
                     {
-                        // The monitoring was stopped by the user
-                        if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
-                        {
-                            // The program was closed normally
-                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} wasn't started.");
-                            // Tell the user that the application has closed
-                            // Construct the toast content
-                            tcBuilder = new ToastContentBuilder()
-                                .AddText($"{shortcutToUse.ExecutableNameAndPath} was not started", hintMaxLines: 1)
-                                .AddText($"Couldn't find {processToMonitorName} processes were shutdown and changes were reverted.")
-                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                .SetToastDuration(ToastDuration.Short);
-                        }
-                        else
-                        {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the different executable {shortcutToUse.ExecutableNameAndPath} was closed.");
-                            // Construct the toast content
-                            tcBuilder = new ToastContentBuilder()
-                                .AddText($"Different executable {shortcutToUse.DifferentExecutableToMonitor} was closed", hintMaxLines: 1)
-                                .AddText($"All different executable {processToMonitorName} processes were shutdown and changes were reverted.")
-                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                .SetToastDuration(ToastDuration.Short);
-                        }
-
-
-                        ShowStatusToast(tcBuilder);
-
+                        RevertAndCleanup();
+                        return RunShortcutResult.Cancelled;
                     }
+
+                    for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                    {
+                        if (Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)).Length > 0)
+                            break;
+
+                        Thread.Sleep(500);
+                    }
+
+                    goto RetryExecutableProcessDetection;
                 }
 
                 ReleaseMonitoringResources();
@@ -2206,7 +2232,10 @@ namespace DisplayMagician
                             logger.Error($"ShortcutRepository/RunShortcut: No Alternative Game Executable '{altGameProcessToMonitor}' processes found before waiting timeout. DisplayMagician was unable to find any alternative processes before the {shortcutToUse.StartTimeout} second timeout");
                             logger.Info($"ShortcutRepository/RunShortcut: Ignoring monitoring Alternative Game Executable '{altGameProcessToMonitor}' processes. Reverting back to monitoring Game executables '{gameToRun.ProcessName}' instead.");
 
-                            // we wait until the game has started running (*allows for updates to occur)
+                        RetryFallbackGameDetection:
+                            // Wait until the game has started running. If the user chooses
+                            // Continue after a timeout, repeat this check so a manually
+                            // restarted game is detected and monitored.
                             for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                             {
 
@@ -2264,6 +2293,7 @@ namespace DisplayMagician
                                     ShowStatusToast(tcBuilder);
                                 }
 
+                                goto RetryFallbackGameDetection;
 
                             }
                             else
@@ -2469,8 +2499,9 @@ namespace DisplayMagician
 
                         }
 
-                        // If the game still isn't running then there is an issue so tell the user and revert things back
-                        if (!gameRunning)
+                        // Keep the temporary shortcut state active while the user restarts
+                        // the game manually. Continue starts another detection period.
+                        while (!gameRunning)
                         {
                             logger.Error($"ShortcutRepository/RunShortcut: The Game {gameToRun.Name} didn't start for some reason (or the game uses a starter exe that launches the game itself)! so reverting changes back if needed...");
                             logger.Warn($"ShortcutRepository/RunShortcut: We were monitoring {gameToRun.ExePath}. You may need to manually add an alternative game executable to monitor - please run the game manually and check if another executable in {Path.GetDirectoryName(gameToRun.ExePath)} is run, and then monitor that instead.");
@@ -2497,8 +2528,20 @@ namespace DisplayMagician
                                 ShowStatusToast(tcBuilder);
                             }
 
+                            for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                            {
+                                if (gameToRun.IsRunning)
+                                {
+                                    gameRunning = true;
+                                    logger.Debug($"ShortcutRepository/RunShortcut: Found the manually restarted '{gameToRun.Name}' process.");
+                                    break;
+                                }
+
+                                Thread.Sleep(500);
+                            }
                         }
-                        else
+
+                        if (gameRunning)
                         {
                             // This is the main waiting thread!
                             // Wait for the game to exit
