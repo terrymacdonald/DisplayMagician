@@ -12,6 +12,7 @@ namespace DisplayMagician.UIForms
     public partial class AudioProfilesForm : Form
     {
         private AudioProfileItem _selectedAudioProfile;
+        private int _audioProfileAdvisoryRefreshVersion;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -55,6 +56,28 @@ namespace DisplayMagician.UIForms
             else
             {
                 txt_audio_profile_settings.Clear();
+            }
+
+            RefreshAudioProfileAdvisory();
+        }
+
+        private async void RefreshAudioProfileAdvisory()
+        {
+            int refreshVersion = ++_audioProfileAdvisoryRefreshVersion;
+            AudioProfileItem selectedAudioProfile = _selectedAudioProfile;
+            p_audio_profile_advisory.Visible = false;
+
+            if (selectedAudioProfile == null)
+                return;
+
+            List<string> unavailableAudioDeviceNames = await Task.Run(() => selectedAudioProfile.GetUnavailableAudioDeviceNames());
+            if (IsDisposed || refreshVersion != _audioProfileAdvisoryRefreshVersion || selectedAudioProfile != _selectedAudioProfile)
+                return;
+
+            if (unavailableAudioDeviceNames.Count > 0)
+            {
+                lbl_audio_profile_advisory.Text = $"⚠ Your audio profile may not apply as expected.{Environment.NewLine}DisplayMagician could not detect the following: {String.Join(", ", unavailableAudioDeviceNames)}. This may be normal if an associated display or device is disconnected or powered off. You may still apply the profile but it may not apply as expected.";
+                p_audio_profile_advisory.Visible = true;
             }
         }
 

@@ -373,6 +373,68 @@ namespace DisplayMagicianShared
         }
 
         /// <summary>
+        /// Checks whether the audio devices saved in this profile are currently available without changing any audio settings.
+        /// </summary>
+        /// <param name="deviceCheckTimeoutInMs">Maximum time to wait for each endpoint to respond.</param>
+        /// <returns>The friendly names of audio devices that could not be confirmed.</returns>
+        public List<string> GetUnavailableAudioDeviceNames(int deviceCheckTimeoutInMs = 100)
+        {
+            List<string> unavailableAudioDeviceNames = new List<string>();
+
+            try
+            {
+                List<WindowsAudioWrapper.Models.AudioEndpointReference> endpointsToCheck = new List<WindowsAudioWrapper.Models.AudioEndpointReference>();
+
+                void AddIfNew(WindowsAudioWrapper.Models.AudioEndpointReference endpoint)
+                {
+                    if (endpoint != null && !String.IsNullOrEmpty(endpoint.DeviceId) &&
+                        !endpointsToCheck.Any(existingEndpoint => existingEndpoint.DeviceId == endpoint.DeviceId))
+                    {
+                        endpointsToCheck.Add(endpoint);
+                    }
+                }
+
+                string GetEndpointDisplayName(WindowsAudioWrapper.Models.AudioEndpointReference endpoint)
+                {
+                    if (!String.IsNullOrWhiteSpace(endpoint?.FriendlyName))
+                        return endpoint.FriendlyName;
+                    if (!String.IsNullOrWhiteSpace(endpoint?.DeviceId))
+                        return endpoint.DeviceId;
+                    return "Unknown Audio Device";
+                }
+
+                if (WindowsAudioConfig?.Playback != null)
+                {
+                    AddIfNew(WindowsAudioConfig.Playback.MultimediaDevice);
+                    AddIfNew(WindowsAudioConfig.Playback.CommunicationsDevice);
+                    AddIfNew(WindowsAudioConfig.Playback.ConsoleDevice);
+                }
+
+                if (WindowsAudioConfig?.Recording != null)
+                {
+                    AddIfNew(WindowsAudioConfig.Recording.MultimediaDevice);
+                    AddIfNew(WindowsAudioConfig.Recording.CommunicationsDevice);
+                    AddIfNew(WindowsAudioConfig.Recording.ConsoleDevice);
+                }
+
+                using (WindowsAudioController controller = new WindowsAudioController())
+                {
+                    foreach (WindowsAudioWrapper.Models.AudioEndpointReference endpoint in endpointsToCheck)
+                    {
+                        if (!controller.WaitForAudioDeviceToAppear(endpoint, Math.Max(1, deviceCheckTimeoutInMs)))
+                            unavailableAudioDeviceNames.Add(GetEndpointDisplayName(endpoint));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"AudioProfileItem/GetUnavailableAudioDeviceNames: Exception checking the availability of audio devices in '{Name}'.");
+            }
+
+            return unavailableAudioDeviceNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        /// <summary>
         /// Waits for the audio devices listed in the Audio Profile to become available using short round-robin polling slices,
         /// then applies the profile. Returns missing devices in out parameter if timeout expires before all devices appear.
         /// </summary>

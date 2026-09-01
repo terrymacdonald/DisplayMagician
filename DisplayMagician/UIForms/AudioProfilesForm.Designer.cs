@@ -1,4 +1,4 @@
-namespace DisplayMagician.UIForms
+﻿namespace DisplayMagician.UIForms
 {
     partial class AudioProfilesForm
     {
@@ -38,9 +38,12 @@ namespace DisplayMagician.UIForms
             btn_delete_audio_profile = new System.Windows.Forms.Button();
             gb_selected_audio_settings = new System.Windows.Forms.GroupBox();
             txt_audio_profile_settings = new System.Windows.Forms.TextBox();
+            p_audio_profile_advisory = new System.Windows.Forms.Panel();
+            lbl_audio_profile_advisory = new System.Windows.Forms.Label();
             btn_back = new System.Windows.Forms.Button();
             lbl_heading_text = new System.Windows.Forms.Label();
             gb_selected_audio_settings.SuspendLayout();
+            p_audio_profile_advisory.SuspendLayout();
             SuspendLayout();
             // 
             // lbl_audio_profiles
@@ -166,7 +169,7 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.Location = new System.Drawing.Point(453, 76);
             gb_selected_audio_settings.Name = "gb_selected_audio_settings";
             gb_selected_audio_settings.Padding = new System.Windows.Forms.Padding(6);
-            gb_selected_audio_settings.Size = new System.Drawing.Size(734, 544);
+            gb_selected_audio_settings.Size = new System.Drawing.Size(734, 466);
             gb_selected_audio_settings.TabIndex = 0;
             gb_selected_audio_settings.TabStop = false;
             gb_selected_audio_settings.Text = "Selected Audio Profile Settings";
@@ -188,6 +191,29 @@ namespace DisplayMagician.UIForms
             txt_audio_profile_settings.Size = new System.Drawing.Size(722, 512);
             txt_audio_profile_settings.TabIndex = 0;
             // 
+            // p_audio_profile_advisory
+            //
+            p_audio_profile_advisory.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_audio_profile_advisory.BackColor = System.Drawing.Color.FromArgb(255, 193, 7);
+            p_audio_profile_advisory.Controls.Add(lbl_audio_profile_advisory);
+            p_audio_profile_advisory.Location = new System.Drawing.Point(453, 550);
+            p_audio_profile_advisory.Name = "p_audio_profile_advisory";
+            p_audio_profile_advisory.Size = new System.Drawing.Size(734, 70);
+            p_audio_profile_advisory.TabIndex = 8;
+            p_audio_profile_advisory.Visible = false;
+            //
+            // lbl_audio_profile_advisory
+            //
+            lbl_audio_profile_advisory.Dock = System.Windows.Forms.DockStyle.Fill;
+            lbl_audio_profile_advisory.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_audio_profile_advisory.ForeColor = System.Drawing.Color.Black;
+            lbl_audio_profile_advisory.Location = new System.Drawing.Point(0, 0);
+            lbl_audio_profile_advisory.Name = "lbl_audio_profile_advisory";
+            lbl_audio_profile_advisory.Padding = new System.Windows.Forms.Padding(10, 6, 10, 6);
+            lbl_audio_profile_advisory.Size = new System.Drawing.Size(734, 70);
+            lbl_audio_profile_advisory.TabIndex = 0;
+            lbl_audio_profile_advisory.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
             // btn_back
             // 
             btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
@@ -230,6 +256,7 @@ namespace DisplayMagician.UIForms
             ClientSize = new System.Drawing.Size(1222, 664);
             Controls.Add(lbl_heading_text);
             Controls.Add(lbl_audio_profiles);
+            Controls.Add(p_audio_profile_advisory);
             Controls.Add(btn_back);
             Controls.Add(lb_audio_profiles);
             Controls.Add(gb_selected_audio_settings);
@@ -247,6 +274,7 @@ namespace DisplayMagician.UIForms
             Load += AudioProfilesForm_Load;
             gb_selected_audio_settings.ResumeLayout(false);
             gb_selected_audio_settings.PerformLayout();
+            p_audio_profile_advisory.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -254,6 +282,8 @@ namespace DisplayMagician.UIForms
         #endregion
         private System.Windows.Forms.GroupBox gb_selected_audio_settings;
         private System.Windows.Forms.TextBox txt_audio_profile_settings;
+        private System.Windows.Forms.Panel p_audio_profile_advisory;
+        private System.Windows.Forms.Label lbl_audio_profile_advisory;
         private System.Windows.Forms.Label lbl_audio_profiles;
         private System.Windows.Forms.ListBox lb_audio_profiles;
         private System.Windows.Forms.Button btn_delete_audio_profile;
