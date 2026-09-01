@@ -51,6 +51,8 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             tt_selected = new System.Windows.Forms.ToolTip(components);
             lbl_save_profile = new System.Windows.Forms.Label();
+            p_profile_advisory = new System.Windows.Forms.Panel();
+            lbl_profile_advisory = new System.Windows.Forms.Label();
             btn_save = new System.Windows.Forms.Button();
             dialog_save = new System.Windows.Forms.SaveFileDialog();
             btn_hotkey = new System.Windows.Forms.Button();
@@ -68,6 +70,7 @@ namespace DisplayMagician.UIForms
             cms_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).BeginInit();
             p_upper.SuspendLayout();
+            p_profile_advisory.SuspendLayout();
             p_lower.SuspendLayout();
             p_listview.SuspendLayout();
             p_middle.SuspendLayout();
@@ -299,6 +302,31 @@ namespace DisplayMagician.UIForms
             lbl_save_profile.TabIndex = 0;
             lbl_save_profile.Text = resources.GetString("lbl_save_profile.Text");
             lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            //
+            // p_profile_advisory
+            //
+            p_profile_advisory.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_profile_advisory.BackColor = System.Drawing.Color.FromArgb(255, 193, 7);
+            p_profile_advisory.Controls.Add(lbl_profile_advisory);
+            p_profile_advisory.Location = new System.Drawing.Point(2, 116);
+            p_profile_advisory.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            p_profile_advisory.Name = "p_profile_advisory";
+            p_profile_advisory.Size = new System.Drawing.Size(1004, 80);
+            p_profile_advisory.TabIndex = 38;
+            p_profile_advisory.Visible = false;
+            //
+            // lbl_profile_advisory
+            //
+            lbl_profile_advisory.Dock = System.Windows.Forms.DockStyle.Fill;
+            lbl_profile_advisory.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            lbl_profile_advisory.ForeColor = System.Drawing.Color.Black;
+            lbl_profile_advisory.Location = new System.Drawing.Point(0, 0);
+            lbl_profile_advisory.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbl_profile_advisory.Name = "lbl_profile_advisory";
+            lbl_profile_advisory.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
+            lbl_profile_advisory.Size = new System.Drawing.Size(1004, 80);
+            lbl_profile_advisory.TabIndex = 0;
+            lbl_profile_advisory.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btn_save
             // 
@@ -366,6 +394,7 @@ namespace DisplayMagician.UIForms
             p_upper.BackColor = System.Drawing.Color.Transparent;
             p_upper.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             p_upper.Controls.Add(lbl_save_profile);
+            p_upper.Controls.Add(p_profile_advisory);
             p_upper.Controls.Add(btn_donate);
             p_upper.Controls.Add(btn_help);
             p_upper.Controls.Add(btn_view_current);
@@ -547,6 +576,7 @@ namespace DisplayMagician.UIForms
             Load += DisplayProfileForm_Load;
             cms_profiles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
+            p_profile_advisory.ResumeLayout(false);
             p_upper.ResumeLayout(false);
             p_upper.PerformLayout();
             p_lower.ResumeLayout(false);
@@ -574,6 +604,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.ToolTip tt_selected;
         private System.Windows.Forms.Label lbl_save_profile;
+        private System.Windows.Forms.Panel p_profile_advisory;
+        private System.Windows.Forms.Label lbl_profile_advisory;
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.SaveFileDialog dialog_save;
         private System.Windows.Forms.Button btn_hotkey;

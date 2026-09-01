@@ -1,4 +1,4 @@
-using DisplayMagicianShared.AMD;
+﻿using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.Intel;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
@@ -393,6 +393,24 @@ namespace DisplayMagicianShared
                     _profileDisplayIdentifiers = value;
             }
         }
+
+        [JsonIgnore]
+        public virtual List<string> UndetectedDisplayIdentifiers
+        {
+            get
+            {
+                List<string> connectedDisplayIdentifiers = ProfileRepository.ConnectedDisplayIdentifiers;
+
+                return ProfileDisplayIdentifiers
+                    .Where(identifier => !String.IsNullOrWhiteSpace(identifier))
+                    .Where(identifier => !connectedDisplayIdentifiers.Contains(identifier, StringComparer.OrdinalIgnoreCase))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+        }
+
+        [JsonIgnore]
+        public virtual bool HasDisplayDetectionAdvisory => UndetectedDisplayIdentifiers.Count > 0;
 
         [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]

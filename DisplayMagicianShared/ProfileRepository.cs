@@ -1537,6 +1537,12 @@ namespace DisplayMagicianShared
                 return ApplyProfileResult.Error;
             }
 
+            if (!profile.IsValid())
+            {
+                SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: The supplied profile '{profile.Name}' has invalid configuration data and cannot be applied.");
+                return ApplyProfileResult.Error;
+            }
+
             try
             {
                 // We start the timer just before we attempt the display change

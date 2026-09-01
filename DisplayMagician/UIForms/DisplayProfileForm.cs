@@ -72,11 +72,11 @@ namespace DisplayMagician.UIForms
             if (_selectedProfile == null)
                 return;
 
-            if (!_selectedProfile.IsPossible)
+            if (!_selectedProfile.IsValid())
             {
-                MessageBox.Show(this, "This profile is currently impossible to apply.",
+                MessageBox.Show(this, "This display profile contains errors and cannot be applied. Please update or recreate the profile.",
                     "Apply Profile",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 return;
             }
@@ -224,15 +224,6 @@ namespace DisplayMagician.UIForms
             // Only do something if there is a shortcut selected
             if (_selectedProfile != null)
             {
-
-                // if shortcut is not valid then ask if the user
-                // really wants to save it to desktop
-                if (!_selectedProfile.IsPossible)
-                {
-                    // We ask the user of they still want to save the desktop shortcut
-                    if (MessageBox.Show($"The '{_selectedProfile.Name}' Desktop Profile isn't possible to use right now so a desktop shortcut wouldn't work until your Displays are changed to match the profile. Has your hardware or screen layout changed from when the Display Profile was made? Do you still want to save the desktop shortcut?", $"Still save the '{_selectedProfile.Name}' Display Profile?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
-                        return;
-                }
 
                 try
                 {
@@ -408,6 +399,25 @@ namespace DisplayMagician.UIForms
             // And update the save/rename textbox
             txt_profile_save_name.Text = _selectedProfile.Name;
 
+            bool profileHasErrors = !_selectedProfile.IsValid();
+            List<string> undetectedDisplays = profileHasErrors
+                ? new List<string>()
+                : _selectedProfile.UndetectedDisplayIdentifiers;
+
+            p_profile_advisory.Visible = ProfileRepository.ContainsProfile(profile) && (profileHasErrors || undetectedDisplays.Count > 0);
+            if (profileHasErrors)
+            {
+                p_profile_advisory.BackColor = Color.Firebrick;
+                lbl_profile_advisory.ForeColor = Color.White;
+                lbl_profile_advisory.Text = "This display profile contains errors and cannot be applied. Please update or recreate the profile.";
+            }
+            else if (undetectedDisplays.Count > 0)
+            {
+                p_profile_advisory.BackColor = Color.FromArgb(255, 193, 7);
+                lbl_profile_advisory.ForeColor = Color.Black;
+                lbl_profile_advisory.Text = $"⚠ Your display profile may not apply as expected.{Environment.NewLine}DisplayMagician could not detect the following: {String.Join(", ", undetectedDisplays)}. This may be normal when using switchers, alternate inputs, or screens that are powered off. You may still apply the profile but it may not apply as expected.";
+            }
+
             if (ProfileRepository.ContainsProfile(profile))
             {
                 // we already have the profile stored
@@ -415,11 +425,12 @@ namespace DisplayMagician.UIForms
                 btn_save_or_rename.Text = "Rename To";
                 lbl_save_profile.Visible = false;
                 btn_update.Visible = true;
-                if (!_selectedProfile.IsPossible)
+                if (profileHasErrors)
                 {
-                    lbl_profile_shown_subtitle.Text = "This Display Profile can't be used as not all Displays are connected.";
+                    lbl_profile_shown_subtitle.Text = "This Display Profile contains errors.";
                     lbl_profile_shown_subtitle.Visible = true;
                     btn_apply.Visible = false;
+                    cms_profiles.Items[0].Enabled = false;
                 }
                 else
                 {

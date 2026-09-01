@@ -328,19 +328,17 @@ namespace DisplayMagician.UIForms
                             g.DrawImage(Properties.Resources.exe, pos);
                         }
                     }
-                    else if (profileToRender.IsPossible)
+                    else if (!profileToRender.HasDisplayDetectionAdvisory)
                     {
-                        // Draw the full color image as the shortcut is not invalid
+                        // Draw the full color image when no display-detection advisory is present.
                         logger.Trace($"ProfileILVRenderer/DrawItem: Rendering valid profile item with key '{item.EquipmentModel}'.");
                         g.DrawImage(img, pos);
                     }
                     else
                     {
                         logger.Trace($"ProfileILVRenderer/DrawItem: Rendering invalid profile item with key '{item.EquipmentModel}'. Drawing with warning icon overlay.");
-                        // THe shortcut is invalid
-                        // so we make the image grayscale
-                        Image grayImg = ImageUtils.MakeGrayscale(img);
-                        g.DrawImage(grayImg, pos);
+                        // Keep the profile image in colour: an undetected display is advisory-only.
+                        g.DrawImage(img, pos);
 
                         // Draw a warning triangle over it
                         // right in the centre
