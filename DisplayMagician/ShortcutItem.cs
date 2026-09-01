@@ -917,28 +917,6 @@ namespace DisplayMagician
             }
         }
 
-        /// <summary>
-        /// Indicates that a saved display or audio profile may not be available with the
-        /// hardware currently detected. This is advisory only: switchers and manually
-        /// powered displays can become available while the shortcut is being applied.
-        /// </summary>
-        [JsonIgnore]
-        public bool HasReadinessAdvisory
-        {
-            get
-            {
-                if (!String.Equals(ProfileUUID, ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase) &&
-                    ProfileToUse != null && !ProfileToUse.IsPossible)
-                    return true;
-
-                if (!String.Equals(AudioProfileUUID, AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase) &&
-                    AudioProfileToUse != null && !AudioProfileToUse.IsPossible)
-                    return true;
-
-                return false;
-            }
-        }
-
         [JsonIgnore]
         public List<ShortcutError> Errors
         {
@@ -1557,14 +1535,19 @@ namespace DisplayMagician
             else if (Category.Equals(ShortcutCategory.Application))
             {
                 logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Application");
-                // We need to check if the Application still exists
-                if (!System.IO.File.Exists(ExecutableNameAndPath))
+                // Use the same application source as runtime. When the live app list is
+                // still loading, retain the persisted application data to avoid a false error.
+                App applicationToValidate = Application;
+                if (AppLibrary.AppsLoaded && AppLibrary.AllInstalledAppsInAllLibraries != null)
+                    applicationToValidate = AppLibrary.GetAnyAppById(ApplicationId);
+
+                if (applicationToValidate == null || String.IsNullOrWhiteSpace(applicationToValidate.ExePath) || !System.IO.File.Exists(applicationToValidate.ExePath))
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The Application {ExecutableNameAndPath} DOES NOT exist");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The application '{ApplicationName}' (ID: {ApplicationId}) could not be found or its executable is unavailable.");
                     ShortcutError error = new ShortcutError();
-                    error.Name = "InvalidExecutableNameAndPath";
+                    error.Name = "ApplicationNotInstalled";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The application '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
+                    error.Message = $"The application '{ApplicationName}' is not installed or its executable cannot be accessed.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
@@ -1595,6 +1578,16 @@ namespace DisplayMagician
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
                 }
+            }
+            else
+            {
+                logger.Warn($"ShortcutItem/RefreshValidity: The shortcut '{Name}' has an unknown category '{Category}'.");
+                ShortcutError error = new ShortcutError();
+                error.Name = "UnknownShortcutCategory";
+                error.Validity = ShortcutValidity.Error;
+                error.Message = "The shortcut has an unknown type and cannot be run.";
+                _shortcutErrors.Add(error);
+                worstError = ShortcutValidity.Error;
             }
             // Do all the active/enabled specified start programs still exist?
             foreach (StartProgram sp in StartPrograms)
@@ -1632,6 +1625,51 @@ namespace DisplayMagician
                             worstError = ShortcutValidity.Warning;
                     }
                 }
+            }
+
+            // After Programs do not prevent the target application or game from running,
+            // but the user should know they will be skipped after it closes.
+            foreach (AfterProgram ap in AfterPrograms)
+            {
+                if (!ap.Disabled && !string.IsNullOrWhiteSpace(ap.Executable) && !System.IO.File.Exists(ap.Executable))
+                {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The after program executable '{ap.Executable}' does not exist");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "AfterProgramNotExist";
+                    error.Validity = ShortcutValidity.Warning;
+                    error.Message = $"The after program '{Path.GetFileName(ap.Executable)}' does not exist.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Warning;
+                }
+            }
+
+            if ((Category.Equals(ShortcutCategory.Executable) || Category.Equals(ShortcutCategory.Application)) && !ProcessNameToMonitorUsesExecutable &&
+                (String.IsNullOrWhiteSpace(DifferentExecutableToMonitor) || !System.IO.File.Exists(DifferentExecutableToMonitor)))
+            {
+                ShortcutError error = new ShortcutError();
+                error.Name = "AlternativeExecutableToMonitorNotExist";
+                error.Validity = ShortcutValidity.Warning;
+                error.Message = String.IsNullOrWhiteSpace(DifferentExecutableToMonitor)
+                    ? "An alternative executable to monitor has not been selected."
+                    : $"The alternative executable to monitor '{Path.GetFileName(DifferentExecutableToMonitor)}' does not exist.";
+                _shortcutErrors.Add(error);
+                if (worstError != ShortcutValidity.Error)
+                    worstError = ShortcutValidity.Warning;
+            }
+
+            if (Category.Equals(ShortcutCategory.Game) && MonitorDifferentGameExe &&
+                (String.IsNullOrWhiteSpace(DifferentGameExeToMonitor) || !System.IO.File.Exists(DifferentGameExeToMonitor)))
+            {
+                ShortcutError error = new ShortcutError();
+                error.Name = "AlternativeGameExecutableToMonitorNotExist";
+                error.Validity = ShortcutValidity.Warning;
+                error.Message = String.IsNullOrWhiteSpace(DifferentGameExeToMonitor)
+                    ? "An alternative game executable to monitor has not been selected."
+                    : $"The alternative game executable to monitor '{Path.GetFileName(DifferentGameExeToMonitor)}' does not exist.";
+                _shortcutErrors.Add(error);
+                if (worstError != ShortcutValidity.Error)
+                    worstError = ShortcutValidity.Warning;
             }
 
             // Save the worst error level to IsValid property

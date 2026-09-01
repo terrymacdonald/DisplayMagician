@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Reflection;
@@ -485,11 +485,7 @@ namespace DisplayMagician.UIForms
                 foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                 {
                     ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, profile.ProfileBitmap, runProfileToolStripMenuItem_Click);
-                    if (!profile.IsPossible)
-                    {
-                        profileMenuItem.Enabled = false;
-                    }
-                    else if (profile.IsActive)
+                    if (profile.IsActive)
                     {
                         profileMenuItem.Enabled = true;
                         profileMenuItem.Font = new Font(profileMenuItem.Font, FontStyle.Bold);

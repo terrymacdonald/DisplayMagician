@@ -131,7 +131,7 @@ namespace DisplayMagician.UIForms
                     // right in the centre
                     g.DrawImage(Properties.Resources.error, pos.X + 30, pos.Y + 30, 40, 40);
                 }
-                else if (shortcutToRender.IsValid == ShortcutValidity.Warning || shortcutToRender.HasReadinessAdvisory)
+                else if (shortcutToRender.IsValid == ShortcutValidity.Warning)
                 {
                     // The shortcut has an advisory (e.g. screens aren't right at the moment).
                     // It can still be run, as switchers and powered-off displays may appear later.

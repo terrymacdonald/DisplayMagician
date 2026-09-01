@@ -854,12 +854,6 @@ namespace DisplayMagician
 
             MainForm myMainForm = Program.AppMainForm;
 
-            // Refresh advisory readiness immediately before running. These checks are not
-            // hard validity requirements: external switches and powered-off displays can
-            // become available while the display profile is being applied.
-            ProfileRepository.IsPossibleRefresh();
-            AudioProfileRepository.IsPossibleRefresh();
-
             // Check the shortcut is still valid.
             shortcutToUse.RefreshValidity();
 
@@ -875,17 +869,10 @@ namespace DisplayMagician
 
                 return RunShortcutResult.Error;
             }
-            else if (shortcutToUse.IsValid == ShortcutValidity.Warning || shortcutToUse.HasReadinessAdvisory)
+            else if (shortcutToUse.IsValid == ShortcutValidity.Warning)
             {
-                logger.Warn($"ShortcutRepository/RunShortcut: Shortcut '{shortcutToUse.Name}' has warnings or readiness advisories. Asking the user whether to continue.");
+                logger.Warn($"ShortcutRepository/RunShortcut: Shortcut '{shortcutToUse.Name}' has warnings. Asking the user whether to continue.");
                 List<string> warningReasons = shortcutToUse.Errors.Select(error => $"• {error.Message}").ToList();
-                if (!shortcutToUse.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase) &&
-                    shortcutToUse.ProfileToUse != null && !shortcutToUse.ProfileToUse.IsPossible)
-                    warningReasons.Add($"• Display profile '{shortcutToUse.ProfileToUse.Name}' may require displays or inputs that are not currently available.");
-                if (!shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase) &&
-                    shortcutToUse.AudioProfileToUse != null && !shortcutToUse.AudioProfileToUse.IsPossible)
-                    warningReasons.Add($"• Audio profile '{shortcutToUse.AudioProfileToUse.Name}' may not be available until the display setup has changed.");
-
                 if (!AskToContinue(
                     $"Your shortcut may not run as expected:{Environment.NewLine}{Environment.NewLine}{String.Join(Environment.NewLine, warningReasons)}{Environment.NewLine}{Environment.NewLine}You can still run the shortcut if you want to, but it may not work as expected.",
                     "Shortcut Warnings"))
@@ -1478,19 +1465,28 @@ namespace DisplayMagician
                 // Start the main executable
 
                 List<Process> processesCreated = new List<Process>();
-                App appToUse = shortcutToUse.Application;
-                bool appStartFailed = false;
+                if (!AppLibrary.AppsLoaded)
+                {
+                    logger.Info("ShortcutRepository/RunShortcut: Loading installed applications before starting an application shortcut.");
+                    AppLibrary.LoadAppsInBackground();
+                }
+
+                App appToUse = AppLibrary.AllInstalledAppsInAllLibraries != null
+                    ? AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId)
+                    : null;
+
+                bool appStartFailed = appToUse == null;
                 try
                 {
-                     if (shortcutToUse.Application is App)
+                     if (!appStartFailed && appToUse is App)
                     {
                         if (appToUse.Start(out processesCreated, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} was launched as the main application to monitor.");
+                            logger.Debug($"ShortcutRepository/RunShortcut: Application '{appToUse.Name}' was launched as the main application to monitor.");
                         }
                         else
                         {
-                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} as the main application to monitor.");
+                            logger.Error($"ShortcutRepository/RunShortcut: Unable to launch application '{appToUse.Name}' as the main application to monitor.");
                             appStartFailed = true;
                         }
                     }
@@ -1498,7 +1494,7 @@ namespace DisplayMagician
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception caused whilst starting UWP App {appToUse.Name}.");
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception caused whilst starting application '{shortcutToUse.ApplicationName}'.");
                     appStartFailed = true;
                 }
 
@@ -1968,9 +1964,15 @@ namespace DisplayMagician
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the game that we wanted to run, and that we're going to monitor and watch");
 
-                Game gameToRun = null;
+                if (!GameLibrary.GamesLoaded)
+                {
+                    logger.Info("ShortcutRepository/RunShortcut: Loading installed games before starting a game shortcut.");
+                    GameLibrary.LoadGamesInBackground();
+                }
 
-                gameToRun = GameLibrary.GetAnyGameById(shortcutToUse.GameAppId);
+                Game gameToRun = GameLibrary.AllInstalledGamesInAllLibraries != null
+                    ? GameLibrary.GetAnyGameById(shortcutToUse.GameAppId)
+                    : null;
 
                 // If the GameAppID is not null, then we've matched a game! Lets run it.
                 if (gameToRun != null)
@@ -2021,6 +2023,13 @@ namespace DisplayMagician
                     else
                     {
                         logger.Error($"ShortcutRepository/RunShortcut: Unable to start the {gameToRun.GameLibrary.GameLibraryName} game {gameToRun.Name}");
+                        if (!AskToContinue(
+                            $"The game '{gameToRun.Name}' could not be started. Do you want to continue running the shortcut anyway?",
+                            "Game Failed to Start"))
+                        {
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
+                        }
                     }
                     monitoredProcessHandles.AddRange(gameProcesses);
 
@@ -2100,7 +2109,7 @@ namespace DisplayMagician
                         }
 
                         // Wait for up to 5 minutes for GameLibrary to update
-                        for (int secs = 0; secs <= 5000; secs += 500)
+                        for (int secs = 0; secs <= 300000; secs += 500)
                         {
 
                             // If the game library has finished updating then let's break, and get to the next step....
@@ -2153,7 +2162,7 @@ namespace DisplayMagician
                         }
 
                         // Wait for up to 15 minutes for the Game to update
-                        for (int secs = 0; secs <= 15000; secs += 500)
+                        for (int secs = 0; secs <= 900000; secs += 500)
                         {
 
                             // If the game library has finished updating then let's break, and get to the next step....
@@ -2549,7 +2558,14 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    logger.Error($"ShortcutRepository/RunShortcut: Error starting the {gameToRun.Name} {gameToRun.GameLibraryType} Game as the game wasn't found.");
+                    logger.Error($"ShortcutRepository/RunShortcut: The game '{shortcutToUse.GameName}' (ID: {shortcutToUse.GameAppId}) was not available when runtime attempted to start it.");
+                    if (!AskToContinue(
+                        $"The game '{shortcutToUse.GameName}' is no longer available. Do you want to continue running the shortcut anyway?",
+                        "Game Not Available"))
+                    {
+                        RevertAndCleanup();
+                        return RunShortcutResult.Cancelled;
+                    }
                 }
 
                 ReleaseMonitoringResources();

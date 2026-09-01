@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -122,9 +122,6 @@ namespace DisplayMagician
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
                 foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                 {
-                    if (!profile.IsPossible) continue; // Skip invalid profiles (e.g. missing screens)
-
-
                     RegistryKey pm = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name);
                     if (pm != null)
                     {

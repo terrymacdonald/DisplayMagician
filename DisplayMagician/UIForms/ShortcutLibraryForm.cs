@@ -62,8 +62,6 @@ namespace DisplayMagician.UIForms
             // The rest of the refreshing happens as the shortcuts are added
             // and deleted.
             logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing Possibilty.");
-            ProfileRepository.IsPossibleRefresh();
-            AudioProfileRepository.IsPossibleRefresh();
             logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing Validity.");
             ShortcutRepository.IsValidRefresh();
             logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing SHortutLibraryUI.");
@@ -503,8 +501,6 @@ namespace DisplayMagician.UIForms
             }
 
             // Revalidate immediately before running so the UI does not rely on a stale library state.
-            ProfileRepository.IsPossibleRefresh();
-            AudioProfileRepository.IsPossibleRefresh();
             _selectedShortcut.RefreshValidity();
             UpdateShortcutStatusPanel();
 
@@ -588,7 +584,7 @@ namespace DisplayMagician.UIForms
             if (e.Item != null)
             {
                 ShortcutItem shortcut = ShortcutRepository.GetShortcut(e.Item.Text);
-                if (shortcut != null && (shortcut.IsValid != ShortcutValidity.Valid || shortcut.HasReadinessAdvisory))
+                if (shortcut != null && shortcut.IsValid != ShortcutValidity.Valid)
                     tt_selected.SetToolTip(ilv_saved_shortcuts, GetShortcutStatusText(shortcut));
                 else
                     tt_selected.SetToolTip(ilv_saved_shortcuts, e.Item.Text);
@@ -608,7 +604,7 @@ namespace DisplayMagician.UIForms
             }
 
             bool hasError = _selectedShortcut.IsValid == ShortcutValidity.Error;
-            bool hasIssue = hasError || _selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.HasReadinessAdvisory;
+            bool hasIssue = hasError || _selectedShortcut.IsValid == ShortcutValidity.Warning;
             if (!hasIssue)
             {
                 pnl_shortcut_status.Visible = false;
@@ -644,14 +640,6 @@ namespace DisplayMagician.UIForms
         private string GetShortcutIssueList(ShortcutItem shortcut)
         {
             List<string> issues = shortcut.Errors.Select(error => $"• {error.Message}").ToList();
-
-            if (!String.Equals(shortcut.ProfileUUID, ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase) &&
-                shortcut.ProfileToUse != null && !shortcut.ProfileToUse.IsPossible)
-                issues.Add($"• Display profile '{shortcut.ProfileToUse.Name}' may require displays or inputs that are not currently available.");
-
-            if (!String.Equals(shortcut.AudioProfileUUID, AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase) &&
-                shortcut.AudioProfileToUse != null && !shortcut.AudioProfileToUse.IsPossible)
-                issues.Add($"• Audio profile '{shortcut.AudioProfileToUse.Name}' may not be available until the display setup has changed.");
 
             if (issues.Count == 0)
                 issues.Add("• The shortcut configuration has a warning.");
