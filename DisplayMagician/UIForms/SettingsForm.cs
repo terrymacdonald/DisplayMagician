@@ -1,4 +1,4 @@
-﻿using AutoUpdaterDotNET;
+using AutoUpdaterDotNET;
 using DisplayMagicianShared;
 //using NHotkey;
 //using NHotkey.WindowsForms;
@@ -170,6 +170,7 @@ namespace DisplayMagician.UIForms
 
             // Set the AudioDeviceWaitSecs numeric up down control to the value from the settings
             nud_audio_device_wait.Value = Program.AppProgramSettings.AudioDeviceWaitSecs;
+            nud_display_profile_wait.Value = Program.AppProgramSettings.DisplayProfileWaitSecs;
 
             // setup loglevel on start
             switch (Program.AppProgramSettings.LogLevel)
@@ -332,6 +333,7 @@ namespace DisplayMagician.UIForms
 
             // Set the settings value from the AudioDeviceWaitSecs numeric up down control
             Program.AppProgramSettings.AudioDeviceWaitSecs = (int)nud_audio_device_wait.Value;
+            Program.AppProgramSettings.DisplayProfileWaitSecs = (int)nud_display_profile_wait.Value;
 
             // save loglevel on close
             // and make that log level live in NLog straight away

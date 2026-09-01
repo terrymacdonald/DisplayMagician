@@ -134,7 +134,7 @@ namespace DisplayMagician
         public string Source;
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap Image;
-        public Size Size;        
+        public Size Size;
 
         public ShortcutBitmap()
         {
@@ -163,7 +163,7 @@ namespace DisplayMagician
 
     public class ShortcutItem : IComparable
     {
-        
+
         private string _profileUuid = "";
         private ProfileItem _profileToUse;
         private string _uuid = "";
@@ -222,7 +222,7 @@ namespace DisplayMagician
                 _uuid = Guid.NewGuid().ToString("D");
 
             // If there are no GameLibraries then choose executable instead
-            if (!(UplayLibrary.GetLibrary().IsGameLibraryInstalled && 
+            if (!(UplayLibrary.GetLibrary().IsGameLibraryInstalled &&
                 SteamLibrary.GetLibrary().IsGameLibraryInstalled &&
                 GogLibrary.GetLibrary().IsGameLibraryInstalled &&
                 EpicLibrary.GetLibrary().IsGameLibraryInstalled &&
@@ -240,7 +240,7 @@ namespace DisplayMagician
                 // If Autoname is on, and then lets autoname it!
                 // That populates all the right things
                 AutoSuggestShortcutName();
-            }            
+            }
         }
 
         public static Version Version
@@ -288,7 +288,7 @@ namespace DisplayMagician
             {
                 _autoName = value;
             }
-        }   
+        }
 
 
         [JsonIgnore]
@@ -346,14 +346,14 @@ namespace DisplayMagician
         }
 
         [DefaultValue(ShortcutPermanence.Temporary)]
-        public ShortcutPermanence DisplayPermanence 
-        { 
-            get 
+        public ShortcutPermanence DisplayPermanence
+        {
+            get
             {
                 return _displayPermanence;
             }
 
-            set 
+            set
             {
                 _displayPermanence = value;
             }
@@ -419,7 +419,7 @@ namespace DisplayMagician
                 {
                     _differentExecutableToMonitor = value;
                 }
-                
+
             }
         }
 
@@ -433,7 +433,7 @@ namespace DisplayMagician
 
             set
             {
-                _applicationId = value;                
+                _applicationId = value;
 
             }
         }
@@ -467,7 +467,7 @@ namespace DisplayMagician
 
             }
         }
-        
+
         public App Application
         {
             get
@@ -679,7 +679,7 @@ namespace DisplayMagician
                 else
                 {
                     _differentGameExeToMonitor = value;
-                }                
+                }
             }
         }
 
@@ -850,8 +850,8 @@ namespace DisplayMagician
             {
                 _originalIconPath = value;
 
-                // And we do the same for the OriginalBitmap 
-                //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);                
+                // And we do the same for the OriginalBitmap
+                //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
             }
         }
 
@@ -914,6 +914,28 @@ namespace DisplayMagician
             set
             {
                 _isValid = value;
+            }
+        }
+
+        /// <summary>
+        /// Indicates that a saved display or audio profile may not be available with the
+        /// hardware currently detected. This is advisory only: switchers and manually
+        /// powered displays can become available while the shortcut is being applied.
+        /// </summary>
+        [JsonIgnore]
+        public bool HasReadinessAdvisory
+        {
+            get
+            {
+                if (!String.Equals(ProfileUUID, ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase) &&
+                    ProfileToUse != null && !ProfileToUse.IsPossible)
+                    return true;
+
+                if (!String.Equals(AudioProfileUUID, AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase) &&
+                    AudioProfileToUse != null && !AudioProfileToUse.IsPossible)
+                    return true;
+
+                return false;
             }
         }
 
@@ -1046,15 +1068,15 @@ namespace DisplayMagician
         }
 
         public void UpdateGameShortcut(
-            string name, 
+            string name,
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile, 
+            ProfileItem profile,
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            GameShorcutData game, 
+            GameShorcutData game,
             ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence audioPermanence,
             string originalIconPath,
-            ShortcutBitmap selectedImage, 
+            ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages,
             AudioProfileItem audioProfileToUse = null,
             bool overrideAudioSpeakerVolume = false,
@@ -1064,7 +1086,7 @@ namespace DisplayMagician
             List<StartProgram> startPrograms = null,
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
-            bool autoName = true, 
+            bool autoName = true,
             string uuid = ""
             )
         {
@@ -1097,9 +1119,9 @@ namespace DisplayMagician
             _afterPrograms = afterPrograms;
             _stopPrograms = stopPrograms;
             _originalIconPath = originalIconPath;
-            _selectedImage = selectedImage; 
+            _selectedImage = selectedImage;
             _availableImages = availableImages;
-            
+
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
@@ -1126,16 +1148,16 @@ namespace DisplayMagician
         }
 
         public void UpdateExecutableShortcut(
-            string name, 
+            string name,
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile, 
+            ProfileItem profile,
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            ExecutableShortcutData executable, 
+            ExecutableShortcutData executable,
             ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence audioPermanence,
             string originalIconPath,
             ShortcutBitmap selectedImage,
-            List<ShortcutBitmap> availableImages, 
+            List<ShortcutBitmap> availableImages,
             AudioProfileItem audioProfileToUse = null,
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
@@ -1171,12 +1193,12 @@ namespace DisplayMagician
             _overrideAudioMicrophoneVolumeLevel = overrideAudioMicrophoneVolumeLevel;
             _autoName = autoName;
             _startPrograms = startPrograms;
-            _afterPrograms = afterPrograms; 
+            _afterPrograms = afterPrograms;
             _stopPrograms = stopPrograms;
             _originalIconPath = originalIconPath;
             _selectedImage = selectedImage;
             _availableImages = availableImages;
-            
+
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
@@ -1223,7 +1245,7 @@ namespace DisplayMagician
             List<AfterProgram> afterPrograms = null,
             List<StopProgram> stopPrograms = null,
             bool autoName = true,
-            string uuid = ""            
+            string uuid = ""
             )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1263,7 +1285,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            
+
             // We create the Bitmaps for the executable
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
@@ -1314,7 +1336,7 @@ namespace DisplayMagician
             shortcut.StartTimeout = StartTimeout;
             shortcut.GameArguments = GameArguments;
             shortcut.GameArgumentsRequired = GameArgumentsRequired;
-            shortcut.OriginalIconPath = OriginalIconPath;           
+            shortcut.OriginalIconPath = OriginalIconPath;
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
             shortcut.AudioProfileToUse = AudioProfileToUse;
@@ -1328,7 +1350,7 @@ namespace DisplayMagician
             shortcut.OriginalLargeBitmap = (Bitmap)OriginalLargeBitmap.Clone();
             shortcut.ShortcutBitmap = (Bitmap)ShortcutBitmap.Clone();
             //shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename; // We want a new shortcut icon!
-            shortcut.SelectedImage = ImageUtils.ShortcutBitmapClone(SelectedImage);            
+            shortcut.SelectedImage = ImageUtils.ShortcutBitmapClone(SelectedImage);
             shortcut.AvailableImages = ImageUtils.ShortcutBitmapClone(AvailableImages);
 
             // Duplicate the start programs
@@ -1415,11 +1437,11 @@ namespace DisplayMagician
             // Work out the name of the shortcut we'll save.
             _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
             logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Planning on saving shortcut icon to cache as {_savedShortcutIconCacheFilename}.");
-            MultiIcon shortcutIcon = new MultiIcon(); 
+            MultiIcon shortcutIcon = new MultiIcon();
             try
             {
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Creating Icon from Shortcut bitmap.");
-                // Create a new 
+                // Create a new
                 SingleIcon si = shortcutIcon.Add("icon");
                 si.Add(_shortcutBitmap);
                 shortcutIcon.SelectedIndex = 0;
@@ -1435,7 +1457,7 @@ namespace DisplayMagician
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileToUse.Name} as the icon instead.");
                 SingleIcon si = shortcutIcon.Add("icon2");
                 si.Add(Properties.Resources.displaymagician);
-                shortcutIcon.SelectedIndex = 0; 
+                shortcutIcon.SelectedIndex = 0;
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
                 shortcutIcon.Save(_savedShortcutIconCacheFilename);
             }
@@ -1673,7 +1695,7 @@ namespace DisplayMagician
                     if (System.IO.File.Exists(shortcutFileName))
                     {
                         System.IO.File.Delete(shortcutFileName);
-                    }                   
+                    }
 
                     Type shellType = Type.GetTypeFromProgID("WScript.Shell");
                     if (shellType == null)
@@ -1755,7 +1777,7 @@ namespace DisplayMagician
             if (!(obj is ShortcutItem)) throw new ArgumentException("Object to CompareTo is not a Shortcut"); ;
 
             ShortcutItem otherShortcut = (ShortcutItem) obj;
-            return this.Name.CompareTo(otherShortcut.Name);                
+            return this.Name.CompareTo(otherShortcut.Name);
         }
 
     }

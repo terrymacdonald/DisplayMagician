@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.UIForms
+namespace DisplayMagician.UIForms
 {
     partial class ShortcutLibraryForm
     {
@@ -53,11 +53,15 @@
             btn_donate = new System.Windows.Forms.Button();
             btn_copy = new System.Windows.Forms.Button();
             btn_cancel = new System.Windows.Forms.Button();
+            pnl_shortcut_status = new System.Windows.Forms.Panel();
+            lbl_shortcut_status_title = new System.Windows.Forms.Label();
+            lbl_shortcut_status_message = new System.Windows.Forms.Label();
             cms_shortcuts.SuspendLayout();
+            pnl_shortcut_status.SuspendLayout();
             SuspendLayout();
-            // 
+            //
             // ilv_saved_shortcuts
-            // 
+            //
             ilv_saved_shortcuts.AllowCheckBoxClick = false;
             ilv_saved_shortcuts.AllowColumnClick = false;
             ilv_saved_shortcuts.AllowColumnResize = false;
@@ -70,15 +74,15 @@
             ilv_saved_shortcuts.Name = "ilv_saved_shortcuts";
             ilv_saved_shortcuts.PersistentCacheDirectory = "";
             ilv_saved_shortcuts.PersistentCacheSize = 100L;
-            ilv_saved_shortcuts.Size = new System.Drawing.Size(1020, 696);
+            ilv_saved_shortcuts.Size = new System.Drawing.Size(1020, 574);
             ilv_saved_shortcuts.TabIndex = 22;
             ilv_saved_shortcuts.UseWIC = true;
             ilv_saved_shortcuts.ItemClick += ilv_saved_shortcuts_ItemClick;
             ilv_saved_shortcuts.ItemHover += ilv_saved_shortcuts_ItemHover;
             ilv_saved_shortcuts.ItemDoubleClick += ilv_saved_shortcuts_ItemDoubleClick;
-            // 
+            //
             // btn_delete
-            // 
+            //
             btn_delete.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_delete.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_delete.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
@@ -93,9 +97,9 @@
             btn_delete.Text = "&Delete";
             btn_delete.UseVisualStyleBackColor = true;
             btn_delete.Click += btn_delete_Click;
-            // 
+            //
             // btn_back
-            // 
+            //
             btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
@@ -111,9 +115,9 @@
             btn_back.Text = "&Back";
             btn_back.UseVisualStyleBackColor = true;
             btn_back.Click += btn_back_Click;
-            // 
+            //
             // btn_run
-            // 
+            //
             btn_run.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_run.BackColor = System.Drawing.Color.Black;
             btn_run.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
@@ -129,9 +133,37 @@
             btn_run.Text = "&Run";
             btn_run.UseVisualStyleBackColor = false;
             btn_run.Click += btn_run_Click;
-            // 
+            //
+            // pnl_shortcut_status
+            //
+            pnl_shortcut_status.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            pnl_shortcut_status.BackColor = System.Drawing.Color.FromArgb(255, 248, 225);
+            pnl_shortcut_status.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            pnl_shortcut_status.Controls.Add(lbl_shortcut_status_message);
+            pnl_shortcut_status.Controls.Add(lbl_shortcut_status_title);
+            pnl_shortcut_status.Location = new System.Drawing.Point(12, 696);
+            pnl_shortcut_status.Name = "pnl_shortcut_status";
+            pnl_shortcut_status.Size = new System.Drawing.Size(996, 112);
+            pnl_shortcut_status.TabIndex = 23;
+            pnl_shortcut_status.Visible = false;
+            //
+            // lbl_shortcut_status_title
+            //
+            lbl_shortcut_status_title.AutoSize = true;
+            lbl_shortcut_status_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
+            lbl_shortcut_status_title.Location = new System.Drawing.Point(12, 10);
+            lbl_shortcut_status_title.Name = "lbl_shortcut_status_title";
+            lbl_shortcut_status_title.Size = new System.Drawing.Size(0, 20);
+            //
+            // lbl_shortcut_status_message
+            //
+            lbl_shortcut_status_message.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            lbl_shortcut_status_message.Location = new System.Drawing.Point(12, 38);
+            lbl_shortcut_status_message.Name = "lbl_shortcut_status_message";
+            lbl_shortcut_status_message.Size = new System.Drawing.Size(970, 62);
+            //
             // btn_edit
-            // 
+            //
             btn_edit.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_edit.BackColor = System.Drawing.Color.Black;
             btn_edit.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
@@ -147,9 +179,9 @@
             btn_edit.Text = "&Edit";
             btn_edit.UseVisualStyleBackColor = false;
             btn_edit.Click += btn_edit_Click;
-            // 
+            //
             // btn_new
-            // 
+            //
             btn_new.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_new.BackColor = System.Drawing.Color.Black;
             btn_new.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
@@ -165,9 +197,9 @@
             btn_new.Text = "&New";
             btn_new.UseVisualStyleBackColor = false;
             btn_new.Click += btn_new_Click;
-            // 
+            //
             // btn_save
-            // 
+            //
             btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_save.BackColor = System.Drawing.Color.Black;
             btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
@@ -183,16 +215,16 @@
             btn_save.Text = "&Save to Desktop";
             btn_save.UseVisualStyleBackColor = false;
             btn_save.Click += btn_save_Click;
-            // 
+            //
             // dialog_save
-            // 
+            //
             dialog_save.DefaultExt = "lnk";
             dialog_save.DereferenceLinks = false;
             dialog_save.Filter = "Shortcuts|*.lnk";
             dialog_save.RestoreDirectory = true;
-            // 
+            //
             // label1
-            // 
+            //
             label1.Anchor = System.Windows.Forms.AnchorStyles.Top;
             label1.AutoSize = true;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -203,9 +235,9 @@
             label1.Size = new System.Drawing.Size(309, 33);
             label1.TabIndex = 0;
             label1.Text = "Game Shortcut Library";
-            // 
+            //
             // lbl_create_shortcut
-            // 
+            //
             lbl_create_shortcut.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             lbl_create_shortcut.AutoSize = true;
             lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
@@ -219,59 +251,59 @@
             lbl_create_shortcut.Size = new System.Drawing.Size(304, 22);
             lbl_create_shortcut.TabIndex = 0;
             lbl_create_shortcut.Text = "Click the 'New' button to create a shortcut";
-            // 
+            //
             // cms_shortcuts
-            // 
+            //
             cms_shortcuts.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmi_edit, tsmi_run, tsmi_save_to_desktop, sendToClipboardToolStripMenuItem, tsmi_copy, tsmi_delete });
             cms_shortcuts.Name = "cms_shortcuts";
             cms_shortcuts.Size = new System.Drawing.Size(216, 136);
-            // 
+            //
             // tsmi_edit
-            // 
+            //
             tsmi_edit.Font = new System.Drawing.Font("Segoe UI", 9F);
             tsmi_edit.Name = "tsmi_edit";
             tsmi_edit.Size = new System.Drawing.Size(215, 22);
             tsmi_edit.Text = "Edit Shortcut...";
             tsmi_edit.Click += tsmi_edit_Click;
-            // 
+            //
             // tsmi_run
-            // 
+            //
             tsmi_run.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             tsmi_run.Name = "tsmi_run";
             tsmi_run.Size = new System.Drawing.Size(215, 22);
             tsmi_run.Text = "Run Shortcut...";
             tsmi_run.Click += tsmi_run_Click;
-            // 
+            //
             // tsmi_save_to_desktop
-            // 
+            //
             tsmi_save_to_desktop.Name = "tsmi_save_to_desktop";
             tsmi_save_to_desktop.Size = new System.Drawing.Size(215, 22);
             tsmi_save_to_desktop.Text = "Save Shortcut to Desktop...";
             tsmi_save_to_desktop.Click += tsmi_save_to_desktop_Click;
-            // 
+            //
             // sendToClipboardToolStripMenuItem
-            // 
+            //
             sendToClipboardToolStripMenuItem.Name = "sendToClipboardToolStripMenuItem";
             sendToClipboardToolStripMenuItem.Size = new System.Drawing.Size(215, 22);
             sendToClipboardToolStripMenuItem.Text = "Send to Clipboard...";
             sendToClipboardToolStripMenuItem.Click += sendToClipboardToolStripMenuItem_Click;
-            // 
+            //
             // tsmi_copy
-            // 
+            //
             tsmi_copy.Name = "tsmi_copy";
             tsmi_copy.Size = new System.Drawing.Size(215, 22);
             tsmi_copy.Text = "Duplicate Shortcut...";
             tsmi_copy.Click += tsmi_copy_Click;
-            // 
+            //
             // tsmi_delete
-            // 
+            //
             tsmi_delete.Name = "tsmi_delete";
             tsmi_delete.Size = new System.Drawing.Size(215, 22);
             tsmi_delete.Text = "Delete Shortcut...";
             tsmi_delete.Click += tsmi_delete_Click;
-            // 
+            //
             // lbl_mask
-            // 
+            //
             lbl_mask.Anchor = System.Windows.Forms.AnchorStyles.None;
             lbl_mask.BackColor = System.Drawing.Color.Gray;
             lbl_mask.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -284,9 +316,9 @@
             lbl_mask.Text = "lbl_masked_form";
             lbl_mask.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             lbl_mask.Visible = false;
-            // 
+            //
             // btn_help
-            // 
+            //
             btn_help.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
@@ -302,9 +334,9 @@
             btn_help.Text = "&Help";
             btn_help.UseVisualStyleBackColor = true;
             btn_help.Click += btn_help_Click;
-            // 
+            //
             // btn_donate
-            // 
+            //
             btn_donate.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_donate.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_donate.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
@@ -320,9 +352,9 @@
             btn_donate.Text = "D&onate";
             btn_donate.UseVisualStyleBackColor = true;
             btn_donate.Click += btn_donate_Click;
-            // 
+            //
             // btn_copy
-            // 
+            //
             btn_copy.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_copy.BackColor = System.Drawing.Color.Black;
             btn_copy.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
@@ -338,9 +370,9 @@
             btn_copy.Text = "&Copy";
             btn_copy.UseVisualStyleBackColor = false;
             btn_copy.Click += btn_copy_Click;
-            // 
+            //
             // btn_cancel
-            // 
+            //
             btn_cancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_cancel.BackColor = System.Drawing.Color.Black;
             btn_cancel.Enabled = false;
@@ -358,9 +390,9 @@
             btn_cancel.UseVisualStyleBackColor = false;
             btn_cancel.Visible = false;
             btn_cancel.Click += btn_cancel_Click;
-            // 
+            //
             // ShortcutLibraryForm
-            // 
+            //
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
@@ -368,6 +400,7 @@
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             ClientSize = new System.Drawing.Size(1020, 931);
             Controls.Add(btn_cancel);
+            Controls.Add(pnl_shortcut_status);
             Controls.Add(btn_copy);
             Controls.Add(btn_donate);
             Controls.Add(btn_help);
@@ -391,6 +424,8 @@
             Load += ShortcutLibraryForm_Load;
             KeyPress += ShortcutLibraryForm_KeyPress;
             cms_shortcuts.ResumeLayout(false);
+            pnl_shortcut_status.ResumeLayout(false);
+            pnl_shortcut_status.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -414,6 +449,9 @@
         private System.Windows.Forms.ToolStripMenuItem tsmi_delete;
         private System.Windows.Forms.ToolStripMenuItem tsmi_save_to_desktop;
         private System.Windows.Forms.Label lbl_mask;
+        private System.Windows.Forms.Panel pnl_shortcut_status;
+        private System.Windows.Forms.Label lbl_shortcut_status_title;
+        private System.Windows.Forms.Label lbl_shortcut_status_message;
         private System.Windows.Forms.Button btn_help;
         private System.Windows.Forms.Button btn_donate;
         private System.Windows.Forms.Button btn_copy;

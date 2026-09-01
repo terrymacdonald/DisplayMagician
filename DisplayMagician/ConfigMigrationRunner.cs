@@ -13,7 +13,8 @@ namespace DisplayMagician
         private static readonly List<IConfigMigrationRule> MigrationRules = new List<IConfigMigrationRule>
         {
             new SettingsV4ToV5DonationSplitMigration(),
-            new SettingsV5ToV6ClientSyncMigration()
+            new SettingsV5ToV6ClientSyncMigration(),
+            new SettingsV6ToV7DisplayProfileWaitMigration()
         };
 
         public enum MigrationStatus
@@ -337,6 +338,41 @@ namespace DisplayMagician
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ConfigMigrationRunner/{nameof(SettingsV5ToV6ClientSyncMigration)}: Failed to migrate Settings.json.");
+                    return false;
+                }
+            }
+        }
+
+        private sealed class SettingsV6ToV7DisplayProfileWaitMigration : IConfigMigrationRule
+        {
+            public string Name => "Settings v6 to v7 display profile wait";
+
+            public bool Applies(MigrationContext context)
+            {
+                return string.Equals(context.GetSettingsFileVersion(), "6", StringComparison.OrdinalIgnoreCase);
+            }
+
+            public bool Apply(MigrationContext context)
+            {
+                try
+                {
+                    string backupFileName = CreateBackup(context.SettingsFileName, "v6-to-v7");
+                    logger.Info($"ConfigMigrationRunner/{nameof(SettingsV6ToV7DisplayProfileWaitMigration)}: Created Settings.json backup at {backupFileName}.");
+                    JObject settings = context.GetSettingsObject();
+                    if (settings == null)
+                        return false;
+
+                    if (settings.Property("DisplayProfileWaitSecs") == null)
+                        settings["DisplayProfileWaitSecs"] = 30;
+
+                    context.SettingsFile["SettingsFileVersion"] = ProgramSettings.CurrentProgramSettingsFileVersion;
+                    context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
+                    context.MarkSettingsFileChanged();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ConfigMigrationRunner/{nameof(SettingsV6ToV7DisplayProfileWaitMigration)}: Failed to migrate Settings.json.");
                     return false;
                 }
             }

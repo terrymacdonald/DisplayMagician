@@ -131,9 +131,10 @@ namespace DisplayMagician.UIForms
                     // right in the centre
                     g.DrawImage(Properties.Resources.error, pos.X + 30, pos.Y + 30, 40, 40);
                 }
-                else if (shortcutToRender.IsValid == ShortcutValidity.Warning)
+                else if (shortcutToRender.IsValid == ShortcutValidity.Warning || shortcutToRender.HasReadinessAdvisory)
                 {
-                    // The shortcut is temporaily invalid (e.g. screens aren't right at the moment)
+                    // The shortcut has an advisory (e.g. screens aren't right at the moment).
+                    // It can still be run, as switchers and powered-off displays may appear later.
                     // so we make the image grayscale
                     Image grayImg = ImageUtils.MakeGrayscale(img);
                     g.DrawImage(grayImg, pos);

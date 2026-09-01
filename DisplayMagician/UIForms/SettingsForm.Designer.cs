@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class SettingsForm
@@ -35,6 +35,9 @@ namespace DisplayMagician.UIForms
             label7 = new System.Windows.Forms.Label();
             nud_audio_device_wait = new System.Windows.Forms.NumericUpDown();
             label5 = new System.Windows.Forms.Label();
+            label9 = new System.Windows.Forms.Label();
+            nud_display_profile_wait = new System.Windows.Forms.NumericUpDown();
+            label8 = new System.Windows.Forms.Label();
             label6 = new System.Windows.Forms.Label();
             cmb_notify_icon_double_click = new System.Windows.Forms.ComboBox();
             cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
@@ -72,6 +75,7 @@ namespace DisplayMagician.UIForms
             label3 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nud_display_profile_wait).BeginInit();
             gb_hotkeys.SuspendLayout();
             gb_upgrades.SuspendLayout();
             gb_support.SuspendLayout();
@@ -100,6 +104,9 @@ namespace DisplayMagician.UIForms
             gb_general.Controls.Add(label7);
             gb_general.Controls.Add(nud_audio_device_wait);
             gb_general.Controls.Add(label5);
+            gb_general.Controls.Add(label9);
+            gb_general.Controls.Add(nud_display_profile_wait);
+            gb_general.Controls.Add(label8);
             gb_general.Controls.Add(label6);
             gb_general.Controls.Add(cmb_notify_icon_double_click);
             gb_general.Controls.Add(cb_wake_up_gpus);
@@ -120,7 +127,7 @@ namespace DisplayMagician.UIForms
             gb_general.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_general.Name = "gb_general";
             gb_general.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_general.Size = new System.Drawing.Size(612, 503);
+            gb_general.Size = new System.Drawing.Size(612, 535);
             gb_general.TabIndex = 0;
             gb_general.TabStop = false;
             gb_general.Text = "General Settings";
@@ -155,14 +162,47 @@ namespace DisplayMagician.UIForms
             label5.Name = "label5";
             label5.Size = new System.Drawing.Size(386, 16);
             label5.TabIndex = 0;
-            label5.Text = "Max time to wait for audio device to appear (default 10 seconds):";
+            label5.Text = "Max time to wait for audio device to appear (default 20 seconds):";
+            //
+            // label9
+            //
+            label9.AutoSize = true;
+            label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label9.ForeColor = System.Drawing.Color.Transparent;
+            label9.Location = new System.Drawing.Point(492, 298);
+            label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label9.Name = "label9";
+            label9.Size = new System.Drawing.Size(59, 16);
+            label9.TabIndex = 0;
+            label9.Text = "seconds";
+            //
+            // nud_display_profile_wait
+            //
+            nud_display_profile_wait.Location = new System.Drawing.Point(429, 296);
+            nud_display_profile_wait.Maximum = new decimal(new int[] { 120, 0, 0, 0 });
+            nud_display_profile_wait.Minimum = new decimal(new int[] { 5, 0, 0, 0 });
+            nud_display_profile_wait.Name = "nud_display_profile_wait";
+            nud_display_profile_wait.Size = new System.Drawing.Size(60, 22);
+            nud_display_profile_wait.TabIndex = 9;
+            //
+            // label8
+            //
+            label8.AutoSize = true;
+            label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label8.ForeColor = System.Drawing.Color.Transparent;
+            label8.Location = new System.Drawing.Point(33, 298);
+            label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label8.Name = "label8";
+            label8.Size = new System.Drawing.Size(319, 16);
+            label8.TabIndex = 0;
+            label8.Text = "Max display profile wait before recovery options (default 30):";
             // 
             // label6
             // 
             label6.AutoSize = true;
             label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label6.ForeColor = System.Drawing.Color.Transparent;
-            label6.Location = new System.Drawing.Point(32, 303);
+            label6.Location = new System.Drawing.Point(32, 335);
             label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label6.Name = "label6";
             label6.Size = new System.Drawing.Size(308, 16);
@@ -173,7 +213,7 @@ namespace DisplayMagician.UIForms
             // 
             cmb_notify_icon_double_click.FormattingEnabled = true;
             cmb_notify_icon_double_click.ItemHeight = 16;
-            cmb_notify_icon_double_click.Location = new System.Drawing.Point(359, 300);
+            cmb_notify_icon_double_click.Location = new System.Drawing.Point(359, 332);
             cmb_notify_icon_double_click.Name = "cmb_notify_icon_double_click";
             cmb_notify_icon_double_click.Size = new System.Drawing.Size(226, 24);
             cmb_notify_icon_double_click.TabIndex = 49;
@@ -226,7 +266,7 @@ namespace DisplayMagician.UIForms
             btn_context_menu_reinstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_context_menu_reinstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_context_menu_reinstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_reinstall.Location = new System.Drawing.Point(30, 437);
+            btn_context_menu_reinstall.Location = new System.Drawing.Point(30, 469);
             btn_context_menu_reinstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_context_menu_reinstall.Name = "btn_context_menu_reinstall";
             btn_context_menu_reinstall.Size = new System.Drawing.Size(243, 38);
@@ -283,7 +323,7 @@ namespace DisplayMagician.UIForms
             // label4
             // 
             label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label4.Location = new System.Drawing.Point(130, 399);
+            label4.Location = new System.Drawing.Point(130, 431);
             label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label4.Name = "label4";
             label4.Size = new System.Drawing.Size(361, 28);
@@ -299,7 +339,7 @@ namespace DisplayMagician.UIForms
             btn_context_menu_uninstall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_context_menu_uninstall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_context_menu_uninstall.ForeColor = System.Drawing.Color.White;
-            btn_context_menu_uninstall.Location = new System.Drawing.Point(342, 437);
+            btn_context_menu_uninstall.Location = new System.Drawing.Point(342, 469);
             btn_context_menu_uninstall.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_context_menu_uninstall.Name = "btn_context_menu_uninstall";
             btn_context_menu_uninstall.Size = new System.Drawing.Size(243, 38);
@@ -343,7 +383,7 @@ namespace DisplayMagician.UIForms
             label1.AutoSize = true;
             label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label1.ForeColor = System.Drawing.Color.Transparent;
-            label1.Location = new System.Drawing.Point(32, 353);
+            label1.Location = new System.Drawing.Point(32, 385);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(136, 16);
@@ -355,7 +395,7 @@ namespace DisplayMagician.UIForms
             cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             cmb_loglevel.FormattingEnabled = true;
             cmb_loglevel.ItemHeight = 16;
-            cmb_loglevel.Location = new System.Drawing.Point(179, 350);
+            cmb_loglevel.Location = new System.Drawing.Point(179, 382);
             cmb_loglevel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             cmb_loglevel.Name = "cmb_loglevel";
             cmb_loglevel.Size = new System.Drawing.Size(406, 24);
@@ -560,7 +600,7 @@ namespace DisplayMagician.UIForms
             gb_upgrades.Controls.Add(lbl_anonymous_metrics);
             gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_upgrades.ForeColor = System.Drawing.Color.White;
-            gb_upgrades.Location = new System.Drawing.Point(31, 556);
+            gb_upgrades.Location = new System.Drawing.Point(31, 568);
             gb_upgrades.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_upgrades.Name = "gb_upgrades";
             gb_upgrades.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -619,7 +659,7 @@ namespace DisplayMagician.UIForms
             gb_support.Controls.Add(label3);
             gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_support.ForeColor = System.Drawing.Color.White;
-            gb_support.Location = new System.Drawing.Point(681, 556);
+            gb_support.Location = new System.Drawing.Point(681, 568);
             gb_support.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_support.Name = "gb_support";
             gb_support.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -684,6 +724,7 @@ namespace DisplayMagician.UIForms
             gb_general.ResumeLayout(false);
             gb_general.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nud_display_profile_wait).EndInit();
             gb_hotkeys.ResumeLayout(false);
             gb_hotkeys.PerformLayout();
             gb_upgrades.ResumeLayout(false);
@@ -733,5 +774,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.NumericUpDown nud_audio_device_wait;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.NumericUpDown nud_display_profile_wait;
+        private System.Windows.Forms.Label label8;
     }
 }

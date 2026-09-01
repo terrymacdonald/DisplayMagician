@@ -63,6 +63,7 @@ namespace DisplayMagician.UIForms
             // and deleted.
             logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing Possibilty.");
             ProfileRepository.IsPossibleRefresh();
+            AudioProfileRepository.IsPossibleRefresh();
             logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing Validity.");
             ShortcutRepository.IsValidRefresh();
             logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing SHortutLibraryUI.");
@@ -83,17 +84,20 @@ namespace DisplayMagician.UIForms
         {
 
             if (ShortcutRepository.ShortcutCount == 0)
+            {
+                UpdateShortcutStatusPanel();
                 return;
+            }
 
             // Temporarily stop updating the saved_profiles listview
             logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Suspending the imagelistview layout");
-            ilv_saved_shortcuts.SuspendLayout();            
+            ilv_saved_shortcuts.SuspendLayout();
 
             ImageListViewItem newItem = null;
             logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Emptying shortcut list");
             ilv_saved_shortcuts.Items.Clear();
 
-            
+
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
                 logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Adding shortcut {loadedShortcut.Name} into the list of shortcuts shown to the user ");
@@ -138,6 +142,7 @@ namespace DisplayMagician.UIForms
 
             // Restart updating the saved_profiles listview
             ilv_saved_shortcuts.ResumeLayout();
+            UpdateShortcutStatusPanel();
 
         }
 
@@ -242,6 +247,8 @@ namespace DisplayMagician.UIForms
                 cms_shortcuts.Items[1].Enabled = true;
             }
 
+            UpdateShortcutStatusPanel();
+
             if (e.Buttons == MouseButtons.Right)
             {
                 cms_shortcuts.Show(ilv_saved_shortcuts,e.Location);
@@ -253,7 +260,7 @@ namespace DisplayMagician.UIForms
             logger.Trace($"ShortcutLibraryForm/ilv_saved_shortcuts_ItemDoubleClick: User double-clicked on an item in the image list of Shortcuts.");
             // This is the double click to run
             _selectedShortcut = ShortcutRepository.GetShortcut(e.Item.Text);
-            
+
             // Hide the run button if the shortcut isn't valid
             if (_selectedShortcut.IsValid == ShortcutValidity.Error)
             {
@@ -266,6 +273,8 @@ namespace DisplayMagician.UIForms
                 btn_run.Visible = true;
                 cms_shortcuts.Items[1].Enabled = true;
             }
+
+            UpdateShortcutStatusPanel();
 
             // Run the selected shortcut
             btn_run.PerformClick();
@@ -287,10 +296,10 @@ namespace DisplayMagician.UIForms
                 GameLibrary.LoadGamesInBackground();
                 // Load the apps in background on execute
                 //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                //      Need to investigate why this particular part was crashing everything. 
+                //      Need to investigate why this particular part was crashing everything.
                 logger.Trace($"ShortcutLibraryForm/btn_new_Click: Starting the Loading the Apps in the background tasks.");
                 AppLibrary.LoadAppsInBackground();
-            } 
+            }
             _shortcutForm.Owner = this;
 
             //ShortcutRepository.IsValidRefresh()
@@ -383,11 +392,11 @@ namespace DisplayMagician.UIForms
                     GameLibrary.LoadGamesInBackground();
                     // Load the apps in background on execute
                     //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                    //      Need to investigate why this particular part was crashing everything. 
+                    //      Need to investigate why this particular part was crashing everything.
                     logger.Trace($"ShortcutLibraryForm/btn_edit_Click: Starting the Loading the Apps in the background tasks.");
                     AppLibrary.LoadAppsInBackground();
                 }
-                _shortcutForm.Owner = this; 
+                _shortcutForm.Owner = this;
 
                 _shortcutForm.Shortcut = _selectedShortcut;
                 _shortcutForm.EditingExistingShortcut = true;
@@ -443,7 +452,7 @@ namespace DisplayMagician.UIForms
             // remove the profile from the imagelistview
             int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
             ilv_saved_shortcuts.Items.RemoveAt(currentIlvIndex);
-           
+
             // Remove the shortcut. This will also remove the shortcut hotkey if there is one
             ShortcutRepository.RemoveShortcut(_selectedShortcut);
             _selectedShortcut = null;
@@ -494,7 +503,10 @@ namespace DisplayMagician.UIForms
             }
 
             // Revalidate immediately before running so the UI does not rely on a stale library state.
+            ProfileRepository.IsPossibleRefresh();
+            AudioProfileRepository.IsPossibleRefresh();
             _selectedShortcut.RefreshValidity();
+            UpdateShortcutStatusPanel();
 
             // Only run the shortcut if it is valid.
             if (_selectedShortcut.IsValid == ShortcutValidity.Error)
@@ -542,7 +554,7 @@ namespace DisplayMagician.UIForms
             {
                 if (ex.CancellationToken == Program.AppCancellationTokenSource.Token)
                     logger.Trace($"ShortcutLibraryForm/btn_run_Click: Cancellation token provided while running shortcut {_selectedShortcut.Name}. User asked to cancel.");
-            }            
+            }
             catch(Exception ex)
             {
                 logger.Error(ex, $"ShortcutLibraryForm/btn_run_Click: An exception occurred while trying to run the shortcut {_selectedShortcut.Name}.");
@@ -559,12 +571,12 @@ namespace DisplayMagician.UIForms
             btn_cancel.Enabled = false;
 
             if (Program.AppMainForm is Form)
-            {                
+            {
                 // Also refresh the right-click menu (if we have a main form loaded)
                 Program.AppMainForm.RefreshNotifyIconMenus();
 
             }
-            // Bring the window back to the front            
+            // Bring the window back to the front
             //Utils.ActivateCenteredOnPrimaryScreen(this);
             this.Activate();
 
@@ -575,12 +587,76 @@ namespace DisplayMagician.UIForms
         {
             if (e.Item != null)
             {
-                tt_selected.SetToolTip(ilv_saved_shortcuts, e.Item.Text);
+                ShortcutItem shortcut = ShortcutRepository.GetShortcut(e.Item.Text);
+                if (shortcut != null && (shortcut.IsValid != ShortcutValidity.Valid || shortcut.HasReadinessAdvisory))
+                    tt_selected.SetToolTip(ilv_saved_shortcuts, GetShortcutStatusText(shortcut));
+                else
+                    tt_selected.SetToolTip(ilv_saved_shortcuts, e.Item.Text);
             }
             else
             {
                 tt_selected.RemoveAll();
             }
+        }
+
+        private void UpdateShortcutStatusPanel()
+        {
+            if (_selectedShortcut == null)
+            {
+                pnl_shortcut_status.Visible = false;
+                return;
+            }
+
+            bool hasError = _selectedShortcut.IsValid == ShortcutValidity.Error;
+            bool hasIssue = hasError || _selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.HasReadinessAdvisory;
+            if (!hasIssue)
+            {
+                pnl_shortcut_status.Visible = false;
+                return;
+            }
+
+            if (hasError)
+            {
+                pnl_shortcut_status.BackColor = Color.MistyRose;
+                lbl_shortcut_status_title.ForeColor = Color.DarkRed;
+                lbl_shortcut_status_title.Text = "✖ Your shortcut cannot run:";
+                lbl_shortcut_status_message.Text = GetShortcutIssueList(_selectedShortcut) + Environment.NewLine + "Edit the shortcut to correct the issue, then try again.";
+            }
+            else
+            {
+                pnl_shortcut_status.BackColor = Color.FromArgb(255, 248, 225);
+                lbl_shortcut_status_title.ForeColor = Color.DarkGoldenrod;
+                lbl_shortcut_status_title.Text = "⚠ Your shortcut may not run as expected:";
+                lbl_shortcut_status_message.Text = GetShortcutIssueList(_selectedShortcut) + Environment.NewLine + "You can still run the shortcut if you want to, but it may not work as expected.";
+            }
+
+            pnl_shortcut_status.Visible = true;
+        }
+
+        private string GetShortcutStatusText(ShortcutItem shortcut)
+        {
+            if (shortcut.IsValid == ShortcutValidity.Error)
+                return "Your shortcut cannot run:" + Environment.NewLine + GetShortcutIssueList(shortcut) + Environment.NewLine + "Edit the shortcut to correct the issue, then try again.";
+
+            return "Your shortcut may not run as expected:" + Environment.NewLine + GetShortcutIssueList(shortcut) + Environment.NewLine + "You can still run the shortcut if you want to, but it may not work as expected.";
+        }
+
+        private string GetShortcutIssueList(ShortcutItem shortcut)
+        {
+            List<string> issues = shortcut.Errors.Select(error => $"• {error.Message}").ToList();
+
+            if (!String.Equals(shortcut.ProfileUUID, ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase) &&
+                shortcut.ProfileToUse != null && !shortcut.ProfileToUse.IsPossible)
+                issues.Add($"• Display profile '{shortcut.ProfileToUse.Name}' may require displays or inputs that are not currently available.");
+
+            if (!String.Equals(shortcut.AudioProfileUUID, AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase) &&
+                shortcut.AudioProfileToUse != null && !shortcut.AudioProfileToUse.IsPossible)
+                issues.Add($"• Audio profile '{shortcut.AudioProfileToUse.Name}' may not be available until the display setup has changed.");
+
+            if (issues.Count == 0)
+                issues.Add("• The shortcut configuration has a warning.");
+
+            return String.Join(Environment.NewLine, issues);
         }
 
         /*private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
@@ -698,7 +774,7 @@ namespace DisplayMagician.UIForms
                 string commandline = _selectedShortcut.CreateCommand();
                 Clipboard.SetText(commandline);
             }
-                
+
         }
     }
 }

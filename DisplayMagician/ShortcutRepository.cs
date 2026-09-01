@@ -42,7 +42,7 @@ namespace DisplayMagician
         public override bool Equals(object obj) => obj is ShortcutFile other && this.Equals(other);
         public bool Equals(ShortcutFile other)
         => ShortcutFileVersion.Equals(other.ShortcutFileVersion) &&
-           LastUpdated.Equals(other.LastUpdated) && 
+           LastUpdated.Equals(other.LastUpdated) &&
            Shortcuts.SequenceEqual(other.Shortcuts);
         public override int GetHashCode()
         {
@@ -72,7 +72,7 @@ namespace DisplayMagician
 
         #region Class Constructors
         static ShortcutRepository()
-        {            
+        {
             // Load the Shortcuts from storage
             try
             {
@@ -192,7 +192,7 @@ namespace DisplayMagician
                 logger.Trace($"ShortcutRepository/RemoveShortcut: Our shortcut repository doesn't contain a shortcut we were looking for");
                 return false;
             }
-                
+
             else
                 throw new ShortcutRepositoryException();
         }
@@ -432,13 +432,13 @@ namespace DisplayMagician
         {
 
             logger.Trace($"ShortcutRepository/CopyShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
-            
+
             copiedShortcut = new ShortcutItem();
 
             if (!(shortcut is ShortcutItem))
                 return false;
 
-            
+
             if (shortcut.CopyTo(copiedShortcut,false))
             {
                 // Copy worked!
@@ -449,7 +449,7 @@ namespace DisplayMagician
                 if (ContainsShortcut(copiedShortcut))
                 {
                     // Select the copied shortcut
-                    
+
                     // Save the shortcuts JSON as it's different
                     SaveShortcuts();
                     IsValidRefresh();
@@ -462,7 +462,7 @@ namespace DisplayMagician
             {
                 // Copy failed
                 return false;
-            }            
+            }
         }
 
         public static bool LoadShortcuts()
@@ -495,7 +495,7 @@ namespace DisplayMagician
             {
                 string json = "";
                 try
-                { 
+                {
                     json = File.ReadAllText(_shortcutStorageJsonFullFileName, Encoding.Unicode);
                 }
                 catch (Exception ex)
@@ -516,7 +516,7 @@ namespace DisplayMagician
                             // Add the ProcessPriority line as null so its in there at least and won't stop the json load
                             json = Regex.Replace(json, "    \"DifferentExecutableToMonitor\"", "    \"ProcessPriority\": null,\n    \"DifferentExecutableToMonitor\"");
                         }
-                        
+
                     }
                     catch(Exception ex)
                     {
@@ -531,7 +531,7 @@ namespace DisplayMagician
                     List<string> jsonErrors = new List<string>();
                     try
                     {
-                        
+
 
                         JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
@@ -635,7 +635,7 @@ namespace DisplayMagician
 
 
                     // Lookup all the Profile Names in the Saved Profiles
-                    // and link the profiles to the Shortcuts as we only 
+                    // and link the profiles to the Shortcuts as we only
                     // store the profile names to allow users to uodate profiles
                     // separately from the shortcuts
                     logger.Debug($"ShortcutRepository/LoadShortcuts: Connecting Shortcut profile names to the real profile objects");
@@ -707,7 +707,7 @@ namespace DisplayMagician
             {
                 logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Exception while checking the validity of the loaded shortcuts to make sure they're ok to use");
                 return false;
-            }            
+            }
         }
 
         public static bool SaveShortcuts()
@@ -854,27 +854,40 @@ namespace DisplayMagician
 
             MainForm myMainForm = Program.AppMainForm;
 
+            // Refresh advisory readiness immediately before running. These checks are not
+            // hard validity requirements: external switches and powered-off displays can
+            // become available while the display profile is being applied.
+            ProfileRepository.IsPossibleRefresh();
+            AudioProfileRepository.IsPossibleRefresh();
+
             // Check the shortcut is still valid.
             shortcutToUse.RefreshValidity();
 
             if (shortcutToUse.IsValid == ShortcutValidity.Error)
             {
                 logger.Error($"ShortcutRepository/RunShortcut: Cannot run the shortcut {shortcutToUse.Name} as it isn't valid");
-                string errorReasons = String.Join(", ", (from error in shortcutToUse.Errors select error.Message));
+                string errorReasons = String.Join(Environment.NewLine, (from error in shortcutToUse.Errors select $"• {error.Message}"));
                 MessageBox.Show(
-                    $"Unable to run the shortcut '{shortcutToUse.Name}': {errorReasons}",
+                    $"Your shortcut cannot run:{Environment.NewLine}{Environment.NewLine}{errorReasons}{Environment.NewLine}{Environment.NewLine}Edit the shortcut to correct the issue, then try again.",
                     @"Cannot run the Shortcut",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
 
                 return RunShortcutResult.Error;
             }
-            else if (shortcutToUse.IsValid == ShortcutValidity.Warning)
+            else if (shortcutToUse.IsValid == ShortcutValidity.Warning || shortcutToUse.HasReadinessAdvisory)
             {
-                logger.Warn($"ShortcutRepository/RunShortcut: Shortcut '{shortcutToUse.Name}' has warnings. Asking the user whether to continue.");
-                string warningReasons = String.Join(Environment.NewLine, (from error in shortcutToUse.Errors select $"• {error.Message}"));
+                logger.Warn($"ShortcutRepository/RunShortcut: Shortcut '{shortcutToUse.Name}' has warnings or readiness advisories. Asking the user whether to continue.");
+                List<string> warningReasons = shortcutToUse.Errors.Select(error => $"• {error.Message}").ToList();
+                if (!shortcutToUse.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase) &&
+                    shortcutToUse.ProfileToUse != null && !shortcutToUse.ProfileToUse.IsPossible)
+                    warningReasons.Add($"• Display profile '{shortcutToUse.ProfileToUse.Name}' may require displays or inputs that are not currently available.");
+                if (!shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase) &&
+                    shortcutToUse.AudioProfileToUse != null && !shortcutToUse.AudioProfileToUse.IsPossible)
+                    warningReasons.Add($"• Audio profile '{shortcutToUse.AudioProfileToUse.Name}' may not be available until the display setup has changed.");
+
                 if (!AskToContinue(
-                    $"The shortcut '{shortcutToUse.Name}' has the following warnings:{Environment.NewLine}{Environment.NewLine}{warningReasons}{Environment.NewLine}{Environment.NewLine}Do you want to continue running it?",
+                    $"Your shortcut may not run as expected:{Environment.NewLine}{Environment.NewLine}{String.Join(Environment.NewLine, warningReasons)}{Environment.NewLine}{Environment.NewLine}You can still run the shortcut if you want to, but it may not work as expected.",
                     "Shortcut Warnings"))
                 {
                     return RunShortcutResult.Cancelled;
@@ -977,6 +990,17 @@ namespace DisplayMagician
                 SetTrayText(myMainForm, $"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
             }
 
+            bool RestoreOriginalDisplayProfile()
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: Restoring the display profile that was active before '{shortcutToUse.Name}' was run.");
+                ApplyProfileResult rollbackResult = ProfileRepository.ApplyProfile(rollbackProfile);
+                if (rollbackResult == ApplyProfileResult.Successful)
+                    return true;
+
+                logger.Error($"ShortcutRepository/RunShortcut: Could not restore the original '{rollbackProfile.Name}' display profile.");
+                return false;
+            }
+
             bool AskToContinue(string message, string title)
             {
                 if (cancelToken.IsCancellationRequested)
@@ -1016,6 +1040,57 @@ namespace DisplayMagician
                 }
             }
 
+            DisplayApplyFailureAction AskDisplayApplyFailureAction(bool timedOut, int timeoutSeconds)
+            {
+                if (cancelToken.IsCancellationRequested)
+                    return DisplayApplyFailureAction.Cancel;
+
+                try
+                {
+                    if (myMainForm == null || myMainForm.IsDisposed)
+                    {
+                        using (DisplayApplyFailureForm failureForm = new DisplayApplyFailureForm(shortcutToUse.ProfileToUse.Name, timedOut, timeoutSeconds))
+                        {
+                            failureForm.ShowDialog();
+                            return failureForm.SelectedAction;
+                        }
+                    }
+
+                    if (!myMainForm.InvokeRequired)
+                    {
+                        using (DisplayApplyFailureForm failureForm = new DisplayApplyFailureForm(shortcutToUse.ProfileToUse.Name, timedOut, timeoutSeconds))
+                        {
+                            failureForm.ShowDialog(myMainForm);
+                            return failureForm.SelectedAction;
+                        }
+                    }
+
+                    TaskCompletionSource<DisplayApplyFailureAction> dialogResult = new TaskCompletionSource<DisplayApplyFailureAction>();
+                    myMainForm.BeginInvoke((MethodInvoker)delegate
+                    {
+                        try
+                        {
+                            using (DisplayApplyFailureForm failureForm = new DisplayApplyFailureForm(shortcutToUse.ProfileToUse.Name, timedOut, timeoutSeconds))
+                            {
+                                failureForm.ShowDialog(myMainForm);
+                                dialogResult.TrySetResult(failureForm.SelectedAction);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, "ShortcutRepository/RunShortcut: Could not show the display profile recovery dialog.");
+                            dialogResult.TrySetResult(DisplayApplyFailureAction.Cancel);
+                        }
+                    });
+                    return dialogResult.Task.GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "ShortcutRepository/RunShortcut: Could not queue the display profile recovery dialog.");
+                    return DisplayApplyFailureAction.Cancel;
+                }
+            }
+
             if (shortcutToUse.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} doesn't have a profile to apply, so we won't change profiles.");
@@ -1040,53 +1115,82 @@ namespace DisplayMagician
             if (needToChangeDisplayProfiles)
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.ProfileToUse.Name} display profile.");
-                // Apply the Profile with a 30-second timeout tracking
-                ApplyProfileResult result = ApplyProfileResult.Error;
-                bool displayTaskCompleted = false;
-
-                var displayTask = Task.Run(() => ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse));
-                displayTaskCompleted = displayTask.Wait(TimeSpan.FromSeconds(30));
-
-                if (displayTaskCompleted)
+                int displayProfileWaitSecs = Math.Clamp(Program.AppProgramSettings.DisplayProfileWaitSecs, 5, 120);
+                while (true)
                 {
-                    result = displayTask.Result;
-                }
-                else
-                {
-                    logger.Warn($"ShortcutRepository/RunShortcut: Display profile change timed out after 30 seconds.");
-                    bool continueAnyway = AskToContinue(
-                        "The display change is taking a long time. Do you want to continue waiting/running the shortcut anyway?",
-                        "Display Change Timeout");
+                    Task<ApplyProfileResult> displayTask = Task.Run(() => ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse));
+                    bool displayTaskCompleted = displayTask.Wait(TimeSpan.FromSeconds(displayProfileWaitSecs));
+                    ApplyProfileResult result = displayTaskCompleted ? displayTask.Result : ApplyProfileResult.Error;
 
-                    if (!continueAnyway)
+                    if (displayTaskCompleted && result == ApplyProfileResult.Successful)
                     {
+                        logger.Trace($"ShortcutRepository/RunShortcut: Applied '{shortcutToUse.ProfileToUse.Name}' Display Profile successfully!");
+                        break;
+                    }
+
+                    bool timedOut = !displayTaskCompleted;
+                    if (timedOut)
+                        logger.Warn($"ShortcutRepository/RunShortcut: Display profile change did not finish within {displayProfileWaitSecs} seconds.");
+                    else if (result == ApplyProfileResult.Cancelled)
+                        logger.Warn($"ShortcutRepository/RunShortcut: Applying '{shortcutToUse.ProfileToUse.Name}' Display Profile was cancelled.");
+                    else
+                        logger.Warn($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile.");
+
+                    DisplayApplyFailureAction action = AskDisplayApplyFailureAction(timedOut, displayProfileWaitSecs);
+                    if (action == DisplayApplyFailureAction.Cancel)
+                    {
+                        // Windows does not expose a safe way to cancel an in-progress display
+                        // change. Avoid starting a competing rollback while it is still active.
+                        if (timedOut && !displayTask.Wait(TimeSpan.FromMinutes(5)))
+                        {
+                            logger.Error("ShortcutRepository/RunShortcut: Timed-out display operation is still running. The shortcut has been cancelled, but the original layout cannot yet be restored safely.");
+                            ReleaseMonitoringResources();
+                            return RunShortcutResult.Cancelled;
+                        }
+
+                        RestoreOriginalDisplayProfile();
+                        needToChangeDisplayProfiles = false;
                         RevertAndCleanup();
                         return RunShortcutResult.Cancelled;
                     }
 
-                    // User wants to continue waiting - block with a generous 5-minute timeout
-                    displayTaskCompleted = displayTask.Wait(TimeSpan.FromMinutes(5));
-                    if (displayTaskCompleted)
+                    if (action == DisplayApplyFailureAction.Retry)
                     {
-                        result = displayTask.Result;
+                        // An in-flight display operation cannot be cancelled safely. Let it
+                        // finish before retrying so two display changes are never concurrent.
+                        if (timedOut && displayTask.Wait(TimeSpan.FromMinutes(5)) && displayTask.Result == ApplyProfileResult.Successful)
+                        {
+                            logger.Trace($"ShortcutRepository/RunShortcut: The delayed display profile operation completed successfully.");
+                            break;
+                        }
+                        continue;
                     }
-                }
 
-                if (result == ApplyProfileResult.Error)
-                {
-                    logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
-                    RevertAndCleanup();
-                    return RunShortcutResult.Error;
-                }
-                else if (result == ApplyProfileResult.Cancelled)
-                {
-                    logger.Error($"ShortcutRepository/RunShortcut: User cancelled applying '{shortcutToUse.ProfileToUse.Name}' Display Profile");
-                    RevertAndCleanup();
-                    return RunShortcutResult.Cancelled;
-                }
-                else if (result == ApplyProfileResult.Successful)
-                {
-                    logger.Trace($"ShortcutRepository/RunShortcut: Applied '{shortcutToUse.ProfileToUse.Name}' Display Profile successfully!");
+                    // Run without changing displays. If the timed-out Windows operation is
+                    // still running, wait for it to finish before restoring the original layout.
+                    if (timedOut && !displayTask.Wait(TimeSpan.FromMinutes(5)))
+                    {
+                        logger.Error("ShortcutRepository/RunShortcut: Timed-out display operation did not finish, so the original display layout cannot be safely restored.");
+                        if (!AskToContinue("The display operation is still running, so DisplayMagician cannot safely restore your original layout. Do you want to run the shortcut anyway?", "Display Change Still Running"))
+                        {
+                            needToChangeDisplayProfiles = false;
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
+                        }
+                    }
+                    else
+                    {
+                        if (!RestoreOriginalDisplayProfile() && !AskToContinue("DisplayMagician could not restore your original display layout. Do you want to run the shortcut anyway?", "Display Restore Failed"))
+                        {
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
+                        }
+                    }
+
+                    // Do not later treat the target display profile as applied or roll back a
+                    // layout the user chose to keep.
+                    needToChangeDisplayProfiles = false;
+                    break;
                 }
             }
 
@@ -1129,10 +1233,10 @@ namespace DisplayMagician
                             : string.Empty;
 
                         logger.Warn($"ShortcutRepository/RunShortcut: Could not set the {shortcutToUse.AudioProfileToUse.Name} audio profile when running '{shortcutToUse.Name}' shortcut. {missingDevicesText}");
-                        
+
                         bool continueAnyway = AskToContinue(
-                            $"Could not set the '{shortcutToUse.AudioProfileToUse.Name}' audio profile in time.{missingDevicesText}\n\nDo you want to continue running the shortcut anyway?",
-                            "Audio Profile Timeout");
+                            $"Your shortcut may not run as expected:{Environment.NewLine}{Environment.NewLine}• Audio profile '{shortcutToUse.AudioProfileToUse.Name}' could not be set in time.{missingDevicesText}{Environment.NewLine}{Environment.NewLine}You can still run the shortcut if you want to, but it may not work as expected.",
+                            "Shortcut Warnings");
 
                         if (!continueAnyway)
                         {
@@ -1140,7 +1244,7 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
                     }
-                    else 
+                    else
                     {
                         logger.Trace($"ShortcutRepository/RunShortcut: Applied '{shortcutToUse.AudioProfileToUse.Name}' audio profile successfully!");
                     }
@@ -1346,7 +1450,7 @@ namespace DisplayMagician
                 //bool isUWPApp = false;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;                        
+                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;
                 }
                 else
                 {
@@ -1382,14 +1486,14 @@ namespace DisplayMagician
                     {
                         if (appToUse.Start(out processesCreated, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority,shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} was launched as the main application to monitor.");                            
+                            logger.Debug($"ShortcutRepository/RunShortcut: {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} was launched as the main application to monitor.");
                         }
                         else
                         {
                             logger.Error($"ShortcutRepository/RunShortcut: Unable to launch {shortcutToUse.Application.AppLibrary.AppLibraryName} {shortcutToUse.Application.Name} as the main application to monitor.");
                             appStartFailed = true;
                         }
-                    }                                                            
+                    }
 
                 }
                 catch (Exception ex)
@@ -1625,7 +1729,7 @@ namespace DisplayMagician
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
                     // If this is a normal app we're starting
-                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;                    
+                    processToMonitorName = shortcutToUse.ExecutableNameAndPath;
                 }
                 else
                 {
@@ -1748,7 +1852,7 @@ namespace DisplayMagician
                 // if we have things to monitor, then we should start to wait for them
                 logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {shortcutToUse.ExecutableNameAndPath} to exit.");
                 if (foundSomethingToMonitor)
-                {                        
+                {
                     while (true)
                     {
                         // If we have no more processes left then we're done!
@@ -1871,7 +1975,7 @@ namespace DisplayMagician
                 // If the GameAppID is not null, then we've matched a game! Lets run it.
                 if (gameToRun != null)
                 {
-                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameToRun.GameLibrary.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");                
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameToRun.GameLibrary.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
 
                     string processToMonitorName;
                     if (shortcutToUse.MonitorDifferentGameExe)
@@ -1966,7 +2070,7 @@ namespace DisplayMagician
                     }
 
                     // Check whether GameLibrary is updating (if it supports finding that out!)
-                    // Note - this is the scaffolding in place for the future. It will allow future ability to 
+                    // Note - this is the scaffolding in place for the future. It will allow future ability to
                     // detect game library updates if I can find a way of developing them per library in the future.
                     if (gameToRun.GameLibrary.IsUpdating)
                     {
@@ -1993,7 +2097,7 @@ namespace DisplayMagician
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                             ShowStatusToast(tcBuilder);
-                        }                            
+                        }
 
                         // Wait for up to 5 minutes for GameLibrary to update
                         for (int secs = 0; secs <= 5000; secs += 500)
@@ -2013,7 +2117,7 @@ namespace DisplayMagician
                     }
 
                     // Delay 5secs
-                    logger.Debug($"ShortcutRepository/RunShortcut: Pausing to let the game library start the game."); 
+                    logger.Debug($"ShortcutRepository/RunShortcut: Pausing to let the game library start the game.");
                     Thread.Sleep(5000);
 
                     // Store the Process ID for later
@@ -2021,7 +2125,7 @@ namespace DisplayMagician
                     //IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                     // Check whether Game itself is updating (if it supports finding that out!)
-                    // Note - this is the scaffolding in place for the future. It will allow future ability to 
+                    // Note - this is the scaffolding in place for the future. It will allow future ability to
                     // detect game library updates if I can find a way of developing them per library in the future.
                     if (gameToRun.IsUpdating)
                     {
@@ -2138,7 +2242,7 @@ namespace DisplayMagician
                                     RevertAndCleanup();
                                     return RunShortcutResult.Cancelled;
                                 }
-                                
+
                                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                                 {
                                     // Now we want to tell the user we couldn't start the game!
@@ -2152,7 +2256,7 @@ namespace DisplayMagician
                                 }
 
 
-                            } 
+                            }
                             else
                             {
                                 // The game has started correctly so we continue to monitor it!
@@ -2172,7 +2276,7 @@ namespace DisplayMagician
                                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                     .SetToastDuration(ToastDuration.Short);
                                     ShowStatusToast(tcBuilder);
-                                }                                    
+                                }
 
                                 // This is the main waiting thread!
                                 // Wait for the game to exit
@@ -2225,7 +2329,7 @@ namespace DisplayMagician
                                     ShowStatusToast(tcBuilder);
                                 }
 
-                            }                            
+                            }
                         }
                         else
                         {
@@ -2247,7 +2351,7 @@ namespace DisplayMagician
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                 .SetToastDuration(ToastDuration.Short);
                                 ShowStatusToast(tcBuilder);
-                            }                                
+                            }
 
                             while (true)
                             {
@@ -2300,7 +2404,7 @@ namespace DisplayMagician
                                 ShowStatusToast(tcBuilder);
                             }
 
-                        }                        
+                        }
                     }
                     else
                     {
@@ -2320,7 +2424,7 @@ namespace DisplayMagician
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                             .SetToastDuration(ToastDuration.Short);
                             ShowStatusToast(tcBuilder);
-                        }                            
+                        }
 
                         // Now we know the game library app is running then
                         // we wait until the game has started running (*allows for updates to occur)
@@ -2382,9 +2486,9 @@ namespace DisplayMagician
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, false)
                                 .SetToastDuration(ToastDuration.Short);
                                 ShowStatusToast(tcBuilder);
-                            }                                
+                            }
 
-                        } 
+                        }
                         else
                         {
                             // This is the main waiting thread!
@@ -2439,7 +2543,7 @@ namespace DisplayMagician
                                 ShowStatusToast(tcBuilder);
                             }
 
-                        }                                                
+                        }
 
                     }
                 }
@@ -2484,7 +2588,7 @@ namespace DisplayMagician
                 // And then show it
                 ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
             }
-            
+
 
             // Stop started programs and restart stopped programs in the same Priority order as pre-game
             if (startedProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
@@ -2539,7 +2643,7 @@ namespace DisplayMagician
                 // Refresh the system tray / notification tray area to clean out any applications we stopped
                 WinLibrary.RefreshTrayArea();
             }
-            
+
             // Change back to the original profile only if it is different
             // And if we're temporary
             if (needToChangeDisplayProfiles && shortcutToUse.DisplayPermanence == ShortcutPermanence.Temporary)
@@ -2608,7 +2712,7 @@ namespace DisplayMagician
                 logger.Debug($"ShortcutRepository/RunShortcut: No audio profile rollback needed.");
             }
 
-            
+
             // And finally run the stop program we have
             if (shortcutToUse.AfterPrograms.Count > 0)
             {
@@ -2645,7 +2749,7 @@ namespace DisplayMagician
                                 if (!ProcessUtils.StartProcessAndForget(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator))
                                     logger.Warn($"ShortcutRepository/RunShortcut: No processes were created when starting After Program '{stopProg.Executable}'.");
                             }
-                        }    
+                        }
                         else
                         {
                             logger.Trace($"ShortcutRepository/RunShortcut: Skipping starting Stop Program {stopProg.Executable} as it doesn't current exist! We can't start it if it's not there.");
@@ -2655,7 +2759,7 @@ namespace DisplayMagician
                     {
                         logger.Trace($"ShortcutRepository/RunShortcut: Skipping starting Stop Program {stopProg.Executable} as it is disabled.");
                     }
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -2673,7 +2777,7 @@ namespace DisplayMagician
             {
                 myMainForm.Dispose();
             }*/
-            
+
             return RunShortcutResult.Successful;
 
         }

@@ -1,4 +1,4 @@
-﻿using DisplayMagicianShared;
+using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -44,7 +44,7 @@ namespace DisplayMagician
     {
         #region Class Variables
         // Other constants that are useful
-        public const string CurrentProgramSettingsFileVersion = "6";
+        public const string CurrentProgramSettingsFileVersion = "7";
         public const string ProgramSettingsStorageJsonFileName = "Settings.json";
         public static string ProgramSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, ProgramSettingsStorageJsonFileName);
         public static string _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
@@ -60,6 +60,7 @@ namespace DisplayMagician
         private bool _showMessageToasts = true;
         private bool _upgradeToPrereleases = false;
         private int _audioDeviceWaitSecs = 20;
+        private int _displayProfileWaitSecs = 30;
         private bool _upgradeEnabled = true;
         private bool _installDesktopContextMenu = true;
         private bool _wakeUpGpus = true;
@@ -245,6 +246,19 @@ namespace DisplayMagician
             set
             {
                 _audioDeviceWaitSecs = value;
+            }
+        }
+
+        [DefaultValue(30)]
+        public int DisplayProfileWaitSecs
+        {
+            get
+            {
+                return _displayProfileWaitSecs;
+            }
+            set
+            {
+                _displayProfileWaitSecs = value;
             }
         }
 
