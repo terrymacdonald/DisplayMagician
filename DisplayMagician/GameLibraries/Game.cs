@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Text.RegularExpressions;
-using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {
