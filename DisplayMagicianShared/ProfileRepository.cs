@@ -59,7 +59,6 @@ namespace DisplayMagicianShared
         #region Class Variables
         // Common items to the class
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
-        public static Dictionary<string, bool> _profileWarningLookup = new Dictionary<string, bool>();
         private static bool _profilesLoaded = false;
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
@@ -123,18 +122,6 @@ namespace DisplayMagicianShared
                     // Load the Profiles from storage if they need to be
                     LoadProfiles();
                 return _allProfiles;
-            }
-        }
-
-        public static Dictionary<string, bool> ProfileWarningLookup
-        {
-            get
-            {
-                if (!_profilesLoaded)
-                    // Load the Profiles from storage if they need to be
-                    LoadProfiles();
-
-                return _profileWarningLookup;
             }
         }
 
@@ -260,7 +247,7 @@ namespace DisplayMagicianShared
             }
 
             // Refresh the profiles to see whats valid
-            IsPossibleRefresh();
+            RefreshDisplayDetectionState();
 
 
             //Doublecheck it's been added
@@ -334,7 +321,7 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveProfiles();
-                IsPossibleRefresh();
+                RefreshDisplayDetectionState();
                 UpdateActiveProfile();
                 return true;
             }
@@ -406,7 +393,7 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveProfiles();
-                IsPossibleRefresh();
+                RefreshDisplayDetectionState();
                 UpdateActiveProfile();
                 return true;
             }
@@ -481,7 +468,7 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveProfiles();
-                IsPossibleRefresh();
+                RefreshDisplayDetectionState();
                 UpdateActiveProfile();
                 return true;
             }
@@ -664,7 +651,7 @@ namespace DisplayMagicianShared
             string oldProfileName = profile.Name;
             profile.Name = GetValidFilename(renamedName);
 
-            IsPossibleRefresh();
+            RefreshDisplayDetectionState();
 
             // If it's been added to the list of AllProfiles
             // then we also need to reproduce the Icons
@@ -933,7 +920,7 @@ namespace DisplayMagicianShared
 
             // Update the current active profile
             //UpdateActiveProfile();
-            IsPossibleRefresh();
+            RefreshDisplayDetectionState();
 
             return true;
         }
@@ -1324,19 +1311,9 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static void IsPossibleRefresh()
+        public static void RefreshDisplayDetectionState()
         {
-            // We need to refresh the cached answer
-            // Get the list of connected devices
-            //ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
-
-            if (_profilesLoaded && _allProfiles.Count > 0)
-            {
-                ProfileRepository.ConnectedDisplayIdentifiers = ProfileRepository.GetAllConnectedDisplayIdentifiers();
-
-                foreach (ProfileItem loadedProfile in AllProfiles)
-                    loadedProfile.RefreshPossbility();
-            }
+            ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
         }
 
 

@@ -365,8 +365,7 @@ namespace DisplayMagician.UIForms
         private void DisplayProfileForm_Load(object sender, EventArgs e)
         {
 
-            // Refresh the profiles to see whats valid
-            ProfileRepository.IsPossibleRefresh();
+            ProfileRepository.RefreshDisplayDetectionState();
 
             // If the user is changing profiles right now, then we need to wait until the profile change has finished
             // We need a 30 second timeout in there too, just in case the user is changing profiles and it's taking a long time
@@ -695,8 +694,7 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            // Refresh the profiles to see whats valid
-            ProfileRepository.IsPossibleRefresh();
+            ProfileRepository.RefreshDisplayDetectionState();
             // Reload the profiles in case we swapped to another program to change it
             ProfileRepository.UpdateActiveProfile(false);
             // Change to the current selected Profile
@@ -950,8 +948,7 @@ namespace DisplayMagician.UIForms
                     // Save the Profiles JSON as it's different now
                     ProfileRepository.SaveProfiles();
 
-                    // Refresh the profiles to see whats valid
-                    ProfileRepository.IsPossibleRefresh();
+                    ProfileRepository.RefreshDisplayDetectionState();
 
                     // Update the active profile so the UI knows which profile is currently in use
                     ProfileRepository.UpdateActiveProfile(false);

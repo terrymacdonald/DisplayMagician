@@ -308,8 +308,6 @@ namespace DisplayMagician.UIForms
 
         private void FovCalcForm_Load(object sender, EventArgs e)
         {
-            // Refresh the profiles to see whats valid
-            ProfileRepository.IsPossibleRefresh();
 
             // Populate the fov calculator based on the last settings we saved:
             if (Program.AppProgramSettings.FovCalcScreenLayout == ScreenLayout.TripleScreen)

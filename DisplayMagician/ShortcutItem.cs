@@ -1472,22 +1472,6 @@ namespace DisplayMagician
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
                 }
-                /*// Is the profile still valid right now? i.e. are all the screens available?
-                if (ProfileToUse != null)
-                {
-                    ProfileToUse.RefreshPossbility();
-                    if (!ProfileToUse.IsPossible)
-                    {
-                        logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "InvalidProfile";
-                        error.Validity = ShortcutValidity.Warning;
-                        error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Warning;
-                    }
-                }*/
             }
 
             // Check that the configured saved audio profile still exists. Do not check live audio

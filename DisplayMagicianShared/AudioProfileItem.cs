@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using NLog.Targets;
 using System;
 using System.Collections.Generic;
@@ -31,7 +31,6 @@ namespace DisplayMagicianShared
 
 
         private string _uuid = "";
-        private bool _isPossible = false;
 
         public AudioProfileItem()
         {
@@ -76,16 +75,6 @@ namespace DisplayMagicianShared
                 Match match = Regex.Match(value, uuidV4Regex, RegexOptions.IgnoreCase);
                 if (match.Success)
                     _uuid = value;
-            }
-        }
-
-        [JsonIgnore]
-        public virtual bool IsPossible
-        {
-            get
-            {
-                // Return the cached answer
-                return _isPossible;
             }
         }
 
@@ -193,12 +182,6 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error(ex, $"AudioProfileItem/CreateProfileFromCurrentAudioSettings: Exception within CreateProfileFromCurrentAudioSettings function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return false;
             }
-        }
-
-        public virtual void RefreshPossbility()
-        {            
-            // Set isPossible to true unless we find it can't be done.
-            _isPossible = true;
         }
 
         // Actually set this audioProfile active

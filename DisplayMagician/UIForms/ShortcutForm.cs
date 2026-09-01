@@ -1086,18 +1086,6 @@ namespace DisplayMagician.UIForms
                     chosenProfile = ProfileRepository.GetProfile(_shortcutToEdit.ProfileUUID);
                     foundChosenProfileInLoadedProfiles = true;
 
-                    // If the profile is the same, but the user has renamed the profile
-                    // since the shortcut was last created, then we need to tell the user
-                    if (!chosenProfile.IsPossible)
-                    {
-                        MessageBox.Show(
-                        $"The '{chosenProfile.Name}' Display Profile used by this Shortcut still exists, but it isn't possible to use it right now. You can either change the Display Profile this Shortcut uses, or you can change your Displays to make the Display Profile valid again.",
-                        @"Display Profile isn't possible now",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-
-                    }
-
                 }
 
                 if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))

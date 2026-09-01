@@ -53,10 +53,8 @@ namespace DisplayMagicianShared
         #region Class Variables
         // Common items to the class
         private static List<AudioProfileItem> _allAudioProfiles = new List<AudioProfileItem>();
-        public static Dictionary<string, bool> _audioProfileWarningLookup = new Dictionary<string, bool>();
         private static bool _audioProfilesLoaded = false;
         private static AudioProfileItem _currentAudioProfile;
-        private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static WindowsAudioController _audioController = new WindowsAudioController();
 
 
@@ -119,18 +117,6 @@ namespace DisplayMagicianShared
                     // Load the AudioProfiles from storage if they need to be
                     LoadAudioProfiles();
                 return _allAudioProfiles;
-            }
-        }
-
-        public static Dictionary<string, bool> AudioProfileWarningLookup
-        {
-            get
-            {
-                if (!_audioProfilesLoaded)
-                    // Load the AudioProfiles from storage if they need to be
-                    LoadAudioProfiles();
-
-                return _audioProfileWarningLookup;
             }
         }
 
@@ -228,7 +214,6 @@ namespace DisplayMagicianShared
             }
 
             // Refresh the audioProfiles to see whats valid
-            IsPossibleRefresh();
 
 
             //Doublecheck it's been added
@@ -255,7 +240,6 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveAudioProfiles();
-                IsPossibleRefresh();
                 UpdateActiveAudioProfile();
                 return true;
             }
@@ -280,7 +264,6 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveAudioProfiles();
-                IsPossibleRefresh();
                 UpdateActiveAudioProfile();
                 return true;
             }
@@ -306,7 +289,6 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveAudioProfiles();
-                IsPossibleRefresh();
                 UpdateActiveAudioProfile();
                 return true;
             }
@@ -489,7 +471,6 @@ namespace DisplayMagicianShared
             string oldAudioProfileName = audioProfile.Name;
             audioProfile.Name = GetValidFilename(renamedName);
 
-            IsPossibleRefresh();
 
             // If it's been added to the list of AllAudioProfiles
             // then we also need to reproduce the Icons
@@ -668,7 +649,6 @@ namespace DisplayMagicianShared
             }
             _audioProfilesLoaded = true;
 
-            IsPossibleRefresh();
 
             return true;
         }
@@ -931,19 +911,6 @@ namespace DisplayMagicianShared
             }            
         }
 
-       public static void IsPossibleRefresh()
-        {
-            // We need to refresh the cached answer
-            // Get the list of connected devices
-            //ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
-
-            if (_audioProfilesLoaded && _allAudioProfiles.Count > 0)
-            {
-                foreach (AudioProfileItem loadedAudioProfile in AllAudioProfiles)
-                    loadedAudioProfile.RefreshPossbility();
-            }
-        }
-        
         public static bool IsValidFilename(string testName)
         {
             SharedLogger.logger.Trace($"AudioProfileRepository/IsValidFilename: Checking whether {testName} is a valid filename");

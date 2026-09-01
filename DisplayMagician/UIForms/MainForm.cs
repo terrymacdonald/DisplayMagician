@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Reflection;
@@ -73,8 +73,8 @@ namespace DisplayMagician.UIForms
             // Update the message count on the Messages button to reflect any unread messages
             SetUnreadMessageCount(Program.GetUnreadMessageCount());
 
-            // Refresh all possible profiles and shortcuts
-            ProfileRepository.IsPossibleRefresh();
+            // Refresh display detection state and shortcut validation.
+            ProfileRepository.RefreshDisplayDetectionState();
             ShortcutRepository.IsValidRefresh();
 
             // Update the active profile so the UI knows which profile is currently in use
@@ -941,7 +941,7 @@ namespace DisplayMagician.UIForms
 
                 RepositionDisplayMagician();
 
-                ProfileRepository.IsPossibleRefresh();
+                ProfileRepository.RefreshDisplayDetectionState();
                 ProfileRepository.UpdateActiveProfile();
                 RefreshNotifyIconMenus();
 
