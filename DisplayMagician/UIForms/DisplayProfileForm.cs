@@ -67,7 +67,7 @@ namespace DisplayMagician.UIForms
             base.OnFormClosing(e);
         }
 
-        private void Apply_Click(object sender, EventArgs e)
+        private async void Apply_Click(object sender, EventArgs e)
         {
             if (_selectedProfile == null)
                 return;
@@ -89,31 +89,68 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            // Apply the Profile
-            //if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
-            ApplyProfileResult result = Program.ApplyProfileTask(_selectedProfile);
-            if (result == ApplyProfileResult.Successful)
-            {
-                logger.Trace($"DisplayProfileForm/Apply_Click: The Profile {_selectedProfile.Name} was successfully applied. Waiting 0.5 sec for the display to settle after the change.");
-                System.Threading.Thread.Sleep(500);
-                logger.Trace($"DisplayProfileForm/Apply_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
-                ChangeSelectedProfile(_selectedProfile);
-                MainForm myMainForm = Program.AppMainForm;
-                myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
+            btn_apply.Enabled = false;
+            cms_profiles.Items[0].Enabled = false;
 
-            }
-            else if (result == ApplyProfileResult.Cancelled)
+            try
             {
-                logger.Warn($"DisplayProfileForm/Apply_Click: The user cancelled changing to Profile {_selectedProfile.Name}.");
+                while (true)
+                {
+                    ApplyProfileResult result = await Task.Run(() => Program.ApplyProfileTask(_selectedProfile));
+                    if (result == ApplyProfileResult.Successful)
+                    {
+                        logger.Trace($"DisplayProfileForm/Apply_Click: The Profile {_selectedProfile.Name} was successfully applied. Waiting 0.5 sec for the display to settle after the change.");
+                        await Task.Delay(500);
+                        logger.Trace($"DisplayProfileForm/Apply_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
+                        ChangeSelectedProfile(_selectedProfile);
+                        MainForm myMainForm = Program.AppMainForm;
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
+                        return;
+                    }
+
+                    if (result == ApplyProfileResult.Cancelled)
+                    {
+                        logger.Warn($"DisplayProfileForm/Apply_Click: The user cancelled changing to Profile {_selectedProfile.Name}.");
+                        return;
+                    }
+
+                    bool timedOut = ProfileRepository.UserChangingProfiles;
+                    logger.Error($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
+                    using (DisplayApplyFailureForm failureForm = new DisplayApplyFailureForm(_selectedProfile.Name, timedOut, 120, DisplayApplyFailureContext.DisplayProfile))
+                    {
+                        if (failureForm.ShowDialog(this) != DialogResult.Retry || failureForm.SelectedAction != DisplayApplyFailureAction.Retry)
+                            return;
+                    }
+
+                    if (timedOut && !await WaitForTimedOutDisplayProfileOperation())
+                    {
+                        logger.Error($"DisplayProfileForm/Apply_Click: Timed-out display operation for '{_selectedProfile.Name}' is still running, so DisplayMagician cannot retry safely.");
+                        MessageBox.Show(this, "The previous display change is still running, so DisplayMagician cannot safely retry yet. Please wait for it to finish, then try again.", "Display Change Still Running", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                }
             }
-            else
+            finally
             {
-                logger.Error($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
+                btn_apply.Enabled = true;
+                if (_selectedProfile != null && _selectedProfile.IsValid() && !ProfileRepository.IsActiveProfile(_selectedProfile))
+                    cms_profiles.Items[0].Enabled = true;
+            }
+        }
+
+        private async Task<bool> WaitForTimedOutDisplayProfileOperation()
+        {
+            const int timeoutMilliseconds = 300000;
+            const int pollMilliseconds = 250;
+            int elapsedMilliseconds = 0;
+
+            while (ProfileRepository.UserChangingProfiles && elapsedMilliseconds < timeoutMilliseconds)
+            {
+                await Task.Delay(pollMilliseconds);
+                elapsedMilliseconds += pollMilliseconds;
             }
 
-            // Recenter the Window
-            //RecenterWindow();
-
+            return !ProfileRepository.UserChangingProfiles;
         }
 
         /* private void RecenterWindow()
