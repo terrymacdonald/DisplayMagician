@@ -167,7 +167,7 @@ namespace DisplayMagician
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
                 foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
                 {
-                    if (shortcut.IsValid != ShortcutValidity.Valid) continue; // Skip invalid shortcuts (e.g. missing files)
+                    if (shortcut.IsValid == ShortcutValidity.Error) continue; // Skip shortcuts that cannot be run.
 
                     RegistryKey gs = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell\\" + shortcut.Name);
                     if (gs != null)

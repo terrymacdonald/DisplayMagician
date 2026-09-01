@@ -114,7 +114,7 @@ namespace DisplayMagician.UIForms
                     logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: This shortcut {loadedShortcut.Name} is the selected one so selecting it in the UI");
                     newItem.Selected = true;
                     // Hide the run button if the shortcut isn't valid
-                    if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
+                    if (_selectedShortcut.IsValid == ShortcutValidity.Error)
                     {
                         logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: This shortcut {loadedShortcut.Name} is the selected one and is invalid ({_selectedShortcut.IsValid.ToString("G")}), so highlighting that in the UI");
                         btn_run.Visible = false;
@@ -230,7 +230,7 @@ namespace DisplayMagician.UIForms
             _selectedShortcut = ShortcutRepository.GetShortcut(e.Item.Text);
 
             // Hide the run button if the shortcut isn't valid
-            if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
+            if (_selectedShortcut.IsValid == ShortcutValidity.Error)
             {
                 btn_run.Visible = false;
                 cms_shortcuts.Items[1].Enabled = false;
@@ -255,7 +255,7 @@ namespace DisplayMagician.UIForms
             _selectedShortcut = ShortcutRepository.GetShortcut(e.Item.Text);
             
             // Hide the run button if the shortcut isn't valid
-            if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
+            if (_selectedShortcut.IsValid == ShortcutValidity.Error)
             {
                 btn_run.Visible = false;
                 cms_shortcuts.Items[1].Enabled = false;
@@ -493,14 +493,19 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            // Only run the if shortcut is valid
-            if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
+            // Revalidate immediately before running so the UI does not rely on a stale library state.
+            _selectedShortcut.RefreshValidity();
+
+            // Only run the shortcut if it is valid.
+            if (_selectedShortcut.IsValid == ShortcutValidity.Error)
             {
                 // We tell the user the reason that we couldnt run the shortcut
                 if (MessageBox.Show($"The shortcut '{_selectedShortcut.Name}' isn't valid for some reason so we cannot run the application or game. Has your hardware or screen layout changed from when the shortcut was made? We recommend that you edit the shortcut to make it valid again, or reverse the hardware changes you made. Do you want to do that now?", $"Edit the '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
                     return;
                 else
                     btn_edit.PerformClick();
+
+                return;
             }
 
             // Figure out the string we're going to use as the MaskedForm message

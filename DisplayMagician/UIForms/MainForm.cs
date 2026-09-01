@@ -520,7 +520,7 @@ namespace DisplayMagician.UIForms
                 {
                     ToolStripMenuItem shortcutMenuItem = new ToolStripMenuItem(shortcut.Name, shortcut.ShortcutBitmap, runShortcutToolStripMenuItem_Click);
                     shortcut.RefreshValidity();
-                    if (shortcut.IsValid == ShortcutValidity.Warning || shortcut.IsValid == ShortcutValidity.Error)
+                    if (shortcut.IsValid == ShortcutValidity.Error)
                         shortcutMenuItem.Enabled = false;
                     else
                         shortcutMenuItem.Enabled = true;

@@ -852,10 +852,12 @@ namespace DisplayMagician
             if (shortcutToUse == null)
                 return RunShortcutResult.Error;
 
+            MainForm myMainForm = Program.AppMainForm;
+
             // Check the shortcut is still valid.
             shortcutToUse.RefreshValidity();
 
-            if (shortcutToUse.IsValid == ShortcutValidity.Error || shortcutToUse.IsValid == ShortcutValidity.Warning)
+            if (shortcutToUse.IsValid == ShortcutValidity.Error)
             {
                 logger.Error($"ShortcutRepository/RunShortcut: Cannot run the shortcut {shortcutToUse.Name} as it isn't valid");
                 string errorReasons = String.Join(", ", (from error in shortcutToUse.Errors select error.Message));
@@ -867,8 +869,18 @@ namespace DisplayMagician
 
                 return RunShortcutResult.Error;
             }
+            else if (shortcutToUse.IsValid == ShortcutValidity.Warning)
+            {
+                logger.Warn($"ShortcutRepository/RunShortcut: Shortcut '{shortcutToUse.Name}' has warnings. Asking the user whether to continue.");
+                string warningReasons = String.Join(Environment.NewLine, (from error in shortcutToUse.Errors select $"• {error.Message}"));
+                if (!AskToContinue(
+                    $"The shortcut '{shortcutToUse.Name}' has the following warnings:{Environment.NewLine}{Environment.NewLine}{warningReasons}{Environment.NewLine}{Environment.NewLine}Do you want to continue running it?",
+                    "Shortcut Warnings"))
+                {
+                    return RunShortcutResult.Cancelled;
+                }
+            }
 
-            MainForm myMainForm = Program.AppMainForm;
             ToastContentBuilder tcBuilder = new ToastContentBuilder();
             ToastContent toastContent = tcBuilder.Content;
             var doc = new Windows.Data.Xml.Dom.XmlDocument();
@@ -967,11 +979,16 @@ namespace DisplayMagician
 
             bool AskToContinue(string message, string title)
             {
-                if (cancelToken.IsCancellationRequested || myMainForm == null || myMainForm.IsDisposed)
+                if (cancelToken.IsCancellationRequested)
                     return false;
 
                 try
                 {
+                    if (myMainForm == null || myMainForm.IsDisposed)
+                    {
+                        return MessageBox.Show(message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
+                    }
+
                     if (!myMainForm.InvokeRequired)
                     {
                         return MessageBox.Show(myMainForm, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;

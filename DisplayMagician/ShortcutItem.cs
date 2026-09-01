@@ -1554,14 +1554,21 @@ namespace DisplayMagician
             }
             else if (Category.Equals(ShortcutCategory.Game))
             {
-                // We need to check if the Game still exists
-                if (!System.IO.File.Exists(ExecutableNameAndPath))                   
+                // Game shortcuts intentionally leave ExecutableNameAndPath empty. Prefer the
+                // current game-library entry when the game list has loaded, and otherwise use
+                // the persisted game data so an asynchronous game-library scan cannot make a
+                // working shortcut temporarily invalid.
+                Game gameToValidate = Game;
+                if (DisplayMagician.GameLibraries.GameLibrary.GamesLoaded && DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries != null)
+                    gameToValidate = DisplayMagician.GameLibraries.GameLibrary.GetAnyGameById(GameAppId);
+
+                if (gameToValidate == null || String.IsNullOrWhiteSpace(gameToValidate.ExePath) || !System.IO.File.Exists(gameToValidate.ExePath))
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The game {GameName} is not installed!");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The game '{GameName}' (ID: {GameAppId}) could not be found or its executable is unavailable.");
                     ShortcutError error = new ShortcutError();
                     error.Name = $"{GameName}NotInstalled";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"{GameName} is not installed on this computer.";
+                    error.Message = $"The game '{GameName}' is not installed or its executable cannot be accessed.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
