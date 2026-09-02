@@ -451,13 +451,17 @@ namespace DisplayMagician.UIForms
             {
                 p_profile_advisory.BackColor = Color.Firebrick;
                 lbl_profile_advisory.ForeColor = Color.White;
-                lbl_profile_advisory.Text = $"This display profile contains errors and cannot be applied. {profileErrorMessage}";
+                lbl_profile_advisory_title.ForeColor = Color.White;
+                lbl_profile_advisory_title.Text = "✖ This display profile contains errors and cannot be applied.";
+                lbl_profile_advisory.Text = $"{profileErrorMessage}{Environment.NewLine}Please update or recreate the profile.";
             }
             else if (undetectedDisplays.Count > 0)
             {
                 p_profile_advisory.BackColor = Color.FromArgb(255, 193, 7);
                 lbl_profile_advisory.ForeColor = Color.Black;
-                lbl_profile_advisory.Text = $"⚠ Your display profile may not apply as expected. ⚠{Environment.NewLine}DisplayMagician could not detect:{Environment.NewLine}• {String.Join(Environment.NewLine + "• ", undetectedDisplays)}{Environment.NewLine}You may still apply the profile but it may not apply as expected.";
+                lbl_profile_advisory_title.ForeColor = Color.Black;
+                lbl_profile_advisory_title.Text = "⚠ Your display profile may not apply as expected. ⚠";
+                lbl_profile_advisory.Text = $"DisplayMagician could not detect:{Environment.NewLine}• {String.Join(Environment.NewLine + "• ", undetectedDisplays)}{Environment.NewLine}{Environment.NewLine}You may still apply the profile but it may not apply as expected.";
             }
 
             ResizeProfileAdvisoryPanel();
@@ -729,15 +733,18 @@ namespace DisplayMagician.UIForms
 
         private void ResizeProfileAdvisoryPanel()
         {
-            if (p_profile_advisory == null || lbl_profile_advisory == null || p_middle == null || !p_profile_advisory.Visible || String.IsNullOrWhiteSpace(lbl_profile_advisory.Text))
+            if (p_profile_advisory == null || lbl_profile_advisory == null || lbl_profile_advisory_title == null || p_middle == null || !p_profile_advisory.Visible || String.IsNullOrWhiteSpace(lbl_profile_advisory.Text))
                 return;
 
             const int minimumHeight = 80;
             int maximumHeight = Math.Max(minimumHeight, p_middle.Top - p_profile_advisory.Top);
             int availableTextWidth = Math.Max(1, p_profile_advisory.ClientSize.Width - lbl_profile_advisory.Padding.Horizontal);
+            Size requiredTitleSize = TextRenderer.MeasureText(lbl_profile_advisory_title.Text, lbl_profile_advisory_title.Font, new Size(availableTextWidth, Int32.MaxValue), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
             Size requiredTextSize = TextRenderer.MeasureText(lbl_profile_advisory.Text, lbl_profile_advisory.Font, new Size(availableTextWidth, Int32.MaxValue), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
-            int requiredHeight = requiredTextSize.Height + lbl_profile_advisory.Padding.Vertical;
+            int requiredTitleHeight = Math.Max(28, requiredTitleSize.Height + lbl_profile_advisory_title.Padding.Vertical);
+            int requiredHeight = requiredTitleHeight + requiredTextSize.Height + lbl_profile_advisory.Padding.Vertical;
 
+            lbl_profile_advisory_title.Height = requiredTitleHeight;
             p_profile_advisory.Height = Math.Min(maximumHeight, Math.Max(minimumHeight, requiredHeight));
         }
 
