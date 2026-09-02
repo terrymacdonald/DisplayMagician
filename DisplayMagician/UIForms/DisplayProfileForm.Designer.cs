@@ -326,7 +326,7 @@ namespace DisplayMagician.UIForms
             lbl_profile_advisory.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
             lbl_profile_advisory.Size = new System.Drawing.Size(1004, 80);
             lbl_profile_advisory.TabIndex = 0;
-            lbl_profile_advisory.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            lbl_profile_advisory.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btn_save
             // 

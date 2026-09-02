@@ -1485,7 +1485,7 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    List<string> undetectedDisplays = profileToValidate.GetUndetectedDisplayIdentifiers();
+                    List<string> undetectedDisplays = profileToValidate.GetUndetectedDisplayDescriptions();
                     if (undetectedDisplays.Count > 0)
                     {
                         logger.Warn($"ShortcutItem/RefreshValidity: The display profile '{profileToValidate.Name}' could not detect: {String.Join(", ", undetectedDisplays)}.");

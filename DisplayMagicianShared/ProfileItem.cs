@@ -555,6 +555,99 @@ namespace DisplayMagicianShared
 
         }
 
+        public virtual List<string> GetUndetectedDisplayDescriptions()
+        {
+            return GetUndetectedDisplayIdentifiers()
+                .Select(GetDisplayDescription)
+                .ToList();
+        }
+
+        private string GetDisplayDescription(string displayIdentifier)
+        {
+            string[] parts = displayIdentifier.Split('|');
+            if (parts.Length == 0)
+                return "An unknown display";
+
+            if (parts[0].Equals("NVIDIA", StringComparison.OrdinalIgnoreCase) && parts.Length >= 9)
+            {
+                string displayName = GetWindowsDisplayName(parts[5], parts[6]);
+                string gpuName = parts[1];
+                string connectionType = GetFriendlyConnectionType(parts[4]);
+                string displayNumber = GetNvidiaDisplayNumber(parts[8]);
+
+                if (String.IsNullOrWhiteSpace(displayName))
+                    displayName = "An external display";
+
+                if (!String.IsNullOrWhiteSpace(displayNumber))
+                    displayName = $"{displayName} ({displayNumber})";
+
+                return $"{displayName} was previously connected by {connectionType} to {gpuName}.";
+            }
+
+            if (parts[0].Equals("AMDADLX", StringComparison.OrdinalIgnoreCase) && parts.Length >= 6)
+            {
+                string gpuName = parts[1];
+                string connectionType = GetFriendlyConnectionType(parts[4]);
+                bool isBuiltInDisplay = parts.Any(part => part.Equals("DISPLAY_TYPE_LCD_PANEL", StringComparison.OrdinalIgnoreCase));
+                string displayName = isBuiltInDisplay ? "The built-in laptop display" : "An external display";
+
+                return isBuiltInDisplay
+                    ? $"{displayName} was previously driven by {gpuName}."
+                    : $"{displayName} was previously connected by {connectionType} to {gpuName}.";
+            }
+
+            if (parts[0].Equals("WINAPI", StringComparison.OrdinalIgnoreCase))
+            {
+                string displayName = parts.LastOrDefault();
+                string connectionType = parts.Length > 2 ? GetFriendlyConnectionType(parts[2]) : String.Empty;
+
+                if (!String.IsNullOrWhiteSpace(displayName))
+                    return String.IsNullOrWhiteSpace(connectionType)
+                        ? $"{displayName}"
+                        : $"{displayName} was previously connected by {connectionType}.";
+            }
+
+            return "An unavailable display in this profile";
+        }
+
+        private string GetWindowsDisplayName(string manufacturerCode, string productCode)
+        {
+            if (!UInt32.TryParse(productCode, out uint productCodeValue) || _windowsDisplayConfig.DisplayIdentifiers == null)
+                return String.Empty;
+
+            string monitorIdentifier = $"DISPLAY#{manufacturerCode}{productCodeValue:X4}";
+            string matchingIdentifier = _windowsDisplayConfig.DisplayIdentifiers.FirstOrDefault(identifier => identifier.IndexOf(monitorIdentifier, StringComparison.OrdinalIgnoreCase) >= 0);
+            if (String.IsNullOrWhiteSpace(matchingIdentifier))
+                return String.Empty;
+
+            string displayName = matchingIdentifier.Split('|').LastOrDefault();
+            return displayName ?? String.Empty;
+        }
+
+        private string GetNvidiaDisplayNumber(string displayId)
+        {
+            if (String.IsNullOrWhiteSpace(displayId) || _nvidiaDisplayConfig.DisplayNames == null || !_nvidiaDisplayConfig.DisplayNames.TryGetValue(displayId, out string displayName))
+                return String.Empty;
+
+            return displayName.Replace("\\\\.\\DISPLAY", "Windows display ", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetFriendlyConnectionType(string connectionType)
+        {
+            if (String.IsNullOrWhiteSpace(connectionType) || connectionType == "#")
+                return "an unknown connection";
+
+            string friendlyConnectionType = connectionType
+                .Replace("NV_MONITOR_CONN_TYPE_", String.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace("DISPLAY_CONTYPE_", String.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace('_', ' ');
+
+            if (friendlyConnectionType.Equals("EDP", StringComparison.OrdinalIgnoreCase))
+                return "the built-in display connection";
+
+            return friendlyConnectionType;
+        }
+
 
 
         public virtual bool CopyTo(ProfileItem profile, bool overwriteId = true)

@@ -67,6 +67,12 @@ namespace DisplayMagician.UIForms
             base.OnFormClosing(e);
         }
 
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            ResizeProfileAdvisoryPanel();
+        }
+
         private async void Apply_Click(object sender, EventArgs e)
         {
             if (_selectedProfile == null)
@@ -438,7 +444,7 @@ namespace DisplayMagician.UIForms
             bool profileHasErrors = !_selectedProfile.HasUsableSavedConfiguration(out string profileErrorMessage);
             List<string> undetectedDisplays = profileHasErrors
                 ? new List<string>()
-                : _selectedProfile.UndetectedDisplayIdentifiers;
+                : _selectedProfile.GetUndetectedDisplayDescriptions();
 
             p_profile_advisory.Visible = ProfileRepository.ContainsProfile(profile) && (profileHasErrors || undetectedDisplays.Count > 0);
             if (profileHasErrors)
@@ -451,8 +457,10 @@ namespace DisplayMagician.UIForms
             {
                 p_profile_advisory.BackColor = Color.FromArgb(255, 193, 7);
                 lbl_profile_advisory.ForeColor = Color.Black;
-                lbl_profile_advisory.Text = $"⚠ Your display profile may not apply as expected.{Environment.NewLine}DisplayMagician could not detect the following: {String.Join(", ", undetectedDisplays)}. This may be normal when using switchers, alternate inputs, or screens that are powered off. You may still apply the profile but it may not apply as expected.";
+                lbl_profile_advisory.Text = $"⚠ Your display profile may not apply as expected.{Environment.NewLine}DisplayMagician could not detect:{Environment.NewLine}• {String.Join(Environment.NewLine + "• ", undetectedDisplays)}{Environment.NewLine}This may be normal when using switchers, alternate inputs, or screens that are powered off. You may still apply the profile but it may not apply as expected.";
             }
+
+            ResizeProfileAdvisoryPanel();
 
             if (ProfileRepository.ContainsProfile(profile))
             {
@@ -717,6 +725,20 @@ namespace DisplayMagician.UIForms
                 //MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 btn_save_or_rename.PerformClick();
             }
+        }
+
+        private void ResizeProfileAdvisoryPanel()
+        {
+            if (p_profile_advisory == null || lbl_profile_advisory == null || p_middle == null || !p_profile_advisory.Visible || String.IsNullOrWhiteSpace(lbl_profile_advisory.Text))
+                return;
+
+            const int minimumHeight = 80;
+            int maximumHeight = Math.Max(minimumHeight, p_middle.Top - p_profile_advisory.Top);
+            int availableTextWidth = Math.Max(1, p_profile_advisory.ClientSize.Width - lbl_profile_advisory.Padding.Horizontal);
+            Size requiredTextSize = TextRenderer.MeasureText(lbl_profile_advisory.Text, lbl_profile_advisory.Font, new Size(availableTextWidth, Int32.MaxValue), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+            int requiredHeight = requiredTextSize.Height + lbl_profile_advisory.Padding.Vertical;
+
+            p_profile_advisory.Height = Math.Min(maximumHeight, Math.Max(minimumHeight, requiredHeight));
         }
 
 

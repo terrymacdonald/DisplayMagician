@@ -1,4 +1,4 @@
-namespace DisplayMagician.UIForms
+﻿namespace DisplayMagician.UIForms
 {
     partial class ShortcutLibraryForm
     {
@@ -149,11 +149,12 @@ namespace DisplayMagician.UIForms
             //
             // lbl_shortcut_status_title
             //
-            lbl_shortcut_status_title.AutoSize = true;
+            lbl_shortcut_status_title.AutoSize = false;
             lbl_shortcut_status_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
             lbl_shortcut_status_title.Location = new System.Drawing.Point(12, 10);
             lbl_shortcut_status_title.Name = "lbl_shortcut_status_title";
-            lbl_shortcut_status_title.Size = new System.Drawing.Size(0, 20);
+            lbl_shortcut_status_title.Size = new System.Drawing.Size(970, 20);
+            lbl_shortcut_status_title.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             //
             // lbl_shortcut_status_message
             //
@@ -161,6 +162,7 @@ namespace DisplayMagician.UIForms
             lbl_shortcut_status_message.Location = new System.Drawing.Point(12, 38);
             lbl_shortcut_status_message.Name = "lbl_shortcut_status_message";
             lbl_shortcut_status_message.Size = new System.Drawing.Size(970, 62);
+            lbl_shortcut_status_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             //
             // btn_edit
             //
