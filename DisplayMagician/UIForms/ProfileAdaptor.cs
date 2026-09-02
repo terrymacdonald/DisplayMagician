@@ -174,8 +174,11 @@ namespace DisplayMagician.UIForms
                     profileToUse = ProfileRepository.CurrentProfile;
                 }
 
-                // Get file info
-                if (profileToUse.ProfileBitmap is Bitmap)
+                // Get file info. A profile may not have a saved bitmap, but it must
+                // still provide its UUID through EquipmentModel so the renderer can
+                // look up its current error or advisory state.
+                Image profileBitmap = profileToUse.ProfileBitmap ?? Properties.Resources.exe;
+                if (profileBitmap is Bitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
                     // System.Drawing.Image exception created while accessing the Size
@@ -185,7 +188,7 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySize = profileToUse.ProfileBitmap.Size;
+                            mySize = profileBitmap.Size;
                             gotSize = true;
                         }
                         catch (Exception ex)
@@ -203,7 +206,7 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySizeF = profileToUse.ProfileBitmap.PhysicalDimension;
+                            mySizeF = profileBitmap.PhysicalDimension;
                             gotSizeF = true;
                         }
                         catch (Exception ex)
