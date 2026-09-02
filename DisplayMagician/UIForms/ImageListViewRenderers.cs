@@ -94,8 +94,8 @@ namespace DisplayMagician.UIForms
             }
 
             // Draw the image
-            Image img = ImageUtils.RoundCorners(item.GetCachedImage(CachedImageType.Thumbnail), 20);
-            if (img == null)
+            Image cachedImage = item.GetCachedImage(CachedImageType.Thumbnail);
+            if (cachedImage == null)
             {
                 logger.Warn($"ShortcutILVRenderer/DrawItem: No cached thumbnail available for shortcut '{item.EquipmentModel}'. Drawing default exe icon.");
                 Rectangle defaultPos = new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize);
@@ -103,60 +103,55 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
-
-                ShortcutItem shortcutToRender = ShortcutRepository.GetShortcut(item.EquipmentModel);
-                if (shortcutToRender == null)
+                using (Image img = ImageUtils.RoundCorners(cachedImage, 20))
                 {
-                    // Shortcut no longer exists in the repository; try the cached image first, fall back to default
-                    logger.Warn($"ShortcutILVRenderer/DrawItem: Shortcut with key '{item.EquipmentModel}' was not found in the repository. Attempting to draw cached image.");
-                    try
+                    Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
+
+                    ShortcutItem shortcutToRender = ShortcutRepository.GetShortcut(item.EquipmentModel);
+                    if (shortcutToRender == null)
                     {
+                        // Shortcut no longer exists in the repository; try the cached image first, fall back to default
+                        logger.Warn($"ShortcutILVRenderer/DrawItem: Shortcut with key '{item.EquipmentModel}' was not found in the repository. Attempting to draw cached image.");
+                        try
+                        {
+                            g.DrawImage(img, pos);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ShortcutILVRenderer/DrawItem: Failed to draw cached image for missing shortcut '{item.EquipmentModel}'. Falling back to default exe icon.");
+                            g.DrawImage(Properties.Resources.exe, pos);
+                        }
+                    }
+                    else if (shortcutToRender.IsValid == ShortcutValidity.Error)
+                    {
+                        // A shortcut error prevents it from running, so make the image grayscale.
+                        using (Image grayImg = ImageUtils.MakeGrayscale(img))
+                        {
+                            g.DrawImage(grayImg, pos);
+                        }
+
+                        g.DrawImage(Properties.Resources.error, pos.X + 30, pos.Y + 30, 40, 40);
+                    }
+                    else if (shortcutToRender.IsValid == ShortcutValidity.Warning)
+                    {
+                        // A warning is advisory-only, so keep the shortcut image in colour.
+                        g.DrawImage(img, pos);
+                        g.DrawImage(Properties.Resources.warning, pos.X + 30, pos.Y + 30, 40, 40);
+                    }
+                    else
+                    {
+                        // Draw the full color image as the shortcut is fine!
                         g.DrawImage(img, pos);
                     }
-                    catch (Exception ex)
+
+                    // Draw image border
+                    if (Math.Min(pos.Width, pos.Height) > 32)
                     {
-                        logger.Warn(ex, $"ShortcutILVRenderer/DrawItem: Failed to draw cached image for missing shortcut '{item.EquipmentModel}'. Falling back to default exe icon.");
-                        g.DrawImage(Properties.Resources.exe, pos);
-                    }
-                }
-                else if (shortcutToRender.IsValid == ShortcutValidity.Error)
-                {
-                    // The shortcut is permanently invalid (game removed or profile deleted)
-                    // so we make the image grayscale
-                    Image grayImg = ImageUtils.MakeGrayscale(img);
-                    g.DrawImage(grayImg, pos);
-
-                    // Draw a warning triangle over it
-                    // right in the centre
-                    g.DrawImage(Properties.Resources.error, pos.X + 30, pos.Y + 30, 40, 40);
-                }
-                else if (shortcutToRender.IsValid == ShortcutValidity.Warning)
-                {
-                    // The shortcut has an advisory (e.g. screens aren't right at the moment).
-                    // It can still be run, as switchers and powered-off displays may appear later.
-                    // so we make the image grayscale
-                    Image grayImg = ImageUtils.MakeGrayscale(img);
-                    g.DrawImage(grayImg, pos);
-
-                    // Draw a warning triangle over it
-                    // right in the centre
-                    g.DrawImage(Properties.Resources.warning, pos.X + 30, pos.Y + 30, 40, 40);
-                }
-                else
-                {
-                    // Draw the full color image as the shortcut is fine!
-                    g.DrawImage(img, pos);
-                }
-
-
-                // Draw image border
-                if (Math.Min(pos.Width, pos.Height) > 32)
-                {
-                    using (Pen pOuterBorder = new Pen(ImageListView.Colors.ImageOuterBorderColor))
-                    {
-                        //g.DrawRectangle(pOuterBorder, pos);
-                        ImageUtils.DrawRoundedRectangle(g, pOuterBorder, pos, 9);
+                        using (Pen pOuterBorder = new Pen(ImageListView.Colors.ImageOuterBorderColor))
+                        {
+                            //g.DrawRectangle(pOuterBorder, pos);
+                            ImageUtils.DrawRoundedRectangle(g, pOuterBorder, pos, 9);
+                        }
                     }
                 }
             }
@@ -289,8 +284,8 @@ namespace DisplayMagician.UIForms
             }
 
             // Draw the image
-            Image img = ImageUtils.RoundCorners(item.GetCachedImage(CachedImageType.Thumbnail), 20);
-            if (img == null)
+            Image cachedImage = item.GetCachedImage(CachedImageType.Thumbnail);
+            if (cachedImage == null)
             {
                 logger.Warn($"ProfileILVRenderer/DrawItem: No cached thumbnail available for profile '{item.EquipmentModel}'. Drawing default exe icon.");
                 Rectangle defaultPos = new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize);
@@ -298,7 +293,9 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
+                using (Image img = ImageUtils.RoundCorners(cachedImage, 20))
+                {
+                    Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
                 //if (item.EquipmentModel.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
                 //{
@@ -358,13 +355,14 @@ namespace DisplayMagician.UIForms
                 //}
 
 
-                // Draw image border
-                if (Math.Min(pos.Width, pos.Height) > 32)
-                {
-                    using (Pen pOuterBorder = new Pen(ImageListView.Colors.ImageOuterBorderColor))
+                    // Draw image border
+                    if (Math.Min(pos.Width, pos.Height) > 32)
                     {
-                        //g.DrawRectangle(pOuterBorder, pos);
-                        ImageUtils.DrawRoundedRectangle(g, pOuterBorder, pos, 9);
+                        using (Pen pOuterBorder = new Pen(ImageListView.Colors.ImageOuterBorderColor))
+                        {
+                            //g.DrawRectangle(pOuterBorder, pos);
+                            ImageUtils.DrawRoundedRectangle(g, pOuterBorder, pos, 9);
+                        }
                     }
                 }
             }

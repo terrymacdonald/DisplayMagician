@@ -42,13 +42,15 @@ namespace DisplayMagician
             {
                 g.Clear(Color.Transparent);
                 g.SmoothingMode = SmoothingMode.HighQuality;
-                Brush brush = new TextureBrush(StartImage);
-                GraphicsPath gp = new GraphicsPath();
-                gp.AddArc(0, 0, CornerRadius, CornerRadius, 180, 90);
-                gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0, CornerRadius, CornerRadius, 270, 90);
-                gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 0, 90);
-                gp.AddArc(0, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 90, 90);
-                g.FillPath(brush, gp);
+                using (Brush brush = new TextureBrush(StartImage))
+                using (GraphicsPath gp = new GraphicsPath())
+                {
+                    gp.AddArc(0, 0, CornerRadius, CornerRadius, 180, 90);
+                    gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0, CornerRadius, CornerRadius, 270, 90);
+                    gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 0, 90);
+                    gp.AddArc(0, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 90, 90);
+                    g.FillPath(brush, gp);
+                }
                 return RoundedImage;
             }
         }
