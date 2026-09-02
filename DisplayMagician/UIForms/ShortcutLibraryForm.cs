@@ -50,6 +50,12 @@ namespace DisplayMagician.UIForms
             base.OnFormClosing(e);
         }
 
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            ResizeShortcutStatusPanel();
+        }
+
         private void btn_back_Click(object sender, EventArgs e)
         {
             logger.Trace($"ShortcutLibraryForm/btn_back_Click: User clicked on the Back button.");
@@ -613,28 +619,55 @@ namespace DisplayMagician.UIForms
 
             if (hasError)
             {
-                pnl_shortcut_status.BackColor = Color.MistyRose;
-                lbl_shortcut_status_title.ForeColor = Color.DarkRed;
-                lbl_shortcut_status_title.Text = "✖ Your shortcut cannot run:";
-                lbl_shortcut_status_message.Text = GetShortcutIssueList(_selectedShortcut) + Environment.NewLine + "Edit the shortcut to correct the issue, then try again.";
+                pnl_shortcut_status.BackColor = Color.Firebrick;
+                lbl_shortcut_status_title.ForeColor = Color.White;
+                lbl_shortcut_status_message.ForeColor = Color.White;
+                lbl_shortcut_status_title.Text = "✖ Your shortcut cannot run. ✖";
+                lbl_shortcut_status_message.Text = GetShortcutIssueList(_selectedShortcut) + Environment.NewLine + Environment.NewLine + "Edit the shortcut to correct the issue, then try again.";
             }
             else
             {
-                pnl_shortcut_status.BackColor = Color.FromArgb(255, 248, 225);
-                lbl_shortcut_status_title.ForeColor = Color.DarkGoldenrod;
-                lbl_shortcut_status_title.Text = "⚠ Your shortcut may not run as expected:";
-                lbl_shortcut_status_message.Text = GetShortcutIssueList(_selectedShortcut) + Environment.NewLine + "You can still run the shortcut if you want to, but it may not work as expected.";
+                pnl_shortcut_status.BackColor = Color.FromArgb(255, 193, 7);
+                lbl_shortcut_status_title.ForeColor = Color.Black;
+                lbl_shortcut_status_message.ForeColor = Color.Black;
+                lbl_shortcut_status_title.Text = "⚠ Your shortcut may not run as expected. ⚠";
+                lbl_shortcut_status_message.Text = GetShortcutIssueList(_selectedShortcut) + Environment.NewLine + Environment.NewLine + "You can still run the shortcut if you want to, but it may not work as expected.";
             }
 
             pnl_shortcut_status.Visible = true;
+            ResizeShortcutStatusPanel();
         }
 
         private string GetShortcutStatusText(ShortcutItem shortcut)
         {
             if (shortcut.IsValid == ShortcutValidity.Error)
-                return "Your shortcut cannot run:" + Environment.NewLine + GetShortcutIssueList(shortcut) + Environment.NewLine + "Edit the shortcut to correct the issue, then try again.";
+                return "Your shortcut cannot run." + Environment.NewLine + GetShortcutIssueList(shortcut) + Environment.NewLine + Environment.NewLine + "Edit the shortcut to correct the issue, then try again.";
 
-            return "Your shortcut may not run as expected:" + Environment.NewLine + GetShortcutIssueList(shortcut) + Environment.NewLine + "You can still run the shortcut if you want to, but it may not work as expected.";
+            return "Your shortcut may not run as expected." + Environment.NewLine + GetShortcutIssueList(shortcut) + Environment.NewLine + Environment.NewLine + "You can still run the shortcut if you want to, but it may not work as expected.";
+        }
+
+        private void ResizeShortcutStatusPanel()
+        {
+            if (pnl_shortcut_status == null || lbl_shortcut_status_title == null || lbl_shortcut_status_message == null || btn_edit == null || !pnl_shortcut_status.Visible || String.IsNullOrWhiteSpace(lbl_shortcut_status_message.Text))
+                return;
+
+            const int minimumHeight = 112;
+            const int panelBottomMargin = 34;
+            const int panelTopMargin = 12;
+            int panelBottom = btn_edit.Top - panelBottomMargin;
+            int maximumHeight = Math.Max(minimumHeight, panelBottom - panelTopMargin);
+            int availableTextWidth = Math.Max(1, pnl_shortcut_status.ClientSize.Width - 24);
+            Size requiredTitleSize = TextRenderer.MeasureText(lbl_shortcut_status_title.Text, lbl_shortcut_status_title.Font, new Size(availableTextWidth, Int32.MaxValue), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+            Size requiredMessageSize = TextRenderer.MeasureText(lbl_shortcut_status_message.Text, lbl_shortcut_status_message.Font, new Size(availableTextWidth, Int32.MaxValue), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+            int titleHeight = Math.Max(20, requiredTitleSize.Height);
+            int requiredHeight = titleHeight + requiredMessageSize.Height + 34;
+            int panelHeight = Math.Min(maximumHeight, Math.Max(minimumHeight, requiredHeight));
+
+            pnl_shortcut_status.Height = panelHeight;
+            pnl_shortcut_status.Top = panelBottom - panelHeight;
+            lbl_shortcut_status_title.Size = new Size(availableTextWidth, titleHeight);
+            lbl_shortcut_status_message.Location = new Point(12, lbl_shortcut_status_title.Bottom + 8);
+            lbl_shortcut_status_message.Size = new Size(availableTextWidth, panelHeight - lbl_shortcut_status_message.Top - 10);
         }
 
         private string GetShortcutIssueList(ShortcutItem shortcut)
