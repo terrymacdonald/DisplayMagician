@@ -1492,7 +1492,7 @@ namespace DisplayMagician
                         ShortcutError error = new ShortcutError();
                         error.Name = "DisplayProfileDetectionAdvisory";
                         error.Validity = ShortcutValidity.Warning;
-                        error.Message = $"The display profile '{profileToValidate.Name}' could not detect: {String.Join(", ", undetectedDisplays)}. This may be normal when using switchers, alternate inputs, or screens that are powered off. You can still run the shortcut if you want to but it may not work as expected.";
+                        error.Message = $"The display profile '{profileToValidate.Name}' could not detect: {String.Join(", ", undetectedDisplays)}. You can still run the shortcut if you want to but it may not work as expected.";
                         _shortcutErrors.Add(error);
                         if (worstError == ShortcutValidity.Valid)
                             worstError = ShortcutValidity.Warning;

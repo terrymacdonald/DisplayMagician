@@ -457,7 +457,7 @@ namespace DisplayMagician.UIForms
             {
                 p_profile_advisory.BackColor = Color.FromArgb(255, 193, 7);
                 lbl_profile_advisory.ForeColor = Color.Black;
-                lbl_profile_advisory.Text = $"⚠ Your display profile may not apply as expected.{Environment.NewLine}DisplayMagician could not detect:{Environment.NewLine}• {String.Join(Environment.NewLine + "• ", undetectedDisplays)}{Environment.NewLine}This may be normal when using switchers, alternate inputs, or screens that are powered off. You may still apply the profile but it may not apply as expected.";
+                lbl_profile_advisory.Text = $"⚠ Your display profile may not apply as expected. ⚠{Environment.NewLine}DisplayMagician could not detect:{Environment.NewLine}• {String.Join(Environment.NewLine + "• ", undetectedDisplays)}{Environment.NewLine}You may still apply the profile but it may not apply as expected.";
             }
 
             ResizeProfileAdvisoryPanel();
