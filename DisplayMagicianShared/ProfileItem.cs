@@ -382,16 +382,7 @@ namespace DisplayMagicianShared
         [JsonIgnore]
         public virtual List<string> UndetectedDisplayIdentifiers
         {
-            get
-            {
-                List<string> connectedDisplayIdentifiers = ProfileRepository.ConnectedDisplayIdentifiers;
-
-                return ProfileDisplayIdentifiers
-                    .Where(identifier => !String.IsNullOrWhiteSpace(identifier))
-                    .Where(identifier => !connectedDisplayIdentifiers.Contains(identifier, StringComparer.OrdinalIgnoreCase))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-            }
+            get => GetUndetectedDisplayIdentifiers();
         }
 
         [JsonIgnore]
@@ -515,67 +506,52 @@ namespace DisplayMagicianShared
                 return false;
         }
 
-        public bool IsValid()
+        public bool HasUsableSavedConfiguration(out string errorMessage)
         {
-            NVIDIALibrary nvidiaLibrary;
-            AMDLibrary amdLibrary;
-            IntelLibrary intelLibrary;
-            WinLibrary winLibrary;
-            try
+            errorMessage = String.Empty;
+
+            if (_windowsDisplayConfig.DisplayConfigPaths == null || _windowsDisplayConfig.DisplayConfigPaths.Length == 0)
             {
-                nvidiaLibrary = NVIDIALibrary.GetLibrary();
-                amdLibrary = AMDLibrary.GetLibrary();
-                intelLibrary = IntelLibrary.GetLibrary();
-                winLibrary = WinLibrary.GetLibrary();
-
-                if (nvidiaLibrary.IsInstalled)
-                {
-                    if (!nvidiaLibrary.IsValidConfig(_nvidiaDisplayConfig))
-                    {
-                        SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid NVIDIA display config");
-                        return false;
-                    }
-                }
-
-                if (amdLibrary.IsInstalled)
-                {
-                    if (!amdLibrary.IsValidConfig(_amdDisplayConfig))
-                    {
-                        SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid AMD display config");
-                        return false;
-                    }
-                }
-
-                if (intelLibrary.IsInstalled)
-                {
-                    if (!intelLibrary.IsValidConfig(_intelDisplayConfig))
-                    {
-                        SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid Intel display config");
-                        return false;
-                    }
-                }
-
-                if (!winLibrary.IsValidConfig(_windowsDisplayConfig))
-                {
-                    SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid Windows CCD display config");
-                    return false;
-                }
+                errorMessage = "The profile does not contain a saved Windows display layout.";
+                return false;
             }
-            catch (Exception ex)
+
+            if (_windowsDisplayConfig.DisplayConfigModes == null)
             {
-                SharedLogger.logger.Error(ex, $"ProfileItem/IsValid: Exception within IsValid function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                errorMessage = "The profile's saved Windows display modes are missing.";
                 return false;
-            }         
-            
-            // The rest of the 
-            if (ProfileIcon is ProfileIcon &&
-                System.IO.File.Exists(SavedProfileIconCacheFilename) &&
-                ProfileBitmap is Bitmap &&
-                ProfileTightestBitmap is Bitmap &&
-                ProfileDisplayIdentifiers.Count > 0)
-                return true;
-            else
+            }
+
+            if (_nvidiaDisplayConfig.IsInUse && (_nvidiaDisplayConfig.DisplayIdentifiers == null || _nvidiaDisplayConfig.PhysicalAdapters == null))
+            {
+                errorMessage = "The profile's saved NVIDIA display configuration is incomplete.";
                 return false;
+            }
+
+            if (_amdDisplayConfig.IsInUse && (_amdDisplayConfig.DisplayIdentifiers == null || _amdDisplayConfig.Displays == null || _amdDisplayConfig.GPUs == null))
+            {
+                errorMessage = "The profile's saved AMD display configuration is incomplete.";
+                return false;
+            }
+
+            if (_intelDisplayConfig.IsInUse && (_intelDisplayConfig.DisplayIdentifiers == null || _intelDisplayConfig.PhysicalAdapters == null || _intelDisplayConfig.Displays == null))
+            {
+                errorMessage = "The profile's saved Intel display configuration is incomplete.";
+                return false;
+            }
+
+            return true;
+        }
+
+        public virtual List<string> GetUndetectedDisplayIdentifiers()
+        {
+            List<string> connectedDisplayIdentifiers = ProfileRepository.ConnectedDisplayIdentifiers;
+
+            return ProfileDisplayIdentifiers
+                .Where(identifier => !String.IsNullOrWhiteSpace(identifier))
+                .Where(identifier => !connectedDisplayIdentifiers.Contains(identifier, StringComparer.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
         }
 
@@ -611,7 +587,7 @@ namespace DisplayMagicianShared
                 Wallpaper.SaveWallpaperFiles(WallpaperConfiguration, AppWallpaperPath, UUID);
 
             // Return if it is valid and we should continue
-            return IsValid();
+            return HasUsableSavedConfiguration(out _);
         }
 
 

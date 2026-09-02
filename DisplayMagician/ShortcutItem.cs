@@ -1457,11 +1457,12 @@ namespace DisplayMagician
             if (ProfileUUID == ProfileItem.SkipDisplayChangeUUID)
             {
                 // Skip Display Change is a special virtual profile - always valid, never needs checking
-                logger.Trace($"ShortcutItem/RefreshValidity: ProfileUUID is SkipDisplayChangeUUID - skipping display profile existence and possibility checks.");
+                logger.Trace($"ShortcutItem/RefreshValidity: ProfileUUID is SkipDisplayChangeUUID - skipping display profile checks.");
             }
             else
             {
-                if (!ProfileRepository.ContainsProfile(ProfileUUID))
+                ProfileItem profileToValidate = ProfileRepository.GetProfile(ProfileUUID);
+                if (profileToValidate == null)
                 {
                     logger.Warn($"ShortcutItem/RefreshValidity: The profile UUID {ProfileUUID} isn't in the ProfileRepository");
                     ShortcutError error = new ShortcutError();
@@ -1471,6 +1472,31 @@ namespace DisplayMagician
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
+                }
+                else if (!profileToValidate.HasUsableSavedConfiguration(out string profileErrorMessage))
+                {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The profile '{profileToValidate.Name}' has invalid saved configuration data. {profileErrorMessage}");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "InvalidDisplayProfileConfiguration";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The display profile '{profileToValidate.Name}' contains errors and cannot be applied. {profileErrorMessage}";
+                    _shortcutErrors.Add(error);
+                    worstError = ShortcutValidity.Error;
+                }
+                else
+                {
+                    List<string> undetectedDisplays = profileToValidate.GetUndetectedDisplayIdentifiers();
+                    if (undetectedDisplays.Count > 0)
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The display profile '{profileToValidate.Name}' could not detect: {String.Join(", ", undetectedDisplays)}.");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "DisplayProfileDetectionAdvisory";
+                        error.Validity = ShortcutValidity.Warning;
+                        error.Message = $"The display profile '{profileToValidate.Name}' could not detect: {String.Join(", ", undetectedDisplays)}. This may be normal when using switchers, alternate inputs, or screens that are powered off. You can still run the shortcut if you want to but it may not work as expected.";
+                        _shortcutErrors.Add(error);
+                        if (worstError == ShortcutValidity.Valid)
+                            worstError = ShortcutValidity.Warning;
+                    }
                 }
             }
 

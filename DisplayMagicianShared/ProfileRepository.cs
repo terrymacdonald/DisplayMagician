@@ -1514,9 +1514,9 @@ namespace DisplayMagicianShared
                 return ApplyProfileResult.Error;
             }
 
-            if (!profile.IsValid())
+            if (!profile.HasUsableSavedConfiguration(out string errorMessage))
             {
-                SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: The supplied profile '{profile.Name}' has invalid configuration data and cannot be applied.");
+                SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: The supplied profile '{profile.Name}' has invalid configuration data and cannot be applied. {errorMessage}");
                 return ApplyProfileResult.Error;
             }
 

@@ -328,6 +328,16 @@ namespace DisplayMagician.UIForms
                             g.DrawImage(Properties.Resources.exe, pos);
                         }
                     }
+                    else if (!profileToRender.HasUsableSavedConfiguration(out _))
+                    {
+                        logger.Trace($"ProfileILVRenderer/DrawItem: Rendering profile item with invalid saved configuration for key '{item.EquipmentModel}'. Drawing with error icon overlay.");
+                        using (Image grayImg = ImageUtils.MakeGrayscale(img))
+                        {
+                            g.DrawImage(grayImg, pos);
+                        }
+
+                        g.DrawImage(Properties.Resources.error, pos.X + 30, pos.Y + 30, 40, 40);
+                    }
                     else if (!profileToRender.HasDisplayDetectionAdvisory)
                     {
                         // Draw the full color image when no display-detection advisory is present.

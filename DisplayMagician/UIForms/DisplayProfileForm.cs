@@ -72,9 +72,9 @@ namespace DisplayMagician.UIForms
             if (_selectedProfile == null)
                 return;
 
-            if (!_selectedProfile.IsValid())
+            if (!_selectedProfile.HasUsableSavedConfiguration(out string profileErrorMessage))
             {
-                MessageBox.Show(this, "This display profile contains errors and cannot be applied. Please update or recreate the profile.",
+                MessageBox.Show(this, $"This display profile contains errors and cannot be applied. {profileErrorMessage}",
                     "Apply Profile",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
 
@@ -133,7 +133,7 @@ namespace DisplayMagician.UIForms
             finally
             {
                 btn_apply.Enabled = true;
-                if (_selectedProfile != null && _selectedProfile.IsValid() && !ProfileRepository.IsActiveProfile(_selectedProfile))
+                if (_selectedProfile != null && _selectedProfile.HasUsableSavedConfiguration(out _) && !ProfileRepository.IsActiveProfile(_selectedProfile))
                     cms_profiles.Items[0].Enabled = true;
             }
         }
@@ -435,7 +435,7 @@ namespace DisplayMagician.UIForms
             // And update the save/rename textbox
             txt_profile_save_name.Text = _selectedProfile.Name;
 
-            bool profileHasErrors = !_selectedProfile.IsValid();
+            bool profileHasErrors = !_selectedProfile.HasUsableSavedConfiguration(out string profileErrorMessage);
             List<string> undetectedDisplays = profileHasErrors
                 ? new List<string>()
                 : _selectedProfile.UndetectedDisplayIdentifiers;
@@ -445,7 +445,7 @@ namespace DisplayMagician.UIForms
             {
                 p_profile_advisory.BackColor = Color.Firebrick;
                 lbl_profile_advisory.ForeColor = Color.White;
-                lbl_profile_advisory.Text = "This display profile contains errors and cannot be applied. Please update or recreate the profile.";
+                lbl_profile_advisory.Text = $"This display profile contains errors and cannot be applied. {profileErrorMessage}";
             }
             else if (undetectedDisplays.Count > 0)
             {
