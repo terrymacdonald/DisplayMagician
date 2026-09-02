@@ -385,6 +385,14 @@ namespace DisplayMagician.UIForms
                 string shortcutUUID = ilv_saved_shortcuts.Items[currentIlvIndex].EquipmentModel;
                 _selectedShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
 
+                if (_selectedShortcut == null)
+                {
+                    logger.Warn($"ShortcutLibraryForm/btn_edit_Click: The selected shortcut item '{shortcutUUID}' no longer exists in the shortcut repository.");
+                    MessageBox.Show(this, "The selected shortcut is no longer available. The Shortcut Library will now refresh.", "Shortcut Not Available", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    RefreshShortcutLibraryUI();
+                    return;
+                }
+
                 this.Cursor = Cursors.WaitCursor;
                 ShowShortcutLoadingWindow();
 

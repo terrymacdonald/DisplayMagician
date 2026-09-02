@@ -136,8 +136,12 @@ namespace DisplayMagician.UIForms
             {
                 ShortcutItem shortcut = (ShortcutItem) key;
 
-                // Get file info
-                if (shortcut.ShortcutBitmap is Bitmap)
+                // Get file info. A shortcut may not have a saved bitmap (for example,
+                // when extracting its source executable icon failed). It must still
+                // provide its UUID through EquipmentModel so the renderer can look up
+                // its current validity and draw the correct warning or error overlay.
+                Image shortcutBitmap = shortcut.ShortcutBitmap ?? Properties.Resources.exe;
+                if (shortcutBitmap is Bitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
                     // System.Drawing.Image exception created while accessing the Size
@@ -147,7 +151,7 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySize = shortcut.ShortcutBitmap.Size;
+                            mySize = shortcutBitmap.Size;
                             gotSize = true;
                         }
                         catch (Exception ex)
@@ -165,7 +169,7 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySizeF = shortcut.ShortcutBitmap.PhysicalDimension;
+                            mySizeF = shortcutBitmap.PhysicalDimension;
                             gotSizeF = true;
                         }
                         catch (Exception ex)

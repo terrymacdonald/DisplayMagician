@@ -1010,6 +1010,15 @@ namespace DisplayMagician.UIForms
 
         private void LoadShortcut()
         {
+            if (_shortcutToEdit == null)
+            {
+                logger.Error("ShortcutForm/LoadShortcut: No shortcut was supplied before the form was opened.");
+                MessageBox.Show(this, "The shortcut is no longer available. Please close this window, refresh the Shortcut Library, and try again.", "Shortcut Not Available", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                DialogResult = DialogResult.Cancel;
+                BeginInvoke(new Action(Close));
+                return;
+            }
+
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
