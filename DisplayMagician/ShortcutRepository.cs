@@ -918,6 +918,27 @@ namespace DisplayMagician
                 monitoredProcessHandles.Clear();
             }
 
+            void SetGameProcessTreePriority(Game gameToPrioritize)
+            {
+                List<Process> trackedProcesses = gameToPrioritize.GetTrackedProcessTree();
+                try
+                {
+                    foreach (Process monitoredProcess in trackedProcesses)
+                    {
+                        logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of game tree process {monitoredProcess.ProcessName} to {shortcutToUse.ProcessPriority.ToString("G")}");
+                        monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting priority of game process tree for {gameToPrioritize.Name} to {shortcutToUse.ProcessPriority.ToString("G")}");
+                }
+                finally
+                {
+                    ProcessUtils.DisposeProcesses(trackedProcesses);
+                }
+            }
+
             // Create a local function to revert any changes we've made if the user cancels the shortcut run
             // This allows us to reuse code easily in multiple places in this function.
             void RevertAndCleanup()
@@ -1871,7 +1892,7 @@ namespace DisplayMagician
                 bool exeStartFailed = false;
                 try
                 {
-                    processesCreated = ProcessTreeMonitor.StartAndCapture(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    processesCreated = ProcessTreeMonitor.StartAndCapture(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator, captureDescendantsForStartupWindow: true);
                     monitoredProcessHandles.AddRange(processesCreated);
 
                     // Record the program we started so we can close it later
@@ -2325,18 +2346,7 @@ namespace DisplayMagician
                                     // The game is running! So now we continue processing
                                     logger.Debug($"ShortcutRepository/RunShortcut: Found the '{gameToRun.Name}' process has started");
 
-                                    try
-                                    {
-                                        foreach (Process monitoredProcess in gameToRun.Processes)
-                                        {
-                                            logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of fallback game monitored process {gameToRun.ProcessName} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                            monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting priority of fallback game monitored process {gameToRun.ProcessName} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                    }
+                                    SetGameProcessTreePriority(gameToRun);
 
                                     break;
                                 }
@@ -2361,6 +2371,9 @@ namespace DisplayMagician
                                     RevertAndCleanup();
                                     return RunShortcutResult.Cancelled;
                                 }
+
+                                if (!gameToRun.HasObservedProcessTreeRoot)
+                                    gameToRun.RestartProcessTreeMonitoring(shortcutToUse.StartTimeout);
 
                                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                                 {
@@ -2558,18 +2571,7 @@ namespace DisplayMagician
                                 gameRunning = true;
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found the '{gameToRun.Name}' process has started");
 
-                                try
-                                {
-                                    foreach (Process monitoredProcess in gameToRun.Processes)
-                                    {
-                                        logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of fallback game monitored process {gameToRun.ProcessName} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                        monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
-                                    }
-                                }
-                                catch(Exception ex)
-                                {
-                                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting priority of fallback game monitored process {gameToRun.ProcessName} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                }
+                                SetGameProcessTreePriority(gameToRun);
 
                                 break;
                             }
@@ -2596,6 +2598,9 @@ namespace DisplayMagician
                                 RevertAndCleanup();
                                 return RunShortcutResult.Cancelled;
                             }
+
+                            if (!gameToRun.HasObservedProcessTreeRoot)
+                                gameToRun.RestartProcessTreeMonitoring(shortcutToUse.StartTimeout);
 
                             if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                             {

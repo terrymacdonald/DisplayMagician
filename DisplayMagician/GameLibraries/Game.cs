@@ -95,6 +95,18 @@ namespace DisplayMagician.GameLibraries
 
         protected bool IsProcessTreeRunning => _processTreeMonitor != null && _processTreeMonitor.IsRunning;
 
+        public bool HasObservedProcessTreeRoot => _processTreeMonitor != null && _processTreeMonitor.HasObservedExpectedProcess;
+
+        public List<Process> GetTrackedProcessTree()
+        {
+            return _processTreeMonitor?.GetTrackedProcesses() ?? new List<Process>();
+        }
+
+        public void RestartProcessTreeMonitoring(int timeout)
+        {
+            BeginProcessTreeMonitoring(timeout);
+        }
+
         public void EndProcessTreeMonitoring()
         {
             _processTreeMonitor?.Dispose();

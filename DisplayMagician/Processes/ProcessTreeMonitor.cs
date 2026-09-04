@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -19,6 +19,7 @@ namespace DisplayMagician.Processes
         private ManagementEventWatcher _processStartWatcher;
         private Timer _fallbackTimer;
         private bool _hasObservedExpectedProcess;
+        private bool _discoveryComplete;
         private bool _disposed;
 
         private ProcessTreeMonitor(string expectedExecutablePath, int startTimeout)
@@ -50,6 +51,15 @@ namespace DisplayMagician.Processes
             {
                 lock (_syncRoot)
                     return _hasObservedExpectedProcess;
+            }
+        }
+
+        public bool IsDiscoveryComplete
+        {
+            get
+            {
+                lock (_syncRoot)
+                    return _discoveryComplete;
             }
         }
 
@@ -123,7 +133,7 @@ namespace DisplayMagician.Processes
             return monitor;
         }
 
-        public static List<Process> StartAndCapture(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
+        public static List<Process> StartAndCapture(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false, bool captureDescendantsForStartupWindow = false)
         {
             ProcessTreeMonitor monitor = BeginWatching(executable, startTimeout);
             List<Process> startedProcesses = ProcessUtils.StartProcess(executable, arguments, processPriority, startTimeout, runAsAdministrator);
@@ -132,7 +142,8 @@ namespace DisplayMagician.Processes
 
             try
             {
-                while (!monitor.HasObservedExpectedProcess && DateTime.UtcNow < monitor._deadlineUtc)
+                while (DateTime.UtcNow < monitor._deadlineUtc &&
+                    (captureDescendantsForStartupWindow || !monitor.HasObservedExpectedProcess))
                     Thread.Sleep(50);
 
                 List<Process> trackedProcesses = monitor.GetTrackedProcesses();
@@ -140,7 +151,7 @@ namespace DisplayMagician.Processes
                     return startedProcesses;
 
                 ProcessUtils.DisposeProcesses(startedProcesses);
-                logger.Info($"ProcessTreeMonitor/StartAndCapture: Tracking {trackedProcesses.Count} process(es) for {executable}.");
+                logger.Info($"ProcessTreeMonitor/StartAndCapture: Captured {trackedProcesses.Count} process(es) for {executable}{(captureDescendantsForStartupWindow ? " during the startup discovery window" : string.Empty)}.");
                 return trackedProcesses;
             }
             finally
@@ -169,7 +180,7 @@ namespace DisplayMagician.Processes
 
         private void ProcessStartWatcherEventArrived(object sender, EventArrivedEventArgs args)
         {
-            if (_disposed || DateTime.UtcNow > _deadlineUtc)
+            if (_disposed || IsDiscoveryComplete)
                 return;
 
             try
@@ -195,7 +206,7 @@ namespace DisplayMagician.Processes
 
             if (DateTime.UtcNow > _deadlineUtc)
             {
-                Dispose();
+                CompleteDiscovery();
                 return;
             }
 
@@ -286,6 +297,29 @@ namespace DisplayMagician.Processes
             }
         }
 
+        private void CompleteDiscovery()
+        {
+            lock (_syncRoot)
+            {
+                if (_discoveryComplete || _disposed)
+                    return;
+                _discoveryComplete = true;
+            }
+
+            _fallbackTimer?.Dispose();
+            _fallbackTimer = null;
+            try
+            {
+                DisposeWatcher();
+            }
+            catch (Exception ex)
+            {
+                logger.Trace(ex, $"ProcessTreeMonitor/CompleteDiscovery: Could not stop the process discovery watcher for {_expectedExecutablePath}.");
+            }
+
+            logger.Debug($"ProcessTreeMonitor/CompleteDiscovery: Startup discovery completed for {_expectedExecutablePath}. Retaining the captured process tree for lifetime tracking.");
+        }
+
         private bool PathsMatch(Process process)
         {
             string processPath = process.MainModule?.FileName;
@@ -307,17 +341,8 @@ namespace DisplayMagician.Processes
         {
             if (_disposed)
                 return;
+            CompleteDiscovery();
             _disposed = true;
-            _fallbackTimer?.Dispose();
-            _fallbackTimer = null;
-            try
-            {
-                DisposeWatcher();
-            }
-            catch (Exception ex)
-            {
-                logger.Trace(ex, $"ProcessTreeMonitor/Dispose: Could not dispose the process-start watcher for {_expectedExecutablePath}.");
-            }
         }
     }
 }
