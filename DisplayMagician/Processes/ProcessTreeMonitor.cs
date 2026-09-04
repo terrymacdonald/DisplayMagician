@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Management;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace DisplayMagician.Processes
 {
     public sealed class ProcessTreeMonitor : IDisposable
     {
+        private const uint SnapshotProcesses = 0x00000002;
+        private static readonly IntPtr InvalidHandle = new IntPtr(-1);
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly object _syncRoot = new object();
         private readonly string _expectedExecutablePath;
@@ -16,8 +19,8 @@ namespace DisplayMagician.Processes
         private readonly HashSet<int> _existingExpectedProcessIds = new HashSet<int>();
         private readonly HashSet<int> _trackedProcessIds = new HashSet<int>();
         private readonly DateTime _deadlineUtc;
-        private ManagementEventWatcher _processStartWatcher;
-        private Timer _fallbackTimer;
+        private Timer _snapshotTimer;
+        private int _snapshotInProgress;
         private bool _hasObservedExpectedProcess;
         private bool _discoveryComplete;
         private bool _disposed;
@@ -27,6 +30,7 @@ namespace DisplayMagician.Processes
             _expectedExecutablePath = Path.GetFullPath(expectedExecutablePath);
             _expectedExecutableName = Path.GetFileName(expectedExecutablePath);
             _deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(startTimeout, 1, 30));
+
             foreach (Process process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(_expectedExecutableName)))
             {
                 try
@@ -69,7 +73,7 @@ namespace DisplayMagician.Processes
             {
                 int[] processIds;
                 lock (_syncRoot)
-                    processIds = new List<int>(_trackedProcessIds).ToArray();
+                    processIds = _trackedProcessIds.ToArray();
 
                 foreach (int processId in processIds)
                 {
@@ -90,6 +94,7 @@ namespace DisplayMagician.Processes
                         logger.Trace(ex, $"ProcessTreeMonitor/IsRunning: Could not query tracked PID {processId}.");
                     }
                 }
+
                 return false;
             }
         }
@@ -99,7 +104,7 @@ namespace DisplayMagician.Processes
             List<Process> processes = new List<Process>();
             int[] processIds;
             lock (_syncRoot)
-                processIds = new List<int>(_trackedProcessIds).ToArray();
+                processIds = _trackedProcessIds.ToArray();
 
             foreach (int processId in processIds)
             {
@@ -120,6 +125,7 @@ namespace DisplayMagician.Processes
                     logger.Trace(ex, $"ProcessTreeMonitor/GetTrackedProcesses: Could not query tracked PID {processId}.");
                 }
             }
+
             return processes;
         }
 
@@ -144,7 +150,9 @@ namespace DisplayMagician.Processes
             {
                 while (DateTime.UtcNow < monitor._deadlineUtc &&
                     (captureDescendantsForStartupWindow || !monitor.HasObservedExpectedProcess))
+                {
                     Thread.Sleep(50);
+                }
 
                 List<Process> trackedProcesses = monitor.GetTrackedProcesses();
                 if (trackedProcesses.Count == 0)
@@ -162,75 +170,42 @@ namespace DisplayMagician.Processes
 
         private void Start()
         {
-            try
-            {
-                _processStartWatcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_ProcessStartTrace"));
-                _processStartWatcher.EventArrived += ProcessStartWatcherEventArrived;
-                _processStartWatcher.Start();
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ProcessTreeMonitor/Start: Could not start the process-start watcher for {_expectedExecutablePath}. Falling back to bounded process checks.");
-                DisposeWatcher();
-            }
-
-            _fallbackTimer = new Timer(FallbackTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(250));
-            logger.Debug($"ProcessTreeMonitor/Start: Watching for a new {_expectedExecutablePath} process until {_deadlineUtc:O}.");
+            _snapshotTimer = new Timer(CaptureProcessTree, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(250));
+            logger.Debug($"ProcessTreeMonitor/Start: Capturing native process snapshots for {_expectedExecutablePath} until {_deadlineUtc:O}.");
         }
 
-        private void ProcessStartWatcherEventArrived(object sender, EventArrivedEventArgs args)
+        private void CaptureProcessTree(object state)
         {
-            if (_disposed || IsDiscoveryComplete)
+            if (_disposed || IsDiscoveryComplete || Interlocked.Exchange(ref _snapshotInProgress, 1) != 0)
                 return;
 
             try
             {
-                int processId = Convert.ToInt32(args.NewEvent.Properties["ProcessID"].Value);
-                int parentProcessId = Convert.ToInt32(args.NewEvent.Properties["ParentProcessID"].Value);
-                string processName = args.NewEvent.Properties["ProcessName"].Value as string;
-                if (string.Equals(processName, _expectedExecutableName, StringComparison.OrdinalIgnoreCase))
-                    TryTrackExpectedProcess(processId);
-                else
-                    TryTrackDescendant(processId, parentProcessId);
-            }
-            catch (Exception ex)
-            {
-                logger.Trace(ex, $"ProcessTreeMonitor/ProcessStartWatcherEventArrived: Could not process a process-start event while watching {_expectedExecutablePath}.");
-            }
-        }
-
-        private void FallbackTimerElapsed(object state)
-        {
-            if (_disposed)
-                return;
-
-            if (DateTime.UtcNow > _deadlineUtc)
-            {
-                CompleteDiscovery();
-                return;
-            }
-
-            if (!HasObservedExpectedProcess)
-            {
-                foreach (Process process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(_expectedExecutableName)))
+                if (DateTime.UtcNow > _deadlineUtc)
                 {
-                    try
-                    {
-                        if (PathsMatch(process))
-                        {
-                            TryTrackExpectedProcess(process.Id);
-                            break;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Trace(ex, $"ProcessTreeMonitor/FallbackTimerElapsed: Could not inspect a candidate process for {_expectedExecutablePath}.");
-                    }
-                    finally
-                    {
-                        process.Dispose();
-                    }
+                    CompleteDiscovery();
+                    return;
                 }
+
+                List<ProcessSnapshot> runningProcesses = CaptureProcessSnapshot();
+                foreach (ProcessSnapshot process in runningProcesses)
+                {
+                    if (!string.Equals(process.ExecutableName, _expectedExecutableName, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    TryTrackExpectedProcess(process.ProcessId);
+                }
+
+                if (HasObservedExpectedProcess)
+                    ExpandTrackedDescendants(runningProcesses);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ProcessTreeMonitor/CaptureProcessTree: Could not capture the process tree for {_expectedExecutablePath}.");
+            }
+            finally
+            {
+                Volatile.Write(ref _snapshotInProgress, 0);
             }
         }
 
@@ -241,60 +216,95 @@ namespace DisplayMagician.Processes
                 if (_existingExpectedProcessIds.Contains(processId))
                     return;
             }
+
             try
             {
                 using (Process process = Process.GetProcessById(processId))
                 {
-                    if (PathsMatch(process))
-                        TrackProcess(processId, true);
+                    if (!PathsMatch(process))
+                        return;
+                }
+
+                lock (_syncRoot)
+                {
+                    if (_trackedProcessIds.Add(processId))
+                    {
+                        _hasObservedExpectedProcess = true;
+                        logger.Debug($"ProcessTreeMonitor/TryTrackExpectedProcess: Tracking PID {processId} for {_expectedExecutablePath} as the expected executable.");
+                    }
                 }
             }
             catch (ArgumentException)
             {
-                // The expected process was short-lived. The periodic exact-path check remains available.
+                // The process exited before its full path could be verified.
+            }
+            catch (Exception ex)
+            {
+                logger.Trace(ex, $"ProcessTreeMonitor/TryTrackExpectedProcess: Could not inspect PID {processId} for {_expectedExecutablePath}.");
             }
         }
 
-        private void TryTrackDescendant(int processId, int parentProcessId)
+        private void ExpandTrackedDescendants(List<ProcessSnapshot> runningProcesses)
         {
-            lock (_syncRoot)
+            bool changed;
+            do
             {
-                if (!_hasObservedExpectedProcess || !_trackedProcessIds.Contains(parentProcessId))
-                    return;
+                changed = false;
+                lock (_syncRoot)
+                {
+                    foreach (ProcessSnapshot process in runningProcesses)
+                    {
+                        if (_trackedProcessIds.Contains(process.ParentProcessId) && _trackedProcessIds.Add(process.ProcessId))
+                        {
+                            changed = true;
+                            logger.Trace($"ProcessTreeMonitor/ExpandTrackedDescendants: Tracking descendant PID {process.ProcessId} of PID {process.ParentProcessId} for {_expectedExecutablePath}.");
+                        }
+                    }
+                }
             }
-            TrackProcess(processId, false);
+            while (changed);
         }
 
-        private void TrackProcess(int processId, bool expectedProcess)
+        private static List<ProcessSnapshot> CaptureProcessSnapshot()
         {
-            lock (_syncRoot)
+            List<ProcessSnapshot> processes = new List<ProcessSnapshot>();
+            IntPtr snapshot = CreateToolhelp32Snapshot(SnapshotProcesses, 0);
+            if (snapshot == InvalidHandle)
             {
-                if (!_trackedProcessIds.Add(processId))
-                    return;
-                if (expectedProcess)
-                    _hasObservedExpectedProcess = true;
+                logger.Warn($"ProcessTreeMonitor/CaptureProcessSnapshot: CreateToolhelp32Snapshot failed with Win32 error {Marshal.GetLastWin32Error()}.");
+                return processes;
             }
-            logger.Debug($"ProcessTreeMonitor/TrackProcess: Tracking PID {processId} for {_expectedExecutablePath}{(expectedProcess ? " as the expected executable" : " as a descendant")}.");
-            TrackExistingDescendants(processId);
+
+            try
+            {
+                ProcessEntry32 entry = new ProcessEntry32
+                {
+                    Size = (uint)Marshal.SizeOf<ProcessEntry32>()
+                };
+
+                if (!Process32First(snapshot, ref entry))
+                    return processes;
+
+                do
+                {
+                    processes.Add(new ProcessSnapshot((int)entry.ProcessId, (int)entry.ParentProcessId, entry.ExecutableFile ?? string.Empty));
+                    entry.Size = (uint)Marshal.SizeOf<ProcessEntry32>();
+                }
+                while (Process32Next(snapshot, ref entry));
+            }
+            finally
+            {
+                CloseHandle(snapshot);
+            }
+
+            return processes;
         }
 
-        private void TrackExistingDescendants(int parentProcessId)
+        private bool PathsMatch(Process process)
         {
-            foreach (Process childProcess in ProcessUtils.GetChildProcesses(parentProcessId))
-            {
-                try
-                {
-                    TrackProcess(childProcess.Id, false);
-                }
-                catch (Exception ex)
-                {
-                    logger.Trace(ex, $"ProcessTreeMonitor/TrackExistingDescendants: Could not track a descendant of PID {parentProcessId}.");
-                }
-                finally
-                {
-                    childProcess.Dispose();
-                }
-            }
+            string processPath = process.MainModule?.FileName;
+            return !string.IsNullOrWhiteSpace(processPath)
+                && string.Equals(Path.GetFullPath(processPath), _expectedExecutablePath, StringComparison.OrdinalIgnoreCase);
         }
 
         private void CompleteDiscovery()
@@ -306,43 +316,48 @@ namespace DisplayMagician.Processes
                 _discoveryComplete = true;
             }
 
-            _fallbackTimer?.Dispose();
-            _fallbackTimer = null;
-            try
-            {
-                DisposeWatcher();
-            }
-            catch (Exception ex)
-            {
-                logger.Trace(ex, $"ProcessTreeMonitor/CompleteDiscovery: Could not stop the process discovery watcher for {_expectedExecutablePath}.");
-            }
-
-            logger.Debug($"ProcessTreeMonitor/CompleteDiscovery: Startup discovery completed for {_expectedExecutablePath}. Retaining the captured process tree for lifetime tracking.");
-        }
-
-        private bool PathsMatch(Process process)
-        {
-            string processPath = process.MainModule?.FileName;
-            return !string.IsNullOrWhiteSpace(processPath)
-                && string.Equals(Path.GetFullPath(processPath), _expectedExecutablePath, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private void DisposeWatcher()
-        {
-            if (_processStartWatcher == null)
-                return;
-            _processStartWatcher.EventArrived -= ProcessStartWatcherEventArrived;
-            _processStartWatcher.Stop();
-            _processStartWatcher.Dispose();
-            _processStartWatcher = null;
+            _snapshotTimer?.Dispose();
+            _snapshotTimer = null;
+            logger.Debug($"ProcessTreeMonitor/CompleteDiscovery: Native startup discovery completed for {_expectedExecutablePath}. Retaining the captured process tree for lifetime tracking.");
         }
 
         public void Dispose()
         {
             if (_disposed)
                 return;
+
             CompleteDiscovery();
             _disposed = true;
         }
+
+        private sealed record ProcessSnapshot(int ProcessId, int ParentProcessId, string ExecutableName);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct ProcessEntry32
+        {
+            public uint Size;
+            public uint Usage;
+            public uint ProcessId;
+            public IntPtr DefaultHeapId;
+            public uint ModuleId;
+            public uint Threads;
+            public uint ParentProcessId;
+            public int PriorityClassBase;
+            public uint Flags;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string ExecutableFile;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr CreateToolhelp32Snapshot(uint flags, uint processId);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool Process32First(IntPtr snapshot, ref ProcessEntry32 processEntry);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool Process32Next(IntPtr snapshot, ref ProcessEntry32 processEntry);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr handle);
     }
 }
