@@ -141,7 +141,7 @@ namespace DisplayMagician.Processes
             {
                 try
                 {
-                    if (process == null || process.HasExited)
+                    if (process == null)
                         continue;
 
                     lock (_syncRoot)
@@ -149,6 +149,8 @@ namespace DisplayMagician.Processes
                         if (_trackedProcessIds.Add(process.Id))
                         {
                             _hasObservedExpectedProcess = true;
+                            // A bootstrapper can exit before Process.Start returns its handle. Keep its
+                            // PID so the following native snapshots can still identify its live children.
                             logger.Debug($"ProcessTreeMonitor/RegisterLaunchedProcesses: Tracking launched PID {process.Id} for {_expectedExecutablePath} as the expected executable.");
                         }
                     }
