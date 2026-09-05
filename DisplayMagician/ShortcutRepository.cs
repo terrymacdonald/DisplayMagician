@@ -978,21 +978,12 @@ namespace DisplayMagician
                 if (needToChangeDisplayProfiles && shortcutToUse.DisplayPermanence == ShortcutPermanence.Temporary)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name} during cancel.");
-                    ProfileRepository.ApplyProfile(rollbackProfile);
+                    RestoreOriginalDisplayProfile();
                 }
 
                 if (needToChangeAudioProfiles && shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
                 {
-                    try
-                    {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting audio profile back to pre-shortcut state during cancel.");
-                        List<string> rollbackMissingAudioDeviceNames;
-                        rollbackAudioProfile.TrySetActive(Program.AppProgramSettings.AudioDeviceWaitSecs * 1000, 500, out rollbackMissingAudioDeviceNames);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception reverting audio profile during cancel!");
-                    }
+                    RestoreOriginalAudioProfile(out _);
                 }
 
                 SetTrayText(myMainForm, $"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
@@ -1001,6 +992,23 @@ namespace DisplayMagician
             bool RestoreOriginalDisplayProfile()
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Restoring the display profile that was active before '{shortcutToUse.Name}' was run.");
+
+                ProfileItem currentDisplayProfile = new ProfileItem();
+                if (currentDisplayProfile.CreateProfileFromCurrentDisplaySettings(captureWallpaper: false))
+                {
+                    if (rollbackProfile.Equals(currentDisplayProfile))
+                    {
+                        logger.Debug($"ShortcutRepository/RestoreOriginalDisplayProfile: The original '{rollbackProfile.Name}' display profile is already active. Skipping restore.");
+                        return true;
+                    }
+
+                    logger.Debug($"ShortcutRepository/RestoreOriginalDisplayProfile: The current display layout differs from the original '{rollbackProfile.Name}' display profile. Restoring it now.");
+                }
+                else
+                {
+                    logger.Warn($"ShortcutRepository/RestoreOriginalDisplayProfile: Could not determine the current display layout. Attempting to restore the original '{rollbackProfile.Name}' display profile anyway.");
+                }
+
                 ApplyProfileResult rollbackResult = ProfileRepository.ApplyProfile(rollbackProfile);
                 if (rollbackResult == ApplyProfileResult.Successful)
                     return true;
@@ -1009,11 +1017,27 @@ namespace DisplayMagician
                 return false;
             }
 
-            bool RestoreOriginalAudioProfile()
+            bool RestoreOriginalAudioProfile(out List<string> missingAudioDeviceNames)
             {
+                missingAudioDeviceNames = new List<string>();
                 try
                 {
-                    List<string> missingAudioDeviceNames;
+                    AudioProfileItem currentAudioProfile = new AudioProfileItem();
+                    if (currentAudioProfile.WindowsAudioConfig != null && rollbackAudioProfile.WindowsAudioConfig != null)
+                    {
+                        if (currentAudioProfile.WindowsAudioConfig.Equals(rollbackAudioProfile.WindowsAudioConfig))
+                        {
+                            logger.Debug($"ShortcutRepository/RestoreOriginalAudioProfile: The original '{rollbackAudioProfile.Name}' audio profile is already active. Skipping restore.");
+                            return true;
+                        }
+
+                        logger.Debug($"ShortcutRepository/RestoreOriginalAudioProfile: The current audio configuration differs from the original '{rollbackAudioProfile.Name}' audio profile. Restoring it now.");
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RestoreOriginalAudioProfile: Could not determine the current audio configuration. Attempting to restore the original '{rollbackAudioProfile.Name}' audio profile anyway.");
+                    }
+
                     int rollbackAudioTimeoutInMs = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
                     bool rollbackResult = rollbackAudioProfile.TrySetActive(rollbackAudioTimeoutInMs, 500, out missingAudioDeviceNames);
                     if (!rollbackResult)
@@ -1321,13 +1345,13 @@ namespace DisplayMagician
 
                         if (action == AudioApplyFailureAction.Cancel)
                         {
-                            RestoreOriginalAudioProfile();
+                            RestoreOriginalAudioProfile(out _);
                             needToChangeAudioProfiles = false;
                             RevertAndCleanup();
                             return RunShortcutResult.Cancelled;
                         }
 
-                        if (!RestoreOriginalAudioProfile() && !AskToContinue("DisplayMagician could not restore your original audio profile. Do you want to run the shortcut anyway?", "Audio Restore Failed"))
+                        if (!RestoreOriginalAudioProfile(out _) && !AskToContinue("DisplayMagician could not restore your original audio profile. Do you want to run the shortcut anyway?", "Audio Restore Failed"))
                         {
                             needToChangeAudioProfiles = false;
                             RevertAndCleanup();
@@ -2795,22 +2819,13 @@ namespace DisplayMagician
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 
-                ApplyProfileResult result = ProfileRepository.ApplyProfile(rollbackProfile);
-
-                if (result == ApplyProfileResult.Error)
+                if (!RestoreOriginalDisplayProfile())
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: Error rolling back display profile to {rollbackProfile.Name}");
                     return RunShortcutResult.Error;
                 }
-                else if (result == ApplyProfileResult.Cancelled)
-                {
-                    logger.Error($"ShortcutRepository/RunShortcut: User cancelled rolling back display profile to {rollbackProfile.Name}");
-                    return RunShortcutResult.Cancelled;
-                }
-                else if (result == ApplyProfileResult.Successful)
-                {
-                    logger.Trace($"ShortcutRepository/RunShortcut: Successfully rolled back display profile to {rollbackProfile.Name}");
-                }
+
+                logger.Trace($"ShortcutRepository/RunShortcut: Successfully restored or confirmed the original display profile '{rollbackProfile.Name}'.");
 
             }
             else
@@ -2823,12 +2838,9 @@ namespace DisplayMagician
             {
                 try
                 {
-                    int rollbackAudioTimeoutInMs = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
-                    const int rollbackApplyDelayInMs = 500;
-                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting audio profile back to pre-shortcut state (timeout: {rollbackAudioTimeoutInMs}ms).");
+                    logger.Debug($"ShortcutRepository/RunShortcut: Checking whether the original audio profile needs to be restored.");
 
-                    List<string> rollbackMissingAudioDeviceNames;
-                    bool rollbackResult = rollbackAudioProfile.TrySetActive(rollbackAudioTimeoutInMs, rollbackApplyDelayInMs, out rollbackMissingAudioDeviceNames);
+                    bool rollbackResult = RestoreOriginalAudioProfile(out List<string> rollbackMissingAudioDeviceNames);
                     if (rollbackResult)
                     {
                         logger.Debug($"ShortcutRepository/RunShortcut: Audio profile reverted successfully.");

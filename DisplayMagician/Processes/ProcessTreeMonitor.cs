@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 
 namespace DisplayMagician.Processes
@@ -11,6 +12,8 @@ namespace DisplayMagician.Processes
     public sealed class ProcessTreeMonitor : IDisposable
     {
         private const uint SnapshotProcesses = 0x00000002;
+        private const uint ProcessQueryLimitedInformation = 0x00001000;
+        private const int MaximumPathLength = 32768;
         private static readonly IntPtr InvalidHandle = new IntPtr(-1);
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly object _syncRoot = new object();
@@ -302,9 +305,30 @@ namespace DisplayMagician.Processes
 
         private bool PathsMatch(Process process)
         {
-            string processPath = process.MainModule?.FileName;
+            string processPath = GetProcessImagePath(process.Id);
             return !string.IsNullOrWhiteSpace(processPath)
                 && string.Equals(Path.GetFullPath(processPath), _expectedExecutablePath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetProcessImagePath(int processId)
+        {
+            IntPtr processHandle = OpenProcess(ProcessQueryLimitedInformation, false, processId);
+            if (processHandle == IntPtr.Zero)
+                return null;
+
+            try
+            {
+                StringBuilder pathBuffer = new StringBuilder(MaximumPathLength);
+                uint pathLength = (uint)pathBuffer.Capacity;
+                if (!QueryFullProcessImageName(processHandle, 0, pathBuffer, ref pathLength))
+                    return null;
+
+                return pathBuffer.ToString();
+            }
+            finally
+            {
+                CloseHandle(processHandle);
+            }
         }
 
         private void CompleteDiscovery()
@@ -318,7 +342,14 @@ namespace DisplayMagician.Processes
 
             _snapshotTimer?.Dispose();
             _snapshotTimer = null;
-            logger.Debug($"ProcessTreeMonitor/CompleteDiscovery: Native startup discovery completed for {_expectedExecutablePath}. Retaining the captured process tree for lifetime tracking.");
+            if (!HasObservedExpectedProcess)
+            {
+                logger.Warn($"ProcessTreeMonitor/CompleteDiscovery: Native startup discovery ended without observing {_expectedExecutablePath}. The snapshot timer has stopped; the shortcut may need a different executable selected for monitoring.");
+            }
+            else
+            {
+                logger.Debug($"ProcessTreeMonitor/CompleteDiscovery: Native startup discovery completed for {_expectedExecutablePath}. Retaining the captured process tree for lifetime tracking.");
+            }
         }
 
         public void Dispose()
@@ -350,6 +381,12 @@ namespace DisplayMagician.Processes
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr CreateToolhelp32Snapshot(uint flags, uint processId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(uint desiredAccess, bool inheritHandle, int processId);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool QueryFullProcessImageName(IntPtr processHandle, uint flags, StringBuilder executablePath, ref uint size);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern bool Process32First(IntPtr snapshot, ref ProcessEntry32 processEntry);
