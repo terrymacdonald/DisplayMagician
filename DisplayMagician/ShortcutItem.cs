@@ -327,12 +327,7 @@ namespace DisplayMagician
                 // The skip UUID is a special virtual profile - not in AllProfiles, handle it directly
                 if (_profileUuid.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
                 {
-                    _profileToUse = new ProfileItem
-                    {
-                        Name = ProfileItem.SkipDisplayChangeName,
-                        UUID = ProfileItem.SkipDisplayChangeUUID,
-                        ProfileBitmap = Properties.Resources.skipdisplaychange
-                    };
+                    _profileToUse = CreateSkipDisplayChangeProfile();
                     return;
                 }
 
@@ -1787,7 +1782,10 @@ namespace DisplayMagician
             {
                 Name = ProfileItem.SkipDisplayChangeName,
                 UUID = ProfileItem.SkipDisplayChangeUUID,
-                ProfileBitmap = Properties.Resources.skipdisplaychange
+                ProfileBitmap = Properties.Resources.skipdisplaychange,
+                // The virtual profile has no display layout to render. Reuse its
+                // canonical bitmap for the shortcut's bottom-right overlay.
+                ProfileTightestBitmap = Properties.Resources.skipdisplaychange
             };
         }
 
