@@ -1628,6 +1628,9 @@ namespace DisplayMagician
                 App appToUse = AppLibrary.AllInstalledAppsInAllLibraries != null
                     ? AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId)
                     : null;
+                ProcessTreeMonitor applicationProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable && appToUse is LocalApp localApplication && localApplication.LocalAppType == InstalledAppType.InstalledProgram
+                    ? BeginAlternativeExecutableMonitoring(appToUse.ExePath)
+                    : null;
 
                 bool appStartFailed = appToUse == null;
                 try
@@ -1652,6 +1655,7 @@ namespace DisplayMagician
                     appStartFailed = true;
                 }
 
+                applicationProcessMonitor?.RegisterLaunchedProcesses(processesCreated);
                 monitoredProcessHandles.AddRange(processesCreated);
 
                 if (appStartFailed)
@@ -1668,9 +1672,16 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
 
+                        if (applicationProcessMonitor != null && !applicationProcessMonitor.HasObservedExpectedProcess)
+                        {
+                            applicationProcessMonitor.Dispose();
+                            applicationProcessMonitor = BeginAlternativeExecutableMonitoring(appToUse.ExePath);
+                        }
+
                         for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            if (appToUse != null && appToUse.IsRunning)
+                            if ((applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess) ||
+                                (appToUse != null && appToUse.IsRunning))
                             {
                                 appStartFailed = false;
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found manually started application '{appToUse.Name}'.");
@@ -1685,6 +1696,7 @@ namespace DisplayMagician
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
                     bool applicationDetected = processesCreated.Any(process => !ProcessUtils.ProcessExited(process)) ||
+                        (applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess) ||
                         (appToUse != null && appToUse.IsRunning);
                     while (!applicationDetected)
                     {
@@ -1698,9 +1710,16 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
 
+                        if (applicationProcessMonitor != null && !applicationProcessMonitor.HasObservedExpectedProcess)
+                        {
+                            applicationProcessMonitor.Dispose();
+                            applicationProcessMonitor = BeginAlternativeExecutableMonitoring(appToUse.ExePath);
+                        }
+
                         for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            if ((appToUse != null && appToUse.IsRunning) || processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
+                            if ((applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess) ||
+                                (appToUse != null && appToUse.IsRunning) || processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
                             {
                                 applicationDetected = true;
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found manually started application '{shortcutToUse.ApplicationName}'.");
@@ -1722,10 +1741,10 @@ namespace DisplayMagician
                 {
                     try
                     {
-                        if (appToUse is LocalApp localApp && localApp.LocalAppType == InstalledAppType.InstalledProgram && processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
+                        if (applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess)
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Waiting for {processesCreated.Count} tracked process(es) started by {shortcutToUse.ApplicationName} to exit.");
-                            while (!ProcessUtils.ProcessExited(processesCreated))
+                            logger.Debug($"ShortcutRepository/RunShortcut: Waiting for the process tree started by {shortcutToUse.ApplicationName} to exit.");
+                            while (applicationProcessMonitor.IsRunning)
                             {
                                 if (cancelToken.IsCancellationRequested)
                                 {
@@ -1911,6 +1930,9 @@ namespace DisplayMagician
                 ProcessTreeMonitor alternativeExecutableProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable
                     ? null
                     : BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
+                ProcessTreeMonitor executableProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable
+                    ? BeginAlternativeExecutableMonitoring(shortcutToUse.ExecutableNameAndPath)
+                    : null;
 
                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                 {
@@ -1936,7 +1958,8 @@ namespace DisplayMagician
                 bool exeStartFailed = false;
                 try
                 {
-                    processesCreated = ProcessTreeMonitor.StartAndCapture(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator, captureDescendantsForStartupWindow: true);
+                    processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    executableProcessMonitor?.RegisterLaunchedProcesses(processesCreated);
                     monitoredProcessHandles.AddRange(processesCreated);
 
                     // Record the program we started so we can close it later
@@ -1989,17 +2012,13 @@ namespace DisplayMagician
                 List<Process> processesToMonitor = new List<Process>();
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    processesToMonitor = processesCreated;
-                    if (processesToMonitor.Count > 0)
+                    if (executableProcessMonitor != null)
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{processToMonitorName}' created processes to monitor are running");
-                        foundSomethingToMonitor = true;
+                        foundSomethingToMonitor = WaitForAlternativeExecutable(executableProcessMonitor);
                     }
                     else
                     {
-                        logger.Warn($"ShortcutRepository/RunShortcut: No '{processToMonitorName}' processes were created to monitor, so we didn't find anything to monitor!");
-                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)));
-                        monitoredProcessHandles.AddRange(processesToMonitor);
+                        processesToMonitor = processesCreated;
                         foundSomethingToMonitor = processesToMonitor.Count > 0;
                     }
                 }
@@ -2025,7 +2044,7 @@ namespace DisplayMagician
                     {
                         // If we have no more processes left then we're done!
                         if (shortcutToUse.ProcessNameToMonitorUsesExecutable
-                            ? ProcessUtils.ProcessExited(processesToMonitor)
+                            ? (executableProcessMonitor != null ? !executableProcessMonitor.IsRunning : ProcessUtils.ProcessExited(processesToMonitor))
                             : !alternativeExecutableProcessMonitor.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: No more processes to monitor are still running. It, and all it's child processes have exited!");
@@ -2110,12 +2129,20 @@ namespace DisplayMagician
 
                     if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                     {
-                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        if (executableProcessMonitor != null)
                         {
-                            if (Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)).Length > 0)
-                                break;
+                            executableProcessMonitor.Dispose();
+                            executableProcessMonitor = BeginAlternativeExecutableMonitoring(shortcutToUse.ExecutableNameAndPath);
+                        }
+                        else
+                        {
+                            for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                            {
+                                if (Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)).Length > 0)
+                                    break;
 
-                            Thread.Sleep(500);
+                                Thread.Sleep(500);
+                            }
                         }
                     }
                     else

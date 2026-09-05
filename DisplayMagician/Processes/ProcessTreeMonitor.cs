@@ -132,6 +132,34 @@ namespace DisplayMagician.Processes
             return processes;
         }
 
+        public void RegisterLaunchedProcesses(IEnumerable<Process> launchedProcesses)
+        {
+            if (launchedProcesses == null)
+                return;
+
+            foreach (Process process in launchedProcesses)
+            {
+                try
+                {
+                    if (process == null || process.HasExited)
+                        continue;
+
+                    lock (_syncRoot)
+                    {
+                        if (_trackedProcessIds.Add(process.Id))
+                        {
+                            _hasObservedExpectedProcess = true;
+                            logger.Debug($"ProcessTreeMonitor/RegisterLaunchedProcesses: Tracking launched PID {process.Id} for {_expectedExecutablePath} as the expected executable.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Trace(ex, $"ProcessTreeMonitor/RegisterLaunchedProcesses: Could not register a launched process for {_expectedExecutablePath}.");
+                }
+            }
+        }
+
         public static ProcessTreeMonitor BeginWatching(string expectedExecutablePath, int startTimeout)
         {
             if (string.IsNullOrWhiteSpace(expectedExecutablePath) || !File.Exists(expectedExecutablePath))
