@@ -221,7 +221,7 @@ namespace DisplayMagician.Processes
                 logger.Warn("ProcessUtils/StopProcess: Null process supplied, nothing to stop.");
                 return false;
             }
-            string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
+            string procId = $"PID {processToStop.Id}";
             try
             {
                 // Stop the process
@@ -300,7 +300,7 @@ namespace DisplayMagician.Processes
                 {
                     if (!ProcessExited(processToStop))
                     {
-                        string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
+                        string procId = $"PID {processToStop.Id}";
                         logger.Debug($"ProcessUtils/StopProcess: Stopping process {procId}");
                         if (StopProcess(processToStop))
                         {
@@ -314,7 +314,7 @@ namespace DisplayMagician.Processes
                     }
                     else
                     {
-                        logger.Debug($"ProcessUtils/StopProcess: Process {processToStop.ProcessName} (PID {processToStop.Id}) already stopped.");
+                        logger.Debug("ProcessUtils/StopProcess: A started process had already stopped.");
                     }
                 }
                 catch (Exception ex)

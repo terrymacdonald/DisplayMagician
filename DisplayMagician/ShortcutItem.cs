@@ -57,6 +57,8 @@ namespace DisplayMagician
         public bool Disabled;
         public ProcessPriority ProcessPriority;
         public string Executable;
+        public string ApplicationId;
+        public string ApplicationName;
         public string Arguments;
         public bool ExecutableArgumentsRequired;
         public bool CloseOnFinish;
@@ -1336,9 +1338,12 @@ namespace DisplayMagician
                 copiedStartProgram.Disabled = sp.Disabled;
                 copiedStartProgram.DontStartIfAlreadyRunning = sp.DontStartIfAlreadyRunning;
                 copiedStartProgram.Executable = sp.Executable;
+                copiedStartProgram.ApplicationId = sp.ApplicationId;
+                copiedStartProgram.ApplicationName = sp.ApplicationName;
                 copiedStartProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
                 copiedStartProgram.Priority = sp.Priority;
                 copiedStartProgram.ProcessPriority = sp.ProcessPriority;
+                copiedStartProgram.RunAsAdministrator = sp.RunAsAdministrator;
                 shortcut.StartPrograms.Add(copiedStartProgram);
             }
 
@@ -1597,7 +1602,28 @@ namespace DisplayMagician
             // Do all the active/enabled specified start programs still exist?
             foreach (StartProgram sp in StartPrograms)
             {
-                if (!sp.Disabled && !string.IsNullOrWhiteSpace(sp.Executable))
+                if (sp.Disabled)
+                    continue;
+
+                if (!String.IsNullOrWhiteSpace(sp.ApplicationId))
+                {
+                    App applicationToValidate = null;
+                    if (AppLibrary.AppsLoaded && AppLibrary.AllInstalledAppsInAllLibraries != null)
+                        applicationToValidate = AppLibrary.GetAnyAppById(sp.ApplicationId);
+
+                    if (AppLibrary.AppsLoaded && (applicationToValidate == null || applicationToValidate is not LocalApp localApp || localApp.LocalAppType != InstalledAppType.UWP))
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The UWP start program '{sp.ApplicationName}' (ID: {sp.ApplicationId}) could not be found.");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "UwpStartProgramNotInstalled";
+                        error.Validity = ShortcutValidity.Warning;
+                        error.Message = $"The UWP start program '{sp.ApplicationName}' is not installed or cannot be accessed.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Warning;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(sp.Executable))
                 {
                     if (!System.IO.File.Exists(sp.Executable))
                     {

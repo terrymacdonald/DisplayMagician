@@ -894,7 +894,8 @@ namespace DisplayMagician
             AudioProfileItem rollbackAudioProfile = AudioProfileRepository.CurrentAudioProfile;
 
             // Run pre-game start/stop programs in UI Priority order (interleaved)
-            List<(int Priority, List<Process> Processes)> startedProgramsForCleanup = new List<(int Priority, List<Process> Processes)>();
+            List<(int Priority, List<Process> Processes, ProcessTreeMonitor Monitor)> startedProgramsForCleanup = new List<(int Priority, List<Process> Processes, ProcessTreeMonitor Monitor)>();
+            List<(int Priority, LocalApp Application)> startedUwpProgramsForCleanup = new List<(int Priority, LocalApp Application)>();
             List<StopProgram> stopProgramsToRestart = new List<StopProgram>();
             List<Process> monitoredProcessHandles = new List<Process>();
             List<Action> monitorCleanupActions = new List<Action>();
@@ -963,25 +964,63 @@ namespace DisplayMagician
                 return monitor.HasObservedExpectedProcess;
             }
 
+            bool StopStartedProgram(List<Process> processes, ProcessTreeMonitor monitor)
+            {
+                List<Process> processesToStop = monitor?.GetTrackedProcesses() ?? new List<Process>();
+                foreach (Process process in processes)
+                {
+                    try
+                    {
+                        if (!ProcessUtils.ProcessExited(process) && processesToStop.All(trackedProcess => trackedProcess.Id != process.Id))
+                            processesToStop.Add(process);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Trace(ex, "ShortcutRepository/RunShortcut: Could not include a directly launched start-program process during cleanup.");
+                    }
+                }
+                try
+                {
+                    return ProcessUtils.StopProcess(processesToStop);
+                }
+                finally
+                {
+                    ProcessUtils.DisposeProcesses(processesToStop);
+                    monitor?.Dispose();
+                }
+            }
+
             // Create a local function to revert any changes we've made if the user cancels the shortcut run
             // This allows us to reuse code easily in multiple places in this function.
             void RevertAndCleanup()
             {
                 ReleaseMonitoringResources();
 
-                if (startedProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
+                if (startedProgramsForCleanup.Count > 0 || startedUwpProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Performing started/stopped programs cleanup during cancellation revert.");
                     foreach (var entry in Enumerable.Reverse(startedProgramsForCleanup))
                     {
                         try
                         {
-                            if (!ProcessUtils.StopProcess(entry.Processes))
+                            if (!StopStartedProgram(entry.Processes, entry.Monitor))
                                 logger.Warn($"ShortcutRepository/RunShortcut: One or more started programs could not be stopped during cleanup.");
                         }
                         catch (Exception ex)
                         {
                             logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping started programs during cleanup.");
+                        }
+                    }
+                    foreach (var entry in Enumerable.Reverse(startedUwpProgramsForCleanup))
+                    {
+                        try
+                        {
+                            if (!entry.Application.Stop())
+                                logger.Warn($"ShortcutRepository/RunShortcut: UWP start program '{entry.Application.Name}' could not be stopped during cleanup.");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping UWP start program '{entry.Application.Name}' during cleanup.");
                         }
                     }
                     foreach (StopProgram sp in stopProgramsToRestart)
@@ -1397,7 +1436,7 @@ namespace DisplayMagician
             }
 
             var programsInOrder = new List<(int Priority, bool IsStop, StartProgram StartProg, StopProgram StopProg)>();
-            foreach (StartProgram sp in shortcutToUse.StartPrograms.Where(p => !p.Disabled && !String.IsNullOrWhiteSpace(p.Executable)))
+            foreach (StartProgram sp in shortcutToUse.StartPrograms.Where(p => !p.Disabled && (!String.IsNullOrWhiteSpace(p.Executable) || !String.IsNullOrWhiteSpace(p.ApplicationId))))
                 programsInOrder.Add((sp.Priority, false, sp, default));
             foreach (StopProgram sp in shortcutToUse.StopPrograms.Where(p => !p.Disabled && !String.IsNullOrWhiteSpace(p.Executable)))
                 programsInOrder.Add((sp.Priority, true, default, sp));
@@ -1457,6 +1496,40 @@ namespace DisplayMagician
                     else
                     {
                         StartProgram processToStart = item.StartProg;
+                        if (!String.IsNullOrWhiteSpace(processToStart.ApplicationId))
+                        {
+                            LocalApp uwpApp = AppLibrary.GetAnyAppById(processToStart.ApplicationId) as LocalApp;
+                            if (processToStart.DontStartIfAlreadyRunning && uwpApp != null && uwpApp.IsRunning)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: UWP start program '{uwpApp.Name}' is already running, so it will not be launched or stopped by this shortcut.");
+                                continue;
+                            }
+
+                            List<Process> launchedProcesses;
+                            bool startedUwpApp = uwpApp != null && uwpApp.LocalAppType == InstalledAppType.UWP &&
+                                uwpApp.Start(out launchedProcesses, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+                            if (!startedUwpApp)
+                            {
+                                if (!AskToContinue($"The UWP start program '{processToStart.ApplicationName}' could not be launched. Do you want to continue running the shortcut?", "UWP Start Program Failed"))
+                                {
+                                    RevertAndCleanup();
+                                    return RunShortcutResult.Cancelled;
+                                }
+                            }
+                            else
+                            {
+                                if (processToStart.CloseOnFinish)
+                                    startedUwpProgramsForCleanup.Add((processToStart.Priority, uwpApp));
+
+                                if (!String.IsNullOrWhiteSpace(processToStart.Arguments) ||
+                                    processToStart.ProcessPriority != ProcessPriority.Normal ||
+                                    processToStart.RunAsAdministrator)
+                                {
+                                    logger.Warn($"ShortcutRepository/RunShortcut: UWP start program '{uwpApp.Name}' was launched, but its arguments, priority, and Run as administrator settings are not supported by the UWP launch API.");
+                                }
+                            }
+                            continue;
+                        }
                         // If required, check whether a process is started already
                         if (processToStart.DontStartIfAlreadyRunning)
                         {
@@ -1486,11 +1559,15 @@ namespace DisplayMagician
                         // Start the executable
                         logger.Info($"ShortcutRepository/RunShortcut: Starting Start Program process {processToStart.Executable}");
                         List<Process> processesCreated = new List<Process>();
+                        ProcessTreeMonitor startProgramMonitor = ProcessTreeMonitor.BeginWatching(
+                            processToStart.Executable,
+                            10);
                         bool startFailed = false;
                         string failReason = "";
                         try
                         {
-                            processesCreated = ProcessTreeMonitor.StartAndCapture(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+                            processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+                            startProgramMonitor?.RegisterLaunchedProcesses(processesCreated);
 
                             // Record the program we started so we can close it later (if we have any!)
                             if (processesCreated.Count > 0)
@@ -1501,7 +1578,8 @@ namespace DisplayMagician
                                     {
                                         logger.Debug($"ShortcutRepository/RunShortcut: We need to stop launched PID {p.Id} after the main game or executable is closed.");
                                     }
-                                    startedProgramsForCleanup.Add((processToStart.Priority, processesCreated));
+                                    startedProgramsForCleanup.Add((processToStart.Priority, processesCreated, startProgramMonitor));
+                                    startProgramMonitor = null;
                                 }
                                 else
                                 {
@@ -1510,6 +1588,11 @@ namespace DisplayMagician
                                         logger.Debug($"ShortcutRepository/RunShortcut: No need to stop launched PID {p.Id} after the main game or executable is closed, so we'll just leave it running");
                                     }
                                     monitoredProcessHandles.AddRange(processesCreated);
+                                    if (startProgramMonitor != null)
+                                    {
+                                        monitorCleanupActions.Add(startProgramMonitor.Dispose);
+                                        startProgramMonitor = null;
+                                    }
                                 }
                             }
                             else
@@ -1555,6 +1638,10 @@ namespace DisplayMagician
                             logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting process {processToStart.Executable}. Method call is invalid for the current state.");
                             startFailed = true;
                             failReason = ex.Message;
+                        }
+                        finally
+                        {
+                            startProgramMonitor?.Dispose();
                         }
 
                         if (startFailed)
@@ -2806,15 +2893,17 @@ namespace DisplayMagician
 
 
             // Stop started programs and restart stopped programs in the same Priority order as pre-game
-            if (startedProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
+            if (startedProgramsForCleanup.Count > 0 || startedUwpProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: We started {startedProgramsForCleanup.Count} program(s) and stopped {stopProgramsToRestart.Count} program(s) before the main executable or game — now performing post-game cleanup in the same order");
+                logger.Debug($"ShortcutRepository/RunShortcut: We started {startedProgramsForCleanup.Count} executable program(s), {startedUwpProgramsForCleanup.Count} UWP program(s), and stopped {stopProgramsToRestart.Count} program(s) before the main executable or game — now performing post-game cleanup in the same order");
 
-                var postGameActions = new List<(int Priority, bool IsRestart, List<Process> ToStop, StopProgram ToRestart)>();
+                var postGameActions = new List<(int Priority, bool IsRestart, List<Process> ToStop, StopProgram ToRestart, ProcessTreeMonitor Monitor, LocalApp UwpApplication)>();
                 foreach (var entry in startedProgramsForCleanup)
-                    postGameActions.Add((entry.Priority, false, entry.Processes, default));
+                    postGameActions.Add((entry.Priority, false, entry.Processes, default, entry.Monitor, null));
+                foreach (var entry in startedUwpProgramsForCleanup)
+                    postGameActions.Add((entry.Priority, false, null, default, null, entry.Application));
                 foreach (StopProgram sp in stopProgramsToRestart)
-                    postGameActions.Add((sp.Priority, true, null, sp));
+                    postGameActions.Add((sp.Priority, true, null, sp, null, null));
                 postGameActions.Sort((a, b) => a.Priority.CompareTo(b.Priority));
 
                 foreach (var action in postGameActions)
@@ -2842,11 +2931,17 @@ namespace DisplayMagician
                     }
                     else
                     {
-                        // Shutdown the processes
                         try
                         {
-                            if (!ProcessUtils.StopProcess(action.ToStop))
+                            if (action.UwpApplication != null)
+                            {
+                                if (!action.UwpApplication.Stop())
+                                    logger.Warn($"ShortcutRepository/RunShortcut: UWP start program '{action.UwpApplication.Name}' could not be stopped during post-game cleanup.");
+                            }
+                            else if (!StopStartedProgram(action.ToStop, action.Monitor))
+                            {
                                 logger.Warn($"ShortcutRepository/RunShortcut: One or more started programs could not be stopped during post-game cleanup.");
+                            }
                         }
                         catch (Exception ex)
                         {

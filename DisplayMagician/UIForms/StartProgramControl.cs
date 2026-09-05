@@ -1,12 +1,11 @@
 ﻿//using DisplayMagician.Resources;
 using DisplayMagician.Processes;
-using Microsoft.Win32;
+using DisplayMagician.AppLibraries;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,6 +18,7 @@ namespace DisplayMagician.UIForms
     {
 
         private StartProgram myStartProgram = new StartProgram() { };
+        private bool _updatingSelectedProgram;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ProgramNumber
@@ -132,7 +132,18 @@ namespace DisplayMagician.UIForms
         {
             // Now populate the controls with the start program data
             lbl_priority.Text = myStartProgram.Priority.ToString();
-            txt_start_program.Text = myStartProgram.Executable;
+            _updatingSelectedProgram = true;
+            try
+            {
+                txt_start_program.Text = !String.IsNullOrWhiteSpace(myStartProgram.ApplicationId)
+                    ? $"UWP: {myStartProgram.ApplicationName}"
+                    : myStartProgram.Executable;
+            }
+            finally
+            {
+                _updatingSelectedProgram = false;
+            }
+            txt_start_program.ReadOnly = !String.IsNullOrWhiteSpace(myStartProgram.ApplicationId);
             cb_disable_start_program.Checked = myStartProgram.Disabled;
             cb_start_program_pass_args.Checked = myStartProgram.ExecutableArgumentsRequired;
             txt_start_program_args.Text = myStartProgram.Arguments;
@@ -161,7 +172,59 @@ namespace DisplayMagician.UIForms
 
         private void btn_start_program_Click(object sender, EventArgs e)
         {
-            txt_start_program.Text = getExeFile();
+            using (ChooseExecutableForm chooseExecutableForm = new ChooseExecutableForm())
+            {
+                chooseExecutableForm.PreviousExe = myStartProgram.Executable;
+                chooseExecutableForm.PreviousAppId = myStartProgram.ApplicationId;
+                chooseExecutableForm.StartPosition = FormStartPosition.CenterParent;
+                if (chooseExecutableForm.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                _updatingSelectedProgram = true;
+                try
+                {
+                    if (chooseExecutableForm.Mode == ChooseExecutableFormMode.AppMode &&
+                        chooseExecutableForm.AppToUse is LocalApp localApp &&
+                        localApp.LocalAppType == InstalledAppType.UWP)
+                    {
+                        myStartProgram.ApplicationId = localApp.Id;
+                        myStartProgram.ApplicationName = localApp.Name;
+                        myStartProgram.Executable = String.Empty;
+                        txt_start_program.Text = $"UWP: {localApp.Name}";
+                        txt_start_program.ReadOnly = true;
+                    }
+                    else if (chooseExecutableForm.Mode == ChooseExecutableFormMode.AppMode &&
+                             chooseExecutableForm.AppToUse is App installedApp &&
+                             !String.IsNullOrWhiteSpace(installedApp.ExePath))
+                    {
+                        myStartProgram.ApplicationId = String.Empty;
+                        myStartProgram.ApplicationName = String.Empty;
+                        myStartProgram.Executable = installedApp.ExePath;
+                        txt_start_program.Text = installedApp.ExePath;
+                        txt_start_program.ReadOnly = false;
+                    }
+                    else if (chooseExecutableForm.Mode == ChooseExecutableFormMode.ExeMode && !String.IsNullOrWhiteSpace(chooseExecutableForm.ExeToUse))
+                    {
+                        myStartProgram.ApplicationId = String.Empty;
+                        myStartProgram.ApplicationName = String.Empty;
+                        myStartProgram.Executable = chooseExecutableForm.ExeToUse;
+                        txt_start_program.Text = chooseExecutableForm.ExeToUse;
+                        txt_start_program.ReadOnly = false;
+                    }
+                    else
+                    {
+                        MessageBox.Show(this,
+                            "The selected application does not have an executable that DisplayMagician can start. Please select another application or executable file.",
+                            "Unsupported Start Program",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                    }
+                }
+                finally
+                {
+                    _updatingSelectedProgram = false;
+                }
+            }
         }
 
         private void cb_start_program_CheckedChanged(object sender, EventArgs e)
@@ -210,33 +273,6 @@ namespace DisplayMagician.UIForms
                 // Disable the Executable Arguments Text field
                 txt_start_program_args.Enabled = false;
             }
-        }
-
-        private string getExeFile()
-        {
-            string textToReturn = "";
-            System.Windows.Forms.OpenFileDialog dialog_open = new System.Windows.Forms.OpenFileDialog();
-            dialog_open.InitialDirectory = Environment.ExpandEnvironmentVariables("%ProgramW6432%"); ;
-            dialog_open.Filter = "Executables (*.exe; *.com; *.ps1; *.bat; *.cmd)|*.exe; *.com; *.ps1; *.bat; *.cmd|All files (*.*)|*.*";
-            dialog_open.FilterIndex = 1;
-            dialog_open.RestoreDirectory = true;
-            if (dialog_open.ShowDialog(this) == DialogResult.OK)
-            {
-                if (File.Exists(dialog_open.FileName))
-                {
-                    textToReturn = dialog_open.FileName;
-                    dialog_open.FileName = string.Empty;
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "Selected file is not a valid file.",
-                        "Executable",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
-            }
-            return textToReturn;
         }
 
         private void btn_delete_Click(object sender, EventArgs e)
@@ -301,6 +337,11 @@ namespace DisplayMagician.UIForms
 
         private void txt_start_program_TextChanged(object sender, EventArgs e)
         {
+            if (_updatingSelectedProgram)
+                return;
+
+            myStartProgram.ApplicationId = String.Empty;
+            myStartProgram.ApplicationName = String.Empty;
             myStartProgram.Executable = txt_start_program.Text;
         }
 
