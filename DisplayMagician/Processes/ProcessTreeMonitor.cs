@@ -24,6 +24,8 @@ namespace DisplayMagician.Processes
         private readonly DateTime _deadlineUtc;
         private Timer _snapshotTimer;
         private int _snapshotInProgress;
+        private int _completedSnapshotCount;
+        private int _minimumSnapshotCountForDirectLaunch;
         private bool _hasObservedExpectedProcess;
         private bool _discoveryComplete;
         private bool _disposed;
@@ -75,8 +77,14 @@ namespace DisplayMagician.Processes
             get
             {
                 int[] processIds;
+                bool waitingForDirectLaunchSnapshot;
                 lock (_syncRoot)
+                {
                     processIds = _trackedProcessIds.ToArray();
+                    waitingForDirectLaunchSnapshot = _hasObservedExpectedProcess &&
+                        !_discoveryComplete &&
+                        _completedSnapshotCount < _minimumSnapshotCountForDirectLaunch;
+                }
 
                 foreach (int processId in processIds)
                 {
@@ -98,7 +106,10 @@ namespace DisplayMagician.Processes
                     }
                 }
 
-                return false;
+                // A launcher may already have exited while its child process is starting.
+                // Do not report the tree as closed until a snapshot taken after the launch has
+                // had an opportunity to add that child to the tracked process tree.
+                return waitingForDirectLaunchSnapshot;
             }
         }
 
@@ -137,6 +148,7 @@ namespace DisplayMagician.Processes
             if (launchedProcesses == null)
                 return;
 
+            bool registeredLaunchedProcess = false;
             foreach (Process process in launchedProcesses)
             {
                 try
@@ -149,6 +161,10 @@ namespace DisplayMagician.Processes
                         if (_trackedProcessIds.Add(process.Id))
                         {
                             _hasObservedExpectedProcess = true;
+                            int snapshotsRequired = _completedSnapshotCount +
+                                (Volatile.Read(ref _snapshotInProgress) != 0 ? 2 : 1);
+                            _minimumSnapshotCountForDirectLaunch = Math.Max(_minimumSnapshotCountForDirectLaunch, snapshotsRequired);
+                            registeredLaunchedProcess = true;
                             // A bootstrapper can exit before Process.Start returns its handle. Keep its
                             // PID so the following native snapshots can still identify its live children.
                             logger.Debug($"ProcessTreeMonitor/RegisterLaunchedProcesses: Tracking launched PID {process.Id} for {_expectedExecutablePath} as the expected executable.");
@@ -159,6 +175,13 @@ namespace DisplayMagician.Processes
                 {
                     logger.Trace(ex, $"ProcessTreeMonitor/RegisterLaunchedProcesses: Could not register a launched process for {_expectedExecutablePath}.");
                 }
+            }
+
+            if (registeredLaunchedProcess)
+            {
+                // Capture any child that was started before the launcher returned control.
+                // If a timer snapshot is already in progress, IsRunning waits for the next one.
+                CaptureProcessTree(null);
             }
         }
 
@@ -181,6 +204,10 @@ namespace DisplayMagician.Processes
 
             try
             {
+                // Register the direct process immediately. Some applications replace this
+                // short-lived launcher with a child process before the first timer snapshot.
+                monitor.RegisterLaunchedProcesses(startedProcesses);
+
                 while (DateTime.UtcNow < monitor._deadlineUtc &&
                     (captureDescendantsForStartupWindow || !monitor.HasObservedExpectedProcess))
                 {
@@ -238,6 +265,8 @@ namespace DisplayMagician.Processes
             }
             finally
             {
+                lock (_syncRoot)
+                    _completedSnapshotCount++;
                 Volatile.Write(ref _snapshotInProgress, 0);
             }
         }

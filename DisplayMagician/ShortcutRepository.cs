@@ -1499,7 +1499,7 @@ namespace DisplayMagician
                                 {
                                     foreach (Process p in processesCreated)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.ProcessName} (PID {p.Id}) after the main game or executable is closed.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to stop launched PID {p.Id} after the main game or executable is closed.");
                                     }
                                     startedProgramsForCleanup.Add((processToStart.Priority, processesCreated));
                                 }
@@ -1507,7 +1507,7 @@ namespace DisplayMagician
                                 {
                                     foreach (Process p in processesCreated)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.ProcessName} (PID {p.Id}) after the main game or executable is closed, so we'll just leave it running");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: No need to stop launched PID {p.Id} after the main game or executable is closed, so we'll just leave it running");
                                     }
                                     monitoredProcessHandles.AddRange(processesCreated);
                                 }
@@ -1963,10 +1963,10 @@ namespace DisplayMagician
                     monitoredProcessHandles.AddRange(processesCreated);
 
                     // Record the program we started so we can close it later
-                    foreach (Process p in processesCreated)
-                    {
-                        logger.Debug($"ShortcutRepository/RunShortcut: {p.ProcessName} (PID {p.Id}) was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
-                    }
+                        foreach (Process p in processesCreated)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Launched PID {p.Id} when starting main application {shortcutToUse.ExecutableNameAndPath}.");
+                        }
 
                 }
                 catch (Win32Exception ex)
