@@ -939,6 +939,30 @@ namespace DisplayMagician
                 }
             }
 
+            ProcessTreeMonitor BeginAlternativeExecutableMonitoring(string executablePath)
+            {
+                ProcessTreeMonitor monitor = ProcessTreeMonitor.BeginWatching(executablePath, shortcutToUse.StartTimeout);
+                if (monitor == null)
+                {
+                    logger.Warn($"ShortcutRepository/RunShortcut: Could not start process-tree monitoring for alternative executable '{executablePath}'.");
+                    return null;
+                }
+
+                monitorCleanupActions.Add(monitor.Dispose);
+                return monitor;
+            }
+
+            bool WaitForAlternativeExecutable(ProcessTreeMonitor monitor)
+            {
+                if (monitor == null)
+                    return false;
+
+                while (!monitor.HasObservedExpectedProcess && !monitor.IsDiscoveryComplete && !cancelToken.IsCancellationRequested)
+                    Thread.Sleep(250);
+
+                return monitor.HasObservedExpectedProcess;
+            }
+
             // Create a local function to revert any changes we've made if the user cancels the shortcut run
             // This allows us to reuse code easily in multiple places in this function.
             void RevertAndCleanup()
@@ -1570,6 +1594,10 @@ namespace DisplayMagician
                     processToMonitorName = shortcutToUse.DifferentExecutableToMonitor;
                 }
 
+                ProcessTreeMonitor alternativeApplicationProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable
+                    ? null
+                    : BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
+
                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the {shortcutToUse.ApplicationName} application to close.");
@@ -1774,28 +1802,14 @@ namespace DisplayMagician
                 {
                     // We use the a user supplied executable as the thing we're monitoring instead!
                 RetryApplicationAlternativeMonitorDetection:
-                    try
+                    foundSomethingToMonitor = WaitForAlternativeExecutable(alternativeApplicationProcessMonitor);
+                    if (foundSomethingToMonitor)
                     {
-                        // Wait for the configured startup period so launchers have time to
-                        // start the alternate executable before we ask the user what to do.
-                        Task.Delay(shortcutToUse.StartTimeout * 1000).Wait(cancelToken);
-                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
-                        monitoredProcessHandles.AddRange(processesToMonitor);
-                        if (processesToMonitor.Count > 0)
-                        {
-                            logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
-                            foundSomethingToMonitor = true;
-                        }
-                        else
-                        {
-                            logger.Warn($"ShortcutRepository/RunShortcut: No '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running, so we didn't find anything to monitor!");
-                            foundSomethingToMonitor = false;
-                        }
+                        logger.Trace($"ShortcutRepository/RunShortcut: Detected alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' and its process tree.");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
-                        foundSomethingToMonitor = false;
+                        logger.Warn($"ShortcutRepository/RunShortcut: Alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' was not detected during its startup discovery window.");
                     }
 
                     // if we have things to monitor, then we should start to wait for them
@@ -1805,7 +1819,7 @@ namespace DisplayMagician
                         while (true)
                         {
                             // If we have no more processes left then we're done!
-                            if (ProcessUtils.ProcessExited(processesToMonitor))
+                            if (!alternativeApplicationProcessMonitor.IsRunning)
                             {
                                 logger.Debug($"ShortcutRepository/RunShortcut: The different executable {shortcutToUse.DifferentExecutableToMonitor} has exited!");
                                 break;
@@ -1865,6 +1879,8 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
 
+                        alternativeApplicationProcessMonitor?.Dispose();
+                        alternativeApplicationProcessMonitor = BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
                         goto RetryApplicationAlternativeMonitorDetection;
                     }
                 }
@@ -1891,6 +1907,10 @@ namespace DisplayMagician
                 {
                     processToMonitorName = shortcutToUse.DifferentExecutableToMonitor;
                 }
+
+                ProcessTreeMonitor alternativeExecutableProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable
+                    ? null
+                    : BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
 
                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                 {
@@ -1986,25 +2006,14 @@ namespace DisplayMagician
                 else
                 {
                     // We use the a user supplied executable as the thing we're monitoring instead!
-                    try
+                    foundSomethingToMonitor = WaitForAlternativeExecutable(alternativeExecutableProcessMonitor);
+                    if (foundSomethingToMonitor)
                     {
-                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
-                        monitoredProcessHandles.AddRange(processesToMonitor);
-                        if (processesToMonitor.Count > 0)
-                        {
-                            logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
-                            foundSomethingToMonitor = true;
-                        }
-                        else
-                        {
-                            logger.Warn($"ShortcutRepository/RunShortcut: No '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running, so we didn't find anything to monitor!");
-                            foundSomethingToMonitor = false;
-                        }
+                        logger.Trace($"ShortcutRepository/RunShortcut: Detected alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' and its process tree.");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
-                        foundSomethingToMonitor = false;
+                        logger.Warn($"ShortcutRepository/RunShortcut: Alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' was not detected during its startup discovery window.");
                     }
                 }
 
@@ -2015,7 +2024,9 @@ namespace DisplayMagician
                     while (true)
                     {
                         // If we have no more processes left then we're done!
-                        if (ProcessUtils.ProcessExited(processesToMonitor))
+                        if (shortcutToUse.ProcessNameToMonitorUsesExecutable
+                            ? ProcessUtils.ProcessExited(processesToMonitor)
+                            : !alternativeExecutableProcessMonitor.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: No more processes to monitor are still running. It, and all it's child processes have exited!");
                             break;
@@ -2097,12 +2108,20 @@ namespace DisplayMagician
                         return RunShortcutResult.Cancelled;
                     }
 
-                    for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                    if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                     {
-                        if (Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)).Length > 0)
-                            break;
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+                            if (Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)).Length > 0)
+                                break;
 
-                        Thread.Sleep(500);
+                            Thread.Sleep(500);
+                        }
+                    }
+                    else
+                    {
+                        alternativeExecutableProcessMonitor?.Dispose();
+                        alternativeExecutableProcessMonitor = BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
                     }
 
                     goto RetryExecutableProcessDetection;
