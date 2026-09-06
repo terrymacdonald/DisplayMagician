@@ -46,6 +46,9 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
             tabp_audio = new System.Windows.Forms.TabPage();
+            p_audio_access_warning = new System.Windows.Forms.Panel();
+            lbl_audio_access_warning = new System.Windows.Forms.Label();
+            lnk_open_microphone_settings = new System.Windows.Forms.LinkLabel();
             gb_audio_profile = new System.Windows.Forms.GroupBox();
             gb_selected_audio_settings = new System.Windows.Forms.GroupBox();
             txt_audio_profile_settings = new System.Windows.Forms.TextBox();
@@ -328,6 +331,7 @@ namespace DisplayMagician.UIForms
             // 
             tabp_audio.BackColor = System.Drawing.Color.Black;
             tabp_audio.Controls.Add(gb_audio_profile);
+            tabp_audio.Controls.Add(p_audio_access_warning);
             tabp_audio.Controls.Add(cb_dont_change_audio);
             tabp_audio.Location = new System.Drawing.Point(4, 32);
             tabp_audio.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -336,6 +340,40 @@ namespace DisplayMagician.UIForms
             tabp_audio.Size = new System.Drawing.Size(1264, 750);
             tabp_audio.TabIndex = 4;
             tabp_audio.Text = "2. Choose Audio";
+            // 
+            // p_audio_access_warning
+            // 
+            p_audio_access_warning.BackColor = System.Drawing.Color.FromArgb(194, 31, 31);
+            p_audio_access_warning.Controls.Add(lnk_open_microphone_settings);
+            p_audio_access_warning.Controls.Add(lbl_audio_access_warning);
+            p_audio_access_warning.Location = new System.Drawing.Point(26, 52);
+            p_audio_access_warning.Name = "p_audio_access_warning";
+            p_audio_access_warning.Size = new System.Drawing.Size(1215, 78);
+            p_audio_access_warning.TabIndex = 4;
+            p_audio_access_warning.Visible = false;
+            // 
+            // lbl_audio_access_warning
+            // 
+            lbl_audio_access_warning.ForeColor = System.Drawing.Color.White;
+            lbl_audio_access_warning.Location = new System.Drawing.Point(12, 10);
+            lbl_audio_access_warning.Name = "lbl_audio_access_warning";
+            lbl_audio_access_warning.Size = new System.Drawing.Size(885, 57);
+            lbl_audio_access_warning.TabIndex = 0;
+            lbl_audio_access_warning.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lnk_open_microphone_settings
+            // 
+            lnk_open_microphone_settings.ActiveLinkColor = System.Drawing.Color.White;
+            lnk_open_microphone_settings.AutoSize = true;
+            lnk_open_microphone_settings.LinkColor = System.Drawing.Color.White;
+            lnk_open_microphone_settings.Location = new System.Drawing.Point(927, 29);
+            lnk_open_microphone_settings.Name = "lnk_open_microphone_settings";
+            lnk_open_microphone_settings.Size = new System.Drawing.Size(216, 20);
+            lnk_open_microphone_settings.TabIndex = 1;
+            lnk_open_microphone_settings.TabStop = true;
+            lnk_open_microphone_settings.Text = "Open Windows microphone settings";
+            lnk_open_microphone_settings.VisitedLinkColor = System.Drawing.Color.White;
+            lnk_open_microphone_settings.LinkClicked += lnk_open_microphone_settings_LinkClicked;
             // 
             // gb_audio_profile
             // 
@@ -348,9 +386,9 @@ namespace DisplayMagician.UIForms
             gb_audio_profile.Enabled = false;
             gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_audio_profile.ForeColor = System.Drawing.Color.White;
-            gb_audio_profile.Location = new System.Drawing.Point(26, 61);
+            gb_audio_profile.Location = new System.Drawing.Point(26, 141);
             gb_audio_profile.Name = "gb_audio_profile";
-            gb_audio_profile.Size = new System.Drawing.Size(1215, 664);
+            gb_audio_profile.Size = new System.Drawing.Size(1215, 584);
             gb_audio_profile.TabIndex = 0;
             gb_audio_profile.TabStop = false;
             gb_audio_profile.Text = "Audio Profiles to use";
@@ -1641,6 +1679,9 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_autosuggest;
         private System.Windows.Forms.TabPage tabp_audio;
         private System.Windows.Forms.CheckBox cb_dont_change_audio;
+        private System.Windows.Forms.Panel p_audio_access_warning;
+        private System.Windows.Forms.Label lbl_audio_access_warning;
+        private System.Windows.Forms.LinkLabel lnk_open_microphone_settings;
         private System.Windows.Forms.Label lbl_audio_profiles;
         private System.Windows.Forms.ListBox lb_audio_profiles;
         private System.Windows.Forms.Button btn_create_audio_profile;

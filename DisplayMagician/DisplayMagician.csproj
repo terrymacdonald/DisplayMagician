@@ -220,6 +220,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\AudioAccessPermissionForm.resx" />
     <EmbeddedResource Include="UIForms\ChooseExecutableForm.resx" />
     <EmbeddedResource Include="UIForms\ChooseImageForm.resx" />
     <EmbeddedResource Include="UIForms\AudioProfileNameForm.resx" />

@@ -1376,16 +1376,37 @@ namespace DisplayMagician {
                 if (accessStatus != AppCapabilityAccessStatus.UserPromptRequired)
                     return;
 
-                using (AudioAccessPermissionForm permissionForm = new AudioAccessPermissionForm())
+                bool splashWasVisible = false;
+                if (AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing)
                 {
-                    // Closing this explanation is deliberately equivalent to Continue. There is
-                    // no bypass because audio profile detection needs Windows' consent decision.
-                    permissionForm.ShowDialog();
+                    AppSplashScreen.Invoke(new Action(() =>
+                    {
+                        splashWasVisible = AppSplashScreen.Visible;
+                        if (splashWasVisible)
+                            AppSplashScreen.Hide();
+                    }));
                 }
 
-                accessStatus = AppCapability.RequestAccessForCapabilitiesAsync(new[] { "microphone" }).AsTask().GetAwaiter().GetResult()["microphone"];
-                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
-                logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
+                try
+                {
+                    using (AudioAccessPermissionForm permissionForm = new AudioAccessPermissionForm())
+                    {
+                        // Closing this explanation is deliberately equivalent to Continue. There is
+                        // no bypass because audio profile detection needs Windows' consent decision.
+                        permissionForm.ShowDialog();
+                    }
+
+                    accessStatus = AppCapability.RequestAccessForCapabilitiesAsync(new[] { "microphone" }).AsTask().GetAwaiter().GetResult()["microphone"];
+                    AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
+                    logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
+                }
+                finally
+                {
+                    if (splashWasVisible && AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing)
+                    {
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Show()));
+                    }
+                }
             }
             catch (Exception ex)
             {

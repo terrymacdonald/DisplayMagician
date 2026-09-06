@@ -18,6 +18,7 @@ using static DisplayMagician.GameLibraries.ProductInformation;
 using System.ComponentModel;
 using DisplayMagician.Processes;
 using System.Globalization;
+using System.Diagnostics;
 
 namespace DisplayMagician.UIForms
 {
@@ -2554,6 +2555,34 @@ namespace DisplayMagician.UIForms
             {
                 lb_audio_profiles.Items.Add(audioProfile);
             }
+
+            RefreshAudioAccessWarning();
+        }
+
+        private void RefreshAudioAccessWarning()
+        {
+            bool audioAccessDenied = !AudioProfileRepository.CanAccessAudioSettings;
+            p_audio_access_warning.Visible = audioAccessDenied;
+            btn_create_audio_profile.Enabled = !audioAccessDenied;
+            btn_update_audio_profile.Enabled = !audioAccessDenied && _audioProfileToUse != null;
+
+            if (!audioAccessDenied)
+                return;
+
+            lbl_audio_access_warning.Text = $"⚠ Windows has denied microphone access. DisplayMagician cannot create, read, or apply Audio Profiles until access is enabled.{Environment.NewLine}You can still save and run this shortcut, but its audio profile will be skipped.";
+        }
+
+        private void lnk_open_microphone_settings_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo("ms-settings:privacy-microphone") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutForm/lnk_open_microphone_settings_LinkClicked: Could not open Windows microphone privacy settings.");
+                MessageBox.Show(this, "DisplayMagician could not open Windows microphone privacy settings. Open Settings > Privacy & security > Microphone and enable access for DisplayMagician.", "Audio Access", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void SetAudioProfileUiEnabled(bool enabled)
@@ -2634,7 +2663,7 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
-            btn_update_audio_profile.Enabled = _audioProfileToUse != null;
+            btn_update_audio_profile.Enabled = AudioProfileRepository.CanAccessAudioSettings && _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
             gb_selected_audio_settings.Enabled = _audioProfileToUse != null;
             if (_audioProfileToUse != null)
