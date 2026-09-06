@@ -8,10 +8,13 @@
 				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstalledDir" Value="[INSTALLFOLDER]"/>
 			</Component>
 			<Component>
-					<File Source="$(var.DmPublishDir)DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
-				</Component>
+				<File Source="$(var.DmPublishDir)DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />
+			</Component>
 
-			<File Source="$(var.DmPublishDir)WebView2Loader.dll" />
+			<!-- Install every framework-dependent runtime file published with the application. -->
+			<Files Include="$(var.DmPublishDir)**">
+				<Exclude Files="$(var.DmPublishDir)DisplayMagician.exe" />
+			</Files>
 
 			<!-- Sparse MSIX identity package — installed alongside the app and registered via custom action -->
 			<Component Id="IdentityMsixComponent">
@@ -63,10 +66,30 @@
 
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">
 			<Component>
-				<!-- Install the DisplayMagician Console file -->
-				<File Source="$(var.DmConsolePublishDir)DisplayMagicianConsole.exe" />
-				<!-- Add the install location to the system PATH so that users can use the DisplayMagicianConsole.exe from anywhere on the PC -->
+				<!-- Add the install location to the system PATH so that users can use the console from anywhere on the PC. -->
 				<Environment Name="PATH" System="yes" Value="[INSTALLFOLDER]" Action="set" Part="last"/>
+				<RegistryValue Root="HKLM"
+							   Key="Software\DisplayMagician"
+							   Name="ConsolePath"
+							   Value="[INSTALLFOLDER]"
+							   KeyPath="yes" />
+			</Component>
+
+			<!-- All shared console dependencies are already installed with the main application. -->
+			<Component>
+				<File Source="$(var.DmConsolePublishDir)DisplayMagicianConsole.exe" />
+			</Component>
+			<Component>
+				<File Source="$(var.DmConsolePublishDir)DisplayMagicianConsole.dll" />
+			</Component>
+			<Component>
+				<File Source="$(var.DmConsolePublishDir)DisplayMagicianConsole.deps.json" />
+			</Component>
+			<Component>
+				<File Source="$(var.DmConsolePublishDir)DisplayMagicianConsole.runtimeconfig.json" />
+			</Component>
+			<Component>
+				<File Source="$(var.DmConsolePublishDir)DisplayMagicianConsole.pdb" />
 			</Component>
 		</ComponentGroup>
 
