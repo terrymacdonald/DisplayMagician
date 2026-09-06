@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using McMaster.Extensions.CommandLineUtils;
 using System.IO;
 using System.Linq;
@@ -103,6 +103,7 @@ namespace DisplayMagician {
         private static System.Timers.Timer _startupMessagePollTimer;
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
+        private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
 
         private static volatile bool _useTestUpdateFeed;
 
@@ -233,7 +234,8 @@ namespace DisplayMagician {
 
 
             // PACKAGE IDENTITY INITIALIZATION AND CHECKS
-            EnsurePackageIdentity();
+            if (EnsurePackageIdentity(args))
+                return (int)ERRORLEVEL.OK;
 
             // SINGLE INSTANCE MODE CHECKS
             // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
@@ -1292,13 +1294,13 @@ namespace DisplayMagician {
             return result;
         }
 
-        private static void EnsurePackageIdentity()
+        private static bool EnsurePackageIdentity(string[] startupArguments)
         {
             if (ExecutionMode.TryGetPackageFullName(out string packageFullName, out int errorCode))
             {
                 AppHasPackageIdentity = true;
                 logger.Info($"Program/EnsurePackageIdentity: DisplayMagician is running with package identity {packageFullName}.");
-                return;
+                return false;
             }
 
             AppHasPackageIdentity = false;
@@ -1308,13 +1310,30 @@ namespace DisplayMagician {
             {
                 logger.Warn($"Program/EnsurePackageIdentity: Cannot register package identity because {AppIdentityPkgPath} does not exist.");
                 _packageIdentityWarningNeeded = true;
-                return;
+                return false;
             }
 
             bool registrationSucceeded = RegisterPackageWithExternalLocationAsync(AppStartupPath, AppIdentityPkgPath).GetAwaiter().GetResult();
             if (registrationSucceeded)
             {
-                logger.Info($"Program/EnsurePackageIdentity: Package identity registration completed. Re-checking current process identity.");
+                if (!startupArguments.Any(argument => String.Equals(argument, PackageIdentityRestartCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+                {
+                    string restartArguments = String.Join(" ", startupArguments
+                        .Select(argument => $"\"{argument.Replace("\"", "\\\"")}\"")
+                        .Append(PackageIdentityRestartCommandLineOption));
+                    try
+                    {
+                        logger.Info("Program/EnsurePackageIdentity: Package identity registration completed. Restarting DisplayMagician so the new process receives its package identity.");
+                        Process.Start(new ProcessStartInfo(Application.ExecutablePath, restartArguments) { UseShellExecute = true });
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, "Program/EnsurePackageIdentity: Package identity registration completed, but DisplayMagician could not restart itself.");
+                    }
+                }
+
+                logger.Warn("Program/EnsurePackageIdentity: Package identity registration completed, but the restarted process still has no package identity.");
             }
             else
             {
@@ -1332,6 +1351,8 @@ namespace DisplayMagician {
                 _packageIdentityWarningNeeded = true;
                 logger.Warn($"Program/EnsurePackageIdentity: DisplayMagician still does not have package identity after registration attempt. GetCurrentPackageFullName returned {errorCode}. UWP and Xbox app monitoring will be disabled for this run.");
             }
+
+            return false;
         }
 
         private static void QueueStartupBackgroundTasks(object sender, EventArgs e)

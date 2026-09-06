@@ -21,7 +21,8 @@
 .NOTES
     Run once per developer machine, or whenever you need a new certificate.
     Re-running is safe - existing entries are detected and skipped.
-    The script runs as a normal user - no administrator rights required.
+    Administrator rights are required to trust a self-signed certificate in
+    LocalMachine\TrustedPeople for MSIX registration.
 #>
 
 
@@ -398,17 +399,17 @@ if ($pfxExists) {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 8. Import certificate into CurrentUser\TrustedPeople
+# 8. Import certificate into LocalMachine\TrustedPeople
 # ---------------------------------------------------------------------------
-$alreadyTrusted = Get-ChildItem Cert:\CurrentUser\TrustedPeople -ErrorAction SilentlyContinue |
+$alreadyTrusted = Get-ChildItem Cert:\LocalMachine\TrustedPeople -ErrorAction SilentlyContinue |
     Where-Object { $_.Thumbprint -eq $cert.Thumbprint }
 
 if ($alreadyTrusted) {
-    Write-Host "Certificate already present in CurrentUser\TrustedPeople - skipping import." -ForegroundColor Green
+    Write-Host "Certificate already present in LocalMachine\TrustedPeople - skipping import." -ForegroundColor Green
 } else {
-    Write-Host "Importing certificate into CurrentUser\TrustedPeople so Windows trusts the signed MSIX..."
+    Write-Host "Importing certificate into LocalMachine\TrustedPeople so Windows trusts the signed MSIX..."
     Import-PfxCertificate `
-        -CertStoreLocation 'Cert:\CurrentUser\TrustedPeople' `
+        -CertStoreLocation 'Cert:\LocalMachine\TrustedPeople' `
         -FilePath $pfxPath `
         -Password $password | Out-Null
     Write-Host "  Imported." -ForegroundColor Green
