@@ -1,4 +1,4 @@
-﻿using DisplayMagician.AppLibraries;
+using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.UIForms;
@@ -891,7 +891,9 @@ namespace DisplayMagician
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
 
             bool needToChangeAudioProfiles = false;
-            AudioProfileItem rollbackAudioProfile = AudioProfileRepository.CurrentAudioProfile;
+            AudioProfileItem rollbackAudioProfile = AudioProfileRepository.CanAccessAudioSettings
+                ? AudioProfileRepository.CurrentAudioProfile
+                : null;
 
             // Run pre-game start/stop programs in UI Priority order (interleaved)
             List<(int Priority, List<Process> Processes, ProcessTreeMonitor Monitor)> startedProgramsForCleanup = new List<(int Priority, List<Process> Processes, ProcessTreeMonitor Monitor)>();
@@ -1083,9 +1085,15 @@ namespace DisplayMagician
             bool RestoreOriginalAudioProfile(out List<string> missingAudioDeviceNames)
             {
                 missingAudioDeviceNames = new List<string>();
+                if (rollbackAudioProfile == null || !AudioProfileRepository.CanAccessAudioSettings)
+                {
+                    logger.Warn("ShortcutRepository/RestoreOriginalAudioProfile: Audio access is unavailable, so there is no original audio profile to restore.");
+                    return true;
+                }
                 try
                 {
                     AudioProfileItem currentAudioProfile = new AudioProfileItem();
+                    currentAudioProfile.CreateProfileFromCurrentAudioSettings();
                     if (currentAudioProfile.WindowsAudioConfig != null && rollbackAudioProfile.WindowsAudioConfig != null)
                     {
                         if (currentAudioProfile.WindowsAudioConfig.Equals(rollbackAudioProfile.WindowsAudioConfig))
@@ -1358,7 +1366,12 @@ namespace DisplayMagician
                 }
             }
 
-            if (shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
+            if (!AudioProfileRepository.CanAccessAudioSettings)
+            {
+                logger.Warn($"ShortcutRepository/RunShortcut: Windows microphone privacy access is denied, so the audio profile for '{shortcutToUse.Name}' will be skipped.");
+                needToChangeAudioProfiles = false;
+            }
+            else if (shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} doesn't have a profile to apply, so we won't change profiles.");
                 needToChangeAudioProfiles = false;

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,6 +24,14 @@ namespace DisplayMagicianShared
         Successful,
         Cancelled,
         Error
+    }
+
+    public enum AudioAccessStatus
+    {
+        Available,
+        PromptRequired,
+        Denied,
+        Unknown
     }
 
 
@@ -56,6 +64,7 @@ namespace DisplayMagicianShared
         private static bool _audioProfilesLoaded = false;
         private static AudioProfileItem _currentAudioProfile;
         private static WindowsAudioController _audioController = new WindowsAudioController();
+        private static AudioAccessStatus _audioAccessStatus = AudioAccessStatus.Unknown;
 
 
         private static bool _userChangingAudioProfiles = false;
@@ -119,6 +128,18 @@ namespace DisplayMagicianShared
                 return _allAudioProfiles;
             }
         }
+
+        /// <summary>
+        /// The microphone privacy capability protects access to Windows audio endpoints.
+        /// Program establishes this state before any audio profile capture or application.
+        /// </summary>
+        public static AudioAccessStatus AudioAccessStatus
+        {
+            get => _audioAccessStatus;
+            set => _audioAccessStatus = value;
+        }
+
+        public static bool CanAccessAudioSettings => _audioAccessStatus != AudioAccessStatus.Denied;
 
         public static AudioProfileItem CurrentAudioProfile
         {
@@ -493,9 +514,22 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: Updating the audioProfile currently active (in use now).");
 
+            if (!CanAccessAudioSettings)
+            {
+                SharedLogger.logger.Warn("AudioProfileRepository/UpdateActiveAudioProfile: Windows microphone privacy access is denied, so the current audio profile cannot be read.");
+                _currentAudioProfile = null;
+                return;
+            }
+
             AudioProfileItem audioProfile;
             SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
-            audioProfile = new AudioProfileItem();            
+            audioProfile = new AudioProfileItem();
+            if (!audioProfile.CreateProfileFromCurrentAudioSettings())
+            {
+                SharedLogger.logger.Warn("AudioProfileRepository/UpdateActiveAudioProfile: Windows audio settings could not be read.");
+                _currentAudioProfile = null;
+                return;
+            }
 
             if (_audioProfilesLoaded && _allAudioProfiles.Count > 0)
             {
@@ -951,6 +985,12 @@ namespace DisplayMagicianShared
             if (audioProfile == null)
             {
                 SharedLogger.logger.Debug($"AudioProfileRepository/ApplyAudioProfile: The supplied audioProfile is null! Can't be used.");
+                return ApplyAudioProfileResult.Error;
+            }
+
+            if (!CanAccessAudioSettings)
+            {
+                SharedLogger.logger.Warn("AudioProfileRepository/ApplyAudioProfile: Windows microphone privacy access is denied, so audio profiles cannot be applied.");
                 return ApplyAudioProfileResult.Error;
             }
 

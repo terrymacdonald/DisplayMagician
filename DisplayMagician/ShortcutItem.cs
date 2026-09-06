@@ -1,4 +1,4 @@
-﻿using DisplayMagician.GameLibraries;
+using DisplayMagician.GameLibraries;
 //using DisplayMagician.Resources;
 using System.Drawing;
 using DisplayMagicianShared;
@@ -1517,6 +1517,17 @@ namespace DisplayMagician
                 error.Message = "The audio profile selected by this shortcut no longer exists. Please edit the shortcut and select an existing audio profile.";
                 _shortcutErrors.Add(error);
                 worstError = ShortcutValidity.Error;
+            }
+            else if (!AudioProfileRepository.CanAccessAudioSettings)
+            {
+                logger.Warn($"ShortcutItem/RefreshValidity: Windows microphone privacy access is denied, so the audio profile for shortcut '{Name}' cannot be applied.");
+                ShortcutError warning = new ShortcutError();
+                warning.Name = "AudioAccessDenied";
+                warning.Validity = ShortcutValidity.Warning;
+                warning.Message = "Windows has denied microphone access, so this shortcut's audio profile will be skipped. You can enable microphone access for DisplayMagician in Windows Settings.";
+                _shortcutErrors.Add(warning);
+                if (worstError != ShortcutValidity.Error)
+                    worstError = ShortcutValidity.Warning;
             }
 
             // Is the main application still installed?

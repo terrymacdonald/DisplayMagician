@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -2659,10 +2659,12 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            AudioProfileItem newAudioProfile = new AudioProfileItem
+            AudioProfileItem newAudioProfile = new AudioProfileItem { Name = profileName };
+            if (!newAudioProfile.CreateProfileFromCurrentAudioSettings())
             {
-                Name = profileName
-            };
+                MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then restart DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
             {

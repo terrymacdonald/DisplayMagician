@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using NLog.Targets;
 using System;
 using System.Collections.Generic;
@@ -36,24 +36,6 @@ namespace DisplayMagicianShared
         {
             // Create a default audioProfile Name to avoid null exceptions
             Name = "Current Windows Audio Profile";
-            
-            // Fill out a new NVIDIA and AMD object when a audioProfile is being created
-            // so that it will save correctly. Json.NET will save null references by default
-            // unless we fill them up first, and that in turn causes NullReference errors when
-            // loading the DisplayProfiles_2.0.json into DisplayMagician next time.
-            // We cannot make the structs themselves create the default entry, so instead, we 
-            // make each library create the default.
-            try
-            {
-                using (WindowsAudioController controller = new WindowsAudioController())
-                {
-                 _windowsAudioConfig =  controller.GetCurrentProfile();   
-                }                                
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex,$"AudioProfileItem/AudioProfileItem: Exception getting the default configuration from WindowsAudioController - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-            }
         }
 
         public static Version Version = new Version(1, 1);
@@ -165,7 +147,12 @@ namespace DisplayMagicianShared
 
         public bool CreateProfileFromCurrentAudioSettings()
         {
-            
+            if (!AudioProfileRepository.CanAccessAudioSettings)
+            {
+                SharedLogger.logger.Warn("AudioProfileItem/CreateProfileFromCurrentAudioSettings: Windows microphone privacy access is denied, so audio settings cannot be read.");
+                return false;
+            }
+
             try
             {
                 using (WindowsAudioController controller = new WindowsAudioController())
@@ -187,6 +174,12 @@ namespace DisplayMagicianShared
         // Actually set this audioProfile active
         public bool SetActive(int delayInMs = 500)
         {
+            if (!AudioProfileRepository.CanAccessAudioSettings)
+            {
+                SharedLogger.logger.Warn("AudioProfileItem/SetActive: Windows microphone privacy access is denied, so the audio profile cannot be applied.");
+                return false;
+            }
+
             try
             {
                 bool itWorkedforWindows = false;

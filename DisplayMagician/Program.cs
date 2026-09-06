@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using McMaster.Extensions.CommandLineUtils;
 using System.IO;
 using System.Linq;
@@ -30,6 +30,7 @@ using DisplayMagician.Messaging;
 
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
+using Windows.Security.Authorization.AppCapabilityAccess;
 
 
 namespace DisplayMagician {
@@ -550,6 +551,7 @@ namespace DisplayMagician {
 
             // Next we create the MainForm object but keep it hidden for now
             logger.Trace($"Program/Main: Creating the MainForm object");
+            RequestAudioAccessBeforeFirstProfileCheck();
             AppMainForm = new MainForm();
 
             StartDirectInputManager();
@@ -1353,6 +1355,56 @@ namespace DisplayMagician {
             }
 
             return false;
+        }
+
+        private static void RequestAudioAccessBeforeFirstProfileCheck()
+        {
+            if (!AppHasPackageIdentity)
+            {
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                logger.Warn("Program/RequestAudioAccessBeforeFirstProfileCheck: DisplayMagician has no package identity, so Windows microphone privacy access cannot be checked.");
+                return;
+            }
+
+            try
+            {
+                AppCapability microphoneCapability = AppCapability.Create("microphone");
+                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
+                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
+                logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability access is {accessStatus}.");
+
+                if (accessStatus != AppCapabilityAccessStatus.UserPromptRequired)
+                    return;
+
+                using (AudioAccessPermissionForm permissionForm = new AudioAccessPermissionForm())
+                {
+                    // Closing this explanation is deliberately equivalent to Continue. There is
+                    // no bypass because audio profile detection needs Windows' consent decision.
+                    permissionForm.ShowDialog();
+                }
+
+                accessStatus = AppCapability.RequestAccessForCapabilitiesAsync(new[] { "microphone" }).AsTask().GetAwaiter().GetResult()["microphone"];
+                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
+                logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
+            }
+            catch (Exception ex)
+            {
+                // Retain the legacy behaviour when Windows cannot query the package capability.
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                logger.Warn(ex, "Program/RequestAudioAccessBeforeFirstProfileCheck: Could not query or request microphone access. Audio operations will be attempted and report any Windows error.");
+            }
+        }
+
+        private static AudioAccessStatus ConvertAudioAccessStatus(AppCapabilityAccessStatus accessStatus)
+        {
+            return accessStatus switch
+            {
+                AppCapabilityAccessStatus.Allowed => AudioAccessStatus.Available,
+                AppCapabilityAccessStatus.UserPromptRequired => AudioAccessStatus.PromptRequired,
+                AppCapabilityAccessStatus.DeniedByUser => AudioAccessStatus.Denied,
+                AppCapabilityAccessStatus.DeniedBySystem => AudioAccessStatus.Denied,
+                _ => AudioAccessStatus.Unknown
+            };
         }
 
         private static void QueueStartupBackgroundTasks(object sender, EventArgs e)

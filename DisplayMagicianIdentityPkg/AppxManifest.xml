@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -29,6 +29,7 @@
 		<rescap:Capability Name="runFullTrust" />
 		<rescap:Capability Name="unvirtualizedResources"/>
 		<rescap:Capability Name="appDiagnostics" />
+		<DeviceCapability Name="microphone" />
 	</Capabilities>
 	<Applications>
 		<Application Id="DisplayMagician"

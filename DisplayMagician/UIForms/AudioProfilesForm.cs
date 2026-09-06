@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
@@ -47,6 +48,10 @@ namespace DisplayMagician.UIForms
             btn_delete_audio_profile.Visible = hasSelection;
             btn_rename_audio_profile.Visible = hasSelection;
             btn_apply_audio_profile.Visible = hasSelection;
+            bool canAccessAudioSettings = AudioProfileRepository.CanAccessAudioSettings;
+            btn_create_audio_profile.Enabled = canAccessAudioSettings;
+            btn_update_audio_profile.Enabled = hasSelection && canAccessAudioSettings;
+            btn_apply_audio_profile.Enabled = hasSelection && canAccessAudioSettings;
             //gb_selected_audio_settings.Visible = hasSelection;
 
             if (hasSelection && _selectedAudioProfile.WindowsAudioConfig != null)
@@ -66,6 +71,17 @@ namespace DisplayMagician.UIForms
             int refreshVersion = ++_audioProfileAdvisoryRefreshVersion;
             AudioProfileItem selectedAudioProfile = _selectedAudioProfile;
             p_audio_profile_advisory.Visible = false;
+            btn_open_microphone_settings.Visible = false;
+
+            if (!AudioProfileRepository.CanAccessAudioSettings)
+            {
+                p_audio_profile_advisory.BackColor = System.Drawing.Color.FromArgb(194, 31, 31);
+                lbl_audio_profile_advisory.ForeColor = System.Drawing.Color.White;
+                lbl_audio_profile_advisory.Text = $"✖ Windows has denied microphone access, so DisplayMagician cannot read or apply audio profiles.{Environment.NewLine}Enable microphone access for DisplayMagician in Windows Settings, then restart DisplayMagician.";
+                btn_open_microphone_settings.Visible = true;
+                p_audio_profile_advisory.Visible = true;
+                return;
+            }
 
             if (selectedAudioProfile == null)
                 return;
@@ -76,6 +92,8 @@ namespace DisplayMagician.UIForms
 
             if (unavailableAudioDeviceNames.Count > 0)
             {
+                p_audio_profile_advisory.BackColor = System.Drawing.Color.FromArgb(255, 193, 7);
+                lbl_audio_profile_advisory.ForeColor = System.Drawing.Color.Black;
                 lbl_audio_profile_advisory.Text = $"⚠ Your audio profile may not apply as expected.{Environment.NewLine}DisplayMagician could not detect the following: {String.Join(", ", unavailableAudioDeviceNames)}. This may be normal if an associated display or device is disconnected or powered off. You may still apply the profile but it may not apply as expected.";
                 p_audio_profile_advisory.Visible = true;
             }
@@ -95,10 +113,12 @@ namespace DisplayMagician.UIForms
                 if (nameForm.ShowDialog(this) != DialogResult.OK)
                     return;
 
-                AudioProfileItem newAudioProfile = new AudioProfileItem
+                AudioProfileItem newAudioProfile = new AudioProfileItem { Name = nameForm.ProfileName };
+                if (!newAudioProfile.CreateProfileFromCurrentAudioSettings())
                 {
-                    Name = nameForm.ProfileName
-                };
+                    MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then restart DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
                 if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
                 {
@@ -233,6 +253,19 @@ namespace DisplayMagician.UIForms
             finally
             {
                 btn_apply_audio_profile.Enabled = true;
+            }
+        }
+
+        private void btn_open_microphone_settings_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo("ms-settings:privacy-microphone") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "AudioProfilesForm/btn_open_microphone_settings_Click: Could not open Windows microphone privacy settings.");
+                MessageBox.Show(this, "DisplayMagician could not open Windows microphone privacy settings. Open Settings > Privacy & security > Microphone and enable access for DisplayMagician.", "Audio Access", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
