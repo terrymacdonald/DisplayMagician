@@ -1416,6 +1416,36 @@ namespace DisplayMagician {
             }
         }
 
+        /// <summary>
+        /// Re-reads Windows' current microphone privacy decision without asking the user
+        /// again. This lets audio features resume in the same DisplayMagician session when
+        /// the user enables access in Windows Settings.
+        /// </summary>
+        public static bool RefreshAudioAccessStatus()
+        {
+            AudioAccessStatus previousStatus = AudioProfileRepository.AudioAccessStatus;
+            if (!AppHasPackageIdentity)
+            {
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                return previousStatus != AudioProfileRepository.AudioAccessStatus;
+            }
+
+            try
+            {
+                AppCapability microphoneCapability = AppCapability.Create("microphone");
+                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
+                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
+                logger.Debug($"Program/RefreshAudioAccessStatus: Microphone capability access is {accessStatus}.");
+            }
+            catch (Exception ex)
+            {
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                logger.Warn(ex, "Program/RefreshAudioAccessStatus: Could not query Windows microphone privacy access.");
+            }
+
+            return previousStatus != AudioProfileRepository.AudioAccessStatus;
+        }
+
         private static AudioAccessStatus ConvertAudioAccessStatus(AppCapabilityAccessStatus accessStatus)
         {
             return accessStatus switch

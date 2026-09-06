@@ -22,6 +22,13 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
         }
 
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            Program.RefreshAudioAccessStatus();
+            UpdateSelectionState();
+        }
+
         private void AudioProfilesForm_Load(object sender, EventArgs e)
         {
             RefreshAudioProfilesList();
@@ -77,7 +84,7 @@ namespace DisplayMagician.UIForms
             {
                 p_audio_profile_advisory.BackColor = System.Drawing.Color.FromArgb(194, 31, 31);
                 lbl_audio_profile_advisory.ForeColor = System.Drawing.Color.White;
-                lbl_audio_profile_advisory.Text = $"✖ Windows has denied microphone access, so DisplayMagician cannot read or apply audio profiles.{Environment.NewLine}Enable microphone access for DisplayMagician in Windows Settings, then restart DisplayMagician.";
+                lbl_audio_profile_advisory.Text = $"✖ Windows has denied microphone access, so DisplayMagician cannot read or apply audio profiles.{Environment.NewLine}Enable microphone access for DisplayMagician in Windows Settings, then return to DisplayMagician.";
                 btn_open_microphone_settings.Visible = true;
                 p_audio_profile_advisory.Visible = true;
                 return;
@@ -116,7 +123,7 @@ namespace DisplayMagician.UIForms
                 AudioProfileItem newAudioProfile = new AudioProfileItem { Name = nameForm.ProfileName };
                 if (!newAudioProfile.CreateProfileFromCurrentAudioSettings())
                 {
-                    MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then restart DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then return to DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 

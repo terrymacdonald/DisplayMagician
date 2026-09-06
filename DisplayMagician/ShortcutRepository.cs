@@ -854,6 +854,10 @@ namespace DisplayMagician
 
             MainForm myMainForm = Program.AppMainForm;
 
+            // The user may have changed microphone privacy access since DisplayMagician
+            // started, including before invoking this through the command line.
+            Program.RefreshAudioAccessStatus();
+
             // Check the shortcut is still valid.
             shortcutToUse.RefreshValidity();
 

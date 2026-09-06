@@ -610,6 +610,11 @@ namespace DisplayMagician.UIForms
 
         private bool AllowedToSave(bool showErrorsToUser = false)
         {
+            // The user may have enabled microphone access in Windows Settings while this
+            // form was open, so do not rely on the startup status when saving.
+            Program.RefreshAudioAccessStatus();
+            RefreshAudioAccessWarning();
+
             // initialise errors list
             List<string> errors = new List<string>();
 
@@ -627,8 +632,15 @@ namespace DisplayMagician.UIForms
                 errors.Add("You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.");
             }
 
+            // Audio changes are impossible without Windows microphone privacy access. Do not
+            // save a shortcut which claims it will change audio but can never do so.
+            if (!cb_dont_change_audio.Checked && !AudioProfileRepository.CanAccessAudioSettings)
+            {
+                logger.Error("ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings, but Windows microphone access is denied.");
+                errors.Add("Windows has denied microphone access, so DisplayMagician cannot apply an Audio Profile. Select 'Don't change audio settings' before saving this shortcut, or enable microphone access in Windows Settings.");
+            }
             // Check if the user has selected to change the audio settings, and if so, that they have selected a valid audio profile
-            if (!cb_dont_change_audio.Checked && !(_audioProfileToUse is AudioProfileItem))
+            else if (!cb_dont_change_audio.Checked && !(_audioProfileToUse is AudioProfileItem))
             {
                 logger.Error($"ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings but doesn't have an audio profile selected!");
                 errors.Add("You need to select an Audio Profile to use with this shortcut. Please select one from the list of Audio Profiles on the left of the screen or create one if none exists, or select 'Don't change audio settings' if you don't want to change the audio settings.");
@@ -2569,7 +2581,14 @@ namespace DisplayMagician.UIForms
             if (!audioAccessDenied)
                 return;
 
-            lbl_audio_access_warning.Text = $"⚠ Windows has denied microphone access. DisplayMagician cannot create, read, or apply Audio Profiles until access is enabled.{Environment.NewLine}You can still save and run this shortcut, but its audio profile will be skipped.";
+            lbl_audio_access_warning.Text = $"⚠ Windows has denied microphone access. DisplayMagician cannot create, read, or apply Audio Profiles until access is enabled.{Environment.NewLine}Select 'Don't change audio settings' before saving this shortcut, or enable microphone access below.";
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            Program.RefreshAudioAccessStatus();
+            RefreshAudioAccessWarning();
         }
 
         private void lnk_open_microphone_settings_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -2691,7 +2710,7 @@ namespace DisplayMagician.UIForms
             AudioProfileItem newAudioProfile = new AudioProfileItem { Name = profileName };
             if (!newAudioProfile.CreateProfileFromCurrentAudioSettings())
             {
-                MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then restart DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then return to DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
