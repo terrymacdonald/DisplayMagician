@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -10,7 +10,7 @@
   <Identity
 	Name="50566LittleBitBig.DisplayMagician"
 	Publisher="CN=AC8F2FDD-977F-4390-B92A-B9CFAEE91973"
-	Version="3.0.0.257"
+	Version="3.0.0.260"
 	ProcessorArchitecture="neutral" />
 
     <Properties>
