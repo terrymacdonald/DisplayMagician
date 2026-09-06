@@ -348,16 +348,16 @@ namespace DisplayMagician.UIForms
             p_audio_access_warning.Controls.Add(lbl_audio_access_warning);
             p_audio_access_warning.Location = new System.Drawing.Point(26, 52);
             p_audio_access_warning.Name = "p_audio_access_warning";
-            p_audio_access_warning.Size = new System.Drawing.Size(1215, 78);
+            p_audio_access_warning.Size = new System.Drawing.Size(1215, 54);
             p_audio_access_warning.TabIndex = 4;
             p_audio_access_warning.Visible = false;
             // 
             // lbl_audio_access_warning
             // 
             lbl_audio_access_warning.ForeColor = System.Drawing.Color.White;
-            lbl_audio_access_warning.Location = new System.Drawing.Point(12, 10);
+            lbl_audio_access_warning.Location = new System.Drawing.Point(12, 5);
             lbl_audio_access_warning.Name = "lbl_audio_access_warning";
-            lbl_audio_access_warning.Size = new System.Drawing.Size(885, 57);
+            lbl_audio_access_warning.Size = new System.Drawing.Size(885, 44);
             lbl_audio_access_warning.TabIndex = 0;
             lbl_audio_access_warning.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -366,7 +366,7 @@ namespace DisplayMagician.UIForms
             lnk_open_microphone_settings.ActiveLinkColor = System.Drawing.Color.White;
             lnk_open_microphone_settings.AutoSize = true;
             lnk_open_microphone_settings.LinkColor = System.Drawing.Color.White;
-            lnk_open_microphone_settings.Location = new System.Drawing.Point(927, 29);
+            lnk_open_microphone_settings.Location = new System.Drawing.Point(927, 17);
             lnk_open_microphone_settings.Name = "lnk_open_microphone_settings";
             lnk_open_microphone_settings.Size = new System.Drawing.Size(216, 20);
             lnk_open_microphone_settings.TabIndex = 1;
@@ -386,9 +386,9 @@ namespace DisplayMagician.UIForms
             gb_audio_profile.Enabled = false;
             gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_audio_profile.ForeColor = System.Drawing.Color.White;
-            gb_audio_profile.Location = new System.Drawing.Point(26, 141);
+            gb_audio_profile.Location = new System.Drawing.Point(26, 112);
             gb_audio_profile.Name = "gb_audio_profile";
-            gb_audio_profile.Size = new System.Drawing.Size(1215, 584);
+            gb_audio_profile.Size = new System.Drawing.Size(1215, 613);
             gb_audio_profile.TabIndex = 0;
             gb_audio_profile.TabStop = false;
             gb_audio_profile.Text = "Audio Profiles to use";
