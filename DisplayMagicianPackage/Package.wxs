@@ -9,7 +9,8 @@
 		
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
 		<Property Id="ARPPRODUCTICON" Value="DisplayMagician.ico" />
-		<Property Id="REMOVE_USER_DATA" Secure="yes" Value="0" />
+		<!-- Leave unset by default so the uninstall checkbox is explicitly opt-in. -->
+		<Property Id="REMOVE_USER_DATA" Secure="yes" />
 		
 		<!-- Installer UI custom pictures. File names are made up. Add path to your pics -->
 		<WixVariable Id="WixUIBannerBmp" Value="WixUIBannerBmp.png" />

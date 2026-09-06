@@ -5,13 +5,9 @@
 		<bal:WixInternalUIBootstrapperApplication />
 	  </BootstrapperApplication>
 
-	<Variable Name="RemoveUserData" Type="numeric" Value="0" bal:Overridable="yes" />
-
 	<Chain>
 		<PackageGroupRef Id="DotNetDesktopRedist" />
-		<MsiPackage Id="DisplayMagicianPackage" SourceFile="$(var.DmPackageDir)DisplayMagicianPackage.msi" Vital="yes">
-			<MsiProperty Name="REMOVE_USER_DATA" Value="[RemoveUserData]" />
-		</MsiPackage>
+		<MsiPackage Id="DisplayMagicianPackage" SourceFile="$(var.DmPackageDir)DisplayMagicianPackage.msi" Vital="yes" />
 	</Chain>
 
   </Bundle>
