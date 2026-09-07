@@ -8,9 +8,6 @@ namespace DisplayMagician.UIForms
         public AudioAccessPermissionForm()
         {
             InitializeComponent();
-            // The loading form runs on its own STA thread during startup. Keep this
-            // one-time consent explanation above it without cross-thread ownership.
-            TopMost = true;
         }
 
         private void btn_continue_Click(object sender, EventArgs e)

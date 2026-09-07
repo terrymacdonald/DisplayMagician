@@ -1376,36 +1376,35 @@ namespace DisplayMagician {
                 if (accessStatus != AppCapabilityAccessStatus.UserPromptRequired)
                     return;
 
-                bool splashWasVisible = false;
-                if (AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing)
-                {
-                    AppSplashScreen.Invoke(new Action(() =>
-                    {
-                        splashWasVisible = AppSplashScreen.Visible;
-                        if (splashWasVisible)
-                            AppSplashScreen.Hide();
-                    }));
-                }
-
-                try
+                Action<IWin32Window> showPermissionDialogAndRequestAccess = owner =>
                 {
                     using (AudioAccessPermissionForm permissionForm = new AudioAccessPermissionForm())
                     {
                         // Closing this explanation is deliberately equivalent to Continue. There is
                         // no bypass because audio profile detection needs Windows' consent decision.
-                        permissionForm.ShowDialog();
+                        if (owner != null)
+                            permissionForm.ShowDialog(owner);
+                        else
+                            permissionForm.ShowDialog();
                     }
 
                     accessStatus = AppCapability.RequestAccessForCapabilitiesAsync(new[] { "microphone" }).AsTask().GetAwaiter().GetResult()["microphone"];
                     AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
                     logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
-                }
-                finally
+                };
+
+                // The splash has its own UI thread. Showing the standard modal dialog on
+                // that thread, with the splash as owner, keeps it above the loading window
+                // without relying on TopMost or foreground-window APIs.
+                if (AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing && AppSplashScreen.IsHandleCreated)
                 {
-                    if (splashWasVisible && AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing)
-                    {
-                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Show()));
-                    }
+                    AppSplashScreen.Invoke(new Action(() => showPermissionDialogAndRequestAccess(AppSplashScreen)));
+                }
+                else
+                {
+                    // The splash is disabled, or has not created a window yet. The form's
+                    // normal centred, unowned modal behaviour is appropriate in this case.
+                    showPermissionDialogAndRequestAccess(null);
                 }
             }
             catch (Exception ex)
