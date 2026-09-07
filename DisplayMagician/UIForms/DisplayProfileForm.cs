@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -10,6 +11,7 @@ using Manina.Windows.Forms;
 using System.Drawing;
 //using NHotkey.WindowsForms;
 //using NHotkey;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DisplayMagician.Processes;
@@ -33,6 +35,8 @@ namespace DisplayMagician.UIForms
 
         private List<HotkeyKeyboard> _shownKeyboardHotkeys = new();
         private List<HotkeyJoystick> _shownJoystickHotkeys = new();
+        private readonly CancellationTokenSource _initialLoadCancellationTokenSource = new();
+        private bool _initialLoadStarted;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -63,8 +67,20 @@ namespace DisplayMagician.UIForms
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            _initialLoadCancellationTokenSource.Cancel();
             Utils.SaveFormState(this);
             base.OnFormClosing(e);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
+            if (!_initialLoadStarted)
+            {
+                _initialLoadStarted = true;
+                _ = InitialiseDisplayProfileAsync(_initialLoadCancellationTokenSource.Token);
+            }
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -370,49 +386,104 @@ namespace DisplayMagician.UIForms
 
         private void DisplayProfileForm_Load(object sender, EventArgs e)
         {
+            SetProfileActionsEnabled(false);
+            lbl_profile_shown.Text = "Loading display profile...";
+            lbl_profile_shown_subtitle.Text = "Checking current display configuration...";
+            lbl_profile_shown_subtitle.Visible = true;
+        }
 
-            ProfileRepository.RefreshDisplayDetectionState();
+        private async Task InitialiseDisplayProfileAsync(CancellationToken cancellationToken)
+        {
+            Stopwatch totalStopwatch = Stopwatch.StartNew();
 
-            // If the user is changing profiles right now, then we need to wait until the profile change has finished
-            // We need a 30 second timeout in there too, just in case the user is changing profiles and it's taking a long time
-            if (ProfileRepository.UserChangingProfiles)
+            try
             {
-                logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Waiting for the User to finish changing profiles before we can load the Display Profile window.");
+                // Allow the form and its static controls to complete their first paint before querying display hardware.
+                await Task.Yield();
+
                 int timeout = 30;
                 while (ProfileRepository.UserChangingProfiles && timeout > 0)
                 {
-                    System.Threading.Thread.Sleep(1000);
+                    logger.Warn("DisplayProfileForm/InitialiseDisplayProfileAsync: Waiting for the current display profile operation to finish before loading the form.");
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                     timeout--;
                 }
-                if (timeout == 0)
+
+                if (timeout == 0 && ProfileRepository.UserChangingProfiles)
                 {
-                    logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: The User is still changing profiles after 30 seconds. We can't load the Display Profile window until they're finished.");
-                    MessageBox.Show("The User is still changing profiles after 30 seconds. We can't load the Display Profile window until they're finished.", "Display Profile Window Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    logger.Error("DisplayProfileForm/InitialiseDisplayProfileAsync: The current display profile operation is still running after 30 seconds.");
+                    MessageBox.Show(this, "DisplayMagician is still changing a display profile. The Display Profile window will continue loading when that operation has finished.", "Display Profile Window Loading", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
+                {
+                    logger.Trace("DisplayProfileForm/InitialiseDisplayProfileAsync: Waiting for another display task before reading the current display configuration.");
+                }
+
+                await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(cancellationToken);
+                try
+                {
+                    Stopwatch displayDetectionStopwatch = Stopwatch.StartNew();
+                    await Task.Run(() =>
+                    {
+                        ProfileRepository.RefreshDisplayDetectionState();
+                        ProfileRepository.UpdateActiveProfile();
+                    });
+                    logger.Debug($"DisplayProfileForm/InitialiseDisplayProfileAsync: Display detection and current-profile capture took {displayDetectionStopwatch.ElapsedMilliseconds} ms.");
+                }
+                finally
+                {
+                    Program.AppBackgroundTaskSemaphoreSlim.Release();
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                ChangeSelectedProfile(ProfileRepository.CurrentProfile);
+                RefreshDisplayProfileUI();
+
+                if (Utils.TimeToRunDonationAnimation())
+                {
+                    Utils.AddAnimation(btn_donate);
+                }
+
+                logger.Debug($"DisplayProfileForm/InitialiseDisplayProfileAsync: Initial Display Profile form load took {totalStopwatch.ElapsedMilliseconds} ms.");
+            }
+            catch (OperationCanceledException)
+            {
+                logger.Trace("DisplayProfileForm/InitialiseDisplayProfileAsync: Initial form loading was cancelled because the form closed.");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "DisplayProfileForm/InitialiseDisplayProfileAsync: Failed to load the current display configuration.");
+                if (!IsDisposed && IsHandleCreated)
+                {
+                    MessageBox.Show(this, "DisplayMagician could not read the current display configuration. You can close this window and try again.", "Display Profile Window Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-
-            // Update the Current Profile, but if another task is running then just wait.
-            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
+            finally
             {
-                logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Waiting to run the UpdateActiveProfile as there is another Task running!");
+                if (!IsDisposed && IsHandleCreated)
+                {
+                    SetProfileActionsEnabled(true);
+                }
             }
-            Program.AppBackgroundTaskSemaphoreSlim.Wait();
-            logger.Trace($"DisplayProfileForm/DisplayProfileForm_Load: Running the UpdateActiveProfile as there are no other Tasks running!");
-            ProfileRepository.UpdateActiveProfile();
-            Program.AppBackgroundTaskSemaphoreSlim.Release();
+        }
 
-            ChangeSelectedProfile(ProfileRepository.CurrentProfile);
-
-            // Refresh the Profile UI
-            RefreshDisplayProfileUI();
-
-            // Start the donation animation if it's time to do so
-            if (Utils.TimeToRunDonationAnimation())
-            {
-                Utils.AddAnimation(btn_donate);
-            }
-
-            UpdateHotkeyText();
+        private void SetProfileActionsEnabled(bool enabled)
+        {
+            ilv_saved_profiles.Enabled = enabled;
+            btn_view_current.Enabled = enabled;
+            btn_save_or_rename.Enabled = enabled;
+            btn_update.Enabled = enabled;
+            btn_delete.Enabled = enabled;
+            btn_apply.Enabled = enabled && btn_apply.Visible;
+            btn_save.Enabled = enabled;
+            btn_hotkey.Enabled = enabled;
+            btn_profile_settings.Enabled = enabled;
+            applyToolStripMenuItem.Enabled = enabled && btn_apply.Visible;
+            saveProfileToDesktopToolStripMenuItem.Enabled = enabled;
+            sendToClipboardToolStripMenuItem.Enabled = enabled;
+            deleteProfileToolStripMenuItem.Enabled = enabled;
         }
 
 
