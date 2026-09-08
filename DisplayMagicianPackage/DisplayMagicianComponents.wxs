@@ -1,4 +1,4 @@
-﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 	<Fragment>
 		<ComponentGroup Id="DisplayMagicianComponents" Directory="INSTALLFOLDER">
 			<Component>
@@ -32,16 +32,28 @@
 				<File Source="..\DisplayMagicianIdentityPkg\Assets\LockScreenLogo.scale-200.png" />
 			</Component>
 			<Component Directory="IdentityAssetsFolder">
+				<File Source="..\DisplayMagicianIdentityPkg\Assets\Square150x150Logo.png" />
+			</Component>
+			<Component Directory="IdentityAssetsFolder">
 				<File Source="..\DisplayMagicianIdentityPkg\Assets\Square150x150Logo.scale-200.png" />
 			</Component>
 			<Component Directory="IdentityAssetsFolder">
+				<File Source="..\DisplayMagicianIdentityPkg\Assets\Square44x44Logo.png" />
+			</Component>
+			<Component Directory="IdentityAssetsFolder">
 				<File Source="..\DisplayMagicianIdentityPkg\Assets\Square44x44Logo.scale-200.png" />
+			</Component>
+			<Component Directory="IdentityAssetsFolder">
+				<File Source="..\DisplayMagicianIdentityPkg\Assets\Square44x44Logo.targetsize-44_altform-unplated.png" />
 			</Component>
 			<Component Directory="IdentityAssetsFolder">
 				<File Source="..\DisplayMagicianIdentityPkg\Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
 			</Component>
 			<Component Directory="IdentityAssetsFolder">
 				<File Source="..\DisplayMagicianIdentityPkg\Assets\StoreLogo.png" />
+			</Component>
+			<Component Directory="IdentityAssetsFolder">
+				<File Source="..\DisplayMagicianIdentityPkg\Assets\Wide310x150Logo.png" />
 			</Component>
 			<Component Directory="IdentityAssetsFolder">
 				<File Source="..\DisplayMagicianIdentityPkg\Assets\Wide310x150Logo.scale-200.png" />

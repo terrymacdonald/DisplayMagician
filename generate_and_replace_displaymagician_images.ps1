@@ -64,8 +64,11 @@ Invoke-Magick ($iconFrames + @($iconPath))
 $pngAssets = @(
     @{ Path = (Join-Path $generatedRoot 'applogo.png'); Width = 48; Height = 48 },
     @{ Path = (Join-Path $msixGeneratedRoot 'StoreLogo.png'); Width = 50; Height = 50 },
+    @{ Path = (Join-Path $msixGeneratedRoot 'Square44x44Logo.png'); Width = 44; Height = 44 },
     @{ Path = (Join-Path $msixGeneratedRoot 'Square44x44Logo.scale-200.png'); Width = 88; Height = 88 },
+    @{ Path = (Join-Path $msixGeneratedRoot 'Square44x44Logo.targetsize-44_altform-unplated.png'); Width = 44; Height = 44 },
     @{ Path = (Join-Path $msixGeneratedRoot 'Square44x44Logo.targetsize-24_altform-unplated.png'); Width = 24; Height = 24 },
+    @{ Path = (Join-Path $msixGeneratedRoot 'Square150x150Logo.png'); Width = 150; Height = 150 },
     @{ Path = (Join-Path $msixGeneratedRoot 'Square150x150Logo.scale-200.png'); Width = 300; Height = 300 },
     @{ Path = (Join-Path $msixGeneratedRoot 'LockScreenLogo.scale-200.png'); Width = 96; Height = 96 }
 )
@@ -77,6 +80,10 @@ foreach ($asset in $pngAssets) {
 $wideLogoPath = Join-Path $msixGeneratedRoot 'Wide310x150Logo.scale-200.png'
 Invoke-Magick @($sourceImage, '-resize', '260x260', '-background', 'none', '-gravity', 'center', '-extent', '620x300', $wideLogoPath)
 Assert-ImageDimensions -Path $wideLogoPath -Width 620 -Height 300
+
+$wideLogoBasePath = Join-Path $msixGeneratedRoot 'Wide310x150Logo.png'
+Invoke-Magick @($sourceImage, '-resize', '130x130', '-background', 'none', '-gravity', 'center', '-extent', '310x150', $wideLogoBasePath)
+Assert-ImageDimensions -Path $wideLogoBasePath -Width 310 -Height 150
 
 $iconDimensions = & $magickExe 'identify' '-format' '%w,%h\n' $iconPath
 if ($LASTEXITCODE -ne 0 -or @($iconDimensions | Where-Object { $_.Trim() -match '^(16,16|20,20|24,24|32,32|40,40|48,48|64,64|128,128|256,256)$' }).Count -lt $iconSizes.Count) {
@@ -91,9 +98,13 @@ $deployments = @(
     @{ Source = $iconPath; Destination = (Join-Path $repoRoot 'DisplayMagicianBundle\DisplayMagician.ico') },
     @{ Source = (Join-Path $generatedRoot 'applogo.png'); Destination = (Join-Path $repoRoot 'DisplayMagician\Properties\applogo.png') },
     @{ Source = (Join-Path $msixGeneratedRoot 'StoreLogo.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\StoreLogo.png') },
+    @{ Source = (Join-Path $msixGeneratedRoot 'Square44x44Logo.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Square44x44Logo.png') },
     @{ Source = (Join-Path $msixGeneratedRoot 'Square44x44Logo.scale-200.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Square44x44Logo.scale-200.png') },
+    @{ Source = (Join-Path $msixGeneratedRoot 'Square44x44Logo.targetsize-44_altform-unplated.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Square44x44Logo.targetsize-44_altform-unplated.png') },
     @{ Source = (Join-Path $msixGeneratedRoot 'Square44x44Logo.targetsize-24_altform-unplated.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Square44x44Logo.targetsize-24_altform-unplated.png') },
+    @{ Source = (Join-Path $msixGeneratedRoot 'Square150x150Logo.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Square150x150Logo.png') },
     @{ Source = (Join-Path $msixGeneratedRoot 'Square150x150Logo.scale-200.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Square150x150Logo.scale-200.png') },
+    @{ Source = $wideLogoBasePath; Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Wide310x150Logo.png') },
     @{ Source = $wideLogoPath; Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\Wide310x150Logo.scale-200.png') },
     @{ Source = (Join-Path $msixGeneratedRoot 'LockScreenLogo.scale-200.png'); Destination = (Join-Path $repoRoot 'DisplayMagicianIdentityPkg\Assets\LockScreenLogo.scale-200.png') }
 )

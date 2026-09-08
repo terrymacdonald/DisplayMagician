@@ -53,6 +53,7 @@
     <PropertyGroup>
       <WindowsKitBinDir>$(WindowsKitVersionDir.Trim())\x64</WindowsKitBinDir>
       <MakeAppxExe>$(WindowsKitBinDir)\makeappx.exe</MakeAppxExe>
+      <MakePriExe>$(WindowsKitBinDir)\makepri.exe</MakePriExe>
       <SignToolExe>$(WindowsKitBinDir)\signtool.exe</SignToolExe>
     </PropertyGroup>
 
@@ -61,6 +62,8 @@
     <!-- Validate makeappx is reachable -->
     <Error Condition="!Exists('$(MakeAppxExe)')"
            Text="makeappx.exe not found at '$(MakeAppxExe)'. Install the Windows 10 SDK." />
+    <Error Condition="!Exists('$(MakePriExe)')"
+           Text="makepri.exe not found at '$(MakePriExe)'. Install the Windows 10 SDK." />
 
     <!-- Stage only the files that belong in the MSIX into a clean temp directory -->
     <PropertyGroup>
@@ -74,6 +77,11 @@
       <_AssetFiles Include="$(MSBuildThisFileDirectory)Assets\*" />
     </ItemGroup>
     <Copy SourceFiles="@(_AssetFiles)" DestinationFolder="$(_MsixStagingDir)Assets\" />
+
+    <!-- Windows resolves qualified taskbar assets through resources.pri. -->
+    <Exec Command="&quot;$(MakePriExe)&quot; createconfig /cf &quot;$(_MsixStagingDir)priconfig.xml&quot; /dq en-US /o" />
+    <Exec Command="&quot;$(MakePriExe)&quot; new /pr &quot;$(_MsixStagingDir.TrimEnd('\'))&quot; /cf &quot;$(_MsixStagingDir)priconfig.xml&quot; /mn &quot;$(_MsixStagingDir)AppxManifest.xml&quot; /of &quot;$(_MsixStagingDir)resources.pri&quot; /o" />
+    <Delete Files="$(_MsixStagingDir)priconfig.xml" />
 
     <!-- Test-only publisher override used by the SignPath test certificate in CI. -->
     <Exec Condition="'$(IdentityPackagePublisherOverride)' != '' and Exists('$(_DmExePath)')"
