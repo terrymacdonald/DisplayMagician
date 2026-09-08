@@ -6,14 +6,15 @@
 .DESCRIPTION
     This script:
       1. Installs WiX Toolset v7.0.0 dotnet global tool
-      2. Restores WiX NuGet SDK packages into the local cache
-      2b. Restores Microsoft.Build.NoTargets SDK for the MSIX identity project
-      3. Installs the HeatWave VS extension (.wixproj support in Visual Studio)
-      4. Creates a self-signed code-signing certificate (CN=LittleBitBig)
-      5. Exports it to a PFX file at a path you choose
-      6. Imports the certificate into LocalMachine\TrustedPeople so Windows
+      2. Installs ImageMagick portable into the repository-local .tools folder
+      3. Restores WiX NuGet SDK packages into the local cache
+      3b. Restores Microsoft.Build.NoTargets SDK for the MSIX identity project
+      4. Installs the HeatWave VS extension (.wixproj support in Visual Studio)
+      5. Creates a self-signed code-signing certificate (CN=LittleBitBig)
+      6. Exports it to a PFX file at a path you choose
+      7. Imports the certificate into LocalMachine\TrustedPeople so Windows
          trusts the signed MSIX identity package on this machine
-      7. Writes SigningConfig.props so MSBuild can sign the MSIX during build
+      8. Writes SigningConfig.props so MSBuild can sign the MSIX during build
 
     The PFX file and SigningConfig.props are both listed in .gitignore and
     will never be committed to the repository.
@@ -75,7 +76,49 @@ if (-not $wixInstalled) {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# 2. Restore WiX NuGet SDK packages (required by both VS and VS Code)
+# 2. Install ImageMagick portable for deterministic branding asset generation
+# ---------------------------------------------------------------------------
+$imageMagickVersion = '7.1.2-31'
+$imageMagickArchiveUrl = "https://download.imagemagick.org/archive/binaries/ImageMagick-$imageMagickVersion-portable-Q8-x64.7z"
+$imageMagickToolDir = Join-Path $PSScriptRoot '.tools\ImageMagick'
+$imageMagickExe = Join-Path $imageMagickToolDir 'magick.exe'
+$imageMagickVersionFile = Join-Path $imageMagickToolDir 'version.txt'
+
+Write-Host "Checking ImageMagick portable tool..."
+$imageMagickInstalled = (Test-Path $imageMagickExe) -and (Test-Path $imageMagickVersionFile) -and ((Get-Content $imageMagickVersionFile -Raw).Trim() -eq $imageMagickVersion)
+if ($imageMagickInstalled) {
+    Write-Host "  ImageMagick $imageMagickVersion is already installed - skipping." -ForegroundColor Green
+} else {
+    $imageMagickArchive = Join-Path $env:TEMP "ImageMagick-$imageMagickVersion-portable-Q8-x64.7z"
+    $imageMagickExtractDir = Join-Path $env:TEMP "ImageMagick-$imageMagickVersion-$([Guid]::NewGuid().ToString('N'))"
+    try {
+        Write-Host "  Downloading ImageMagick $imageMagickVersion portable..."
+        Invoke-WebRequest -Uri $imageMagickArchiveUrl -OutFile $imageMagickArchive -UseBasicParsing
+        New-Item -ItemType Directory -Path $imageMagickExtractDir -Force | Out-Null
+        & tar.exe -xf $imageMagickArchive -C $imageMagickExtractDir
+        if ($LASTEXITCODE -ne 0) { throw "Could not extract the downloaded ImageMagick archive (tar exit code $LASTEXITCODE)." }
+        $downloadedMagickExe = Get-ChildItem -Path $imageMagickExtractDir -Filter 'magick.exe' -Recurse | Select-Object -First 1
+        if ($null -eq $downloadedMagickExe) { throw 'The downloaded ImageMagick archive did not contain magick.exe.' }
+        if (Test-Path $imageMagickToolDir) { Remove-Item -LiteralPath $imageMagickToolDir -Recurse -Force }
+        New-Item -ItemType Directory -Path $imageMagickToolDir -Force | Out-Null
+        Copy-Item -Path (Join-Path $downloadedMagickExe.Directory.FullName '*') -Destination $imageMagickToolDir -Recurse -Force
+        Set-Content -Path $imageMagickVersionFile -Value $imageMagickVersion -Encoding ASCII
+        & $imageMagickExe -version | Select-Object -First 1 | Write-Host
+        if ($LASTEXITCODE -ne 0) { throw "ImageMagick exited with code $LASTEXITCODE after installation." }
+        Write-Host "  ImageMagick installed at $imageMagickToolDir." -ForegroundColor Green
+    } catch {
+        Write-Warning "Could not install ImageMagick automatically: $_"
+        Write-Warning "Download manually from: $imageMagickArchiveUrl"
+        Write-Warning "Extract its contents so magick.exe is at: $imageMagickExe"
+    } finally {
+        Remove-Item -LiteralPath $imageMagickArchive -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $imageMagickExtractDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+Write-Host ""
+
+# ---------------------------------------------------------------------------
+# 3. Restore WiX NuGet SDK packages (required by both VS and VS Code)
 # ---------------------------------------------------------------------------
 Write-Host "Restoring WiX NuGet packages (WixToolset.Sdk, extensions)..."
 Write-Host "  This downloads WixToolset.Sdk v$requiredWixVersion and extension packages into the NuGet cache."
@@ -489,6 +532,7 @@ Write-Host "and the MSIX identity package will be packed and signed automaticall
 Write-Host ""
 Write-Host "Tools installed:" -ForegroundColor White
 Write-Host "  WiX Toolset v$requiredWixVersion (dotnet global tool)"
+Write-Host "  ImageMagick $imageMagickVersion portable ($imageMagickToolDir)"
 Write-Host "  HeatWave VS extension (.wixproj support in Visual Studio)"
 Write-Host "  Microsoft.Build.NoTargets SDK (DisplayMagicianIdentityPkg NuGet restore)"
 Write-Host "  .NET $runtimeVersion Desktop Runtime installer (DisplayMagicianBundle\Packages\)"
