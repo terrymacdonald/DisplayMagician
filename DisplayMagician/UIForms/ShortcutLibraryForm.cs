@@ -17,7 +17,7 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class ShortcutLibraryForm : Form
+    public partial class ShortcutLibraryForm : DisplayMagicianForm
     {
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();

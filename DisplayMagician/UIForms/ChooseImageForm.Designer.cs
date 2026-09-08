@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class ChooseImageForm
@@ -192,7 +192,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(pb_selected_icon);
             Controls.Add(lv_icons);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;

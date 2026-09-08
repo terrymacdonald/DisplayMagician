@@ -708,7 +708,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(gb_general);
             Controls.Add(btn_back);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;

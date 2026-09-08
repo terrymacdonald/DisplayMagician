@@ -10,7 +10,7 @@ using DisplayMagicianShared;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class AudioProfilesForm : Form
+    public partial class AudioProfilesForm : DisplayMagicianForm
     {
         private AudioProfileItem _selectedAudioProfile;
         private int _audioProfileAdvisoryRefreshVersion;

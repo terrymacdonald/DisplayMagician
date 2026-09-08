@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -17,7 +17,7 @@ using static DisplayMagician.WindowsThumbnailProvider;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class FovCalcForm : Form
+    public partial class FovCalcForm : DisplayMagicianForm
     {   
         
         private ScreenLayout _screenLayout = ScreenLayout.TripleScreen;

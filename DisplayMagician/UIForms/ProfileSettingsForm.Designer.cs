@@ -134,7 +134,7 @@ namespace DisplayMagician.UIForms
             lbl_wallpaper_bg_type.Name = "lbl_wallpaper_bg_type";
             lbl_wallpaper_bg_type.Size = new System.Drawing.Size(16, 16);
             lbl_wallpaper_bg_type.TabIndex = 3;
-            lbl_wallpaper_bg_type.Text = "—";
+            lbl_wallpaper_bg_type.Text = "ï¿½";
             // 
             // gb_multiple_applies
             // 
@@ -243,7 +243,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(gb_general);
             Controls.Add(btn_back);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             MaximizeBox = false;
             MinimizeBox = false;

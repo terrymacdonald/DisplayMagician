@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class StartMessageForm
@@ -106,7 +106,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(pnl_richtextbox);
             Controls.Add(btn_back);
             Controls.Add(lbl_heading_text);
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             Name = "StartMessageForm";
             ShowIcon = false;

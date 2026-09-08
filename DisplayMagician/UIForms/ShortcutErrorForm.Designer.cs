@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.UIForms
+namespace DisplayMagician.UIForms
 {
     partial class ShortcutErrorForm
     {
@@ -87,7 +87,6 @@
             Controls.Add(btn_save);
             Controls.Add(lbl_title);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;

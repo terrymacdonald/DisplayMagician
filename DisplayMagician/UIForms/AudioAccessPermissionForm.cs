@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class AudioAccessPermissionForm : Form
+    public partial class AudioAccessPermissionForm : DisplayMagicianForm
     {
         public AudioAccessPermissionForm()
         {

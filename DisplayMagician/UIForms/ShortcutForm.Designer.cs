@@ -1610,7 +1610,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(tabc_shortcut);
             Controls.Add(btn_cancel);
             Controls.Add(btn_save);
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;

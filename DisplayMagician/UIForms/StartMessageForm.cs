@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -14,7 +14,7 @@ using Markdig;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class StartMessageForm : Form
+    public partial class StartMessageForm : DisplayMagicianForm
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 

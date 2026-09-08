@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.UIForms
+namespace DisplayMagician.UIForms
 {
     partial class ShortcutLibraryForm
     {
@@ -417,7 +417,6 @@
             Controls.Add(btn_back);
             Controls.Add(btn_run);
             Controls.Add(ilv_saved_shortcuts);
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MinimumSize = new System.Drawing.Size(950, 652);
             Name = "ShortcutLibraryForm";

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class ChooseImageForm : Form
+    public partial class ChooseImageForm : DisplayMagicianForm
     {
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();

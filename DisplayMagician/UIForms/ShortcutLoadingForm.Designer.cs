@@ -74,7 +74,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(lbl_description);
             Controls.Add(lbl_title);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             MaximizeBox = false;
             MaximumSize = new System.Drawing.Size(804, 403);

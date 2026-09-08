@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -19,7 +19,7 @@ using static DisplayMagician.Program;
 
 namespace DisplayMagician.UIForms
 {
-    internal partial class DisplayProfileForm : Form
+    internal partial class DisplayProfileForm : DisplayMagicianForm
     {
         private ProfileItem _selectedProfile;
         //private List<ProfileItem> _savedProfiles = new List<ProfileItem>();

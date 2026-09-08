@@ -298,7 +298,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(splitContainer);
             Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             ForeColor = System.Drawing.Color.White;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(860, 560);

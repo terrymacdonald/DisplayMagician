@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.UIForms
+namespace DisplayMagician.UIForms
 {
     partial class FovCalcForm
     {
@@ -604,7 +604,6 @@
             Controls.Add(pnl_fov);
             Controls.Add(btn_back);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MinimumSize = new System.Drawing.Size(1534, 927);
             Name = "FovCalcForm";

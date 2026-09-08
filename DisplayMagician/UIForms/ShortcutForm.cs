@@ -23,7 +23,7 @@ using System.Diagnostics;
 namespace DisplayMagician.UIForms
 {
 
-    public partial class ShortcutForm : Form
+    public partial class ShortcutForm : DisplayMagicianForm
     {
 
         private ProfileAdaptor _profileAdaptor;

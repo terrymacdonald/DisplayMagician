@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -17,7 +17,7 @@ namespace DisplayMagician.UIForms
         AudioProfile
     }
 
-    internal partial class AudioApplyFailureForm : Form
+    internal partial class AudioApplyFailureForm : DisplayMagicianForm
     {
         public AudioApplyFailureAction SelectedAction { get; private set; } = AudioApplyFailureAction.Cancel;
 
