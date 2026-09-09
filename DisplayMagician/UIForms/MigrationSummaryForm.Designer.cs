@@ -18,6 +18,7 @@ namespace DisplayMagician.UIForms
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MigrationSummaryForm));
             lbl_heading = new System.Windows.Forms.Label();
             rtb_summary = new System.Windows.Forms.RichTextBox();
             btn_close = new System.Windows.Forms.Button();
@@ -26,12 +27,14 @@ namespace DisplayMagician.UIForms
             // lbl_heading
             // 
             lbl_heading.AutoSize = true;
+            lbl_heading.BackColor = System.Drawing.Color.Black;
             lbl_heading.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_heading.Location = new System.Drawing.Point(18, 16);
+            lbl_heading.ForeColor = System.Drawing.Color.White;
+            lbl_heading.Location = new System.Drawing.Point(153, 18);
             lbl_heading.Name = "lbl_heading";
-            lbl_heading.Size = new System.Drawing.Size(276, 20);
+            lbl_heading.Size = new System.Drawing.Size(264, 20);
             lbl_heading.TabIndex = 0;
-            lbl_heading.Text = "DisplayMagician was updated";
+            lbl_heading.Text = "Your configuration was updated";
             // 
             // rtb_summary
             // 
@@ -40,27 +43,31 @@ namespace DisplayMagician.UIForms
             rtb_summary.Location = new System.Drawing.Point(22, 52);
             rtb_summary.Name = "rtb_summary";
             rtb_summary.ReadOnly = true;
-            rtb_summary.Size = new System.Drawing.Size(526, 158);
+            rtb_summary.Size = new System.Drawing.Size(526, 329);
             rtb_summary.TabIndex = 1;
             rtb_summary.Text = "";
             // 
             // btn_close
             // 
             btn_close.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btn_close.BackColor = System.Drawing.Color.Black;
             btn_close.DialogResult = System.Windows.Forms.DialogResult.OK;
-            btn_close.Location = new System.Drawing.Point(473, 225);
+            btn_close.ForeColor = System.Drawing.Color.White;
+            btn_close.Location = new System.Drawing.Point(473, 396);
             btn_close.Name = "btn_close";
             btn_close.Size = new System.Drawing.Size(75, 27);
             btn_close.TabIndex = 2;
             btn_close.Text = "&Close";
-            btn_close.UseVisualStyleBackColor = true;
+            btn_close.UseVisualStyleBackColor = false;
             // 
             // MigrationSummaryForm
             // 
             AcceptButton = btn_close;
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(570, 264);
+            BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
+            BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            ClientSize = new System.Drawing.Size(570, 435);
             Controls.Add(btn_close);
             Controls.Add(rtb_summary);
             Controls.Add(lbl_heading);
@@ -68,10 +75,9 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(430, 240);
             Name = "MigrationSummaryForm";
-            ShowIcon = false;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "DisplayMagician migration";
+            Text = "Updated configuration";
             Load += MigrationSummaryForm_Load;
             ResumeLayout(false);
             PerformLayout();

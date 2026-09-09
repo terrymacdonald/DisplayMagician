@@ -1856,7 +1856,7 @@ namespace DisplayMagician {
                 {
                     if (!string.IsNullOrWhiteSpace(notice.Title))
                     {
-                        summary.AppendLine(notice.Title);
+                        summary.AppendLine($"**{notice.Title}**");
                     }
 
                     summary.AppendLine(notice.Message);
