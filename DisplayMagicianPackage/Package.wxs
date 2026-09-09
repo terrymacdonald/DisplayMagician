@@ -83,16 +83,16 @@
 			Return="check" />
 
 		<SetProperty Id="CleanUserData"
-			Value="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$appDataPath = Join-Path $env:LOCALAPPDATA 'DisplayMagician'; if (Test-Path -LiteralPath $appDataPath) { Remove-Item -LiteralPath $appDataPath -Recurse -Force -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { Remove-Item -LiteralPath 'HKCU:\Software\DisplayMagician' -Recurse -Force -ErrorAction SilentlyContinue }&quot;"
+			Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$ErrorActionPreference = 'Stop'; $appDataPath = Join-Path $env:LOCALAPPDATA 'DisplayMagician'; if (Test-Path -LiteralPath $appDataPath) { Remove-Item -LiteralPath $appDataPath -Recurse -Force; if (Test-Path -LiteralPath $appDataPath) { throw 'DisplayMagician user data could not be removed.' } }; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { Remove-Item -LiteralPath 'HKCU:\Software\DisplayMagician' -Recurse -Force; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { throw 'DisplayMagician user registry data could not be removed.' } }&quot;"
 			Before="CleanUserData"
 			Sequence="execute"
 			Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
 		<CustomAction Id="CleanUserData"
 			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
-			DllEntry="WixQuietExec"
+			DllEntry="WixQuietExec64"
 			Execute="deferred"
 			Impersonate="yes"
-			Return="ignore" />
+			Return="check" />
 					
 		<!-- Set application components that will be installed -->
 		<Feature Id="Main">
