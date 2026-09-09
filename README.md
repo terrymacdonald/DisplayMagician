@@ -137,11 +137,9 @@ Have fun!
 
 Official Windows releases of DisplayMagician are digitally signed.
 
-Free code signing is provided by SignPath.io, with the certificate provided
-by SignPath Foundation.
+Free code signing is provided by SignPath.io, with the certificate provided by SignPath Foundation.
 
-See the [DisplayMagician Code signing policy](CODE_SIGNING_POLICY.md)
-for information about the build, signing, approval and privacy processes.
+See the [DisplayMagician Code signing policy](CODE_SIGNING_POLICY.md) for information about the build, signing, approval and privacy processes.
 
 ## License
 

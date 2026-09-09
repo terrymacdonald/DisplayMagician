@@ -58,6 +58,8 @@ namespace DisplayMagician {
         public static string AppPermStartMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "DisplayMagician","DisplayMagician.lnk");
         public static string AppTempStartMenuPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.Programs),"DisplayMagician.lnk");
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
+        // Keep the desktop taskbar identity in sync with the MSI Start menu shortcut.
+        public const string AppTaskbarUserModelId = "LittleBitBig.DisplayMagician.Desktop";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
         public static bool AppNotInstalled = false;
