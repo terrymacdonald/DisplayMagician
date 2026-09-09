@@ -18,7 +18,6 @@ namespace DisplayMagician.UIForms
         public LoadingForm()
         {
             InitializeComponent();
-            this.TopMost = false;
         }
 
 

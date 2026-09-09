@@ -83,6 +83,7 @@ namespace DisplayMagician.UIForms
             ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            TopMost = true;
             Text = "DisplayMagician is loading....";
             UseWaitCursor = true;
             Load += LoadingForm_Load;

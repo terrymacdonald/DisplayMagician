@@ -1395,9 +1395,8 @@ namespace DisplayMagician {
                     logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
                 };
 
-                // The splash has its own UI thread. Showing the standard modal dialog on
-                // that thread, with the splash as owner, keeps it above the loading window
-                // without relying on TopMost or foreground-window APIs.
+                // The splash has its own UI thread. Showing the modal dialog on that thread,
+                // with the splash as owner, keeps it above the loading window.
                 if (AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing && AppSplashScreen.IsHandleCreated)
                 {
                     AppSplashScreen.Invoke(new Action(() => showPermissionDialogAndRequestAccess(AppSplashScreen)));
