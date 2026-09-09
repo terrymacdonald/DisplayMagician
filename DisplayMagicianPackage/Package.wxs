@@ -17,8 +17,8 @@
 		<WixVariable Id="WixUIDialogBmp" Value="WixUIDialogBmp.png" />
 		<WixVariable Id="WixUILicenseRtf" Value="EULA_en-us.rtf" />
 		
-		<!-- This will ask the user to close the DisplayMagician app if it's running while upgrading -->
-		<util:CloseApplication Id="CloseDisplayMagician" CloseMessage="no" Description="!(loc.MustCloseDisplayMagician)" ElevatedCloseMessage="no" RebootPrompt="no" Target="DisplayMagician.exe" />		
+		<!-- A full uninstall must stop the app before its files and per-user data are removed. -->
+		<util:CloseApplication Id="CloseDisplayMagician" Condition='REMOVE~="ALL"' RebootPrompt="no" Target="DisplayMagician.exe" TerminateProcess="0" />
 		
 		<!-- Use DisplayMagician's WixUI_InstallDir variant so uninstall can optionally clean user data -->
 		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
