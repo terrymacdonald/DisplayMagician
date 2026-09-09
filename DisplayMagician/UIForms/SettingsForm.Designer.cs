@@ -708,13 +708,12 @@ namespace DisplayMagician.UIForms
             Controls.Add(gb_general);
             Controls.Add(btn_back);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(1544, 834);
             Name = "SettingsForm";
-            ShowIcon = false;
+            ShowIcon = true;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Settings";

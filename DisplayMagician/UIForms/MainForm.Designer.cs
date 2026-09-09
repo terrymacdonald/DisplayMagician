@@ -323,7 +323,7 @@ namespace DisplayMagician.UIForms
             Controls.Add(splitContainer1);
             MaximizeBox = false;
             Name = "MainForm";
-            ShowIcon = false;
+            ShowIcon = true;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             Activated += MainForm_Activated;
             Load += MainForm_Load;

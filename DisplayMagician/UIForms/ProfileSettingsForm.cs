@@ -1,4 +1,4 @@
-﻿using DisplayMagicianShared;
+using DisplayMagicianShared;
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
@@ -7,7 +7,7 @@ using WindowsWallpaperWrapper;
 namespace DisplayMagician.UIForms
 {
 
-    public partial class ProfileSettingsForm : Form
+    public partial class ProfileSettingsForm : DisplayMagicianForm
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();

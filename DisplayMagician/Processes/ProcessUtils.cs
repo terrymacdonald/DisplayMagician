@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Management;
 
 namespace DisplayMagician.Processes
 {
@@ -100,39 +99,6 @@ namespace DisplayMagician.Processes
             {
                 DisposeProcesses(startedProcesses);
             }
-        }
-
-        public static List<Process> GetChildProcesses(Process process)
-        {
-            if (process == null)
-            {
-                logger.Warn("ProcessUtils/GetChildProcesses: Null process supplied — returning empty list.");
-                return new List<Process>();
-            }
-            return GetChildProcesses(process.Id);
-        }
-
-        public static List<Process> GetChildProcesses(int processId)
-        {
-            List<Process> children = new List<Process>();
-            using (ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={processId}"))
-            {
-                foreach (ManagementObject mo in mos.Get())
-                {
-                    using (mo)
-                    {
-                        try
-                        {
-                            children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
-                        }
-                        catch (ArgumentException)
-                        {
-                            logger.Trace($"ProcessUtils/GetChildProcesses: Child process {mo["ProcessID"]} exited before we could retrieve it — skipping.");
-                        }
-                    }
-                }
-            }
-            return children;
         }
 
         public static bool ProcessExited(Process process)
@@ -255,7 +221,7 @@ namespace DisplayMagician.Processes
                 logger.Warn("ProcessUtils/StopProcess: Null process supplied, nothing to stop.");
                 return false;
             }
-            string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
+            string procId = $"PID {processToStop.Id}";
             try
             {
                 // Stop the process
@@ -334,7 +300,7 @@ namespace DisplayMagician.Processes
                 {
                     if (!ProcessExited(processToStop))
                     {
-                        string procId = $"{processToStop.ProcessName} (PID {processToStop.Id})";
+                        string procId = $"PID {processToStop.Id}";
                         logger.Debug($"ProcessUtils/StopProcess: Stopping process {procId}");
                         if (StopProcess(processToStop))
                         {
@@ -348,7 +314,7 @@ namespace DisplayMagician.Processes
                     }
                     else
                     {
-                        logger.Debug($"ProcessUtils/StopProcess: Process {processToStop.ProcessName} (PID {processToStop.Id}) already stopped.");
+                        logger.Debug("ProcessUtils/StopProcess: A started process had already stopped.");
                     }
                 }
                 catch (Exception ex)

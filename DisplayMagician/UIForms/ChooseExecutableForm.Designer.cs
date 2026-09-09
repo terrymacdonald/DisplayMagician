@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class ChooseExecutableForm
@@ -192,13 +192,12 @@ namespace DisplayMagician.UIForms
             Controls.Add(btn_select_app);
             Controls.Add(lbl_installed_apps);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(1476, 488);
             Name = "ChooseExecutableForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Choose an application";

@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class DonationForm
@@ -145,14 +145,13 @@ namespace DisplayMagician.UIForms
             Controls.Add(lbl_description);
             Controls.Add(lbl_title);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MaximumSize = new System.Drawing.Size(800, 500);
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(647, 388);
             Name = "DonationForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Annual Donation Appeal";

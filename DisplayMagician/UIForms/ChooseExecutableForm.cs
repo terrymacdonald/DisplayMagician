@@ -1,4 +1,4 @@
-﻿using DisplayMagician.AppLibraries;
+using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 //using DisplayMagician.Resources;
 using Manina.Windows.Forms;
@@ -21,7 +21,7 @@ namespace DisplayMagician.UIForms
         ExeMode = 1,
     }
 
-    public partial class ChooseExecutableForm : Form
+    public partial class ChooseExecutableForm : DisplayMagicianForm
     {
         private AppAdaptor _appAdaptor = new AppAdaptor();
         private App _selectedApp = null;

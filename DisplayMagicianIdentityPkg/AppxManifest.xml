@@ -10,7 +10,7 @@
   <Identity
 	Name="50566LittleBitBig.DisplayMagician"
 	Publisher="CN=AC8F2FDD-977F-4390-B92A-B9CFAEE91973"
-	Version="3.0.0.239"
+	Version="3.0.0.278"
 	ProcessorArchitecture="neutral" />
 
     <Properties>
@@ -29,6 +29,7 @@
 		<rescap:Capability Name="runFullTrust" />
 		<rescap:Capability Name="unvirtualizedResources"/>
 		<rescap:Capability Name="appDiagnostics" />
+		<DeviceCapability Name="microphone" />
 	</Capabilities>
 	<Applications>
 		<Application Id="DisplayMagician"
@@ -40,9 +41,9 @@
 				DisplayName="DisplayMagician"
 				Description="Automatically run your games with a different display profile or audio settings, then revert everything back when you're done."
 				BackgroundColor="transparent"
-				Square150x150Logo="Assets\Square150x150Logo.scale-200.png"
-				Square44x44Logo="Assets\Square44x44Logo.scale-200.png">
-				<uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.scale-200.png"
+				Square150x150Logo="Assets\Square150x150Logo.png"
+				Square44x44Logo="Assets\Square44x44Logo.png">
+				<uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"
 								 ShortName="DisplayMagician" />
 				<uap:InitialRotationPreference>
 					<uap:Rotation Preference="landscape"/>

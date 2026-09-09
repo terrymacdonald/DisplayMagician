@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Resources;
 using System.ComponentModel;
@@ -19,7 +19,7 @@ using System.Windows.Documents;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class HotkeyForm : Form
+    public partial class HotkeyForm : DisplayMagicianForm
     {
         //List<Keys> _invalidKeyCombination = new List<Keys>() { };
         private List<HotkeyKeyboard> _shownKeyboardHotkeys = new();

@@ -1,4 +1,4 @@
-﻿using DisplayMagician.GameLibraries;
+using DisplayMagician.GameLibraries;
 //using DisplayMagician.Resources;
 using System.Drawing;
 using DisplayMagicianShared;
@@ -57,6 +57,8 @@ namespace DisplayMagician
         public bool Disabled;
         public ProcessPriority ProcessPriority;
         public string Executable;
+        public string ApplicationId;
+        public string ApplicationName;
         public string Arguments;
         public bool ExecutableArgumentsRequired;
         public bool CloseOnFinish;
@@ -327,12 +329,7 @@ namespace DisplayMagician
                 // The skip UUID is a special virtual profile - not in AllProfiles, handle it directly
                 if (_profileUuid.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
                 {
-                    _profileToUse = new ProfileItem
-                    {
-                        Name = ProfileItem.SkipDisplayChangeName,
-                        UUID = ProfileItem.SkipDisplayChangeUUID,
-                        ProfileBitmap = Properties.Resources.skipdisplaychange
-                    };
+                    _profileToUse = CreateSkipDisplayChangeProfile();
                     return;
                 }
 
@@ -1341,9 +1338,12 @@ namespace DisplayMagician
                 copiedStartProgram.Disabled = sp.Disabled;
                 copiedStartProgram.DontStartIfAlreadyRunning = sp.DontStartIfAlreadyRunning;
                 copiedStartProgram.Executable = sp.Executable;
+                copiedStartProgram.ApplicationId = sp.ApplicationId;
+                copiedStartProgram.ApplicationName = sp.ApplicationName;
                 copiedStartProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
                 copiedStartProgram.Priority = sp.Priority;
                 copiedStartProgram.ProcessPriority = sp.ProcessPriority;
+                copiedStartProgram.RunAsAdministrator = sp.RunAsAdministrator;
                 shortcut.StartPrograms.Add(copiedStartProgram);
             }
 
@@ -1518,6 +1518,17 @@ namespace DisplayMagician
                 _shortcutErrors.Add(error);
                 worstError = ShortcutValidity.Error;
             }
+            else if (!AudioProfileRepository.CanAccessAudioSettings)
+            {
+                logger.Warn($"ShortcutItem/RefreshValidity: Windows microphone privacy access is denied, so the audio profile for shortcut '{Name}' cannot be applied.");
+                ShortcutError warning = new ShortcutError();
+                warning.Name = "AudioAccessDenied";
+                warning.Validity = ShortcutValidity.Warning;
+                warning.Message = "Windows has denied microphone access, so this shortcut's audio profile will be skipped. You can enable microphone access for DisplayMagician in Windows Settings.";
+                _shortcutErrors.Add(warning);
+                if (worstError != ShortcutValidity.Error)
+                    worstError = ShortcutValidity.Warning;
+            }
 
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Executable))
@@ -1602,7 +1613,28 @@ namespace DisplayMagician
             // Do all the active/enabled specified start programs still exist?
             foreach (StartProgram sp in StartPrograms)
             {
-                if (!sp.Disabled && !string.IsNullOrWhiteSpace(sp.Executable))
+                if (sp.Disabled)
+                    continue;
+
+                if (!String.IsNullOrWhiteSpace(sp.ApplicationId))
+                {
+                    App applicationToValidate = null;
+                    if (AppLibrary.AppsLoaded && AppLibrary.AllInstalledAppsInAllLibraries != null)
+                        applicationToValidate = AppLibrary.GetAnyAppById(sp.ApplicationId);
+
+                    if (AppLibrary.AppsLoaded && (applicationToValidate == null || applicationToValidate is not LocalApp localApp || localApp.LocalAppType != InstalledAppType.UWP))
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The UWP start program '{sp.ApplicationName}' (ID: {sp.ApplicationId}) could not be found.");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "UwpStartProgramNotInstalled";
+                        error.Validity = ShortcutValidity.Warning;
+                        error.Message = $"The UWP start program '{sp.ApplicationName}' is not installed or cannot be accessed.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Warning;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(sp.Executable))
                 {
                     if (!System.IO.File.Exists(sp.Executable))
                     {
@@ -1787,7 +1819,10 @@ namespace DisplayMagician
             {
                 Name = ProfileItem.SkipDisplayChangeName,
                 UUID = ProfileItem.SkipDisplayChangeUUID,
-                ProfileBitmap = Properties.Resources.skipdisplaychange
+                ProfileBitmap = Properties.Resources.skipdisplaychange,
+                // The virtual profile has no display layout to render. Reuse its
+                // canonical bitmap for the shortcut's bottom-right overlay.
+                ProfileTightestBitmap = Properties.Resources.skipdisplaychange
             };
         }
 

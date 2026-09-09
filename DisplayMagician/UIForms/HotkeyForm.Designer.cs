@@ -1,4 +1,4 @@
-﻿
+
 namespace DisplayMagician.UIForms
 {
     partial class HotkeyForm
@@ -189,12 +189,11 @@ namespace DisplayMagician.UIForms
             Controls.Add(lbl_hotkey_selector);
             Controls.Add(txt_hotkey);
             Controls.Add(lbl_hotkey_description);
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximumSize = new System.Drawing.Size(867, 522);
             MinimumSize = new System.Drawing.Size(673, 369);
             Name = "HotkeyForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Choose a Hotkey";

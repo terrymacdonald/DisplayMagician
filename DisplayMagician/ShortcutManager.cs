@@ -86,6 +86,9 @@ namespace DisplayMagician
         [SuppressUnmanagedCodeSecurity]
         [DllImport("ole32.dll")]
         public extern static int PropVariantClear(ref PROPVARIANT pvar);
+
+        [DllImport("shell32.dll")]
+        internal static extern int SHGetPropertyStoreForWindow(IntPtr hwnd, ref Guid riid, out IPropertyStore propertyStore);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -483,6 +486,62 @@ namespace DisplayMagician
 
     class ShortcutManager
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// Sets desktop taskbar grouping and relaunch information, or removes it before handle destruction.
+        /// Package identity remains available to the process for Windows APIs and notifications.
+        /// </summary>
+        public static void ConfigureWindowTaskbar(IntPtr windowHandle, bool clear = false)
+        {
+            IPropertyStore propertyStore = null;
+            string executablePath = System.Windows.Forms.Application.ExecutablePath;
+            try
+            {
+                Guid interfaceId = typeof(IPropertyStore).GUID;
+                Marshal.ThrowExceptionForHR(UnsafeNativeMethods.SHGetPropertyStoreForWindow(windowHandle, ref interfaceId, out propertyStore));
+
+                // The sparse-package AUMID can show a placeholder in the Windows 11 taskbar even
+                // when WM_GETICON and the package's Shell icon resolve correctly. Use a desktop
+                // window AUMID and explicit relaunch metadata, without changing process identity.
+                string[] values = clear ? null : new[]
+                {
+                    $"\"{executablePath}\"",
+                    System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "Properties", "DisplayMagician.ico") + ",0",
+                    "DisplayMagician",
+                    Program.AppTaskbarUserModelId
+                };
+
+                // PIDs 2, 3, 4, 5 are RelaunchCommand, RelaunchIconResource,
+                // RelaunchDisplayNameResource, and ID. Set ID last; remove it first.
+                // https://learn.microsoft.com/windows/win32/api/shellapi/nf-shellapi-shgetpropertystoreforwindow
+                for (int step = 0; step < 4; step++)
+                {
+                    int index = clear ? 3 - step : step;
+                    PropertyKey key = new PropertyKey(new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"), (uint)(index + 2));
+                    PROPVARIANT value = clear ? new PROPVARIANT() : new PROPVARIANT(values[index]);
+                    try
+                    {
+                        propertyStore.SetValue(ref key, ref value);
+                    }
+                    finally
+                    {
+                        value.Clear();
+                    }
+                }
+                // Window properties take effect immediately; Commit is unnecessary.
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ShortcutManager/ConfigureWindowTaskbar: Could not {(clear ? "clear" : "set")} taskbar properties for window {windowHandle}, executable {executablePath}.");
+            }
+            finally
+            {
+                if (propertyStore != null)
+                    Marshal.ReleaseComObject(propertyStore);
+            }
+        }
+
         /// <summary>
         /// Creates a shortcut to enable the app to receive toast notifications.
         /// </summary>

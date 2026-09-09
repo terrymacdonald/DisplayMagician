@@ -13,7 +13,7 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class MessagesForm : Form
+    public partial class MessagesForm : DisplayMagicianForm
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private const string MessagesVirtualHost = "displaymagician-messages.local";

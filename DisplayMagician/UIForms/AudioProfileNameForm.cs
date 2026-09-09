@@ -11,7 +11,7 @@ namespace DisplayMagician.UIForms
         Rename
     }
 
-    public partial class AudioProfileNameForm : Form
+    public partial class AudioProfileNameForm : DisplayMagicianForm
     {
         private string _originalName;
         private AudioProfileNameFormMode _mode;

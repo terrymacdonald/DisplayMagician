@@ -430,7 +430,7 @@ namespace DisplayMagician.AppLibraries
             
             if (LocalAppType == InstalledAppType.InstalledProgram)
             {
-                processesStarted = ProcessTreeMonitor.StartAndCapture(ExePath, Arguments, priority, timeout, runExeAsAdmin, captureDescendantsForStartupWindow: true);
+                processesStarted = ProcessUtils.StartProcess(ExePath, Arguments, priority, timeout, runExeAsAdmin);
                 if (processesStarted.Count > 0)
                 {
                     logger.Trace($"LocalApp/Start: Started LocalApp installed program {Name} with {processesStarted.Count} processes.");
@@ -499,6 +499,9 @@ namespace DisplayMagician.AppLibraries
 
         public override bool Stop()
         {
+            if (LocalAppType == InstalledAppType.UWP)
+                return StopUWPProcess().GetAwaiter().GetResult();
+
             return true;
         }
 
@@ -529,6 +532,48 @@ namespace DisplayMagician.AppLibraries
             bool result = await _LocalAppListEntry.LaunchAsync();
 
             return result;
+        }
+
+        private async Task<bool> StopUWPProcess()
+        {
+            if (!Program.AppHasPackageIdentity)
+            {
+                logger.Warn($"LocalApp/StopUWPProcess: Cannot terminate UWP app {Name} because DisplayMagician is not running with package identity.");
+                return false;
+            }
+
+            try
+            {
+                DiagnosticAccessStatus accessStatus = await AppDiagnosticInfo.RequestAccessAsync();
+                if (accessStatus != DiagnosticAccessStatus.Allowed)
+                {
+                    logger.Warn($"LocalApp/StopUWPProcess: App diagnostics access is {accessStatus} for {Name}; the UWP app cannot be terminated.");
+                    return false;
+                }
+
+                IList<AppDiagnosticInfo> infos = await AppDiagnosticInfo.RequestInfoForAppAsync(_LocalAppId);
+                bool terminationRequested = false;
+                foreach (AppDiagnosticInfo info in infos)
+                {
+                    foreach (AppResourceGroupInfo group in info.GetResourceGroups())
+                    {
+                        if (group.GetProcessDiagnosticInfos().Count == 0)
+                            continue;
+
+                        await group.StartTerminateAsync();
+                        terminationRequested = true;
+                    }
+                }
+
+                if (terminationRequested)
+                    logger.Info($"LocalApp/StopUWPProcess: Requested normal lifecycle termination for UWP app {Name} ({_LocalAppId}).");
+                return terminationRequested;
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"LocalApp/StopUWPProcess: Could not terminate UWP app {Name} ({_LocalAppId}).");
+                return false;
+            }
         }
 
     }

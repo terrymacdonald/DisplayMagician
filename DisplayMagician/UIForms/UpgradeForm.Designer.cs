@@ -202,13 +202,12 @@ namespace DisplayMagician.UIForms
             Controls.Add(btn_remind_later);
             Controls.Add(btn_upgrade);
             Controls.Add(lbl_title);
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             MaximizeBox = false;
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(1419, 954);
             Name = "UpgradeForm";
-            ShowIcon = false;
+            ShowIcon = true;
             Text = "Upgrade DisplayMagician";
             TopMost = true;
             Load += UpgradeForm_Load;

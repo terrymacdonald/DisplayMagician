@@ -19,7 +19,7 @@ using System.ComponentModel;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class MainForm : Form
+    public partial class MainForm : DisplayMagicianForm
     {
 
         private bool _allowVisible = false;     // Default to not showing form
@@ -66,6 +66,7 @@ namespace DisplayMagician.UIForms
         public MainForm(Form formToOpen = null)
         {
             InitializeComponent();
+            notifyIcon.Icon = Icon;
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
             lbl_version.Text = string.Format(lbl_version.Text, Program.AppVersion);

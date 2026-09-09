@@ -30,7 +30,6 @@ namespace DisplayMagician.UIForms
         private void InitializeComponent()
         {
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MessagesForm));
             splitContainer = new System.Windows.Forms.SplitContainer();
             btn_back = new System.Windows.Forms.Button();
             btn_check_for_new_messages = new System.Windows.Forms.Button();
@@ -298,14 +297,12 @@ namespace DisplayMagician.UIForms
             Controls.Add(splitContainer);
             Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             ForeColor = System.Drawing.Color.White;
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(860, 560);
             Name = "MessagesForm";
-            ShowIcon = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "DisplayMagician Messages";
+            Text = "Messages";
             splitContainer.Panel1.ResumeLayout(false);
             splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer).EndInit();

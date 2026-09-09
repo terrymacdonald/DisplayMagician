@@ -1,4 +1,4 @@
-﻿using DisplayMagician.Processes;
+using DisplayMagician.Processes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,7 +12,7 @@ using Markdig;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class UpgradeForm : Form
+    public partial class UpgradeForm : DisplayMagicianForm
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 

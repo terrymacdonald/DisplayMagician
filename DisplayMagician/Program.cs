@@ -30,6 +30,7 @@ using DisplayMagician.Messaging;
 
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
+using Windows.Security.Authorization.AppCapabilityAccess;
 
 
 namespace DisplayMagician {
@@ -57,6 +58,8 @@ namespace DisplayMagician {
         public static string AppPermStartMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "DisplayMagician","DisplayMagician.lnk");
         public static string AppTempStartMenuPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.Programs),"DisplayMagician.lnk");
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
+        // Keep the desktop taskbar identity in sync with the MSI Start menu shortcut.
+        public const string AppTaskbarUserModelId = "LittleBitBig.DisplayMagician.Desktop";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
         public static bool AppNotInstalled = false;
@@ -103,6 +106,7 @@ namespace DisplayMagician {
         private static System.Timers.Timer _startupMessagePollTimer;
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
+        private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
 
         private static volatile bool _useTestUpdateFeed;
 
@@ -233,7 +237,8 @@ namespace DisplayMagician {
 
 
             // PACKAGE IDENTITY INITIALIZATION AND CHECKS
-            EnsurePackageIdentity();
+            if (EnsurePackageIdentity(args))
+                return (int)ERRORLEVEL.OK;
 
             // SINGLE INSTANCE MODE CHECKS
             // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
@@ -548,6 +553,7 @@ namespace DisplayMagician {
 
             // Next we create the MainForm object but keep it hidden for now
             logger.Trace($"Program/Main: Creating the MainForm object");
+            RequestAudioAccessBeforeFirstProfileCheck();
             AppMainForm = new MainForm();
 
             StartDirectInputManager();
@@ -1292,13 +1298,13 @@ namespace DisplayMagician {
             return result;
         }
 
-        private static void EnsurePackageIdentity()
+        private static bool EnsurePackageIdentity(string[] startupArguments)
         {
             if (ExecutionMode.TryGetPackageFullName(out string packageFullName, out int errorCode))
             {
                 AppHasPackageIdentity = true;
                 logger.Info($"Program/EnsurePackageIdentity: DisplayMagician is running with package identity {packageFullName}.");
-                return;
+                return false;
             }
 
             AppHasPackageIdentity = false;
@@ -1308,13 +1314,30 @@ namespace DisplayMagician {
             {
                 logger.Warn($"Program/EnsurePackageIdentity: Cannot register package identity because {AppIdentityPkgPath} does not exist.");
                 _packageIdentityWarningNeeded = true;
-                return;
+                return false;
             }
 
             bool registrationSucceeded = RegisterPackageWithExternalLocationAsync(AppStartupPath, AppIdentityPkgPath).GetAwaiter().GetResult();
             if (registrationSucceeded)
             {
-                logger.Info($"Program/EnsurePackageIdentity: Package identity registration completed. Re-checking current process identity.");
+                if (!startupArguments.Any(argument => String.Equals(argument, PackageIdentityRestartCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+                {
+                    string restartArguments = String.Join(" ", startupArguments
+                        .Select(argument => $"\"{argument.Replace("\"", "\\\"")}\"")
+                        .Append(PackageIdentityRestartCommandLineOption));
+                    try
+                    {
+                        logger.Info("Program/EnsurePackageIdentity: Package identity registration completed. Restarting DisplayMagician so the new process receives its package identity.");
+                        Process.Start(new ProcessStartInfo(Application.ExecutablePath, restartArguments) { UseShellExecute = true });
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, "Program/EnsurePackageIdentity: Package identity registration completed, but DisplayMagician could not restart itself.");
+                    }
+                }
+
+                logger.Warn("Program/EnsurePackageIdentity: Package identity registration completed, but the restarted process still has no package identity.");
             }
             else
             {
@@ -1332,6 +1355,107 @@ namespace DisplayMagician {
                 _packageIdentityWarningNeeded = true;
                 logger.Warn($"Program/EnsurePackageIdentity: DisplayMagician still does not have package identity after registration attempt. GetCurrentPackageFullName returned {errorCode}. UWP and Xbox app monitoring will be disabled for this run.");
             }
+
+            return false;
+        }
+
+        private static void RequestAudioAccessBeforeFirstProfileCheck()
+        {
+            if (!AppHasPackageIdentity)
+            {
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                logger.Warn("Program/RequestAudioAccessBeforeFirstProfileCheck: DisplayMagician has no package identity, so Windows microphone privacy access cannot be checked.");
+                return;
+            }
+
+            try
+            {
+                AppCapability microphoneCapability = AppCapability.Create("microphone");
+                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
+                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
+                logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability access is {accessStatus}.");
+
+                if (accessStatus != AppCapabilityAccessStatus.UserPromptRequired)
+                    return;
+
+                Action<IWin32Window> showPermissionDialogAndRequestAccess = owner =>
+                {
+                    using (AudioAccessPermissionForm permissionForm = new AudioAccessPermissionForm())
+                    {
+                        // Closing this explanation is deliberately equivalent to Continue. There is
+                        // no bypass because audio profile detection needs Windows' consent decision.
+                        if (owner != null)
+                            permissionForm.ShowDialog(owner);
+                        else
+                            permissionForm.ShowDialog();
+                    }
+
+                    accessStatus = AppCapability.RequestAccessForCapabilitiesAsync(new[] { "microphone" }).AsTask().GetAwaiter().GetResult()["microphone"];
+                    AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
+                    logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
+                };
+
+                // The splash has its own UI thread. Showing the modal dialog on that thread,
+                // with the splash as owner, keeps it above the loading window.
+                if (AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing && AppSplashScreen.IsHandleCreated)
+                {
+                    AppSplashScreen.Invoke(new Action(() => showPermissionDialogAndRequestAccess(AppSplashScreen)));
+                }
+                else
+                {
+                    // The splash is disabled, or has not created a window yet. The form's
+                    // normal centred, unowned modal behaviour is appropriate in this case.
+                    showPermissionDialogAndRequestAccess(null);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Retain the legacy behaviour when Windows cannot query the package capability.
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                logger.Warn(ex, "Program/RequestAudioAccessBeforeFirstProfileCheck: Could not query or request microphone access. Audio operations will be attempted and report any Windows error.");
+            }
+        }
+
+        /// <summary>
+        /// Re-reads Windows' current microphone privacy decision without asking the user
+        /// again. This lets audio features resume in the same DisplayMagician session when
+        /// the user enables access in Windows Settings.
+        /// </summary>
+        public static bool RefreshAudioAccessStatus()
+        {
+            AudioAccessStatus previousStatus = AudioProfileRepository.AudioAccessStatus;
+            if (!AppHasPackageIdentity)
+            {
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                return previousStatus != AudioProfileRepository.AudioAccessStatus;
+            }
+
+            try
+            {
+                AppCapability microphoneCapability = AppCapability.Create("microphone");
+                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
+                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
+                logger.Debug($"Program/RefreshAudioAccessStatus: Microphone capability access is {accessStatus}.");
+            }
+            catch (Exception ex)
+            {
+                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+                logger.Warn(ex, "Program/RefreshAudioAccessStatus: Could not query Windows microphone privacy access.");
+            }
+
+            return previousStatus != AudioProfileRepository.AudioAccessStatus;
+        }
+
+        private static AudioAccessStatus ConvertAudioAccessStatus(AppCapabilityAccessStatus accessStatus)
+        {
+            return accessStatus switch
+            {
+                AppCapabilityAccessStatus.Allowed => AudioAccessStatus.Available,
+                AppCapabilityAccessStatus.UserPromptRequired => AudioAccessStatus.PromptRequired,
+                AppCapabilityAccessStatus.DeniedByUser => AudioAccessStatus.Denied,
+                AppCapabilityAccessStatus.DeniedBySystem => AudioAccessStatus.Denied,
+                _ => AudioAccessStatus.Unknown
+            };
         }
 
         private static void QueueStartupBackgroundTasks(object sender, EventArgs e)
@@ -2370,7 +2494,7 @@ namespace DisplayMagician {
                     // Allows running from a ZIP file rather than forcing the app to be installed. If we don't do this then Toasts just wouldn't work.
                     _tempShortcutRegistered = true;
                     ShortcutManager.RegisterAppForNotifications(
-                        AppTempStartMenuPath, Assembly.GetExecutingAssembly().Location, null, AppUserModelId, AppActivationId);
+                        AppTempStartMenuPath, Application.ExecutablePath, null, AppUserModelId, AppActivationId);
                 }
             
             }

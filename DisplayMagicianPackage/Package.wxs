@@ -8,16 +8,17 @@
 		<MediaTemplate EmbedCab="yes" />
 		
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
-		<Property Id="ARPPRODUCTICON" Value="DisplayMagician.ico" />
-		<Property Id="REMOVE_USER_DATA" Secure="yes" Value="0" />
+		<Property Id="ARPPRODUCTICON" Value="dm.exe" />
+		<!-- Leave unset by default so the uninstall checkbox is explicitly opt-in. -->
+		<Property Id="REMOVE_USER_DATA" Secure="yes" />
 		
 		<!-- Installer UI custom pictures. File names are made up. Add path to your pics -->
 		<WixVariable Id="WixUIBannerBmp" Value="WixUIBannerBmp.png" />
 		<WixVariable Id="WixUIDialogBmp" Value="WixUIDialogBmp.png" />
 		<WixVariable Id="WixUILicenseRtf" Value="EULA_en-us.rtf" />
 		
-		<!-- This will ask the user to close the DisplayMagician app if it's running while upgrading -->
-		<util:CloseApplication Id="CloseDisplayMagician" CloseMessage="no" Description="!(loc.MustCloseDisplayMagician)" ElevatedCloseMessage="no" RebootPrompt="no" Target="DisplayMagician.exe" />		
+		<!-- A full uninstall must stop the app before its files and per-user data are removed. -->
+		<util:CloseApplication Id="CloseDisplayMagician" Condition='REMOVE~="ALL"' RebootPrompt="no" Target="DisplayMagician.exe" TerminateProcess="0" />
 		
 		<!-- Use DisplayMagician's WixUI_InstallDir variant so uninstall can optionally clean user data -->
 		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
@@ -33,17 +34,17 @@
 			<DialogRef Id="MsiRMFilesInUse" />
 
 			<!-- Automatically start DisplayMagician -->
-			<Publish Dialog="ExitDialog" Control="Finish"  Event="DoAction"	 Value="LaunchApplication" />
+			<Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication" Condition='NOT REMOVE~="ALL"' />
 
 		</UI>
 
 		<InstallExecuteSequence>
 			<!-- Register sparse MSIX after files are copied (install/upgrade only) -->
-			<Custom Action="RegisterIdentityPkgData" After="InstallFiles" Condition="NOT Installed OR REINSTALL" />
-			<Custom Action="RegisterIdentityPkg" After="RegisterIdentityPkgData" Condition="NOT Installed OR REINSTALL" />
+			<Custom Action="SetRegisterIdentityPkgCommand" After="InstallFiles" Condition="NOT Installed OR REINSTALL" />
+			<Custom Action="RegisterIdentityPkg" After="SetRegisterIdentityPkgCommand" Condition="NOT Installed OR REINSTALL" />
 			<!-- Unregister sparse MSIX before files are removed (uninstall only) -->
-			<Custom Action="UnregisterIdentityPkgData" Before="RemoveFiles" Condition='REMOVE~="ALL"' />
-			<Custom Action="UnregisterIdentityPkg" After="UnregisterIdentityPkgData" Condition='REMOVE~="ALL"' />
+			<Custom Action="SetUnregisterIdentityPkgCommand" Before="UnregisterIdentityPkg" Condition='REMOVE~="ALL"' />
+			<Custom Action="UnregisterIdentityPkg" Before="RemoveFiles" Condition='REMOVE~="ALL"' />
 			<Custom Action="CleanUserData" After="RemoveFiles" Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
 		</InstallExecuteSequence>
 
@@ -56,41 +57,42 @@
 			DllEntry="WixShellExec"
 			Impersonate="yes" />
 
-		<!-- Register the sparse MSIX identity package after files are installed -->
-		<!-- WixQuietExec64 pattern: set CustomActionData property, then call the CA -->
-		<Property Id="WixQuietExec64CmdLine" Value="powershell.exe" />
-		<CustomAction Id="RegisterIdentityPkgData"
-			Property="WixQuietExec64CmdLine"
-			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Add-AppxPackage -ExternalLocation '[INSTALLFOLDER]' -Path '[INSTALLFOLDER]DisplayMagicianIdentityPkg.msix'&quot;" />
+		<!-- Microsoft sparse-package guidance: the immediate type-51 action stores the
+		     resolved command as CustomActionData for the deferred action with this ID. -->
+		<CustomAction Id="SetRegisterIdentityPkgCommand"
+			Property="RegisterIdentityPkg"
+			Execute="immediate"
+			Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]RegisterSparsePackage.ps1&quot; -Action Register -MsixPath &quot;[INSTALLFOLDER]DisplayMagicianIdentityPkg.msix&quot; -ExternalLocation &quot;[INSTALLFOLDER].&quot; -PackageName &quot;50566LittleBitBig.DisplayMagician&quot;" />
 		<CustomAction Id="RegisterIdentityPkg"
 			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
 			DllEntry="WixQuietExec64"
 			Execute="deferred"
-			Impersonate="no"
-			Return="ignore" />
+			Impersonate="yes"
+			Return="check" />
 
-		<!-- Unregister the sparse MSIX identity package before files are removed -->
-		<CustomAction Id="UnregisterIdentityPkgData"
-			Property="WixQuietExec64CmdLine"
-			Value="powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command &quot;Get-AppxPackage -Name '50566LittleBitBig.DisplayMagician' | Remove-AppxPackage -ErrorAction SilentlyContinue&quot;" />
+		<!-- Unregister the sparse MSIX identity package before files are removed. -->
+		<CustomAction Id="SetUnregisterIdentityPkgCommand"
+			Property="UnregisterIdentityPkg"
+			Execute="immediate"
+			Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]RegisterSparsePackage.ps1&quot; -Action Unregister -PackageName &quot;50566LittleBitBig.DisplayMagician&quot;" />
 		<CustomAction Id="UnregisterIdentityPkg"
 			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
 			DllEntry="WixQuietExec64"
 			Execute="deferred"
-			Impersonate="no"
-			Return="ignore" />
+			Impersonate="yes"
+			Return="check" />
 
 		<SetProperty Id="CleanUserData"
-			Value="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$appDataPath = Join-Path $env:LOCALAPPDATA 'DisplayMagician'; if (Test-Path -LiteralPath $appDataPath) { Remove-Item -LiteralPath $appDataPath -Recurse -Force -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { Remove-Item -LiteralPath 'HKCU:\Software\DisplayMagician' -Recurse -Force -ErrorAction SilentlyContinue }&quot;"
+			Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$ErrorActionPreference = 'Stop'; $appDataPath = Join-Path $env:LOCALAPPDATA 'DisplayMagician'; if (Test-Path -LiteralPath $appDataPath) { Remove-Item -LiteralPath $appDataPath -Recurse -Force; if (Test-Path -LiteralPath $appDataPath) { throw 'DisplayMagician user data could not be removed.' } }; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { Remove-Item -LiteralPath 'HKCU:\Software\DisplayMagician' -Recurse -Force; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { throw 'DisplayMagician user registry data could not be removed.' } }&quot;"
 			Before="CleanUserData"
 			Sequence="execute"
 			Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
 		<CustomAction Id="CleanUserData"
 			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
-			DllEntry="WixQuietExec"
+			DllEntry="WixQuietExec64"
 			Execute="deferred"
 			Impersonate="yes"
-			Return="ignore" />
+			Return="check" />
 					
 		<!-- Set application components that will be installed -->
 		<Feature Id="Main">

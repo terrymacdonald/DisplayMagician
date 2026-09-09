@@ -1,4 +1,4 @@
-﻿using DisplayMagician.AppLibraries;
+using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.UIForms;
@@ -854,6 +854,10 @@ namespace DisplayMagician
 
             MainForm myMainForm = Program.AppMainForm;
 
+            // The user may have changed microphone privacy access since DisplayMagician
+            // started, including before invoking this through the command line.
+            Program.RefreshAudioAccessStatus();
+
             // Check the shortcut is still valid.
             shortcutToUse.RefreshValidity();
 
@@ -891,10 +895,13 @@ namespace DisplayMagician
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
 
             bool needToChangeAudioProfiles = false;
-            AudioProfileItem rollbackAudioProfile = AudioProfileRepository.CurrentAudioProfile;
+            AudioProfileItem rollbackAudioProfile = AudioProfileRepository.CanAccessAudioSettings
+                ? AudioProfileRepository.CurrentAudioProfile
+                : null;
 
             // Run pre-game start/stop programs in UI Priority order (interleaved)
-            List<(int Priority, List<Process> Processes)> startedProgramsForCleanup = new List<(int Priority, List<Process> Processes)>();
+            List<(int Priority, List<Process> Processes, ProcessTreeMonitor Monitor)> startedProgramsForCleanup = new List<(int Priority, List<Process> Processes, ProcessTreeMonitor Monitor)>();
+            List<(int Priority, LocalApp Application)> startedUwpProgramsForCleanup = new List<(int Priority, LocalApp Application)>();
             List<StopProgram> stopProgramsToRestart = new List<StopProgram>();
             List<Process> monitoredProcessHandles = new List<Process>();
             List<Action> monitorCleanupActions = new List<Action>();
@@ -939,25 +946,87 @@ namespace DisplayMagician
                 }
             }
 
+            ProcessTreeMonitor BeginAlternativeExecutableMonitoring(string executablePath)
+            {
+                ProcessTreeMonitor monitor = ProcessTreeMonitor.BeginWatching(executablePath, shortcutToUse.StartTimeout);
+                if (monitor == null)
+                {
+                    logger.Warn($"ShortcutRepository/RunShortcut: Could not start process-tree monitoring for alternative executable '{executablePath}'.");
+                    return null;
+                }
+
+                monitorCleanupActions.Add(monitor.Dispose);
+                return monitor;
+            }
+
+            bool WaitForAlternativeExecutable(ProcessTreeMonitor monitor)
+            {
+                if (monitor == null)
+                    return false;
+
+                while (!monitor.HasObservedExpectedProcess && !monitor.IsDiscoveryComplete && !cancelToken.IsCancellationRequested)
+                    Thread.Sleep(250);
+
+                return monitor.HasObservedExpectedProcess;
+            }
+
+            bool StopStartedProgram(List<Process> processes, ProcessTreeMonitor monitor)
+            {
+                List<Process> processesToStop = monitor?.GetTrackedProcesses() ?? new List<Process>();
+                foreach (Process process in processes)
+                {
+                    try
+                    {
+                        if (!ProcessUtils.ProcessExited(process) && processesToStop.All(trackedProcess => trackedProcess.Id != process.Id))
+                            processesToStop.Add(process);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Trace(ex, "ShortcutRepository/RunShortcut: Could not include a directly launched start-program process during cleanup.");
+                    }
+                }
+                try
+                {
+                    return ProcessUtils.StopProcess(processesToStop);
+                }
+                finally
+                {
+                    ProcessUtils.DisposeProcesses(processesToStop);
+                    monitor?.Dispose();
+                }
+            }
+
             // Create a local function to revert any changes we've made if the user cancels the shortcut run
             // This allows us to reuse code easily in multiple places in this function.
             void RevertAndCleanup()
             {
                 ReleaseMonitoringResources();
 
-                if (startedProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
+                if (startedProgramsForCleanup.Count > 0 || startedUwpProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Performing started/stopped programs cleanup during cancellation revert.");
                     foreach (var entry in Enumerable.Reverse(startedProgramsForCleanup))
                     {
                         try
                         {
-                            if (!ProcessUtils.StopProcess(entry.Processes))
+                            if (!StopStartedProgram(entry.Processes, entry.Monitor))
                                 logger.Warn($"ShortcutRepository/RunShortcut: One or more started programs could not be stopped during cleanup.");
                         }
                         catch (Exception ex)
                         {
                             logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping started programs during cleanup.");
+                        }
+                    }
+                    foreach (var entry in Enumerable.Reverse(startedUwpProgramsForCleanup))
+                    {
+                        try
+                        {
+                            if (!entry.Application.Stop())
+                                logger.Warn($"ShortcutRepository/RunShortcut: UWP start program '{entry.Application.Name}' could not be stopped during cleanup.");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping UWP start program '{entry.Application.Name}' during cleanup.");
                         }
                     }
                     foreach (StopProgram sp in stopProgramsToRestart)
@@ -978,21 +1047,12 @@ namespace DisplayMagician
                 if (needToChangeDisplayProfiles && shortcutToUse.DisplayPermanence == ShortcutPermanence.Temporary)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name} during cancel.");
-                    ProfileRepository.ApplyProfile(rollbackProfile);
+                    RestoreOriginalDisplayProfile();
                 }
 
                 if (needToChangeAudioProfiles && shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
                 {
-                    try
-                    {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting audio profile back to pre-shortcut state during cancel.");
-                        List<string> rollbackMissingAudioDeviceNames;
-                        rollbackAudioProfile.TrySetActive(Program.AppProgramSettings.AudioDeviceWaitSecs * 1000, 500, out rollbackMissingAudioDeviceNames);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception reverting audio profile during cancel!");
-                    }
+                    RestoreOriginalAudioProfile(out _);
                 }
 
                 SetTrayText(myMainForm, $"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
@@ -1001,6 +1061,23 @@ namespace DisplayMagician
             bool RestoreOriginalDisplayProfile()
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Restoring the display profile that was active before '{shortcutToUse.Name}' was run.");
+
+                ProfileItem currentDisplayProfile = new ProfileItem();
+                if (currentDisplayProfile.CreateProfileFromCurrentDisplaySettings(captureWallpaper: false))
+                {
+                    if (rollbackProfile.Equals(currentDisplayProfile))
+                    {
+                        logger.Debug($"ShortcutRepository/RestoreOriginalDisplayProfile: The original '{rollbackProfile.Name}' display profile is already active. Skipping restore.");
+                        return true;
+                    }
+
+                    logger.Debug($"ShortcutRepository/RestoreOriginalDisplayProfile: The current display layout differs from the original '{rollbackProfile.Name}' display profile. Restoring it now.");
+                }
+                else
+                {
+                    logger.Warn($"ShortcutRepository/RestoreOriginalDisplayProfile: Could not determine the current display layout. Attempting to restore the original '{rollbackProfile.Name}' display profile anyway.");
+                }
+
                 ApplyProfileResult rollbackResult = ProfileRepository.ApplyProfile(rollbackProfile);
                 if (rollbackResult == ApplyProfileResult.Successful)
                     return true;
@@ -1009,11 +1086,33 @@ namespace DisplayMagician
                 return false;
             }
 
-            bool RestoreOriginalAudioProfile()
+            bool RestoreOriginalAudioProfile(out List<string> missingAudioDeviceNames)
             {
+                missingAudioDeviceNames = new List<string>();
+                if (rollbackAudioProfile == null || !AudioProfileRepository.CanAccessAudioSettings)
+                {
+                    logger.Warn("ShortcutRepository/RestoreOriginalAudioProfile: Audio access is unavailable, so there is no original audio profile to restore.");
+                    return true;
+                }
                 try
                 {
-                    List<string> missingAudioDeviceNames;
+                    AudioProfileItem currentAudioProfile = new AudioProfileItem();
+                    currentAudioProfile.CreateProfileFromCurrentAudioSettings();
+                    if (currentAudioProfile.WindowsAudioConfig != null && rollbackAudioProfile.WindowsAudioConfig != null)
+                    {
+                        if (currentAudioProfile.WindowsAudioConfig.Equals(rollbackAudioProfile.WindowsAudioConfig))
+                        {
+                            logger.Debug($"ShortcutRepository/RestoreOriginalAudioProfile: The original '{rollbackAudioProfile.Name}' audio profile is already active. Skipping restore.");
+                            return true;
+                        }
+
+                        logger.Debug($"ShortcutRepository/RestoreOriginalAudioProfile: The current audio configuration differs from the original '{rollbackAudioProfile.Name}' audio profile. Restoring it now.");
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RestoreOriginalAudioProfile: Could not determine the current audio configuration. Attempting to restore the original '{rollbackAudioProfile.Name}' audio profile anyway.");
+                    }
+
                     int rollbackAudioTimeoutInMs = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
                     bool rollbackResult = rollbackAudioProfile.TrySetActive(rollbackAudioTimeoutInMs, 500, out missingAudioDeviceNames);
                     if (!rollbackResult)
@@ -1271,7 +1370,12 @@ namespace DisplayMagician
                 }
             }
 
-            if (shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
+            if (!AudioProfileRepository.CanAccessAudioSettings)
+            {
+                logger.Warn($"ShortcutRepository/RunShortcut: Windows microphone privacy access is denied, so the audio profile for '{shortcutToUse.Name}' will be skipped.");
+                needToChangeAudioProfiles = false;
+            }
+            else if (shortcutToUse.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: The shortcut {shortcutToUse.Name} doesn't have a profile to apply, so we won't change profiles.");
                 needToChangeAudioProfiles = false;
@@ -1321,13 +1425,13 @@ namespace DisplayMagician
 
                         if (action == AudioApplyFailureAction.Cancel)
                         {
-                            RestoreOriginalAudioProfile();
+                            RestoreOriginalAudioProfile(out _);
                             needToChangeAudioProfiles = false;
                             RevertAndCleanup();
                             return RunShortcutResult.Cancelled;
                         }
 
-                        if (!RestoreOriginalAudioProfile() && !AskToContinue("DisplayMagician could not restore your original audio profile. Do you want to run the shortcut anyway?", "Audio Restore Failed"))
+                        if (!RestoreOriginalAudioProfile(out _) && !AskToContinue("DisplayMagician could not restore your original audio profile. Do you want to run the shortcut anyway?", "Audio Restore Failed"))
                         {
                             needToChangeAudioProfiles = false;
                             RevertAndCleanup();
@@ -1349,7 +1453,7 @@ namespace DisplayMagician
             }
 
             var programsInOrder = new List<(int Priority, bool IsStop, StartProgram StartProg, StopProgram StopProg)>();
-            foreach (StartProgram sp in shortcutToUse.StartPrograms.Where(p => !p.Disabled && !String.IsNullOrWhiteSpace(p.Executable)))
+            foreach (StartProgram sp in shortcutToUse.StartPrograms.Where(p => !p.Disabled && (!String.IsNullOrWhiteSpace(p.Executable) || !String.IsNullOrWhiteSpace(p.ApplicationId))))
                 programsInOrder.Add((sp.Priority, false, sp, default));
             foreach (StopProgram sp in shortcutToUse.StopPrograms.Where(p => !p.Disabled && !String.IsNullOrWhiteSpace(p.Executable)))
                 programsInOrder.Add((sp.Priority, true, default, sp));
@@ -1409,6 +1513,40 @@ namespace DisplayMagician
                     else
                     {
                         StartProgram processToStart = item.StartProg;
+                        if (!String.IsNullOrWhiteSpace(processToStart.ApplicationId))
+                        {
+                            LocalApp uwpApp = AppLibrary.GetAnyAppById(processToStart.ApplicationId) as LocalApp;
+                            if (processToStart.DontStartIfAlreadyRunning && uwpApp != null && uwpApp.IsRunning)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: UWP start program '{uwpApp.Name}' is already running, so it will not be launched or stopped by this shortcut.");
+                                continue;
+                            }
+
+                            List<Process> launchedProcesses;
+                            bool startedUwpApp = uwpApp != null && uwpApp.LocalAppType == InstalledAppType.UWP &&
+                                uwpApp.Start(out launchedProcesses, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+                            if (!startedUwpApp)
+                            {
+                                if (!AskToContinue($"The UWP start program '{processToStart.ApplicationName}' could not be launched. Do you want to continue running the shortcut?", "UWP Start Program Failed"))
+                                {
+                                    RevertAndCleanup();
+                                    return RunShortcutResult.Cancelled;
+                                }
+                            }
+                            else
+                            {
+                                if (processToStart.CloseOnFinish)
+                                    startedUwpProgramsForCleanup.Add((processToStart.Priority, uwpApp));
+
+                                if (!String.IsNullOrWhiteSpace(processToStart.Arguments) ||
+                                    processToStart.ProcessPriority != ProcessPriority.Normal ||
+                                    processToStart.RunAsAdministrator)
+                                {
+                                    logger.Warn($"ShortcutRepository/RunShortcut: UWP start program '{uwpApp.Name}' was launched, but its arguments, priority, and Run as administrator settings are not supported by the UWP launch API.");
+                                }
+                            }
+                            continue;
+                        }
                         // If required, check whether a process is started already
                         if (processToStart.DontStartIfAlreadyRunning)
                         {
@@ -1438,11 +1576,15 @@ namespace DisplayMagician
                         // Start the executable
                         logger.Info($"ShortcutRepository/RunShortcut: Starting Start Program process {processToStart.Executable}");
                         List<Process> processesCreated = new List<Process>();
+                        ProcessTreeMonitor startProgramMonitor = ProcessTreeMonitor.BeginWatching(
+                            processToStart.Executable,
+                            10);
                         bool startFailed = false;
                         string failReason = "";
                         try
                         {
-                            processesCreated = ProcessTreeMonitor.StartAndCapture(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+                            processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
+                            startProgramMonitor?.RegisterLaunchedProcesses(processesCreated);
 
                             // Record the program we started so we can close it later (if we have any!)
                             if (processesCreated.Count > 0)
@@ -1451,17 +1593,23 @@ namespace DisplayMagician
                                 {
                                     foreach (Process p in processesCreated)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.ProcessName} (PID {p.Id}) after the main game or executable is closed.");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: We need to stop launched PID {p.Id} after the main game or executable is closed.");
                                     }
-                                    startedProgramsForCleanup.Add((processToStart.Priority, processesCreated));
+                                    startedProgramsForCleanup.Add((processToStart.Priority, processesCreated, startProgramMonitor));
+                                    startProgramMonitor = null;
                                 }
                                 else
                                 {
                                     foreach (Process p in processesCreated)
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.ProcessName} (PID {p.Id}) after the main game or executable is closed, so we'll just leave it running");
+                                        logger.Debug($"ShortcutRepository/RunShortcut: No need to stop launched PID {p.Id} after the main game or executable is closed, so we'll just leave it running");
                                     }
                                     monitoredProcessHandles.AddRange(processesCreated);
+                                    if (startProgramMonitor != null)
+                                    {
+                                        monitorCleanupActions.Add(startProgramMonitor.Dispose);
+                                        startProgramMonitor = null;
+                                    }
                                 }
                             }
                             else
@@ -1508,6 +1656,10 @@ namespace DisplayMagician
                             startFailed = true;
                             failReason = ex.Message;
                         }
+                        finally
+                        {
+                            startProgramMonitor?.Dispose();
+                        }
 
                         if (startFailed)
                         {
@@ -1546,6 +1698,10 @@ namespace DisplayMagician
                     processToMonitorName = shortcutToUse.DifferentExecutableToMonitor;
                 }
 
+                ProcessTreeMonitor alternativeApplicationProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable
+                    ? null
+                    : BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
+
                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the {shortcutToUse.ApplicationName} application to close.");
@@ -1576,6 +1732,9 @@ namespace DisplayMagician
                 App appToUse = AppLibrary.AllInstalledAppsInAllLibraries != null
                     ? AppLibrary.GetAnyAppById(shortcutToUse.ApplicationId)
                     : null;
+                ProcessTreeMonitor applicationProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable && appToUse is LocalApp localApplication && localApplication.LocalAppType == InstalledAppType.InstalledProgram
+                    ? BeginAlternativeExecutableMonitoring(appToUse.ExePath)
+                    : null;
 
                 bool appStartFailed = appToUse == null;
                 try
@@ -1600,6 +1759,7 @@ namespace DisplayMagician
                     appStartFailed = true;
                 }
 
+                applicationProcessMonitor?.RegisterLaunchedProcesses(processesCreated);
                 monitoredProcessHandles.AddRange(processesCreated);
 
                 if (appStartFailed)
@@ -1616,9 +1776,16 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
 
+                        if (applicationProcessMonitor != null && !applicationProcessMonitor.HasObservedExpectedProcess)
+                        {
+                            applicationProcessMonitor.Dispose();
+                            applicationProcessMonitor = BeginAlternativeExecutableMonitoring(appToUse.ExePath);
+                        }
+
                         for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            if (appToUse != null && appToUse.IsRunning)
+                            if ((applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess) ||
+                                (appToUse != null && appToUse.IsRunning))
                             {
                                 appStartFailed = false;
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found manually started application '{appToUse.Name}'.");
@@ -1633,6 +1800,7 @@ namespace DisplayMagician
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
                     bool applicationDetected = processesCreated.Any(process => !ProcessUtils.ProcessExited(process)) ||
+                        (applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess) ||
                         (appToUse != null && appToUse.IsRunning);
                     while (!applicationDetected)
                     {
@@ -1646,9 +1814,16 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
 
+                        if (applicationProcessMonitor != null && !applicationProcessMonitor.HasObservedExpectedProcess)
+                        {
+                            applicationProcessMonitor.Dispose();
+                            applicationProcessMonitor = BeginAlternativeExecutableMonitoring(appToUse.ExePath);
+                        }
+
                         for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            if ((appToUse != null && appToUse.IsRunning) || processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
+                            if ((applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess) ||
+                                (appToUse != null && appToUse.IsRunning) || processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
                             {
                                 applicationDetected = true;
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found manually started application '{shortcutToUse.ApplicationName}'.");
@@ -1670,10 +1845,10 @@ namespace DisplayMagician
                 {
                     try
                     {
-                        if (appToUse is LocalApp localApp && localApp.LocalAppType == InstalledAppType.InstalledProgram && processesCreated.Any(process => !ProcessUtils.ProcessExited(process)))
+                        if (applicationProcessMonitor != null && applicationProcessMonitor.HasObservedExpectedProcess)
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Waiting for {processesCreated.Count} tracked process(es) started by {shortcutToUse.ApplicationName} to exit.");
-                            while (!ProcessUtils.ProcessExited(processesCreated))
+                            logger.Debug($"ShortcutRepository/RunShortcut: Waiting for the process tree started by {shortcutToUse.ApplicationName} to exit.");
+                            while (applicationProcessMonitor.IsRunning)
                             {
                                 if (cancelToken.IsCancellationRequested)
                                 {
@@ -1750,28 +1925,14 @@ namespace DisplayMagician
                 {
                     // We use the a user supplied executable as the thing we're monitoring instead!
                 RetryApplicationAlternativeMonitorDetection:
-                    try
+                    foundSomethingToMonitor = WaitForAlternativeExecutable(alternativeApplicationProcessMonitor);
+                    if (foundSomethingToMonitor)
                     {
-                        // Wait for the configured startup period so launchers have time to
-                        // start the alternate executable before we ask the user what to do.
-                        Task.Delay(shortcutToUse.StartTimeout * 1000).Wait(cancelToken);
-                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
-                        monitoredProcessHandles.AddRange(processesToMonitor);
-                        if (processesToMonitor.Count > 0)
-                        {
-                            logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
-                            foundSomethingToMonitor = true;
-                        }
-                        else
-                        {
-                            logger.Warn($"ShortcutRepository/RunShortcut: No '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running, so we didn't find anything to monitor!");
-                            foundSomethingToMonitor = false;
-                        }
+                        logger.Trace($"ShortcutRepository/RunShortcut: Detected alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' and its process tree.");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
-                        foundSomethingToMonitor = false;
+                        logger.Warn($"ShortcutRepository/RunShortcut: Alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' was not detected during its startup discovery window.");
                     }
 
                     // if we have things to monitor, then we should start to wait for them
@@ -1781,7 +1942,7 @@ namespace DisplayMagician
                         while (true)
                         {
                             // If we have no more processes left then we're done!
-                            if (ProcessUtils.ProcessExited(processesToMonitor))
+                            if (!alternativeApplicationProcessMonitor.IsRunning)
                             {
                                 logger.Debug($"ShortcutRepository/RunShortcut: The different executable {shortcutToUse.DifferentExecutableToMonitor} has exited!");
                                 break;
@@ -1841,6 +2002,8 @@ namespace DisplayMagician
                             return RunShortcutResult.Cancelled;
                         }
 
+                        alternativeApplicationProcessMonitor?.Dispose();
+                        alternativeApplicationProcessMonitor = BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
                         goto RetryApplicationAlternativeMonitorDetection;
                     }
                 }
@@ -1868,6 +2031,13 @@ namespace DisplayMagician
                     processToMonitorName = shortcutToUse.DifferentExecutableToMonitor;
                 }
 
+                ProcessTreeMonitor alternativeExecutableProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable
+                    ? null
+                    : BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
+                ProcessTreeMonitor executableProcessMonitor = shortcutToUse.ProcessNameToMonitorUsesExecutable
+                    ? BeginAlternativeExecutableMonitoring(shortcutToUse.ExecutableNameAndPath)
+                    : null;
+
                 if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the executable {shortcutToUse.ExecutableNameAndPath} to close.");
@@ -1892,14 +2062,15 @@ namespace DisplayMagician
                 bool exeStartFailed = false;
                 try
                 {
-                    processesCreated = ProcessTreeMonitor.StartAndCapture(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator, captureDescendantsForStartupWindow: true);
+                    processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
+                    executableProcessMonitor?.RegisterLaunchedProcesses(processesCreated);
                     monitoredProcessHandles.AddRange(processesCreated);
 
                     // Record the program we started so we can close it later
-                    foreach (Process p in processesCreated)
-                    {
-                        logger.Debug($"ShortcutRepository/RunShortcut: {p.ProcessName} (PID {p.Id}) was launched when we started the main application {shortcutToUse.ExecutableNameAndPath}.");
-                    }
+                        foreach (Process p in processesCreated)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Launched PID {p.Id} when starting main application {shortcutToUse.ExecutableNameAndPath}.");
+                        }
 
                 }
                 catch (Win32Exception ex)
@@ -1945,42 +2116,27 @@ namespace DisplayMagician
                 List<Process> processesToMonitor = new List<Process>();
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    processesToMonitor = processesCreated;
-                    if (processesToMonitor.Count > 0)
+                    if (executableProcessMonitor != null)
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{processToMonitorName}' created processes to monitor are running");
-                        foundSomethingToMonitor = true;
+                        foundSomethingToMonitor = WaitForAlternativeExecutable(executableProcessMonitor);
                     }
                     else
                     {
-                        logger.Warn($"ShortcutRepository/RunShortcut: No '{processToMonitorName}' processes were created to monitor, so we didn't find anything to monitor!");
-                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)));
-                        monitoredProcessHandles.AddRange(processesToMonitor);
+                        processesToMonitor = processesCreated;
                         foundSomethingToMonitor = processesToMonitor.Count > 0;
                     }
                 }
                 else
                 {
                     // We use the a user supplied executable as the thing we're monitoring instead!
-                    try
+                    foundSomethingToMonitor = WaitForAlternativeExecutable(alternativeExecutableProcessMonitor);
+                    if (foundSomethingToMonitor)
                     {
-                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
-                        monitoredProcessHandles.AddRange(processesToMonitor);
-                        if (processesToMonitor.Count > 0)
-                        {
-                            logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
-                            foundSomethingToMonitor = true;
-                        }
-                        else
-                        {
-                            logger.Warn($"ShortcutRepository/RunShortcut: No '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running, so we didn't find anything to monitor!");
-                            foundSomethingToMonitor = false;
-                        }
+                        logger.Trace($"ShortcutRepository/RunShortcut: Detected alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' and its process tree.");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
-                        foundSomethingToMonitor = false;
+                        logger.Warn($"ShortcutRepository/RunShortcut: Alternative executable '{shortcutToUse.DifferentExecutableToMonitor}' was not detected during its startup discovery window.");
                     }
                 }
 
@@ -1991,7 +2147,9 @@ namespace DisplayMagician
                     while (true)
                     {
                         // If we have no more processes left then we're done!
-                        if (ProcessUtils.ProcessExited(processesToMonitor))
+                        if (shortcutToUse.ProcessNameToMonitorUsesExecutable
+                            ? (executableProcessMonitor != null ? !executableProcessMonitor.IsRunning : ProcessUtils.ProcessExited(processesToMonitor))
+                            : !alternativeExecutableProcessMonitor.IsRunning)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: No more processes to monitor are still running. It, and all it's child processes have exited!");
                             break;
@@ -2073,12 +2231,28 @@ namespace DisplayMagician
                         return RunShortcutResult.Cancelled;
                     }
 
-                    for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                    if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                     {
-                        if (Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)).Length > 0)
-                            break;
+                        if (executableProcessMonitor != null)
+                        {
+                            executableProcessMonitor.Dispose();
+                            executableProcessMonitor = BeginAlternativeExecutableMonitoring(shortcutToUse.ExecutableNameAndPath);
+                        }
+                        else
+                        {
+                            for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                            {
+                                if (Process.GetProcessesByName(ProcessUtils.GetProcessName(processToMonitorName)).Length > 0)
+                                    break;
 
-                        Thread.Sleep(500);
+                                Thread.Sleep(500);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        alternativeExecutableProcessMonitor?.Dispose();
+                        alternativeExecutableProcessMonitor = BeginAlternativeExecutableMonitoring(shortcutToUse.DifferentExecutableToMonitor);
                     }
 
                     goto RetryExecutableProcessDetection;
@@ -2736,15 +2910,17 @@ namespace DisplayMagician
 
 
             // Stop started programs and restart stopped programs in the same Priority order as pre-game
-            if (startedProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
+            if (startedProgramsForCleanup.Count > 0 || startedUwpProgramsForCleanup.Count > 0 || stopProgramsToRestart.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: We started {startedProgramsForCleanup.Count} program(s) and stopped {stopProgramsToRestart.Count} program(s) before the main executable or game — now performing post-game cleanup in the same order");
+                logger.Debug($"ShortcutRepository/RunShortcut: We started {startedProgramsForCleanup.Count} executable program(s), {startedUwpProgramsForCleanup.Count} UWP program(s), and stopped {stopProgramsToRestart.Count} program(s) before the main executable or game — now performing post-game cleanup in the same order");
 
-                var postGameActions = new List<(int Priority, bool IsRestart, List<Process> ToStop, StopProgram ToRestart)>();
+                var postGameActions = new List<(int Priority, bool IsRestart, List<Process> ToStop, StopProgram ToRestart, ProcessTreeMonitor Monitor, LocalApp UwpApplication)>();
                 foreach (var entry in startedProgramsForCleanup)
-                    postGameActions.Add((entry.Priority, false, entry.Processes, default));
+                    postGameActions.Add((entry.Priority, false, entry.Processes, default, entry.Monitor, null));
+                foreach (var entry in startedUwpProgramsForCleanup)
+                    postGameActions.Add((entry.Priority, false, null, default, null, entry.Application));
                 foreach (StopProgram sp in stopProgramsToRestart)
-                    postGameActions.Add((sp.Priority, true, null, sp));
+                    postGameActions.Add((sp.Priority, true, null, sp, null, null));
                 postGameActions.Sort((a, b) => a.Priority.CompareTo(b.Priority));
 
                 foreach (var action in postGameActions)
@@ -2772,11 +2948,17 @@ namespace DisplayMagician
                     }
                     else
                     {
-                        // Shutdown the processes
                         try
                         {
-                            if (!ProcessUtils.StopProcess(action.ToStop))
+                            if (action.UwpApplication != null)
+                            {
+                                if (!action.UwpApplication.Stop())
+                                    logger.Warn($"ShortcutRepository/RunShortcut: UWP start program '{action.UwpApplication.Name}' could not be stopped during post-game cleanup.");
+                            }
+                            else if (!StopStartedProgram(action.ToStop, action.Monitor))
+                            {
                                 logger.Warn($"ShortcutRepository/RunShortcut: One or more started programs could not be stopped during post-game cleanup.");
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -2795,22 +2977,13 @@ namespace DisplayMagician
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 
-                ApplyProfileResult result = ProfileRepository.ApplyProfile(rollbackProfile);
-
-                if (result == ApplyProfileResult.Error)
+                if (!RestoreOriginalDisplayProfile())
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: Error rolling back display profile to {rollbackProfile.Name}");
                     return RunShortcutResult.Error;
                 }
-                else if (result == ApplyProfileResult.Cancelled)
-                {
-                    logger.Error($"ShortcutRepository/RunShortcut: User cancelled rolling back display profile to {rollbackProfile.Name}");
-                    return RunShortcutResult.Cancelled;
-                }
-                else if (result == ApplyProfileResult.Successful)
-                {
-                    logger.Trace($"ShortcutRepository/RunShortcut: Successfully rolled back display profile to {rollbackProfile.Name}");
-                }
+
+                logger.Trace($"ShortcutRepository/RunShortcut: Successfully restored or confirmed the original display profile '{rollbackProfile.Name}'.");
 
             }
             else
@@ -2823,12 +2996,9 @@ namespace DisplayMagician
             {
                 try
                 {
-                    int rollbackAudioTimeoutInMs = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
-                    const int rollbackApplyDelayInMs = 500;
-                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting audio profile back to pre-shortcut state (timeout: {rollbackAudioTimeoutInMs}ms).");
+                    logger.Debug($"ShortcutRepository/RunShortcut: Checking whether the original audio profile needs to be restored.");
 
-                    List<string> rollbackMissingAudioDeviceNames;
-                    bool rollbackResult = rollbackAudioProfile.TrySetActive(rollbackAudioTimeoutInMs, rollbackApplyDelayInMs, out rollbackMissingAudioDeviceNames);
+                    bool rollbackResult = RestoreOriginalAudioProfile(out List<string> rollbackMissingAudioDeviceNames);
                     if (rollbackResult)
                     {
                         logger.Debug($"ShortcutRepository/RunShortcut: Audio profile reverted successfully.");

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -18,11 +18,12 @@ using static DisplayMagician.GameLibraries.ProductInformation;
 using System.ComponentModel;
 using DisplayMagician.Processes;
 using System.Globalization;
+using System.Diagnostics;
 
 namespace DisplayMagician.UIForms
 {
 
-    public partial class ShortcutForm : Form
+    public partial class ShortcutForm : DisplayMagicianForm
     {
 
         private ProfileAdaptor _profileAdaptor;
@@ -609,6 +610,11 @@ namespace DisplayMagician.UIForms
 
         private bool AllowedToSave(bool showErrorsToUser = false)
         {
+            // The user may have enabled microphone access in Windows Settings while this
+            // form was open, so do not rely on the startup status when saving.
+            Program.RefreshAudioAccessStatus();
+            RefreshAudioAccessWarning();
+
             // initialise errors list
             List<string> errors = new List<string>();
 
@@ -626,8 +632,15 @@ namespace DisplayMagician.UIForms
                 errors.Add("You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.");
             }
 
+            // Audio changes are impossible without Windows microphone privacy access. Do not
+            // save a shortcut which claims it will change audio but can never do so.
+            if (!cb_dont_change_audio.Checked && !AudioProfileRepository.CanAccessAudioSettings)
+            {
+                logger.Error("ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings, but Windows microphone access is denied.");
+                errors.Add("Windows has denied microphone access, so DisplayMagician cannot apply an Audio Profile. Select 'Don't change audio settings' before saving this shortcut, or enable microphone access in Windows Settings.");
+            }
             // Check if the user has selected to change the audio settings, and if so, that they have selected a valid audio profile
-            if (!cb_dont_change_audio.Checked && !(_audioProfileToUse is AudioProfileItem))
+            else if (!cb_dont_change_audio.Checked && !(_audioProfileToUse is AudioProfileItem))
             {
                 logger.Error($"ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings but doesn't have an audio profile selected!");
                 errors.Add("You need to select an Audio Profile to use with this shortcut. Please select one from the list of Audio Profiles on the left of the screen or create one if none exists, or select 'Don't change audio settings' if you don't want to change the audio settings.");
@@ -2554,6 +2567,41 @@ namespace DisplayMagician.UIForms
             {
                 lb_audio_profiles.Items.Add(audioProfile);
             }
+
+            RefreshAudioAccessWarning();
+        }
+
+        private void RefreshAudioAccessWarning()
+        {
+            bool audioAccessDenied = !AudioProfileRepository.CanAccessAudioSettings;
+            p_audio_access_warning.Visible = audioAccessDenied;
+            btn_create_audio_profile.Enabled = !audioAccessDenied;
+            btn_update_audio_profile.Enabled = !audioAccessDenied && _audioProfileToUse != null;
+
+            if (!audioAccessDenied)
+                return;
+
+            lbl_audio_access_warning.Text = $"⚠ Windows has denied microphone access. DisplayMagician cannot create, read, or apply Audio Profiles until access is enabled.{Environment.NewLine}Select 'Don't change audio settings' before saving this shortcut, or enable microphone access below.";
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            Program.RefreshAudioAccessStatus();
+            RefreshAudioAccessWarning();
+        }
+
+        private void lnk_open_microphone_settings_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo("ms-settings:privacy-microphone") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutForm/lnk_open_microphone_settings_LinkClicked: Could not open Windows microphone privacy settings.");
+                MessageBox.Show(this, "DisplayMagician could not open Windows microphone privacy settings. Open Settings > Privacy & security > Microphone and enable access for DisplayMagician.", "Audio Access", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void SetAudioProfileUiEnabled(bool enabled)
@@ -2634,7 +2682,7 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
-            btn_update_audio_profile.Enabled = _audioProfileToUse != null;
+            btn_update_audio_profile.Enabled = AudioProfileRepository.CanAccessAudioSettings && _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
             gb_selected_audio_settings.Enabled = _audioProfileToUse != null;
             if (_audioProfileToUse != null)
@@ -2659,10 +2707,12 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            AudioProfileItem newAudioProfile = new AudioProfileItem
+            AudioProfileItem newAudioProfile = new AudioProfileItem { Name = profileName };
+            if (!newAudioProfile.CreateProfileFromCurrentAudioSettings())
             {
-                Name = profileName
-            };
+                MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then return to DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
             {

@@ -133,9 +133,17 @@ You now have 4 different ways you can start your shortcut:
 
 Have fun!
 
+## Code signing policy
+
+Official Windows releases of DisplayMagician are digitally signed.
+
+Free code signing is provided by SignPath.io, with the certificate provided by SignPath Foundation.
+
+See the [DisplayMagician Code signing policy](CODE_SIGNING_POLICY.md) for information about the build, signing, approval and privacy processes.
+
 ## License
 
-CCopyright © Terry MacDonald 2020-2026
+Copyright © Terry MacDonald 2020-2026
 
 Original HelioDisplayManagement - copyright © Soroush Falahati 2017-2020
 

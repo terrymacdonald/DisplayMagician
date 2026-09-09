@@ -132,9 +132,9 @@ namespace DisplayMagician.UIForms
             lbl_wallpaper_bg_type.Location = new System.Drawing.Point(246, 96);
             lbl_wallpaper_bg_type.Margin = new System.Windows.Forms.Padding(55, 0, 55, 0);
             lbl_wallpaper_bg_type.Name = "lbl_wallpaper_bg_type";
-            lbl_wallpaper_bg_type.Size = new System.Drawing.Size(16, 16);
+            lbl_wallpaper_bg_type.Size = new System.Drawing.Size(15, 16);
             lbl_wallpaper_bg_type.TabIndex = 3;
-            lbl_wallpaper_bg_type.Text = "—";
+            lbl_wallpaper_bg_type.Text = "ï¿½";
             // 
             // gb_multiple_applies
             // 
@@ -249,7 +249,6 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(662, 478);
             Name = "ProfileSettingsForm";
-            ShowIcon = false;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Profile Settings";

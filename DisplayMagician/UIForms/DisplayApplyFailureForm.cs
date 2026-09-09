@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -16,7 +16,7 @@ namespace DisplayMagician.UIForms
         DisplayProfile
     }
 
-    internal partial class DisplayApplyFailureForm : Form
+    internal partial class DisplayApplyFailureForm : DisplayMagicianForm
     {
         public DisplayApplyFailureAction SelectedAction { get; private set; } = DisplayApplyFailureAction.Cancel;
 

@@ -1,4 +1,4 @@
-﻿using DisplayMagician.Processes;
+using DisplayMagician.Processes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class DonationForm : Form
+    public partial class DonationForm : DisplayMagicianForm
     {
         private string _title = "DisplayMagician is loading...";
         private string _description = "If you have installed a lot of games over time or have a lot of games installed now, this may take a while!";

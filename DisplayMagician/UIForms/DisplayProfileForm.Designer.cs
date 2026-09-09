@@ -1,4 +1,4 @@
-﻿//using DisplayMagician.Resources;
+//using DisplayMagician.Resources;
 using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
@@ -580,14 +580,12 @@ namespace DisplayMagician.UIForms
             Controls.Add(p_listview);
             Controls.Add(p_lower);
             Controls.Add(p_upper);
-            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MinimumSize = new System.Drawing.Size(1024, 970);
             Name = "DisplayProfileForm";
-            ShowIcon = false;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "DisplayMagician - Display Profiles";
+            Text = "Display Profiles";
             Load += DisplayProfileForm_Load;
             cms_profiles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();

@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.UIForms
+namespace DisplayMagician.UIForms
 {
     partial class ShortcutErrorForm
     {
@@ -93,7 +93,6 @@
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(950, 539);
             Name = "ShortcutErrorForm";
-            ShowIcon = false;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Shortcut errors detected";

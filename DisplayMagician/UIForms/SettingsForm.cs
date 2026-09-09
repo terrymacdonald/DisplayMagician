@@ -14,7 +14,7 @@ using Vortice.DirectInput;
 namespace DisplayMagician.UIForms
 {
 
-    public partial class SettingsForm : Form
+    public partial class SettingsForm : DisplayMagicianForm
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();

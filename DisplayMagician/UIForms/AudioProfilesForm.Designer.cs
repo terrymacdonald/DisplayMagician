@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.UIForms
+namespace DisplayMagician.UIForms
 {
     partial class AudioProfilesForm
     {
@@ -40,14 +40,15 @@
             txt_audio_profile_settings = new System.Windows.Forms.TextBox();
             p_audio_profile_advisory = new System.Windows.Forms.Panel();
             lbl_audio_profile_advisory = new System.Windows.Forms.Label();
+            btn_open_microphone_settings = new System.Windows.Forms.Button();
             btn_back = new System.Windows.Forms.Button();
             lbl_heading_text = new System.Windows.Forms.Label();
             gb_selected_audio_settings.SuspendLayout();
             p_audio_profile_advisory.SuspendLayout();
             SuspendLayout();
-            // 
+            //
             // lbl_audio_profiles
-            // 
+            //
             lbl_audio_profiles.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_audio_profiles.AutoSize = true;
             lbl_audio_profiles.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -196,6 +197,7 @@
             p_audio_profile_advisory.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             p_audio_profile_advisory.BackColor = System.Drawing.Color.FromArgb(255, 193, 7);
             p_audio_profile_advisory.Controls.Add(lbl_audio_profile_advisory);
+            p_audio_profile_advisory.Controls.Add(btn_open_microphone_settings);
             p_audio_profile_advisory.Location = new System.Drawing.Point(453, 550);
             p_audio_profile_advisory.Name = "p_audio_profile_advisory";
             p_audio_profile_advisory.Size = new System.Drawing.Size(734, 70);
@@ -210,9 +212,23 @@
             lbl_audio_profile_advisory.Location = new System.Drawing.Point(0, 0);
             lbl_audio_profile_advisory.Name = "lbl_audio_profile_advisory";
             lbl_audio_profile_advisory.Padding = new System.Windows.Forms.Padding(10, 6, 10, 6);
-            lbl_audio_profile_advisory.Size = new System.Drawing.Size(734, 70);
+            lbl_audio_profile_advisory.Size = new System.Drawing.Size(570, 70);
             lbl_audio_profile_advisory.TabIndex = 0;
             lbl_audio_profile_advisory.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // btn_open_microphone_settings
+            //
+            btn_open_microphone_settings.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btn_open_microphone_settings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_open_microphone_settings.ForeColor = System.Drawing.Color.White;
+            btn_open_microphone_settings.Location = new System.Drawing.Point(580, 20);
+            btn_open_microphone_settings.Name = "btn_open_microphone_settings";
+            btn_open_microphone_settings.Size = new System.Drawing.Size(143, 30);
+            btn_open_microphone_settings.TabIndex = 1;
+            btn_open_microphone_settings.Text = "Open Settings";
+            btn_open_microphone_settings.UseVisualStyleBackColor = true;
+            btn_open_microphone_settings.Visible = false;
+            btn_open_microphone_settings.Click += btn_open_microphone_settings_Click;
             //
             // btn_back
             // 
@@ -284,6 +300,7 @@
         private System.Windows.Forms.TextBox txt_audio_profile_settings;
         private System.Windows.Forms.Panel p_audio_profile_advisory;
         private System.Windows.Forms.Label lbl_audio_profile_advisory;
+        private System.Windows.Forms.Button btn_open_microphone_settings;
         private System.Windows.Forms.Label lbl_audio_profiles;
         private System.Windows.Forms.ListBox lb_audio_profiles;
         private System.Windows.Forms.Button btn_delete_audio_profile;

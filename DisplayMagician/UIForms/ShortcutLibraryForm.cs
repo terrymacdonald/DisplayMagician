@@ -1,4 +1,4 @@
-﻿using DisplayMagician.AppLibraries;
+using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 //using DisplayMagician.Resources;
@@ -17,7 +17,7 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
-    public partial class ShortcutLibraryForm : Form
+    public partial class ShortcutLibraryForm : DisplayMagicianForm
     {
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
@@ -54,6 +54,19 @@ namespace DisplayMagician.UIForms
         {
             base.OnSizeChanged(e);
             ResizeShortcutStatusPanel();
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+
+            // Refresh cached warning icons after the user returns from Windows Settings.
+            if (Program.RefreshAudioAccessStatus())
+            {
+                ShortcutRepository.IsValidRefresh();
+                RefreshShortcutLibraryUI();
+                UpdateShortcutStatusPanel();
+            }
         }
 
         private void btn_back_Click(object sender, EventArgs e)
