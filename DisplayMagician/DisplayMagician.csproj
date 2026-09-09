@@ -108,6 +108,9 @@
     <Compile Update="UIForms\DonationForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="UIForms\MigrationSummaryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="UIForms\StartProgramControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -230,6 +233,7 @@
     <EmbeddedResource Include="UIForms\FovCalcForm.resx" />
     <EmbeddedResource Include="UIForms\HotkeyForm.resx" />
     <EmbeddedResource Include="UIForms\LoadingForm.resx" />
+    <EmbeddedResource Include="UIForms\MigrationSummaryForm.resx" />
     <EmbeddedResource Include="UIForms\MainForm.resx" />
     <EmbeddedResource Include="UIForms\MessagesForm.resx" />
     <EmbeddedResource Include="UIForms\ProfileSettingsForm.resx" />

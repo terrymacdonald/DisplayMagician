@@ -32,15 +32,29 @@ namespace DisplayMagician
 
         public sealed class MigrationResult
         {
-            public MigrationResult(MigrationStatus status, string message = "")
+            public MigrationResult(MigrationStatus status, string message = "", IReadOnlyList<MigrationNotice> notices = null)
             {
                 Status = status;
                 Message = message;
+                Notices = notices ?? Array.Empty<MigrationNotice>();
             }
 
             public MigrationStatus Status { get; }
             public string Message { get; }
+            public IReadOnlyList<MigrationNotice> Notices { get; }
             public bool Success => Status == MigrationStatus.Success || Status == MigrationStatus.NoSettingsFile;
+        }
+
+        public sealed class MigrationNotice
+        {
+            public MigrationNotice(string title, string message)
+            {
+                Title = title;
+                Message = message;
+            }
+
+            public string Title { get; }
+            public string Message { get; }
         }
 
         public static bool RunMigrations()
@@ -109,7 +123,7 @@ namespace DisplayMagician
                     WriteJsonObject(context.SettingsFileName, context.SettingsFile);
                 }
 
-                return new MigrationResult(MigrationStatus.Success);
+                return new MigrationResult(MigrationStatus.Success, notices: context.Notices);
             }
             catch (JsonReaderException ex)
             {
@@ -186,6 +200,7 @@ namespace DisplayMagician
             public string DonationSettingsFileName { get; }
             public JObject SettingsFile { get; }
             public bool SettingsFileChanged { get; private set; }
+            public List<MigrationNotice> Notices { get; } = new List<MigrationNotice>();
 
             public string GetSettingsFileVersion()
             {
@@ -200,6 +215,11 @@ namespace DisplayMagician
             public void MarkSettingsFileChanged()
             {
                 SettingsFileChanged = true;
+            }
+
+            public void AddNotice(string title, string message)
+            {
+                Notices.Add(new MigrationNotice(title, message));
             }
         }
 
@@ -398,6 +418,10 @@ namespace DisplayMagician
 
                     MigrateLegacyShortcuts();
                     RetireLegacyDisplayProfiles();
+
+                    context.AddNotice(
+                        "Your DisplayMagician data was migrated",
+                        "Your settings and shortcuts were migrated. Display and audio profiles were not migrated and need to be recreated. Legacy hotkeys were removed. Backups of your previous settings, shortcuts, and display profiles were retained in the DisplayMagician data folder.");
 
                     context.SettingsFile["SettingsFileVersion"] = "4";
                     context.SettingsFile["LastUpdated"] = DateTime.UtcNow;

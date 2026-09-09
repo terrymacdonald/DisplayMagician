@@ -556,6 +556,8 @@ namespace DisplayMagician {
             RequestAudioAccessBeforeFirstProfileCheck();
             AppMainForm = new MainForm();
 
+            ShowMigrationSummary(migrationResult.Notices);
+
             StartDirectInputManager();
             SingleInstance.MarkReadyForCommands();
 
@@ -1839,6 +1841,37 @@ namespace DisplayMagician {
                 logger.Warn(ex, $"Program/StartDirectInputManager: DirectInput hotkeys could not be started. DisplayMagician will continue without keyboard/joystick hotkeys.");
                 AppDirectInputManager?.Dispose();
                 AppDirectInputManager = null;
+            }
+        }
+
+        private static void ShowMigrationSummary(IReadOnlyList<ConfigMigrationRunner.MigrationNotice> notices)
+        {
+            if (notices == null || notices.Count == 0)
+                return;
+
+            try
+            {
+                StringBuilder summary = new StringBuilder();
+                foreach (ConfigMigrationRunner.MigrationNotice notice in notices)
+                {
+                    if (!string.IsNullOrWhiteSpace(notice.Title))
+                    {
+                        summary.AppendLine(notice.Title);
+                    }
+
+                    summary.AppendLine(notice.Message);
+                    summary.AppendLine();
+                }
+
+                using (MigrationSummaryForm migrationSummaryForm = new MigrationSummaryForm())
+                {
+                    migrationSummaryForm.SummaryText = summary.ToString().Trim();
+                    migrationSummaryForm.ShowDialog(AppMainForm);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/ShowMigrationSummary: Unable to show the completed migration summary.");
             }
         }
 
