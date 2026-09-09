@@ -108,7 +108,7 @@ namespace DisplayMagician.UIForms
             Controls.Add(lbl_heading_text);
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             Name = "StartMessageForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "DisplayMagician - Message";

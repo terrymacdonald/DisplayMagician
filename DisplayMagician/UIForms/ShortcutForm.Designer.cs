@@ -1615,7 +1615,7 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(800, 600);
             Name = "ShortcutForm";
-            ShowIcon = false;
+            ShowIcon = true;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "DisplayMagician - Configure a Game Shortcut";
             FormClosing += ShortcutForm_FormClosing;

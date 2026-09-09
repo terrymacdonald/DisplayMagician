@@ -67,7 +67,7 @@ namespace DisplayMagician.UIForms
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "AudioAccessPermissionForm";
-            ShowIcon = false;
+            ShowIcon = true;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "DisplayMagician - Audio Access";
             ResumeLayout(false);

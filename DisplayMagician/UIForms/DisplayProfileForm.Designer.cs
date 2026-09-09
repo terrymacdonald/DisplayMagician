@@ -583,7 +583,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MinimumSize = new System.Drawing.Size(1024, 970);
             Name = "DisplayProfileForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "DisplayMagician - Display Profiles";

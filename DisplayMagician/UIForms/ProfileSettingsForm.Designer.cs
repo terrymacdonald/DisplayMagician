@@ -248,7 +248,7 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(662, 478);
             Name = "ProfileSettingsForm";
-            ShowIcon = false;
+            ShowIcon = true;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Profile Settings";

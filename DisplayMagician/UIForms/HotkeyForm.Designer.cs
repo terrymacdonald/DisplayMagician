@@ -193,7 +193,7 @@ namespace DisplayMagician.UIForms
             MaximumSize = new System.Drawing.Size(867, 522);
             MinimumSize = new System.Drawing.Size(673, 369);
             Name = "HotkeyForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Choose a Hotkey";

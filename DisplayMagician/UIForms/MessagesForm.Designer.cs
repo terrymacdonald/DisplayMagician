@@ -302,7 +302,7 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(860, 560);
             Name = "MessagesForm";
-            ShowIcon = false;
+            ShowIcon = true;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "DisplayMagician Messages";
             splitContainer.Panel1.ResumeLayout(false);

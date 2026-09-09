@@ -151,7 +151,7 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(647, 388);
             Name = "DonationForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Annual Donation Appeal";

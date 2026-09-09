@@ -80,7 +80,7 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(598, 219);
             Name = "LoadingForm";
-            ShowIcon = false;
+            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "DisplayMagician is loading....";

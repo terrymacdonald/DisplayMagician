@@ -607,7 +607,7 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MinimumSize = new System.Drawing.Size(1534, 927);
             Name = "FovCalcForm";
-            ShowIcon = false;
+            ShowIcon = true;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Field of View (FOV) Calculator";
             Load += FovCalcForm_Load;
