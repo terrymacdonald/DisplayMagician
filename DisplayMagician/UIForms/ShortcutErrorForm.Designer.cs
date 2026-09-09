@@ -87,12 +87,12 @@ namespace DisplayMagician.UIForms
             Controls.Add(btn_save);
             Controls.Add(lbl_title);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MaximizeBox = false;
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(950, 539);
             Name = "ShortcutErrorForm";
-            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Shortcut errors detected";

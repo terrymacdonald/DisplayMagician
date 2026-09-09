@@ -420,9 +420,8 @@ namespace DisplayMagician.UIForms
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MinimumSize = new System.Drawing.Size(950, 652);
             Name = "ShortcutLibraryForm";
-            ShowIcon = true;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "DisplayMagician - Game Shortcuts";
+            Text = "Game Shortcut Library";
             Load += ShortcutLibraryForm_Load;
             KeyPress += ShortcutLibraryForm_KeyPress;
             cms_shortcuts.ResumeLayout(false);

@@ -32,7 +32,6 @@ namespace DisplayMagician.UIForms
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutForm));
             btn_save = new System.Windows.Forms.Button();
             btn_cancel = new System.Windows.Forms.Button();
             il_games = new System.Windows.Forms.ImageList(components);
@@ -46,9 +45,6 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
             tabp_audio = new System.Windows.Forms.TabPage();
-            p_audio_access_warning = new System.Windows.Forms.Panel();
-            lbl_audio_access_warning = new System.Windows.Forms.Label();
-            lnk_open_microphone_settings = new System.Windows.Forms.LinkLabel();
             gb_audio_profile = new System.Windows.Forms.GroupBox();
             gb_selected_audio_settings = new System.Windows.Forms.GroupBox();
             txt_audio_profile_settings = new System.Windows.Forms.TextBox();
@@ -63,6 +59,9 @@ namespace DisplayMagician.UIForms
             btn_delete_audio_profile = new System.Windows.Forms.Button();
             btn_create_audio_profile = new System.Windows.Forms.Button();
             btn_update_audio_profile = new System.Windows.Forms.Button();
+            p_audio_access_warning = new System.Windows.Forms.Panel();
+            lnk_open_microphone_settings = new System.Windows.Forms.LinkLabel();
+            lbl_audio_access_warning = new System.Windows.Forms.Label();
             cb_dont_change_audio = new System.Windows.Forms.CheckBox();
             tabp_before = new System.Windows.Forms.TabPage();
             flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
@@ -144,6 +143,7 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nud_speaker_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nud_microphone_volume).BeginInit();
+            p_audio_access_warning.SuspendLayout();
             tabp_before.SuspendLayout();
             p_start_program_upper.SuspendLayout();
             tabp_game.SuspendLayout();
@@ -340,40 +340,6 @@ namespace DisplayMagician.UIForms
             tabp_audio.Size = new System.Drawing.Size(1264, 750);
             tabp_audio.TabIndex = 4;
             tabp_audio.Text = "2. Choose Audio";
-            // 
-            // p_audio_access_warning
-            // 
-            p_audio_access_warning.BackColor = System.Drawing.Color.FromArgb(194, 31, 31);
-            p_audio_access_warning.Controls.Add(lnk_open_microphone_settings);
-            p_audio_access_warning.Controls.Add(lbl_audio_access_warning);
-            p_audio_access_warning.Location = new System.Drawing.Point(26, 52);
-            p_audio_access_warning.Name = "p_audio_access_warning";
-            p_audio_access_warning.Size = new System.Drawing.Size(1215, 54);
-            p_audio_access_warning.TabIndex = 4;
-            p_audio_access_warning.Visible = false;
-            // 
-            // lbl_audio_access_warning
-            // 
-            lbl_audio_access_warning.ForeColor = System.Drawing.Color.White;
-            lbl_audio_access_warning.Location = new System.Drawing.Point(12, 5);
-            lbl_audio_access_warning.Name = "lbl_audio_access_warning";
-            lbl_audio_access_warning.Size = new System.Drawing.Size(885, 44);
-            lbl_audio_access_warning.TabIndex = 0;
-            lbl_audio_access_warning.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // lnk_open_microphone_settings
-            // 
-            lnk_open_microphone_settings.ActiveLinkColor = System.Drawing.Color.White;
-            lnk_open_microphone_settings.AutoSize = true;
-            lnk_open_microphone_settings.LinkColor = System.Drawing.Color.White;
-            lnk_open_microphone_settings.Location = new System.Drawing.Point(927, 17);
-            lnk_open_microphone_settings.Name = "lnk_open_microphone_settings";
-            lnk_open_microphone_settings.Size = new System.Drawing.Size(216, 20);
-            lnk_open_microphone_settings.TabIndex = 1;
-            lnk_open_microphone_settings.TabStop = true;
-            lnk_open_microphone_settings.Text = "Open Windows microphone settings";
-            lnk_open_microphone_settings.VisitedLinkColor = System.Drawing.Color.White;
-            lnk_open_microphone_settings.LinkClicked += lnk_open_microphone_settings_LinkClicked;
             // 
             // gb_audio_profile
             // 
@@ -575,6 +541,40 @@ namespace DisplayMagician.UIForms
             btn_update_audio_profile.Text = "Update Profile from Current Audio";
             btn_update_audio_profile.UseVisualStyleBackColor = true;
             btn_update_audio_profile.Click += btn_update_audio_profile_Click;
+            // 
+            // p_audio_access_warning
+            // 
+            p_audio_access_warning.BackColor = System.Drawing.Color.FromArgb(194, 31, 31);
+            p_audio_access_warning.Controls.Add(lnk_open_microphone_settings);
+            p_audio_access_warning.Controls.Add(lbl_audio_access_warning);
+            p_audio_access_warning.Location = new System.Drawing.Point(26, 52);
+            p_audio_access_warning.Name = "p_audio_access_warning";
+            p_audio_access_warning.Size = new System.Drawing.Size(1215, 54);
+            p_audio_access_warning.TabIndex = 4;
+            p_audio_access_warning.Visible = false;
+            // 
+            // lnk_open_microphone_settings
+            // 
+            lnk_open_microphone_settings.ActiveLinkColor = System.Drawing.Color.White;
+            lnk_open_microphone_settings.AutoSize = true;
+            lnk_open_microphone_settings.LinkColor = System.Drawing.Color.White;
+            lnk_open_microphone_settings.Location = new System.Drawing.Point(927, 17);
+            lnk_open_microphone_settings.Name = "lnk_open_microphone_settings";
+            lnk_open_microphone_settings.Size = new System.Drawing.Size(263, 20);
+            lnk_open_microphone_settings.TabIndex = 1;
+            lnk_open_microphone_settings.TabStop = true;
+            lnk_open_microphone_settings.Text = "Open Windows microphone settings";
+            lnk_open_microphone_settings.VisitedLinkColor = System.Drawing.Color.White;
+            lnk_open_microphone_settings.LinkClicked += lnk_open_microphone_settings_LinkClicked;
+            // 
+            // lbl_audio_access_warning
+            // 
+            lbl_audio_access_warning.ForeColor = System.Drawing.Color.White;
+            lbl_audio_access_warning.Location = new System.Drawing.Point(12, 5);
+            lbl_audio_access_warning.Name = "lbl_audio_access_warning";
+            lbl_audio_access_warning.Size = new System.Drawing.Size(885, 44);
+            lbl_audio_access_warning.TabIndex = 0;
+            lbl_audio_access_warning.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // cb_dont_change_audio
             // 
@@ -1615,9 +1615,8 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(800, 600);
             Name = "ShortcutForm";
-            ShowIcon = true;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "DisplayMagician - Configure a Game Shortcut";
+            Text = "Configure Game Shortcut";
             FormClosing += ShortcutForm_FormClosing;
             Load += ShortcutForm_Load;
             tabc_shortcut.ResumeLayout(false);
@@ -1633,6 +1632,8 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nud_speaker_volume).EndInit();
             ((System.ComponentModel.ISupportInitialize)nud_microphone_volume).EndInit();
+            p_audio_access_warning.ResumeLayout(false);
+            p_audio_access_warning.PerformLayout();
             tabp_before.ResumeLayout(false);
             p_start_program_upper.ResumeLayout(false);
             p_start_program_upper.PerformLayout();
