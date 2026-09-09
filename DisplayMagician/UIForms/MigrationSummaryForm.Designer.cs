@@ -52,10 +52,12 @@ namespace DisplayMagician.UIForms
             btn_close.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             btn_close.BackColor = System.Drawing.Color.Black;
             btn_close.DialogResult = System.Windows.Forms.DialogResult.OK;
+            btn_close.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_close.ForeColor = System.Drawing.Color.White;
-            btn_close.Location = new System.Drawing.Point(473, 396);
+            btn_close.Location = new System.Drawing.Point(460, 396);
             btn_close.Name = "btn_close";
-            btn_close.Size = new System.Drawing.Size(75, 27);
+            btn_close.Size = new System.Drawing.Size(88, 27);
             btn_close.TabIndex = 2;
             btn_close.Text = "&Close";
             btn_close.UseVisualStyleBackColor = false;
@@ -63,8 +65,8 @@ namespace DisplayMagician.UIForms
             // MigrationSummaryForm
             // 
             AcceptButton = btn_close;
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             ClientSize = new System.Drawing.Size(570, 435);

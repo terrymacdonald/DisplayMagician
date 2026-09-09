@@ -97,8 +97,8 @@ namespace DisplayMagician.UIForms
             // 
             // StartMessageForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             BackgroundImage = (System.Drawing.Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
@@ -108,7 +108,6 @@ namespace DisplayMagician.UIForms
             Controls.Add(lbl_heading_text);
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             Name = "StartMessageForm";
-            ShowIcon = true;
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "DisplayMagician - Message";

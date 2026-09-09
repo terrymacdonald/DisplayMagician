@@ -57,8 +57,8 @@ namespace DisplayMagician.UIForms
             // AudioAccessPermissionForm
             // 
             AcceptButton = btn_continue;
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             ClientSize = new System.Drawing.Size(601, 187);
             Controls.Add(btn_continue);
             Controls.Add(lbl_message);
@@ -67,10 +67,9 @@ namespace DisplayMagician.UIForms
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "AudioAccessPermissionForm";
-            ShowIcon = true;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            TopMost = true;
             Text = "DisplayMagician - Audio Access";
+            TopMost = true;
             ResumeLayout(false);
             PerformLayout();
         }
