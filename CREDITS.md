@@ -1,4 +1,4 @@
-###Massive thanks to the amazing help and donations from the following people (in no particular order):
+### Massive thanks to the amazing help and donations from the following people (in no particular order):
 
 * Stefan Hergesell (Thanks for the donation)
 * bladews (Thanks for the donation)

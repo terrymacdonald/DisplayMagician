@@ -8,7 +8,7 @@
 		<MediaTemplate EmbedCab="yes" />
 		
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
-		<Property Id="ARPPRODUCTICON" Value="DisplayMagician.ico" />
+		<Property Id="ARPPRODUCTICON" Value="dm.exe" />
 		<!-- Leave unset by default so the uninstall checkbox is explicitly opt-in. -->
 		<Property Id="REMOVE_USER_DATA" Secure="yes" />
 		

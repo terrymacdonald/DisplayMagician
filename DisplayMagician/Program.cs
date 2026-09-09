@@ -2493,7 +2493,7 @@ namespace DisplayMagician {
                     // Allows running from a ZIP file rather than forcing the app to be installed. If we don't do this then Toasts just wouldn't work.
                     _tempShortcutRegistered = true;
                     ShortcutManager.RegisterAppForNotifications(
-                        AppTempStartMenuPath, Assembly.GetExecutingAssembly().Location, null, AppUserModelId, AppActivationId);
+                        AppTempStartMenuPath, Application.ExecutablePath, null, AppUserModelId, AppActivationId);
                 }
             
             }
