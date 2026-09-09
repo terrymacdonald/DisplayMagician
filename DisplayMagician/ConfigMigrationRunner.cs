@@ -12,6 +12,8 @@ namespace DisplayMagician
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static readonly List<IConfigMigrationRule> MigrationRules = new List<IConfigMigrationRule>
         {
+            new LegacyUnwrappedSettingsToV3Migration(),
+            new SettingsV3ToV4LegacyDataMigration(),
             new SettingsV4ToV5DonationSplitMigration(),
             new SettingsV5ToV6ClientSyncMigration(),
             new SettingsV6ToV7DisplayProfileWaitMigration()
@@ -148,13 +150,19 @@ namespace DisplayMagician
 
         private static string CreateBackup(string fileName, string migrationName)
         {
+            string backupFileName = GetBackupFileName(fileName, migrationName);
+            File.Copy(fileName, backupFileName);
+            return backupFileName;
+        }
+
+        private static string GetBackupFileName(string fileName, string migrationName)
+        {
             string backupFileName = $"{fileName}.{migrationName}.bak";
             if (File.Exists(backupFileName))
             {
                 backupFileName = $"{fileName}.{migrationName}.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
             }
 
-            File.Copy(fileName, backupFileName);
             return backupFileName;
         }
 
@@ -301,6 +309,167 @@ namespace DisplayMagician
                     MissingMemberHandling = MissingMemberHandling.Ignore,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                 };
+            }
+        }
+
+        private sealed class LegacyUnwrappedSettingsToV3Migration : IConfigMigrationRule
+        {
+            public string Name => "Legacy unwrapped settings to v3";
+
+            public bool Applies(MigrationContext context)
+            {
+                return string.IsNullOrWhiteSpace(context.GetSettingsFileVersion()) &&
+                       context.GetSettingsObject() == null &&
+                       context.SettingsFile.Property("StartOnBootUp") != null;
+            }
+
+            public bool Apply(MigrationContext context)
+            {
+                try
+                {
+                    string backupFileName = CreateBackup(context.SettingsFileName, "legacy-unwrapped-to-v3");
+                    logger.Info($"ConfigMigrationRunner/{nameof(LegacyUnwrappedSettingsToV3Migration)}: Created Settings.json backup at {backupFileName}.");
+
+                    JObject oldSettings = (JObject)context.SettingsFile.DeepClone();
+                    context.SettingsFile.RemoveAll();
+                    context.SettingsFile["SettingsFileVersion"] = "3";
+                    context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
+                    context.SettingsFile["Settings"] = oldSettings;
+                    context.MarkSettingsFileChanged();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ConfigMigrationRunner/{nameof(LegacyUnwrappedSettingsToV3Migration)}: Failed to wrap legacy Settings.json.");
+                    return false;
+                }
+            }
+        }
+
+        private sealed class SettingsV3ToV4LegacyDataMigration : IConfigMigrationRule
+        {
+            private const string MigrationName = "v3-legacy";
+            private const string NoChangeProfileUuid = "00000000-0000-4000-8000-000000000000";
+            private static readonly string[] LegacyHotkeyFieldNames =
+            {
+                "HotkeyMainWindow",
+                "HotkeyDisplayProfileWindow",
+                "HotkeyShortcutLibraryWindow"
+            };
+            private static readonly string[] LegacyShortcutAudioFieldNames =
+            {
+                "AudioDevice",
+                "ChangeAudioDevice",
+                "UseAsCommsAudioDevice",
+                "SetAudioVolume",
+                "AudioVolume",
+                "CaptureDevice",
+                "ChangeCaptureDevice",
+                "UseAsCommsCaptureDevice",
+                "SetCaptureVolume",
+                "CaptureVolume",
+                "CapturePermanence"
+            };
+
+            public string Name => "Settings v3 legacy data migration";
+
+            public bool Applies(MigrationContext context)
+            {
+                return string.Equals(context.GetSettingsFileVersion(), "3", StringComparison.OrdinalIgnoreCase);
+            }
+
+            public bool Apply(MigrationContext context)
+            {
+                JObject settings = context.GetSettingsObject();
+                if (settings == null)
+                {
+                    logger.Error($"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: Settings.json version 3 did not contain a Settings object.");
+                    return false;
+                }
+
+                try
+                {
+                    string settingsBackupFileName = CreateBackup(context.SettingsFileName, MigrationName);
+                    logger.Info($"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: Created Settings.json backup at {settingsBackupFileName}.");
+
+                    RemoveProperties(settings, LegacyHotkeyFieldNames);
+                    settings["KeyboardHotkeys"] = new JArray();
+                    settings["JoystickHotkeys"] = new JArray();
+
+                    MigrateLegacyShortcuts();
+                    RetireLegacyDisplayProfiles();
+
+                    context.SettingsFile["SettingsFileVersion"] = "4";
+                    context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
+                    context.MarkSettingsFileChanged();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: Failed to migrate legacy v3 configuration data.");
+                    return false;
+                }
+            }
+
+            private static void MigrateLegacyShortcuts()
+            {
+                string shortcutsFileName = Path.Combine(Program.AppDataPath, "Shortcuts", "Shortcuts.json");
+                if (!File.Exists(shortcutsFileName))
+                {
+                    logger.Info($"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: No legacy Shortcuts.json file exists, so no shortcut migration is needed.");
+                    return;
+                }
+
+                string backupFileName = CreateBackup(shortcutsFileName, MigrationName);
+                logger.Info($"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: Created Shortcuts.json backup at {backupFileName}.");
+
+                JObject shortcutsFile = ReadJsonObject(shortcutsFileName);
+                JArray shortcuts = shortcutsFile["Shortcuts"] as JArray;
+                if (shortcuts == null)
+                {
+                    throw new InvalidDataException("The legacy Shortcuts.json file did not contain a Shortcuts array.");
+                }
+
+                foreach (JToken shortcutToken in shortcuts)
+                {
+                    if (!(shortcutToken is JObject shortcut))
+                    {
+                        throw new InvalidDataException("The legacy Shortcuts.json file contained an invalid shortcut entry.");
+                    }
+
+                    shortcut["ProfileUUID"] = NoChangeProfileUuid;
+                    shortcut["AudioProfileUUID"] = NoChangeProfileUuid;
+                    shortcut["OverrideAudioSpeakerVolume"] = false;
+                    shortcut["OverrideAudioMicrophoneVolume"] = false;
+                    shortcut.Property("Hotkey")?.Remove();
+                    RemoveProperties(shortcut, LegacyShortcutAudioFieldNames);
+                }
+
+                shortcutsFile["ShortcutFileVersion"] = "5";
+                shortcutsFile["LastUpdated"] = DateTime.UtcNow;
+                WriteJsonObject(shortcutsFileName, shortcutsFile);
+            }
+
+            private static void RetireLegacyDisplayProfiles()
+            {
+                string profilesFileName = Path.Combine(Program.AppDataPath, "Profiles", "DisplayProfiles.json");
+                if (!File.Exists(profilesFileName))
+                {
+                    logger.Info($"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: No legacy DisplayProfiles.json file exists, so no display profile migration is needed.");
+                    return;
+                }
+
+                string backupFileName = GetBackupFileName(profilesFileName, MigrationName);
+                File.Move(profilesFileName, backupFileName);
+                logger.Info($"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: Retired legacy DisplayProfiles.json to {backupFileName}.");
+            }
+
+            private static void RemoveProperties(JObject jsonObject, IEnumerable<string> propertyNames)
+            {
+                foreach (string propertyName in propertyNames)
+                {
+                    jsonObject.Property(propertyName)?.Remove();
+                }
             }
         }
 
