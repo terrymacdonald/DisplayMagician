@@ -46,9 +46,9 @@ namespace DisplayMagician.UIForms
             gb_selected_audio_settings.SuspendLayout();
             p_audio_profile_advisory.SuspendLayout();
             SuspendLayout();
-            //
+            // 
             // lbl_audio_profiles
-            //
+            // 
             lbl_audio_profiles.Anchor = System.Windows.Forms.AnchorStyles.Left;
             lbl_audio_profiles.AutoSize = true;
             lbl_audio_profiles.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -189,11 +189,11 @@ namespace DisplayMagician.UIForms
             txt_audio_profile_settings.Name = "txt_audio_profile_settings";
             txt_audio_profile_settings.ReadOnly = true;
             txt_audio_profile_settings.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txt_audio_profile_settings.Size = new System.Drawing.Size(722, 512);
+            txt_audio_profile_settings.Size = new System.Drawing.Size(722, 434);
             txt_audio_profile_settings.TabIndex = 0;
             // 
             // p_audio_profile_advisory
-            //
+            // 
             p_audio_profile_advisory.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             p_audio_profile_advisory.BackColor = System.Drawing.Color.FromArgb(255, 193, 7);
             p_audio_profile_advisory.Controls.Add(lbl_audio_profile_advisory);
@@ -203,21 +203,21 @@ namespace DisplayMagician.UIForms
             p_audio_profile_advisory.Size = new System.Drawing.Size(734, 70);
             p_audio_profile_advisory.TabIndex = 8;
             p_audio_profile_advisory.Visible = false;
-            //
+            // 
             // lbl_audio_profile_advisory
-            //
+            // 
             lbl_audio_profile_advisory.Dock = System.Windows.Forms.DockStyle.Fill;
             lbl_audio_profile_advisory.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_audio_profile_advisory.ForeColor = System.Drawing.Color.Black;
             lbl_audio_profile_advisory.Location = new System.Drawing.Point(0, 0);
             lbl_audio_profile_advisory.Name = "lbl_audio_profile_advisory";
             lbl_audio_profile_advisory.Padding = new System.Windows.Forms.Padding(10, 6, 10, 6);
-            lbl_audio_profile_advisory.Size = new System.Drawing.Size(570, 70);
+            lbl_audio_profile_advisory.Size = new System.Drawing.Size(734, 70);
             lbl_audio_profile_advisory.TabIndex = 0;
             lbl_audio_profile_advisory.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
+            // 
             // btn_open_microphone_settings
-            //
+            // 
             btn_open_microphone_settings.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btn_open_microphone_settings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_open_microphone_settings.ForeColor = System.Drawing.Color.White;
@@ -229,7 +229,7 @@ namespace DisplayMagician.UIForms
             btn_open_microphone_settings.UseVisualStyleBackColor = true;
             btn_open_microphone_settings.Visible = false;
             btn_open_microphone_settings.Click += btn_open_microphone_settings_Click;
-            //
+            // 
             // btn_back
             // 
             btn_back.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
