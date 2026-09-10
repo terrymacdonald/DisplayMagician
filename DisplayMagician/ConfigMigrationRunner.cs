@@ -523,7 +523,7 @@ namespace DisplayMagician
                         settings["ShareAnonymousUsageMetrics"] = true;
                     }
 
-                    context.SettingsFile["SettingsFileVersion"] = ProgramSettings.CurrentProgramSettingsFileVersion;
+                    context.SettingsFile["SettingsFileVersion"] = "6";
                     context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
                     context.MarkSettingsFileChanged();
                     return true;
