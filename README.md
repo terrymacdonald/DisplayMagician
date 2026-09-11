@@ -1,7 +1,11 @@
 # DisplayMagician
+[![](https://img.shields.io/github/downloads/terrymacdonald/DisplayMagician/total.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
+[![](https://img.shields.io/github/tag-date/terrymacdonald/DisplayMagician.svg?label=version&style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
 [![](https://img.shields.io/github/license/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/blob/main/LICENSE)
 [![](https://img.shields.io/github/commit-activity/y/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/commits/main)
 [![](https://img.shields.io/github/issues/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/issues)
+[![](https://img.shields.io/github/stars/terrymacdonald/DisplayMagician.svg?style=flat-square)]()
+[![](https://img.shields.io/github/sponsors/terrymacdonald.svg?style=flat-square)](https://github.com/sponsors/terrymacdonald)
 
 DisplayMagician is an open source tool for automatically configuring your displays and sound for a game or application from a single Windows Shortcut. DisplayMagician is designed to change your display profile, change audio devices, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
 
@@ -15,7 +19,9 @@ The latest version of this application is available for download via the [releas
 
 <p align="center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases/latest"><img src="READMEAssets/gh-download.png"/></a></p>
 
-**NOTE** - This version of DisplayMagician uses all video card libraries at once. This makes it much more likely to detect your display layout, and should make it much more reliable! 
+``` 
+IMPORTANT - DisplayMagician v3.0.0 and later versions have completely brand new video libraries written from scratch. They can handle multiple video cards at once from different manufacturers and should be able to correctly detect and apply settings that didn't work in previous versions of DisplayMagician. If you had problems with previous versions I would advise you to try again with this new version of DisplayMagician. 
+```
 
 ## What it does
 
@@ -23,7 +29,7 @@ Different games require your displays configured in different ways. If you're a 
 
 There is now. DisplayMagician allows you to configure multiple different display profiles, and then use those different display profiles to create Game Shortcuts. These Game Shortcuts allow you to have your game or application start exactly the way you like it.
 
-Do you like running Dirt Rally 2.0 on a single NVIDIA Surround window across triple screens, and yet you like to run Assetto Corsa across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut (you can even start games with a Hotkey)!
+Do you like running Assetto Corsa Rally on a single NVIDIA Surround window across triple screens, and yet you like to run Le Mans Ultimate across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut (you can even start games with a Hotkey, a button, or a script)!
 
 DisplayMagician also allows you to automatically change to a different audio device just for one game, and will revert that change when you close the game. Great if you have some special audio devices you use only for certain games. No more fiddling with audio settings - just play the game!
 
@@ -34,34 +40,40 @@ Feel free to report missing features or bugs using the project [issue tracker](h
 ## Current features
 
 DisplayMagician lets you set up the following information for each game or application:
-* Create and save a Display Profile to be used within future Desktop Shortcuts
+* Create and save a Display Profile to be used within future Desktop Shortcuts (including wallpapers!).
 * Save a Game Shortcut that will automatically change to a different Display Profile and start your Game when you double-click on it.
 * Run your Game Shortcut using a keyboard shortcut, joystick or game controller like an Elgato Stream Deck.
-* Or start your games by right-clicking on the DisplayMagician Notification Tray icon, or from a desktop background context menu (right-click on the desktop background).
+* Or start your games by right-clicking on the DisplayMagician Notification Tray icon.
+* Or start your game from a desktop background context menu (right-click on the desktop background).
 * Choose which Audio Profile you want the shortcut to use. Like using the wireless headset when driving? This lets you with a single click.
-* Add one or more programs to pre-start before your game or application (and close them afterwards!)
+* Add one or more programs to pre-start before your game or application (and close them afterwards!).
 * Allows you to easily select games from the following Game Launchers:
   * Steam
   * Ubisoft Uplay
   * Origin (Electronic Arts)
   * Epic Games 
   * GOG.com
-* Or select your Game from a list of installed Windows applications (including UWP apps)
-* Or even select a specific game executable to run
+* Or select your Game from a list of installed Windows applications (including UWP apps).
+* Or even select a specific game executable to run.
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Desktop Background Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups, Intel Combined Displays and standard Windows multi-desktop views.
-* Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display)
-* Supports Windows DPI Scaling, rotated screens, setting Refresh Rates and HDR.
+* Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display).
+* Supports Windows DPI Scaling, rotated screens, setting Refresh Rates, HDR and much, much more.
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
-* It even contains a Field-of-view (FOV) Calculator to help set games to make objects appear at normal size
+* It even contains a Field-of-view (FOV) Calculator to help set games to make objects appear at normal size.
 * Allows you to easily chose installed applications from software installed via installers and UWP apps downloaded from the Microsoft Store.
 
 ## Planned features
 
-* Create DisplayMagician v4 using WinUI3
 * Add Unit Tests!
+* Window position tracking
+* Add new Game libraries like Battle.net, Amnazon Games Launcher, Rockstar Games, Riot Client, Itch.io and more.
+* StreamDeck companion application
+* FOV calcualtor updates
+* Create DisplayMagician v4 using WinUI3
+* Multi-language support
 
 ## Requirements
 
@@ -69,7 +81,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
 * Intel Combined Display support requires Intel Graphics Command Center 1.100 or later
-* Requires .Net 10.0 (automatically included in the installer)
+* DisplayMagiaicn requires .Net 10.0 (automatically included in the installer bundle)
 
 ## Donation
 I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to craft something that is useful to so many people. That said, I'd appreciate a donation to help buy a coffee or two! 
@@ -98,34 +110,42 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 
 ### Initial Setup:
 
-If you prefer to see a video on how to setup DisplayMagician, check out [this awesome 'How to Setup DisplayMagician' video from JDM PC Gaming](https://www.youtube.com/watch?v=xqguYAMNHLM). Otherwise, perform the steps shown below:
+If you prefer to see a video on how to setup DisplayMagician, check out these amazing tutorials made by some of my amazing users!
+* ['How to Setup DisplayMagician' video from JDM PC Gaming](https://www.youtube.com/watch?v=xqguYAMNHLM). 
+* [DISPLAYMAGICIAN: A PRACTICAL TOOL FOR SIM RACING (French)](https://www.youtube.com/watch?v=XOiSb9k9S-U)
+* [EIN Tool, um sie ALLE zu kontrollieren! (NVIDIA, ATI, Intel)(German)](https://www.youtube.com/watch?v=cTwhqvT4X5M)
 
-1. Install 'DisplayMagician'
-1. Run 'DisplayMagician'. If you have previously installed DisplayMagician then it may already be running in the System Tray/Notification area.
-1. Open the main DisplayMagician window and click on the 'Display Profiles' button
+Otherwise, feel free to perform the steps shown below to get started:
+
+1. Download the latest [DisplayMagicianSetup_v.exe](https://github.com/terrymacdonald/DisplayMagician/releases/latest) from the list of DisplayMagician releases (expand the Assets section and download the exe file).
+1. Install 'DisplayMagician' by doubleclicking the exe file you just downloaded. Follow the instructions that you are shown.
+1. DisplayMagician will start after the installer closes.
+1. The main DisplayMagician window will open.
+1. Click on the 'Display Profiles' button to open the Display Profiles window. The Display Profiles window will show the current display layout. 
+1. Now you need to change the display layout to whatever you want it to be:
     * Use 'Windows Display Settings', 'NVIDIA Control Panel', 'AMD Adrenalin' or 'Intel Graphics Command Center' to configure your display(s) exactly as you would like them
-    * ALT-TAB back to DisplayMagician, and you should see the new display configuration shown in the Display Profile window.
-    * Click the 'Save As/Rename' button so that DisplayMagician will remember the current Display Profile so you can use it in your Game Shortcuts.
-    * You will need to do this for each different display configuration you want to use in any of your games or applications.
+1. Swap back to DisplayMagician (ALT-TAB), and you should see the new display configuration shown in the Display Profile window.
+1. Click the 'Save As/Rename' button so that DisplayMagician will remember the current Display Profile so you can use it in your Game Shortcuts. The new Display Profile will be shown in the list.
+    * You will need to repeat this process to add each different display configuration you want to use in any of your games or applications.
     * If you want to have this Display Profile apply your current wallpaper then click on the Profile Settings button. You can also change how many times DM attempts to apply the profile.  Useful if you have a dodgy display!
-    * Click 'Back' button to go back to the main DisplayMagician window.
-1. Now that you have some Display Profiles set up, you can create some Game Shortcuts that will use them! Click on the 'Game Shortcuts' button.
-1. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you ever want to edit them.
+1. Click 'Back' button to go back to the main DisplayMagician window.
+1. Now that you have some Display Profiles set up, you will be allowed to create some Game Shortcuts that will use them! Click on the 'Game Shortcuts' button on the main page.
+1. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you ever want to run them or edit them.
 1. Click the 'New' button to create a new Game Shortcut
     * Choose the Display Profile you want to use with the Game Shortcut. Make sure it matches what the game expects :).
-    * Click on the '2. Choose Audio' tab, to create, choose or update which Audio Profile you want to use for sound and microphone details
-    * Click on the '3. Choose what happens before' tab, to choose any other programs you want to start before you start the main Game or Application. You can choose if you want to shut them down afterwards too! Click on the 'Find Examples' button if you'd like to see some example helper software and their settings for popular games.
+    * Click on the '2. Choose Audio' tab, to create, choose or update which Audio Profile you want to use for sound and microphone details. An Audio Profile is just like a display profile, but for audio!
+    * Click on the '3. Choose what happens before' tab, to choose any other programs you want to either start or stop before you start the main Game or Application. You can choose if you want to pout everything back the way it was afterwards too! Click on the 'Find Examples' button if you'd like to see some example helper software and their settings for popular helper programs.
     * Click on the '4. Choose Game to start' tab, to choose the main game or application that the Game Shortcut will start and monitor.
-    * Choose the Game from the list shown (be sure to click it so it has a red border), or if it's not shown in ths list then select the specific game or application executable in the 'Launch a Game executable' section of the page. 
+    * Choose the Game from the list shown (be sure to click it so it has a red border), or if it's not shown in ths list then select the specific game or application executable in the 'Launch a Game executable' section of the page.
     * Click on the '5. Chose what happens afterwards' tab, and choose if you want to rollback any changes made by the Game Shortcut when it runs, or if you want to keep them rather than rolling them back.
     * If the 'auto-suggest name' option is enabled then you should have a Shortcut Name already entered in automatically. 
-    * You can optionally create a keyboard shortcut (Hotkey) for this Game Shortcut. To do this, click on the 'Hotkey' button.
+    * You can optionally create a keyboard hotkey or joystick button shortcut for this Game Shortcut. To do this, click on the 'Hotkey' button.
     * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. The Save button only shows if you have a valid Shortcut set up.
-1. Once you've saved the Shortcut, you should see it in the Shortcut Library.
+1. Once you've saved the Shortcut, you should see it listed in the Shortcut Library.
 1. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
 <p align="center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></p>
 
-You now have 4 different ways you can start your shortcut:
+You now have 4 different ways you can start your Game Shortcut:
 * You can double-click on the Desktop shortcut you just saved to the Desktop to start your game; or
 * You can right mouse click on the DisplayMagician notification tray icon, and select the Game Shortcut from the DisplayMagician pop-up menu to start your game; or
 * You can right mouse click on the Windows Desktop, and select the Game Shortcut from the DisplayMagician pop-up context menu to start your game; or
