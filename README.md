@@ -90,57 +90,10 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 
 ## Usage
 
-### Screenshots
-<p align="center"><img src="READMEAssets/DisplayMagicianMainScreen.png" alt="The DisplayMagician main window." /><br /><em>The DisplayMagician main window.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfiles.png" alt="Display Profiles - where you create and store your display settings" /><br /><em>Display Profiles - where you create and store your display settings</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfilesSettings.png" alt="Display Profile settings - Choose your wallpaper." /><br /><em>Display Profile settings - Choose your wallpaper.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianShortcutLibrary.png" alt="Shortcut Library - Where all your game shortcuts live." /><br /><em>Shortcut Library - Where all your game shortcuts live.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut1.png" alt="Configure Shortcut - Choose which Display Profile you want to use." /><br /><em>Configure Shortcut - Choose which Display Profile you want to use.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut2.png" alt="Configure Shortcut - Choose which Audio Profile you want to use." /><br /><em>Configure Shortcut - Choose which Audio Profile you want to use.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png" alt="Configure Shortcut - Configure helper programs to start or programs to stop before your game runs." /><br /><em>Configure Shortcut - Configure helper programs to start or programs to stop before your game runs.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png" alt="Configure Shortcut: Choose your main game or application to run." /><br /><em>Configure Shortcut: Choose your main game or application to run.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianChooseApplication.png" alt="Choose an application." /><br /><em>Choose an application.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianChooseShortcutImage.png" alt="Choose a shortcut image." /><br /><em>Choose a shortcut image.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png" alt="Configure Shortcut - Choose what happens after you've exited the main game or application." /><br /><em>Configure Shortcut - Choose what happens after you've exited the main game or application.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfileHotkey.png" alt="Set Hotkeys or Button Box Buttons to open DisplayMagician windows, apply Display Profiles, or run Game Shortcuts!" /><br /><em>Set Hotkeys or Button Box Buttons to open DisplayMagician windows, apply Display Profiles, or run Game Shortcuts!</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianFovCalculator.png" alt="Field of view calculator - Helps you configure games FOV to match your simrig layout!" /><br /><em>Field of view calculator - Helps you configure games FOV to match your simrig layout!</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianSettings.png" alt="DisplayMagician settings - Make DisplayMagician work just the way you want." /><br /><em>DisplayMagician settings - Make DisplayMagician work just the way you want.</em></p>
-<br />
-
-<p align="center"><img src="READMEAssets/DisplayMagicianShellExtension.png" alt="DisplayMagician Desktop Context Menu - Access your Display Profiles and Game Shortcuts straight from the desktop." /><br /><em>DisplayMagician Desktop Context Menu - Access your Display Profiles and Game Shortcuts straight from the desktop.</em></p>
-
-
 ### Initial Setup:
 
 If you prefer to see a video on how to setup DisplayMagician, check out these amazing tutorials made by some of my amazing users!
-* ['How to Setup DisplayMagician' video from JDM PC Gaming](https://www.youtube.com/watch?v=xqguYAMNHLM). 
-* [DISPLAYMAGICIAN: A PRACTICAL TOOL FOR SIM RACING (French)](https://www.youtube.com/watch?v=XOiSb9k9S-U)
+* [DISPLAYMAGICIAN: A PRACTICAL TOOL FOR SIM RACING (French with English subtitles)](https://www.youtube.com/watch?v=XOiSb9k9S-U)
 * [EIN Tool, um sie ALLE zu kontrollieren! (NVIDIA, ATI, Intel)(German)](https://www.youtube.com/watch?v=cTwhqvT4X5M)
 
 Otherwise, feel free to perform the steps shown below to get started:
@@ -180,6 +133,59 @@ You now have 4 different ways you can start your Game Shortcut:
 * (optionally) If you've set a Hotkey/Joystick Button for your Game Shortcut, you can press the Hotkey keyboard shortcut or Joystick button whenever DisplayMagician is running and your Game Shortcut will run.
 
 Have fun!
+
+
+### Screenshots
+<p align="center"><img src="READMEAssets/DisplayMagicianMainScreen.png" alt="The DisplayMagician main window." /><br /><em>The DisplayMagician main window.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfiles.png" alt="Display Profiles - where you create and store your display settings" /><br /><em>Display Profiles - where you create and store your display settings</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfilesSettings.png" alt="Display Profile settings - Choose your wallpaper." /><br /><em>Display Profile settings - Choose your wallpaper.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianAudioProfiles.png" alt="Audio Profile - Save audio profiles to use." /><br /><em>Audio Profile - Save audio profiles to use.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianShortcutLibrary.png" alt="Shortcut Library - Where all your game shortcuts live." /><br /><em>Shortcut Library - Where all your game shortcuts live.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianMessages.png" alt="Messages - Be notified when new versions are released." /><br /><em>Messages - Be notified when new versions are released.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut1.png" alt="Configure Shortcut - Choose which Display Profile you want to use." /><br /><em>Configure Shortcut - Choose which Display Profile you want to use.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut2.png" alt="Configure Shortcut - Choose which Audio Profile you want to use." /><br /><em>Configure Shortcut - Choose which Audio Profile you want to use.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png" alt="Configure Shortcut - Configure helper programs to start or programs to stop before your game runs." /><br /><em>Configure Shortcut - Configure helper programs to start or programs to stop before your game runs.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png" alt="Configure Shortcut: Choose your main game or application to run." /><br /><em>Configure Shortcut: Choose your main game or application to run.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianChooseApplication.png" alt="Choose an application." /><br /><em>Choose an application or exe to launch (desktop or UWP apps).</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianChooseShortcutImage.png" alt="Choose a shortcut image." /><br /><em>Choose a better game shortcut image if you don't like the default one.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png" alt="Configure Shortcut - Choose what happens after you've exited the main game or application." /><br /><em>Configure Shortcut - Choose what happens after you've exited the main game or application.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfileHotkey.png" alt="Set Hotkeys or Button Box Buttons to open DisplayMagician windows, apply Display Profiles, or run Game Shortcuts!" /><br /><em>Set Hotkeys or Button Box Buttons to open DisplayMagician windows, apply Display Profiles, or run Game Shortcuts!</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianFovCalculator.png" alt="Field of view calculator - Helps you configure games FOV to match your simrig layout!" /><br /><em>Field of view calculator - Helps you configure games FOV to match your simrig layout!</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianSettings.png" alt="DisplayMagician settings - Make DisplayMagician work just the way you want." /><br /><em>DisplayMagician settings - Make DisplayMagician work just the way you want.</em></p>
+<br />
+
+<p align="center"><img src="READMEAssets/DisplayMagicianContextMenu.png" alt="DisplayMagician Desktop Context Menu - Access your Display Profiles and Game Shortcuts straight from the desktop." /><br /><em>DisplayMagician Desktop Context Menu - Access your Display Profiles and Game Shortcuts straight from the desktop.</em></p>
+
 
 ## Code signing policy
 
