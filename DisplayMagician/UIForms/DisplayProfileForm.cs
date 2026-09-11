@@ -532,7 +532,7 @@ namespace DisplayMagician.UIForms
                 lbl_profile_advisory.ForeColor = Color.Black;
                 lbl_profile_advisory_title.ForeColor = Color.Black;
                 lbl_profile_advisory_title.Text = "⚠ Your display profile may not apply as expected. ⚠";
-                lbl_profile_advisory.Text = $"DisplayMagician could not detect:{Environment.NewLine}• {String.Join(Environment.NewLine + "• ", undetectedDisplays)}{Environment.NewLine}{Environment.NewLine}You may still apply the profile but it may not apply as expected.";
+                lbl_profile_advisory.Text = $"• {String.Join(Environment.NewLine + "• ", undetectedDisplays)}{Environment.NewLine}{Environment.NewLine}You may still apply the profile but it may not apply as expected.";
             }
 
             ResizeProfileAdvisoryPanel();
@@ -563,9 +563,10 @@ namespace DisplayMagician.UIForms
                     else
                     {
                         btn_apply.Visible = true;
+                        btn_apply.Enabled = ilv_saved_profiles.Enabled;
                         lbl_profile_shown_subtitle.Text = "";
                         lbl_profile_shown_subtitle.Visible = false;
-                        cms_profiles.Items[0].Enabled = true;
+                        cms_profiles.Items[0].Enabled = ilv_saved_profiles.Enabled;
                     }
                 }
             }
