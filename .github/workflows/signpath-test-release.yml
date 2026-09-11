@@ -14,10 +14,10 @@ jobs:
     env:
       CONFIGURATION: Release
       PLATFORM: x64
-      SIGNPATH_ORGANIZATION_ID: 7d8563da-0103-4716-ad87-b3633f63f1b2
-      SIGNPATH_PROJECT_SLUG: DisplayMagician
+      SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+      SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
       SIGNPATH_POLICY_SLUG: test-signing
-      SIGNPATH_TEST_PUBLISHER: "CN=Test certificate for 'DisplayMagician [OSS]'"
+      SIGNPATH_TEST_PUBLISHER: ${{ vars.SIGNPATH_TEST_PUBLISHER }}
 
     steps:
       - name: Check out source

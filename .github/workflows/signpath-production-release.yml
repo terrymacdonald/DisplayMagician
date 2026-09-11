@@ -28,11 +28,10 @@ jobs:
       CONFIGURATION: Release
       PLATFORM: x64
       RELEASE_TAG: ${{ inputs.release_tag }}
-      SIGNPATH_ORGANIZATION_ID: 7d8563da-0103-4716-ad87-b3633f63f1b2
-      SIGNPATH_PROJECT_SLUG: DisplayMagician
+      SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+      SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
       SIGNPATH_POLICY_SLUG: release-signing
-      # Replace this with the exact Subject/CN of the SignPath production certificate.
-      SIGNPATH_RELEASE_PUBLISHER: CN=REPLACE_WITH_SIGNPATH_PRODUCTION_CERTIFICATE_SUBJECT
+      SIGNPATH_RELEASE_PUBLISHER: ${{ vars.SIGNPATH_RELEASE_PUBLISHER }}
 
     steps:
       - name: Check out the release tag
@@ -51,11 +50,17 @@ jobs:
           git fetch origin main --tags --force
           git merge-base --is-ancestor "refs/tags/$env:RELEASE_TAG" origin/main
 
-      - name: Verify production certificate details are configured
+      - name: Verify production signing configuration
         shell: pwsh
         run: |
-          if ($env:SIGNPATH_RELEASE_PUBLISHER -match 'REPLACE_WITH') {
-            throw 'Set SIGNPATH_RELEASE_PUBLISHER to the exact Subject/CN of the issued SignPath production certificate before production signing.'
+          $requiredVariables = @(
+            'SIGNPATH_ORGANIZATION_ID',
+            'SIGNPATH_PROJECT_SLUG',
+            'SIGNPATH_RELEASE_PUBLISHER'
+          )
+          $missingVariables = $requiredVariables | Where-Object { [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) }
+          if ($missingVariables) {
+            throw "Configure the required GitHub Actions repository variables before production signing: $($missingVariables -join ', ')."
           }
           if (Test-Path SigningConfig.props) {
             throw 'SigningConfig.props must not exist in a SignPath CI build.'
@@ -104,6 +109,7 @@ jobs:
           signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
           artifact-configuration-slug: package-identity-msix-signing
           github-artifact-id: ${{ steps.unsigned_msix.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 900
           output-artifact-directory: signed-msix
 
       - name: Stage signed identity MSIX
@@ -137,6 +143,7 @@ jobs:
           signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
           artifact-configuration-slug: installer-msi-signing
           github-artifact-id: ${{ steps.unsigned_msi.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 900
           output-artifact-directory: signed-msi
 
       - name: Stage signed MSI
@@ -198,6 +205,7 @@ jobs:
           signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
           artifact-configuration-slug: bundle-exe-signing
           github-artifact-id: ${{ steps.unsigned_bundle.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 900
           output-artifact-directory: signed-bundle
 
       - name: Attach signed installer to the draft release

@@ -183,11 +183,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 ## Credits
-I’m so very thankful for the help of the following people, who make DisplayMagician possible with their donations and help:
+I’m so very thankful for the help of the following people, who make DisplayMagician possible with their especially large donations and help:
 
 * Sean at SimCraft (Thank you so much for your generous donation!)
 * Domenic (Thanks for the solid month of troubleshooting help and the monthly sponsorship!)
 * Frcooper (thanks for the monthly donations)
 * Miiinttt (thanks for the monthly donations)
 
-Also big thanks to [the amazing list of people shown here](CREDITS.md).
+Also big thanks to [the amazing list of people who have donated and helped shown here](CREDITS.md).
