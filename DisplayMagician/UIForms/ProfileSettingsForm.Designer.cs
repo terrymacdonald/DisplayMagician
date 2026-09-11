@@ -108,7 +108,7 @@ namespace DisplayMagician.UIForms
             cmb_wallpaper_mode.Location = new System.Drawing.Point(244, 49);
             cmb_wallpaper_mode.Margin = new System.Windows.Forms.Padding(55, 19, 55, 19);
             cmb_wallpaper_mode.Name = "cmb_wallpaper_mode";
-            cmb_wallpaper_mode.Size = new System.Drawing.Size(200, 24);
+            cmb_wallpaper_mode.Size = new System.Drawing.Size(282, 24);
             cmb_wallpaper_mode.TabIndex = 1;
             cmb_wallpaper_mode.SelectedIndexChanged += cmb_wallpaper_mode_SelectedIndexChanged;
             // 

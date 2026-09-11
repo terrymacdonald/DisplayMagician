@@ -352,9 +352,9 @@ namespace DisplayMagician.UIForms
             gb_audio_profile.Enabled = false;
             gb_audio_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             gb_audio_profile.ForeColor = System.Drawing.Color.White;
-            gb_audio_profile.Location = new System.Drawing.Point(26, 112);
+            gb_audio_profile.Location = new System.Drawing.Point(26, 80);
             gb_audio_profile.Name = "gb_audio_profile";
-            gb_audio_profile.Size = new System.Drawing.Size(1215, 613);
+            gb_audio_profile.Size = new System.Drawing.Size(1215, 644);
             gb_audio_profile.TabIndex = 0;
             gb_audio_profile.TabStop = false;
             gb_audio_profile.Text = "Audio Profiles to use";
@@ -547,9 +547,9 @@ namespace DisplayMagician.UIForms
             p_audio_access_warning.BackColor = System.Drawing.Color.FromArgb(194, 31, 31);
             p_audio_access_warning.Controls.Add(lnk_open_microphone_settings);
             p_audio_access_warning.Controls.Add(lbl_audio_access_warning);
-            p_audio_access_warning.Location = new System.Drawing.Point(26, 52);
+            p_audio_access_warning.Location = new System.Drawing.Point(289, 20);
             p_audio_access_warning.Name = "p_audio_access_warning";
-            p_audio_access_warning.Size = new System.Drawing.Size(1215, 54);
+            p_audio_access_warning.Size = new System.Drawing.Size(952, 54);
             p_audio_access_warning.TabIndex = 4;
             p_audio_access_warning.Visible = false;
             // 
@@ -557,10 +557,11 @@ namespace DisplayMagician.UIForms
             // 
             lnk_open_microphone_settings.ActiveLinkColor = System.Drawing.Color.White;
             lnk_open_microphone_settings.AutoSize = true;
+            lnk_open_microphone_settings.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lnk_open_microphone_settings.LinkColor = System.Drawing.Color.White;
-            lnk_open_microphone_settings.Location = new System.Drawing.Point(927, 17);
+            lnk_open_microphone_settings.Location = new System.Drawing.Point(736, 19);
             lnk_open_microphone_settings.Name = "lnk_open_microphone_settings";
-            lnk_open_microphone_settings.Size = new System.Drawing.Size(263, 20);
+            lnk_open_microphone_settings.Size = new System.Drawing.Size(204, 15);
             lnk_open_microphone_settings.TabIndex = 1;
             lnk_open_microphone_settings.TabStop = true;
             lnk_open_microphone_settings.Text = "Open Windows microphone settings";
@@ -570,9 +571,9 @@ namespace DisplayMagician.UIForms
             // lbl_audio_access_warning
             // 
             lbl_audio_access_warning.ForeColor = System.Drawing.Color.White;
-            lbl_audio_access_warning.Location = new System.Drawing.Point(12, 5);
+            lbl_audio_access_warning.Location = new System.Drawing.Point(5, 4);
             lbl_audio_access_warning.Name = "lbl_audio_access_warning";
-            lbl_audio_access_warning.Size = new System.Drawing.Size(885, 44);
+            lbl_audio_access_warning.Size = new System.Drawing.Size(716, 44);
             lbl_audio_access_warning.TabIndex = 0;
             lbl_audio_access_warning.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -1303,7 +1304,7 @@ namespace DisplayMagician.UIForms
             groupBox3.Controls.Add(cb_run_cmd_afterwards);
             groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             groupBox3.ForeColor = System.Drawing.Color.White;
-            groupBox3.Location = new System.Drawing.Point(204, 526);
+            groupBox3.Location = new System.Drawing.Point(204, 362);
             groupBox3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             groupBox3.Name = "groupBox3";
             groupBox3.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -1415,7 +1416,7 @@ namespace DisplayMagician.UIForms
             groupBox1.Size = new System.Drawing.Size(892, 145);
             groupBox1.TabIndex = 0;
             groupBox1.TabStop = false;
-            groupBox1.Text = "What happens to the Audio output afterwards?";
+            groupBox1.Text = "What happens to the Audio Profile afterwards?";
             // 
             // rb_switch_audio_permanent
             // 
@@ -1424,9 +1425,9 @@ namespace DisplayMagician.UIForms
             rb_switch_audio_permanent.Location = new System.Drawing.Point(114, 86);
             rb_switch_audio_permanent.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
-            rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
+            rb_switch_audio_permanent.Size = new System.Drawing.Size(498, 24);
             rb_switch_audio_permanent.TabIndex = 45;
-            rb_switch_audio_permanent.Text = "Keep using the Audio Device after Game ends (permanent change)";
+            rb_switch_audio_permanent.Text = "Keep using the Audio Profile after Game ends (permanent change)";
             rb_switch_audio_permanent.UseVisualStyleBackColor = true;
             rb_switch_audio_permanent.CheckedChanged += rb_switch_audio_permanent_CheckedChanged;
             // 
@@ -1438,10 +1439,10 @@ namespace DisplayMagician.UIForms
             rb_switch_audio_temp.Location = new System.Drawing.Point(114, 44);
             rb_switch_audio_temp.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             rb_switch_audio_temp.Name = "rb_switch_audio_temp";
-            rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
+            rb_switch_audio_temp.Size = new System.Drawing.Size(559, 24);
             rb_switch_audio_temp.TabIndex = 44;
             rb_switch_audio_temp.TabStop = true;
-            rb_switch_audio_temp.Text = "Revert back to original Audio Device (temporary change while running game)";
+            rb_switch_audio_temp.Text = "Revert back to original Audio Profile (temporary change while running game)";
             rb_switch_audio_temp.UseVisualStyleBackColor = true;
             rb_switch_audio_temp.CheckedChanged += rb_switch_audio_temp_CheckedChanged;
             // 
