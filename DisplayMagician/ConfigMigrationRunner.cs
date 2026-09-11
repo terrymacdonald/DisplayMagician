@@ -447,8 +447,28 @@ namespace DisplayMagician
                 string backupFileName = CreateBackup(shortcutsFileName, MigrationName);
                 logger.Info($"ConfigMigrationRunner/{nameof(SettingsV3ToV4LegacyDataMigration)}: Created Shortcuts.json backup at {backupFileName}.");
 
-                JObject shortcutsFile = ReadJsonObject(shortcutsFileName);
-                JArray shortcuts = shortcutsFile["Shortcuts"] as JArray;
+                string shortcutsJson = File.ReadAllText(shortcutsFileName, Encoding.Unicode);
+                JToken shortcutsRoot = JToken.Parse(shortcutsJson);
+                JObject shortcutsFile;
+                JArray shortcuts;
+                if (shortcutsRoot is JObject wrappedShortcutsFile)
+                {
+                    shortcutsFile = wrappedShortcutsFile;
+                    shortcuts = shortcutsFile["Shortcuts"] as JArray;
+                }
+                else if (shortcutsRoot is JArray legacyShortcuts)
+                {
+                    shortcuts = legacyShortcuts;
+                    shortcutsFile = new JObject
+                    {
+                        ["Shortcuts"] = shortcuts
+                    };
+                }
+                else
+                {
+                    throw new InvalidDataException("The legacy Shortcuts.json file did not contain a shortcut collection.");
+                }
+
                 if (shortcuts == null)
                 {
                     throw new InvalidDataException("The legacy Shortcuts.json file did not contain a Shortcuts array.");

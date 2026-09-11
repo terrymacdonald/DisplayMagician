@@ -1,4 +1,4 @@
-name: Build Setup w/ test cert
+name: Build and sign test release
 
 on:
   workflow_dispatch:
@@ -119,17 +119,33 @@ jobs:
           if ($null -eq $signedMsi) { throw 'SignPath did not return DisplayMagicianPackage.msi.' }
           Copy-Item -LiteralPath $signedMsi.FullName -Destination DisplayMagicianPackage\bin\x64\Release\en-US\DisplayMagicianPackage.msi -Force
 
-      - name: Download the bundled .NET Desktop Runtime
+      - name: Download and verify the bundled .NET Desktop Runtime
         shell: pwsh
+        env:
+          DOTNET_DESKTOP_RUNTIME_VERSION: 10.0.12
+          DOTNET_DESKTOP_RUNTIME_SHA512: 0b907e9312867172a4eb82f4b5ab3f7c2d25e27d8349546d77eeb5d5b8cbecab9ebebfed189b13e9669dc578d892756c548366da539d47b3ddac5efcb7ae72fe
         run: |
-          $runtimeVersion = '10.0.7'
-          $runtimeName = "windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
+          $runtimeName = "windowsdesktop-runtime-$env:DOTNET_DESKTOP_RUNTIME_VERSION-win-x64.exe"
           $runtimePath = Join-Path $env:GITHUB_WORKSPACE "DisplayMagicianBundle\Packages\$runtimeName"
+          $runtimeUrl = "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/$env:DOTNET_DESKTOP_RUNTIME_VERSION/$runtimeName"
+
           New-Item -ItemType Directory -Force -Path (Split-Path -Parent $runtimePath) | Out-Null
-          Invoke-WebRequest -Uri "https://aka.ms/dotnet/$runtimeVersion/windowsdesktop-runtime-win-x64.exe" -OutFile $runtimePath
-          if (-not (Test-Path $runtimePath) -or (Get-Item $runtimePath).Length -eq 0) {
-            throw "The .NET Desktop Runtime installer was not downloaded to $runtimePath."
+          Remove-Item -LiteralPath $runtimePath -Force -ErrorAction SilentlyContinue
+
+          Invoke-WebRequest -Uri $runtimeUrl -OutFile $runtimePath
+
+          $actualHash = (Get-FileHash -LiteralPath $runtimePath -Algorithm SHA512).Hash
+          if ($actualHash -ne $env:DOTNET_DESKTOP_RUNTIME_SHA512) {
+            throw "The downloaded .NET Desktop Runtime does not match its pinned SHA-512."
           }
+
+          $signature = Get-AuthenticodeSignature -LiteralPath $runtimePath
+          if ($signature.Status -ne 'Valid' -or
+              $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') {
+            throw "The downloaded .NET Desktop Runtime does not have a valid Microsoft signature."
+          }
+
+          Write-Host "Verified $runtimeName ($actualHash)."
 
       - name: Build the WiX bundle around the signed MSI
         shell: pwsh
