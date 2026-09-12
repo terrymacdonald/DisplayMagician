@@ -2584,15 +2584,14 @@ namespace DisplayMagicianShared.Intel
             }
 
             HashSet<uint> topologyHiddenEncoderIds = new HashSet<uint>();
-            HashSet<uint> combinedDisplayEncoderIds = new HashSet<uint>();
             HashSet<uint> connectedEncoderIds = new HashSet<uint>(_allConnectedDisplayIdentifiers
                 .Select(identifier => TryGetWindowsDisplayEncoderId(identifier, out uint displayEncoderId) ? displayEncoderId : 0)
                 .Where(displayEncoderId => displayEncoderId != 0));
 
-            if (!AddCombinedDisplayEncoderIds(displayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, combinedDisplayEncoderIds, true))
+            if (!AddCombinedDisplayEncoderIds(displayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, true))
                 return topologyHiddenIdentifiers;
 
-            if (!AddCombinedDisplayEncoderIds(activeDisplayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, combinedDisplayEncoderIds, false, connectedEncoderIds))
+            if (!AddCombinedDisplayEncoderIds(activeDisplayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, false, connectedEncoderIds))
                 return topologyHiddenIdentifiers;
 
             if (requiredPhysicalEncoderIds.Count == 0)
@@ -2613,9 +2612,9 @@ namespace DisplayMagicianShared.Intel
                     continue;
 
                 bool isWindowsLogicalMonitor = candidateIdentifier.StartsWith("WINAPI|", StringComparison.OrdinalIgnoreCase);
-                bool isCombinedIntelOutput = candidateIdentifier.StartsWith("IntelIGCL#", StringComparison.OrdinalIgnoreCase) && combinedDisplayEncoderIds.Contains(displayEncoderId);
+                bool isTopologyHiddenIntelOutput = candidateIdentifier.StartsWith("IntelIGCL#", StringComparison.OrdinalIgnoreCase) && topologyHiddenEncoderIds.Contains(displayEncoderId);
 
-                if ((isWindowsLogicalMonitor && topologyHiddenEncoderIds.Contains(displayEncoderId)) || isCombinedIntelOutput)
+                if ((isWindowsLogicalMonitor && topologyHiddenEncoderIds.Contains(displayEncoderId)) || isTopologyHiddenIntelOutput)
                     topologyHiddenIdentifiers.Add(candidateIdentifier);
             }
 
@@ -2625,7 +2624,7 @@ namespace DisplayMagicianShared.Intel
             return topologyHiddenIdentifiers;
         }
 
-        private static bool AddCombinedDisplayEncoderIds(INTEL_DISPLAY_CONFIG displayConfig, HashSet<uint> requiredPhysicalEncoderIds, HashSet<uint> topologyHiddenEncoderIds, HashSet<uint> combinedDisplayEncoderIds, bool updateRequiredPhysicalEncoderIds, HashSet<uint> activeCombinedChildEncoderIds = null)
+        private static bool AddCombinedDisplayEncoderIds(INTEL_DISPLAY_CONFIG displayConfig, HashSet<uint> requiredPhysicalEncoderIds, HashSet<uint> topologyHiddenEncoderIds, bool updateRequiredPhysicalEncoderIds, HashSet<uint> activeCombinedChildEncoderIds = null)
         {
             if (!displayConfig.CombinedDisplayIsInUse)
                 return true;
@@ -2649,7 +2648,6 @@ namespace DisplayMagicianShared.Intel
                 }
 
                 uint combinedDisplayEncoderId = adapter.CombinedDisplay.CombinedDisplayOutputWindowsDisplayEncoderId;
-                combinedDisplayEncoderIds.Add(combinedDisplayEncoderId);
                 topologyHiddenEncoderIds.Add(combinedDisplayEncoderId);
                 if (updateRequiredPhysicalEncoderIds)
                     requiredPhysicalEncoderIds.Remove(combinedDisplayEncoderId);
