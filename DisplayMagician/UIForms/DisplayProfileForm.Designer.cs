@@ -580,7 +580,7 @@ namespace DisplayMagician.UIForms
             Controls.Add(p_lower);
             Controls.Add(p_upper);
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            MinimumSize = new System.Drawing.Size(800, 700);
+            MinimumSize = new System.Drawing.Size(1024, 970);
             Name = "DisplayProfileForm";
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

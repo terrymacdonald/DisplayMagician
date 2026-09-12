@@ -319,6 +319,7 @@ namespace DisplayMagician.UIForms
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
+            AutoSize = false;
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             Controls.Add(splitContainer1);
             MaximizeBox = false;

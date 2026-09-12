@@ -290,8 +290,7 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Registering DisplayMagician with Windows.");
             RegisterDisplayMagicianWithWindows();
 
-            logger.Trace($"Program/Main: Setting high DPI mode, visual styles and rendering mode");
-            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            logger.Trace($"Program/Main: Setting visual styles and rendering mode");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -819,7 +818,10 @@ namespace DisplayMagician {
                 /* // Update the Active Profile before we load the Main Form
                  ProfileRepository.UpdateActiveProfile();*/
 
-                //AppMainForm.Load += MainForm_LoadCompletedAndOpenApp;
+                // Keep the splash screen in the foreground until the normal main window is visible,
+                // then explicitly transfer focus to it. A minimized startup has no main window to show.
+                if (!AppProgramSettings.MinimiseOnStart)
+                    AppMainForm.Shown += MainForm_ShownAndOpenApp;
 
                 try
                 {
@@ -995,8 +997,9 @@ namespace DisplayMagician {
 
                 Application.Idle += QueueStartupBackgroundTasks;
 
-                // Close the splash screen
-                if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                // A normal startup closes the splash screen from MainForm_ShownAndOpenApp,
+                // once the main window can receive focus. A minimized startup has no shown form.
+                if (AppProgramSettings.MinimiseOnStart && AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                     AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                 // Run the program with normal startup
@@ -1024,13 +1027,21 @@ namespace DisplayMagician {
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
         }
 
-        private static void MainForm_LoadCompletedAndOpenApp(object sender, EventArgs e)
+        private static void MainForm_ShownAndOpenApp(object sender, EventArgs e)
         {
+            logger.Trace("Program/MainForm_ShownAndOpenApp: Closing the splash screen and activating the main window.");
+
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
+            if (AppMainForm == null || AppMainForm.IsDisposed || !AppMainForm.Visible)
+                return;
+
+            bool wasTopMost = AppMainForm.TopMost;
             AppMainForm.TopMost = true;
+            AppMainForm.BringToFront();
             AppMainForm.Activate();
-            AppMainForm.TopMost = false;
+            AppMainForm.TopMost = wasTopMost;
         }
 
         // ReSharper disable once CyclomaticComplexity

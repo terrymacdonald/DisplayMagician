@@ -72,13 +72,7 @@ namespace DisplayMagician
             int width = 0;
             int height = 0;
 
-            if (frm.GetType().Name == "DisplayProfileForm")
-            {
-                max = Program.AppProgramSettings.DisplayProfileFormMaximized;
-                width = Program.AppProgramSettings.DisplayProfileFormWidth;
-                height = Program.AppProgramSettings.DisplayProfileFormHeight;
-            }
-            else if (frm.GetType().Name == "ShortcutLibraryForm")
+            if (frm.GetType().Name == "ShortcutLibraryForm")
             {
                 max = Program.AppProgramSettings.ShortcutLibraryFormMaximized;
                 width = Program.AppProgramSettings.ShortcutLibraryFormWidth;
@@ -93,26 +87,20 @@ namespace DisplayMagician
 
             frm.StartPosition = FormStartPosition.Manual;
 
+            Screen targetScreen = frm.Owner != null ? Screen.FromControl(frm.Owner) : Screen.PrimaryScreen;
+            Rectangle workingArea = targetScreen.WorkingArea;
+
             if (width > 0 && height > 0)
             {
-                frm.Size = new Size(width, height);
+                frm.Size = new Size(
+                    Math.Min(width, workingArea.Width),
+                    Math.Min(height, workingArea.Height));
             }
 
-            if (frm.Owner != null)
-            {
-                Rectangle ownerRect = frm.Owner.DesktopBounds;
-                frm.Location = new Point(
-                    ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
-                    ownerRect.Top + (ownerRect.Height - frm.Height) / 2
-                );
-            }
-            else
-            {
-                frm.Location = new Point(
-                    (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2,
-                    (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2
-                );
-            }
+            frm.Location = new Point(
+                workingArea.Left + (workingArea.Width - frm.Width) / 2,
+                workingArea.Top + (workingArea.Height - frm.Height) / 2
+            );
 
             if (max)
             {
@@ -147,19 +135,7 @@ namespace DisplayMagician
 
             bool changed = false;
 
-            if (frm.GetType().Name == "DisplayProfileForm")
-            {
-                if (Program.AppProgramSettings.DisplayProfileFormMaximized != max ||
-                    Program.AppProgramSettings.DisplayProfileFormWidth != width ||
-                    Program.AppProgramSettings.DisplayProfileFormHeight != height)
-                {
-                    Program.AppProgramSettings.DisplayProfileFormMaximized = max;
-                    Program.AppProgramSettings.DisplayProfileFormWidth = width;
-                    Program.AppProgramSettings.DisplayProfileFormHeight = height;
-                    changed = true;
-                }
-            }
-            else if (frm.GetType().Name == "ShortcutLibraryForm")
+            if (frm.GetType().Name == "ShortcutLibraryForm")
             {
                 if (Program.AppProgramSettings.ShortcutLibraryFormMaximized != max ||
                     Program.AppProgramSettings.ShortcutLibraryFormWidth != width ||

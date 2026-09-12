@@ -112,7 +112,13 @@ namespace DisplayMagicianShared.UserControls
         {
 
             var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
+            if (Width <= 0 || Height <= 0 || viewSize.Width <= 0 || viewSize.Height <= 0)
+                return;
+
             var factor = Math.Min(Width / viewSize.Width, Height / viewSize.Height);
+            if (factor <= 0 || float.IsNaN(factor) || float.IsInfinity(factor))
+                return;
+
             g.ScaleTransform(factor, factor);
 
             var xOffset = (Width / factor - viewSize.Width) / 2f;

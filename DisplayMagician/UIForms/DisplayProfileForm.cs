@@ -61,16 +61,9 @@ namespace DisplayMagician.UIForms
             _profileToLoad = profileToLoad;
         }
 
-        protected override void OnLoad(EventArgs e)
-        {
-            Utils.LoadFormState(this);
-            base.OnLoad(e);
-        }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             _initialLoadCancellationTokenSource.Cancel();
-            Utils.SaveFormState(this);
             base.OnFormClosing(e);
         }
 
