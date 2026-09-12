@@ -1886,12 +1886,11 @@ namespace DisplayMagician
             }
 
             byte[] byteBuffer = Convert.FromBase64String(image);
-            MemoryStream memoryStream = new MemoryStream(byteBuffer)
+            using (MemoryStream memoryStream = new MemoryStream(byteBuffer))
+            using (Image decodedImage = Image.FromStream(memoryStream))
             {
-                Position = 0
-            };
-
-            return (Bitmap)Bitmap.FromStream(memoryStream);
+                return new Bitmap(decodedImage);
+            }
         }
 
         //convert bitmap to byte (serialize)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Windows;
@@ -490,10 +490,18 @@ namespace DisplayMagician
                 throw (new System.IO.FileNotFoundException());
             }
 
-            var myIcon = System.Drawing.Icon.FromHandle(shinfo.hIcon);
-            DestroyIcon(shinfo.hIcon);
-            //CloseHandle(shinfo.hIcon);
-            return myIcon;
+            try
+            {
+                using (Icon systemIcon = Icon.FromHandle(shinfo.hIcon))
+                {
+                    return (Icon)systemIcon.Clone();
+                }
+            }
+            finally
+            {
+                if (shinfo.hIcon != IntPtr.Zero)
+                    DestroyIcon(shinfo.hIcon);
+            }
 
         }
 
@@ -524,26 +532,31 @@ namespace DisplayMagician
             Guid iidImageList = new Guid("46EB5926-582E-4017-9FDF-E8998DAA0950");
 
             int size = jumbo ? SHIL_JUMBO : SHIL_EXTRALARGE;
-            var hres = SHGetImageList(size, ref iidImageList, out IImageList iml); // writes iml
-            //if (hres == 0)
-            //{
-            //    throw (new System.Exception("Error SHGetImageList"));
-            //}
-
+            int hres = SHGetImageList(size, ref iidImageList, out IImageList iml); // writes iml
             IntPtr hIcon = IntPtr.Zero;
-            int ILD_TRANSPARENT = 1;
-            hres = iml.GetIcon(iconIndex, ILD_TRANSPARENT, ref hIcon);
-            //if (hres == 0)
-            //{
-            //    throw (new System.Exception("Error iml.GetIcon"));
-            //}
+            try
+            {
+                if (hres != 0 || iml == null)
+                    throw new InvalidOperationException("Unable to get the Windows system image list.");
 
-            var myIcon = System.Drawing.Icon.FromHandle(hIcon);
-            //myIcon.Dispose();
-            //DestroyIcon(hIcon);
-            //CloseHandle(hIcon);
+                const int ILD_TRANSPARENT = 1;
+                hres = iml.GetIcon(iconIndex, ILD_TRANSPARENT, ref hIcon);
+                if (hres != 0 || hIcon == IntPtr.Zero)
+                    throw new InvalidOperationException("Unable to get the icon from the Windows system image list.");
 
-            return myIcon;
+                using (Icon systemIcon = Icon.FromHandle(hIcon))
+                {
+                    return (Icon)systemIcon.Clone();
+                }
+            }
+            finally
+            {
+                if (hIcon != IntPtr.Zero)
+                    DestroyIcon(hIcon);
+
+                if (iml != null && Marshal.IsComObject(iml))
+                    Marshal.ReleaseComObject(iml);
+            }
 
         }
 

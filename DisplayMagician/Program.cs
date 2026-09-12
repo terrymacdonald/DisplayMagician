@@ -1247,6 +1247,7 @@ namespace DisplayMagician {
                 return ApplyProfileResult.Error;
             }
             ApplyProfileResult result = ApplyProfileResult.Error;            
+            bool semaphoreReleaseDeferred = false;
             if (Program.AppCancellationTokenSource != null)
             {
                 Program.AppCancellationTokenSource.Dispose();
@@ -1259,7 +1260,32 @@ namespace DisplayMagician {
                 if (completed)
                     result = taskToRun.Result;
                 else
+                {
                     logger.Warn($"Program/ApplyProfileTask: Profile apply task timed out after 120 seconds.");
+                    semaphoreReleaseDeferred = true;
+                    _ = taskToRun.ContinueWith(completedTask =>
+                    {
+                        try
+                        {
+                            if (completedTask.IsFaulted)
+                            {
+                                logger.Error(completedTask.Exception, $"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} completed with an exception.");
+                            }
+                            else if (completedTask.IsCanceled)
+                            {
+                                logger.Warn($"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} was cancelled.");
+                            }
+                            else
+                            {
+                                logger.Warn($"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} has now finished with result {completedTask.Result}.");
+                            }
+                        }
+                        finally
+                        {
+                            Program.AppBackgroundTaskSemaphoreSlim.Release();
+                        }
+                    }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+                }
             }   
             catch (OperationCanceledException ex)
             {
@@ -1273,7 +1299,7 @@ namespace DisplayMagician {
             {
                 //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
                 //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                if (gotGreenLightToProceed)
+                if (gotGreenLightToProceed && !semaphoreReleaseDeferred)
                 {
                     Program.AppBackgroundTaskSemaphoreSlim.Release();
                 }                        

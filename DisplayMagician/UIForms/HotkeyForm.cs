@@ -269,11 +269,20 @@ namespace DisplayMagician.UIForms
         public void StopCapture()
         {
             if (_captureCts == null) return;
-            _captureCts.Cancel();
-            _captureThread.Join();
-            _captureCts.Dispose();
+
+            CancellationTokenSource captureCts = _captureCts;
+            Thread captureThread = _captureThread;
             _captureCts = null;
             _captureThread = null;
+
+            captureCts.Cancel();
+            if (captureThread != null && captureThread.IsAlive && !captureThread.Join(TimeSpan.FromSeconds(2)))
+            {
+                logger.Warn("HotkeyForm/StopCapture: The capture thread did not exit within two seconds after cancellation.");
+                return;
+            }
+
+            captureCts.Dispose();
         }
 
         private void btn_remove_all_Click(object sender, EventArgs e)
@@ -471,29 +480,45 @@ namespace DisplayMagician.UIForms
             {
                 IEnumerable<string> hotkeyNames = keys.Select(k => k.ToString());
                 string hotkeyText = string.Join(" + ", hotkeyNames);
-                if (txt_hotkey.InvokeRequired)
-                {
-                    txt_hotkey.Invoke(new Action(() => txt_hotkey.Text = hotkeyText));
-                }
-                else
-                {
-                    txt_hotkey.Text = hotkeyText;
-                }
+                SetHotkeyText(hotkeyText);
             }
             else if (buttons.Count > 0)
             {
                 IEnumerable<string> hotkeyNames = buttons.Select(b => $"{b.DeviceName} Button #{b.DeviceButtonIndex}");
                 string hotkeyText = string.Join(" + ", hotkeyNames);
+                SetHotkeyText(hotkeyText);
+            }
+
+        }
+
+        private void SetHotkeyText(string hotkeyText)
+        {
+            if (IsDisposed || Disposing || !IsHandleCreated)
+                return;
+
+            try
+            {
                 if (txt_hotkey.InvokeRequired)
                 {
-                    txt_hotkey.Invoke(new Action(() => txt_hotkey.Text = hotkeyText));
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        if (!IsDisposed && !Disposing)
+                            txt_hotkey.Text = hotkeyText;
+                    });
                 }
                 else
                 {
                     txt_hotkey.Text = hotkeyText;
                 }
             }
-
+            catch (ObjectDisposedException)
+            {
+                // The form was disposed while the capture thread was posting this update.
+            }
+            catch (InvalidOperationException)
+            {
+                // The form handle was destroyed while the capture thread was posting this update.
+            }
         }
 
         /* private void GenerateInvalidModifiers()

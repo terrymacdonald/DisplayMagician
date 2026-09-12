@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -310,12 +310,12 @@ namespace DisplayMagician
 
         public static List<ShortcutBitmap> GetMeAllBitmapsFromFile(ArrayList fileNamesAndPaths)
         {
-            List<ShortcutBitmap> bmToReturn = null;
+            List<ShortcutBitmap> bmToReturn = new List<ShortcutBitmap>();
 
-            if (fileNamesAndPaths.Count == 0)
+            if (fileNamesAndPaths == null || fileNamesAndPaths.Count == 0)
             {
                 logger.Warn($"ShortcutItem/GetMeAllBitmapsFromFile: The fileNamesAndPaths list is empty! Can't get the bitmap from the files.");
-                return null;
+                return bmToReturn;
             }
             logger.Trace($"ShortcutItem/GetMeAllBitmapsFromFile: We have {fileNamesAndPaths.Count} files to try and extract a bitmap from.");
             foreach (string fileNameAndPath in fileNamesAndPaths)
