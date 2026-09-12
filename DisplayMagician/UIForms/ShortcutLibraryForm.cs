@@ -573,10 +573,9 @@ namespace DisplayMagician.UIForms
             {
                 result = await Program.RunShortcutTaskAsync(_selectedShortcut);
             }
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException)
             {
-                if (ex.CancellationToken == Program.AppCancellationTokenSource.Token)
-                    logger.Trace($"ShortcutLibraryForm/btn_run_Click: Cancellation token provided while running shortcut {_selectedShortcut.Name}. User asked to cancel.");
+                logger.Trace($"ShortcutLibraryForm/btn_run_Click: Cancellation token provided while running shortcut {_selectedShortcut.Name}. User asked to cancel.");
             }
             catch(Exception ex)
             {
@@ -746,7 +745,7 @@ namespace DisplayMagician.UIForms
                 if (e.KeyChar == 27)
                 {
                     // We set the CancellationTokenSource to true and it will be picked up by the shortcut check.
-                    Program.AppCancellationTokenSource.Cancel();
+                    Program.CancelActiveOperation();
                 }
             }
         }
@@ -806,7 +805,7 @@ namespace DisplayMagician.UIForms
         {
             logger.Trace($"ShortcutLibraryForm/btn_cancel_Click: User clicked on the Cancel button after running a Shortcut.");
             // Inform the ShortcutRepository that it needs to cancel the running shortcut.
-            Program.AppCancellationTokenSource.Cancel();
+            Program.CancelActiveOperation();
         }
 
         private void sendToClipboardToolStripMenuItem_Click(object sender, EventArgs e)

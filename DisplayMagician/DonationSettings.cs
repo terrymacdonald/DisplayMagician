@@ -148,6 +148,7 @@ namespace DisplayMagician
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
+                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
@@ -198,6 +199,7 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
@@ -217,7 +219,7 @@ namespace DisplayMagician
                 string json = JsonConvert.SerializeObject(donationSettingsFile, Formatting.Indented, serializerSettings);
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    File.WriteAllText(DonationSettingsStorageJsonFullFileName, json, Encoding.Unicode);
+                    AtomicFile.WriteAllText(DonationSettingsStorageJsonFullFileName, json, Encoding.Unicode);
                     return true;
                 }
             }

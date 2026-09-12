@@ -67,7 +67,7 @@ namespace DisplayMagicianShared
         private static AudioAccessStatus _audioAccessStatus = AudioAccessStatus.Unknown;
 
 
-        private static bool _userChangingAudioProfiles = false;
+        private static volatile bool _userChangingAudioProfiles = false;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -620,6 +620,7 @@ namespace DisplayMagicianShared
                             NullValueHandling = NullValueHandling.Include,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
+                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
@@ -734,6 +735,7 @@ namespace DisplayMagicianShared
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
@@ -769,7 +771,7 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Saving the audioProfile repository to the {_audioProfileStorageJsonFullFileName}.");
 
-                    File.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
+                    AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
                     if (ValidateAudioProfiles())
                     {
                         SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Validated that we successfully saved the Audio Profiles repository to {_audioProfileStorageJsonFullFileName}.");
@@ -784,7 +786,7 @@ namespace DisplayMagicianShared
 
                         SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Saving the Audio Profiles repository to the {_audioProfileStorageJsonFullFileName} for a second time.");
 
-                        File.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
+                        AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
 
                         if (ValidateAudioProfiles())
                         {
@@ -852,6 +854,7 @@ namespace DisplayMagicianShared
                                 NullValueHandling = NullValueHandling.Include,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
+                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {

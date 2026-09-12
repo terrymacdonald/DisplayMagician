@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using DisplayMagicianShared;
 using DisplayMagicianShared.Windows;
 using Newtonsoft.Json;
 
@@ -892,7 +893,7 @@ namespace DisplayMagician.Messaging
                 {
                     Directory.CreateDirectory(_messagesFolderPath);
                     string json = JsonConvert.SerializeObject(store, Formatting.Indented);
-                    File.WriteAllText(_storePath, json);
+                    AtomicFile.WriteAllText(_storePath, json, Encoding.UTF8);
                 }
                 catch (Exception ex)
                 {

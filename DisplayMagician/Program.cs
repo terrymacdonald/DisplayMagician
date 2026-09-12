@@ -68,7 +68,8 @@ namespace DisplayMagician {
         //public static bool AppVersionUpgrade = false;
         public static bool AppHasPackageIdentity = false;
         //public static string AppLastVersionRun = "0.0";
-        public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
+        private static readonly object _activeOperationCancellationLock = new object();
+        private static CancellationTokenSource _activeOperationCancellationSource;
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
 
@@ -109,6 +110,42 @@ namespace DisplayMagician {
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
 
         private static volatile bool _useTestUpdateFeed;
+
+        public static bool CancelActiveOperation()
+        {
+            lock (_activeOperationCancellationLock)
+            {
+                if (_activeOperationCancellationSource == null)
+                    return false;
+
+                _activeOperationCancellationSource.Cancel();
+                return true;
+            }
+        }
+
+        private static CancellationTokenSource BeginActiveOperationCancellation()
+        {
+            lock (_activeOperationCancellationLock)
+            {
+                if (_activeOperationCancellationSource != null)
+                    throw new InvalidOperationException("A cancellable operation is already active.");
+
+                _activeOperationCancellationSource = new CancellationTokenSource();
+                return _activeOperationCancellationSource;
+            }
+        }
+
+        private static void CompleteActiveOperationCancellation(CancellationTokenSource cancellationSource)
+        {
+            lock (_activeOperationCancellationLock)
+            {
+                if (!ReferenceEquals(_activeOperationCancellationSource, cancellationSource))
+                    return;
+
+                _activeOperationCancellationSource = null;
+                cancellationSource.Dispose();
+            }
+        }
 
         public enum ERRORLEVEL: int
         {
@@ -917,7 +954,7 @@ namespace DisplayMagician {
 
             logger.Trace($"Program/Main: Disposing the CancellationToken");
             // Dispose of the CancellationTokenSource
-            Program.AppCancellationTokenSource.Dispose();
+            Program.CancelActiveOperation();
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
             logger.Trace($"Program/Main: Returning the following errorlevel to the OS: {errorLevelToReturnToOS} ({((ERRORLEVEL)errorLevelToReturnToOS).ToString()})");
@@ -1195,17 +1232,11 @@ namespace DisplayMagician {
                 return RunShortcutResult.Error;
             }
 
-            // This line creates a new cancellationtokensource, just in case the user used the last one up cancelling something.
-            // Each cancellationtoken can only be consumed once, and then needs to be replaced.
-            if (Program.AppCancellationTokenSource != null)
-            {
-                Program.AppCancellationTokenSource.Dispose();
-            }
-            Program.AppCancellationTokenSource = new CancellationTokenSource();
+            CancellationTokenSource cancellationSource = BeginActiveOperationCancellation();
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                CancellationToken cancelToken = AppCancellationTokenSource.Token;
+                CancellationToken cancelToken = cancellationSource.Token;
                 // Start the RunShortcut Task in a new thread
                 Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, cancelToken), cancelToken);
                 // Awaiting keeps a WinForms caller's message loop available for shortcut prompts.
@@ -1221,6 +1252,7 @@ namespace DisplayMagician {
             }
             finally
             {
+                CompleteActiveOperationCancellation(cancellationSource);
                 //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
                 //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
                 if (gotGreenLightToProceed)
@@ -1248,11 +1280,7 @@ namespace DisplayMagician {
             }
             ApplyProfileResult result = ApplyProfileResult.Error;            
             bool semaphoreReleaseDeferred = false;
-            if (Program.AppCancellationTokenSource != null)
-            {
-                Program.AppCancellationTokenSource.Dispose();
-            }                
-            Program.AppCancellationTokenSource = new CancellationTokenSource();
+            CancellationTokenSource cancellationSource = BeginActiveOperationCancellation();
             try
             {
                 Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
@@ -1282,6 +1310,7 @@ namespace DisplayMagician {
                         }
                         finally
                         {
+                            CompleteActiveOperationCancellation(cancellationSource);
                             Program.AppBackgroundTaskSemaphoreSlim.Release();
                         }
                     }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
@@ -1301,6 +1330,7 @@ namespace DisplayMagician {
                 //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
                 if (gotGreenLightToProceed && !semaphoreReleaseDeferred)
                 {
+                    CompleteActiveOperationCancellation(cancellationSource);
                     Program.AppBackgroundTaskSemaphoreSlim.Release();
                 }                        
             }
@@ -2536,7 +2566,7 @@ namespace DisplayMagician {
                             {
                                 Program.AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                 {
-                                    Program.AppCancellationTokenSource.Cancel();
+                                    Program.CancelActiveOperation();
                                 });
 
                             }

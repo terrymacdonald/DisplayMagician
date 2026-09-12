@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using DisplayMagicianShared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -156,10 +157,7 @@ namespace DisplayMagician
                 Directory.CreateDirectory(directory);
             }
 
-            string tempFileName = $"{fileName}.tmp";
-            File.WriteAllText(tempFileName, contents, Encoding.Unicode);
-            File.Copy(tempFileName, fileName, true);
-            File.Delete(tempFileName);
+            AtomicFile.WriteAllText(fileName, contents, Encoding.Unicode);
         }
 
         private static string CreateBackup(string fileName, string migrationName)
@@ -326,6 +324,7 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Ignore,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                 };

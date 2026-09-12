@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using IconLib;
@@ -63,7 +63,7 @@ namespace DisplayMagicianShared
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
 
-        private static bool _userChangingProfiles = false;
+        private static volatile bool _userChangingProfiles = false;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -797,6 +797,7 @@ namespace DisplayMagicianShared
                             NullValueHandling = NullValueHandling.Include,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
+                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
@@ -847,6 +848,7 @@ namespace DisplayMagicianShared
                                 NullValueHandling = NullValueHandling.Include,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
+                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
@@ -1013,7 +1015,7 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/MigrateJsonToLatestVersion: Saving the profile repository to the {_profileStorageJsonFullFileName}.");
 
-                    File.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
+                    AtomicFile.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
                 }
             }
 
@@ -1068,6 +1070,7 @@ namespace DisplayMagicianShared
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
@@ -1103,7 +1106,7 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName}.");
 
-                    File.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
+                    AtomicFile.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
                     if (ValidateProfiles())
                     {
                         SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFullFileName}.");
@@ -1118,7 +1121,7 @@ namespace DisplayMagicianShared
 
                         SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName} for a second time.");
 
-                        File.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
+                        AtomicFile.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
 
                         if (ValidateProfiles())
                         {
@@ -1186,6 +1189,7 @@ namespace DisplayMagicianShared
                                 NullValueHandling = NullValueHandling.Include,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
+                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {

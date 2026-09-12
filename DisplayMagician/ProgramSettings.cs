@@ -607,6 +607,7 @@ namespace DisplayMagician
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
+                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
 {
@@ -637,7 +638,7 @@ namespace DisplayMagician
                         MessageBox.Show($"The Program Settings file {_programSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Program Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         try
                         {
@@ -647,6 +648,7 @@ namespace DisplayMagician
                                 NullValueHandling = NullValueHandling.Ignore,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
+                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
@@ -669,7 +671,7 @@ namespace DisplayMagician
                         catch (JsonReaderException nex)
                         {
                             // If there is a error in the JSON format
-                            if (ex.HResult == -2146233088)
+                            if (nex.HResult == -2146233088)
                             {
                                 SharedLogger.logger.Error(nex, $"ProgramSettings/LoadSettings: JSONReaderException - The Program Settings file {_programSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
@@ -726,6 +728,7 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
@@ -747,10 +750,7 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    string tempFileName = _programSettingsStorageJsonFullFileName + ".tmp";
-                    File.WriteAllText(tempFileName, json, Encoding.Unicode);
-                    File.Copy(tempFileName, _programSettingsStorageJsonFullFileName, true);
-                    File.Delete(tempFileName);
+                    AtomicFile.WriteAllText(_programSettingsStorageJsonFullFileName, json, Encoding.Unicode);
                     return true;
                 }
             }

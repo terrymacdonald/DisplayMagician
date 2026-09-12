@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -71,26 +71,34 @@ namespace DisplayMagicianShared
             var sourceSize = Marshal.SizeOf(typeof(T));
             var destinationSize = Marshal.SizeOf(typeof(TResult));
             var minSize = Math.Min(sourceSize, destinationSize);
-            var sourcePointer = Marshal.AllocHGlobal(sourceSize);
-            Marshal.StructureToPtr(source, sourcePointer, false);
-            var bytes = new byte[destinationSize];
-
-            if (BitConverter.IsLittleEndian)
+            IntPtr sourcePointer = IntPtr.Zero;
+            IntPtr destinationPointer = IntPtr.Zero;
+            try
             {
-                Marshal.Copy(sourcePointer, bytes, 0, minSize);
+                sourcePointer = Marshal.AllocHGlobal(sourceSize);
+                Marshal.StructureToPtr(source, sourcePointer, false);
+                var bytes = new byte[destinationSize];
+
+                if (BitConverter.IsLittleEndian)
+                {
+                    Marshal.Copy(sourcePointer, bytes, 0, minSize);
+                }
+                else
+                {
+                    Marshal.Copy(sourcePointer + (sourceSize - minSize), bytes, destinationSize - minSize, minSize);
+                }
+
+                destinationPointer = Marshal.AllocHGlobal(destinationSize);
+                Marshal.Copy(bytes, 0, destinationPointer, destinationSize);
+                return (TResult)Marshal.PtrToStructure(destinationPointer, typeof(TResult));
             }
-            else
+            finally
             {
-                Marshal.Copy(sourcePointer + (sourceSize - minSize), bytes, destinationSize - minSize, minSize);
+                if (sourcePointer != IntPtr.Zero)
+                    Marshal.FreeHGlobal(sourcePointer);
+                if (destinationPointer != IntPtr.Zero)
+                    Marshal.FreeHGlobal(destinationPointer);
             }
-
-            Marshal.FreeHGlobal(sourcePointer);
-            var destinationPointer = Marshal.AllocHGlobal(destinationSize);
-            Marshal.Copy(bytes, 0, destinationPointer, destinationSize);
-            var destination = (TResult)Marshal.PtrToStructure(destinationPointer, typeof(TResult));
-            Marshal.FreeHGlobal(destinationPointer);
-
-            return destination;
         }
 
         /*public static void DisposeAll<T>(this IEnumerable<T> disposableArray)

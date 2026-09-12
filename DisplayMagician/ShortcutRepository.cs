@@ -539,6 +539,7 @@ namespace DisplayMagician
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
+                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
@@ -570,7 +571,7 @@ namespace DisplayMagician
                         }
                         MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // If we get here then we may need to import the shortcuts from the old format without the Shortcut Version
                         try
@@ -583,6 +584,7 @@ namespace DisplayMagician
                                 NullValueHandling = NullValueHandling.Ignore,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
+                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
@@ -601,7 +603,7 @@ namespace DisplayMagician
                         catch (JsonReaderException nex)
                         {
                             // If there is a error in the JSON format
-                            if (ex.HResult == -2146233088)
+                            if (nex.HResult == -2146233088)
                             {
                                 SharedLogger.logger.Error(nex, $"ShortcutRepository/LoadShortcuts: JSONReaderException - The Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
@@ -755,6 +757,7 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
@@ -778,7 +781,7 @@ namespace DisplayMagician
                 {
                     logger.Debug($"ShortcutRepository/SaveShortcuts: Saving the shortcut repository to the {_shortcutStorageJsonFullFileName}.");
 
-                    File.WriteAllText(_shortcutStorageJsonFullFileName, json, Encoding.Unicode);
+                    AtomicFile.WriteAllText(_shortcutStorageJsonFullFileName, json, Encoding.Unicode);
                     return true;
                 }
             }
