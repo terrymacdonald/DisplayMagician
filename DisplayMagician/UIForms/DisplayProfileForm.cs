@@ -21,6 +21,8 @@ namespace DisplayMagician.UIForms
 {
     internal partial class DisplayProfileForm : DisplayMagicianForm
     {
+        protected override bool FitToWorkingAreaAfterDpiChange => true;
+
         private ProfileItem _selectedProfile;
         //private List<ProfileItem> _savedProfiles = new List<ProfileItem>();
         private string _saveOrRenameMode = "save";

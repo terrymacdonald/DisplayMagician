@@ -406,7 +406,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_upper
             // 
-            p_upper.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_upper.Dock = System.Windows.Forms.DockStyle.Fill;
             p_upper.BackColor = System.Drawing.Color.Transparent;
             p_upper.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             p_upper.Controls.Add(p_profile_advisory);
@@ -491,7 +491,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_lower
             // 
-            p_lower.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_lower.Dock = System.Windows.Forms.DockStyle.Bottom;
             p_lower.BackColor = System.Drawing.Color.Transparent;
             p_lower.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             p_lower.Controls.Add(btn_update);
@@ -503,7 +503,6 @@ namespace DisplayMagician.UIForms
             p_lower.Controls.Add(btn_back);
             p_lower.Location = new System.Drawing.Point(0, 841);
             p_lower.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            p_lower.MaximumSize = new System.Drawing.Size(0, 118);
             p_lower.Name = "p_lower";
             p_lower.Size = new System.Drawing.Size(1008, 102);
             p_lower.TabIndex = 0;
@@ -528,7 +527,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_listview
             // 
-            p_listview.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_listview.Dock = System.Windows.Forms.DockStyle.Bottom;
             p_listview.BackColor = System.Drawing.Color.White;
             p_listview.Controls.Add(ilv_saved_profiles);
             p_listview.Location = new System.Drawing.Point(0, 675);
@@ -539,7 +538,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_middle
             // 
-            p_middle.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            p_middle.Dock = System.Windows.Forms.DockStyle.Bottom;
             p_middle.BackColor = System.Drawing.Color.Transparent;
             p_middle.Controls.Add(label1);
             p_middle.Controls.Add(txt_profile_save_name);
@@ -581,7 +580,7 @@ namespace DisplayMagician.UIForms
             Controls.Add(p_lower);
             Controls.Add(p_upper);
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            MinimumSize = new System.Drawing.Size(1024, 970);
+            MinimumSize = new System.Drawing.Size(800, 700);
             Name = "DisplayProfileForm";
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

@@ -12,6 +12,13 @@ namespace DisplayMagician.UIForms
     public class DisplayMagicianForm : Form
     {
         private static readonly Icon _applicationIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// Large, resizable forms can opt in to remain fully accessible when Windows moves them
+        /// to a monitor with a different DPI. Small dialogs retain the normal WinForms behaviour.
+        /// </summary>
+        protected virtual bool FitToWorkingAreaAfterDpiChange => false;
 
         public DisplayMagicianForm()
         {
@@ -32,6 +39,28 @@ namespace DisplayMagician.UIForms
             if (IsHandleCreated && !DesignMode && LicenseManager.UsageMode != LicenseUsageMode.Designtime)
                 ShortcutManager.ConfigureWindowTaskbar(Handle, clear: true);
             base.OnHandleDestroyed(e);
+        }
+
+        protected override void OnDpiChanged(DpiChangedEventArgs e)
+        {
+            base.OnDpiChanged(e);
+
+            if (!FitToWorkingAreaAfterDpiChange || WindowState != FormWindowState.Normal)
+                return;
+
+            Rectangle suggestedBounds = e.SuggestedRectangle;
+            Rectangle workingArea = Screen.FromRectangle(suggestedBounds).WorkingArea;
+            int width = Math.Min(suggestedBounds.Width, workingArea.Width);
+            int height = Math.Min(suggestedBounds.Height, workingArea.Height);
+            int x = Math.Max(workingArea.Left, Math.Min(suggestedBounds.Left, workingArea.Right - width));
+            int y = Math.Max(workingArea.Top, Math.Min(suggestedBounds.Top, workingArea.Bottom - height));
+            Rectangle fittedBounds = new Rectangle(x, y, width, height);
+
+            if (Bounds != fittedBounds)
+            {
+                logger.Info($"DisplayMagicianForm/OnDpiChanged: Fitting '{Name}' within the destination monitor working area after DPI changed from {e.DeviceDpiOld} to {e.DeviceDpiNew}.");
+                Bounds = fittedBounds;
+            }
         }
     }
 }
