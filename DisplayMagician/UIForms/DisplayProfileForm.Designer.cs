@@ -575,10 +575,10 @@ namespace DisplayMagician.UIForms
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             CancelButton = btn_back;
             ClientSize = new System.Drawing.Size(1008, 943);
+            Controls.Add(p_upper);
             Controls.Add(p_middle);
             Controls.Add(p_listview);
             Controls.Add(p_lower);
-            Controls.Add(p_upper);
             Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MinimumSize = new System.Drawing.Size(1024, 970);
             Name = "DisplayProfileForm";
