@@ -88,6 +88,18 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 
 <a href="https://www.buymeacoffee.com/displaymagician" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a><a href="https://github.com/sponsors/terrymacdonald" target="_blank">  <img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-sponsor.png" alt="Github Sponsor" height="41" width="122"></a>
 
+The following incredibly generous people get special mention for their extra large donations!
+* Nigel-CY (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* zaneyard (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* jonathanprl (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* domenic (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* luke (Thanks for the 15 coffees!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* mattmazgaj (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* frcooper (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* RBZL (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* sean (Thanks for the 100 coffees!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+
+
 ## Usage
 
 ### Initial Setup:
@@ -216,12 +228,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-## Credits
-I’m so very thankful for the help of the following people, who make DisplayMagician possible with their especially large donations and help:
+## Extra Credit
+I’m so very thankful for the help of the following people, who make DisplayMagician possible with their extra help:
 
 * Sean at SimCraft (Thank you so much for your generous donation!)
 * Domenic (Thanks for the solid month of troubleshooting help and the monthly sponsorship!)
-* Frcooper (thanks for the monthly donations)
-* Miiinttt (thanks for the monthly donations)
+* Markus Ewert 'dinex86' (Thanks for letting my use your FOV logic)
 
 Also big thanks to [the amazing list of people who have donated and helped shown here](CREDITS.md).
