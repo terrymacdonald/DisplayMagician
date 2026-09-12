@@ -1,4 +1,4 @@
-﻿using DisplayMagicianShared.AMD;
+using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.Intel;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
@@ -547,12 +547,22 @@ namespace DisplayMagicianShared
         {
             List<string> connectedDisplayIdentifiers = ProfileRepository.ConnectedDisplayIdentifiers;
 
-            return ProfileDisplayIdentifiers
+            List<string> undetectedDisplayIdentifiers = ProfileDisplayIdentifiers
                 .Where(identifier => !String.IsNullOrWhiteSpace(identifier))
                 .Where(identifier => !connectedDisplayIdentifiers.Contains(identifier, StringComparer.OrdinalIgnoreCase))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
+            IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
+            if (intelLibrary.IsInstalled && undetectedDisplayIdentifiers.Count > 0)
+            {
+                List<string> topologyHiddenIdentifiers = intelLibrary.GetCombinedDisplayTopologyHiddenIdentifiers(IntelDisplayConfig, undetectedDisplayIdentifiers);
+                undetectedDisplayIdentifiers = undetectedDisplayIdentifiers
+                    .Except(topologyHiddenIdentifiers, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            return undetectedDisplayIdentifiers;
         }
 
         public virtual List<string> GetUndetectedDisplayDescriptions()
