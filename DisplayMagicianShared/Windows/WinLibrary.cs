@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -2605,7 +2605,16 @@ namespace DisplayMagicianShared.Windows
                 }
                 try
                 {
-                    displayInfo.Add(targetInfo.MonitorDevicePath.ToString());
+                    string monitorDevicePath = targetInfo.MonitorDevicePath.ToString();
+
+                    // Intel Combined Display recreates this Windows monitor instance after a
+                    // mode change (for example DISPLAY#ESJ3E3E becomes DISPLAY#UZRA7CE).
+                    // The adapter path, output technology, target ID and friendly monitor name
+                    // below remain in the identifier, so replace only the volatile segment.
+                    if (targetInfo.OutputTechnology == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EXTERNAL)
+                        monitorDevicePath = Regex.Replace(monitorDevicePath, @"^(\\\\\?\\DISPLAY#)[^#]+", "$1_");
+
+                    displayInfo.Add(monitorDevicePath);
                 }
                 catch (Exception ex)
                 {
