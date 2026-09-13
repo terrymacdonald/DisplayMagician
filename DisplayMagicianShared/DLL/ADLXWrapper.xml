@@ -119,6 +119,30 @@
         <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetFluidMotionFrames(System.Int32,ADLXWrapper.FluidMotionFramesDto@)">
             <summary>Tries to get Fluid Motion Frames state for the GPU with the specified unique id.</summary>
         </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetFidelityFXSuperResolution(System.Int32)">
+            <summary>Gets FidelityFX Super Resolution state for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetFidelityFXSuperResolution(System.Int32,ADLXWrapper.FidelityFXSuperResolutionDto@)">
+            <summary>Tries to get FidelityFX Super Resolution state for the specified GPU.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.ApplyFidelityFXSuperResolution(System.Int32,ADLXWrapper.FidelityFXSuperResolutionDto)">
+            <summary>Applies FidelityFX Super Resolution state to the specified GPU.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryApplyFidelityFXSuperResolution(System.Int32,ADLXWrapper.FidelityFXSuperResolutionDto)">
+            <summary>Tries to apply FidelityFX Super Resolution state to the specified GPU.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.GetFidelityFXFrameGenUpgrade(System.Int32)">
+            <summary>Gets FidelityFX Frame Generation Upgrade state for the GPU with the specified unique id.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryGetFidelityFXFrameGenUpgrade(System.Int32,ADLXWrapper.FidelityFXFrameGenUpgradeDto@)">
+            <summary>Tries to get FidelityFX Frame Generation Upgrade state for the specified GPU.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.ApplyFidelityFXFrameGenUpgrade(System.Int32,ADLXWrapper.FidelityFXFrameGenUpgradeDto)">
+            <summary>Applies FidelityFX Frame Generation Upgrade state to the specified GPU.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLX3DSettingsServicesHelper.TryApplyFidelityFXFrameGenUpgrade(System.Int32,ADLXWrapper.FidelityFXFrameGenUpgradeDto)">
+            <summary>Tries to apply FidelityFX Frame Generation Upgrade state to the specified GPU.</summary>
+        </member>
         <member name="T:ADLXWrapper.All3DSettingsDto">
             <summary>
             Represents a complete snapshot of all 3D settings for a GPU.
@@ -901,6 +925,30 @@
             <param name="pDisplayServices">Optional display services pointer for display enumeration.</param>
             <param name="pDesktopServices">Optional desktop services pointer for desktop enumeration.</param>
         </member>
+        <member name="M:ADLXWrapper.ADLXGPU.GetGpu3Info">
+            <summary>
+            Gets extended GPU architecture and VRAM information available through IADLXGPU3.
+            </summary>
+            <exception cref="T:ADLXWrapper.ADLXException">If IADLXGPU3 is unsupported or data retrieval fails.</exception>
+        </member>
+        <member name="M:ADLXWrapper.ADLXGPU.IsStressTestSupported">
+            <summary>
+            Returns whether this GPU supports the ADLX GPU stress test feature.
+            </summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLXGPU.StartStressTest(System.UInt32)">
+            <summary>
+            Starts a GPU stress test for the requested duration in seconds.
+            The returned operation must remain undisposed until it completes.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">If <paramref name="durationSeconds"/> is zero.</exception>
+            <exception cref="T:ADLXWrapper.ADLXException">If stress testing is unsupported or ADLX cannot start it.</exception>
+        </member>
+        <member name="M:ADLXWrapper.ADLXGPU.TryStartStressTest(System.UInt32,ADLXWrapper.ADLXGpuStressTest@)">
+            <summary>
+            Tries to start a GPU stress test without throwing when the feature is unsupported.
+            </summary>
+        </member>
         <member name="M:ADLXWrapper.ADLXGPU.EnumerateDisplaysForGPU">
             <summary>
             Enumerates managed displays driven by this GPU. Callers must dispose each display.
@@ -934,6 +982,37 @@
             </summary>
             <param name="handle">Handle returned by add.</param>
             <param name="disposeHandle">True to dispose the handle after removal.</param>
+        </member>
+        <member name="T:ADLXWrapper.Gpu3InfoDto">
+            <summary>
+            Extended read-only GPU information provided by IADLXGPU3.
+            </summary>
+        </member>
+        <member name="T:ADLXWrapper.ADLXGpuStressTest">
+            <summary>
+            Represents a running ADLX GPU stress test and its one-shot completion callback.
+            </summary>
+        </member>
+        <member name="P:ADLXWrapper.ADLXGpuStressTest.GpuUniqueId">
+            <summary>The GPU unique identifier supplied when the stress test started.</summary>
+        </member>
+        <member name="P:ADLXWrapper.ADLXGpuStressTest.DurationSeconds">
+            <summary>The requested stress-test duration in seconds.</summary>
+        </member>
+        <member name="P:ADLXWrapper.ADLXGpuStressTest.IsCompleted">
+            <summary>Gets whether ADLX has reported stress-test completion.</summary>
+        </member>
+        <member name="P:ADLXWrapper.ADLXGpuStressTest.Completion">
+            <summary>Completes when ADLX reports the final stress-test result.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLXGpuStressTest.Dispose">
+            <summary>
+            Releases operation resources after completion.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">If the stress test is still running.</exception>
+        </member>
+        <member name="T:ADLXWrapper.GpuStressTestResultDto">
+            <summary>Pointer-free result of a completed ADLX GPU stress test.</summary>
         </member>
         <member name="T:ADLXWrapper.ADLXGPUTuningServicesHelper">
             <summary>
@@ -1495,7 +1574,7 @@
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetSystemServicesNative">
             <summary>
-            Returns the most capable available system interface (IADLXSystem2, then 1, else base).
+            Returns the most capable available system interface (IADLXSystem3, then 2, then 1, else base).
             Caller must not Release the returned pointer.
             </summary>
             <returns>Native system interface pointer owned by this helper.</returns>
@@ -1596,6 +1675,13 @@
             </summary>
             <returns>3D settings services helper wrapping native interfaces.</returns>
             <exception cref="T:ADLXWrapper.ADLXException">If 3D settings services are unsupported or retrieval fails.</exception>
+            <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
+        </member>
+        <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetVariableGraphicsMemory">
+            <summary>
+            Creates a managed helper for Variable Graphics Memory options.
+            </summary>
+            <exception cref="T:ADLXWrapper.ADLXException">If Variable Graphics Memory is unsupported or unavailable.</exception>
             <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
         </member>
         <member name="M:ADLXWrapper.ADLXSystemServicesHelper.GetGPUTuningServicesNative">
@@ -1869,6 +1955,11 @@
             </summary>
             <typeparam name="T">The type of the COM interface pointer.</typeparam>
         </member>
+        <member name="T:ADLXWrapper.ADLXVariableGraphicsMemoryHelper">
+            <summary>
+            Pointer-safe wrapper for ADLX Variable Graphics Memory options.
+            </summary>
+        </member>
         <member name="T:ADLXWrapper.IComObject">
             <summary>
             Marker interface for ADLX COM-like objects to be used with ComPtr.
@@ -1916,6 +2007,51 @@
         </member>
         <member name="F:ADLXWrapper.ADLX_3DLUT_TRANSFER_FUNCTION.TF_G22">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_3DLUT_TRANSFER_FUNCTION.xml" path="doc/member[@name=&quot;ADLX_3DLUT_TRANSFER_FUNCTION.TF_G22&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.ADLX_AFMF_ALGORITHM">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_ALGORITHM.xml" path="doc/member[@name=&quot;ADLX_AFMF_ALGORITHM&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_ALGORITHM.AFMF_ALGORITHM_AUTO">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_ALGORITHM.xml" path="doc/member[@name=&quot;ADLX_AFMF_ALGORITHM.AFMF_ALGORITHM_AUTO&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_ALGORITHM.AFMF_ALGORITHM_ENHANCED">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_ALGORITHM.xml" path="doc/member[@name=&quot;ADLX_AFMF_ALGORITHM.AFMF_ALGORITHM_ENHANCED&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_ALGORITHM.AFMF_ALGORITHM_STANDARD">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_ALGORITHM.xml" path="doc/member[@name=&quot;ADLX_AFMF_ALGORITHM.AFMF_ALGORITHM_STANDARD&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.ADLX_AFMF_FAST_MOTION_RESP">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_FAST_MOTION_RESP.xml" path="doc/member[@name=&quot;ADLX_AFMF_FAST_MOTION_RESP&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_FAST_MOTION_RESP.AFMF_RESP_REPEAT_FRAMES">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_FAST_MOTION_RESP.xml" path="doc/member[@name=&quot;ADLX_AFMF_FAST_MOTION_RESP.AFMF_RESP_REPEAT_FRAMES&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_FAST_MOTION_RESP.AFMF_RESP_BLENDED_FRAMES">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_FAST_MOTION_RESP.xml" path="doc/member[@name=&quot;ADLX_AFMF_FAST_MOTION_RESP.AFMF_RESP_BLENDED_FRAMES&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.ADLX_AFMF_PERFORMANCE_MODE_TYPE">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_PERFORMANCE_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_PERFORMANCE_MODE_TYPE&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_PERFORMANCE_MODE_TYPE.AFMF_PERFORMANCE_MODE_AUTO">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_PERFORMANCE_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_PERFORMANCE_MODE_TYPE.AFMF_PERFORMANCE_MODE_AUTO&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_PERFORMANCE_MODE_TYPE.AFMF_PERFORMANCE_MODE_QUALITY">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_PERFORMANCE_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_PERFORMANCE_MODE_TYPE.AFMF_PERFORMANCE_MODE_QUALITY&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_PERFORMANCE_MODE_TYPE.AFMF_PERFORMANCE_MODE_PERFORMANCE">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_PERFORMANCE_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_PERFORMANCE_MODE_TYPE.AFMF_PERFORMANCE_MODE_PERFORMANCE&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.ADLX_AFMF_SEARCH_MODE_TYPE">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_SEARCH_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_SEARCH_MODE_TYPE&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_SEARCH_MODE_TYPE.AFMF_SEARCH_MODE_AUTO">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_SEARCH_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_SEARCH_MODE_TYPE.AFMF_SEARCH_MODE_AUTO&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_SEARCH_MODE_TYPE.AFMF_SEARCH_MODE_STANDARD">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_SEARCH_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_SEARCH_MODE_TYPE.AFMF_SEARCH_MODE_STANDARD&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_AFMF_SEARCH_MODE_TYPE.AFMF_SEARCH_MODE_HIGH">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_AFMF_SEARCH_MODE_TYPE.xml" path="doc/member[@name=&quot;ADLX_AFMF_SEARCH_MODE_TYPE.AFMF_SEARCH_MODE_HIGH&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.ADLX_ANISOTROPIC_FILTERING_LEVEL">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_ANISOTROPIC_FILTERING_LEVEL.xml" path="doc/member[@name=&quot;ADLX_ANISOTROPIC_FILTERING_LEVEL&quot;]/*" />
@@ -2244,6 +2380,15 @@
         <member name="F:ADLXWrapper.ADLX_DP_LINK_RATE.DP_LINK_RATE_UHBR20">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_DP_LINK_RATE.xml" path="doc/member[@name=&quot;ADLX_DP_LINK_RATE.DP_LINK_RATE_UHBR20&quot;]/*" />
         </member>
+        <member name="T:ADLXWrapper.ADLX_FFX_FRAME_GEN_RATIO">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_FFX_FRAME_GEN_RATIO.xml" path="doc/member[@name=&quot;ADLX_FFX_FRAME_GEN_RATIO&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_FFX_FRAME_GEN_RATIO.FFX_FRAME_GEN_UNKNOWN">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_FFX_FRAME_GEN_RATIO.xml" path="doc/member[@name=&quot;ADLX_FFX_FRAME_GEN_RATIO.FFX_FRAME_GEN_UNKNOWN&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_FFX_FRAME_GEN_RATIO.FFX_FRAME_GEN_2X">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_FFX_FRAME_GEN_RATIO.xml" path="doc/member[@name=&quot;ADLX_FFX_FRAME_GEN_RATIO.FFX_FRAME_GEN_2X&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.ADLX_GammaRamp">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_GammaRamp.xml" path="doc/member[@name=&quot;ADLX_GammaRamp&quot;]/*" />
         </member>
@@ -2303,6 +2448,45 @@
         </member>
         <member name="F:ADLXWrapper.ADLX_GAMUT_SPACE.GAMUT_SPACE_CUSTOM">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_GAMUT_SPACE.xml" path="doc/member[@name=&quot;ADLX_GAMUT_SPACE.GAMUT_SPACE_CUSTOM&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.ADLX_GFX_IP_VERSION">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_UNKNOWN">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_UNKNOWN&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_4">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_4&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_5">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_5&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_6">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_6&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_7">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_7&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_8">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_8&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_9">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_9&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_10_1">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_10_1&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_10_2">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_10_2&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_10_3">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_10_3&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_11_0">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_11_0&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_GFX_IP_VERSION.GFX_IP_VERSION_12_0">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_GFX_IP_VERSION.xml" path="doc/member[@name=&quot;ADLX_GFX_IP_VERSION.GFX_IP_VERSION_12_0&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.ADLX_GPU_TYPE">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_GPU_TYPE.xml" path="doc/member[@name=&quot;ADLX_GPU_TYPE&quot;]/*" />
@@ -2469,6 +2653,9 @@
         <member name="F:ADLXWrapper.ADLX_PCI_BUS_TYPE.PCIE_4_0">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_PCI_BUS_TYPE.xml" path="doc/member[@name=&quot;ADLX_PCI_BUS_TYPE.PCIE_4_0&quot;]/*" />
         </member>
+        <member name="F:ADLXWrapper.ADLX_PCI_BUS_TYPE.PCIE_5_0">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_PCI_BUS_TYPE.xml" path="doc/member[@name=&quot;ADLX_PCI_BUS_TYPE.PCIE_5_0&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.ADLX_PIXEL_FORMAT">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_PIXEL_FORMAT.xml" path="doc/member[@name=&quot;ADLX_PIXEL_FORMAT&quot;]/*" />
         </member>
@@ -2573,6 +2760,9 @@
         </member>
         <member name="F:ADLXWrapper.ADLX_RESULT.ADLX_NOT_ACTIVE">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_RESULT.xml" path="doc/member[@name=&quot;ADLX_RESULT.ADLX_NOT_ACTIVE&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_RESULT.ADLX_RESET_NEEDED">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_RESULT.xml" path="doc/member[@name=&quot;ADLX_RESULT.ADLX_RESET_NEEDED&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.ADLX_RGB">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_RGB.xml" path="doc/member[@name=&quot;ADLX_RGB&quot;]/*" />
@@ -2742,6 +2932,15 @@
         <member name="F:ADLXWrapper.ADLX_UINT16_RGB.blue">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_UINT16_RGB.xml" path="doc/member[@name=&quot;ADLX_UINT16_RGB.blue&quot;]/*" />
         </member>
+        <member name="T:ADLXWrapper.ADLX_VARIABLE_GRAPHICS_MEMORY_MODE">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_VARIABLE_GRAPHICS_MEMORY_MODE.xml" path="doc/member[@name=&quot;ADLX_VARIABLE_GRAPHICS_MEMORY_MODE&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_VARIABLE_GRAPHICS_MEMORY_MODE.VARIABLE_GRAPHICS_MEMORY_MODE_AUTO">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_VARIABLE_GRAPHICS_MEMORY_MODE.xml" path="doc/member[@name=&quot;ADLX_VARIABLE_GRAPHICS_MEMORY_MODE.VARIABLE_GRAPHICS_MEMORY_MODE_AUTO&quot;]/*" />
+        </member>
+        <member name="F:ADLXWrapper.ADLX_VARIABLE_GRAPHICS_MEMORY_MODE.VARIABLE_GRAPHICS_MEMORY_MODE_CUSTOM">
+            <!-- Failed to insert some or all of included XML --><include file="ADLX_VARIABLE_GRAPHICS_MEMORY_MODE.xml" path="doc/member[@name=&quot;ADLX_VARIABLE_GRAPHICS_MEMORY_MODE.VARIABLE_GRAPHICS_MEMORY_MODE_CUSTOM&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.ADLX_WAIT_FOR_VERTICAL_REFRESH_MODE">
             <!-- Failed to insert some or all of included XML --><include file="ADLX_WAIT_FOR_VERTICAL_REFRESH_MODE.xml" path="doc/member[@name=&quot;ADLX_WAIT_FOR_VERTICAL_REFRESH_MODE&quot;]/*" />
         </member>
@@ -2822,6 +3021,54 @@
         </member>
         <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames.SetEnabled(System.Byte)">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames.SetEnabled&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLX3DAMDFluidMotionFrames1">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.IsSupported(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames.IsSupported(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.IsEnabled(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames.IsEnabled(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.SetEnabled(System.Byte)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames.SetEnabled(System.Byte)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.IsSupportedAlgorithm(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.IsSupportedAlgorithm&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.GetAlgorithm(ADLXWrapper.ADLX_AFMF_ALGORITHM*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.GetAlgorithm&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.SetAlgorithm(ADLXWrapper.ADLX_AFMF_ALGORITHM)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.SetAlgorithm&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.GetSearchMode(ADLXWrapper.ADLX_AFMF_SEARCH_MODE_TYPE*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.GetSearchMode&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.SetSearchMode(ADLXWrapper.ADLX_AFMF_SEARCH_MODE_TYPE)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.SetSearchMode&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.GetPerformanceMode(ADLXWrapper.ADLX_AFMF_PERFORMANCE_MODE_TYPE*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.GetPerformanceMode&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.SetPerformanceMode(ADLXWrapper.ADLX_AFMF_PERFORMANCE_MODE_TYPE)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.SetPerformanceMode&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.GetFastMotionResponse(ADLXWrapper.ADLX_AFMF_FAST_MOTION_RESP*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.GetFastMotionResponse&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DAMDFluidMotionFrames1.SetFastMotionResponse(ADLXWrapper.ADLX_AFMF_FAST_MOTION_RESP)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DAMDFluidMotionFrames1.xml" path="doc/member[@name=&quot;IADLX3DAMDFluidMotionFrames1.SetFastMotionResponse&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.IADLX3DAnisotropicFiltering">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DAnisotropicFiltering.xml" path="doc/member[@name=&quot;IADLX3DAnisotropicFiltering&quot;]/*" />
@@ -3017,6 +3264,114 @@
         </member>
         <member name="M:ADLXWrapper.IADLX3DEnhancedSync.SetEnabled(System.Byte)">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DEnhancedSync.xml" path="doc/member[@name=&quot;IADLX3DEnhancedSync.SetEnabled&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgrade.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgrade&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.GetAvailableRatios(ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgrade.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgrade.GetAvailableRatios&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.GetRatio(ADLXWrapper.ADLX_FFX_FRAME_GEN_RATIO*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgrade.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgrade.GetRatio&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.IsSupported(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgrade.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgrade.IsSupported&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.IsEnabled(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgrade.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgrade.IsEnabled&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.SetEnabled(System.Byte)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgrade.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgrade.SetEnabled&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade.SetRatio(ADLXWrapper.ADLX_FFX_FRAME_GEN_RATIO)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgrade.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgrade.SetRatio&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOption">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgradeRatioOption.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgradeRatioOption&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOption.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOption.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOption.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOption.Ratio(ADLXWrapper.ADLX_FFX_FRAME_GEN_RATIO*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgradeRatioOption.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgradeRatioOption.Ratio&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgradeRatioOptionList&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Size">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Size" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Empty">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Empty" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Begin">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Begin" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.End">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.End" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.At(System.UInt32,ADLXWrapper.IADLXInterface**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.At(System.UInt32,ADLXWrapper.IADLXInterface**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Clear">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Clear" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Remove_Back">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Remove_Back" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Add_Back(ADLXWrapper.IADLXInterface*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Add_Back(ADLXWrapper.IADLXInterface*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.At(System.UInt32,ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOption**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.At&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Add_Back(ADLXWrapper.IADLX3DFidelityFXFrameGenUpgradeRatioOption*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXFrameGenUpgradeRatioOptionList.Add_Back&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLX3DFidelityFXSuperResolution">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXSuperResolution.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXSuperResolution&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXSuperResolution.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXSuperResolution.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXSuperResolution.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXSuperResolution.IsSupported(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXSuperResolution.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXSuperResolution.IsSupported&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXSuperResolution.IsEnabled(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXSuperResolution.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXSuperResolution.IsEnabled&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DFidelityFXSuperResolution.SetEnabled(System.Byte)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DFidelityFXSuperResolution.xml" path="doc/member[@name=&quot;IADLX3DFidelityFXSuperResolution.SetEnabled&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.IADLX3DFrameRateTargetControl">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DFrameRateTargetControl.xml" path="doc/member[@name=&quot;IADLX3DFrameRateTargetControl&quot;]/*" />
@@ -3348,6 +3703,75 @@
         <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent2.IsImageSharpenDesktopChanged">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsChangedEvent2.xml" path="doc/member[@name=&quot;IADLX3DSettingsChangedEvent2.IsImageSharpenDesktopChanged&quot;]/*" />
         </member>
+        <member name="T:ADLXWrapper.IADLX3DSettingsChangedEvent3">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsChangedEvent3.xml" path="doc/member[@name=&quot;IADLX3DSettingsChangedEvent3&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.GetOrigin">
+            <inheritdoc cref="M:ADLXWrapper.IADLXChangedEvent.GetOrigin" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.GetGPU(ADLXWrapper.IADLXGPU**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.GetGPU(ADLXWrapper.IADLXGPU**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsAntiLagChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsAntiLagChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsChillChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsChillChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsBoostChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsBoostChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsImageSharpeningChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsImageSharpeningChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsEnhancedSyncChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsEnhancedSyncChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsWaitForVerticalRefreshChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsWaitForVerticalRefreshChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsFrameRateTargetControlChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsFrameRateTargetControlChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsAntiAliasingChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsAntiAliasingChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsMorphologicalAntiAliasingChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsMorphologicalAntiAliasingChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsAnisotropicFilteringChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsAnisotropicFilteringChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsTessellationModeChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsTessellationModeChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsRadeonSuperResolutionChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsRadeonSuperResolutionChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsResetShaderCache">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent.IsResetShaderCache" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsAMDFluidMotionFramesChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent1.IsAMDFluidMotionFramesChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsImageSharpenDesktopChanged">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsChangedEvent2.IsImageSharpenDesktopChanged" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsFidelityFXSuperResolutionChanged">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsChangedEvent3.xml" path="doc/member[@name=&quot;IADLX3DSettingsChangedEvent3.IsFidelityFXSuperResolutionChanged&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsChangedEvent3.IsFidelityFXFrameGenUpgradeChanged">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsChangedEvent3.xml" path="doc/member[@name=&quot;IADLX3DSettingsChangedEvent3.IsFidelityFXFrameGenUpgradeChanged&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.IADLX3DSettingsChangedHandling">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsChangedHandling.xml" path="doc/member[@name=&quot;IADLX3DSettingsChangedHandling&quot;]/*" />
         </member>
@@ -3542,6 +3966,72 @@
         </member>
         <member name="M:ADLXWrapper.IADLX3DSettingsServices2.GetImageSharpenDesktop(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DImageSharpenDesktop**)">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsServices2.xml" path="doc/member[@name=&quot;IADLX3DSettingsServices2.GetImageSharpenDesktop&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLX3DSettingsServices3">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsServices3.xml" path="doc/member[@name=&quot;IADLX3DSettingsServices3&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetAntiLag(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DAntiLag**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetAntiLag(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DAntiLag**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetChill(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DChill**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetChill(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DChill**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetBoost(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DBoost**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetBoost(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DBoost**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetImageSharpening(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DImageSharpening**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetImageSharpening(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DImageSharpening**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetEnhancedSync(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DEnhancedSync**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetEnhancedSync(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DEnhancedSync**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetWaitForVerticalRefresh(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DWaitForVerticalRefresh**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetWaitForVerticalRefresh(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DWaitForVerticalRefresh**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetFrameRateTargetControl(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DFrameRateTargetControl**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetFrameRateTargetControl(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DFrameRateTargetControl**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetAntiAliasing(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DAntiAliasing**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetAntiAliasing(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DAntiAliasing**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetMorphologicalAntiAliasing(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DMorphologicalAntiAliasing**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetMorphologicalAntiAliasing(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DMorphologicalAntiAliasing**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetAnisotropicFiltering(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DAnisotropicFiltering**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetAnisotropicFiltering(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DAnisotropicFiltering**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetTessellation(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DTessellation**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetTessellation(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DTessellation**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetRadeonSuperResolution(ADLXWrapper.IADLX3DRadeonSuperResolution**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetRadeonSuperResolution(ADLXWrapper.IADLX3DRadeonSuperResolution**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetResetShaderCache(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DResetShaderCache**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.GetResetShaderCache(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DResetShaderCache**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.Get3DSettingsChangedHandling(ADLXWrapper.IADLX3DSettingsChangedHandling**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices.Get3DSettingsChangedHandling(ADLXWrapper.IADLX3DSettingsChangedHandling**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetAMDFluidMotionFrames(ADLXWrapper.IADLX3DAMDFluidMotionFrames**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices1.GetAMDFluidMotionFrames(ADLXWrapper.IADLX3DAMDFluidMotionFrames**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetImageSharpenDesktop(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DImageSharpenDesktop**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLX3DSettingsServices2.GetImageSharpenDesktop(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DImageSharpenDesktop**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetFidelityFXSuperResolution(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DFidelityFXSuperResolution**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsServices3.xml" path="doc/member[@name=&quot;IADLX3DSettingsServices3.GetFidelityFXSuperResolution&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLX3DSettingsServices3.GetFidelityFXFrameGenUpgrade(ADLXWrapper.IADLXGPU*,ADLXWrapper.IADLX3DFidelityFXFrameGenUpgrade**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLX3DSettingsServices3.xml" path="doc/member[@name=&quot;IADLX3DSettingsServices3.GetFidelityFXFrameGenUpgrade&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.IADLX3DTessellation">
             <!-- Failed to insert some or all of included XML --><include file="IADLX3DTessellation.xml" path="doc/member[@name=&quot;IADLX3DTessellation&quot;]/*" />
@@ -5892,6 +6382,141 @@
         <member name="M:ADLXWrapper.IADLXGPU2List.Add_Back(ADLXWrapper.IADLXGPU2*)">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPU2List.xml" path="doc/member[@name=&quot;IADLXGPU2List.Add_Back&quot;]/*" />
         </member>
+        <member name="T:ADLXWrapper.IADLXGPU3">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.VendorId(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.VendorId(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.ASICFamilyType(ADLXWrapper.ADLX_ASIC_FAMILY_TYPE*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.ASICFamilyType(ADLXWrapper.ADLX_ASIC_FAMILY_TYPE*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.Type(ADLXWrapper.ADLX_GPU_TYPE*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.Type(ADLXWrapper.ADLX_GPU_TYPE*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.IsExternal(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.IsExternal(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.Name(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.Name(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.DriverPath(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.DriverPath(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.PNPString(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.PNPString(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.HasDesktops(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.HasDesktops(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.TotalVRAM(System.UInt32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.TotalVRAM(System.UInt32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.VRAMType(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.VRAMType(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.BIOSInfo(System.SByte**,System.SByte**,System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.BIOSInfo(System.SByte**,System.SByte**,System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.DeviceId(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.DeviceId(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.RevisionId(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.RevisionId(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.SubSystemId(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.SubSystemId(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.SubSystemVendorId(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.SubSystemVendorId(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.UniqueId(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU.UniqueId(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.PCIBusType(ADLXWrapper.ADLX_PCI_BUS_TYPE*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU1.PCIBusType(ADLXWrapper.ADLX_PCI_BUS_TYPE*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.PCIBusLaneWidth(System.UInt32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU1.PCIBusLaneWidth(System.UInt32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.MultiGPUMode(ADLXWrapper.ADLX_MGPU_MODE*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU1.MultiGPUMode(ADLXWrapper.ADLX_MGPU_MODE*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.ProductName(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU1.ProductName(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.IsPowerOff(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.IsPowerOff(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.PowerOn">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.PowerOn" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.StartPowerOff(ADLXWrapper.IADLXGPUConnectChangedListener*,System.Int32)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.StartPowerOff(ADLXWrapper.IADLXGPUConnectChangedListener*,System.Int32)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.AbortPowerOff">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.AbortPowerOff" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.IsSupportedApplicationList(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.IsSupportedApplicationList(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.GetApplications(ADLXWrapper.IADLXApplicationList**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.GetApplications(ADLXWrapper.IADLXApplicationList**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.AMDSoftwareReleaseDate(System.UInt32*,System.UInt32*,System.UInt32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.AMDSoftwareReleaseDate(System.UInt32*,System.UInt32*,System.UInt32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.AMDSoftwareEdition(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.AMDSoftwareEdition(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.AMDSoftwareVersion(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.AMDSoftwareVersion(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.DriverVersion(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.DriverVersion(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.AMDWindowsDriverVersion(System.SByte**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.AMDWindowsDriverVersion(System.SByte**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.LUID(ADLXWrapper.ADLX_LUID*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPU2.LUID(ADLXWrapper.ADLX_LUID*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.MicroArchitecture(System.SByte**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.MicroArchitecture&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.HighestVRAMBandwidth(System.UInt32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.HighestVRAMBandwidth&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.InvisibleVRAM(System.UInt32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.InvisibleVRAM&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.VisibleVRAM(System.UInt32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.VisibleVRAM&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.VRAMVendorRevId(System.UInt32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.VRAMVendorRevId&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.VRAMBandwidth(System.UInt32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.VRAMBandwidth&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.VRAMBitRate(System.UInt32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.VRAMBitRate&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.IsSupportedStressTest(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.IsSupportedStressTest&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPU3.StartStressTest(ADLXWrapper.IADLXGPUStressTestFinishedListener*,System.UInt32)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPU3.xml" path="doc/member[@name=&quot;IADLXGPU3.StartStressTest&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.IADLXGPUAppsListChangedHandling">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPUAppsListChangedHandling.xml" path="doc/member[@name=&quot;IADLXGPUAppsListChangedHandling&quot;]/*" />
         </member>
@@ -6222,6 +6847,69 @@
         <member name="M:ADLXWrapper.IADLXGPUMetrics2.GPUSharedMemory(System.Int32*)">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetrics2.xml" path="doc/member[@name=&quot;IADLXGPUMetrics2.GPUSharedMemory&quot;]/*" />
         </member>
+        <member name="T:ADLXWrapper.IADLXGPUMetrics3">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetrics3.xml" path="doc/member[@name=&quot;IADLXGPUMetrics3&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.TimeStamp(System.Int64*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.TimeStamp(System.Int64*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUUsage(System.Double*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUUsage(System.Double*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUClockSpeed(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUClockSpeed(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUVRAMClockSpeed(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUVRAMClockSpeed(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUTemperature(System.Double*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUTemperature(System.Double*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUHotspotTemperature(System.Double*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUHotspotTemperature(System.Double*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUPower(System.Double*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUPower(System.Double*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUTotalBoardPower(System.Double*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUTotalBoardPower(System.Double*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUFanSpeed(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUFanSpeed(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUVRAM(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUVRAM(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUVoltage(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUVoltage(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUIntakeTemperature(System.Double*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics.GPUIntakeTemperature(System.Double*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUMemoryTemperature(System.Double*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics1.GPUMemoryTemperature(System.Double*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.NPUFrequency(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics1.NPUFrequency(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.NPUActivityLevel(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics1.NPUActivityLevel(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUSharedMemory(System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetrics2.GPUSharedMemory(System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetrics3.GPUFanDuty(System.Int32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetrics3.xml" path="doc/member[@name=&quot;IADLXGPUMetrics3.GPUFanDuty&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.IADLXGPUMetricsList">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetricsList.xml" path="doc/member[@name=&quot;IADLXGPUMetricsList&quot;]/*" />
         </member>
@@ -6540,6 +7228,114 @@
         <member name="M:ADLXWrapper.IADLXGPUMetricsSupport2.GetGPUSharedMemoryRange(System.Int32*,System.Int32*)">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetricsSupport2.xml" path="doc/member[@name=&quot;IADLXGPUMetricsSupport2.GetGPUSharedMemoryRange&quot;]/*" />
         </member>
+        <member name="T:ADLXWrapper.IADLXGPUMetricsSupport3">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetricsSupport3.xml" path="doc/member[@name=&quot;IADLXGPUMetricsSupport3&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUUsage(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUUsage(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUClockSpeed(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUClockSpeed(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUVRAMClockSpeed(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUVRAMClockSpeed(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUTemperature(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUTemperature(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUHotspotTemperature(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUHotspotTemperature(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUPower(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUPower(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUTotalBoardPower(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUTotalBoardPower(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUFanSpeed(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUFanSpeed(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUVRAM(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUVRAM(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUVoltage(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUVoltage(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUUsageRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUUsageRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUClockSpeedRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUClockSpeedRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUVRAMClockSpeedRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUVRAMClockSpeedRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUTemperatureRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUTemperatureRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUHotspotTemperatureRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUHotspotTemperatureRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUPowerRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUPowerRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUFanSpeedRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUFanSpeedRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUVRAMRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUVRAMRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUVoltageRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUVoltageRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUTotalBoardPowerRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUTotalBoardPowerRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUIntakeTemperatureRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.GetGPUIntakeTemperatureRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUIntakeTemperature(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport.IsSupportedGPUIntakeTemperature(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUMemoryTemperature(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport1.IsSupportedGPUMemoryTemperature(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUMemoryTemperatureRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport1.GetGPUMemoryTemperatureRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedNPUFrequency(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport1.IsSupportedNPUFrequency(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetNPUFrequencyRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport1.GetNPUFrequencyRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedNPUActivityLevel(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport1.IsSupportedNPUActivityLevel(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetNPUActivityLevelRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport1.GetNPUActivityLevelRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUSharedMemory(System.Boolean*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport2.IsSupportedGPUSharedMemory(System.Boolean*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUSharedMemoryRange(System.Int32*,System.Int32*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXGPUMetricsSupport2.GetGPUSharedMemoryRange(System.Int32*,System.Int32*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.IsSupportedGPUFanDuty(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetricsSupport3.xml" path="doc/member[@name=&quot;IADLXGPUMetricsSupport3.IsSupportedGPUFanDuty&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUMetricsSupport3.GetGPUFanDutyRange(System.Int32*,System.Int32*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPUMetricsSupport3.xml" path="doc/member[@name=&quot;IADLXGPUMetricsSupport3.GetGPUFanDutyRange&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.IADLXGPUPresetTuning">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPUPresetTuning.xml" path="doc/member[@name=&quot;IADLXGPUPresetTuning&quot;]/*" />
         </member>
@@ -6620,6 +7416,12 @@
         </member>
         <member name="M:ADLXWrapper.IADLXGPUsEventListener.OnGPUListChanged(ADLXWrapper.IADLXGPUList*)">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPUsEventListener.xml" path="doc/member[@name=&quot;IADLXGPUsEventListener.OnGPUListChanged&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLXGPUStressTestFinishedListener">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPUStressTestFinishedListener.xml" path="doc/member[@name=&quot;IADLXGPUStressTestFinishedListener&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXGPUStressTestFinishedListener.OnGPUStressTestFinished(ADLXWrapper.IADLXGPU3*,System.Byte)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXGPUStressTestFinishedListener.xml" path="doc/member[@name=&quot;IADLXGPUStressTestFinishedListener.OnGPUStressTestFinished&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.IADLXGPUTuningChangedEvent">
             <!-- Failed to insert some or all of included XML --><include file="IADLXGPUTuningChangedEvent.xml" path="doc/member[@name=&quot;IADLXGPUTuningChangedEvent&quot;]/*" />
@@ -7989,6 +8791,30 @@
         <member name="M:ADLXWrapper.IADLXSystem2.GetGPUAppsListChangedHandling(ADLXWrapper.IADLXGPUAppsListChangedHandling**)">
             <!-- Failed to insert some or all of included XML --><include file="IADLXSystem2.xml" path="doc/member[@name=&quot;IADLXSystem2.GetGPUAppsListChangedHandling&quot;]/*" />
         </member>
+        <member name="T:ADLXWrapper.IADLXSystem3">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXSystem3.xml" path="doc/member[@name=&quot;IADLXSystem3&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXSystem3.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXSystem3.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXSystem3.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXSystem3.GetPowerTuningServices(ADLXWrapper.IADLXPowerTuningServices**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXSystem1.GetPowerTuningServices(ADLXWrapper.IADLXPowerTuningServices**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXSystem3.GetMultimediaServices(ADLXWrapper.IADLXMultimediaServices**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXSystem2.GetMultimediaServices(ADLXWrapper.IADLXMultimediaServices**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXSystem3.GetGPUAppsListChangedHandling(ADLXWrapper.IADLXGPUAppsListChangedHandling**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXSystem2.GetGPUAppsListChangedHandling(ADLXWrapper.IADLXGPUAppsListChangedHandling**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXSystem3.GetVariableGraphicsMemory(ADLXWrapper.IADLXVariableGraphicsMemory**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXSystem3.xml" path="doc/member[@name=&quot;IADLXSystem3.GetVariableGraphicsMemory&quot;]/*" />
+        </member>
         <member name="T:ADLXWrapper.IADLXSystemMetrics">
             <!-- Failed to insert some or all of included XML --><include file="IADLXSystemMetrics.xml" path="doc/member[@name=&quot;IADLXSystemMetrics&quot;]/*" />
         </member>
@@ -8144,6 +8970,99 @@
         </member>
         <member name="M:ADLXWrapper.IADLXSystemMetricsSupport1.IsSupportedPowerDistribution(System.Boolean*)">
             <!-- Failed to insert some or all of included XML --><include file="IADLXSystemMetricsSupport1.xml" path="doc/member[@name=&quot;IADLXSystemMetricsSupport1.IsSupportedPowerDistribution&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLXVariableGraphicsMemory">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemory.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemory&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.IsSupported(System.Boolean*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemory.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemory.IsSupported&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.GetDefaultOption(ADLXWrapper.IADLXVariableGraphicsMemoryOption**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemory.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemory.GetDefaultOption&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.GetOption(ADLXWrapper.IADLXVariableGraphicsMemoryOption**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemory.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemory.GetOption&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.GetAvailableOptions(ADLXWrapper.IADLXVariableGraphicsMemoryOptionList**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemory.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemory.GetAvailableOptions&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemory.SetOption(ADLXWrapper.IADLXVariableGraphicsMemoryOption*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemory.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemory.SetOption&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLXVariableGraphicsMemoryOption">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOption.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOption&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOption.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOption.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOption.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOption.Name(System.SByte**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOption.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOption.Name&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOption.Mode(ADLXWrapper.ADLX_VARIABLE_GRAPHICS_MEMORY_MODE*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOption.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOption.Mode&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOption.MemoryCarved(System.Double*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOption.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOption.MemoryCarved&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOption.MemoryRemaining(System.Double*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOption.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOption.MemoryRemaining&quot;]/*" />
+        </member>
+        <member name="T:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOptionList.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOptionList&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Acquire">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Acquire" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Release">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.Release" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.QueryInterface(System.UInt16*,System.Void**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXInterface.QueryInterface(System.UInt16*,System.Void**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Size">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Size" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Empty">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Empty" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Begin">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Begin" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.End">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.End" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.At(System.UInt32,ADLXWrapper.IADLXInterface**)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.At(System.UInt32,ADLXWrapper.IADLXInterface**)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Clear">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Clear" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Remove_Back">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Remove_Back" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Add_Back(ADLXWrapper.IADLXInterface*)">
+            <inheritdoc cref="M:ADLXWrapper.IADLXList.Add_Back(ADLXWrapper.IADLXInterface*)" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.At(System.UInt32,ADLXWrapper.IADLXVariableGraphicsMemoryOption**)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOptionList.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOptionList.At&quot;]/*" />
+        </member>
+        <member name="M:ADLXWrapper.IADLXVariableGraphicsMemoryOptionList.Add_Back(ADLXWrapper.IADLXVariableGraphicsMemoryOption*)">
+            <!-- Failed to insert some or all of included XML --><include file="IADLXVariableGraphicsMemoryOptionList.xml" path="doc/member[@name=&quot;IADLXVariableGraphicsMemoryOptionList.Add_Back&quot;]/*" />
         </member>
         <member name="T:ADLXWrapper.IADLXVideoSuperResolution">
             <!-- Failed to insert some or all of included XML --><include file="IADLXVideoSuperResolution.xml" path="doc/member[@name=&quot;IADLXVideoSuperResolution&quot;]/*" />
