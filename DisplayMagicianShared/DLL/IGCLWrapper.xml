@@ -695,6 +695,10 @@
             </summary>
             <returns>Adapter properties DTO.</returns>
         </member>
+        <member name="M:IGCLWrapper.IGCLAdapterHelper.GetDevProps">
+            <summary>Get additional device properties exposed by IGCL.</summary>
+            <returns>Device property details, or <c>null</c> if unsupported.</returns>
+        </member>
         <member name="M:IGCLWrapper.IGCLAdapterHelper.GetZeDevice">
             <summary>
             Get the Level Zero device and instance for this adapter.
@@ -1382,6 +1386,9 @@
             DTO for wait property change arguments.
             </summary>
         </member>
+        <member name="T:IGCLWrapper.DevPropsDto">
+            <summary>DTO for additional IGCL device properties.</summary>
+        </member>
         <member name="T:IGCLWrapper.IGCLDisplayHelper">
             <summary>
             Display helper facade for IGCL display handles.
@@ -1679,14 +1686,6 @@
             </summary>
             <param name="left">Left params struct.</param>
             <param name="right">Right params struct.</param>
-            <returns>True when equal; otherwise, false.</returns>
-        </member>
-        <member name="M:IGCLWrapper.IGCLDisplayHelper.AreMuxPropertiesEqual(IGCLWrapper.ctl_mux_properties_t,IGCLWrapper.ctl_mux_properties_t)">
-            <summary>
-            Compare mux properties while ignoring native-only fields.
-            </summary>
-            <param name="left">Left properties struct.</param>
-            <param name="right">Right properties struct.</param>
             <returns>True when equal; otherwise, false.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.AreIntelArcSyncProfileParamsEqual(IGCLWrapper.ctl_intel_arc_sync_profile_params_t,IGCLWrapper.ctl_intel_arc_sync_profile_params_t)">
@@ -2019,26 +2018,10 @@
             </summary>
             <returns>Monitor params DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
-        <member name="M:IGCLWrapper.IGCLDisplayHelper.EnumerateMuxDevices">
-            <summary>
-            Enumerate mux device handles.
-            </summary>
-            <returns>Array of mux handles, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
-        </member>
-        <member name="M:IGCLWrapper.IGCLDisplayHelper.GetMuxProperties(System.IntPtr)">
-            <summary>
-            Get mux properties and display outputs as a DTO.
-            </summary>
-            <param name="muxHandle">Mux handle.</param>
-            <returns>Mux properties DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
-        </member>
-        <member name="M:IGCLWrapper.IGCLDisplayHelper.SwitchMux(System.IntPtr,System.IntPtr)">
-            <summary>
-            Switch mux to the specified inactive display output.
-            </summary>
-            <param name="muxHandle">Mux handle.</param>
-            <param name="inactiveDisplayOutput">Inactive display output handle.</param>
-            <returns><c>true</c> if the operation succeeded; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
+        <member name="M:IGCLWrapper.IGCLDisplayHelper.ResetFeatures(IGCLWrapper.DisplayFeatureResetDto)">
+            <summary>Reset the selected display features to their driver defaults.</summary>
+            <param name="request">Features to reset.</param>
+            <returns><c>true</c> on success; <c>false</c> if unsupported.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.GetIntelArcSyncProfile">
             <summary>
@@ -3554,10 +3537,8 @@
             DTO for custom mode get results.
             </summary>
         </member>
-        <member name="T:IGCLWrapper.MuxPropertiesDto">
-            <summary>
-            DTO for mux properties and display outputs.
-            </summary>
+        <member name="T:IGCLWrapper.DisplayFeatureResetDto">
+            <summary>DTO for a display-feature reset request.</summary>
         </member>
         <member name="T:IGCLWrapper.VblankTimestampArgsDto">
             <summary>
@@ -5459,6 +5440,10 @@
             </summary>
             <returns>Power telemetry DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
+        <member name="M:IGCLWrapper.IGCLOverclockHelper.GetPowerTelemetryV2">
+            <summary>Get version 2 power telemetry as a DTO.</summary>
+            <returns>Power telemetry v2, or <c>null</c> if unsupported.</returns>
+        </member>
         <member name="M:IGCLWrapper.IGCLOverclockHelper.ResetToDefault">
             <summary>
             Reset overclock settings to default.
@@ -5593,6 +5578,12 @@
             <summary>
             Mark the helper as disposed.
             </summary>
+        </member>
+        <member name="T:IGCLWrapper.PowerTelemetryV2Dto">
+            <summary>DTO for version 2 power telemetry.</summary>
+        </member>
+        <member name="F:IGCLWrapper.PowerTelemetryV2Dto.Telemetry">
+            <summary>All telemetry items reported by the version 2 API.</summary>
         </member>
         <member name="T:IGCLWrapper.DataValueDto">
             <summary>
@@ -7117,8 +7108,35 @@
         <member name="F:IGCLWrapper.ctl_3d_feature_t.CTL_3D_FEATURE_FRAME_GENERATION">
             <!-- Failed to insert some or all of included XML --><include file="ctl_3d_feature_t.xml" path="doc/member[@name=&quot;ctl_3d_feature_t.CTL_3D_FEATURE_FRAME_GENERATION&quot;]/*" />
         </member>
+        <member name="F:IGCLWrapper.ctl_3d_feature_t.CTL_3D_FEATURE_PREBUILT_SHADER_DOWNLOAD">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_feature_t.xml" path="doc/member[@name=&quot;ctl_3d_feature_t.CTL_3D_FEATURE_PREBUILT_SHADER_DOWNLOAD&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_feature_t.CTL_3D_FEATURE_LIVE_STATE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_feature_t.xml" path="doc/member[@name=&quot;ctl_3d_feature_t.CTL_3D_FEATURE_LIVE_STATE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_feature_t.CTL_3D_FEATURE_FRAME_GENERATION_CONTROL">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_feature_t.xml" path="doc/member[@name=&quot;ctl_3d_feature_t.CTL_3D_FEATURE_FRAME_GENERATION_CONTROL&quot;]/*" />
+        </member>
         <member name="F:IGCLWrapper.ctl_3d_feature_t.CTL_3D_FEATURE_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_3d_feature_t.xml" path="doc/member[@name=&quot;ctl_3d_feature_t.CTL_3D_FEATURE_MAX&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_3d_frame_generation_override_t">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_frame_generation_override_t.xml" path="doc/member[@name=&quot;ctl_3d_frame_generation_override_t&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_APP_CHOICE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_frame_generation_override_t.xml" path="doc/member[@name=&quot;ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_APP_CHOICE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_2X">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_frame_generation_override_t.xml" path="doc/member[@name=&quot;ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_2X&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_3X">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_frame_generation_override_t.xml" path="doc/member[@name=&quot;ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_3X&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_4X">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_frame_generation_override_t.xml" path="doc/member[@name=&quot;ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_4X&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_MAX">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_frame_generation_override_t.xml" path="doc/member[@name=&quot;ctl_3d_frame_generation_override_t.CTL_3D_FRAME_GENERATION_OVERRIDE_MAX&quot;]/*" />
         </member>
         <member name="T:IGCLWrapper.ctl_3d_frame_pacing_types_t">
             <!-- Failed to insert some or all of included XML --><include file="ctl_3d_frame_pacing_types_t.xml" path="doc/member[@name=&quot;ctl_3d_frame_pacing_types_t&quot;]/*" />
@@ -7152,6 +7170,39 @@
         </member>
         <member name="F:IGCLWrapper.ctl_3d_global_or_per_app_types_t.CTL_3D_GLOBAL_OR_PER_APP_TYPES_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_3d_global_or_per_app_types_t.xml" path="doc/member[@name=&quot;ctl_3d_global_or_per_app_types_t.CTL_3D_GLOBAL_OR_PER_APP_TYPES_MAX&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_3d_live_state_frame_pacing_types_t">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_frame_pacing_types_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_frame_pacing_types_t&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_DISABLED">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_frame_pacing_types_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_DISABLED&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_ENABLED_AND_ACTIVE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_frame_pacing_types_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_ENABLED_AND_ACTIVE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_ENABLED_BUT_INACTIVE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_frame_pacing_types_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_ENABLED_BUT_INACTIVE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_MAX">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_frame_pacing_types_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_frame_pacing_types_t.CTL_3D_LIVE_STATE_FRAME_PACING_TYPES_MAX&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_3d_live_state_t">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_t&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_t.GfxApi">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_t.GfxApi&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_t.TargetFPS">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_t.TargetFPS&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_t.FramePacingStatus">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_t.FramePacingStatus&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_3d_live_state_t.Reserved">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_3d_live_state_t.xml" path="doc/member[@name=&quot;ctl_3d_live_state_t.Reserved&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_3d_live_state_t._Reserved_e__FixedBuffer">
+            <!-- Failed to insert some or all of included XML --><include file="_Reserved_e__FixedBuffer.xml" path="doc/member[@name=&quot;_Reserved_e__FixedBuffer&quot;]/*" />
         </member>
         <member name="T:IGCLWrapper.ctl_3d_low_latency_types_t">
             <!-- Failed to insert some or all of included XML --><include file="ctl_3d_low_latency_types_t.xml" path="doc/member[@name=&quot;ctl_3d_low_latency_types_t&quot;]/*" />
@@ -7774,6 +7825,18 @@
         <member name="F:IGCLWrapper.ctl_device_type_t.CTL_DEVICE_TYPE_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_device_type_t.xml" path="doc/member[@name=&quot;ctl_device_type_t.CTL_DEVICE_TYPE_MAX&quot;]/*" />
         </member>
+        <member name="T:IGCLWrapper.ctl_dev_prop_properties_t">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_dev_prop_properties_t.xml" path="doc/member[@name=&quot;ctl_dev_prop_properties_t&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_dev_prop_properties_t.Size">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_dev_prop_properties_t.xml" path="doc/member[@name=&quot;ctl_dev_prop_properties_t.Size&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_dev_prop_properties_t.Version">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_dev_prop_properties_t.xml" path="doc/member[@name=&quot;ctl_dev_prop_properties_t.Version&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_dev_prop_properties_t.isWorkstation">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_dev_prop_properties_t.xml" path="doc/member[@name=&quot;ctl_dev_prop_properties_t.isWorkstation&quot;]/*" />
+        </member>
         <member name="T:IGCLWrapper.ctl_display_config_flag_t">
             <!-- Failed to insert some or all of included XML --><include file="ctl_display_config_flag_t.xml" path="doc/member[@name=&quot;ctl_display_config_flag_t&quot;]/*" />
         </member>
@@ -7791,6 +7854,57 @@
         </member>
         <member name="F:IGCLWrapper.ctl_display_config_flag_t.CTL_DISPLAY_CONFIG_FLAG_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_display_config_flag_t.xml" path="doc/member[@name=&quot;ctl_display_config_flag_t.CTL_DISPLAY_CONFIG_FLAG_MAX&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_display_feature_reset_flag_t">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_SCALING">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_SCALING&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_WIRE_FORMAT">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_WIRE_FORMAT&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_LACE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_LACE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_COLOR">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_COLOR&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_VRR">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_VRR&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_QUANTIZATION_RANGE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_QUANTIZATION_RANGE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_CONTENT_TYPE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_CONTENT_TYPE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_PSR">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_PSR&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_AUDIO">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_AUDIO&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_ALL">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_ALL&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_MAX">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_flag_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_flag_t.CTL_DISPLAY_FEATURE_RESET_FLAG_MAX&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_display_feature_reset_t">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_t&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_t.Size">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_t.Size&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_t.Version">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_t.Version&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_t.ResetFeature">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_t.ResetFeature&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_display_feature_reset_t.ResetFeatureStatus">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_display_feature_reset_t.xml" path="doc/member[@name=&quot;ctl_display_feature_reset_t.ResetFeatureStatus&quot;]/*" />
         </member>
         <member name="T:IGCLWrapper.ctl_display_orientation_t">
             <!-- Failed to insert some or all of included XML --><include file="ctl_display_orientation_t.xml" path="doc/member[@name=&quot;ctl_display_orientation_t&quot;]/*" />
@@ -8725,6 +8839,9 @@
         <member name="F:IGCLWrapper.ctl_gaming_flip_mode_flag_t.CTL_GAMING_FLIP_MODE_FLAG_CAPPED_FPS">
             <!-- Failed to insert some or all of included XML --><include file="ctl_gaming_flip_mode_flag_t.xml" path="doc/member[@name=&quot;ctl_gaming_flip_mode_flag_t.CTL_GAMING_FLIP_MODE_FLAG_CAPPED_FPS&quot;]/*" />
         </member>
+        <member name="F:IGCLWrapper.ctl_gaming_flip_mode_flag_t.CTL_GAMING_FLIP_MODE_FLAG_VSYNC_OFF_IGNORE_ALLOW_LIST">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_gaming_flip_mode_flag_t.xml" path="doc/member[@name=&quot;ctl_gaming_flip_mode_flag_t.CTL_GAMING_FLIP_MODE_FLAG_VSYNC_OFF_IGNORE_ALLOW_LIST&quot;]/*" />
+        </member>
         <member name="F:IGCLWrapper.ctl_gaming_flip_mode_flag_t.CTL_GAMING_FLIP_MODE_FLAG_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_gaming_flip_mode_flag_t.xml" path="doc/member[@name=&quot;ctl_gaming_flip_mode_flag_t.CTL_GAMING_FLIP_MODE_FLAG_MAX&quot;]/*" />
         </member>
@@ -8986,6 +9103,18 @@
         <member name="F:IGCLWrapper.ctl_i2c_flag_t.CTL_I2C_FLAG_SPEED_BIT_BASH">
             <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_flag_t.CTL_I2C_FLAG_SPEED_BIT_BASH&quot;]/*" />
         </member>
+        <member name="F:IGCLWrapper.ctl_i2c_flag_t.CTL_I2C_FLAG_DRIVER_OVERRIDE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_flag_t.CTL_I2C_FLAG_DRIVER_OVERRIDE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_i2c_flag_t.CTL_I2C_FLAG_START">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_flag_t.CTL_I2C_FLAG_START&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_i2c_flag_t.CTL_I2C_FLAG_STOP">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_flag_t.CTL_I2C_FLAG_STOP&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_i2c_flag_t.CTL_I2C_FLAG_RESTART">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_flag_t.CTL_I2C_FLAG_RESTART&quot;]/*" />
+        </member>
         <member name="F:IGCLWrapper.ctl_i2c_flag_t.CTL_I2C_FLAG_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_flag_t.CTL_I2C_FLAG_MAX&quot;]/*" />
         </member>
@@ -9012,6 +9141,18 @@
         </member>
         <member name="F:IGCLWrapper.ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_SPEED_BIT_BASH">
             <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_pinpair_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_SPEED_BIT_BASH&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_DRIVER_OVERRIDE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_pinpair_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_DRIVER_OVERRIDE&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_START">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_pinpair_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_START&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_STOP">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_pinpair_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_STOP&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_RESTART">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_pinpair_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_RESTART&quot;]/*" />
         </member>
         <member name="F:IGCLWrapper.ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_i2c_pinpair_flag_t.xml" path="doc/member[@name=&quot;ctl_i2c_pinpair_flag_t.CTL_I2C_PINPAIR_FLAG_MAX&quot;]/*" />
@@ -9042,6 +9183,9 @@
         </member>
         <member name="F:IGCLWrapper.ctl_init_flag_t.CTL_INIT_FLAG_USE_LEVEL_ZERO">
             <!-- Failed to insert some or all of included XML --><include file="ctl_init_flag_t.xml" path="doc/member[@name=&quot;ctl_init_flag_t.CTL_INIT_FLAG_USE_LEVEL_ZERO&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_init_flag_t.CTL_INIT_FLAG_IGSC_FUL">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_init_flag_t.xml" path="doc/member[@name=&quot;ctl_init_flag_t.CTL_INIT_FLAG_IGSC_FUL&quot;]/*" />
         </member>
         <member name="F:IGCLWrapper.ctl_init_flag_t.CTL_INIT_FLAG_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_init_flag_t.xml" path="doc/member[@name=&quot;ctl_init_flag_t.CTL_INIT_FLAG_MAX&quot;]/*" />
@@ -9438,27 +9582,6 @@
         </member>
         <member name="F:IGCLWrapper.ctl_mem_type_t.CTL_MEM_TYPE_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_mem_type_t.xml" path="doc/member[@name=&quot;ctl_mem_type_t.CTL_MEM_TYPE_MAX&quot;]/*" />
-        </member>
-        <member name="T:IGCLWrapper.ctl_mux_properties_t">
-            <!-- Failed to insert some or all of included XML --><include file="ctl_mux_properties_t.xml" path="doc/member[@name=&quot;ctl_mux_properties_t&quot;]/*" />
-        </member>
-        <member name="F:IGCLWrapper.ctl_mux_properties_t.Size">
-            <!-- Failed to insert some or all of included XML --><include file="ctl_mux_properties_t.xml" path="doc/member[@name=&quot;ctl_mux_properties_t.Size&quot;]/*" />
-        </member>
-        <member name="F:IGCLWrapper.ctl_mux_properties_t.Version">
-            <!-- Failed to insert some or all of included XML --><include file="ctl_mux_properties_t.xml" path="doc/member[@name=&quot;ctl_mux_properties_t.Version&quot;]/*" />
-        </member>
-        <member name="F:IGCLWrapper.ctl_mux_properties_t.MuxId">
-            <!-- Failed to insert some or all of included XML --><include file="ctl_mux_properties_t.xml" path="doc/member[@name=&quot;ctl_mux_properties_t.MuxId&quot;]/*" />
-        </member>
-        <member name="F:IGCLWrapper.ctl_mux_properties_t.Count">
-            <!-- Failed to insert some or all of included XML --><include file="ctl_mux_properties_t.xml" path="doc/member[@name=&quot;ctl_mux_properties_t.Count&quot;]/*" />
-        </member>
-        <member name="F:IGCLWrapper.ctl_mux_properties_t.phDisplayOutputs">
-            <!-- Failed to insert some or all of included XML --><include file="ctl_mux_properties_t.xml" path="doc/member[@name=&quot;ctl_mux_properties_t.phDisplayOutputs&quot;]/*" />
-        </member>
-        <member name="F:IGCLWrapper.ctl_mux_properties_t.IndexOfDisplayOutputOwningMux">
-            <!-- Failed to insert some or all of included XML --><include file="ctl_mux_properties_t.xml" path="doc/member[@name=&quot;ctl_mux_properties_t.IndexOfDisplayOutputOwningMux&quot;]/*" />
         </member>
         <member name="T:IGCLWrapper.ctl_oc_control_info_t">
             <!-- Failed to insert some or all of included XML --><include file="ctl_oc_control_info_t.xml" path="doc/member[@name=&quot;ctl_oc_control_info_t&quot;]/*" />
@@ -10186,6 +10309,9 @@
         <member name="F:IGCLWrapper.ctl_power_optimization_flag_t.CTL_POWER_OPTIMIZATION_FLAG_LACE">
             <!-- Failed to insert some or all of included XML --><include file="ctl_power_optimization_flag_t.xml" path="doc/member[@name=&quot;ctl_power_optimization_flag_t.CTL_POWER_OPTIMIZATION_FLAG_LACE&quot;]/*" />
         </member>
+        <member name="F:IGCLWrapper.ctl_power_optimization_flag_t.CTL_POWER_OPTIMIZATION_FLAG_SPH">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_optimization_flag_t.xml" path="doc/member[@name=&quot;ctl_power_optimization_flag_t.CTL_POWER_OPTIMIZATION_FLAG_SPH&quot;]/*" />
+        </member>
         <member name="F:IGCLWrapper.ctl_power_optimization_flag_t.CTL_POWER_OPTIMIZATION_FLAG_MAX">
             <!-- Failed to insert some or all of included XML --><include file="ctl_power_optimization_flag_t.xml" path="doc/member[@name=&quot;ctl_power_optimization_flag_t.CTL_POWER_OPTIMIZATION_FLAG_MAX&quot;]/*" />
         </member>
@@ -10466,6 +10592,117 @@
             <!-- Failed to insert some or all of included XML --><include file="_psu_e__FixedBuffer.xml" path="doc/member[@name=&quot;_psu_e__FixedBuffer&quot;]/*" />
         </member>
         <member name="T:IGCLWrapper.ctl_power_telemetry_t._fanSpeed_e__FixedBuffer">
+            <!-- Failed to insert some or all of included XML --><include file="_fanSpeed_e__FixedBuffer.xml" path="doc/member[@name=&quot;_fanSpeed_e__FixedBuffer&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_power_telemetry_v2_t">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.Size">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.Size&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.Version">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.Version&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.timeStamp">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.timeStamp&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuEnergyCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuEnergyCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuVoltage">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuVoltage&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuCurrentClockFrequency">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuCurrentClockFrequency&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuCurrentTemperature">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuCurrentTemperature&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.globalActivityCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.globalActivityCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.renderComputeActivityCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.renderComputeActivityCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.mediaActivityCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.mediaActivityCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuPowerLimited">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuPowerLimited&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuTemperatureLimited">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuTemperatureLimited&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuCurrentLimited">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuCurrentLimited&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuVoltageLimited">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuVoltageLimited&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuUtilizationLimited">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuUtilizationLimited&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramEnergyCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramEnergyCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramVoltage">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramVoltage&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramCurrentClockFrequency">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramCurrentClockFrequency&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramCurrentEffectiveFrequency">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramCurrentEffectiveFrequency&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramReadBandwidthCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramReadBandwidthCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramWriteBandwidthCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramWriteBandwidthCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramCurrentTemperature">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramCurrentTemperature&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.totalCardEnergyCounter">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.totalCardEnergyCounter&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.psu">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.psu&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.fanSpeed">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.fanSpeed&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuVrTemp">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuVrTemp&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramVrTemp">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramVrTemp&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.saVrTemp">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.saVrTemp&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuEffectiveClock">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuEffectiveClock&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuOverVoltagePercent">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuOverVoltagePercent&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuPowerPercent">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuPowerPercent&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.gpuTemperaturePercent">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.gpuTemperaturePercent&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramReadBandwidth">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramReadBandwidth&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_power_telemetry_v2_t.vramWriteBandwidth">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_power_telemetry_v2_t.xml" path="doc/member[@name=&quot;ctl_power_telemetry_v2_t.vramWriteBandwidth&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_power_telemetry_v2_t._psu_e__FixedBuffer">
+            <!-- Failed to insert some or all of included XML --><include file="_psu_e__FixedBuffer.xml" path="doc/member[@name=&quot;_psu_e__FixedBuffer&quot;]/*" />
+        </member>
+        <member name="T:IGCLWrapper.ctl_power_telemetry_v2_t._fanSpeed_e__FixedBuffer">
             <!-- Failed to insert some or all of included XML --><include file="_fanSpeed_e__FixedBuffer.xml" path="doc/member[@name=&quot;_fanSpeed_e__FixedBuffer&quot;]/*" />
         </member>
         <member name="T:IGCLWrapper.ctl_property_boolean_t">
@@ -10882,6 +11119,9 @@
         <member name="F:IGCLWrapper.ctl_result_t.CTL_RESULT_ERROR_LOAD">
             <!-- Failed to insert some or all of included XML --><include file="ctl_result_t.xml" path="doc/member[@name=&quot;ctl_result_t.CTL_RESULT_ERROR_LOAD&quot;]/*" />
         </member>
+        <member name="F:IGCLWrapper.ctl_result_t.CTL_RESULT_ERROR_DEVICE_UNAVAILABLE">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_result_t.xml" path="doc/member[@name=&quot;ctl_result_t.CTL_RESULT_ERROR_DEVICE_UNAVAILABLE&quot;]/*" />
+        </member>
         <member name="F:IGCLWrapper.ctl_result_t.CTL_RESULT_ERROR_UNKNOWN">
             <!-- Failed to insert some or all of included XML --><include file="ctl_result_t.xml" path="doc/member[@name=&quot;ctl_result_t.CTL_RESULT_ERROR_UNKNOWN&quot;]/*" />
         </member>
@@ -10890,6 +11130,9 @@
         </member>
         <member name="F:IGCLWrapper.ctl_result_t.CTL_RESULT_ERROR_IGSC_LOADER">
             <!-- Failed to insert some or all of included XML --><include file="ctl_result_t.xml" path="doc/member[@name=&quot;ctl_result_t.CTL_RESULT_ERROR_IGSC_LOADER&quot;]/*" />
+        </member>
+        <member name="F:IGCLWrapper.ctl_result_t.CTL_RESULT_ERROR_RESTRICTED_APPLICATION">
+            <!-- Failed to insert some or all of included XML --><include file="ctl_result_t.xml" path="doc/member[@name=&quot;ctl_result_t.CTL_RESULT_ERROR_RESTRICTED_APPLICATION&quot;]/*" />
         </member>
         <member name="F:IGCLWrapper.ctl_result_t.CTL_RESULT_ERROR_GENERIC_END">
             <!-- Failed to insert some or all of included XML --><include file="ctl_result_t.xml" path="doc/member[@name=&quot;ctl_result_t.CTL_RESULT_ERROR_GENERIC_END&quot;]/*" />
@@ -12043,6 +12286,9 @@
         <member name="M:IGCLWrapper.IGCL.ctlGetSet3DFeature(IGCLWrapper._ctl_device_adapter_handle_t*,IGCLWrapper.ctl_3d_feature_getset_t*)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlGetSet3DFeature&quot;]/*" />
         </member>
+        <member name="M:IGCLWrapper.IGCL.ctlDevPropGetProperties(IGCLWrapper._ctl_device_adapter_handle_t*,IGCLWrapper.ctl_dev_prop_properties_t*)">
+            <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlDevPropGetProperties&quot;]/*" />
+        </member>
         <member name="M:IGCLWrapper.IGCL.ctlCheckDriverVersion(IGCLWrapper._ctl_device_adapter_handle_t*,System.UInt32)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlCheckDriverVersion&quot;]/*" />
         </member>
@@ -12136,15 +12382,6 @@
         <member name="M:IGCLWrapper.IGCL.ctlGetIntelArcSyncInfoForMonitor(IGCLWrapper._ctl_display_output_handle_t*,IGCLWrapper.ctl_intel_arc_sync_monitor_params_t*)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlGetIntelArcSyncInfoForMonitor&quot;]/*" />
         </member>
-        <member name="M:IGCLWrapper.IGCL.ctlEnumerateMuxDevices(IGCLWrapper._ctl_api_handle_t*,System.UInt32*,IGCLWrapper._ctl_mux_output_handle_t**)">
-            <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlEnumerateMuxDevices&quot;]/*" />
-        </member>
-        <member name="M:IGCLWrapper.IGCL.ctlGetMuxProperties(IGCLWrapper._ctl_mux_output_handle_t*,IGCLWrapper.ctl_mux_properties_t*)">
-            <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlGetMuxProperties&quot;]/*" />
-        </member>
-        <member name="M:IGCLWrapper.IGCL.ctlSwitchMux(IGCLWrapper._ctl_mux_output_handle_t*,IGCLWrapper._ctl_display_output_handle_t*)">
-            <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlSwitchMux&quot;]/*" />
-        </member>
         <member name="M:IGCLWrapper.IGCL.ctlGetIntelArcSyncProfile(IGCLWrapper._ctl_display_output_handle_t*,IGCLWrapper.ctl_intel_arc_sync_profile_params_t*)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlGetIntelArcSyncProfile&quot;]/*" />
         </member>
@@ -12183,6 +12420,9 @@
         </member>
         <member name="M:IGCLWrapper.IGCL.ctlGetSetDisplaySettings(IGCLWrapper._ctl_display_output_handle_t*,IGCLWrapper.ctl_display_settings_t*)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlGetSetDisplaySettings&quot;]/*" />
+        </member>
+        <member name="M:IGCLWrapper.IGCL.ctlDisplayFeatureReset(IGCLWrapper._ctl_display_output_handle_t*,IGCLWrapper.ctl_display_feature_reset_t*)">
+            <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlDisplayFeatureReset&quot;]/*" />
         </member>
         <member name="M:IGCLWrapper.IGCL.ctlEccGetProperties(IGCLWrapper._ctl_device_adapter_handle_t*,IGCLWrapper.ctl_ecc_properties_t*)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlEccGetProperties&quot;]/*" />
@@ -12337,6 +12577,9 @@
         <member name="M:IGCLWrapper.IGCL.ctlPowerTelemetryGet(IGCLWrapper._ctl_device_adapter_handle_t*,IGCLWrapper.ctl_power_telemetry_t*)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlPowerTelemetryGet&quot;]/*" />
         </member>
+        <member name="M:IGCLWrapper.IGCL.ctlPowerTelemetryGetV2(IGCLWrapper._ctl_device_adapter_handle_t*,IGCLWrapper.ctl_power_telemetry_v2_t*)">
+            <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlPowerTelemetryGetV2&quot;]/*" />
+        </member>
         <member name="M:IGCLWrapper.IGCL.ctlOverclockResetToDefault(IGCLWrapper._ctl_device_adapter_handle_t*)">
             <!-- Failed to insert some or all of included XML --><include file="IGCL.xml" path="doc/member[@name=&quot;IGCL.ctlOverclockResetToDefault&quot;]/*" />
         </member>
@@ -12455,9 +12698,6 @@
         </member>
         <member name="T:IGCLWrapper._ctl_mem_handle_t">
             <!-- Failed to insert some or all of included XML --><include file="_ctl_mem_handle_t.xml" path="doc/member[@name=&quot;_ctl_mem_handle_t&quot;]/*" />
-        </member>
-        <member name="T:IGCLWrapper._ctl_mux_output_handle_t">
-            <!-- Failed to insert some or all of included XML --><include file="_ctl_mux_output_handle_t.xml" path="doc/member[@name=&quot;_ctl_mux_output_handle_t&quot;]/*" />
         </member>
         <member name="T:IGCLWrapper._ctl_pwr_handle_t">
             <!-- Failed to insert some or all of included XML --><include file="_ctl_pwr_handle_t.xml" path="doc/member[@name=&quot;_ctl_pwr_handle_t&quot;]/*" />
