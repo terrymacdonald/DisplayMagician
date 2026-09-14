@@ -1903,14 +1903,14 @@
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PixelTransformationGetConfig(IGCLWrapper.PixtxPipeGetConfigDto)">
             <summary>
-            Get pixel transformation configuration as DTOs (metadata only; LUT sample values require native methods).
+            Get pixel transformation configuration as DTOs.
             </summary>
             <param name="args">Pipe get config DTO.</param>
             <returns>Pixel transformation get result DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
         <member name="M:IGCLWrapper.IGCLDisplayHelper.PixelTransformationSetConfig(IGCLWrapper.PixtxPipeSetConfigDto)">
             <summary>
-            Set pixel transformation configuration using a DTO (metadata only; LUT sample values require native methods).
+            Set pixel transformation configuration using DTOs.
             </summary>
             <param name="args">Pipe set config DTO.</param>
             <returns><c>true</c> if the setting was applied successfully; <c>false</c> if the feature is not supported on this hardware or driver.</returns>
@@ -3605,14 +3605,40 @@
             DTO for pixel transformation pipe get config (metadata only; LUT sample values require native methods).
             </summary>
         </member>
+        <member name="T:IGCLWrapper.PixtxOneDLutConfigDto">
+            <summary>
+            Managed 1D LUT payload for a pixel transformation block.
+            </summary>
+        </member>
+        <member name="T:IGCLWrapper.PixtxThreeDLutSampleDto">
+            <summary>
+            Managed RGB sample for a 3D LUT pixel transformation block.
+            </summary>
+        </member>
+        <member name="T:IGCLWrapper.PixtxThreeDLutConfigDto">
+            <summary>
+            Managed 3D LUT payload for a pixel transformation block.
+            </summary>
+        </member>
+        <member name="T:IGCLWrapper.PixtxMatrixConfigDto">
+            <summary>
+            Managed matrix payload for a pixel transformation block.
+            </summary>
+        </member>
         <member name="T:IGCLWrapper.PixtxBlockConfigDto">
             <summary>
-            DTO for pixel transformation block config (metadata only; LUT sample values require native methods).
+            DTO for pixel transformation block config.
+            Only the payload matching <see cref="F:IGCLWrapper.PixtxBlockConfigDto.BlockType"/> is used.
             </summary>
         </member>
         <member name="T:IGCLWrapper.PixtxPipeSetConfigDto">
             <summary>
             DTO for pixel transformation pipe set config.
+            </summary>
+        </member>
+        <member name="P:IGCLWrapper.PixtxPipeSetConfigDto.NumBlocks">
+            <summary>
+            Gets the number of managed block configurations in this request.
             </summary>
         </member>
         <member name="T:IGCLWrapper.PixelTransformationGetResultDto">
@@ -5014,6 +5040,19 @@
             <param name="featureGetSet">Video processing feature DTO.</param>
             <returns>Updated video processing feature DTO, or <c>null</c> if the feature is not supported on this hardware or driver.</returns>
         </member>
+        <member name="M:IGCLWrapper.IGCLMediaHelper.GetStandardColorCorrection">
+            <summary>
+            Gets the adapter-wide standard colour-correction settings.
+            </summary>
+            <returns>The colour-correction settings, or <c>null</c> when unsupported.</returns>
+        </member>
+        <member name="M:IGCLWrapper.IGCLMediaHelper.SetStandardColorCorrection(IGCLWrapper.StandardColorCorrectionDto)">
+            <summary>
+            Sets the adapter-wide standard colour-correction settings.
+            </summary>
+            <param name="settings">The colour-correction settings to apply.</param>
+            <returns><c>true</c> when applied; <c>false</c> when unsupported.</returns>
+        </member>
         <member name="M:IGCLWrapper.IGCLMediaHelper.SetVideoProcessingFeature(IGCLWrapper.VideoProcessingFeatureGetSetDto)">
             <summary>
             Set a video processing feature using a DTO request.
@@ -5183,10 +5222,36 @@
             Number of supported features.
             </summary>
         </member>
+        <member name="F:IGCLWrapper.VideoProcessingFeatureCapsDto.Features">
+            <summary>Details for the media features reported by the driver.</summary>
+        </member>
         <member name="F:IGCLWrapper.VideoProcessingFeatureCapsDto.ReservedFields">
             <summary>
             Reserved fields.
             </summary>
+        </member>
+        <member name="T:IGCLWrapper.StandardColorCorrectionDto">
+            <summary>
+            Adapter-wide hue, saturation, contrast, and brightness settings.
+            </summary>
+        </member>
+        <member name="F:IGCLWrapper.StandardColorCorrectionDto.Enable">
+            <summary>Whether standard colour correction is enabled.</summary>
+        </member>
+        <member name="F:IGCLWrapper.StandardColorCorrectionDto.Brightness">
+            <summary>Brightness adjustment.</summary>
+        </member>
+        <member name="F:IGCLWrapper.StandardColorCorrectionDto.Contrast">
+            <summary>Contrast adjustment.</summary>
+        </member>
+        <member name="F:IGCLWrapper.StandardColorCorrectionDto.Hue">
+            <summary>Hue adjustment.</summary>
+        </member>
+        <member name="F:IGCLWrapper.StandardColorCorrectionDto.Saturation">
+            <summary>Saturation adjustment.</summary>
+        </member>
+        <member name="T:IGCLWrapper.VideoProcessingFeatureDetailDto">
+            <summary>Driver-reported media feature type and required value type.</summary>
         </member>
         <member name="T:IGCLWrapper.IGCLMemoryHelper">
             <summary>
