@@ -1,4 +1,4 @@
-﻿using DisplayMagicianShared.Windows;
+using DisplayMagicianShared.Windows;
 using NVAPIWrapper;
 using EDIDParser;
 using Microsoft.Win32.SafeHandles;
@@ -3998,20 +3998,19 @@ namespace DisplayMagicianShared.NVIDIA
                             var displayIdInfo = displaysDict[displayKeys[j]];
                             var displayIdInfoAdapterLuid = displayIdInfo.DisplayIdInfo.AdapterLuid;
 
-                            if (adapterOldToNewMap.ContainsKey((ulong)displayIdInfoAdapterLuid))
+                            if (adapterOldToNewMap.TryGetValue((ulong)displayIdInfoAdapterLuid, out ulong newAdapterValue))
                             {
                                 // We get here if there is a matching adapter
-                                var newAdapterValue = adapterOldToNewMap[(ulong)displayIdInfoAdapterLuid];
                                 displayIdInfo.DisplayIdInfo.AdapterLuid = (long)newAdapterValue;
                                 SharedLogger.logger.Trace($"NVIDIALibrary/PatchNVIDADisplayConfig: Updated DisplayIdInfo for display {displayIdInfo.DisplayId} from adapter {displayIdInfoAdapterLuid} to adapter {newAdapterValue} instead.");
                             }
+                            else if (adapterOldToNewMap.Count == 0)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/PatchNVIDADisplayConfig: No current adapter mapping is available for saved adapter {displayIdInfoAdapterLuid}; leaving the NVIDIA adapter LUID unchanged.");
+                            }
                             else
                             {
-                                // if there isn't a matching adapter, then we just pick the first current one and hope that works!
-                                // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
-                                var newAdapterValue = adapterOldToNewMap.First().Value;
-                                SharedLogger.logger.Warn($"NVIDIALibrary/PatchNVIDADisplayConfig: Uh Oh. Adapter {displayIdInfoAdapterLuid} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                                displayIdInfo.DisplayIdInfo.AdapterLuid = (long)newAdapterValue;
+                                SharedLogger.logger.Warn($"NVIDIALibrary/PatchNVIDADisplayConfig: Saved adapter {displayIdInfoAdapterLuid} does not have a current match; leaving the NVIDIA adapter LUID unchanged.");
                             }
                             // Write the modified struct back into the dictionary
                             displaysDict[displayKeys[j]] = displayIdInfo;

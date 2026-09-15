@@ -794,7 +794,7 @@ namespace DisplayMagicianShared
                         JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Include,
+                            NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
                             SerializationBinder = DisplayMagicianSerializationBinder.Instance,
@@ -818,9 +818,7 @@ namespace DisplayMagicianShared
                         // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                         foreach (ProfileItem profile in _allProfiles)
                         {
-                            WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
-                            WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
-                            profile.WindowsDisplayConfig = winProfile;
+                            PatchLoadedProfile(profile);
                         }
 
                     }
@@ -845,7 +843,7 @@ namespace DisplayMagicianShared
                             JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                             {
                                 MissingMemberHandling = MissingMemberHandling.Ignore,
-                                NullValueHandling = NullValueHandling.Include,
+                                NullValueHandling = NullValueHandling.Ignore,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
                                 SerializationBinder = DisplayMagicianSerializationBinder.Instance,
@@ -865,9 +863,7 @@ namespace DisplayMagicianShared
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in _allProfiles)
                             {
-                                WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
-                                WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
-                                profile.WindowsDisplayConfig = winProfile;
+                                PatchLoadedProfile(profile);
                             }
 
                         }
@@ -925,6 +921,22 @@ namespace DisplayMagicianShared
             RefreshDisplayDetectionState();
 
             return true;
+        }
+
+        private static void PatchLoadedProfile(ProfileItem profile)
+        {
+            DisplayConfigurationNormalizer.Normalize(profile);
+
+            WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = profile.WindowsDisplayConfig;
+            NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = profile.NVIDIADisplayConfig;
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+            Dictionary<ulong, ulong> adapterOldToNewMap = winLibrary.GetAdapterIdMap(windowsDisplayConfig);
+
+            NVIDIALibrary.GetLibrary().PatchNVIDADisplayConfig(ref nvidiaDisplayConfig, adapterOldToNewMap);
+            winLibrary.PatchWindowsDisplayConfig(ref windowsDisplayConfig, adapterOldToNewMap);
+
+            profile.NVIDIADisplayConfig = nvidiaDisplayConfig;
+            profile.WindowsDisplayConfig = windowsDisplayConfig;
         }
 
         public static void CopyCurrentLayoutToProfile(ProfileItem profile)
@@ -1204,9 +1216,7 @@ namespace DisplayMagicianShared
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in profilesToValidate)
                             {
-                                WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
-                                WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
-                                profile.WindowsDisplayConfig = winProfile;
+                                PatchLoadedProfile(profile);
                             }
 
                         }

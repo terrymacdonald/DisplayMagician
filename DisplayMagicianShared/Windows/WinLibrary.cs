@@ -398,7 +398,7 @@ namespace DisplayMagicianShared.Windows
             return myDefaultConfig;
         }
 
-        public Dictionary<ulong, ulong> GetAdapterIdMap(ref WINDOWS_DISPLAY_CONFIG savedDisplayConfig)
+        public Dictionary<ulong, ulong> GetAdapterIdMap(WINDOWS_DISPLAY_CONFIG savedDisplayConfig)
         {
             Dictionary<ulong, ulong> adapterOldToNewMap = new Dictionary<ulong, ulong>();
             Dictionary<ulong, string> currentAdapterMap = GetAllAdapterIDs();
@@ -432,47 +432,16 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Error(ex, "WinLibrary/PatchWindowsDisplayConfig: Exception while going through the list of adapters we stored in the config to figure out the old adapterIDs");
             }
 
-            ulong newAdapterValue = 0;
-            ulong oldAdapterValue = 0;
-
-            try
-            {
-                // Update the DisplayAdapters with the current adapter id
-                SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Going through the display adatpers to update the adapter id");
-                ulong[] currentKeys = savedDisplayConfig.DisplayAdapters.Keys.ToArray();
-                var currentLength = savedDisplayConfig.DisplayAdapters.Count;
-                for (int i = 0; i < currentLength; i++)
-                {
-                    oldAdapterValue = currentKeys[i];
-                    // Change the Dictionary Key AdapterIDs
-                    if (adapterOldToNewMap.ContainsKey(oldAdapterValue))
-                    {
-                        // We get here if there is a matching adapter
-                        newAdapterValue = adapterOldToNewMap[oldAdapterValue];
-
-                        // Skip if we've already replaced something!
-                        if (!savedDisplayConfig.DisplayAdapters.ContainsKey(newAdapterValue))
-                        {
-                            // Add a new dictionary key with the old value
-                            savedDisplayConfig.DisplayAdapters.Add(newAdapterValue, savedDisplayConfig.DisplayAdapters[oldAdapterValue]);
-                            // Remove the old dictionary key
-                            savedDisplayConfig.DisplayAdapters.Remove(oldAdapterValue);
-                        }
-                        SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated DisplayAdapter from adapter {oldAdapterValue} to adapter {newAdapterValue} instead.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, "WinLibrary/PatchWindowsDisplayConfig: Exception while going through the display adapters update the adapter ids");
-            }
-
             return adapterOldToNewMap;
         }
         public void PatchWindowsDisplayConfig(ref WINDOWS_DISPLAY_CONFIG savedDisplayConfig)
         {
+            Dictionary<ulong, ulong> adapterOldToNewMap = GetAdapterIdMap(savedDisplayConfig);
+            PatchWindowsDisplayConfig(ref savedDisplayConfig, adapterOldToNewMap);
+        }
 
-            Dictionary<ulong, ulong> adapterOldToNewMap = GetAdapterIdMap(ref savedDisplayConfig);
+        public void PatchWindowsDisplayConfig(ref WINDOWS_DISPLAY_CONFIG savedDisplayConfig, Dictionary<ulong, ulong> adapterOldToNewMap)
+        {
             Dictionary<ulong, string> currentAdapterMap = GetAllAdapterIDs();
 
             ulong fallbackAdapterId = 0;
