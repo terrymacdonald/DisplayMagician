@@ -545,7 +545,9 @@ namespace DisplayMagician.UIForms
                 // Only apply the profile if it exists and is not already the active profile
                 if (profileToRun != null)
                 {
-                    if (!ProfileRepository.IsActiveProfile(profileToRun))
+                    // Use the cached active profile first. Only query the display APIs when the cache
+                    // says this profile is already active, because that is the only case where we skip applying it.
+                    if (!ProfileRepository.IsActiveProfile(profileToRun) || !ProfileRepository.RecheckIsActiveProfile(profileToRun))
                     {
                         ApplyProfileResult result = Program.ApplyProfileTask(profileToRun);
                         if (result == ApplyProfileResult.Successful)

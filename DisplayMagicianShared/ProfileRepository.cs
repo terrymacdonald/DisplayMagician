@@ -743,6 +743,19 @@ namespace DisplayMagicianShared
             }
         }
 
+        public static bool RecheckIsActiveProfile(ProfileItem profile)
+        {
+            if (profile == null)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/RecheckIsActiveProfile: The requested profile is null. Not changing anything, and reporting an error");
+                return false;
+            }
+
+            SharedLogger.logger.Trace($"ProfileRepository/RecheckIsActiveProfile: Refreshing the current display settings before checking whether profile {profile.Name} is active.");
+            UpdateActiveProfile();
+            return IsActiveProfile(profile);
+        }
+
 
         private static bool LoadProfiles()
         {
