@@ -548,7 +548,9 @@ namespace DisplayMagician.UIForms
                 }
                 else
                 {
-                    if (ProfileRepository.IsActiveProfile(_selectedProfile))
+                    // Use the cached active profile first. Only query the display APIs when the cache
+                    // says this profile is already active, because that is the only case where we hide Apply.
+                    if (ProfileRepository.IsActiveProfile(_selectedProfile) && ProfileRepository.RecheckIsActiveProfile(_selectedProfile))
                     {
                         btn_apply.Visible = false;
                         lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
