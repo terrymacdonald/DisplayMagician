@@ -3631,6 +3631,12 @@
             Only the payload matching <see cref="F:IGCLWrapper.PixtxBlockConfigDto.BlockType"/> is used.
             </summary>
         </member>
+        <member name="M:IGCLWrapper.PixtxBlockConfigDto.Equals(IGCLWrapper.PixtxBlockConfigDto)">
+            <summary>
+            Compares the active transformation represented by this block. Native Size and Version
+            fields are transport headers, not part of the transformation applied to a display.
+            </summary>
+        </member>
         <member name="T:IGCLWrapper.PixtxPipeSetConfigDto">
             <summary>
             DTO for pixel transformation pipe set config.
@@ -5053,6 +5059,12 @@
             <param name="settings">The colour-correction settings to apply.</param>
             <returns><c>true</c> when applied; <c>false</c> when unsupported.</returns>
         </member>
+        <member name="M:IGCLWrapper.IGCLMediaHelper.GetStandardColorCorrectionCapabilities(IGCLWrapper.ctl_video_processing_standard_color_correction_info_t@)">
+            <summary>
+            Queries the Standard Color Correction capabilities using the same one-feature
+            capability request that Intel's Media Sample uses before every SCC get or set.
+            </summary>
+        </member>
         <member name="M:IGCLWrapper.IGCLMediaHelper.SetVideoProcessingFeature(IGCLWrapper.VideoProcessingFeatureGetSetDto)">
             <summary>
             Set a video processing feature using a DTO request.
@@ -5065,6 +5077,14 @@
             Returns true when the result code indicates a feature is not available
             on the current hardware or driver, rather than a genuine API failure.
             </summary>
+        </member>
+        <member name="M:IGCLWrapper.IGCLMediaHelper.InitializeCustomValueForGet(IGCLWrapper.ctl_video_processing_feature_t,System.Byte*,System.Int32)">
+            <summary>
+            Initializes the header required by IGCL when querying a CUSTOM video-processing value.
+            </summary>
+            <param name="featureType">The feature associated with the custom payload.</param>
+            <param name="pCustomValue">Pointer to the allocated custom payload.</param>
+            <param name="customValueSize">Allocated payload size.</param>
         </member>
         <member name="M:IGCLWrapper.IGCLMediaHelper.CreateVideoProcessingFeatureGetSet">
             <summary>
