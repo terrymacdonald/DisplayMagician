@@ -669,7 +669,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static void UpdateActiveProfile(bool fastScan = true)
+        public static void UpdateActiveProfile()
         {
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");

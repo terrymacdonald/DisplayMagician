@@ -777,7 +777,7 @@ namespace DisplayMagician.UIForms
 
             ProfileRepository.RefreshDisplayDetectionState();
             // Reload the profiles in case we swapped to another program to change it
-            ProfileRepository.UpdateActiveProfile(false);
+            ProfileRepository.UpdateActiveProfile();
             // Change to the current selected Profile
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
@@ -1049,7 +1049,7 @@ namespace DisplayMagician.UIForms
                     ProfileRepository.RefreshDisplayDetectionState();
 
                     // Update the active profile so the UI knows which profile is currently in use
-                    ProfileRepository.UpdateActiveProfile(false);
+                    ProfileRepository.UpdateActiveProfile();
 
                     // Refresh the Profile UI
                     RefreshDisplayProfileUI();

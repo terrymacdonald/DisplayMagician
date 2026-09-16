@@ -40,6 +40,10 @@ namespace DisplayMagicianShared.Intel
         // Display-related DTOs
         public bool IsSupportedDisplaySettings;
         public DisplaySettingsDto DisplaySettings;
+        // Per-display colour pipeline. This captures the active LUT and/or matrix payload
+        // used by the display output rather than adapter-wide media colour processing.
+        public bool IsSupportedPixelTransformation;
+        public PixelTransformationGetResultDto PixelTransformationSettings;
         public ScalingSettingsDto ScalingSettings;
         public SharpnessSettingsDto SharpnessSettings;
         public RetroScalingSettingsDto RetroScalingSettings;
@@ -75,7 +79,6 @@ namespace DisplayMagicianShared.Intel
         public CustomModeArgsDto CustomModeArgs;
         public List<CustomSourceModeDto> CustomModes;
         public LinkedDisplayAdaptersResultDto LinkedDisplayAdapters;
-        public MuxPropertiesDto MuxProperties;
         public VblankTimestampArgsDto VblankTimestamp;
         //public IntPtr ZeDeviceHandle;
         //public IntPtr ZeDriverHandle;
@@ -97,6 +100,8 @@ namespace DisplayMagicianShared.Intel
 
             IsSupportedDisplaySettings = false;
             DisplaySettings = new DisplaySettingsDto();
+            IsSupportedPixelTransformation = false;
+            PixelTransformationSettings = new PixelTransformationGetResultDto();
             ScalingSettings = new ScalingSettingsDto();
             SharpnessSettings = new SharpnessSettingsDto();
             RetroScalingSettings = new RetroScalingSettingsDto();
@@ -130,7 +135,6 @@ namespace DisplayMagicianShared.Intel
             CustomModeArgs = new CustomModeArgsDto();
             CustomModes = new List<CustomSourceModeDto>();
             LinkedDisplayAdapters = new LinkedDisplayAdaptersResultDto();
-            MuxProperties = new MuxPropertiesDto();
             VblankTimestamp = new VblankTimestampArgsDto();
             //ZeDeviceHandle = IntPtr.Zero;
             //ZeDriverHandle = IntPtr.Zero;
@@ -228,6 +232,11 @@ namespace DisplayMagicianShared.Intel
             if (!AreDisplaySettingsEqual(DisplaySettings, other.DisplaySettings))
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_WITH_SETTINGS/Equals: The DisplaySettings values don't equal each other");
+                return false;
+            }
+            if (!PixelTransformationSettings.Equals(other.PixelTransformationSettings))
+            {
+                SharedLogger.logger.Trace($"INTEL_DISPLAY_WITH_SETTINGS/Equals: The PixelTransformationSettings values don't equal each other");
                 return false;
             }
             if (!EqualityComparer<ScalingSettingsDto>.Default.Equals(ScalingSettings, other.ScalingSettings))
@@ -390,11 +399,6 @@ namespace DisplayMagicianShared.Intel
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_WITH_SETTINGS/Equals: The LinkedDisplayAdapters values don't equal each other");
                 return false;
             }
-            if (!EqualityComparer<MuxPropertiesDto>.Default.Equals(MuxProperties, other.MuxProperties))
-            {
-                SharedLogger.logger.Trace($"INTEL_DISPLAY_WITH_SETTINGS/Equals: The MuxProperties values don't equal each other");
-                return false;
-            }
             if (!EqualityComparer<VblankTimestampArgsDto>.Default.Equals(VblankTimestamp, other.VblankTimestamp))
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_WITH_SETTINGS/Equals: The VblankTimestamp values don't equal each other");
@@ -410,7 +414,7 @@ namespace DisplayMagicianShared.Intel
             //     SharedLogger.logger.Trace($"INTEL_DISPLAY_WITH_SETTINGS/Equals: The ZeDriverHandle values don't equal each other");
             //     return false;
             // }
-            if (Math.Abs(RefreshRateHz - other.RefreshRateHz) > 0.001)
+            if (RefreshRateHz != other.RefreshRateHz)
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_WITH_SETTINGS/Equals: The RefreshRateHz values don't equal each other");
                 return false;
@@ -437,8 +441,8 @@ namespace DisplayMagicianShared.Intel
         {
 
             return (Name, DisplayDeviceID, DisplayIndex, AdapterIndex, IsSupportedIntegerScaling, IsSupportedGPUScaling, IsSupportedImageSharpening,
-                IsSupportedDisplaySettings, GetDisplaySettingsHash(DisplaySettings), ScalingSettings, SharpnessSettings, RetroScalingSettings, IsSupportedDynamicContrastEnhancement, DynamicContrastEnhancement, DynamicContrastEnhancementHistogram?.Length, PowerOptimizationSettings, LaceConfig, SoftwarePsrSettings, GenlockArgs, IsSupportedIntelArcSync, IntelArcSyncMonitorParams, AdapterDisplayEncoderProperties, 
-                DisplayProperties, /*DeviceProperties,*/ DeviceID, DisplayTiming, WireFormat, Brightness, ScalingCaps, SharpnessCaps, RetroScalingCaps, PowerOptimizationCaps, IntelArcSyncProfile, CustomModeArgs, CustomModes?.Count, LinkedDisplayAdapters, MuxProperties, 
+                IsSupportedDisplaySettings, GetDisplaySettingsHash(DisplaySettings), PixelTransformationSettings, ScalingSettings, SharpnessSettings, RetroScalingSettings, IsSupportedDynamicContrastEnhancement, DynamicContrastEnhancement, DynamicContrastEnhancementHistogram?.Length, PowerOptimizationSettings, LaceConfig, SoftwarePsrSettings, GenlockArgs, IsSupportedIntelArcSync, IntelArcSyncMonitorParams, AdapterDisplayEncoderProperties, 
+                DisplayProperties, /*DeviceProperties,*/ DeviceID, DisplayTiming, WireFormat, Brightness, ScalingCaps, SharpnessCaps, RetroScalingCaps, PowerOptimizationCaps, IntelArcSyncProfile, CustomModeArgs, CustomModes?.Count, LinkedDisplayAdapters,
                 VblankTimestamp, /*ZeDeviceHandle, ZeDriverHandle,*/ RefreshRateHz, ResolutionWidth, ResolutionHeight, IsActive).GetHashCode();
         }
 
@@ -463,6 +467,8 @@ namespace DisplayMagicianShared.Intel
         // Per-adapter video processing (media) settings
         public bool IsSupportedVideoProcessing;
         public List<VideoProcessingFeatureGetSetDto> VideoProcessingSettings;
+        public bool IsSupportedStandardColorCorrection;
+        public StandardColorCorrectionDto StandardColorCorrection;
 
         public INTEL_ADAPTER()
         {
@@ -480,6 +486,8 @@ namespace DisplayMagicianShared.Intel
             ThreeDSettings = new List<ThreeDFeatureGetSetDto>();
             IsSupportedVideoProcessing = false;
             VideoProcessingSettings = new List<VideoProcessingFeatureGetSetDto>();
+            IsSupportedStandardColorCorrection = false;
+            StandardColorCorrection = new StandardColorCorrectionDto();
         }
         public override bool Equals(object obj) => obj is INTEL_ADAPTER other && Equals(other);
         
@@ -540,12 +548,18 @@ namespace DisplayMagicianShared.Intel
                 SharedLogger.logger.Trace($"INTEL_ADAPTER/Equals: The VideoProcessingSettings values don't equal each other");
                 return false;
             }
+            if (IsSupportedStandardColorCorrection != other.IsSupportedStandardColorCorrection ||
+                !StandardColorCorrection.Equals(other.StandardColorCorrection))
+            {
+                SharedLogger.logger.Trace($"INTEL_ADAPTER/Equals: The StandardColorCorrection values don't equal each other");
+                return false;
+            }
             return true;
         }
 
         public override int GetHashCode()
         {
-            return (AdapterID, Name, AdapterIndex, AdapterProperties, CombinedDisplayIsSupported, IsCombinedDisplay, CombinedDisplay, IsSupportedThreeDSettings, ThreeDSettings?.Count, IsSupportedVideoProcessing, VideoProcessingSettings?.Count).GetHashCode();
+            return (AdapterID, Name, AdapterIndex, AdapterProperties, CombinedDisplayIsSupported, IsCombinedDisplay, CombinedDisplay, IsSupportedThreeDSettings, ThreeDSettings?.Count, IsSupportedVideoProcessing, VideoProcessingSettings?.Count, IsSupportedStandardColorCorrection, StandardColorCorrection).GetHashCode();
         }
 
         public static bool operator ==(INTEL_ADAPTER lhs, INTEL_ADAPTER rhs) => lhs.Equals(rhs);
@@ -1057,39 +1071,37 @@ namespace DisplayMagicianShared.Intel
                         if (mediaCaps.HasValue && mediaCaps.Value.NumSupportedFeatures > 0)
                         {
                             newAdapter.IsSupportedVideoProcessing = true;
-                            // Attempt to read each known video processing feature. Most video processing features
-                            // are simple boolean enable/disable flags. Features that are not supported are
-                            // skipped gracefully via null return.
-                            ctl_video_processing_feature_t[] mediaFeatures = new[]
+                            var standardColorCorrection = mediaHelper.GetStandardColorCorrection();
+                            if (standardColorCorrection.HasValue)
                             {
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_FILM_MODE_DETECTION,
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_NOISE_REDUCTION,
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_SHARPNESS,
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_ADAPTIVE_CONTRAST_ENHANCEMENT,
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_SUPER_RESOLUTION,
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_STANDARD_COLOR_CORRECTION,
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_TOTAL_COLOR_CORRECTION,
-                                ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_SKIN_TONE_ENHANCEMENT,
-                            };
-                            foreach (var featureType in mediaFeatures)
+                                newAdapter.IsSupportedStandardColorCorrection = true;
+                                newAdapter.StandardColorCorrection = standardColorCorrection.Value;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got standard colour correction for adapter {adapterNum}");
+                            }
+                            // Query only driver-reported features, using each feature's reported value type.
+                            foreach (var mediaFeature in mediaCaps.Value.Features)
                             {
+                                // Standard colour correction is saved and applied via its typed field above.
+                                if (mediaFeature.FeatureType == ctl_video_processing_feature_t.CTL_VIDEO_PROCESSING_FEATURE_STANDARD_COLOR_CORRECTION)
+                                    continue;
+
                                 try
                                 {
-                                    var getRequest = IGCLMediaHelper.CreateVideoProcessingFeatureGetRequest(featureType, ctl_property_value_type_t.CTL_PROPERTY_VALUE_TYPE_BOOL);
+                                    var getRequest = IGCLMediaHelper.CreateVideoProcessingFeatureGetRequest(mediaFeature.FeatureType, mediaFeature.ValueType);
                                     var result = mediaHelper.GetVideoProcessingFeature(getRequest);
                                     if (result.HasValue)
                                     {
                                         newAdapter.VideoProcessingSettings.Add(result.Value);
-                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got video processing feature {featureType} for adapter {adapterNum}");
+                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got video processing feature {mediaFeature.FeatureType} for adapter {adapterNum}");
                                     }
                                     else
                                     {
-                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Video processing feature {featureType} not supported for adapter {adapterNum}, skipping.");
+                                        SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Video processing feature {mediaFeature.FeatureType} not supported for adapter {adapterNum}, skipping.");
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting video processing feature {featureType} for adapter {adapterNum}.");
+                                    SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting video processing feature {mediaFeature.FeatureType} for adapter {adapterNum}.");
                                 }
                             }
                             SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got {newAdapter.VideoProcessingSettings.Count} video processing feature(s) for adapter {adapterNum}");
@@ -1183,6 +1195,39 @@ namespace DisplayMagicianShared.Intel
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting display settings for display {logDisplayId} on adapter {adapterNum}.");
+                        }
+
+                        // Get the active per-display colour transformation. This is separate from
+                        // the adapter-wide media video-processing features and can contain the
+                        // display's 1D/3D LUT or 3x3 colour matrix used by Intel Graphics Command Center.
+                        try
+                        {
+                            var pixelTransformationCapability = display.PixelTransformationGetConfig(PixtxPipeGetConfigDto.CreateCapabilityRequest());
+                            if (pixelTransformationCapability.HasValue)
+                            {
+                                var supportedBlocks = pixelTransformationCapability.Value.Blocks ?? new List<PixtxBlockConfigDto>();
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Pixel transformation capability for display {logDisplayId} on adapter {adapterNum}: {supportedBlocks.Count} block(s): {string.Join(", ", supportedBlocks.Select(block => $"Id={block.BlockId},Type={block.BlockType}"))}");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Pixel transformation capability is unavailable for display {logDisplayId} on adapter {adapterNum}");
+                            }
+
+                            var pixelTransformation = display.PixelTransformationGetConfig(PixtxPipeGetConfigDto.CreateCurrentRequest());
+                            if (pixelTransformation.HasValue && pixelTransformation.Value.Blocks is { Count: > 0 })
+                            {
+                                newDisplay.PixelTransformationSettings = pixelTransformation.Value;
+                                newDisplay.IsSupportedPixelTransformation = true;
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Got {pixelTransformation.Value.Blocks.Count} current pixel transformation block(s) for display {logDisplayId} on adapter {adapterNum}");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: No current pixel transformation blocks were available for display {logDisplayId} on adapter {adapterNum}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting pixel transformation settings for display {logDisplayId} on adapter {adapterNum}.");
                         }
 
                         // Make a display name that works across reboots
@@ -1519,30 +1564,6 @@ namespace DisplayMagicianShared.Intel
                             SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting vblank timestamp for display {logDisplayId} on adapter {adapterNum}.");
                         }
 
-                        //------------------------------------
-                        // GET MUX PROPERTIES
-                        //------------------------------------
-                        try
-                        {
-                            var muxHandles = display.EnumerateMuxDevices();
-                            if (muxHandles != null && muxHandles.Length > 0)
-                            {
-                                var muxProperties = display.GetMuxProperties(muxHandles[0]);
-                                if (muxProperties.HasValue)
-                                    newDisplay.MuxProperties = muxProperties.Value;
-                                if (muxHandles.Length > 1)
-                                {
-                                    SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Multiple mux devices detected ({muxHandles.Length}); storing properties for the first one only.");
-                                }
-                            }
-                            SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Successfully got mux properties for display {logDisplayId} ({displayCount}/{displayTotalCount}) on adapter {adapterNum}");
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting mux properties for display {logDisplayId} on adapter {adapterNum}.");
-                        }
-
-
                         // 3. Create a unique Hardware PCI ID + Target ID
                         // Format: VEN_8086&DEV_XXXX&REV_XX-PORT_X
                         
@@ -1615,12 +1636,16 @@ namespace DisplayMagicianShared.Intel
                 }
                 // Video Processing Settings
                 sb.AppendLine($"  IsSupportedVideoProcessing: {myAdapter.IsSupportedVideoProcessing}");
+                if (myAdapter.IsSupportedStandardColorCorrection)
+                {
+                    sb.AppendLine($"  StandardColorCorrection: Enabled={myAdapter.StandardColorCorrection.Enable} Brightness={myAdapter.StandardColorCorrection.Brightness} Contrast={myAdapter.StandardColorCorrection.Contrast} Hue={myAdapter.StandardColorCorrection.Hue} Saturation={myAdapter.StandardColorCorrection.Saturation}");
+                }
                 if (myAdapter.IsSupportedVideoProcessing && myAdapter.VideoProcessingSettings != null && myAdapter.VideoProcessingSettings.Count > 0)
                 {
                     sb.AppendLine($"  VideoProcessingSettings ({myAdapter.VideoProcessingSettings.Count} feature(s)):");
                     for (int i = 0; i < myAdapter.VideoProcessingSettings.Count; i++)
                     {
-                        sb.AppendLine($"    VideoProcessingFeature[{i}]: Feature={myAdapter.VideoProcessingSettings[i].FeatureType} ValueType={myAdapter.VideoProcessingSettings[i].ValueType} Value={myAdapter.VideoProcessingSettings[i].Value}");
+                        sb.AppendLine($"    VideoProcessingFeature[{i}]: Feature={myAdapter.VideoProcessingSettings[i].FeatureType} ValueType={myAdapter.VideoProcessingSettings[i].ValueType} Value={myAdapter.VideoProcessingSettings[i].Value} CustomValueBytes={myAdapter.VideoProcessingSettings[i].CustomValue?.Count ?? 0}");
                     }
                 }
                 sb.AppendLine();
@@ -1662,6 +1687,13 @@ namespace DisplayMagicianShared.Intel
                 if (display.IsSupportedDisplaySettings)
                 {
                     sb.AppendLine($"  DisplaySettings: {display.DisplaySettings}");
+                }
+
+                sb.AppendLine($"  PixelTransformation: Supported={display.IsSupportedPixelTransformation} Blocks={display.PixelTransformationSettings.Blocks?.Count ?? 0}");
+                if (display.IsSupportedPixelTransformation && display.PixelTransformationSettings.Blocks != null)
+                {
+                    foreach (var block in display.PixelTransformationSettings.Blocks)
+                        sb.AppendLine($"    PixelTransformationBlock: Id={block.BlockId} Type={block.BlockType}");
                 }
 
                 // Wire Format
@@ -2030,7 +2062,7 @@ namespace DisplayMagicianShared.Intel
                                     var sharpnessSettings = currentSettings.SharpnessSettings;
                                     if (sharpnessSettings.Enable != storedSettings.SharpnessSettings.Enable ||
                                         sharpnessSettings.FilterType != storedSettings.SharpnessSettings.FilterType ||
-                                        Math.Abs(sharpnessSettings.Intensity - storedSettings.SharpnessSettings.Intensity) > 0.001f)
+                                        sharpnessSettings.Intensity != storedSettings.SharpnessSettings.Intensity)
                                     {
                                         sharpnessSettings.Enable = storedSettings.SharpnessSettings.Enable;
                                         sharpnessSettings.FilterType = storedSettings.SharpnessSettings.FilterType;
@@ -2051,6 +2083,54 @@ namespace DisplayMagicianShared.Intel
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Image Sharpening for display {logDisplayId}");
+                                success = false;
+                            }
+                        }
+
+                        //------------------------------------
+                        // SET PER-DISPLAY PIXEL TRANSFORMATION IF NEEDED
+                        //------------------------------------
+                        if (storedSettings.IsSupportedPixelTransformation && storedSettings.PixelTransformationSettings.Blocks is { Count: > 0 })
+                        {
+                            try
+                            {
+                                var currentPixelTransformation = display.PixelTransformationGetConfig(PixtxPipeGetConfigDto.CreateCurrentRequest());
+                                if (currentPixelTransformation.HasValue)
+                                {
+                                    if (!currentPixelTransformation.Value.Equals(storedSettings.PixelTransformationSettings))
+                                    {
+                                        var pixelTransformationGroups = GroupPixelTransformationBlocksForApply(storedSettings.PixelTransformationSettings.Blocks);
+                                        var allGroupsApplied = true;
+                                        foreach (var pixelTransformationGroup in pixelTransformationGroups)
+                                        {
+                                            var setPixelTransformation = new PixtxPipeSetConfigDto
+                                            {
+                                                OpertaionType = ctl_pixtx_config_opertaion_type_t.CTL_PIXTX_CONFIG_OPERTAION_TYPE_SET_CUSTOM,
+                                                Blocks = pixelTransformationGroup
+                                            };
+                                            if (!display.PixelTransformationSetConfig(setPixelTransformation))
+                                            {
+                                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Pixel transformation is not supported for display {logDisplayId}, skipping");
+                                                allGroupsApplied = false;
+                                                break;
+                                            }
+                                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set {setPixelTransformation.Blocks.Count} pixel transformation block(s) for display {logDisplayId}");
+                                        }
+                                        success &= allGroupsApplied;
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Pixel transformation already set to desired values, skipping for display {logDisplayId}");
+                                    }
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Pixel transformation is not available for display {logDisplayId}, skipping");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying pixel transformation for display {logDisplayId}");
                                 success = false;
                             }
                         }
@@ -2481,6 +2561,35 @@ namespace DisplayMagicianShared.Intel
                             SharedLogger.logger.Warn(ex, $"IntelLibrary/SetActiveConfigOverride: Exception applying video processing settings for adapter {adapterNum}, skipping.");
                         }
                     }
+
+                    if (hasStoredAdapter && storedAdapter.IsSupportedStandardColorCorrection)
+                    {
+                        try
+                        {
+                            var mediaHelper = _igclApiHelper.GetMediaHelper(adapter);
+                            var currentStandardColorCorrection = mediaHelper.GetStandardColorCorrection();
+                            if (!currentStandardColorCorrection.HasValue)
+                            {
+                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Standard colour correction is not supported by current hardware for adapter {adapterNum}, skipping");
+                            }
+                            else if (!currentStandardColorCorrection.Value.Equals(storedAdapter.StandardColorCorrection))
+                            {
+                                if (mediaHelper.SetStandardColorCorrection(storedAdapter.StandardColorCorrection))
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set standard colour correction for adapter {adapterNum}");
+                                else
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Standard colour correction is not supported by current hardware for adapter {adapterNum}, skipping");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Standard colour correction already has the desired values for adapter {adapterNum}, skipping");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying standard colour correction for adapter {adapterNum}");
+                            success = false;
+                        }
+                    }
                 }
 
                 return success;
@@ -2860,6 +2969,33 @@ namespace DisplayMagicianShared.Intel
             displayIdentifiers.Sort();
 
             return displayIdentifiers;
+        }
+
+        /// <summary>
+        /// Groups saved pixel-transformation blocks in the same form used by Intel's
+        /// Color sample. A contiguous de-gamma/CSC/gamma sequence is submitted as one
+        /// linear CSC request; all other blocks are submitted individually.
+        /// </summary>
+        private static List<List<PixtxBlockConfigDto>> GroupPixelTransformationBlocksForApply(List<PixtxBlockConfigDto> blocks)
+        {
+            var groups = new List<List<PixtxBlockConfigDto>>();
+            for (var index = 0; index < blocks.Count;)
+            {
+                if (index + 2 < blocks.Count &&
+                    blocks[index].BlockType == ctl_pixtx_block_type_t.CTL_PIXTX_BLOCK_TYPE_1D_LUT &&
+                    blocks[index + 1].BlockType == ctl_pixtx_block_type_t.CTL_PIXTX_BLOCK_TYPE_3X3_MATRIX_AND_OFFSETS &&
+                    blocks[index + 2].BlockType == ctl_pixtx_block_type_t.CTL_PIXTX_BLOCK_TYPE_1D_LUT)
+                {
+                    groups.Add(new List<PixtxBlockConfigDto> { blocks[index], blocks[index + 1], blocks[index + 2] });
+                    index += 3;
+                    continue;
+                }
+
+                groups.Add(new List<PixtxBlockConfigDto> { blocks[index] });
+                index++;
+            }
+
+            return groups;
         }
 
     }
