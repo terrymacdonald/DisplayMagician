@@ -1,6 +1,22 @@
-# DisplayMagician 3.0.0
+# DisplayMagician 3.0.0 Release Notes
 
 DisplayMagician 3.0.0 is a major release focused on broader multi-GPU support, more complete game-shortcut automation, and a much more dependable display-profile experience. It also moves the application to .NET 10 and refreshes the interface for modern high-DPI displays.
+
+## Donation
+This is the result of hundreds and hundreds of hours of work over the last year to build a robust reliable application for you to use. There are now over 36,500 DisplayMagician users, so that weight of expectancy does weigh heavily. I've made I really want to make something great for people to use. I'd relly appreciate a donation from you to help buy a coffee or two! 
+
+<a href="https://www.buymeacoffee.com/displaymagician" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a><a href="https://github.com/sponsors/terrymacdonald" target="_blank">  <img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-sponsor.png" alt="Github Sponsor" height="41" width="122"></a>
+
+The following incredibly generous people get special mention for their extra large donations!
+* Nigel-CY (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* zaneyard (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* jonathanprl (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* domenic (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* luke (Thanks for the 15 coffees!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* mattmazgaj (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* frcooper (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* RBZL (Thanks for the monthly donation!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
+* sean (Thanks for the 100 coffees!) <---- MASSIVE THANKS FOR THE EXTRA LARGE DONATION!!!!!
 
 ## Highlights
 
@@ -14,6 +30,10 @@ DisplayMagician can now capture, save, compare, and apply Intel display configur
 
 The Intel integration uses the Intel Graphics Command Center APIs and includes improved handling for display identifiers, cloned/combined display transitions, HDR, refresh rate, scaling, rotation, and display colour settings.
 
+### Brand new video libraries
+
+This DisplayMagician release swaps from handcrafted to video libraries to a brand new automated build process. We have build a brand new process for creating our video libraries, which allows us to quickly and (fairly) easily update our wrapper libraries to make use of any new features released by NVIDIA, AMD or Intel. The three libraries are NVAPIWrapper, ALDXWrapper and IGCLWrapper. These have been made free to use and opensource to help any other future developers build something great for people to use.
+
 ### Built for .NET 10
 
 DisplayMagician now runs on .NET 10. The installer includes the required runtime, so no separate runtime installation should be needed. This modernises the application platform and updates the supporting display, AMD, NVIDIA, and Intel libraries. It also allows us to start monitoring modern UWP applications.
@@ -23,6 +43,10 @@ DisplayMagician now runs on .NET 10. The installer includes the required runtime
 You can now create audio profiles and attach one to a game or application shortcut. A shortcut can apply its display profile and its selected audio-device configuration together, making it easier to move between desktop, headset, sim-racing, streaming, and living-room setups.
 
 DisplayMagician also handles delayed audio devices after a display change, provides clearer audio-profile recovery and failure guidance, and explains when Windows microphone privacy permissions prevent audio settings from being accessed. A denied permission no longer prevents the rest of a shortcut from running.
+
+### Use Streamdecks, buttons and joysticks as hotkeys
+
+This release allows you to use button box buttons, Streamdecks and joysticks as hotkeys to perform various tasks. You can set things up so you can press a button on your button box an bring up the DisplayMagician Game Shortcut Library window. Or you can map a hotkey on your keyboard and then set up a Streamdeck button to press that key combination when yuou press it. I have this set up on my Streamdeck so I can press a single button to run Assetto Corsa Rally and start all my helper applications with a single button press.
 
 ### More capable and reliable game shortcuts
 
