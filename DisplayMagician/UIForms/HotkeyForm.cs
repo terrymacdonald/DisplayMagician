@@ -621,8 +621,8 @@ namespace DisplayMagician.UIForms
             // Now stop the capture thread to listen for hotkeys
             StopCapture();
 
-            // restart the hotkey monitoring as we're leaving this form
-            Program.AppDirectInputManager.Start();
+            // Rebuild the registered actions, then resume polling only when a usable hotkey exists.
+            Program.RefreshDirectInputHotkeys();
 
         }
 

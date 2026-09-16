@@ -223,6 +223,12 @@ namespace DisplayMagician
         /// </summary>
         public void Start(int pollIntervalMs = 50)
         {
+            if (!HasRegisteredHotkeys)
+            {
+                logger.Trace("DirectInputManager/Start: No hotkeys are registered, so input polling will remain stopped.");
+                return;
+            }
+
             if (_pollThread?.IsAlive == true) return;
 
             _cts = new CancellationTokenSource();
@@ -232,6 +238,25 @@ namespace DisplayMagician
                 Name = "DisplayMagician Input Poller"
             };
             _pollThread.Start();
+        }
+
+        public bool HasRegisteredHotkeys => _keyBindings.Count > 0 || _buttonBindings.Count > 0;
+
+        public void ClearRegisteredHotkeys()
+        {
+            _keyBindings.Clear();
+            _buttonBindings.Clear();
+            _activeKeyboardBindings.Clear();
+            _activeJoystickBindings.Clear();
+        }
+
+        public void StopIfNoRegisteredHotkeys()
+        {
+            if (!HasRegisteredHotkeys)
+            {
+                logger.Trace("DirectInputManager/StopIfNoRegisteredHotkeys: No hotkeys remain registered, so stopping input polling.");
+                Stop();
+            }
         }
 
         /// <summary>
@@ -531,7 +556,7 @@ namespace DisplayMagician
                     {
 
                         // Check to make sure that the hotkey has at least one key assigned to it, and skip it as faulty if it doesn't
-                        if (hotkey.KeyCodes.Count == 0)
+                        if (hotkey.KeyCodes == null || hotkey.KeyCodes.Count == 0)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Skipping registering key combination as it has no keys associaited with it!");
                             continue;
@@ -602,7 +627,7 @@ namespace DisplayMagician
                     foreach (var hotkey in programSettings.JoystickHotkeys)
                     {
                         // Check to make sure that the hotkey has at least one button assigned to it, and skip it as faulty if it doesn't
-                        if (hotkey.Buttons.Count == 0)
+                        if (hotkey.Buttons == null || hotkey.Buttons.Count == 0)
                         {
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Skipping registering joystick combination as it has no buttons selected!");
                             continue;
@@ -832,6 +857,8 @@ namespace DisplayMagician
             // Save the settings
             Program.AppProgramSettings.SaveSettings();
 
+            StopIfNoRegisteredHotkeys();
+
             return true;
         }
 
@@ -884,6 +911,8 @@ namespace DisplayMagician
 
             // Save the settings
             Program.AppProgramSettings.SaveSettings();
+
+            StopIfNoRegisteredHotkeys();
 
             return true;
         }

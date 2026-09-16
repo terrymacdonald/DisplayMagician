@@ -1895,10 +1895,16 @@ namespace DisplayMagician {
         {
             try
             {
-                logger.Trace($"Program/StartDirectInputManager: Creating DirectInput Device Manager.");
-                AppDirectInputManager = new DirectInputManager();
-                logger.Trace($"Program/StartDirectInputManager: Initialising DirectInput Device Manager with the MainForm window handle.");
-                AppDirectInputManager.Initialize(AppMainForm.Handle);
+                if (AppDirectInputManager == null)
+                {
+                    logger.Trace($"Program/StartDirectInputManager: Creating DirectInput Device Manager.");
+                    AppDirectInputManager = new DirectInputManager();
+                    logger.Trace($"Program/StartDirectInputManager: Initialising DirectInput Device Manager with the MainForm window handle.");
+                    AppDirectInputManager.Initialize(AppMainForm.Handle);
+                }
+
+                AppDirectInputManager.Stop();
+                AppDirectInputManager.ClearRegisteredHotkeys();
                 logger.Trace($"Program/StartDirectInputManager: Registering stored keys and buttons with the DirectInput Device Manager.");
                 AppDirectInputManager.RegisterStoredHotkeys(AppProgramSettings);
                 AppDirectInputManager.Start(pollIntervalMs: 50);
@@ -1909,6 +1915,11 @@ namespace DisplayMagician {
                 AppDirectInputManager?.Dispose();
                 AppDirectInputManager = null;
             }
+        }
+
+        public static void RefreshDirectInputHotkeys()
+        {
+            StartDirectInputManager();
         }
 
         private static void ShowMigrationSummary(IReadOnlyList<ConfigMigrationRunner.MigrationNotice> notices)
