@@ -212,6 +212,7 @@ namespace DisplayMagicianShared
             AppIconPath = Path.Combine(AppDataPath, "Icons");
             AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
             AppProfileStoragePath = Path.Combine(AppDataPath, "Profiles");
+            ProfileItem.ConfigureStoragePath(AppDataPath);
             _profileStorageJsonFullFileName = Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
             _allProfiles = new List<ProfileItem>();
             _currentProfile = null;

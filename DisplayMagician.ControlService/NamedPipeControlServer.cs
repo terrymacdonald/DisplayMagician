@@ -197,8 +197,19 @@ public sealed class NamedPipeControlServer
                 return;
             }
 
-            UserStoragePaths userPaths = _storagePaths.GetUserPaths(identity.UserSid);
-            UserDataMigrationResult migrationResult = _userDataMigrationRunner.Migrate(legacyAppDataPath, userPaths);
+            UserDataMigrationResult migrationResult;
+            try
+            {
+                UserStoragePaths userPaths = _storagePaths.ProvisionUserStorage(identity.UserSid);
+                migrationResult = _userDataMigrationRunner.Migrate(legacyAppDataPath, userPaths);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+            {
+                _logger.Error(ex, "NamedPipeControlServer/HandleAgentMessageAsync: Could not provision v4 storage for SID {0}.", identity.UserSid);
+                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "DisplayMagician could not provision writable storage for this user.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             if (migrationResult.IsSuccessful)
             {
                 _logger.Info("NamedPipeControlServer/HandleAgentMessageAsync: Completed user-data migration for SID {0} from {1}.", identity.UserSid, legacyAppDataPath);

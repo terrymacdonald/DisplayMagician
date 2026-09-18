@@ -6,6 +6,7 @@ namespace DisplayMagician.ControlService;
 
 public sealed class ControlStateCoordinator
 {
+    private static readonly TimeSpan AgentHeartbeatTimeout = TimeSpan.FromSeconds(45);
     private readonly object _syncRoot = new object();
     private readonly Dictionary<int, RegisteredAgent> _agentsBySession = new Dictionary<int, RegisteredAgent>();
     private DisplayControlLease? _displayControlLease;
@@ -45,6 +46,8 @@ public sealed class ControlStateCoordinator
     {
         lock (_syncRoot)
         {
+            ReleaseIdleLeaseIfUnavailable(activeConsoleSessionId, utcNow);
+
             if (sessionId != activeConsoleSessionId)
             {
                 return Deny(ControlErrorCode.NotActiveConsoleUser, "Only the active physical-console user can control displays.");
@@ -55,7 +58,7 @@ public sealed class ControlStateCoordinator
                 return Deny(ControlErrorCode.AgentNotConnected, "The User Agent is not connected for this session.");
             }
 
-            if (utcNow - agent.LastHeartbeatUtc > TimeSpan.FromSeconds(45))
+            if (utcNow - agent.LastHeartbeatUtc > AgentHeartbeatTimeout)
             {
                 return Deny(ControlErrorCode.AgentNotHealthy, "The User Agent has not sent a recent heartbeat.");
             }
@@ -135,7 +138,7 @@ public sealed class ControlStateCoordinator
                     OperationState = agent.Registration.OperationState,
                     IsRecoveryRequired = agent.Registration.IsRecoveryRequired,
                     LastHeartbeatUtc = agent.LastHeartbeatUtc,
-                    IsHealthy = utcNow - agent.LastHeartbeatUtc <= TimeSpan.FromSeconds(45)
+                    IsHealthy = utcNow - agent.LastHeartbeatUtc <= AgentHeartbeatTimeout
                 });
             }
 
@@ -154,6 +157,21 @@ public sealed class ControlStateCoordinator
             ErrorCode = errorCode,
             Message = message
         };
+    }
+
+    private void ReleaseIdleLeaseIfUnavailable(int activeConsoleSessionId, DateTime utcNow)
+    {
+        if (_displayControlLease == null || _displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired)
+        {
+            return;
+        }
+
+        bool ownerIsNoLongerActiveConsoleUser = _displayControlLease.OwnerSessionId != activeConsoleSessionId;
+        bool ownerHeartbeatIsStale = utcNow - _displayControlLease.LastHeartbeatUtc > AgentHeartbeatTimeout;
+        if (ownerIsNoLongerActiveConsoleUser || ownerHeartbeatIsStale)
+        {
+            _displayControlLease = null;
+        }
     }
 
     private static DisplayControlLease CopyLease(DisplayControlLease lease)

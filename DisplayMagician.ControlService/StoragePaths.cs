@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.AccessControl;
 using System.Security.Principal;
 
 namespace DisplayMagician.ControlService;
@@ -41,6 +42,32 @@ public sealed class StoragePaths
         SecurityIdentifier sid = new SecurityIdentifier(userSid);
         string userPath = Path.Combine(UsersPath, sid.Value);
         return new UserStoragePaths(sid.Value, userPath);
+    }
+
+    /// <summary>
+    /// Creates a per-user data root that the interactive user can modify without granting
+    /// access to any other user's DisplayMagician data. This must run from the elevated
+    /// installer or the Control Service before the WinForms application adopts the v4 path.
+    /// </summary>
+    public UserStoragePaths ProvisionUserStorage(string userSid)
+    {
+        UserStoragePaths userPaths = GetUserPaths(userSid);
+        userPaths.EnsureDirectories();
+
+        SecurityIdentifier userIdentity = new SecurityIdentifier(userPaths.UserSid);
+        SecurityIdentifier administrators = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
+        SecurityIdentifier localSystem = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
+        foreach (string path in userPaths.GetAllPaths())
+        {
+            DirectorySecurity security = Directory.GetAccessControl(path);
+            InheritanceFlags inheritance = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;
+            security.SetAccessRule(new FileSystemAccessRule(userIdentity, FileSystemRights.Modify, inheritance, PropagationFlags.None, AccessControlType.Allow));
+            security.SetAccessRule(new FileSystemAccessRule(administrators, FileSystemRights.FullControl, inheritance, PropagationFlags.None, AccessControlType.Allow));
+            security.SetAccessRule(new FileSystemAccessRule(localSystem, FileSystemRights.FullControl, inheritance, PropagationFlags.None, AccessControlType.Allow));
+            Directory.SetAccessControl(path, security);
+        }
+
+        return userPaths;
     }
 }
 
@@ -90,5 +117,23 @@ public sealed class UserStoragePaths
         Directory.CreateDirectory(BackupsPath);
         Directory.CreateDirectory(LogsPath);
         Directory.CreateDirectory(LegacyFilesPath);
+    }
+
+    internal string[] GetAllPaths()
+    {
+        return new[]
+        {
+            RootPath,
+            ProfilesPath,
+            AudioProfilesPath,
+            ShortcutsPath,
+            SettingsPath,
+            MessagesPath,
+            IconsPath,
+            WallpaperPath,
+            BackupsPath,
+            LogsPath,
+            LegacyFilesPath
+        };
     }
 }

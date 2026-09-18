@@ -88,6 +88,15 @@ namespace DisplayMagicianShared
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         internal static string AppWallpaperPath = Path.Combine(AppDataPath, $"Wallpaper");
+
+        internal static void ConfigureStoragePath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            AppDataPath = Path.GetFullPath(applicationDataPath);
+            AppWallpaperPath = Path.Combine(AppDataPath, "Wallpaper");
+        }
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         public static string SkipDisplayChangeName = "No Change";
