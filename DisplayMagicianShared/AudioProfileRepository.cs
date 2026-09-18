@@ -73,10 +73,10 @@ namespace DisplayMagicianShared
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
-        private static readonly string AppAudioProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"AudioProfiles");
+        private static string AppAudioProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"AudioProfiles");
         private static string _audioProfileFileVersion = "1";
         private static readonly string _audioProfileStorageJsonFileName = "AudioProfiles.json";
-        private static readonly string _audioProfileStorageJsonFullFileName = System.IO.Path.Combine(AppAudioProfileStoragePath, _audioProfileStorageJsonFileName);
+        private static string _audioProfileStorageJsonFullFileName = System.IO.Path.Combine(AppAudioProfileStoragePath, _audioProfileStorageJsonFileName);
 
         #endregion
 
@@ -201,6 +201,22 @@ namespace DisplayMagicianShared
         #endregion
 
         #region Class Methods
+        public static void ConfigureStoragePath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            AppDataPath = Path.GetFullPath(applicationDataPath);
+            AppIconPath = Path.Combine(AppDataPath, "Icons");
+            AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
+            AppAudioProfileStoragePath = Path.Combine(AppDataPath, "AudioProfiles");
+            _audioProfileStorageJsonFullFileName = Path.Combine(AppAudioProfileStoragePath, _audioProfileStorageJsonFileName);
+            _allAudioProfiles = new List<AudioProfileItem>();
+            _currentAudioProfile = null;
+            _audioProfilesLoaded = false;
+            Directory.CreateDirectory(AppAudioProfileStoragePath);
+        }
+
         //public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
         public static bool InitialiseRepository()
         {

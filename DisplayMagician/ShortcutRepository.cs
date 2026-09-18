@@ -130,6 +130,18 @@ namespace DisplayMagician
         #endregion
 
         #region Class Methods
+        public static void ConfigureStoragePath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            AppShortcutStoragePath = Path.Combine(Path.GetFullPath(applicationDataPath), "Shortcuts");
+            _shortcutStorageJsonFullFileName = Path.Combine(AppShortcutStoragePath, _shortcutStorageJsonFileName);
+            _allShortcuts = new List<ShortcutItem>();
+            _shortcutsLoaded = false;
+            Directory.CreateDirectory(AppShortcutStoragePath);
+        }
+
         public static bool AddShortcut(ShortcutItem shortcut)
         {
             logger.Trace($"ShortcutRepository/AddShortcut: Adding shortcut {shortcut.Name} to our shortcut repository");

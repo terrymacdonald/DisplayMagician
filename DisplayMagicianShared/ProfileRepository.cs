@@ -69,10 +69,10 @@ namespace DisplayMagicianShared
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
-        private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
+        private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
         private static string _profileFileVersion = "4";
         private static readonly string _profileStorageJsonFileName = "DisplayProfiles.json";
-        private static readonly string _profileStorageJsonFullFileName = System.IO.Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
+        private static string _profileStorageJsonFullFileName = System.IO.Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
 
         #endregion
 
@@ -203,6 +203,22 @@ namespace DisplayMagicianShared
         #endregion
 
         #region Class Methods
+        public static void ConfigureStoragePath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            AppDataPath = Path.GetFullPath(applicationDataPath);
+            AppIconPath = Path.Combine(AppDataPath, "Icons");
+            AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
+            AppProfileStoragePath = Path.Combine(AppDataPath, "Profiles");
+            _profileStorageJsonFullFileName = Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
+            _allProfiles = new List<ProfileItem>();
+            _currentProfile = null;
+            _profilesLoaded = false;
+            Directory.CreateDirectory(AppProfileStoragePath);
+        }
+
         //public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
         public static bool InitialiseRepository()
         {

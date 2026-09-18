@@ -48,6 +48,15 @@ namespace DisplayMagician
         public const string ProgramSettingsStorageJsonFileName = "Settings.json";
         public static string ProgramSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, ProgramSettingsStorageJsonFileName);
         public static string _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
+
+        public static void ConfigureStoragePath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            ProgramSettingsStorageJsonFullFileName = Path.Combine(Path.GetFullPath(applicationDataPath), ProgramSettingsStorageJsonFileName);
+            _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
+        }
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 

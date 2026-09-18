@@ -22,6 +22,14 @@ namespace DisplayMagician
         public const string DonationSettingsStorageJsonFileName = "Donation.json";
         public static string DonationSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, DonationSettingsStorageJsonFileName);
 
+        public static void ConfigureStoragePath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            DonationSettingsStorageJsonFullFileName = Path.Combine(Path.GetFullPath(applicationDataPath), DonationSettingsStorageJsonFileName);
+        }
+
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private DateTime _lastDonationDate = new DateTime(1980, 1, 1, 0, 0, 0, DateTimeKind.Utc);

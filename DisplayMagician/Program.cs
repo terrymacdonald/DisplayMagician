@@ -123,6 +123,30 @@ namespace DisplayMagician {
             }
         }
 
+        public static void ConfigureUserDataPath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            AppDataPath = Path.GetFullPath(applicationDataPath);
+            AppIconPath = Path.Combine(AppDataPath, "Icons");
+            AppProfilePath = Path.Combine(AppDataPath, "Profiles");
+            AppShortcutPath = Path.Combine(AppDataPath, "Shortcuts");
+            AppWallpaperPath = Path.Combine(AppDataPath, "Wallpaper");
+            AppMessagesPath = Path.Combine(AppDataPath, "Messages");
+            AppLogPath = Path.Combine(AppDataPath, "Logs");
+            AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
+            AppOriginIconFilename = Path.Combine(AppIconPath, "Origin.ico");
+            AppSteamIconFilename = Path.Combine(AppIconPath, "Steam.ico");
+            AppUplayIconFilename = Path.Combine(AppIconPath, "Uplay.ico");
+            AppEpicIconFilename = Path.Combine(AppIconPath, "Epic.ico");
+            ProgramSettings.ConfigureStoragePath(AppDataPath);
+            DonationSettings.ConfigureStoragePath(AppDataPath);
+            ProfileRepository.ConfigureStoragePath(AppDataPath);
+            AudioProfileRepository.ConfigureStoragePath(AppDataPath);
+            ShortcutRepository.ConfigureStoragePath(AppDataPath);
+        }
+
         private static CancellationTokenSource BeginActiveOperationCancellation()
         {
             lock (_activeOperationCancellationLock)
