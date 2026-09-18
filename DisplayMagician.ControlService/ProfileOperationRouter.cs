@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,11 +11,18 @@ public sealed class ProfileOperationRouter
 {
     private readonly ControlStateCoordinator _coordinator;
     private readonly IAgentCommandClient _agentCommandClient;
+    private readonly ISessionLauncherClient _sessionLauncherClient;
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
+        : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient())
+    {
+    }
+
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _agentCommandClient = agentCommandClient ?? throw new ArgumentNullException(nameof(agentCommandClient));
+        _sessionLauncherClient = sessionLauncherClient ?? throw new ArgumentNullException(nameof(sessionLauncherClient));
     }
 
     public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, CancellationToken cancellationToken)
@@ -24,7 +32,7 @@ public sealed class ProfileOperationRouter
 
     public Task<ControlResponse> StopAgentIfIdleAsync(string userSid, int sessionId, CancellationToken cancellationToken)
     {
-        return SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);
+        return SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, false, cancellationToken);
     }
 
     public async Task<ControlResponse> ApplyProfileAsync(string userSid, int sessionId, string profileId, CancellationToken cancellationToken)
@@ -44,12 +52,19 @@ public sealed class ProfileOperationRouter
         {
             MessageType = ControlMessageType.ApplyProfile,
             Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
-        }, cancellationToken).ConfigureAwait(false);
+        }, true, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<ControlResponse> SendToAgentAsync(string userSid, int sessionId, ControlEnvelope command, CancellationToken cancellationToken)
     {
-        AgentRegistration? agent = _coordinator.GetAgentRegistration(userSid, sessionId);
+        return await SendToAgentAsync(userSid, sessionId, command, true, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<ControlResponse> SendToAgentAsync(string userSid, int sessionId, ControlEnvelope command, bool startAgentIfMissing, CancellationToken cancellationToken)
+    {
+        AgentRegistration? agent = startAgentIfMissing
+            ? await GetOrStartAgentAsync(userSid, sessionId, cancellationToken).ConfigureAwait(false)
+            : _coordinator.GetAgentRegistration(userSid, sessionId);
         if (agent == null)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
@@ -62,6 +77,51 @@ public sealed class ProfileOperationRouter
         catch (Exception ex) when (ex is InvalidOperationException || ex is System.IO.IOException || ex is TimeoutException)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
+        }
+    }
+
+    private async Task<AgentRegistration?> GetOrStartAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+    {
+        AgentRegistration? agent = _coordinator.GetAgentRegistration(userSid, sessionId);
+        if (agent != null)
+        {
+            return agent;
+        }
+
+        UserAgentLaunchResult launchResult;
+        try
+        {
+            launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+        {
+            return null;
+        }
+
+        if (!launchResult.IsSuccessful)
+        {
+            return null;
+        }
+
+        const int maximumAttempts = 40;
+        for (int attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            agent = _coordinator.GetAgentRegistration(userSid, sessionId);
+            if (agent != null)
+            {
+                return agent;
+            }
+        }
+
+        return null;
+    }
+
+    private sealed class UnavailableSessionLauncherClient : ISessionLauncherClient
+    {
+        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = false, Message = "The Session Launcher is not configured." });
         }
     }
 }

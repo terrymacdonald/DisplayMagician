@@ -51,6 +51,22 @@ public sealed class ProfileOperationRouterTests
         Assert.False(commandClient.WasCalled);
     }
 
+    [Fact]
+    public async Task ListProfilesAsync_StartsMissingAgentAndForwardsAfterItRegisters()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        RegisteringSessionLauncherClient sessionLauncherClient = new RegisteringSessionLauncherClient(coordinator, agent);
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient);
+
+        ControlResponse response = await router.ListProfilesAsync(agent.UserSid, agent.SessionId, CancellationToken.None);
+
+        Assert.True(response.IsSuccessful);
+        Assert.True(sessionLauncherClient.WasCalled);
+        Assert.True(commandClient.WasCalled);
+    }
+
     private static AgentRegistration CreateAgent()
     {
         return new AgentRegistration { UserSid = "S-1-5-21-100", SessionId = 10, ProcessId = 1000, CommandPipeName = "test-agent-command" };
@@ -70,6 +86,27 @@ public sealed class ProfileOperationRouterTests
             Agent = agent;
             Request = request;
             return Task.FromResult(new ControlResponse { IsSuccessful = true, Message = "Test command response." });
+        }
+    }
+
+    private sealed class RegisteringSessionLauncherClient : ISessionLauncherClient
+    {
+        private readonly ControlStateCoordinator _coordinator;
+        private readonly AgentRegistration _agent;
+
+        public RegisteringSessionLauncherClient(ControlStateCoordinator coordinator, AgentRegistration agent)
+        {
+            _coordinator = coordinator;
+            _agent = agent;
+        }
+
+        public bool WasCalled { get; private set; }
+
+        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+        {
+            WasCalled = true;
+            _coordinator.RegisterAgent(_agent, DateTime.UtcNow);
+            return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = true, Message = "Test Agent launched." });
         }
     }
 }

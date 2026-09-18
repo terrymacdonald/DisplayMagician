@@ -8,6 +8,7 @@ public static class ControlProtocol
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
     public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
     public const string AgentCommandPipePrefix = "DisplayMagician.UserAgent.Command.v1.";
+    public const string SessionLauncherPipeName = "DisplayMagician.SessionLauncher.v1";
 }
 
 public enum ControlMessageType
@@ -25,7 +26,8 @@ public enum ControlMessageType
     MigrateUserData = 10,
     ListProfiles = 11,
     ApplyProfile = 12,
-    StopAgentIfIdle = 13
+    StopAgentIfIdle = 13,
+    LaunchUserAgent = 14
 }
 
 public enum ControlErrorCode
@@ -110,6 +112,20 @@ public sealed class ApplyProfileRequest
 public sealed class ApplyProfileResult
 {
     public bool WasCancelled { get; set; }
+}
+
+public sealed class UserAgentLaunchRequest
+{
+    public string UserSid { get; set; } = string.Empty;
+
+    public int SessionId { get; set; }
+}
+
+public sealed class UserAgentLaunchResult
+{
+    public bool IsSuccessful { get; set; }
+
+    public string Message { get; set; } = string.Empty;
 }
 
 public sealed class AgentHeartbeat

@@ -15,6 +15,7 @@ internal static class Program
         builder.Services.AddSingleton<UserDataMigrationRunner>();
         builder.Services.AddSingleton<ControlStateCoordinator>();
         builder.Services.AddSingleton<IAgentCommandClient, AgentCommandClient>();
+        builder.Services.AddSingleton<ISessionLauncherClient, SessionLauncherClient>();
         builder.Services.AddSingleton<ProfileOperationRouter>();
         builder.Services.AddSingleton<NamedPipeControlServer>();
         builder.Services.AddSingleton<ControlClientPipeServer>();

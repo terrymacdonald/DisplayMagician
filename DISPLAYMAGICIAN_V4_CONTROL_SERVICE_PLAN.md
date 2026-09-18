@@ -545,7 +545,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Implement Agent registration, heartbeat, and diagnostics status.
 - [x] Implement active-console and machine-operation lease state.
 - [x] Apply the root `version.json`/Nerdbank.GitVersioning configuration to all new v4 shipped projects and remove hard-coded Agent/Service version strings.
-- [ ] Add the demand-start LocalSystem SessionLauncher project and its Control Service-only IPC contract.
+- [x] Add the demand-start LocalSystem SessionLauncher project and its Control Service-only IPC contract.
 
 **Exit criteria:** Service can show a verified Agent SID/session and deny a second conflicting display lease.
 
@@ -565,12 +565,12 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 ### Phase C — First end-to-end profile operation
 
-- [ ] Implement `ListProfiles` through service/repositories.
-- [ ] Refactor WinForms profile list to use service requests.
-- [ ] Implement `ApplyProfile` operation routing.
-- [ ] Start and retain the hidden User Agent while WinForms is visible or minimised to its tray icon; stop it after full WinForms exit only when idle.
-- [ ] When an authorized request has no Agent, use SessionLauncher to start it in the active user's session and wait for verified registration.
-- [ ] Agent invokes existing display-application behaviour.
+- [x] Implement `ListProfiles` through service/repositories.
+- [x] Refactor WinForms profile list to use service requests.
+- [x] Implement `ApplyProfile` operation routing.
+- [x] Start and retain the hidden User Agent while WinForms is visible or minimised to its tray icon; stop it after full WinForms exit only when idle.
+- [x] When an authorized request has no Agent, use SessionLauncher to start it in the active user's session and wait for verified registration.
+- [x] Agent invokes existing display-application behaviour.
 - [ ] Agent returns progress/final result; WinForms displays it.
 
 **Exit criteria:** Active console user applies their own migrated profile; another session is denied.

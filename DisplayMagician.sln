@@ -32,6 +32,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.Contracts",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.ControlService", "DisplayMagician.ControlService\DisplayMagician.ControlService.csproj", "{A64B279F-CC0D-4B01-A4C1-7F89737E120E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.SessionLauncher", "DisplayMagician.SessionLauncher\DisplayMagician.SessionLauncher.csproj", "{A8C23C42-2D48-4C5F-9B04-2F607BFB2B78}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.UserAgent", "DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj", "{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.UserAgent.Tests", "DisplayMagician.UserAgent.Tests\DisplayMagician.UserAgent.Tests.csproj", "{B953E7AC-674F-4EC3-94AA-F927EDDD2E2E}"
@@ -178,6 +180,10 @@ Global
 		{A64B279F-CC0D-4B01-A4C1-7F89737E120E}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
 		{A64B279F-CC0D-4B01-A4C1-7F89737E120E}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
 		{A64B279F-CC0D-4B01-A4C1-7F89737E120E}.Release|AnyCPU.Build.0 = Release|AnyCPU
+		{A8C23C42-2D48-4C5F-9B04-2F607BFB2B78}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{A8C23C42-2D48-4C5F-9B04-2F607BFB2B78}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{A8C23C42-2D48-4C5F-9B04-2F607BFB2B78}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{A8C23C42-2D48-4C5F-9B04-2F607BFB2B78}.Release|AnyCPU.Build.0 = Release|AnyCPU
 		{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
 		{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
 		{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
