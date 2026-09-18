@@ -82,6 +82,13 @@ public sealed class AgentRegistration
     public bool IsRecoveryRequired { get; set; }
 }
 
+public sealed class AgentHeartbeat
+{
+    public AgentOperationState OperationState { get; set; }
+
+    public bool IsRecoveryRequired { get; set; }
+}
+
 public sealed class DisplayControlLease
 {
     public string OwnerUserSid { get; set; } = string.Empty;
@@ -115,4 +122,32 @@ public sealed class ControlResponse
     public ControlErrorCode ErrorCode { get; set; }
 
     public string Message { get; set; } = string.Empty;
+
+    public LeaseDecision? LeaseDecision { get; set; }
+
+    public ControlServiceStatus? ServiceStatus { get; set; }
+}
+
+public sealed class ControlServiceStatus
+{
+    public AgentStatus[] Agents { get; set; } = Array.Empty<AgentStatus>();
+
+    public DisplayControlLease? DisplayControlLease { get; set; }
+}
+
+public sealed class AgentStatus
+{
+    public string UserSid { get; set; } = string.Empty;
+
+    public int SessionId { get; set; }
+
+    public int ProcessId { get; set; }
+
+    public AgentOperationState OperationState { get; set; }
+
+    public bool IsRecoveryRequired { get; set; }
+
+    public DateTime LastHeartbeatUtc { get; set; }
+
+    public bool IsHealthy { get; set; }
 }

@@ -41,11 +41,11 @@ public sealed class ControlStateCoordinator
         }
     }
 
-    public LeaseDecision TryAcquireDisplayControl(string userSid, int sessionId, string activeConsoleUserSid, int activeConsoleSessionId, DateTime utcNow)
+    public LeaseDecision TryAcquireDisplayControl(string userSid, int sessionId, int activeConsoleSessionId, DateTime utcNow)
     {
         lock (_syncRoot)
         {
-            if (!string.Equals(userSid, activeConsoleUserSid, StringComparison.OrdinalIgnoreCase) || sessionId != activeConsoleSessionId)
+            if (sessionId != activeConsoleSessionId)
             {
                 return Deny(ControlErrorCode.NotActiveConsoleUser, "Only the active physical-console user can control displays.");
             }
@@ -53,6 +53,11 @@ public sealed class ControlStateCoordinator
             if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent) || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
             {
                 return Deny(ControlErrorCode.AgentNotConnected, "The User Agent is not connected for this session.");
+            }
+
+            if (utcNow - agent.LastHeartbeatUtc > TimeSpan.FromSeconds(45))
+            {
+                return Deny(ControlErrorCode.AgentNotHealthy, "The User Agent has not sent a recent heartbeat.");
             }
 
             if (agent.Registration.IsRecoveryRequired)
@@ -87,6 +92,58 @@ public sealed class ControlStateCoordinator
         lock (_syncRoot)
         {
             return _displayControlLease == null ? null : CopyLease(_displayControlLease);
+        }
+    }
+
+    public void UnregisterAgent(string userSid, int sessionId, int processId)
+    {
+        lock (_syncRoot)
+        {
+            if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent) || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase) || agent.Registration.ProcessId != processId)
+            {
+                return;
+            }
+
+            _agentsBySession.Remove(sessionId);
+            if (_displayControlLease == null || _displayControlLease.OwnerSessionId != sessionId)
+            {
+                return;
+            }
+
+            if (_displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired)
+            {
+                _displayControlLease.IsRecoveryRequired = true;
+                return;
+            }
+
+            _displayControlLease = null;
+        }
+    }
+
+    public ControlServiceStatus GetStatus(DateTime utcNow)
+    {
+        lock (_syncRoot)
+        {
+            List<AgentStatus> agents = new List<AgentStatus>();
+            foreach (RegisteredAgent agent in _agentsBySession.Values)
+            {
+                agents.Add(new AgentStatus
+                {
+                    UserSid = agent.Registration.UserSid,
+                    SessionId = agent.Registration.SessionId,
+                    ProcessId = agent.Registration.ProcessId,
+                    OperationState = agent.Registration.OperationState,
+                    IsRecoveryRequired = agent.Registration.IsRecoveryRequired,
+                    LastHeartbeatUtc = agent.LastHeartbeatUtc,
+                    IsHealthy = utcNow - agent.LastHeartbeatUtc <= TimeSpan.FromSeconds(45)
+                });
+            }
+
+            return new ControlServiceStatus
+            {
+                Agents = agents.ToArray(),
+                DisplayControlLease = _displayControlLease == null ? null : CopyLease(_displayControlLease)
+            };
         }
     }
 

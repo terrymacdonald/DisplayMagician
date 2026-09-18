@@ -49,9 +49,9 @@ public sealed class NamedPipeControlServer
 
     private static NamedPipeServerStream CreatePipe()
     {
-        SecurityIdentifier authenticatedUsers = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
+        SecurityIdentifier everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
         PipeSecurity pipeSecurity = new PipeSecurity();
-        pipeSecurity.AddAccessRule(new PipeAccessRule(authenticatedUsers, PipeAccessRights.FullControl, AccessControlType.Allow));
+        pipeSecurity.AddAccessRule(new PipeAccessRule(everyone, PipeAccessRights.ReadWrite, AccessControlType.Allow));
 
         return NamedPipeServerStreamAcl.Create(
             ControlProtocol.ServicePipeName,
@@ -69,6 +69,7 @@ public sealed class NamedPipeControlServer
     {
         using (pipe)
         {
+            PipeClientIdentity? registeredIdentity = null;
             try
             {
                 ControlEnvelope? envelope = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
@@ -100,8 +101,26 @@ public sealed class NamedPipeControlServer
                 }
 
                 _coordinator.RegisterAgent(registration, DateTime.UtcNow);
+                registeredIdentity = identity;
                 _logger.Info("NamedPipeControlServer/HandleClientAsync: Registered User Agent for SID {0}, session {1}, process {2}.", identity.UserSid, identity.SessionId, identity.ProcessId);
                 await SendResultAsync(pipe, envelope.RequestId, true, ControlErrorCode.None, "Agent registration accepted.", cancellationToken).ConfigureAwait(false);
+
+                while (!cancellationToken.IsCancellationRequested && pipe.IsConnected)
+                {
+                    ControlEnvelope? request = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+                    if (request == null)
+                    {
+                        return;
+                    }
+
+                    if (request.ProtocolVersion != ControlProtocol.CurrentVersion)
+                    {
+                        await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.UnsupportedProtocolVersion, "The client uses an unsupported protocol version.", cancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    await HandleAgentMessageAsync(pipe, identity, request, cancellationToken).ConfigureAwait(false);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -111,7 +130,60 @@ public sealed class NamedPipeControlServer
             {
                 _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Pipe client processing failed.");
             }
+            finally
+            {
+                if (registeredIdentity != null)
+                {
+                    _coordinator.UnregisterAgent(registeredIdentity.UserSid, registeredIdentity.SessionId, registeredIdentity.ProcessId);
+                    _logger.Info("NamedPipeControlServer/HandleClientAsync: User Agent disconnected for SID {0}, session {1}, process {2}.", registeredIdentity.UserSid, registeredIdentity.SessionId, registeredIdentity.ProcessId);
+                }
+            }
         }
+    }
+
+    private async Task HandleAgentMessageAsync(NamedPipeServerStream pipe, PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        if (request.MessageType == ControlMessageType.AgentHeartbeat)
+        {
+            AgentHeartbeat? heartbeat = JsonSerializer.Deserialize<AgentHeartbeat>(request.Payload);
+            if (heartbeat == null)
+            {
+                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The Agent heartbeat was invalid.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            _coordinator.RecordHeartbeat(identity.UserSid, identity.SessionId, heartbeat.OperationState, heartbeat.IsRecoveryRequired, DateTime.UtcNow);
+            await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Agent heartbeat recorded.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
+            return;
+        }
+
+        if (request.MessageType == ControlMessageType.AcquireDisplayControl)
+        {
+            LeaseDecision decision;
+            try
+            {
+                decision = _coordinator.TryAcquireDisplayControl(identity.UserSid, identity.SessionId, ConsoleSessionLocator.GetActiveConsoleSessionId(), DateTime.UtcNow);
+            }
+            catch (InvalidOperationException ex)
+            {
+                decision = new LeaseDecision
+                {
+                    ErrorCode = ControlErrorCode.NotActiveConsoleUser,
+                    Message = ex.Message
+                };
+            }
+
+            await SendResultAsync(pipe, request.RequestId, decision.IsGranted, decision.ErrorCode, decision.Message, cancellationToken, leaseDecision: decision).ConfigureAwait(false);
+            return;
+        }
+
+        if (request.MessageType == ControlMessageType.GetServiceStatus)
+        {
+            await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Service status returned.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
+            return;
+        }
+
+        await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The Agent message type is not supported.", cancellationToken).ConfigureAwait(false);
     }
 
     private static PipeClientIdentity GetClientIdentity(NamedPipeServerStream pipe)
@@ -133,7 +205,7 @@ public sealed class NamedPipeControlServer
         return new PipeClientIdentity(userSid, process.SessionId, checked((int)processId));
     }
 
-    private static Task SendResultAsync(NamedPipeServerStream pipe, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken)
+    private static Task SendResultAsync(NamedPipeServerStream pipe, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null)
     {
         ControlEnvelope response = new ControlEnvelope
         {
@@ -143,7 +215,9 @@ public sealed class NamedPipeControlServer
             {
                 IsSuccessful = isSuccessful,
                 ErrorCode = errorCode,
-                Message = message
+                Message = message,
+                ServiceStatus = serviceStatus,
+                LeaseDecision = leaseDecision
             })
         };
 

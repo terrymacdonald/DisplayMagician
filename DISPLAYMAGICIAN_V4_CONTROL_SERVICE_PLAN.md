@@ -518,8 +518,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Add protocol versioning and common result/error models.
 - [x] Implement authenticated named-pipe transport.
 - [ ] Confirm the production pipe ACL permits authenticated local users while remote callers are rejected by mandatory Windows SID/session/process verification.
-- [ ] Implement Agent registration, heartbeat, and diagnostics status.
-- [ ] Implement active-console and machine-operation lease state.
+- [x] Implement Agent registration, heartbeat, and diagnostics status.
+- [x] Implement active-console and machine-operation lease state.
 
 **Exit criteria:** Service can show a verified Agent SID/session and deny a second conflicting display lease.
 
