@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace DisplayMagician.ControlService;
 
@@ -25,10 +27,9 @@ public sealed class UserDataMigrationRunner
         }
 
         List<LegacyFileMigrationResult> results = new List<LegacyFileMigrationResult>();
-        foreach (MigrationFile file in GetMigrationFiles(userPaths))
+        foreach (MigrationFile file in GetMigrationFiles(legacyAppDataPath, userPaths))
         {
-            string sourcePath = Path.Combine(legacyAppDataPath, file.LegacyRelativePath);
-            results.Add(_legacyFileMigration.MigrateJsonFile(sourcePath, file.DestinationPath, userPaths));
+            results.Add(_legacyFileMigration.MigrateFile(file.LegacyFilePath, file.DestinationFilePath, userPaths, file.JsonTransform));
         }
 
         bool hasFailure = results.Exists(result => !result.IsSuccessful && File.Exists(result.LegacyFilePath));
@@ -55,30 +56,124 @@ public sealed class UserDataMigrationRunner
         return new UserDataMigrationResult(true, false, "Legacy user data migration completed.", results);
     }
 
-    private static MigrationFile[] GetMigrationFiles(UserStoragePaths userPaths)
+    private static List<MigrationFile> GetMigrationFiles(string legacyAppDataPath, UserStoragePaths userPaths)
     {
-        return new[]
+        List<MigrationFile> files = new List<MigrationFile>();
+        AddRootConfigurationFiles(files, legacyAppDataPath, userPaths);
+        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Profiles"), userPaths.ProfilesPath, legacyAppDataPath, userPaths, transformDisplayProfileJson: true);
+        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "AudioProfiles"), userPaths.AudioProfilesPath, legacyAppDataPath, userPaths);
+        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Shortcuts"), userPaths.ShortcutsPath, legacyAppDataPath, userPaths);
+        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Icons"), userPaths.IconsPath, legacyAppDataPath, userPaths);
+        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Wallpaper"), userPaths.WallpaperPath, legacyAppDataPath, userPaths);
+        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Messages"), userPaths.MessagesPath, legacyAppDataPath, userPaths);
+        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Logs"), userPaths.LogsPath, legacyAppDataPath, userPaths);
+        return files;
+    }
+
+    private static void AddRootConfigurationFiles(List<MigrationFile> files, string legacyAppDataPath, UserStoragePaths userPaths)
+    {
+        if (!Directory.Exists(legacyAppDataPath))
         {
-            new MigrationFile("Settings.json", Path.Combine(userPaths.SettingsPath, "Settings.json")),
-            new MigrationFile("Donation.json", Path.Combine(userPaths.SettingsPath, "Donation.json")),
-            new MigrationFile(Path.Combine("Profiles", "DisplayProfiles.json"), Path.Combine(userPaths.ProfilesPath, "DisplayProfiles.json")),
-            new MigrationFile(Path.Combine("AudioProfiles", "AudioProfiles.json"), Path.Combine(userPaths.AudioProfilesPath, "AudioProfiles.json")),
-            new MigrationFile(Path.Combine("Shortcuts", "Shortcuts.json"), Path.Combine(userPaths.ShortcutsPath, "Shortcuts.json")),
-            new MigrationFile(Path.Combine("Messages", "MessagesIndex.json"), Path.Combine(userPaths.MessagesPath, "MessagesIndex.json"))
-        };
+            return;
+        }
+
+        foreach (string filePath in Directory.GetFiles(legacyAppDataPath, "*", SearchOption.TopDirectoryOnly))
+        {
+            string fileName = Path.GetFileName(filePath);
+            if (fileName.StartsWith("Settings", StringComparison.OrdinalIgnoreCase) || fileName.StartsWith("Donation", StringComparison.OrdinalIgnoreCase))
+            {
+                files.Add(new MigrationFile(filePath, Path.Combine(userPaths.SettingsPath, fileName)));
+            }
+            else
+            {
+                files.Add(new MigrationFile(filePath, Path.Combine(userPaths.LegacyFilesPath, fileName)));
+            }
+        }
+    }
+
+    private static void AddDirectoryFiles(List<MigrationFile> files, string legacyDirectoryPath, string destinationDirectoryPath, string legacyAppDataPath, UserStoragePaths userPaths, bool transformDisplayProfileJson = false)
+    {
+        if (!Directory.Exists(legacyDirectoryPath))
+        {
+            return;
+        }
+
+        foreach (string legacyFilePath in Directory.GetFiles(legacyDirectoryPath, "*", SearchOption.AllDirectories))
+        {
+            string relativePath = Path.GetRelativePath(legacyDirectoryPath, legacyFilePath);
+            Func<string, string>? jsonTransform = transformDisplayProfileJson && string.Equals(relativePath, "DisplayProfiles.json", StringComparison.OrdinalIgnoreCase)
+                ? json => RewriteWallpaperPaths(json, Path.Combine(legacyAppDataPath, "Wallpaper"), userPaths.WallpaperPath)
+                : null;
+            files.Add(new MigrationFile(legacyFilePath, Path.Combine(destinationDirectoryPath, relativePath), jsonTransform));
+        }
+    }
+
+    private static string RewriteWallpaperPaths(string json, string legacyWallpaperPath, string destinationWallpaperPath)
+    {
+        JsonNode? root = JsonNode.Parse(json);
+        if (root == null)
+        {
+            throw new JsonException("The display profile file did not contain JSON content.");
+        }
+
+        RewriteWallpaperPaths(root, legacyWallpaperPath, destinationWallpaperPath);
+        return root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static JsonNode? RewriteWallpaperPaths(JsonNode? node, string legacyWallpaperPath, string destinationWallpaperPath)
+    {
+        if (node is JsonObject jsonObject)
+        {
+            foreach (KeyValuePair<string, JsonNode?> property in jsonObject.ToList())
+            {
+                JsonNode? rewritten = RewriteWallpaperPaths(property.Value, legacyWallpaperPath, destinationWallpaperPath);
+                if (!ReferenceEquals(property.Value, rewritten))
+                {
+                    jsonObject[property.Key] = rewritten;
+                }
+            }
+
+            return jsonObject;
+        }
+
+        if (node is JsonArray jsonArray)
+        {
+            for (int index = 0; index < jsonArray.Count; index++)
+            {
+                JsonNode? original = jsonArray[index];
+                JsonNode? rewritten = RewriteWallpaperPaths(original, legacyWallpaperPath, destinationWallpaperPath);
+                if (!ReferenceEquals(original, rewritten))
+                {
+                    jsonArray[index] = rewritten;
+                }
+            }
+
+            return jsonArray;
+        }
+
+        if (node is JsonValue jsonValue && jsonValue.TryGetValue<string>(out string? value) && !string.IsNullOrEmpty(value))
+        {
+            string rewrittenValue = value.Replace(legacyWallpaperPath, destinationWallpaperPath, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(value, rewrittenValue, StringComparison.Ordinal) ? node : JsonValue.Create(rewrittenValue);
+        }
+
+        return node;
     }
 
     private sealed class MigrationFile
     {
-        public MigrationFile(string legacyRelativePath, string destinationPath)
+        public MigrationFile(string legacyFilePath, string destinationFilePath, Func<string, string>? jsonTransform = null)
         {
-            LegacyRelativePath = legacyRelativePath;
-            DestinationPath = destinationPath;
+            LegacyFilePath = legacyFilePath;
+            DestinationFilePath = destinationFilePath;
+            JsonTransform = jsonTransform;
         }
 
-        public string LegacyRelativePath { get; }
+        public string LegacyFilePath { get; }
 
-        public string DestinationPath { get; }
+        public string DestinationFilePath { get; }
+
+        public Func<string, string>? JsonTransform { get; }
     }
 }
 

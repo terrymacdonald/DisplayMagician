@@ -7,24 +7,38 @@ namespace DisplayMagician.ControlService;
 
 public sealed class LegacyFileMigration
 {
-    public LegacyFileMigrationResult MigrateJsonFile(string legacyFilePath, string destinationFilePath, UserStoragePaths userPaths)
+    public LegacyFileMigrationResult MigrateFile(string legacyFilePath, string destinationFilePath, UserStoragePaths userPaths, Func<string, string>? jsonTransform = null)
     {
         if (!File.Exists(legacyFilePath))
         {
-            return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The legacy file does not exist.");
+            return File.Exists(destinationFilePath)
+                ? new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, ValidateDestination(destinationFilePath), "The destination was already migrated during an earlier attempt.")
+                : new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The legacy file does not exist.");
         }
 
         try
         {
             userPaths.EnsureDirectories();
-            string backupPath = Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(legacyFilePath)}.{DateTime.UtcNow:yyyyMMddHHmmss}.pre-v4.bak");
+            string backupPath = GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(legacyFilePath)}.{DateTime.UtcNow:yyyyMMddHHmmss}.pre-v4.bak"));
             File.Copy(legacyFilePath, backupPath, overwrite: false);
 
-            string json = File.ReadAllText(legacyFilePath);
-            using JsonDocument document = JsonDocument.Parse(json);
-            AtomicFileStore.WriteAllText(destinationFilePath, json, Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak"));
+            if (jsonTransform != null)
+            {
+                string json = jsonTransform(File.ReadAllText(legacyFilePath));
+                using JsonDocument document = JsonDocument.Parse(json);
+                AtomicFileStore.WriteAllText(destinationFilePath, json, GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak")));
+            }
+            else
+            {
+                byte[] content = File.ReadAllBytes(legacyFilePath);
+                AtomicFileStore.WriteBytes(destinationFilePath, content, GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak")));
+            }
 
-            using JsonDocument destinationDocument = JsonDocument.Parse(File.ReadAllText(destinationFilePath));
+            if (!ValidateDestination(destinationFilePath))
+            {
+                return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The migrated destination file failed validation.");
+            }
+
             string retiredLegacyPath = GetRetiredLegacyPath(legacyFilePath);
             File.Move(legacyFilePath, retiredLegacyPath);
 
@@ -45,6 +59,32 @@ public sealed class LegacyFileMigration
         }
 
         return $"{legacyFilePath}.{DateTime.UtcNow:yyyyMMddHHmmss}.old";
+    }
+
+    private static bool ValidateDestination(string destinationFilePath)
+    {
+        if (!File.Exists(destinationFilePath) || new FileInfo(destinationFilePath).Length == 0)
+        {
+            return false;
+        }
+
+        if (destinationFilePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(destinationFilePath));
+            return true;
+        }
+
+        return true;
+    }
+
+    private static string GetUniquePath(string proposedPath)
+    {
+        if (!File.Exists(proposedPath))
+        {
+            return proposedPath;
+        }
+
+        return $"{proposedPath}.{Guid.NewGuid():N}";
     }
 }
 

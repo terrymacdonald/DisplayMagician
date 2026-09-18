@@ -66,11 +66,17 @@ public sealed class UserStoragePaths
 
     public string MessagesPath => Path.Combine(RootPath, "Messages");
 
+    public string IconsPath => Path.Combine(RootPath, "Icons");
+
+    public string WallpaperPath => Path.Combine(RootPath, "Wallpaper");
+
     public string BackupsPath => Path.Combine(RootPath, "Backups");
 
     public string LogsPath => Path.Combine(RootPath, "Logs");
 
     public string MigrationMarkerPath => Path.Combine(RootPath, "Migration.json");
+
+    public string LegacyFilesPath => Path.Combine(RootPath, "LegacyFiles");
 
     public void EnsureDirectories()
     {
@@ -79,7 +85,10 @@ public sealed class UserStoragePaths
         Directory.CreateDirectory(ShortcutsPath);
         Directory.CreateDirectory(SettingsPath);
         Directory.CreateDirectory(MessagesPath);
+        Directory.CreateDirectory(IconsPath);
+        Directory.CreateDirectory(WallpaperPath);
         Directory.CreateDirectory(BackupsPath);
         Directory.CreateDirectory(LogsPath);
+        Directory.CreateDirectory(LegacyFilesPath);
     }
 }
