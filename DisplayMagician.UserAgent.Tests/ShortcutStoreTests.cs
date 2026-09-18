@@ -38,4 +38,34 @@ public sealed class ShortcutStoreTests
             }
         }
     }
+
+    [Fact]
+    public void Commit_PreservesAutomaticallyDetectedGameLaunchMode()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");
+        try
+        {
+            ShortcutStore store = new ShortcutStore(root);
+            RepositorySnapshot initial = store.GetSnapshot();
+            string shortcutJson = "{\"ShortcutFileVersion\":\"6\",\"Shortcuts\":[{\"UUID\":\"shortcut-id\",\"GameLaunchMode\":1}]}";
+
+            RepositoryCommitResult committed = store.Commit(new RepositoryCommitRequest
+            {
+                Repository = RepositoryKind.Shortcuts,
+                ExpectedRevision = initial.Revision,
+                Json = shortcutJson
+            });
+
+            Assert.False(committed.WasConflict);
+            using JsonDocument document = JsonDocument.Parse(committed.Snapshot!.Json);
+            Assert.Equal(1, document.RootElement.GetProperty("Shortcuts")[0].GetProperty("GameLaunchMode").GetInt32());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+        }
+    }
 }

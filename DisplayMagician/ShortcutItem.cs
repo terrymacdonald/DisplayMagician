@@ -34,6 +34,16 @@ namespace DisplayMagician
         Application = 3,
     }
 
+    /// <summary>
+    /// Defines whether a game shortcut launches the selected game itself or
+    /// waits for the User Agent to observe the user launching it.
+    /// </summary>
+    public enum GameLaunchMode : int
+    {
+        StartGame = 0,
+        DetectGameRunning = 1,
+    }
+
     public enum ShortcutValidity : int
     {
         Valid = 0,
@@ -113,6 +123,7 @@ namespace DisplayMagician
     public struct GameShorcutData
     {
         public Game GameToPlay;
+        public GameLaunchMode GameLaunchMode;
         public int StartTimeout;
         public string GameArguments;
         public bool GameArgumentsRequired;
@@ -186,6 +197,7 @@ namespace DisplayMagician
         private string _gameName = "";
         private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
         private Game _game = null;
+        private GameLaunchMode _gameLaunchMode = GameLaunchMode.StartGame;
         private int _startTimeout = 60;
         private string _gameArguments = "";
         private bool _gameArgumentsRequired = false;
@@ -608,6 +620,13 @@ namespace DisplayMagician
             {
                 _game = value;
             }
+        }
+
+        [DefaultValue(GameLaunchMode.StartGame)]
+        public GameLaunchMode GameLaunchMode
+        {
+            get => _gameLaunchMode;
+            set => _gameLaunchMode = value;
         }
 
         [DefaultValue(60)]
@@ -1033,6 +1052,7 @@ namespace DisplayMagician
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
             _game = new Game();
+            _gameLaunchMode = GameLaunchMode.StartGame;
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
             _processPriority = ProcessPriority.Normal;
@@ -1075,6 +1095,7 @@ namespace DisplayMagician
             _gameName = game.GameToPlay.Name;
             _gameLibrary = game.GameToPlay.GameLibraryType;
             _game = game.GameToPlay;
+            _gameLaunchMode = game.GameLaunchMode;
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
@@ -1188,6 +1209,7 @@ namespace DisplayMagician
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
             _game = new Game();
+            _gameLaunchMode = GameLaunchMode.StartGame;
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
 
@@ -1272,6 +1294,7 @@ namespace DisplayMagician
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
             _game = new Game();
+            _gameLaunchMode = GameLaunchMode.StartGame;
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
 
@@ -1308,6 +1331,7 @@ namespace DisplayMagician
             shortcut.GameName = GameName;
             shortcut.GameLibrary = GameLibrary;
             shortcut.Game = Game;
+            shortcut.GameLaunchMode = GameLaunchMode;
             shortcut.StartTimeout = StartTimeout;
             shortcut.GameArguments = GameArguments;
             shortcut.GameArgumentsRequired = GameArgumentsRequired;

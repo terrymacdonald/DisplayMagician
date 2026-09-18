@@ -437,6 +437,14 @@ For shortcut extraction, use the following names consistently:
 - `ShortcutClient`: WinForms, Console, and future API-facing request adapter.
 - `ShortcutEditor`: the existing WinForms editing workflow.
 
+### Automatically detected game starts
+
+Game shortcuts persist a `GameLaunchMode`: `StartGame` (the existing default) or `DetectGameRunning`. The latter is for a user who starts the selected game from Steam, another launcher, a desktop shortcut, or another external source. It is not an instruction to start a second game process.
+
+`ShortcutRunner` must register every valid `DetectGameRunning` shortcut when the User Agent becomes active. It uses the same `Game.IsRunning` and process-tree/alternative-executable detection currently used after a normal game launch. When the detector sees a new process for that game, it acquires display control, applies the shortcut's pre-game work, monitors that already-running process until it exits, and finally performs normal rollback and post-game work. The runner must reject conflicting enabled automatic shortcuts for the same game/monitor target, and ignore processes already running when it registers so an Agent restart cannot incorrectly trigger a shortcut.
+
+The WinForms `ShortcutEditor` will expose this as **Automatically detect game running (do not start game)** once `ShortcutRunner` owns shortcut execution. Until then it must not present an option that the legacy WinForms runner cannot safely honour.
+
 Refactor the console so existing commands remain compatible where practical:
 
 ```text
