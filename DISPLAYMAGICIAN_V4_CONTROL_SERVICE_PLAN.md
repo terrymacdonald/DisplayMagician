@@ -59,6 +59,7 @@ v4.0.0 does **not** need to deliver:
 | Pairing | Explicit, user-confirmed pairing. Exact pairing UX is technology-specific and deferred behind abstractions. |
 | Metrics/messages | Existing anonymous metrics, client sync, and message gathering become machine-level Control Service responsibilities. |
 | Remote scope | No public endpoint in v4.0.0. Localhost integration foundation only. |
+| Build version | The root `version.json` is the sole version authority. Every shipped v4 executable, library, service registration, installer/package, diagnostics record, and protocol registration derives its version from the same Nerdbank.GitVersioning build metadata. |
 
 ## Core Rules
 
@@ -116,6 +117,21 @@ ControlService                               --> User Agent command/event channe
 ```
 
 Do not allow Engine code to depend on WinForms, the service host, REST, or static `Program` UI state.
+
+## Build Versioning
+
+The existing `build_displaymagician.ps1` invokes MSBuild for the full solution. Nerdbank.GitVersioning discovers the root `version.json` during that build and produces the shared version metadata. Its Git commit height since the most recent base-version update provides the build/revision component, so builds after a `version.json` change receive a common increasing version number without manually setting a per-build number. The script triggers this process; Nerdbank.GitVersioning performs the calculation. For v4.0.0, preserve this as the only release-version mechanism; do not add component-specific version constants or manually edit assembly versions for a release.
+
+Requirements:
+
+- Keep the release base version in the root `version.json` (currently `4.0.0`).
+- Treat the Git commit height since that base-version update as the common build/revision number. Release builds must retain the Git history required for Nerdbank.GitVersioning to calculate it correctly; do not shallow-clone or override it with a manually supplied revision.
+- Add the existing Nerdbank.GitVersioning package/configuration to every project that produces a shipped v4 binary: WinForms, Console, Shared, Contracts, Engine, ControlService, and UserAgent.
+- Ensure each project emits assembly, file, and informational versions from the generated build metadata. Respect legacy projects that intentionally provide their own assembly attributes by retaining their existing `ThisAssembly`-based mechanism rather than enabling duplicate generated attributes.
+- Replace hard-coded component registration versions (for example the User Agent's development string) with the generated assembly/file version so the Control Service records the actual installed build.
+- Pass the same generated version into service installation metadata, MSI/package versioning, diagnostic bundles, audit records, and update/metrics payloads. Where an installer format has a different version shape, transform the same source value; do not introduce another authoritative version number.
+- Build the complete solution through `build_displaymagician.ps1` for release candidates. A direct project build is permitted for development but is not release verification.
+- Add a build/version test or release verification step that asserts all shipped v4 binaries report the same base version from `version.json`, with only the expected build/revision metadata differing.
 
 ## Storage and Ownership
 
@@ -503,6 +519,7 @@ Installer requirements:
 - Create ProgramData storage and ACLs.
 - Integrate User Agent startup with the existing per-user `StartupManager` HKCU Run registration.
 - Install WinForms and Console clients.
+- Install the User Agent and Control Service using the build version derived from the root `version.json`.
 - Preserve and migrate user data safely.
 - Stop/start service safely during upgrades.
 - Preserve user data by default on uninstall.
@@ -520,6 +537,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [ ] Confirm the production pipe ACL permits authenticated local users while remote callers are rejected by mandatory Windows SID/session/process verification.
 - [x] Implement Agent registration, heartbeat, and diagnostics status.
 - [x] Implement active-console and machine-operation lease state.
+- [ ] Apply the root `version.json`/Nerdbank.GitVersioning configuration to all new v4 shipped projects and remove hard-coded Agent/Service version strings.
 
 **Exit criteria:** Service can show a verified Agent SID/session and deny a second conflicting display lease.
 
@@ -580,6 +598,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 ### Phase G — Installer, verification, release readiness
 
 - [ ] Update installer and upgrade path.
+- [ ] Verify the release build gives every shipped v4 component, service registration, and installer artifact the common `version.json` build version.
 - [ ] Test fresh install, upgrade, repair, uninstall/reinstall.
 - [ ] Run session/hardware/manual matrix.
 - [ ] Build Diagnostics/support documentation.
@@ -641,6 +660,7 @@ v4.0.0 is ready when:
 - [ ] Local REST is unavailable until enabled and paired.
 - [ ] Logs, audit, diagnostics, and recovery are usable.
 - [ ] All affected projects build and relevant tests pass.
+- [ ] All shipped v4 components report the common build version derived from root `version.json`.
 
 ## Future Work After v4.0.0
 

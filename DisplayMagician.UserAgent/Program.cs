@@ -15,7 +15,8 @@ internal static class Program
         AgentRegistration registration = AgentIdentity.CreateRegistration("4.0.0-development", "manual");
         ControlServiceClient serviceClient = new ControlServiceClient();
         using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-        if (args.Length == 1 && args[0] == "--once")
+        UserAgentStartupRequest startupRequest = UserAgentCommandLine.Parse(args);
+        if (startupRequest.Action == UserAgentStartupAction.RegisterOnce)
         {
             cancellationTokenSource.CancelAfter(10000);
             ControlResponse response = await serviceClient.RegisterOnceAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
@@ -27,7 +28,7 @@ internal static class Program
             return;
         }
 
-        if (args.Length == 2 && args[0] == "--apply-profile")
+        if (startupRequest.Action == UserAgentStartupAction.ApplyDisplayProfile)
         {
             string displayMagicianExecutablePath = Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe");
             if (!File.Exists(displayMagicianExecutablePath))
@@ -35,13 +36,13 @@ internal static class Program
                 throw new FileNotFoundException("The User Agent could not find DisplayMagician.exe beside itself.", displayMagicianExecutablePath);
             }
 
-            int exitCode = await serviceClient.ApplyDisplayProfileAsync(registration, args[1], displayMagicianExecutablePath, cancellationTokenSource.Token).ConfigureAwait(false);
+            int exitCode = await serviceClient.ApplyDisplayProfileAsync(registration, startupRequest.ProfileId!, displayMagicianExecutablePath, cancellationTokenSource.Token).ConfigureAwait(false);
             Environment.ExitCode = exitCode;
             return;
         }
 
-        bool acquireDisplayControl = args.Length == 1 && args[0] == "--acquire-display-control";
-        bool migrateUserData = args.Length == 1 && args[0] == "--migrate-user-data";
+        bool acquireDisplayControl = startupRequest.Action == UserAgentStartupAction.AcquireDisplayControl;
+        bool migrateUserData = startupRequest.Action == UserAgentStartupAction.MigrateUserData;
         await serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, cancellationTokenSource.Token).ConfigureAwait(false);
     }
 }

@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.ControlServ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.UserAgent", "DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj", "{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician.UserAgent.Tests", "DisplayMagician.UserAgent.Tests\DisplayMagician.UserAgent.Tests.csproj", "{B953E7AC-674F-4EC3-94AA-F927EDDD2E2E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -186,6 +188,10 @@ Global
 		{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
 		{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
 		{7C55B5D3-DBD6-4660-AF5D-5FE980FDCB80}.Release|AnyCPU.Build.0 = Release|AnyCPU
+		{B953E7AC-674F-4EC3-94AA-F927EDDD2E2E}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{B953E7AC-674F-4EC3-94AA-F927EDDD2E2E}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{B953E7AC-674F-4EC3-94AA-F927EDDD2E2E}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{B953E7AC-674F-4EC3-94AA-F927EDDD2E2E}.Release|AnyCPU.Build.0 = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
