@@ -10,6 +10,7 @@ internal static class Program
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Services.AddWindowsService(options => options.ServiceName = "DisplayMagician Control Service");
+        builder.Services.AddSingleton<StoragePaths>();
         builder.Services.AddSingleton<ControlStateCoordinator>();
         builder.Services.AddSingleton<NamedPipeControlServer>();
         builder.Services.AddHostedService<ControlServiceWorker>();

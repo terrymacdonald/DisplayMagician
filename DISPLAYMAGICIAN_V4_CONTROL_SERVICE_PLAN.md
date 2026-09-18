@@ -525,9 +525,9 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 ### Phase B — Storage and migration
 
-- [ ] Add ProgramData storage abstraction and per-SID paths.
-- [ ] Add safe write/backup helpers.
-- [ ] Add ConfigMigrationRunner rules and migration markers.
+- [x] Add ProgramData storage abstraction and per-SID paths.
+- [x] Add safe write/backup helpers.
+- [x] Add v4 migration runner and migration markers; integrate legacy `ConfigMigrationRunner` once repositories use the new storage paths.
 - [ ] Migrate display profiles first.
 - [ ] Migrate audio profiles, shortcuts, user settings, and message state.
 - [ ] Rename each successful legacy source file to `.old`.
