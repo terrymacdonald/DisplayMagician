@@ -49,9 +49,9 @@ public sealed class NamedPipeControlServer
 
     private static NamedPipeServerStream CreatePipe()
     {
-        SecurityIdentifier everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
+        SecurityIdentifier authenticatedUsers = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
         PipeSecurity pipeSecurity = new PipeSecurity();
-        pipeSecurity.AddAccessRule(new PipeAccessRule(everyone, PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        pipeSecurity.AddAccessRule(new PipeAccessRule(authenticatedUsers, PipeAccessRights.FullControl, AccessControlType.Allow));
 
         return NamedPipeServerStreamAcl.Create(
             ControlProtocol.ServicePipeName,
@@ -123,6 +123,7 @@ public sealed class NamedPipeControlServer
             userSid = identity.User?.Value;
         });
 
+        // Windows does not provide a client process ID for a remote named-pipe client, so this also rejects remote callers.
         if (string.IsNullOrWhiteSpace(userSid) || !GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint processId))
         {
             throw new UnauthorizedAccessException("The Control Service could not verify the named-pipe client identity.");

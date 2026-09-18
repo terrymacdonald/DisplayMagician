@@ -1,6 +1,6 @@
-using System;
-using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace DisplayMagician.ControlService;
 
@@ -8,15 +8,13 @@ internal static class Program
 {
     private static async Task Main()
     {
-        using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, eventArgs) =>
-        {
-            eventArgs.Cancel = true;
-            cancellationTokenSource.Cancel();
-        };
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        builder.Services.AddWindowsService(options => options.ServiceName = "DisplayMagician Control Service");
+        builder.Services.AddSingleton<ControlStateCoordinator>();
+        builder.Services.AddSingleton<NamedPipeControlServer>();
+        builder.Services.AddHostedService<ControlServiceWorker>();
 
-        ControlStateCoordinator coordinator = new ControlStateCoordinator();
-        NamedPipeControlServer pipeServer = new NamedPipeControlServer(coordinator);
-        await pipeServer.RunAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+        using IHost host = builder.Build();
+        await host.RunAsync().ConfigureAwait(false);
     }
 }
