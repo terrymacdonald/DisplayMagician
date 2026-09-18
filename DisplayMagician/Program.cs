@@ -112,6 +112,7 @@ namespace DisplayMagician {
 
         private static volatile bool _useTestUpdateFeed;
         private static bool _isAgentHostedOperation;
+        private static Process _userAgentProcess;
 
         public static bool CancelActiveOperation()
         {
@@ -1420,47 +1421,26 @@ namespace DisplayMagician {
                 return ApplyProfileResult.Error;
             }
 
-            string userAgentPath = Path.Combine(AppStartupPath, "DisplayMagician.UserAgent.exe");
-            if (!File.Exists(userAgentPath))
-            {
-                logger.Error("Program/ApplyProfileThroughUserAgent: Could not find the User Agent at {0}.", userAgentPath);
-                return ApplyProfileResult.Error;
-            }
-
             try
             {
-                using Process userAgent = new Process
+                if (!EnsureUserAgentStarted())
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = userAgentPath,
-                        UseShellExecute = false,
-                        Arguments = $"--apply-profile \"{profile.UUID.Replace("\"", string.Empty, StringComparison.Ordinal)}\""
-                    }
-                };
-                if (!userAgent.Start())
-                {
-                    logger.Error("Program/ApplyProfileThroughUserAgent: The User Agent process did not start for profile {0}.", profile.UUID);
                     return ApplyProfileResult.Error;
                 }
 
-                if (!userAgent.WaitForExit((int)TimeSpan.FromSeconds(130).TotalMilliseconds))
-                {
-                    logger.Error("Program/ApplyProfileThroughUserAgent: The User Agent did not finish applying profile {0} within 130 seconds.", profile.UUID);
-                    return ApplyProfileResult.Error;
-                }
-
-                if (userAgent.ExitCode == (int)ERRORLEVEL.OK)
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.ApplyProfileAsync(profile.UUID, CancellationToken.None).GetAwaiter().GetResult();
+                if (response.IsSuccessful)
                 {
                     return ApplyProfileResult.Successful;
                 }
 
-                if (userAgent.ExitCode == (int)ERRORLEVEL.CANCELED_BY_USER)
+                if (response.ApplyProfile?.WasCancelled == true)
                 {
                     return ApplyProfileResult.Cancelled;
                 }
 
-                logger.Error("Program/ApplyProfileThroughUserAgent: The User Agent failed to apply profile {0}. ExitCode={1}", profile.UUID, userAgent.ExitCode);
+                logger.Error("Program/ApplyProfileThroughUserAgent: Control Service did not apply profile {0}. ErrorCode={1}; Message={2}", profile.UUID, response.ErrorCode, response.Message);
                 return ApplyProfileResult.Error;
             }
             catch (Exception ex)
@@ -1468,6 +1448,31 @@ namespace DisplayMagician {
                 logger.Error(ex, "Program/ApplyProfileThroughUserAgent: Could not invoke the User Agent for profile {0}.", profile.UUID);
                 return ApplyProfileResult.Error;
             }
+        }
+
+        private static bool EnsureUserAgentStarted()
+        {
+            if (_userAgentProcess != null && !_userAgentProcess.HasExited)
+            {
+                return true;
+            }
+
+            string userAgentPath = Path.Combine(AppStartupPath, "DisplayMagician.UserAgent.exe");
+            if (!File.Exists(userAgentPath))
+            {
+                logger.Error("Program/EnsureUserAgentStarted: Could not find the User Agent at {0}.", userAgentPath);
+                return false;
+            }
+
+            _userAgentProcess = Process.Start(new ProcessStartInfo { FileName = userAgentPath, UseShellExecute = false });
+            if (_userAgentProcess == null)
+            {
+                logger.Error("Program/EnsureUserAgentStarted: The User Agent process did not start.");
+                return false;
+            }
+
+            Thread.Sleep(500);
+            return true;
         }
 
         private static bool EnsurePackageIdentity(string[] startupArguments)
