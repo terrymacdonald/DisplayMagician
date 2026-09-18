@@ -38,6 +38,14 @@ public sealed class ControlStateCoordinator
             {
                 _displayControlLease.LastHeartbeatUtc = utcNow;
                 _displayControlLease.IsRecoveryRequired = isRecoveryRequired;
+                if (operationState == AgentOperationState.Running || operationState == AgentOperationState.Restoring)
+                {
+                    _displayControlLease.ActiveOperationId ??= Guid.NewGuid();
+                }
+                else if (operationState == AgentOperationState.Idle && !isRecoveryRequired)
+                {
+                    _displayControlLease.ActiveOperationId = null;
+                }
             }
         }
     }

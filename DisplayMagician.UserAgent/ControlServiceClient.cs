@@ -10,6 +10,85 @@ namespace DisplayMagician.UserAgent;
 
 public sealed class ControlServiceClient
 {
+    public async Task<int> ApplyDisplayProfileAsync(AgentRegistration registration, string profileId, string displayMagicianExecutablePath, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(registration);
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayMagicianExecutablePath);
+
+        using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ServicePipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+        ControlResponse registrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.AgentRegistration,
+            Payload = JsonSerializer.Serialize(registration)
+        }, cancellationToken).ConfigureAwait(false);
+        if (!registrationResponse.IsSuccessful)
+        {
+            throw new InvalidOperationException(registrationResponse.Message);
+        }
+
+        ControlResponse leaseResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.AcquireDisplayControl
+        }, cancellationToken).ConfigureAwait(false);
+        if (!leaseResponse.IsSuccessful)
+        {
+            throw new InvalidOperationException(leaseResponse.Message);
+        }
+
+        using System.Diagnostics.Process process = new System.Diagnostics.Process
+        {
+            StartInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = displayMagicianExecutablePath,
+                UseShellExecute = false,
+                Arguments = $"ChangeProfile \"{profileId.Replace("\"", string.Empty, StringComparison.Ordinal)}\""
+            }
+        };
+        if (!process.Start())
+        {
+            throw new InvalidOperationException("DisplayMagician could not start the profile-change operation.");
+        }
+
+        while (!process.HasExited)
+        {
+            await Task.WhenAny(process.WaitForExitAsync(cancellationToken), Task.Delay(TimeSpan.FromSeconds(15), cancellationToken)).ConfigureAwait(false);
+            if (!process.HasExited)
+            {
+                ControlResponse heartbeatResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+                {
+                    MessageType = ControlMessageType.AgentHeartbeat,
+                    Payload = JsonSerializer.Serialize(new AgentHeartbeat
+                    {
+                        OperationState = AgentOperationState.Running,
+                        IsRecoveryRequired = false
+                    })
+                }, cancellationToken).ConfigureAwait(false);
+                if (!heartbeatResponse.IsSuccessful)
+                {
+                    throw new InvalidOperationException(heartbeatResponse.Message);
+                }
+            }
+        }
+
+        ControlResponse completionHeartbeatResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.AgentHeartbeat,
+            Payload = JsonSerializer.Serialize(new AgentHeartbeat
+            {
+                OperationState = AgentOperationState.Idle,
+                IsRecoveryRequired = false
+            })
+        }, cancellationToken).ConfigureAwait(false);
+        if (!completionHeartbeatResponse.IsSuccessful)
+        {
+            throw new InvalidOperationException(completionHeartbeatResponse.Message);
+        }
+
+        return process.ExitCode;
+    }
+
     public async Task RunAsync(AgentRegistration registration, TimeSpan heartbeatInterval, bool acquireDisplayControl, bool migrateUserData, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);

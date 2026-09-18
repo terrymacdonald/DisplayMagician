@@ -59,6 +59,24 @@ public sealed class ControlStateCoordinatorTests
         Assert.Equal(ControlErrorCode.DisplayControlBusy, decision.ErrorCode);
     }
 
+    [Fact]
+    public void UnregisterAgent_KeepsLeaseWhenAnOperationWasRunning()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        DateTime now = DateTime.UtcNow;
+        AgentRegistration agent = CreateAgent("S-1-5-21-100", 10, 1000);
+        coordinator.RegisterAgent(agent, now);
+        Assert.True(coordinator.TryAcquireDisplayControl(agent.UserSid, agent.SessionId, agent.SessionId, now).IsGranted);
+        coordinator.RecordHeartbeat(agent.UserSid, agent.SessionId, AgentOperationState.Running, false, now.AddSeconds(1));
+
+        coordinator.UnregisterAgent(agent.UserSid, agent.SessionId, agent.ProcessId);
+
+        DisplayControlLease? lease = coordinator.GetDisplayControlLease();
+        Assert.NotNull(lease);
+        Assert.True(lease!.IsRecoveryRequired);
+        Assert.NotNull(lease.ActiveOperationId);
+    }
+
     private static AgentRegistration CreateAgent(string userSid, int sessionId, int processId)
     {
         return new AgentRegistration
