@@ -9,9 +9,9 @@ namespace DisplayMagician.ControlService;
 public sealed class ProfileOperationRouter
 {
     private readonly ControlStateCoordinator _coordinator;
-    private readonly AgentCommandClient _agentCommandClient;
+    private readonly IAgentCommandClient _agentCommandClient;
 
-    public ProfileOperationRouter(ControlStateCoordinator coordinator, AgentCommandClient agentCommandClient)
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _agentCommandClient = agentCommandClient ?? throw new ArgumentNullException(nameof(agentCommandClient));

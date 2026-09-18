@@ -8,7 +8,12 @@ using DisplayMagician.Contracts;
 
 namespace DisplayMagician.ControlService;
 
-public sealed class AgentCommandClient
+public interface IAgentCommandClient
+{
+    Task<ControlResponse> SendAsync(AgentRegistration agent, ControlEnvelope request, CancellationToken cancellationToken);
+}
+
+public sealed class AgentCommandClient : IAgentCommandClient
 {
     public async Task<ControlResponse> SendAsync(AgentRegistration agent, ControlEnvelope request, CancellationToken cancellationToken)
     {

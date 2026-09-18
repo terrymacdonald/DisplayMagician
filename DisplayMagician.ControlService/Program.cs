@@ -14,7 +14,7 @@ internal static class Program
         builder.Services.AddSingleton<LegacyFileMigration>();
         builder.Services.AddSingleton<UserDataMigrationRunner>();
         builder.Services.AddSingleton<ControlStateCoordinator>();
-        builder.Services.AddSingleton<AgentCommandClient>();
+        builder.Services.AddSingleton<IAgentCommandClient, AgentCommandClient>();
         builder.Services.AddSingleton<ProfileOperationRouter>();
         builder.Services.AddSingleton<NamedPipeControlServer>();
         builder.Services.AddSingleton<ControlClientPipeServer>();

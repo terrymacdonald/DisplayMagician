@@ -89,7 +89,6 @@ Create the following projects:
 
 ```text
 DisplayMagician.Contracts
-DisplayMagician.Engine
 DisplayMagician.ControlService
 DisplayMagician.SessionLauncher
 DisplayMagician.UserAgent
@@ -101,7 +100,6 @@ DisplayMagicianShared
 | Project | Responsibility |
 |---|---|
 | `DisplayMagician.Contracts` | Versioned requests, responses, events, protocol constants, and error codes. No UI, hardware, files, or static application state. |
-| `DisplayMagician.Engine` | Reusable validation and orchestration interfaces. No WinForms, REST, named-pipe transport, or dialogs. |
 | `DisplayMagician.ControlService` | Windows Service, ownership, authorization, machine queue, persistence coordination, audit, local API, service health, and Agent routing. |
 | `DisplayMagician.SessionLauncher` | Demand-start `LocalSystem` broker. Accepts only authenticated local requests from Control Service; starts the signed User Agent in one already-authorized interactive session and returns launch status. Never accepts remote clients or performs display work. |
 | `DisplayMagician.UserAgent` | Interactive-session executor: display/audio changes, game library loading, Steam/Big Picture monitoring, shortcut lifecycle, and notifications. |
@@ -113,8 +111,7 @@ Dependency direction:
 
 ```text
 WinForms / Console / UserAgent / ControlService --> Contracts
-UserAgent / ControlService                   --> Engine
-Engine / UserAgent                           --> DisplayMagicianShared
+UserAgent                                      --> DisplayMagicianShared
 WinForms / Console                           --> Control Service IPC client
 ControlService                               --> User Agent command/event channel
 ControlService                               --> SessionLauncher launch request channel
@@ -131,7 +128,7 @@ Requirements:
 
 - Keep the release base version in the root `version.json` (currently `4.0.0`).
 - Treat the Git commit height since that base-version update as the common build/revision number. Release builds must retain the Git history required for Nerdbank.GitVersioning to calculate it correctly; do not shallow-clone or override it with a manually supplied revision.
-- Add the existing Nerdbank.GitVersioning package/configuration to every project that produces a shipped v4 binary: WinForms, Console, Shared, Contracts, Engine, ControlService, and UserAgent.
+- Add the existing Nerdbank.GitVersioning package/configuration to every project that produces a shipped v4 binary: WinForms, Console, Shared, Contracts, ControlService, SessionLauncher, and UserAgent.
 - Ensure each project emits assembly, file, and informational versions from the generated build metadata. Respect legacy projects that intentionally provide their own assembly attributes by retaining their existing `ThisAssembly`-based mechanism rather than enabling duplicate generated attributes.
 - Replace hard-coded component registration versions (for example the User Agent's development string) with the generated assembly/file version so the Control Service records the actual installed build.
 - Pass the same generated version into service installation metadata, MSI/package versioning, diagnostic bundles, audit records, and update/metrics payloads. Where an installer format has a different version shape, transform the same source value; do not introduce another authoritative version number.
@@ -541,7 +538,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 ### Phase A — Structure and IPC
 
-- [x] Create Contracts, Engine, ControlService, and UserAgent projects.
+- [x] Create Contracts, ControlService, and UserAgent projects.
 - [x] Add protocol versioning and common result/error models.
 - [x] Implement authenticated named-pipe transport.
 - [ ] Confirm the production pipe ACL permits authenticated local users while remote callers are rejected by mandatory Windows SID/session/process verification.
