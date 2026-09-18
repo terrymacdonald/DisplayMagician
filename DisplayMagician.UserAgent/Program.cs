@@ -42,10 +42,18 @@ internal static class Program
         }
 
         bool acquireDisplayControl = startupRequest.Action == UserAgentStartupAction.AcquireDisplayControl;
-        bool migrateUserData = startupRequest.Action == UserAgentStartupAction.MigrateUserData;
+        bool migrateUserData = true;
+        TaskCompletionSource<ControlResponse> migrationCompletion = new TaskCompletionSource<ControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
+        Task serviceConnection = serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, migrationCompletion, cancellationTokenSource.Token);
+        ControlResponse migrationResponse = await migrationCompletion.Task.ConfigureAwait(false);
+        if (!migrationResponse.IsSuccessful)
+        {
+            cancellationTokenSource.Cancel();
+            throw new InvalidOperationException(migrationResponse.Message);
+        }
+
         ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
-        Task serviceConnection = serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, cancellationTokenSource.Token);
         Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
 
         await Task.WhenAny(serviceConnection, commandConnection).ConfigureAwait(false);

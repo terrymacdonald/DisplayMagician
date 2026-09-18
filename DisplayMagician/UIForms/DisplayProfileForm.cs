@@ -435,25 +435,35 @@ namespace DisplayMagician.UIForms
 
                 cancellationToken.ThrowIfCancellationRequested();
 
+                if (!Program.EnsureUserAgentStarted())
+                {
+                    throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load display profiles.");
+                }
+
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ProfileListResult profileList = await controlServiceClient.ListProfilesAsync(cancellationToken);
+                if (!V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
+                {
+                    throw new InvalidOperationException("DisplayMagician could not confirm migrated display-profile storage for this user.");
+                }
+
+                Program.ConfigureUserDataPath(migratedUserDataPath);
+                await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(cancellationToken);
+                try
+                {
+                    await Task.Run(() =>
+                    {
+                        ProfileRepository.RefreshDisplayDetectionState();
+                        ProfileRepository.UpdateActiveProfile();
+                    }, cancellationToken);
+                }
+                finally
+                {
+                    Program.AppBackgroundTaskSemaphoreSlim.Release();
+                }
+
                 ChangeSelectedProfile(ProfileRepository.CurrentProfile);
-                if (Program.EnsureUserAgentStarted())
-                {
-                    try
-                    {
-                        ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
-                        DisplayMagician.Contracts.ProfileListResult profileList = await controlServiceClient.ListProfilesAsync(cancellationToken);
-                        RefreshDisplayProfileUI(profileList.Profiles.Select(profile => profile.Id));
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, "DisplayProfileForm/InitialiseDisplayProfileAsync: Could not get the service-authoritative profile list; showing the local editor list.");
-                        RefreshDisplayProfileUI();
-                    }
-                }
-                else
-                {
-                    RefreshDisplayProfileUI();
-                }
+                RefreshDisplayProfileUI(profileList.Profiles.Select(profile => profile.Id));
 
                 if (Utils.TimeToRunDonationAnimation())
                 {

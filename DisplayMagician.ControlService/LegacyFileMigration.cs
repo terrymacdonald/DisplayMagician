@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace DisplayMagician.ControlService;
@@ -27,7 +29,10 @@ public sealed class LegacyFileMigration
             {
                 string json = jsonTransform(File.ReadAllText(legacyFilePath));
                 using JsonDocument document = JsonDocument.Parse(json);
-                AtomicFileStore.WriteAllText(destinationFilePath, json, GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak")));
+                // Display profiles are consumed by the existing repository with Encoding.Unicode.
+                // Retain that contract after rewriting wallpaper paths during v4 migration.
+                byte[] utf16Content = new UnicodeEncoding(false, true).GetPreamble().Concat(new UnicodeEncoding(false, true).GetBytes(json)).ToArray();
+                AtomicFileStore.WriteBytes(destinationFilePath, utf16Content, GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak")));
             }
             else
             {

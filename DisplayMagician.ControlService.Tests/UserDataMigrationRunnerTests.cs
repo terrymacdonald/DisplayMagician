@@ -65,6 +65,10 @@ public sealed class UserDataMigrationRunnerTests
             using JsonDocument migratedProfile = JsonDocument.Parse(migratedProfileJson);
             string? migratedWallpaperPath = migratedProfile.RootElement.GetProperty("LegacyWallpaperPath").GetString();
             Assert.Equal(Path.Combine(userPaths.WallpaperPath, "wallpaper.jpg"), migratedWallpaperPath);
+            byte[] migratedProfileBytes = File.ReadAllBytes(Path.Combine(userPaths.ProfilesPath, "DisplayProfiles.json"));
+            Assert.Equal(0xFF, migratedProfileBytes[0]);
+            Assert.Equal(0xFE, migratedProfileBytes[1]);
+            Assert.Contains("Profiles", File.ReadAllText(Path.Combine(userPaths.ProfilesPath, "DisplayProfiles.json"), Encoding.Unicode));
         }
         finally
         {

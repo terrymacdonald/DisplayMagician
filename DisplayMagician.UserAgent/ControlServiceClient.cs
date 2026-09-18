@@ -89,70 +89,78 @@ public sealed class ControlServiceClient
         return process.ExitCode;
     }
 
-    public async Task RunAsync(AgentRegistration registration, TimeSpan heartbeatInterval, bool acquireDisplayControl, bool migrateUserData, CancellationToken cancellationToken)
+    public async Task RunAsync(AgentRegistration registration, TimeSpan heartbeatInterval, bool acquireDisplayControl, bool migrateUserData, TaskCompletionSource<ControlResponse>? migrationCompletion, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);
-
-        using NamedPipeClientStream pipe = new NamedPipeClientStream(
-            ".",
-            ControlProtocol.ServicePipeName,
-            PipeDirection.InOut,
-            PipeOptions.Asynchronous);
-
-        await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
-
-        ControlEnvelope request = new ControlEnvelope
+        try
         {
-            MessageType = ControlMessageType.AgentRegistration,
-            Payload = JsonSerializer.Serialize(registration)
-        };
-        ControlResponse registrationResponse = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-        if (!registrationResponse.IsSuccessful)
-        {
-            throw new InvalidOperationException(registrationResponse.Message);
-        }
+            using NamedPipeClientStream pipe = new NamedPipeClientStream(
+                ".",
+                ControlProtocol.ServicePipeName,
+                PipeDirection.InOut,
+                PipeOptions.Asynchronous);
 
-        if (acquireDisplayControl)
-        {
-            ControlResponse leaseResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
-            {
-                MessageType = ControlMessageType.AcquireDisplayControl
-            }, cancellationToken).ConfigureAwait(false);
-            if (!leaseResponse.IsSuccessful)
-            {
-                throw new InvalidOperationException(leaseResponse.Message);
-            }
-        }
+            await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
 
-        if (migrateUserData)
-        {
-            ControlResponse migrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+            ControlEnvelope request = new ControlEnvelope
             {
-                MessageType = ControlMessageType.MigrateUserData
-            }, cancellationToken).ConfigureAwait(false);
-            if (!migrationResponse.IsSuccessful)
-            {
-                throw new InvalidOperationException(migrationResponse.Message);
-            }
-        }
-
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(heartbeatInterval, cancellationToken).ConfigureAwait(false);
-            ControlEnvelope heartbeat = new ControlEnvelope
-            {
-                MessageType = ControlMessageType.AgentHeartbeat,
-                Payload = JsonSerializer.Serialize(new AgentHeartbeat
-                {
-                    OperationState = registration.OperationState,
-                    IsRecoveryRequired = registration.IsRecoveryRequired
-                })
+                MessageType = ControlMessageType.AgentRegistration,
+                Payload = JsonSerializer.Serialize(registration)
             };
-            ControlResponse heartbeatResponse = await SendAndReceiveAsync(pipe, heartbeat, cancellationToken).ConfigureAwait(false);
-            if (!heartbeatResponse.IsSuccessful)
+            ControlResponse registrationResponse = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
+            if (!registrationResponse.IsSuccessful)
             {
-                throw new InvalidOperationException(heartbeatResponse.Message);
+                throw new InvalidOperationException(registrationResponse.Message);
             }
+
+            if (acquireDisplayControl)
+            {
+                ControlResponse leaseResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+                {
+                    MessageType = ControlMessageType.AcquireDisplayControl
+                }, cancellationToken).ConfigureAwait(false);
+                if (!leaseResponse.IsSuccessful)
+                {
+                    throw new InvalidOperationException(leaseResponse.Message);
+                }
+            }
+
+            if (migrateUserData)
+            {
+                ControlResponse migrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+                {
+                    MessageType = ControlMessageType.MigrateUserData
+                }, cancellationToken).ConfigureAwait(false);
+                migrationCompletion?.TrySetResult(migrationResponse);
+                if (!migrationResponse.IsSuccessful)
+                {
+                    throw new InvalidOperationException(migrationResponse.Message);
+                }
+            }
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(heartbeatInterval, cancellationToken).ConfigureAwait(false);
+                ControlEnvelope heartbeat = new ControlEnvelope
+                {
+                    MessageType = ControlMessageType.AgentHeartbeat,
+                    Payload = JsonSerializer.Serialize(new AgentHeartbeat
+                    {
+                        OperationState = registration.OperationState,
+                        IsRecoveryRequired = registration.IsRecoveryRequired
+                    })
+                };
+                ControlResponse heartbeatResponse = await SendAndReceiveAsync(pipe, heartbeat, cancellationToken).ConfigureAwait(false);
+                if (!heartbeatResponse.IsSuccessful)
+                {
+                    throw new InvalidOperationException(heartbeatResponse.Message);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            migrationCompletion?.TrySetException(ex);
+            throw;
         }
     }
 
