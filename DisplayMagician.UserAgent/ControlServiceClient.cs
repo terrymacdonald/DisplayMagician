@@ -43,7 +43,7 @@ public sealed class ControlServiceClient
             {
                 FileName = displayMagicianExecutablePath,
                 UseShellExecute = false,
-                Arguments = $"ChangeProfile \"{profileId.Replace("\"", string.Empty, StringComparison.Ordinal)}\""
+                Arguments = $"ChangeProfile \"{profileId.Replace("\"", string.Empty, StringComparison.Ordinal)}\" --agent-hosted-operation"
             }
         };
         if (!process.Start())

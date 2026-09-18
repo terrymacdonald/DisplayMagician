@@ -16,6 +16,7 @@ using System.Linq;
 using System.Diagnostics;
 using DisplayMagician.Processes;
 using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace DisplayMagician.UIForms
 {
@@ -527,7 +528,7 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void runProfileToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void runProfileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var menuItem = sender as ToolStripMenuItem;
             ProfileItem profileToRun = null;
@@ -549,7 +550,7 @@ namespace DisplayMagician.UIForms
                     // says this profile is already active, because that is the only case where we skip applying it.
                     if (!ProfileRepository.IsActiveProfile(profileToRun) || !ProfileRepository.RecheckIsActiveProfile(profileToRun))
                     {
-                        ApplyProfileResult result = Program.ApplyProfileTask(profileToRun);
+                        ApplyProfileResult result = await Task.Run(() => Program.ApplyProfileTask(profileToRun));
                         if (result == ApplyProfileResult.Successful)
                         {
                             logger.Trace($"MainForm/runProfileToolStripMenuItem_Click: Profile {profileToRun.Name} was successfully applied.");

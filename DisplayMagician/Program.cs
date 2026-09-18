@@ -108,8 +108,10 @@ namespace DisplayMagician {
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
+        internal const string AgentHostedOperationCommandLineOption = "--agent-hosted-operation";
 
         private static volatile bool _useTestUpdateFeed;
+        private static bool _isAgentHostedOperation;
 
         public static bool CancelActiveOperation()
         {
@@ -207,6 +209,7 @@ namespace DisplayMagician {
         private static int Main(string[] args)
         {
             // BOOTSTRAP AND INITIALIZATION LOGIC
+            _isAgentHostedOperation = args.Any(argument => string.Equals(argument, AgentHostedOperationCommandLineOption, StringComparison.OrdinalIgnoreCase));
 
             if (V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
             {
@@ -322,6 +325,13 @@ namespace DisplayMagician {
             //{
             //logger.Trace($"Program/Main: We're not bypassing single instance mode so we need to check if we're the only instance, otherwise we have to shutdown and send that first instance our command.");
 
+
+            if (_isAgentHostedOperation)
+            {
+                // The User Agent owns this short-lived operation. It must execute locally instead of
+                // forwarding the command to the long-running WinForms instance.
+                SingleInstance.UniqueName = $"DisplayMagician.AgentOperation.{Environment.ProcessId}";
+            }
 
             // Check if we're the single instance, and if we're the second instance then we need to pass the command to the single instance and shutdown.
             // Create the remote server if we're first instance, or If we're a subsequent instance, pass the command line parameters to the first instance and then 
@@ -925,6 +935,7 @@ namespace DisplayMagician {
                 // This begins the actual execution of the application
                 string[] commandLineArguments = args
                     .Where(argument => !string.Equals(argument, TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase))
+                    .Where(argument => !string.Equals(argument, AgentHostedOperationCommandLineOption, StringComparison.OrdinalIgnoreCase))
                     .ToArray();
                 errorLevelToReturnToOS = app.Execute(commandLineArguments);
             }
@@ -1295,6 +1306,11 @@ namespace DisplayMagician {
         //public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
         public static ApplyProfileResult ApplyProfileTask(ProfileItem profile)
         {
+            if (!_isAgentHostedOperation)
+            {
+                return ApplyProfileThroughUserAgent(profile);
+            }
+
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
             //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
             bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
@@ -1394,6 +1410,64 @@ namespace DisplayMagician {
             // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
             //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
             return result;
+        }
+
+        private static ApplyProfileResult ApplyProfileThroughUserAgent(ProfileItem profile)
+        {
+            if (profile == null || string.IsNullOrWhiteSpace(profile.UUID))
+            {
+                logger.Error("Program/ApplyProfileThroughUserAgent: The requested display profile did not have a valid UUID.");
+                return ApplyProfileResult.Error;
+            }
+
+            string userAgentPath = Path.Combine(AppStartupPath, "DisplayMagician.UserAgent.exe");
+            if (!File.Exists(userAgentPath))
+            {
+                logger.Error("Program/ApplyProfileThroughUserAgent: Could not find the User Agent at {0}.", userAgentPath);
+                return ApplyProfileResult.Error;
+            }
+
+            try
+            {
+                using Process userAgent = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = userAgentPath,
+                        UseShellExecute = false,
+                        Arguments = $"--apply-profile \"{profile.UUID.Replace("\"", string.Empty, StringComparison.Ordinal)}\""
+                    }
+                };
+                if (!userAgent.Start())
+                {
+                    logger.Error("Program/ApplyProfileThroughUserAgent: The User Agent process did not start for profile {0}.", profile.UUID);
+                    return ApplyProfileResult.Error;
+                }
+
+                if (!userAgent.WaitForExit((int)TimeSpan.FromSeconds(130).TotalMilliseconds))
+                {
+                    logger.Error("Program/ApplyProfileThroughUserAgent: The User Agent did not finish applying profile {0} within 130 seconds.", profile.UUID);
+                    return ApplyProfileResult.Error;
+                }
+
+                if (userAgent.ExitCode == (int)ERRORLEVEL.OK)
+                {
+                    return ApplyProfileResult.Successful;
+                }
+
+                if (userAgent.ExitCode == (int)ERRORLEVEL.CANCELED_BY_USER)
+                {
+                    return ApplyProfileResult.Cancelled;
+                }
+
+                logger.Error("Program/ApplyProfileThroughUserAgent: The User Agent failed to apply profile {0}. ExitCode={1}", profile.UUID, userAgent.ExitCode);
+                return ApplyProfileResult.Error;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ApplyProfileThroughUserAgent: Could not invoke the User Agent for profile {0}.", profile.UUID);
+                return ApplyProfileResult.Error;
+            }
         }
 
         private static bool EnsurePackageIdentity(string[] startupArguments)
