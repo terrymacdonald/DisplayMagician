@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Security.Principal;
 using DisplayMagician.Contracts;
 using DisplayMagician.UserAgent;
@@ -9,6 +10,16 @@ namespace DisplayMagician.UserAgent.Tests;
 
 public sealed class AgentIdentityTests
 {
+    [Fact]
+    public void CurrentBuildVersion_ComesFromTheAgentAssemblyFileVersion()
+    {
+        string assemblyFileVersion = typeof(AgentBuildVersion).Assembly
+            .GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version;
+
+        Assert.Equal(assemblyFileVersion, AgentBuildVersion.Current);
+        Assert.NotEqual("4.0.0-development", AgentBuildVersion.Current);
+    }
+
     [Fact]
     public void CreateRegistration_DescribesTheCurrentInteractiveProcess()
     {

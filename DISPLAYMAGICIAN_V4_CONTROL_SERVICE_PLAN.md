@@ -537,7 +537,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [ ] Confirm the production pipe ACL permits authenticated local users while remote callers are rejected by mandatory Windows SID/session/process verification.
 - [x] Implement Agent registration, heartbeat, and diagnostics status.
 - [x] Implement active-console and machine-operation lease state.
-- [ ] Apply the root `version.json`/Nerdbank.GitVersioning configuration to all new v4 shipped projects and remove hard-coded Agent/Service version strings.
+- [x] Apply the root `version.json`/Nerdbank.GitVersioning configuration to all new v4 shipped projects and remove hard-coded Agent/Service version strings.
 
 **Exit criteria:** Service can show a verified Agent SID/session and deny a second conflicting display lease.
 
