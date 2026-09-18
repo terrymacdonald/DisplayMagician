@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatform>windows</SupportedOSPlatform>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <AssemblyName>DisplayMagician.Contracts</AssemblyName>
+    <RootNamespace>DisplayMagician.Contracts</RootNamespace>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>
