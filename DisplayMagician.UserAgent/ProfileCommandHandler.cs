@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -22,6 +23,7 @@ public sealed class ProfileCommandHandler
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
         string userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", _registration.UserSid);
         ProfileRepository.ConfigureStoragePath(userDataPath);
+        AudioProfileRepository.ConfigureStoragePath(userDataPath);
     }
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
@@ -48,6 +50,22 @@ public sealed class ProfileCommandHandler
                 Message = "Profiles returned.",
                 ProfileList = new ProfileListResult { Profiles = profiles }
             };
+        }
+
+        if (request.MessageType == ControlMessageType.ListAudioProfiles)
+        {
+            ProfileSummary[] profiles = AudioProfileRepository.AllAudioProfiles.Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name }).ToArray();
+            return new ControlResponse { IsSuccessful = true, Message = "Audio profiles returned.", AudioProfileList = new AudioProfileListResult { Profiles = profiles } };
+        }
+
+        if (request.MessageType == ControlMessageType.ApplyAudioProfile)
+        {
+            ApplyAudioProfileRequest? audioApplyRequest = JsonSerializer.Deserialize<ApplyAudioProfileRequest>(request.Payload);
+            AudioProfileItem? profile = audioApplyRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, audioApplyRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            List<string> missingDeviceNames = new List<string>();
+            bool applied = profile != null && profile.TrySetActive(Math.Max(0, audioApplyRequest!.DeviceWaitMilliseconds), 500, out missingDeviceNames);
+            if (applied) AudioProfileRepository.UpdateActiveAudioProfile();
+            return new ControlResponse { IsSuccessful = applied, ErrorCode = applied ? ControlErrorCode.None : ControlErrorCode.InvalidRequest, Message = applied ? "Audio profile applied." : $"Audio profile could not be applied. Missing devices: {string.Join(", ", missingDeviceNames)}" };
         }
 
         if (request.MessageType == ControlMessageType.CreateProfileFromCurrent)

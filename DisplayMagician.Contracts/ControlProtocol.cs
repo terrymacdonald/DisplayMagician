@@ -31,7 +31,13 @@ public enum ControlMessageType
     CreateProfileFromCurrent = 15,
     RenameProfile = 16,
     DeleteProfile = 17,
-    UpdateProfileFromCurrent = 18
+    UpdateProfileFromCurrent = 18,
+    ListAudioProfiles = 19,
+    ApplyAudioProfile = 20,
+    CreateAudioProfileFromCurrent = 21,
+    RenameAudioProfile = 22,
+    DeleteAudioProfile = 23,
+    UpdateAudioProfileFromCurrent = 24
 }
 
 public enum ControlErrorCode
@@ -118,6 +124,10 @@ public sealed class ApplyProfileResult
     public bool WasCancelled { get; set; }
 }
 
+public sealed class AudioProfileListResult { public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>(); }
+
+public sealed class ApplyAudioProfileRequest { public string ProfileId { get; set; } = string.Empty; public int DeviceWaitMilliseconds { get; set; } }
+
 public sealed class CreateProfileRequest { public string Name { get; set; } = string.Empty; }
 
 public sealed class RenameProfileRequest { public string ProfileId { get; set; } = string.Empty; public string Name { get; set; } = string.Empty; }
@@ -184,6 +194,8 @@ public sealed class ControlResponse
     public ControlServiceStatus? ServiceStatus { get; set; }
 
     public ProfileListResult? ProfileList { get; set; }
+
+    public AudioProfileListResult? AudioProfileList { get; set; }
 
     public ApplyProfileResult? ApplyProfile { get; set; }
 }

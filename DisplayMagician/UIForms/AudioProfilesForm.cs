@@ -29,9 +29,25 @@ namespace DisplayMagician.UIForms
             UpdateSelectionState();
         }
 
-        private void AudioProfilesForm_Load(object sender, EventArgs e)
+        private async void AudioProfilesForm_Load(object sender, EventArgs e)
         {
-            RefreshAudioProfilesList();
+            try
+            {
+                if (!Program.EnsureUserAgentStarted())
+                    throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
+
+                DisplayMagician.Contracts.AudioProfileListResult profileList = await new ControlServicePipeClient().ListAudioProfilesAsync(System.Threading.CancellationToken.None);
+                if (!V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
+                    throw new InvalidOperationException("DisplayMagician could not confirm migrated audio-profile storage for this user.");
+
+                Program.ConfigureUserDataPath(migratedUserDataPath);
+                RefreshAudioProfilesList(profileList.Profiles.Select(profile => profile.Id));
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "AudioProfilesForm/AudioProfilesForm_Load: Could not load service-authoritative audio profiles.");
+                MessageBox.Show(this, "DisplayMagician could not load your Audio Profiles through the User Agent.", "Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             if (lb_audio_profiles.Items.Count > 0)
             {
                 lb_audio_profiles.SelectedIndex = 0;
@@ -39,10 +55,10 @@ namespace DisplayMagician.UIForms
             UpdateSelectionState();
         }
 
-        private void RefreshAudioProfilesList()
+        private void RefreshAudioProfilesList(IEnumerable<string> serviceProfileIds = null)
         {
             lb_audio_profiles.Items.Clear();
-            foreach (AudioProfileItem audioProfile in AudioProfileRepository.AllAudioProfiles.OrderBy(p => p.Name))
+            foreach (AudioProfileItem audioProfile in AudioProfileRepository.AllAudioProfiles.Where(profile => serviceProfileIds == null || serviceProfileIds.Contains(profile.UUID, StringComparer.OrdinalIgnoreCase)).OrderBy(p => p.Name))
             {
                 lb_audio_profiles.Items.Add(audioProfile);
             }
@@ -240,17 +256,15 @@ namespace DisplayMagician.UIForms
                 int audioDeviceWaitMilliseconds = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
                 while (true)
                 {
-                    List<string> missingAudioDeviceNames = null;
-                    bool applied = await Task.Run(() => selected.TrySetActive(audioDeviceWaitMilliseconds, 500, out missingAudioDeviceNames));
-                    if (applied)
+                    DisplayMagician.Contracts.ControlResponse response = await new ControlServicePipeClient().ApplyAudioProfileAsync(selected.UUID, audioDeviceWaitMilliseconds, System.Threading.CancellationToken.None);
+                    if (response.IsSuccessful)
                     {
-                        AudioProfileRepository.UpdateActiveAudioProfile();
                         logger.Trace($"AudioProfilesForm/btn_apply_audio_profile_Click: Applied '{selected.Name}' audio profile successfully.");
                         return;
                     }
 
-                    logger.Warn($"AudioProfilesForm/btn_apply_audio_profile_Click: Could not apply '{selected.Name}' audio profile. Missing audio devices: {String.Join(", ", missingAudioDeviceNames ?? new List<string>())}.");
-                    using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(selected.Name, missingAudioDeviceNames, AudioApplyFailureContext.AudioProfile))
+                    logger.Warn($"AudioProfilesForm/btn_apply_audio_profile_Click: {response.Message}");
+                    using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(selected.Name, new List<string> { response.Message }, AudioApplyFailureContext.AudioProfile))
                     {
                         if (failureForm.ShowDialog(this) != DialogResult.Retry || failureForm.SelectedAction != AudioApplyFailureAction.Retry)
                             return;
