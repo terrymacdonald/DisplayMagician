@@ -318,7 +318,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void RefreshDisplayProfileUI()
+        private void RefreshDisplayProfileUI(IEnumerable<string> serviceProfileIds = null)
         {
 
             ImageListViewItem newItem = null;
@@ -343,7 +343,9 @@ namespace DisplayMagician.UIForms
             //bool lastSelectedItemStillThere = (from profile in orderedProfiles select profile.Name).Contains(lastSelectedItemName);
 
             // Fill it back up with the Profiles we have
-            foreach (ProfileItem profile in ProfileRepository.AllProfiles.OrderBy(p => p.Name))
+            foreach (ProfileItem profile in ProfileRepository.AllProfiles
+                .Where(profile => serviceProfileIds == null || serviceProfileIds.Contains(profile.UUID, StringComparer.OrdinalIgnoreCase))
+                .OrderBy(profile => profile.Name))
             {
                 // Create a new ImageListViewItem from the profile
                 newItem = new ImageListViewItem(profile, profile.Name);
@@ -434,7 +436,24 @@ namespace DisplayMagician.UIForms
                 cancellationToken.ThrowIfCancellationRequested();
 
                 ChangeSelectedProfile(ProfileRepository.CurrentProfile);
-                RefreshDisplayProfileUI();
+                if (Program.EnsureUserAgentStarted())
+                {
+                    try
+                    {
+                        ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                        DisplayMagician.Contracts.ProfileListResult profileList = await controlServiceClient.ListProfilesAsync(cancellationToken);
+                        RefreshDisplayProfileUI(profileList.Profiles.Select(profile => profile.Id));
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, "DisplayProfileForm/InitialiseDisplayProfileAsync: Could not get the service-authoritative profile list; showing the local editor list.");
+                        RefreshDisplayProfileUI();
+                    }
+                }
+                else
+                {
+                    RefreshDisplayProfileUI();
+                }
 
                 if (Utils.TimeToRunDonationAnimation())
                 {

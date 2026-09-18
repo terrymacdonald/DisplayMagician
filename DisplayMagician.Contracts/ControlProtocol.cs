@@ -24,7 +24,8 @@ public enum ControlMessageType
     GetServiceStatus = 9,
     MigrateUserData = 10,
     ListProfiles = 11,
-    ApplyProfile = 12
+    ApplyProfile = 12,
+    StopAgentIfIdle = 13
 }
 
 public enum ControlErrorCode

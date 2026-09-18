@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Reflection;
@@ -285,6 +285,9 @@ namespace DisplayMagician.UIForms
                     // And then show it
                     ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
                 }
+
+                base.OnFormClosing(e);
+                return;
             }
             base.OnFormClosing(e);
         }

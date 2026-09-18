@@ -46,7 +46,7 @@ internal static class Program
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
         ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
         Task serviceConnection = serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, cancellationTokenSource.Token);
-        Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, cancellationTokenSource.Token);
+        Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
 
         await Task.WhenAny(serviceConnection, commandConnection).ConfigureAwait(false);
         cancellationTokenSource.Cancel();

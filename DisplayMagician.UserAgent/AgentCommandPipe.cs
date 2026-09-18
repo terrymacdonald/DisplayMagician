@@ -32,9 +32,10 @@ public sealed class AgentCommandServer
         _pipeName = string.IsNullOrWhiteSpace(pipeName) ? throw new ArgumentException("An Agent command pipe name is required.", nameof(pipeName)) : pipeName;
     }
 
-    public async Task RunAsync(Func<ControlEnvelope, CancellationToken, Task<ControlResponse>> commandHandler, CancellationToken cancellationToken)
+    public async Task RunAsync(Func<ControlEnvelope, CancellationToken, Task<ControlResponse>> commandHandler, Func<bool> shouldStop, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(commandHandler);
+        ArgumentNullException.ThrowIfNull(shouldStop);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -68,6 +69,11 @@ public sealed class AgentCommandServer
                     RequestId = request.RequestId,
                     Payload = JsonSerializer.Serialize(response)
                 }, cancellationToken).ConfigureAwait(false);
+
+                if (shouldStop())
+                {
+                    return;
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

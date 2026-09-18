@@ -13,6 +13,9 @@ namespace DisplayMagician.UserAgent;
 public sealed class ProfileCommandHandler
 {
     private readonly AgentRegistration _registration;
+    private bool _stopRequested;
+
+    public bool StopRequested => _stopRequested;
 
     public ProfileCommandHandler(AgentRegistration registration)
     {
@@ -23,6 +26,17 @@ public sealed class ProfileCommandHandler
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
+        if (request.MessageType == ControlMessageType.StopAgentIfIdle)
+        {
+            if (_registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent has active work and cannot stop." };
+            }
+
+            _stopRequested = true;
+            return new ControlResponse { IsSuccessful = true, Message = "The idle User Agent is stopping." };
+        }
+
         if (request.MessageType == ControlMessageType.ListProfiles)
         {
             ProfileSummary[] profiles = ProfileRepository.AllProfiles

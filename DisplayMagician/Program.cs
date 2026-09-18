@@ -211,6 +211,7 @@ namespace DisplayMagician {
         {
             // BOOTSTRAP AND INITIALIZATION LOGIC
             _isAgentHostedOperation = args.Any(argument => string.Equals(argument, AgentHostedOperationCommandLineOption, StringComparison.OrdinalIgnoreCase));
+            Application.ApplicationExit += (sender, eventArgs) => StopUserAgentIfIdle();
 
             if (V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
             {
@@ -1429,7 +1430,7 @@ namespace DisplayMagician {
                 }
 
                 ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
-                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.ApplyProfileAsync(profile.UUID, CancellationToken.None).GetAwaiter().GetResult();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.ApplyProfileWhenAgentAvailableAsync(profile.UUID, CancellationToken.None).GetAwaiter().GetResult();
                 if (response.IsSuccessful)
                 {
                     return ApplyProfileResult.Successful;
@@ -1450,7 +1451,7 @@ namespace DisplayMagician {
             }
         }
 
-        private static bool EnsureUserAgentStarted()
+        internal static bool EnsureUserAgentStarted()
         {
             if (_userAgentProcess != null && !_userAgentProcess.HasExited)
             {
@@ -1471,8 +1472,29 @@ namespace DisplayMagician {
                 return false;
             }
 
-            Thread.Sleep(500);
             return true;
+        }
+
+        internal static void StopUserAgentIfIdle()
+        {
+            if (_userAgentProcess == null || _userAgentProcess.HasExited)
+            {
+                return;
+            }
+
+            try
+            {
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.StopAgentIfIdleAsync(CancellationToken.None).GetAwaiter().GetResult();
+                if (!response.IsSuccessful)
+                {
+                    logger.Info("Program/StopUserAgentIfIdle: The User Agent remains running. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/StopUserAgentIfIdle: Unable to ask the User Agent to stop before WinForms exits.");
+            }
         }
 
         private static bool EnsurePackageIdentity(string[] startupArguments)

@@ -24,6 +24,50 @@ internal sealed class ControlServicePipeClient
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<ControlResponse> ApplyProfileWhenAgentAvailableAsync(string profileId, CancellationToken cancellationToken)
+    {
+        const int maximumAttempts = 40;
+        for (int attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            ControlResponse response = await ApplyProfileAsync(profileId, cancellationToken).ConfigureAwait(false);
+            if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
+            {
+                return response;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException("The User Agent registration retry loop completed unexpectedly.");
+    }
+
+    public async Task<ProfileListResult> ListProfilesAsync(CancellationToken cancellationToken)
+    {
+        const int maximumAttempts = 40;
+        for (int attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListProfiles }, cancellationToken).ConfigureAwait(false);
+            if (response.IsSuccessful && response.ProfileList != null)
+            {
+                return response.ProfileList;
+            }
+
+            if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
+            {
+                throw new InvalidOperationException(response.Message);
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException("The User Agent registration retry loop completed unexpectedly.");
+    }
+
+    public Task<ControlResponse> StopAgentIfIdleAsync(CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);
+    }
+
     private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
