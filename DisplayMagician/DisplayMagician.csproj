@@ -248,6 +248,7 @@
     <EmbeddedResource Include="UIForms\UpgradeForm.resx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DisplayMagician.ConfigurationDefinitions\DisplayMagician.ConfigurationDefinitions.csproj" />
     <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
   </ItemGroup>

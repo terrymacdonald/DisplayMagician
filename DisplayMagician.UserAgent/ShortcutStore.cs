@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
 
 namespace DisplayMagician.UserAgent;
@@ -23,6 +24,51 @@ public sealed class ShortcutStore
         return new RepositorySnapshot { Repository = RepositoryKind.Shortcuts, Revision = content.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(content), 0), Json = content.Length == 0 ? string.Empty : Encoding.Unicode.GetString(content).TrimStart('\uFEFF') };
     }
 
+    public bool TryGetShortcutDefinition(string shortcutId, out ShortcutDefinition? shortcutDefinition)
+    {
+        shortcutDefinition = null;
+        if (string.IsNullOrWhiteSpace(shortcutId))
+        {
+            return false;
+        }
+
+        RepositorySnapshot snapshot = GetSnapshot();
+        if (string.IsNullOrWhiteSpace(snapshot.Json))
+        {
+            return false;
+        }
+
+        using JsonDocument document = JsonDocument.Parse(snapshot.Json);
+        if (!document.RootElement.TryGetProperty("Shortcuts", out JsonElement shortcuts) || shortcuts.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        foreach (JsonElement shortcut in shortcuts.EnumerateArray())
+        {
+            string id = GetString(shortcut, "UUID");
+            if (!string.Equals(id, shortcutId, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            int category = GetInt32(shortcut, "Category");
+            int launchMode = GetInt32(shortcut, "GameLaunchMode");
+            shortcutDefinition = new ShortcutDefinition
+            {
+                Id = id,
+                Name = GetString(shortcut, "Name"),
+                Category = Enum.IsDefined(typeof(ShortcutDefinitionCategory), category) ? (ShortcutDefinitionCategory)category : ShortcutDefinitionCategory.Unknown,
+                GameAppId = GetString(shortcut, "GameAppId"),
+                GameName = GetString(shortcut, "GameName"),
+                GameLaunchMode = Enum.IsDefined(typeof(GameLaunchMode), launchMode) ? (GameLaunchMode)launchMode : GameLaunchMode.StartGame
+            };
+            return true;
+        }
+
+        return false;
+    }
+
     public RepositoryCommitResult Commit(RepositoryCommitRequest request)
     {
         RepositorySnapshot snapshot = GetSnapshot();
@@ -38,5 +84,19 @@ public sealed class ShortcutStore
         File.WriteAllText(temporaryPath, request.Json, Encoding.Unicode);
         if (File.Exists(_shortcutFilePath)) File.Replace(temporaryPath, _shortcutFilePath, null); else File.Move(temporaryPath, _shortcutFilePath);
         return new RepositoryCommitResult { Snapshot = GetSnapshot() };
+    }
+
+    private static string GetString(JsonElement element, string propertyName)
+    {
+        return element.TryGetProperty(propertyName, out JsonElement property) && property.ValueKind == JsonValueKind.String
+            ? property.GetString() ?? string.Empty
+            : string.Empty;
+    }
+
+    private static int GetInt32(JsonElement element, string propertyName)
+    {
+        return element.TryGetProperty(propertyName, out JsonElement property) && property.TryGetInt32(out int value)
+            ? value
+            : 0;
     }
 }

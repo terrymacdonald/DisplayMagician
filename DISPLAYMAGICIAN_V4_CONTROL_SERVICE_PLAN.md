@@ -437,6 +437,8 @@ For shortcut extraction, use the following names consistently:
 - `ShortcutClient`: WinForms, Console, and future API-facing request adapter.
 - `ShortcutEditor`: the existing WinForms editing workflow.
 
+`DisplayMagician.ConfigurationDefinitions` owns portable persisted definitions, schema versions, JSON conversion, and pure configuration validation. It does not access files, hardware, processes, named pipes, or WinForms. `DisplayMagician.Contracts` remains limited to transport messages.
+
 ### Automatically detected game starts
 
 Game shortcuts persist a `GameLaunchMode`: `StartGame` (the existing default) or `DetectGameRunning`. The latter is for a user who starts the selected game from Steam, another launcher, a desktop shortcut, or another external source. It is not an instruction to start a second game process.

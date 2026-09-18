@@ -17,6 +17,7 @@ using System.ComponentModel;
 using DisplayMagician.AppLibraries;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
+using DisplayMagician.ConfigurationDefinitions;
 
 namespace DisplayMagician
 {
@@ -32,16 +33,6 @@ namespace DisplayMagician
         Game = 1,
         NoGame = 2,
         Application = 3,
-    }
-
-    /// <summary>
-    /// Defines whether a game shortcut launches the selected game itself or
-    /// waits for the User Agent to observe the user launching it.
-    /// </summary>
-    public enum GameLaunchMode : int
-    {
-        StartGame = 0,
-        DetectGameRunning = 1,
     }
 
     public enum ShortcutValidity : int
