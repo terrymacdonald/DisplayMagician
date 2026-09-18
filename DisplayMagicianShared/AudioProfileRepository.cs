@@ -15,6 +15,7 @@ using System.ComponentModel;
 using NLog;
 using WindowsAudioWrapper;
 using AudioProfile = WindowsAudioWrapper.Models.AudioProfile;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagicianShared
 {
@@ -68,6 +69,8 @@ namespace DisplayMagicianShared
 
 
         private static volatile bool _userChangingAudioProfiles = false;
+        private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
+        private static long _userAgentRepositoryRevision;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -215,6 +218,23 @@ namespace DisplayMagicianShared
             _currentAudioProfile = null;
             _audioProfilesLoaded = false;
             Directory.CreateDirectory(AppAudioProfileStoragePath);
+        }
+
+        /// <summary>
+        /// Loads this repository's local AudioProfileItem cache from the User
+        /// Agent. Subsequent saves are committed back through the same connection.
+        /// </summary>
+        public static void ConnectToUserAgent(IUserAgentRepositoryConnection userAgentRepositoryConnection)
+        {
+            _userAgentRepositoryConnection = userAgentRepositoryConnection ?? throw new ArgumentNullException(nameof(userAgentRepositoryConnection));
+            RepositorySnapshot snapshot = _userAgentRepositoryConnection.GetRepositorySnapshot(RepositoryKind.AudioProfiles);
+            if (snapshot.Repository != RepositoryKind.AudioProfiles)
+                throw new InvalidOperationException("The User Agent returned the wrong repository snapshot for audio profiles.");
+
+            LoadAudioProfilesFromJson(snapshot.Json);
+            _userAgentRepositoryRevision = snapshot.Revision;
+            _audioProfilesLoaded = true;
+            SharedLogger.logger.Debug("AudioProfileRepository/ConnectToUserAgent: Loaded the audio-profile cache from the User Agent.");
         }
 
         //public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
@@ -704,6 +724,40 @@ namespace DisplayMagicianShared
             return true;
         }
 
+        private static void LoadAudioProfilesFromJson(string json)
+        {
+            _allAudioProfiles = new List<AudioProfileItem>();
+            _currentAudioProfile = null;
+
+            if (string.IsNullOrWhiteSpace(json))
+                return;
+
+            try
+            {
+                JsonSerializerSettings serializerSettings = new JsonSerializerSettings
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Populate,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                    ObjectCreationHandling = ObjectCreationHandling.Replace
+                };
+
+                AudioProfileFile profileFile = JsonConvert.DeserializeObject<AudioProfileFile>(json, serializerSettings);
+                if (profileFile.AudioProfiles == null)
+                    throw new InvalidDataException("The User Agent returned audio profiles in an unsupported format.");
+
+                _allAudioProfiles = profileFile.AudioProfiles;
+                _allAudioProfiles.Sort();
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, "AudioProfileRepository/LoadAudioProfilesFromJson: The User Agent returned unreadable audio profile data.");
+                throw new InvalidDataException("The User Agent returned unreadable audio profile data.", ex);
+            }
+        }
+
         public static bool SaveAudioProfiles()
         {
             SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Attempting to save the Audio Profiles repository to the {AppAudioProfileStoragePath}.");
@@ -782,6 +836,34 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: JSON data: {json}");
                 }
 
+
+                if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
+                {
+                    RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
+                    {
+                        Repository = RepositoryKind.AudioProfiles,
+                        ExpectedRevision = _userAgentRepositoryRevision,
+                        Json = json
+                    });
+
+                    if (commitResult.Snapshot == null)
+                    {
+                        SharedLogger.logger.Error("AudioProfileRepository/SaveAudioProfiles: The User Agent did not return an audio-profile snapshot after the commit.");
+                        return false;
+                    }
+
+                    _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
+                    if (commitResult.WasConflict)
+                    {
+                        LoadAudioProfilesFromJson(commitResult.Snapshot.Json);
+                        _audioProfilesLoaded = true;
+                        SharedLogger.logger.Warn("AudioProfileRepository/SaveAudioProfiles: The audio-profile cache was stale. Reloaded the User Agent version instead of overwriting it.");
+                        return false;
+                    }
+
+                    SharedLogger.logger.Debug("AudioProfileRepository/SaveAudioProfiles: Committed the audio-profile cache through the User Agent.");
+                    return true;
+                }
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {

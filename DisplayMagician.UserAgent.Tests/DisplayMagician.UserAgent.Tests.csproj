@@ -13,6 +13,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" />
     <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
     <ProjectReference Include="..\DisplayMagician.ControlService\DisplayMagician.ControlService.csproj" />
     <ProjectReference Include="..\DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj" />

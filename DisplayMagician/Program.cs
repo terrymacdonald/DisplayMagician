@@ -622,6 +622,12 @@ namespace DisplayMagician {
 
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
+            if (!ConnectRepositoriesToUserAgent())
+            {
+                MessageBox.Show("DisplayMagician could not connect to the User Agent that manages your profiles. Please restart DisplayMagician and try again.", "DisplayMagician User Agent", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+
             if (AppProgramSettings.InstallDesktopContextMenu)
             {
                 logger.Trace($"Program/Main: Installing the context menu on startup");
@@ -1473,6 +1479,29 @@ namespace DisplayMagician {
             }
 
             return true;
+        }
+
+        private static bool ConnectRepositoriesToUserAgent()
+        {
+            try
+            {
+                if (!EnsureUserAgentStarted())
+                {
+                    return false;
+                }
+
+                UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(new ControlServicePipeClient());
+                ProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
+                AudioProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
+                ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
+                logger.Info("Program/ConnectRepositoriesToUserAgent: Loaded the display, audio, and shortcut repository caches from the User Agent.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ConnectRepositoriesToUserAgent: Could not load the repository caches from the User Agent.");
+                return false;
+            }
         }
 
         internal static void StopUserAgentIfIdle()

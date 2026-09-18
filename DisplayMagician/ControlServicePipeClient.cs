@@ -84,6 +84,35 @@ internal sealed class ControlServicePipeClient
 
     public Task<ControlResponse> ApplyAudioProfileAsync(string profileId, int deviceWaitMilliseconds, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ApplyAudioProfile, Payload = JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = profileId, DeviceWaitMilliseconds = deviceWaitMilliseconds }) }, cancellationToken);
 
+    public async Task<RepositorySnapshot> GetRepositorySnapshotAsync(RepositoryKind repository, CancellationToken cancellationToken)
+    {
+        const int maximumAttempts = 40;
+        for (int attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetRepositorySnapshot, Payload = JsonSerializer.Serialize(new RepositorySnapshotRequest { Repository = repository }) }, cancellationToken).ConfigureAwait(false);
+            if (response.IsSuccessful && response.RepositorySnapshot != null)
+            {
+                return response.RepositorySnapshot;
+            }
+
+            if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
+            {
+                throw new InvalidOperationException(response.Message);
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException("The User Agent registration retry loop completed unexpectedly.");
+    }
+
+    public async Task<RepositoryCommitResult> CommitRepositorySnapshotAsync(RepositoryCommitRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CommitRepositorySnapshot, Payload = JsonSerializer.Serialize(request) }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.RepositoryCommit != null ? response.RepositoryCommit : throw new InvalidOperationException(response.Message);
+    }
+
     private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);

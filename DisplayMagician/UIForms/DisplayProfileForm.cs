@@ -43,6 +43,11 @@ namespace DisplayMagician.UIForms
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private static Task RefreshDisplayProfilesFromUserAgentAsync()
+        {
+            return Task.Run(() => ProfileRepository.ConnectToUserAgent(new UserAgentRepositoryConnection(new ControlServicePipeClient())));
+        }
+
         public DisplayProfileForm()
         {
             InitializeComponent();
@@ -217,7 +222,7 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            Program.ConfigureUserDataPath(Program.AppDataPath);
+            await RefreshDisplayProfilesFromUserAgentAsync();
             ilv_saved_profiles.Items.RemoveAt(currentIlvIndex);
             Program.AppDirectInputManager.RemoveHotkeysByUUID(_selectedProfile.UUID);
 
@@ -409,29 +414,6 @@ namespace DisplayMagician.UIForms
                     MessageBox.Show(this, "DisplayMagician is still changing a display profile. The Display Profile window will continue loading when that operation has finished.", "Display Profile Window Loading", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
 
-                if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
-                {
-                    logger.Trace("DisplayProfileForm/InitialiseDisplayProfileAsync: Waiting for another display task before reading the current display configuration.");
-                }
-
-                await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(cancellationToken);
-                try
-                {
-                    Stopwatch displayDetectionStopwatch = Stopwatch.StartNew();
-                    await Task.Run(() =>
-                    {
-                        ProfileRepository.RefreshDisplayDetectionState();
-                        ProfileRepository.UpdateActiveProfile();
-                    });
-                    logger.Debug($"DisplayProfileForm/InitialiseDisplayProfileAsync: Display detection and current-profile capture took {displayDetectionStopwatch.ElapsedMilliseconds} ms.");
-                }
-                finally
-                {
-                    Program.AppBackgroundTaskSemaphoreSlim.Release();
-                }
-
-                cancellationToken.ThrowIfCancellationRequested();
-
                 if (!Program.EnsureUserAgentStarted())
                 {
                     throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load display profiles.");
@@ -439,12 +421,7 @@ namespace DisplayMagician.UIForms
 
                 ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
                 DisplayMagician.Contracts.ProfileListResult profileList = await controlServiceClient.ListProfilesAsync(cancellationToken);
-                if (!V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
-                {
-                    throw new InvalidOperationException("DisplayMagician could not confirm migrated display-profile storage for this user.");
-                }
-
-                Program.ConfigureUserDataPath(migratedUserDataPath);
+                await RefreshDisplayProfilesFromUserAgentAsync();
                 await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(cancellationToken);
                 try
                 {
@@ -713,7 +690,7 @@ namespace DisplayMagician.UIForms
                     return;
                 }
 
-                Program.ConfigureUserDataPath(Program.AppDataPath);
+                await RefreshDisplayProfilesFromUserAgentAsync();
                 _selectedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile => string.Equals(profile.Name, txt_profile_save_name.Text, StringComparison.OrdinalIgnoreCase));
                 if (_selectedProfile == null)
                 {
@@ -749,7 +726,7 @@ namespace DisplayMagician.UIForms
                     return;
                 }
 
-                Program.ConfigureUserDataPath(Program.AppDataPath);
+                await RefreshDisplayProfilesFromUserAgentAsync();
                 _selectedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile => string.Equals(profile.UUID, _selectedProfile.UUID, StringComparison.OrdinalIgnoreCase));
                 if (_selectedProfile == null)
                 {
@@ -1092,7 +1069,7 @@ namespace DisplayMagician.UIForms
                         return;
                     }
 
-                    Program.ConfigureUserDataPath(Program.AppDataPath);
+                    await RefreshDisplayProfilesFromUserAgentAsync();
                     _selectedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile => string.Equals(profile.UUID, _selectedProfile.UUID, StringComparison.OrdinalIgnoreCase));
                     if (_selectedProfile == null)
                     {

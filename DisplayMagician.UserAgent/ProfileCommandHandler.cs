@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Drawing.Imaging;
+using System.Security.Cryptography;
 using DisplayMagician.Contracts;
 using DisplayMagicianShared;
 using SharedApplyProfileResult = DisplayMagicianShared.ApplyProfileResult;
@@ -14,6 +16,8 @@ namespace DisplayMagician.UserAgent;
 public sealed class ProfileCommandHandler
 {
     private readonly AgentRegistration _registration;
+    private readonly string _userDataPath;
+    private readonly ShortcutStore _shortcutStore;
     private bool _stopRequested;
 
     public bool StopRequested => _stopRequested;
@@ -21,9 +25,10 @@ public sealed class ProfileCommandHandler
     public ProfileCommandHandler(AgentRegistration registration)
     {
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
-        string userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", _registration.UserSid);
-        ProfileRepository.ConfigureStoragePath(userDataPath);
-        AudioProfileRepository.ConfigureStoragePath(userDataPath);
+        _userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", _registration.UserSid);
+        ProfileRepository.ConfigureStoragePath(_userDataPath);
+        AudioProfileRepository.ConfigureStoragePath(_userDataPath);
+        _shortcutStore = new ShortcutStore(_userDataPath);
     }
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
@@ -48,14 +53,86 @@ public sealed class ProfileCommandHandler
             {
                 IsSuccessful = true,
                 Message = "Profiles returned.",
-                ProfileList = new ProfileListResult { Profiles = profiles }
+                ProfileList = new ProfileListResult
+                {
+                    Profiles = profiles,
+                    Views = ProfileRepository.AllProfiles.Select(profile => new DisplayProfileView { Id = profile.UUID, Name = profile.Name, ThumbnailPngBase64 = GetThumbnailPngBase64(profile) }).ToArray()
+                }
             };
+        }
+
+        if (request.MessageType == ControlMessageType.GetRepositorySnapshot)
+        {
+            RepositorySnapshotRequest? snapshotRequest = JsonSerializer.Deserialize<RepositorySnapshotRequest>(request.Payload);
+            if (snapshotRequest == null || snapshotRequest.Repository == RepositoryKind.Unknown)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested repository snapshot is not available from the User Agent yet." };
+            }
+
+            if (snapshotRequest.Repository == RepositoryKind.Shortcuts)
+            {
+                return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = _shortcutStore.GetSnapshot() };
+            }
+
+            string fileName = snapshotRequest.Repository == RepositoryKind.DisplayProfiles ? "DisplayProfiles.json" : "AudioProfiles.json";
+            string directoryName = snapshotRequest.Repository == RepositoryKind.DisplayProfiles ? "Profiles" : "AudioProfiles";
+            string path = Path.Combine(_userDataPath, directoryName, fileName);
+            byte[] content = File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
+            long revision = content.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(content), 0);
+            return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = new RepositorySnapshot { Repository = snapshotRequest.Repository, Revision = revision, Json = content.Length == 0 ? string.Empty : System.Text.Encoding.Unicode.GetString(content).TrimStart('\uFEFF') } };
+        }
+
+        if (request.MessageType == ControlMessageType.CommitRepositorySnapshot)
+        {
+            RepositoryCommitRequest? commitRequest = JsonSerializer.Deserialize<RepositoryCommitRequest>(request.Payload);
+            if (commitRequest == null || commitRequest.Repository == RepositoryKind.Unknown)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested repository commit is not available from the User Agent yet." };
+            }
+
+            if (commitRequest.Repository == RepositoryKind.Shortcuts)
+            {
+                try
+                {
+                    RepositoryCommitResult shortcutCommit = _shortcutStore.Commit(commitRequest);
+                    return new ControlResponse { IsSuccessful = true, Message = shortcutCommit.WasConflict ? "Repository commit conflicted with a newer Agent revision." : "Repository committed.", RepositoryCommit = shortcutCommit };
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is ArgumentException)
+                {
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The shortcut repository commit could not be validated or persisted." };
+                }
+            }
+
+            string directoryName = commitRequest.Repository == RepositoryKind.DisplayProfiles ? "Profiles" : "AudioProfiles";
+            string fileName = commitRequest.Repository == RepositoryKind.DisplayProfiles ? "DisplayProfiles.json" : "AudioProfiles.json";
+            string path = Path.Combine(_userDataPath, directoryName, fileName);
+            byte[] existing = File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
+            long revision = existing.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(existing), 0);
+            if (revision != commitRequest.ExpectedRevision)
+            {
+                return new ControlResponse { IsSuccessful = true, Message = "Repository commit conflicted with a newer Agent revision.", RepositoryCommit = new RepositoryCommitResult { WasConflict = true, Snapshot = CreateSnapshot(commitRequest.Repository, path) } };
+            }
+
+            try
+            {
+                using JsonDocument _ = JsonDocument.Parse(commitRequest.Json);
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                string temporaryPath = Path.Combine(Path.GetDirectoryName(path)!, $".{fileName}.{Guid.NewGuid():N}.tmp");
+                File.WriteAllText(temporaryPath, commitRequest.Json, System.Text.Encoding.Unicode);
+                if (File.Exists(path)) File.Replace(temporaryPath, path, null); else File.Move(temporaryPath, path);
+                if (commitRequest.Repository == RepositoryKind.DisplayProfiles) ProfileRepository.ConfigureStoragePath(_userDataPath); else AudioProfileRepository.ConfigureStoragePath(_userDataPath);
+                return new ControlResponse { IsSuccessful = true, Message = "Repository committed.", RepositoryCommit = new RepositoryCommitResult { Snapshot = CreateSnapshot(commitRequest.Repository, path) } };
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is ArgumentException)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The repository commit could not be validated or persisted." };
+            }
         }
 
         if (request.MessageType == ControlMessageType.ListAudioProfiles)
         {
             ProfileSummary[] profiles = AudioProfileRepository.AllAudioProfiles.Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name }).ToArray();
-            return new ControlResponse { IsSuccessful = true, Message = "Audio profiles returned.", AudioProfileList = new AudioProfileListResult { Profiles = profiles } };
+            return new ControlResponse { IsSuccessful = true, Message = "Audio profiles returned.", AudioProfileList = new AudioProfileListResult { Profiles = profiles, Views = AudioProfileRepository.AllAudioProfiles.Select(profile => new AudioProfileView { Id = profile.UUID, Name = profile.Name, SettingsText = profile.GenerateSettingsText() }).ToArray() } };
         }
 
         if (request.MessageType == ControlMessageType.ApplyAudioProfile)
@@ -164,5 +241,28 @@ public sealed class ProfileCommandHandler
         {
             _registration.OperationState = AgentOperationState.Idle;
         }
+    }
+
+    private static string? GetThumbnailPngBase64(ProfileItem profile)
+    {
+        if (profile.ProfileBitmap == null)
+        {
+            return null;
+        }
+
+        using MemoryStream stream = new MemoryStream();
+        profile.ProfileBitmap.Save(stream, ImageFormat.Png);
+        return Convert.ToBase64String(stream.ToArray());
+    }
+
+    private static RepositorySnapshot CreateSnapshot(RepositoryKind repository, string path)
+    {
+        byte[] content = File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
+        return new RepositorySnapshot
+        {
+            Repository = repository,
+            Revision = content.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(content), 0),
+            Json = content.Length == 0 ? string.Empty : System.Text.Encoding.Unicode.GetString(content).TrimStart('\uFEFF')
+        };
     }
 }

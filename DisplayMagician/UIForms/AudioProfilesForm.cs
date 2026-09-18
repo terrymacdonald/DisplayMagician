@@ -36,11 +36,9 @@ namespace DisplayMagician.UIForms
                 if (!Program.EnsureUserAgentStarted())
                     throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
 
-                DisplayMagician.Contracts.AudioProfileListResult profileList = await new ControlServicePipeClient().ListAudioProfilesAsync(System.Threading.CancellationToken.None);
-                if (!V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
-                    throw new InvalidOperationException("DisplayMagician could not confirm migrated audio-profile storage for this user.");
-
-                Program.ConfigureUserDataPath(migratedUserDataPath);
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.AudioProfileListResult profileList = await controlServiceClient.ListAudioProfilesAsync(System.Threading.CancellationToken.None);
+                await Task.Run(() => AudioProfileRepository.ConnectToUserAgent(new UserAgentRepositoryConnection(controlServiceClient)));
                 RefreshAudioProfilesList(profileList.Profiles.Select(profile => profile.Id));
             }
             catch (Exception ex)

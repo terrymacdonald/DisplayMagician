@@ -37,7 +37,9 @@ public enum ControlMessageType
     CreateAudioProfileFromCurrent = 21,
     RenameAudioProfile = 22,
     DeleteAudioProfile = 23,
-    UpdateAudioProfileFromCurrent = 24
+    UpdateAudioProfileFromCurrent = 24,
+    GetRepositorySnapshot = 25,
+    CommitRepositorySnapshot = 26
 }
 
 public enum ControlErrorCode
@@ -112,6 +114,7 @@ public sealed class ProfileSummary
 public sealed class ProfileListResult
 {
     public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>();
+    public DisplayProfileView[] Views { get; set; } = Array.Empty<DisplayProfileView>();
 }
 
 public sealed class ApplyProfileRequest
@@ -124,7 +127,29 @@ public sealed class ApplyProfileResult
     public bool WasCancelled { get; set; }
 }
 
-public sealed class AudioProfileListResult { public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>(); }
+public enum RepositoryKind
+{
+    Unknown = 0,
+    DisplayProfiles = 1,
+    AudioProfiles = 2,
+    Shortcuts = 3
+}
+
+public sealed class DisplayProfileView
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? ThumbnailPngBase64 { get; set; }
+}
+
+public sealed class AudioProfileView
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string SettingsText { get; set; } = string.Empty;
+}
+
+public sealed class AudioProfileListResult { public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>(); public AudioProfileView[] Views { get; set; } = Array.Empty<AudioProfileView>(); }
 
 public sealed class ApplyAudioProfileRequest { public string ProfileId { get; set; } = string.Empty; public int DeviceWaitMilliseconds { get; set; } }
 
@@ -133,6 +158,43 @@ public sealed class CreateProfileRequest { public string Name { get; set; } = st
 public sealed class RenameProfileRequest { public string ProfileId { get; set; } = string.Empty; public string Name { get; set; } = string.Empty; }
 
 public sealed class DeleteProfileRequest { public string ProfileId { get; set; } = string.Empty; }
+
+public sealed class RepositorySnapshotRequest
+{
+    public RepositoryKind Repository { get; set; }
+}
+
+public sealed class RepositorySnapshot
+{
+    public RepositoryKind Repository { get; set; }
+    public long Revision { get; set; }
+    public string Json { get; set; } = string.Empty;
+}
+
+public sealed class RepositoryCommitRequest
+{
+    public RepositoryKind Repository { get; set; }
+    public long ExpectedRevision { get; set; }
+    public string Json { get; set; } = string.Empty;
+}
+
+public sealed class RepositoryCommitResult
+{
+    public bool WasConflict { get; set; }
+    public RepositorySnapshot? Snapshot { get; set; }
+}
+
+/// <summary>
+/// Supplies a repository with its current User Agent snapshot and accepts an
+/// optimistic-concurrency commit. The shared repositories own their in-memory
+/// models; the WinForms application only supplies this connection.
+/// </summary>
+public interface IUserAgentRepositoryConnection
+{
+    RepositorySnapshot GetRepositorySnapshot(RepositoryKind repository);
+
+    RepositoryCommitResult CommitRepositorySnapshot(RepositoryCommitRequest request);
+}
 
 public sealed class UserAgentLaunchRequest
 {
@@ -196,6 +258,10 @@ public sealed class ControlResponse
     public ProfileListResult? ProfileList { get; set; }
 
     public AudioProfileListResult? AudioProfileList { get; set; }
+
+    public RepositorySnapshot? RepositorySnapshot { get; set; }
+
+    public RepositoryCommitResult? RepositoryCommit { get; set; }
 
     public ApplyProfileResult? ApplyProfile { get; set; }
 }

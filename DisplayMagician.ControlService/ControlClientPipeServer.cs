@@ -70,6 +70,8 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
                 };
             }

@@ -21,6 +21,11 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
+using IUserAgentRepositoryConnection = DisplayMagician.Contracts.IUserAgentRepositoryConnection;
+using RepositoryCommitRequest = DisplayMagician.Contracts.RepositoryCommitRequest;
+using RepositoryCommitResult = DisplayMagician.Contracts.RepositoryCommitResult;
+using RepositoryKind = DisplayMagician.Contracts.RepositoryKind;
+using RepositorySnapshot = DisplayMagician.Contracts.RepositorySnapshot;
 
 namespace DisplayMagician
 {
@@ -68,20 +73,15 @@ namespace DisplayMagician
         private static string _shortcutStorageJsonFullFileName = Path.Combine(AppShortcutStoragePath, _shortcutStorageJsonFileName);
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
+        private static long _userAgentRepositoryRevision;
         #endregion
 
         #region Class Constructors
         static ShortcutRepository()
         {
-            // Load the Shortcuts from storage
-            try
-            {
-                LoadShortcuts();
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: Exception while trying to load the Shortcuts from the ShortcutRespository initialiser. You probably have an issue with the configuration of your Shortcuts JSON file.");
-            }
+            // Loading is deferred until either AllShortcuts is read or the
+            // repository is connected to the User Agent.
         }
 
         #endregion
@@ -140,6 +140,23 @@ namespace DisplayMagician
             _allShortcuts = new List<ShortcutItem>();
             _shortcutsLoaded = false;
             Directory.CreateDirectory(AppShortcutStoragePath);
+        }
+
+        /// <summary>
+        /// Loads this repository's local ShortcutItem cache from the User Agent.
+        /// Subsequent saves are committed back through the same connection.
+        /// </summary>
+        public static void ConnectToUserAgent(IUserAgentRepositoryConnection userAgentRepositoryConnection)
+        {
+            _userAgentRepositoryConnection = userAgentRepositoryConnection ?? throw new ArgumentNullException(nameof(userAgentRepositoryConnection));
+            RepositorySnapshot snapshot = _userAgentRepositoryConnection.GetRepositorySnapshot(RepositoryKind.Shortcuts);
+            if (snapshot.Repository != RepositoryKind.Shortcuts)
+                throw new InvalidOperationException("The User Agent returned the wrong repository snapshot for shortcuts.");
+
+            LoadShortcutsFromJson(snapshot.Json);
+            _userAgentRepositoryRevision = snapshot.Revision;
+            _shortcutsLoaded = true;
+            logger.Debug("ShortcutRepository/ConnectToUserAgent: Loaded the shortcut cache from the User Agent.");
         }
 
         public static bool AddShortcut(ShortcutItem shortcut)
@@ -789,6 +806,34 @@ namespace DisplayMagician
                 var json = JsonConvert.SerializeObject(shortcutFile, Formatting.Indented, mySerializerSettings);
 
 
+                if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
+                {
+                    RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
+                    {
+                        Repository = RepositoryKind.Shortcuts,
+                        ExpectedRevision = _userAgentRepositoryRevision,
+                        Json = json
+                    });
+
+                    if (commitResult.Snapshot == null)
+                    {
+                        logger.Error("ShortcutRepository/SaveShortcuts: The User Agent did not return a shortcut snapshot after the commit.");
+                        return false;
+                    }
+
+                    _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
+                    if (commitResult.WasConflict)
+                    {
+                        LoadShortcutsFromJson(commitResult.Snapshot.Json);
+                        _shortcutsLoaded = true;
+                        logger.Warn("ShortcutRepository/SaveShortcuts: The shortcut cache was stale. Reloaded the User Agent version instead of overwriting it.");
+                        return false;
+                    }
+
+                    logger.Debug("ShortcutRepository/SaveShortcuts: Committed the shortcut cache through the User Agent.");
+                    return true;
+                }
+
                 if (!string.IsNullOrWhiteSpace(json))
                 {
                     logger.Debug($"ShortcutRepository/SaveShortcuts: Saving the shortcut repository to the {_shortcutStorageJsonFullFileName}.");
@@ -812,6 +857,56 @@ namespace DisplayMagician
             }
 
             return false;
+        }
+
+        private static void LoadShortcutsFromJson(string json)
+        {
+            _allShortcuts = new List<ShortcutItem>();
+
+            if (string.IsNullOrWhiteSpace(json))
+                return;
+
+            try
+            {
+                JsonSerializerSettings serializerSettings = new JsonSerializerSettings
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Populate,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                    ObjectCreationHandling = ObjectCreationHandling.Replace
+                };
+
+                ShortcutFile shortcutFile = JsonConvert.DeserializeObject<ShortcutFile>(json, serializerSettings);
+                if (shortcutFile.Shortcuts == null)
+                    throw new InvalidDataException("The User Agent returned shortcuts in an unsupported format.");
+
+                _allShortcuts = shortcutFile.Shortcuts;
+                LinkShortcutsToProfiles();
+                _allShortcuts.Sort();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "ShortcutRepository/LoadShortcutsFromJson: The User Agent returned unreadable shortcut data.");
+                throw new InvalidDataException("The User Agent returned unreadable shortcut data.", ex);
+            }
+        }
+
+        private static void LinkShortcutsToProfiles()
+        {
+            foreach (ShortcutItem shortcut in _allShortcuts)
+            {
+                if (string.IsNullOrWhiteSpace(shortcut.ProfileUUID) || shortcut.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                {
+                    shortcut.ProfileToUse = null;
+                    continue;
+                }
+
+                shortcut.ProfileToUse = ProfileRepository.AllProfiles.FirstOrDefault(profile =>
+                    !string.IsNullOrWhiteSpace(profile.UUID) &&
+                    profile.UUID.Equals(shortcut.ProfileUUID, StringComparison.OrdinalIgnoreCase));
+            }
         }
 
         public static void IsValidRefresh()

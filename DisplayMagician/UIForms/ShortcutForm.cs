@@ -13,6 +13,7 @@ using System.Windows.Forms.VisualStyles;
 //using NHotkey;
 using DisplayMagician;
 using System.Threading;
+using System.Threading.Tasks;
 using DisplayMagician.AppLibraries;
 using static DisplayMagician.GameLibraries.ProductInformation;
 using System.ComponentModel;
@@ -1922,8 +1923,30 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void ShortcutForm_Load(object sender, EventArgs e)
+        private async void ShortcutForm_Load(object sender, EventArgs e)
         {
+
+            try
+            {
+                if (!Program.EnsureUserAgentStarted())
+                    throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
+
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.AudioProfileListResult audioProfiles = await controlServiceClient.ListAudioProfilesAsync(System.Threading.CancellationToken.None);
+                await Task.Run(() =>
+                {
+                    UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(controlServiceClient);
+                    ProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
+                    AudioProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
+                    ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
+                });
+                RefreshAudioProfilesList(audioProfiles.Profiles.Select(profile => profile.Id));
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "ShortcutForm/ShortcutForm_Load: Could not load service-authoritative audio profiles.");
+                MessageBox.Show(this, "DisplayMagician could not load Audio Profiles through the User Agent.", "Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             if (_firstShow)
             {
@@ -2560,10 +2583,10 @@ namespace DisplayMagician.UIForms
             return textToReturn;
         }
 
-        private void RefreshAudioProfilesList()
+        private void RefreshAudioProfilesList(IEnumerable<string> serviceProfileIds = null)
         {
             lb_audio_profiles.Items.Clear();
-            foreach (AudioProfileItem audioProfile in AudioProfileRepository.AllAudioProfiles.OrderBy(p => p.Name))
+            foreach (AudioProfileItem audioProfile in AudioProfileRepository.AllAudioProfiles.Where(profile => serviceProfileIds == null || serviceProfileIds.Contains(profile.UUID, StringComparer.OrdinalIgnoreCase)).OrderBy(p => p.Name))
             {
                 lb_audio_profiles.Items.Add(audioProfile);
             }

@@ -21,6 +21,7 @@ using System.ComponentModel;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using NLog;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagicianShared
 {
@@ -64,6 +65,8 @@ namespace DisplayMagicianShared
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
 
         private static volatile bool _userChangingProfiles = false;
+        private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
+        private static long _userAgentRepositoryRevision;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -218,6 +221,23 @@ namespace DisplayMagicianShared
             _currentProfile = null;
             _profilesLoaded = false;
             Directory.CreateDirectory(AppProfileStoragePath);
+        }
+
+        /// <summary>
+        /// Loads this repository's local ProfileItem cache from the User Agent.
+        /// Subsequent saves are committed back through the same connection.
+        /// </summary>
+        public static void ConnectToUserAgent(IUserAgentRepositoryConnection userAgentRepositoryConnection)
+        {
+            _userAgentRepositoryConnection = userAgentRepositoryConnection ?? throw new ArgumentNullException(nameof(userAgentRepositoryConnection));
+            RepositorySnapshot snapshot = _userAgentRepositoryConnection.GetRepositorySnapshot(RepositoryKind.DisplayProfiles);
+            if (snapshot.Repository != RepositoryKind.DisplayProfiles)
+                throw new InvalidOperationException("The User Agent returned the wrong repository snapshot for display profiles.");
+
+            LoadProfilesFromJson(snapshot.Json);
+            _userAgentRepositoryRevision = snapshot.Revision;
+            _profilesLoaded = true;
+            SharedLogger.logger.Debug("ProfileRepository/ConnectToUserAgent: Loaded the display-profile cache from the User Agent.");
         }
 
         //public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
@@ -953,6 +973,43 @@ namespace DisplayMagicianShared
             return true;
         }
 
+        private static void LoadProfilesFromJson(string json)
+        {
+            _allProfiles = new List<ProfileItem>();
+            _currentProfile = null;
+
+            if (string.IsNullOrWhiteSpace(json))
+                return;
+
+            try
+            {
+                JsonSerializerSettings serializerSettings = new JsonSerializerSettings
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Populate,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                    ObjectCreationHandling = ObjectCreationHandling.Replace
+                };
+
+                ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, serializerSettings);
+                if (profileFile.Profiles == null)
+                    throw new InvalidDataException("The User Agent returned display profiles in an unsupported format.");
+
+                _allProfiles = profileFile.Profiles;
+                foreach (ProfileItem profile in _allProfiles)
+                    PatchLoadedProfile(profile);
+
+                _allProfiles.Sort();
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, "ProfileRepository/LoadProfilesFromJson: The User Agent returned unreadable display profile data.");
+                throw new InvalidDataException("The User Agent returned unreadable display profile data.", ex);
+            }
+        }
+
         private static void PatchLoadedProfile(ProfileItem profile)
         {
             DisplayConfigurationNormalizer.Normalize(profile);
@@ -1143,6 +1200,34 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: JSON data: {json}");
                 }
 
+
+                if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
+                {
+                    RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
+                    {
+                        Repository = RepositoryKind.DisplayProfiles,
+                        ExpectedRevision = _userAgentRepositoryRevision,
+                        Json = json
+                    });
+
+                    if (commitResult.Snapshot == null)
+                    {
+                        SharedLogger.logger.Error("ProfileRepository/SaveProfiles: The User Agent did not return a display-profile snapshot after the commit.");
+                        return false;
+                    }
+
+                    _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
+                    if (commitResult.WasConflict)
+                    {
+                        LoadProfilesFromJson(commitResult.Snapshot.Json);
+                        _profilesLoaded = true;
+                        SharedLogger.logger.Warn("ProfileRepository/SaveProfiles: The display-profile cache was stale. Reloaded the User Agent version instead of overwriting it.");
+                        return false;
+                    }
+
+                    SharedLogger.logger.Debug("ProfileRepository/SaveProfiles: Committed the display-profile cache through the User Agent.");
+                    return true;
+                }
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {

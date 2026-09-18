@@ -415,6 +415,28 @@ Refactor WinForms in this order:
 
 WinForms remains responsible for validation presentation, modal dialogs, and marshaling updates to the UI thread. Engine/Agent code returns structured results and never shows `MessageBox` dialogs.
 
+### WinForms repository cache transition
+
+To retain the mature WinForms forms while moving authority to the User Agent, `ProfileRepository`, `AudioProfileRepository`, and `ShortcutRepository` in the WinForms process become interactive in-memory caches. They do not read or write authoritative files after v4 migration.
+
+1. The Agent loads and migrates the authoritative per-SID repositories.
+2. A versioned snapshot request returns the existing repository JSON schema plus a content revision. The contract wraps the JSON; it does not expose arbitrary paths or raw filesystem operations.
+3. WinForms imports the snapshot into its existing repository collections solely for rendering, validation, and edit state. Imported objects are never considered persisted locally.
+4. A form changes cached objects and explicitly submits a versioned repository commit or targeted mutation to the Agent.
+5. The Agent validates the caller and expected revision, atomically writes the authoritative repository, and returns the updated snapshot/revision. Domain-reference and hardware-ownership validation is added alongside the Agent-owned shortcut runner.
+6. WinForms replaces its cache from the returned snapshot. If a commit fails, it keeps the dirty edit in memory, clearly reports that it was not saved, and offers reload/retry rather than silently writing local files.
+
+Display/audio apply already route through the Agent. Game launch, process monitoring, temporary-state capture, restoration, and shortcut runtime move to the Agent with `ShortcutRunner`; until then the legacy WinForms `ShortcutRepository.RunShortcut` remains a deliberately temporary compatibility path. The WinForms cache must not invoke `ProfileItem` display APIs or `AudioProfileItem.TrySetActive`.
+
+Prototype status: `ProfileRepository`, `AudioProfileRepository`, and `ShortcutRepository` now each expose `ConnectToUserAgent`. They deserialize Agent snapshots into their existing item collections, retain the current revision, and save through optimistic Agent commits. Forms establish the connection but do not resolve or configure authoritative profile, audio-profile, or shortcut storage paths.
+
+For shortcut extraction, use the following names consistently:
+
+- `ShortcutStore`: Agent-owned shortcut persistence, snapshots, revisions, and definition validation.
+- `ShortcutRunner`: Agent-owned shortcut execution, process monitoring, temporary-state capture, and restoration.
+- `ShortcutClient`: WinForms, Console, and future API-facing request adapter.
+- `ShortcutEditor`: the existing WinForms editing workflow.
+
 Refactor the console so existing commands remain compatible where practical:
 
 ```text
