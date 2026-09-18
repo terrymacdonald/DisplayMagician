@@ -4,6 +4,7 @@
     <SupportedOSPlatform>windows</SupportedOSPlatform>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <OutputType>WinExe</OutputType>
+    <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>DisplayMagician.UserAgent</AssemblyName>
     <RootNamespace>DisplayMagician.UserAgent</RootNamespace>
     <Nullable>enable</Nullable>
@@ -11,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
     <ProjectReference Include="..\DisplayMagician.Engine\DisplayMagician.Engine.csproj" />
+    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">

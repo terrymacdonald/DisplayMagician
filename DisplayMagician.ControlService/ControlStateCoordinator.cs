@@ -120,6 +120,20 @@ public sealed class ControlStateCoordinator
         }
     }
 
+    public AgentRegistration? GetAgentRegistration(string userSid, int sessionId)
+    {
+        lock (_syncRoot)
+        {
+            if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent)
+                || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return CopyRegistration(agent.Registration);
+        }
+    }
+
     public void UnregisterAgent(string userSid, int sessionId, int processId)
     {
         lock (_syncRoot)
@@ -212,6 +226,21 @@ public sealed class ControlStateCoordinator
             LastHeartbeatUtc = lease.LastHeartbeatUtc,
             ActiveOperationId = lease.ActiveOperationId,
             IsRecoveryRequired = lease.IsRecoveryRequired
+        };
+    }
+
+    private static AgentRegistration CopyRegistration(AgentRegistration registration)
+    {
+        return new AgentRegistration
+        {
+            UserSid = registration.UserSid,
+            SessionId = registration.SessionId,
+            ProcessId = registration.ProcessId,
+            Version = registration.Version,
+            StartupMode = registration.StartupMode,
+            OperationState = registration.OperationState,
+            IsRecoveryRequired = registration.IsRecoveryRequired,
+            CommandPipeName = registration.CommandPipeName
         };
     }
 

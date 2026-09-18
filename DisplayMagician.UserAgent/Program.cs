@@ -44,13 +44,9 @@ internal static class Program
         bool acquireDisplayControl = startupRequest.Action == UserAgentStartupAction.AcquireDisplayControl;
         bool migrateUserData = startupRequest.Action == UserAgentStartupAction.MigrateUserData;
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
+        ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
         Task serviceConnection = serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, cancellationTokenSource.Token);
-        Task commandConnection = commandServer.RunAsync((request, token) => Task.FromResult(new ControlResponse
-        {
-            IsSuccessful = false,
-            ErrorCode = ControlErrorCode.InvalidRequest,
-            Message = $"The User Agent does not yet support the {request.MessageType} command."
-        }), cancellationTokenSource.Token);
+        Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, cancellationTokenSource.Token);
 
         await Task.WhenAny(serviceConnection, commandConnection).ConfigureAwait(false);
         cancellationTokenSource.Cancel();

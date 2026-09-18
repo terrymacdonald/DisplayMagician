@@ -14,7 +14,10 @@ internal static class Program
         builder.Services.AddSingleton<LegacyFileMigration>();
         builder.Services.AddSingleton<UserDataMigrationRunner>();
         builder.Services.AddSingleton<ControlStateCoordinator>();
+        builder.Services.AddSingleton<AgentCommandClient>();
+        builder.Services.AddSingleton<ProfileOperationRouter>();
         builder.Services.AddSingleton<NamedPipeControlServer>();
+        builder.Services.AddSingleton<ControlClientPipeServer>();
         builder.Services.AddHostedService<ControlServiceWorker>();
 
         using IHost host = builder.Build();

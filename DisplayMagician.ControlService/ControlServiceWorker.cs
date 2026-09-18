@@ -11,11 +11,13 @@ public sealed class ControlServiceWorker : BackgroundService
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly NamedPipeControlServer _pipeServer;
+    private readonly ControlClientPipeServer _clientPipeServer;
     private readonly StoragePaths _storagePaths;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, StoragePaths storagePaths)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths)
     {
         _pipeServer = pipeServer;
+        _clientPipeServer = clientPipeServer;
         _storagePaths = storagePaths;
     }
 
@@ -32,7 +34,9 @@ public sealed class ControlServiceWorker : BackgroundService
             // The installer provisions ProgramData ACLs. Keep the local coordinator available for development diagnostics if they are absent.
             _logger.Error(ex, "ControlServiceWorker/ExecuteAsync: Machine storage at {0} is unavailable. Persistent operations, including migration, will fail until installer permissions are repaired.", _storagePaths.MachinePath);
         }
-        await _pipeServer.RunAsync(stoppingToken).ConfigureAwait(false);
+        Task agentServer = _pipeServer.RunAsync(stoppingToken);
+        Task clientServer = _clientPipeServer.RunAsync(stoppingToken);
+        await Task.WhenAll(agentServer, clientServer).ConfigureAwait(false);
         _logger.Info("ControlServiceWorker/ExecuteAsync: Control Service pipe listener has stopped.");
     }
 }

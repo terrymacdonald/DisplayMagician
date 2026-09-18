@@ -22,6 +22,7 @@ v4.0.0 must deliver:
 
 - A Windows Control Service, installed with DM.
 - A per-user User Agent running in the interactive desktop session.
+- A demand-start `DisplayMagician.SessionLauncher` fallback for an authorized request when the active user's Agent is absent.
 - Existing WinForms UI and console commands functioning through the service.
 - Safe migration from existing per-user AppData storage.
 - Per-user profiles, audio profiles, shortcuts, and user settings.
@@ -52,7 +53,7 @@ v4.0.0 does **not** need to deliver:
 | DM administrator | The elevated installer user administers installation, service configuration, and recovery. They do not automatically own other users' profiles. |
 | User data | Each Windows user owns their own profiles, audio profiles, shortcuts, and user settings. |
 | Display authority | Only the current active physical-console user may apply a display profile or run a game shortcut. One machine-wide operation can run at a time. |
-| Agent startup | Reuse the existing per-user `StartOnBootUp` and `MinimiseOnStart` behaviour. The existing HKCU Run entry starts DM at Windows sign-in; DM starts/keeps its User Agent ready. When disabled, start the Agent with the WinForms UI and stop it after UI close when no operation is active. |
+| Agent startup | WinForms starts and retains the hidden, tray-less User Agent while WinForms is open or minimised to its existing tray icon. On full WinForms exit, an idle Agent stops; an Agent with an active shortcut, game monitor, apply, or recovery stays until safe completion. The demand-start Session Launcher starts a missing Agent only for an already-authorized request targeting the active console user. |
 | Locked session | Applying a profile is allowed while locked. Starting a new game/application shortcut is denied while locked. Existing shortcuts continue to be monitored and restored. |
 | Recovery | Agent/service loss during temporary state requires safe restoration before further display-changing work. |
 | Recovery administration | A Service Recovery page under Settings > Diagnostics is visible only to an elevated DM administrator. Normal restoration retries only through the affected user's Agent after sign-in. An emergency, UAC-elevated `Force release DM control` action requires an explicit confirmation phrase, releases the lease, marks recovery abandoned, and creates a high-severity audit record. |
@@ -70,7 +71,7 @@ DM Engine: reusable profile and shortcut orchestration.
 UI/API clients: request actions and render results.
 ```
 
-The Control Service must never launch Steam, inspect Big Picture windows, show dialogs, show toasts, or directly own interactive desktop monitoring. That work remains in the User Agent because it runs in the logged-in user's session.
+The Control Service must never launch Steam, inspect Big Picture windows, show dialogs, show toasts, or directly own interactive desktop monitoring. That work remains in the User Agent because it runs in the logged-in user's session. The Control Service may request `DisplayMagician.SessionLauncher` to start an Agent, but never launches an interactive desktop process itself.
 
 ### Session rules
 
@@ -90,6 +91,7 @@ Create the following projects:
 DisplayMagician.Contracts
 DisplayMagician.Engine
 DisplayMagician.ControlService
+DisplayMagician.SessionLauncher
 DisplayMagician.UserAgent
 DisplayMagician.WinForms
 DisplayMagician.Console
@@ -101,6 +103,7 @@ DisplayMagicianShared
 | `DisplayMagician.Contracts` | Versioned requests, responses, events, protocol constants, and error codes. No UI, hardware, files, or static application state. |
 | `DisplayMagician.Engine` | Reusable validation and orchestration interfaces. No WinForms, REST, named-pipe transport, or dialogs. |
 | `DisplayMagician.ControlService` | Windows Service, ownership, authorization, machine queue, persistence coordination, audit, local API, service health, and Agent routing. |
+| `DisplayMagician.SessionLauncher` | Demand-start `LocalSystem` broker. Accepts only authenticated local requests from Control Service; starts the signed User Agent in one already-authorized interactive session and returns launch status. Never accepts remote clients or performs display work. |
 | `DisplayMagician.UserAgent` | Interactive-session executor: display/audio changes, game library loading, Steam/Big Picture monitoring, shortcut lifecycle, and notifications. |
 | `DisplayMagician.WinForms` | Current designer-backed UI, converted to a Control Service client. |
 | `DisplayMagician.Console` | Current command-line interface, converted to a Control Service client. |
@@ -114,6 +117,8 @@ UserAgent / ControlService                   --> Engine
 Engine / UserAgent                           --> DisplayMagicianShared
 WinForms / Console                           --> Control Service IPC client
 ControlService                               --> User Agent command/event channel
+ControlService                               --> SessionLauncher launch request channel
+SessionLauncher                              --> UserAgent process start only
 ```
 
 Do not allow Engine code to depend on WinForms, the service host, REST, or static `Program` UI state.
@@ -206,7 +211,7 @@ Never rename an entire legacy directory blindly. Never rename a file until its m
 
 ### Service account
 
-Start with the least privileged practical account, preferably `LocalService`. Do not default to `LocalSystem`. Any future privileged session-launch functionality must be isolated, justified, and use minimal permissions.
+Control Service runs as `LocalService`. `DisplayMagician.SessionLauncher` is the sole `LocalSystem` component because Windows requires that trust level to obtain an existing interactive user's token for on-demand process launch. Its IPC ACL accepts only Control Service, it accepts only a session ID plus fixed signed Agent executable/arguments, and it stops when idle. Do not run Control Service as `LocalSystem`.
 
 ### Display-control lease
 
@@ -234,19 +239,23 @@ Never release a lease merely because a short timeout elapsed while a shortcut ma
 
 ### Startup lifecycle
 
-Reuse the existing `StartupManager` mechanism. It maintains the per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` entry from the `StartOnBootUp` setting; do not create a scheduled task for the User Agent.
+The hidden User Agent has no tray icon. WinForms owns the existing user-facing tray icon and starts/retains the Agent while it remains open, including when minimised to tray. Do not create a scheduled task for the User Agent.
 
 ```text
-StartOnBootUp enabled:
-  - Existing DM startup registration starts DM at that user's Windows sign-in.
-  - MinimiseOnStart preserves the current visible/minimised startup behaviour.
-  - DM starts/connects the User Agent, which registers with Control Service.
+WinForms `StartOnBootUp` / `MinimiseOnStart`:
+  - Continue to control whether WinForms starts and is minimised at sign-in.
+  - When WinForms starts, it starts/connects the hidden Agent in the same user session.
+  - WinForms minimised to tray remains open, so the Agent remains connected.
 
-StartOnBootUp disabled:
-  - No DM startup registry value exists for that user.
-  - Opening WinForms starts/connects that user's User Agent.
-  - Closing WinForms stops the Agent only when no operation is active.
+WinForms full exit:
+  - Stop the Agent only when it is idle and has no apply, shortcut/game monitor, or recovery work.
   - An active operation keeps the Agent alive until safe completion/recovery.
+
+Authorized request with missing Agent:
+  - Control Service verifies the request's user scope and active-console session.
+  - Control Service asks SessionLauncher to start the Agent in that same session.
+  - Service waits for identity-verified registration before routing work.
+  - If no eligible signed-in active user exists, return `AgentUnavailable`.
 ```
 
 ### Responsibilities
@@ -516,8 +525,9 @@ Installer requirements:
 
 - Require elevation/UAC.
 - Install and configure Control Service.
+- Install SessionLauncher as a demand-start `LocalSystem` service with an IPC ACL restricted to Control Service.
 - Create ProgramData storage and ACLs.
-- Integrate User Agent startup with the existing per-user `StartupManager` HKCU Run registration.
+- Integrate hidden User Agent startup/shutdown with WinForms lifecycle: start/retain it while WinForms is visible or minimised to tray, and stop it only after full UI exit when idle. Do not use a scheduled task.
 - Install WinForms and Console clients.
 - Install the User Agent and Control Service using the build version derived from the root `version.json`.
 - Preserve and migrate user data safely.
@@ -538,6 +548,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Implement Agent registration, heartbeat, and diagnostics status.
 - [x] Implement active-console and machine-operation lease state.
 - [x] Apply the root `version.json`/Nerdbank.GitVersioning configuration to all new v4 shipped projects and remove hard-coded Agent/Service version strings.
+- [ ] Add the demand-start LocalSystem SessionLauncher project and its Control Service-only IPC contract.
 
 **Exit criteria:** Service can show a verified Agent SID/session and deny a second conflicting display lease.
 
@@ -560,6 +571,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [ ] Implement `ListProfiles` through service/repositories.
 - [ ] Refactor WinForms profile list to use service requests.
 - [ ] Implement `ApplyProfile` operation routing.
+- [ ] Start and retain the hidden User Agent while WinForms is visible or minimised to its tray icon; stop it after full WinForms exit only when idle.
+- [ ] When an authorized request has no Agent, use SessionLauncher to start it in the active user's session and wait for verified registration.
 - [ ] Agent invokes existing display-application behaviour.
 - [ ] Agent returns progress/final result; WinForms displays it.
 
@@ -648,7 +661,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 v4.0.0 is ready when:
 
 - [ ] Control Service installs and starts reliably.
-- [ ] User Agent startup follows existing `StartOnBootUp`/`MinimiseOnStart` settings and honors per-user opt-out.
+- [ ] Hidden User Agent has no tray icon and remains connected while WinForms is visible or minimised to tray; full WinForms exit stops it only when idle.
+- [ ] An authorized request starts a missing Agent through SessionLauncher only in the active console user's existing session.
 - [ ] Existing user data migrates safely and source files remain with `.old` suffixes.
 - [ ] Users see and manage only their own profiles/shortcuts.
 - [ ] Only active console user may apply profiles/run game shortcuts.
