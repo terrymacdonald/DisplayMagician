@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace DisplayMagician.ControlService;
@@ -12,7 +13,7 @@ public sealed class LegacyFileMigration
         if (!File.Exists(legacyFilePath))
         {
             return File.Exists(destinationFilePath)
-                ? new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, ValidateDestination(destinationFilePath), "The destination was already migrated during an earlier attempt.")
+                ? new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, ValidateDestination(destinationFilePath, jsonTransform != null), "The destination was already migrated during an earlier attempt.")
                 : new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The legacy file does not exist.");
         }
 
@@ -34,9 +35,11 @@ public sealed class LegacyFileMigration
                 AtomicFileStore.WriteBytes(destinationFilePath, content, GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak")));
             }
 
-            if (!ValidateDestination(destinationFilePath))
+            bool destinationIsValid = ValidateDestination(destinationFilePath, jsonTransform != null);
+            bool contentWasPreserved = jsonTransform != null || FilesHaveSameHash(legacyFilePath, destinationFilePath);
+            if (!destinationIsValid || !contentWasPreserved)
             {
-                return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The migrated destination file failed validation.");
+                return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The migrated destination file failed validation or did not match its legacy source.");
             }
 
             string retiredLegacyPath = GetRetiredLegacyPath(legacyFilePath);
@@ -44,7 +47,7 @@ public sealed class LegacyFileMigration
 
             return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, true, "Migrated and retained the legacy file with a .old suffix.", retiredLegacyPath);
         }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is ArgumentException || ex is NotSupportedException)
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Text.Json.JsonException || ex is ArgumentException || ex is NotSupportedException)
         {
             return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, ex.Message);
         }
@@ -61,7 +64,7 @@ public sealed class LegacyFileMigration
         return $"{legacyFilePath}.{DateTime.UtcNow:yyyyMMddHHmmss}.old";
     }
 
-    private static bool ValidateDestination(string destinationFilePath)
+    private static bool ValidateDestination(string destinationFilePath, bool requiresDisplayProfileValidation)
     {
         if (!File.Exists(destinationFilePath) || new FileInfo(destinationFilePath).Length == 0)
         {
@@ -70,11 +73,37 @@ public sealed class LegacyFileMigration
 
         if (destinationFilePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
         {
-            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(destinationFilePath));
+            string json = File.ReadAllText(destinationFilePath);
+            using JsonDocument document = JsonDocument.Parse(json);
+            if (requiresDisplayProfileValidation && string.Equals(Path.GetFileName(destinationFilePath), "DisplayProfiles.json", StringComparison.OrdinalIgnoreCase))
+            {
+                ValidateDisplayProfiles(json);
+            }
+
             return true;
         }
 
         return true;
+    }
+
+    private static void ValidateDisplayProfiles(string json)
+    {
+        using JsonDocument document = JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != JsonValueKind.Object ||
+            !document.RootElement.TryGetProperty("Profiles", out JsonElement profiles) ||
+            profiles.ValueKind != JsonValueKind.Array)
+        {
+            throw new System.Text.Json.JsonException("DisplayProfiles.json must contain a Profiles array.");
+        }
+    }
+
+    private static bool FilesHaveSameHash(string firstPath, string secondPath)
+    {
+        using FileStream first = File.OpenRead(firstPath);
+        using FileStream second = File.OpenRead(secondPath);
+        byte[] firstHash = SHA256.HashData(first);
+        byte[] secondHash = SHA256.HashData(second);
+        return CryptographicOperations.FixedTimeEquals(firstHash, secondHash);
     }
 
     private static string GetUniquePath(string proposedPath)

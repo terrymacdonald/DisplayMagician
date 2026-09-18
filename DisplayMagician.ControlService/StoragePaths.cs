@@ -59,12 +59,13 @@ public sealed class StoragePaths
         SecurityIdentifier localSystem = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
         foreach (string path in userPaths.GetAllPaths())
         {
-            DirectorySecurity security = Directory.GetAccessControl(path);
+            DirectoryInfo directory = new DirectoryInfo(path);
+            DirectorySecurity security = directory.GetAccessControl();
             InheritanceFlags inheritance = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;
             security.SetAccessRule(new FileSystemAccessRule(userIdentity, FileSystemRights.Modify, inheritance, PropagationFlags.None, AccessControlType.Allow));
             security.SetAccessRule(new FileSystemAccessRule(administrators, FileSystemRights.FullControl, inheritance, PropagationFlags.None, AccessControlType.Allow));
             security.SetAccessRule(new FileSystemAccessRule(localSystem, FileSystemRights.FullControl, inheritance, PropagationFlags.None, AccessControlType.Allow));
-            Directory.SetAccessControl(path, security);
+            directory.SetAccessControl(security);
         }
 
         return userPaths;

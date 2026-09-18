@@ -15,10 +15,14 @@ namespace DisplayMagician.ControlService;
 
 public sealed class NamedPipeControlServer
 {
+    private const int MaximumConnectedClients = 16;
+    private static readonly TimeSpan RegistrationTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan AgentMessageTimeout = TimeSpan.FromSeconds(45);
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly ControlStateCoordinator _coordinator;
     private readonly StoragePaths _storagePaths;
     private readonly UserDataMigrationRunner _userDataMigrationRunner;
+    private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
     public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner)
     {
@@ -36,7 +40,14 @@ public sealed class NamedPipeControlServer
             {
                 pipe = CreatePipe();
                 await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
-                _ = HandleClientAsync(pipe, cancellationToken);
+                if (!await _connectedClientSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                {
+                    _logger.Warn("NamedPipeControlServer/RunAsync: Rejected a Control Service pipe client because the connected-client limit of {0} was reached.", MaximumConnectedClients);
+                    pipe.Dispose();
+                    continue;
+                }
+
+                _ = HandleClientWithSlotAsync(pipe, cancellationToken);
                 pipe = null;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -48,6 +59,18 @@ public sealed class NamedPipeControlServer
                 pipe?.Dispose();
                 _logger.Error(ex, "NamedPipeControlServer/RunAsync: Unable to accept a Control Service pipe client.");
             }
+        }
+    }
+
+    private async Task HandleClientWithSlotAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleClientAsync(pipe, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _connectedClientSlots.Release();
         }
     }
 
@@ -76,7 +99,7 @@ public sealed class NamedPipeControlServer
             PipeClientIdentity? registeredIdentity = null;
             try
             {
-                ControlEnvelope? envelope = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+                ControlEnvelope? envelope = await ReadEnvelopeWithTimeoutAsync(pipe, RegistrationTimeout, cancellationToken).ConfigureAwait(false);
                 if (envelope == null)
                 {
                     return;
@@ -111,7 +134,7 @@ public sealed class NamedPipeControlServer
 
                 while (!cancellationToken.IsCancellationRequested && pipe.IsConnected)
                 {
-                    ControlEnvelope? request = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+                    ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, AgentMessageTimeout, cancellationToken).ConfigureAwait(false);
                     if (request == null)
                     {
                         return;
@@ -130,6 +153,10 @@ public sealed class NamedPipeControlServer
             {
                 // Service shutdown is expected and does not require an error log.
             }
+            catch (TimeoutException ex)
+            {
+                _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Pipe client did not register or send a heartbeat before its deadline.");
+            }
             catch (Exception ex)
             {
                 _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Pipe client processing failed.");
@@ -142,6 +169,20 @@ public sealed class NamedPipeControlServer
                     _logger.Info("NamedPipeControlServer/HandleClientAsync: User Agent disconnected for SID {0}, session {1}, process {2}.", registeredIdentity.UserSid, registeredIdentity.SessionId, registeredIdentity.ProcessId);
                 }
             }
+        }
+    }
+
+    private static async Task<ControlEnvelope?> ReadEnvelopeWithTimeoutAsync(NamedPipeServerStream pipe, TimeSpan timeout, CancellationToken serviceCancellationToken)
+    {
+        using CancellationTokenSource timeoutCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(serviceCancellationToken);
+        timeoutCancellationTokenSource.CancelAfter(timeout);
+        try
+        {
+            return await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutCancellationTokenSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex) when (!serviceCancellationToken.IsCancellationRequested && timeoutCancellationTokenSource.IsCancellationRequested)
+        {
+            throw new TimeoutException($"The pipe client did not send a complete message within {timeout.TotalSeconds:0} seconds.", ex);
         }
     }
 
