@@ -17,6 +17,20 @@ public sealed class ControlStateCoordinator
 
         lock (_syncRoot)
         {
+            if (_agentsBySession.TryGetValue(registration.SessionId, out RegisteredAgent? existingAgent)
+                && string.Equals(existingAgent.Registration.UserSid, registration.UserSid, StringComparison.OrdinalIgnoreCase)
+                && existingAgent.Registration.ProcessId == registration.ProcessId)
+            {
+                existingAgent.ConnectionCount++;
+                existingAgent.Registration.Version = registration.Version;
+                existingAgent.Registration.StartupMode = registration.StartupMode;
+                existingAgent.Registration.OperationState = registration.OperationState;
+                existingAgent.Registration.IsRecoveryRequired = registration.IsRecoveryRequired;
+                existingAgent.Registration.CommandPipeName = registration.CommandPipeName;
+                existingAgent.LastHeartbeatUtc = utcNow;
+                return;
+            }
+
             _agentsBySession[registration.SessionId] = new RegisteredAgent(registration, utcNow);
         }
     }
@@ -115,6 +129,12 @@ public sealed class ControlStateCoordinator
                 return;
             }
 
+            agent.ConnectionCount--;
+            if (agent.ConnectionCount > 0)
+            {
+                return;
+            }
+
             _agentsBySession.Remove(sessionId);
             if (_displayControlLease == null || _displayControlLease.OwnerSessionId != sessionId)
             {
@@ -206,5 +226,7 @@ public sealed class ControlStateCoordinator
         public AgentRegistration Registration { get; }
 
         public DateTime LastHeartbeatUtc { get; set; }
+
+        public int ConnectionCount { get; set; } = 1;
     }
 }

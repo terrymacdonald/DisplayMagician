@@ -77,6 +77,22 @@ public sealed class ControlStateCoordinatorTests
         Assert.NotNull(lease.ActiveOperationId);
     }
 
+    [Fact]
+    public void UnregisterAgent_KeepsPersistentRegistrationWhenAnOperationConnectionCloses()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        DateTime now = DateTime.UtcNow;
+        AgentRegistration agent = CreateAgent("S-1-5-21-100", 10, 1000);
+        coordinator.RegisterAgent(agent, now);
+        coordinator.RegisterAgent(agent, now.AddSeconds(1));
+
+        coordinator.UnregisterAgent(agent.UserSid, agent.SessionId, agent.ProcessId);
+
+        ControlServiceStatus status = coordinator.GetStatus(now.AddSeconds(2));
+        Assert.Single(status.Agents);
+        Assert.Equal(agent.ProcessId, status.Agents[0].ProcessId);
+    }
+
     private static AgentRegistration CreateAgent(string userSid, int sessionId, int processId)
     {
         return new AgentRegistration

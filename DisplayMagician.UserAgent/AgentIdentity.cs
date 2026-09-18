@@ -18,7 +18,8 @@ public static class AgentIdentity
             ProcessId = Environment.ProcessId,
             Version = version,
             StartupMode = startupMode,
-            OperationState = AgentOperationState.Idle
+            OperationState = AgentOperationState.Idle,
+            CommandPipeName = AgentCommandPipe.CreateName(Environment.ProcessId)
         };
     }
 }

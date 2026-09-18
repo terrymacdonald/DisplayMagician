@@ -6,6 +6,8 @@ public static class ControlProtocol
 {
     public const int CurrentVersion = 1;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
+    public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
+    public const string AgentCommandPipePrefix = "DisplayMagician.UserAgent.Command.v1.";
 }
 
 public enum ControlMessageType
@@ -20,7 +22,9 @@ public enum ControlMessageType
     OperationCompleted = 7,
     RecoveryStatus = 8,
     GetServiceStatus = 9,
-    MigrateUserData = 10
+    MigrateUserData = 10,
+    ListProfiles = 11,
+    ApplyProfile = 12
 }
 
 public enum ControlErrorCode
@@ -81,6 +85,30 @@ public sealed class AgentRegistration
     public AgentOperationState OperationState { get; set; }
 
     public bool IsRecoveryRequired { get; set; }
+
+    public string CommandPipeName { get; set; } = string.Empty;
+}
+
+public sealed class ProfileSummary
+{
+    public string Id { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+}
+
+public sealed class ProfileListResult
+{
+    public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>();
+}
+
+public sealed class ApplyProfileRequest
+{
+    public string ProfileId { get; set; } = string.Empty;
+}
+
+public sealed class ApplyProfileResult
+{
+    public bool WasCancelled { get; set; }
 }
 
 public sealed class AgentHeartbeat
@@ -127,6 +155,10 @@ public sealed class ControlResponse
     public LeaseDecision? LeaseDecision { get; set; }
 
     public ControlServiceStatus? ServiceStatus { get; set; }
+
+    public ProfileListResult? ProfileList { get; set; }
+
+    public ApplyProfileResult? ApplyProfile { get; set; }
 }
 
 public sealed class ControlServiceStatus

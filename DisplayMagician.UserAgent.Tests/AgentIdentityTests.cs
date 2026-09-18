@@ -33,5 +33,6 @@ public sealed class AgentIdentityTests
         Assert.Equal("test", registration.StartupMode);
         Assert.Equal(AgentOperationState.Idle, registration.OperationState);
         Assert.False(registration.IsRecoveryRequired);
+        Assert.Equal(AgentCommandPipe.CreateName(Environment.ProcessId), registration.CommandPipeName);
     }
 }
