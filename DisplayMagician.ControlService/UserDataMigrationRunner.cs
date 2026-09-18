@@ -60,7 +60,7 @@ public sealed class UserDataMigrationRunner
         return new[]
         {
             new MigrationFile("Settings.json", Path.Combine(userPaths.SettingsPath, "Settings.json")),
-            new MigrationFile("DonationSettings.json", Path.Combine(userPaths.SettingsPath, "DonationSettings.json")),
+            new MigrationFile("Donation.json", Path.Combine(userPaths.SettingsPath, "Donation.json")),
             new MigrationFile(Path.Combine("Profiles", "DisplayProfiles.json"), Path.Combine(userPaths.ProfilesPath, "DisplayProfiles.json")),
             new MigrationFile(Path.Combine("AudioProfiles", "AudioProfiles.json"), Path.Combine(userPaths.AudioProfilesPath, "AudioProfiles.json")),
             new MigrationFile(Path.Combine("Shortcuts", "Shortcuts.json"), Path.Combine(userPaths.ShortcutsPath, "Shortcuts.json")),

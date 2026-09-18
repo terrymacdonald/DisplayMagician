@@ -26,6 +26,7 @@ internal static class Program
         }
 
         bool acquireDisplayControl = args.Length == 1 && args[0] == "--acquire-display-control";
-        await serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, cancellationTokenSource.Token).ConfigureAwait(false);
+        bool migrateUserData = args.Length == 1 && args[0] == "--migrate-user-data";
+        await serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, cancellationTokenSource.Token).ConfigureAwait(false);
     }
 }

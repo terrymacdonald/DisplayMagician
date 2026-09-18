@@ -17,10 +17,14 @@ public sealed class NamedPipeControlServer
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly ControlStateCoordinator _coordinator;
+    private readonly StoragePaths _storagePaths;
+    private readonly UserDataMigrationRunner _userDataMigrationRunner;
 
-    public NamedPipeControlServer(ControlStateCoordinator coordinator)
+    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
+        _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
+        _userDataMigrationRunner = userDataMigrationRunner ?? throw new ArgumentNullException(nameof(userDataMigrationRunner));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -180,6 +184,32 @@ public sealed class NamedPipeControlServer
         if (request.MessageType == ControlMessageType.GetServiceStatus)
         {
             await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Service status returned.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
+            return;
+        }
+
+        if (request.MessageType == ControlMessageType.MigrateUserData)
+        {
+            string? legacyAppDataPath = null;
+            pipe.RunAsClient(() => legacyAppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician"));
+            if (string.IsNullOrWhiteSpace(legacyAppDataPath))
+            {
+                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The User Agent's legacy application-data path could not be determined.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            UserStoragePaths userPaths = _storagePaths.GetUserPaths(identity.UserSid);
+            UserDataMigrationResult migrationResult = _userDataMigrationRunner.Migrate(legacyAppDataPath, userPaths);
+            if (migrationResult.IsSuccessful)
+            {
+                _logger.Info("NamedPipeControlServer/HandleAgentMessageAsync: Completed user-data migration for SID {0} from {1}.", identity.UserSid, legacyAppDataPath);
+                await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, migrationResult.Message, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                _logger.Error("NamedPipeControlServer/HandleAgentMessageAsync: User-data migration failed for SID {0}. {1}", identity.UserSid, migrationResult.Message);
+                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, migrationResult.Message, cancellationToken).ConfigureAwait(false);
+            }
+
             return;
         }
 

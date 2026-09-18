@@ -19,7 +19,8 @@ public enum ControlMessageType
     OperationProgress = 6,
     OperationCompleted = 7,
     RecoveryStatus = 8,
-    GetServiceStatus = 9
+    GetServiceStatus = 9,
+    MigrateUserData = 10
 }
 
 public enum ControlErrorCode

@@ -529,6 +529,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Add safe write/backup helpers.
 - [x] Add v4 migration runner and migration markers; integrate legacy `ConfigMigrationRunner` once repositories use the new storage paths.
 - [x] Add opt-in repository storage-path configuration; do not activate it before the User Agent migration hand-off is implemented.
+- [x] Add an identity-verified User Agent migration request; keep it explicit until repository ownership moves to the Agent.
+- [x] Redirect current repository paths only when a completed, validated per-SID migration marker is present.
 - [ ] Migrate display profiles first.
 - [ ] Migrate audio profiles, shortcuts, user settings, and message state.
 - [ ] Rename each successful legacy source file to `.old`.

@@ -140,8 +140,8 @@ namespace DisplayMagician {
             AppSteamIconFilename = Path.Combine(AppIconPath, "Steam.ico");
             AppUplayIconFilename = Path.Combine(AppIconPath, "Uplay.ico");
             AppEpicIconFilename = Path.Combine(AppIconPath, "Epic.ico");
-            ProgramSettings.ConfigureStoragePath(AppDataPath);
-            DonationSettings.ConfigureStoragePath(AppDataPath);
+            ProgramSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
+            DonationSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
             ProfileRepository.ConfigureStoragePath(AppDataPath);
             AudioProfileRepository.ConfigureStoragePath(AppDataPath);
             ShortcutRepository.ConfigureStoragePath(AppDataPath);
@@ -207,6 +207,11 @@ namespace DisplayMagician {
         private static int Main(string[] args)
         {
             // BOOTSTRAP AND INITIALIZATION LOGIC
+
+            if (V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
+            {
+                ConfigureUserDataPath(migratedUserDataPath);
+            }
 
             // Create the Logging Dir if it doesn't exist so that it's avilable for all
             // parts of the program to use

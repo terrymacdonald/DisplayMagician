@@ -10,7 +10,7 @@ namespace DisplayMagician.UserAgent;
 
 public sealed class ControlServiceClient
 {
-    public async Task RunAsync(AgentRegistration registration, TimeSpan heartbeatInterval, bool acquireDisplayControl, CancellationToken cancellationToken)
+    public async Task RunAsync(AgentRegistration registration, TimeSpan heartbeatInterval, bool acquireDisplayControl, bool migrateUserData, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);
 
@@ -42,6 +42,18 @@ public sealed class ControlServiceClient
             if (!leaseResponse.IsSuccessful)
             {
                 throw new InvalidOperationException(leaseResponse.Message);
+            }
+        }
+
+        if (migrateUserData)
+        {
+            ControlResponse migrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+            {
+                MessageType = ControlMessageType.MigrateUserData
+            }, cancellationToken).ConfigureAwait(false);
+            if (!migrationResponse.IsSuccessful)
+            {
+                throw new InvalidOperationException(migrationResponse.Message);
             }
         }
 
