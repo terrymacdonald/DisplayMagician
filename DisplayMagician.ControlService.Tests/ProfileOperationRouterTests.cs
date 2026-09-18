@@ -52,6 +52,22 @@ public sealed class ProfileOperationRouterTests
     }
 
     [Fact]
+    public async Task ManageProfileAsync_ForwardsProfileMutationToRegisteredAgent()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient);
+
+        ControlResponse response = await router.ManageProfileAsync(agent.UserSid, agent.SessionId, new ControlEnvelope { MessageType = ControlMessageType.DeleteProfile, Payload = "{}" }, CancellationToken.None);
+
+        Assert.True(response.IsSuccessful);
+        Assert.True(commandClient.WasCalled);
+        Assert.Equal(ControlMessageType.DeleteProfile, commandClient.Request!.MessageType);
+    }
+
+    [Fact]
     public async Task ListProfilesAsync_StartsMissingAgentAndForwardsAfterItRegisters()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();

@@ -27,7 +27,11 @@ public enum ControlMessageType
     ListProfiles = 11,
     ApplyProfile = 12,
     StopAgentIfIdle = 13,
-    LaunchUserAgent = 14
+    LaunchUserAgent = 14,
+    CreateProfileFromCurrent = 15,
+    RenameProfile = 16,
+    DeleteProfile = 17,
+    UpdateProfileFromCurrent = 18
 }
 
 public enum ControlErrorCode
@@ -113,6 +117,12 @@ public sealed class ApplyProfileResult
 {
     public bool WasCancelled { get; set; }
 }
+
+public sealed class CreateProfileRequest { public string Name { get; set; } = string.Empty; }
+
+public sealed class RenameProfileRequest { public string ProfileId { get; set; } = string.Empty; public string Name { get; set; } = string.Empty; }
+
+public sealed class DeleteProfileRequest { public string ProfileId { get; set; } = string.Empty; }
 
 public sealed class UserAgentLaunchRequest
 {

@@ -571,7 +571,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Start and retain the hidden User Agent while WinForms is visible or minimised to its tray icon; stop it after full WinForms exit only when idle.
 - [x] When an authorized request has no Agent, use SessionLauncher to start it in the active user's session and wait for verified registration.
 - [x] Agent invokes existing display-application behaviour.
-- [ ] Agent returns progress/final result; WinForms displays it.
+- [x] Agent returns final profile-operation result; WinForms displays it. Progress events remain part of the shortcut/recovery phase.
 
 **Exit criteria:** Active console user applies their own migrated profile; another session is denied.
 

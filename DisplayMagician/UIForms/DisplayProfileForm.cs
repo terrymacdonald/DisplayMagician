@@ -14,6 +14,7 @@ using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using ControlResponse = DisplayMagician.Contracts.ControlResponse;
 using DisplayMagician.Processes;
 using static DisplayMagician.Program;
 
@@ -199,7 +200,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void Delete_Click(object sender, EventArgs e)
+        private async void Delete_Click(object sender, EventArgs e)
         {
             if (_selectedProfile == null)
                 return;
@@ -207,22 +208,18 @@ namespace DisplayMagician.UIForms
             if (MessageBox.Show($"Are you sure you want to delete the '{_selectedProfile.Name}' Display Profile? This cannot be undone.", $"Delete '{_selectedProfile.Name}' Display Profile?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
                 return;
 
-            // remove the profile from the imagelistview
             int currentIlvIndex = ilv_saved_profiles.SelectedItems[0].Index;
-            ilv_saved_profiles.Items.RemoveAt(currentIlvIndex);
 
-            // Remove the hotkey if it is enabled for this profile
-            /*if (_selectedProfile.Hotkey != Keys.None)
+            ControlResponse deleteResponse = await new ControlServicePipeClient().DeleteProfileAsync(_selectedProfile.UUID, CancellationToken.None);
+            if (!deleteResponse.IsSuccessful)
             {
-                // Remove the Hotkey if it needs to be removed
-                HotkeyManager.Current.Remove(_selectedProfile.UUID);
-            }*/
+                MessageBox.Show(this, deleteResponse.Message, "Delete Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
-            // Remove the hotkey if there is one
+            Program.ConfigureUserDataPath(Program.AppDataPath);
+            ilv_saved_profiles.Items.RemoveAt(currentIlvIndex);
             Program.AppDirectInputManager.RemoveHotkeysByUUID(_selectedProfile.UUID);
-
-            // Remove the Profile
-            ProfileRepository.RemoveProfile(_selectedProfile);
 
             _selectedProfile = null;
 
@@ -629,7 +626,7 @@ namespace DisplayMagician.UIForms
 
 
 
-        private void btn_save_as_Click(object sender, EventArgs e)
+        private async void btn_save_as_Click(object sender, EventArgs e)
         {
             // Stop the user from saving this profile if one is already being applied
             if (ProfileRepository.UserChangingProfiles)
@@ -709,11 +706,20 @@ namespace DisplayMagician.UIForms
                 }
                 // So we've already passed the check that says this profile is unique
 
-                // Update the name just to make sure we record it if the user changed it
-                _selectedProfile.Name = txt_profile_save_name.Text;
+                ControlResponse createResponse = await new ControlServicePipeClient().CreateProfileFromCurrentAsync(txt_profile_save_name.Text, CancellationToken.None);
+                if (!createResponse.IsSuccessful)
+                {
+                    MessageBox.Show(this, createResponse.Message, "Save Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-                // Add the current profile to the list of profiles so it gets saved
-                ProfileRepository.AddProfile(_selectedProfile);
+                Program.ConfigureUserDataPath(Program.AppDataPath);
+                _selectedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile => string.Equals(profile.Name, txt_profile_save_name.Text, StringComparison.OrdinalIgnoreCase));
+                if (_selectedProfile == null)
+                {
+                    MessageBox.Show(this, "DisplayMagician saved the profile but could not reload it.", "Save Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
                 // Also update the imagelistview so that we can see the new profile we just saved
 
@@ -736,15 +742,25 @@ namespace DisplayMagician.UIForms
                 }
 
                 // Lets save the old names for usage next
-                string oldProfileName = _selectedProfile.Name;
+                ControlResponse renameResponse = await new ControlServicePipeClient().RenameProfileAsync(_selectedProfile.UUID, txt_profile_save_name.Text, CancellationToken.None);
+                if (!renameResponse.IsSuccessful)
+                {
+                    MessageBox.Show(this, renameResponse.Message, "Rename Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-                // Lets rename the selectedProfile to the new name
-                ProfileRepository.RenameProfile(_selectedProfile, txt_profile_save_name.Text);
+                Program.ConfigureUserDataPath(Program.AppDataPath);
+                _selectedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile => string.Equals(profile.UUID, _selectedProfile.UUID, StringComparison.OrdinalIgnoreCase));
+                if (_selectedProfile == null)
+                {
+                    MessageBox.Show(this, "DisplayMagician renamed the profile but could not reload it.", "Rename Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
                 // Lets rename the entry in the imagelistview to the new name
                 foreach (ImageListViewItem myItem in ilv_saved_profiles.Items)
                 {
-                    if (myItem.Text == oldProfileName)
+                    if (myItem.Text == _selectedProfile.Name)
                     {
                         myItem.Text = txt_profile_save_name.Text;
                     }
@@ -1034,7 +1050,7 @@ namespace DisplayMagician.UIForms
             Utils.UserHasDonated();
         }
 
-        private void btn_update_Click(object sender, EventArgs e)
+        private async void btn_update_Click(object sender, EventArgs e)
         {
             if (ProfileRepository.UserChangingProfiles)
             {
@@ -1069,11 +1085,20 @@ namespace DisplayMagician.UIForms
                     // We're in 'rename' mode!
                     // This also means we are going to have to get the latest current Profile and then overwrtite this data
 
-                    // Replace the profile data with the current active profile data
-                    ProfileRepository.CopyCurrentLayoutToProfile(_selectedProfile);
+                    ControlResponse updateResponse = await new ControlServicePipeClient().UpdateProfileFromCurrentAsync(_selectedProfile.UUID, CancellationToken.None);
+                    if (!updateResponse.IsSuccessful)
+                    {
+                        MessageBox.Show(this, updateResponse.Message, "Update Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
 
-                    // Save the Profiles JSON as it's different now
-                    ProfileRepository.SaveProfiles();
+                    Program.ConfigureUserDataPath(Program.AppDataPath);
+                    _selectedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile => string.Equals(profile.UUID, _selectedProfile.UUID, StringComparison.OrdinalIgnoreCase));
+                    if (_selectedProfile == null)
+                    {
+                        MessageBox.Show(this, "DisplayMagician updated the profile but could not reload it.", "Update Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
 
                     ProfileRepository.RefreshDisplayDetectionState();
 

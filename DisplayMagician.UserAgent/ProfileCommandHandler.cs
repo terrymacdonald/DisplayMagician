@@ -50,6 +50,64 @@ public sealed class ProfileCommandHandler
             };
         }
 
+        if (request.MessageType == ControlMessageType.CreateProfileFromCurrent)
+        {
+            CreateProfileRequest? createRequest = JsonSerializer.Deserialize<CreateProfileRequest>(request.Payload);
+            if (createRequest == null || !ProfileRepository.IsValidFilename(createRequest.Name) || ProfileRepository.AllProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile name is invalid or already in use." };
+            }
+
+            ProfileRepository.RefreshDisplayDetectionState();
+            ProfileRepository.UpdateActiveProfile();
+            ProfileItem? profile = ProfileRepository.CurrentProfile;
+            if (profile == null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The current display configuration could not be captured." };
+            }
+
+            profile.Name = createRequest.Name;
+            return ProfileRepository.AddProfile(profile)
+                ? new ControlResponse { IsSuccessful = true, Message = "Display profile created." }
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be saved." };
+        }
+
+        if (request.MessageType == ControlMessageType.RenameProfile)
+        {
+            RenameProfileRequest? renameRequest = JsonSerializer.Deserialize<RenameProfileRequest>(request.Payload);
+            ProfileItem? profile = renameRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, renameRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            if (profile == null || !ProfileRepository.RenameProfile(profile, renameRequest!.Name))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be renamed." };
+            }
+
+            return new ControlResponse { IsSuccessful = true, Message = "Display profile renamed." };
+        }
+
+        if (request.MessageType == ControlMessageType.DeleteProfile)
+        {
+            DeleteProfileRequest? deleteRequest = JsonSerializer.Deserialize<DeleteProfileRequest>(request.Payload);
+            ProfileItem? profile = deleteRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, deleteRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            return profile != null && ProfileRepository.RemoveProfile(profile)
+                ? new ControlResponse { IsSuccessful = true, Message = "Display profile deleted." }
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be deleted." };
+        }
+
+        if (request.MessageType == ControlMessageType.UpdateProfileFromCurrent)
+        {
+            DeleteProfileRequest? updateRequest = JsonSerializer.Deserialize<DeleteProfileRequest>(request.Payload);
+            ProfileItem? profile = updateRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, updateRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            if (profile == null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile does not exist." };
+            }
+
+            ProfileRepository.CopyCurrentLayoutToProfile(profile);
+            return ProfileRepository.SaveProfiles()
+                ? new ControlResponse { IsSuccessful = true, Message = "Display profile updated." }
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be updated." };
+        }
+
         if (request.MessageType != ControlMessageType.ApplyProfile)
         {
             return new ControlResponse
