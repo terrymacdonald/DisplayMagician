@@ -14,6 +14,7 @@ using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using TsudaKageyu;
 using System.ComponentModel;
+using System.Linq;
 using DisplayMagician.AppLibraries;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
@@ -965,6 +966,80 @@ namespace DisplayMagician
                 _availableImages = value;
 
             }
+        }
+
+        /// <summary>
+        /// Creates the portable persisted definition used by the User Agent.
+        /// WinForms-specific image data and live profile, audio, game, and app
+        /// objects deliberately remain outside this definition.
+        /// </summary>
+        public ShortcutDefinition CreateConfigurationDefinition()
+        {
+            return new ShortcutDefinition
+            {
+                Id = UUID,
+                Name = Name,
+                Category = (ShortcutDefinitionCategory)(int)Category,
+                AutoName = AutoName,
+                ProfileId = ProfileUUID,
+                AudioProfileId = AudioProfileUUID,
+                DisplayPermanence = (ShortcutDefinitionPermanence)(int)DisplayPermanence,
+                AudioPermanence = (ShortcutDefinitionPermanence)(int)AudioPermanence,
+                ProcessPriority = (ShortcutDefinitionProcessPriority)(int)ProcessPriority,
+                ExecutablePath = ExecutableNameAndPath,
+                ExecutableArguments = ExecutableArguments,
+                ExecutableArgumentsRequired = ExecutableArgumentsRequired,
+                RunExecutableAsAdministrator = RunExeAsAdministrator,
+                MonitorExecutablePath = ProcessNameToMonitorUsesExecutable,
+                DifferentExecutablePathToMonitor = DifferentExecutableToMonitor,
+                GameAppId = GameAppId,
+                GameName = GameName,
+                GameLibrary = (int)GameLibrary,
+                GameLaunchMode = GameLaunchMode,
+                StartTimeoutSeconds = StartTimeout,
+                GameArguments = GameArguments,
+                GameArgumentsRequired = GameArgumentsRequired,
+                DifferentGameExecutablePathToMonitor = DifferentGameExeToMonitor,
+                MonitorDifferentGameExecutable = MonitorDifferentGameExe,
+                OverrideAudioSpeakerVolume = OverrideAudioSpeakerVolume,
+                OverrideAudioSpeakerVolumeLevel = OverrideAudioSpeakerVolumeLevel,
+                OverrideAudioMicrophoneVolume = OverrideAudioMicrophoneVolume,
+                OverrideAudioMicrophoneVolumeLevel = OverrideAudioMicrophoneVolumeLevel,
+                StartPrograms = StartPrograms?.Select(program => new ShortcutStartProgramDefinition
+                {
+                    Priority = program.Priority,
+                    Disabled = program.Disabled,
+                    ProcessPriority = (ShortcutDefinitionProcessPriority)(int)program.ProcessPriority,
+                    ExecutablePath = program.Executable,
+                    ApplicationId = program.ApplicationId,
+                    ApplicationName = program.ApplicationName,
+                    Arguments = program.Arguments,
+                    ArgumentsRequired = program.ExecutableArgumentsRequired,
+                    CloseOnFinish = program.CloseOnFinish,
+                    DoNotStartIfAlreadyRunning = program.DontStartIfAlreadyRunning,
+                    RunAsAdministrator = program.RunAsAdministrator
+                }).ToArray() ?? Array.Empty<ShortcutStartProgramDefinition>(),
+                AfterPrograms = AfterPrograms?.Select(program => new ShortcutAfterProgramDefinition
+                {
+                    Priority = program.Priority,
+                    Disabled = program.Disabled,
+                    ProcessPriority = (ShortcutDefinitionProcessPriority)(int)program.ProcessPriority,
+                    ExecutablePath = program.Executable,
+                    Arguments = program.Arguments,
+                    ArgumentsRequired = program.ExecutableArgumentsRequired,
+                    DoNotStartIfAlreadyRunning = program.DontStartIfAlreadyRunning,
+                    RunAsAdministrator = program.RunAsAdministrator
+                }).ToArray() ?? Array.Empty<ShortcutAfterProgramDefinition>(),
+                StopPrograms = StopPrograms?.Select(program => new ShortcutStopProgramDefinition
+                {
+                    Priority = program.Priority,
+                    Disabled = program.Disabled,
+                    ExecutablePath = program.Executable,
+                    RestartAfterwards = program.RestartAfterwards,
+                    RestartProcessPriority = (ShortcutDefinitionProcessPriority)(int)program.RestartProcessPriority,
+                    RunAsAdministrator = program.RunAsAdministrator
+                }).ToArray() ?? Array.Empty<ShortcutStopProgramDefinition>()
+            };
         }
 
 

@@ -82,7 +82,7 @@ public sealed class ShortcutStoreTests
             {
                 Repository = RepositoryKind.Shortcuts,
                 ExpectedRevision = initial.Revision,
-                Json = "{\"ShortcutFileVersion\":\"6\",\"Shortcuts\":[{\"UUID\":\"shortcut-id\",\"Name\":\"Test Game\",\"Category\":1,\"GameAppId\":\"42\",\"GameName\":\"Test Game\",\"GameLaunchMode\":1}]}"
+                Json = "{\"ShortcutFileVersion\":\"6\",\"Shortcuts\":[{\"UUID\":\"shortcut-id\",\"Name\":\"Test Game\",\"Category\":1,\"ProfileUUID\":\"display-profile\",\"AudioProfileUUID\":\"audio-profile\",\"DisplayPermanence\":1,\"AudioPermanence\":0,\"ProcessPriority\":1,\"GameAppId\":\"42\",\"GameName\":\"Test Game\",\"GameLibrary\":1,\"GameLaunchMode\":1,\"StartTimeout\":90,\"GameArguments\":\"-windowed\",\"GameArgumentsRequired\":true,\"MonitorDifferentGameExe\":true,\"DifferentGameExeToMonitor\":\"C:\\\\Games\\\\TestGame.exe\",\"StartPrograms\":[{\"Priority\":1,\"Executable\":\"C:\\\\Tools\\\\before.exe\",\"Arguments\":\"--ready\",\"ExecutableArgumentsRequired\":true,\"CloseOnFinish\":true}],\"AfterPrograms\":[{\"Priority\":2,\"Executable\":\"C:\\\\Tools\\\\after.exe\"}],\"StopPrograms\":[{\"Priority\":3,\"Executable\":\"C:\\\\Tools\\\\stop.exe\",\"RestartAfterwards\":true}]}]}"
             });
 
             bool wasFound = store.TryGetShortcutDefinition("shortcut-id", out ShortcutDefinition? shortcut);
@@ -92,6 +92,20 @@ public sealed class ShortcutStoreTests
             Assert.Equal(ShortcutDefinitionCategory.Game, shortcut!.Category);
             Assert.Equal(GameLaunchMode.DetectGameRunning, shortcut.GameLaunchMode);
             Assert.Equal("42", shortcut.GameAppId);
+            Assert.Equal("display-profile", shortcut.ProfileId);
+            Assert.Equal("audio-profile", shortcut.AudioProfileId);
+            Assert.Equal(ShortcutDefinitionPermanence.Permanent, shortcut.AudioPermanence);
+            Assert.Equal(ShortcutDefinitionProcessPriority.AboveNormal, shortcut.ProcessPriority);
+            Assert.Equal(90, shortcut.StartTimeoutSeconds);
+            Assert.Equal("-windowed", shortcut.GameArguments);
+            Assert.True(shortcut.MonitorDifferentGameExecutable);
+            Assert.Single(shortcut.StartPrograms);
+            Assert.Equal("C:\\Tools\\before.exe", shortcut.StartPrograms[0].ExecutablePath);
+            Assert.True(shortcut.StartPrograms[0].CloseOnFinish);
+            Assert.Single(shortcut.AfterPrograms);
+            Assert.Equal("C:\\Tools\\after.exe", shortcut.AfterPrograms[0].ExecutablePath);
+            Assert.Single(shortcut.StopPrograms);
+            Assert.True(shortcut.StopPrograms[0].RestartAfterwards);
         }
         finally
         {

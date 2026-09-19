@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -59,9 +60,34 @@ public sealed class ShortcutStore
                 Id = id,
                 Name = GetString(shortcut, "Name"),
                 Category = Enum.IsDefined(typeof(ShortcutDefinitionCategory), category) ? (ShortcutDefinitionCategory)category : ShortcutDefinitionCategory.Unknown,
+                AutoName = GetBoolean(shortcut, "AutoName", true),
+                ProfileId = GetString(shortcut, "ProfileUUID"),
+                AudioProfileId = GetString(shortcut, "AudioProfileUUID"),
+                DisplayPermanence = GetEnum(shortcut, "DisplayPermanence", ShortcutDefinitionPermanence.Temporary),
+                AudioPermanence = GetEnum(shortcut, "AudioPermanence", ShortcutDefinitionPermanence.Temporary),
+                ProcessPriority = GetEnum(shortcut, "ProcessPriority", ShortcutDefinitionProcessPriority.Normal),
+                ExecutablePath = GetString(shortcut, "ExecutableNameAndPath"),
+                ExecutableArguments = GetString(shortcut, "ExecutableArguments"),
+                ExecutableArgumentsRequired = GetBoolean(shortcut, "ExecutableArgumentsRequired"),
+                RunExecutableAsAdministrator = GetBoolean(shortcut, "RunExeAsAdministrator"),
+                MonitorExecutablePath = GetBoolean(shortcut, "ProcessNameToMonitorUsesExecutable", true),
+                DifferentExecutablePathToMonitor = GetString(shortcut, "DifferentExecutableToMonitor"),
                 GameAppId = GetString(shortcut, "GameAppId"),
                 GameName = GetString(shortcut, "GameName"),
-                GameLaunchMode = Enum.IsDefined(typeof(GameLaunchMode), launchMode) ? (GameLaunchMode)launchMode : GameLaunchMode.StartGame
+                GameLibrary = GetInt32(shortcut, "GameLibrary"),
+                GameLaunchMode = Enum.IsDefined(typeof(GameLaunchMode), launchMode) ? (GameLaunchMode)launchMode : GameLaunchMode.StartGame,
+                StartTimeoutSeconds = GetInt32(shortcut, "StartTimeout", 60),
+                GameArguments = GetString(shortcut, "GameArguments"),
+                GameArgumentsRequired = GetBoolean(shortcut, "GameArgumentsRequired"),
+                DifferentGameExecutablePathToMonitor = GetString(shortcut, "DifferentGameExeToMonitor"),
+                MonitorDifferentGameExecutable = GetBoolean(shortcut, "MonitorDifferentGameExe"),
+                OverrideAudioSpeakerVolume = GetBoolean(shortcut, "OverrideAudioSpeakerVolume"),
+                OverrideAudioSpeakerVolumeLevel = GetInt32(shortcut, "OverrideAudioSpeakerVolumeLevel", 50),
+                OverrideAudioMicrophoneVolume = GetBoolean(shortcut, "OverrideAudioMicrophoneVolume"),
+                OverrideAudioMicrophoneVolumeLevel = GetInt32(shortcut, "OverrideAudioMicrophoneVolumeLevel", 50),
+                StartPrograms = GetStartPrograms(shortcut),
+                AfterPrograms = GetAfterPrograms(shortcut),
+                StopPrograms = GetStopPrograms(shortcut)
             };
             return true;
         }
@@ -93,10 +119,102 @@ public sealed class ShortcutStore
             : string.Empty;
     }
 
-    private static int GetInt32(JsonElement element, string propertyName)
+    private static int GetInt32(JsonElement element, string propertyName, int defaultValue = 0)
     {
         return element.TryGetProperty(propertyName, out JsonElement property) && property.TryGetInt32(out int value)
             ? value
-            : 0;
+            : defaultValue;
+    }
+
+    private static bool GetBoolean(JsonElement element, string propertyName, bool defaultValue = false)
+    {
+        return element.TryGetProperty(propertyName, out JsonElement property) && (property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
+            ? property.GetBoolean()
+            : defaultValue;
+    }
+
+    private static TEnum GetEnum<TEnum>(JsonElement element, string propertyName, TEnum defaultValue) where TEnum : struct, Enum
+    {
+        int value = GetInt32(element, propertyName, Convert.ToInt32(defaultValue));
+        return Enum.IsDefined(typeof(TEnum), value) ? (TEnum)Enum.ToObject(typeof(TEnum), value) : defaultValue;
+    }
+
+    private static IReadOnlyList<ShortcutStartProgramDefinition> GetStartPrograms(JsonElement shortcut)
+    {
+        List<ShortcutStartProgramDefinition> programs = new List<ShortcutStartProgramDefinition>();
+        if (!shortcut.TryGetProperty("StartPrograms", out JsonElement sourcePrograms) || sourcePrograms.ValueKind != JsonValueKind.Array)
+        {
+            return programs;
+        }
+
+        foreach (JsonElement program in sourcePrograms.EnumerateArray())
+        {
+            programs.Add(new ShortcutStartProgramDefinition
+            {
+                Priority = GetInt32(program, "Priority"),
+                Disabled = GetBoolean(program, "Disabled"),
+                ProcessPriority = GetEnum(program, "ProcessPriority", ShortcutDefinitionProcessPriority.Normal),
+                ExecutablePath = GetString(program, "Executable"),
+                ApplicationId = GetString(program, "ApplicationId"),
+                ApplicationName = GetString(program, "ApplicationName"),
+                Arguments = GetString(program, "Arguments"),
+                ArgumentsRequired = GetBoolean(program, "ExecutableArgumentsRequired"),
+                CloseOnFinish = GetBoolean(program, "CloseOnFinish"),
+                DoNotStartIfAlreadyRunning = GetBoolean(program, "DontStartIfAlreadyRunning"),
+                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator")
+            });
+        }
+
+        return programs;
+    }
+
+    private static IReadOnlyList<ShortcutAfterProgramDefinition> GetAfterPrograms(JsonElement shortcut)
+    {
+        List<ShortcutAfterProgramDefinition> programs = new List<ShortcutAfterProgramDefinition>();
+        if (!shortcut.TryGetProperty("AfterPrograms", out JsonElement sourcePrograms) || sourcePrograms.ValueKind != JsonValueKind.Array)
+        {
+            return programs;
+        }
+
+        foreach (JsonElement program in sourcePrograms.EnumerateArray())
+        {
+            programs.Add(new ShortcutAfterProgramDefinition
+            {
+                Priority = GetInt32(program, "Priority"),
+                Disabled = GetBoolean(program, "Disabled"),
+                ProcessPriority = GetEnum(program, "ProcessPriority", ShortcutDefinitionProcessPriority.Normal),
+                ExecutablePath = GetString(program, "Executable"),
+                Arguments = GetString(program, "Arguments"),
+                ArgumentsRequired = GetBoolean(program, "ExecutableArgumentsRequired"),
+                DoNotStartIfAlreadyRunning = GetBoolean(program, "DontStartIfAlreadyRunning"),
+                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator")
+            });
+        }
+
+        return programs;
+    }
+
+    private static IReadOnlyList<ShortcutStopProgramDefinition> GetStopPrograms(JsonElement shortcut)
+    {
+        List<ShortcutStopProgramDefinition> programs = new List<ShortcutStopProgramDefinition>();
+        if (!shortcut.TryGetProperty("StopPrograms", out JsonElement sourcePrograms) || sourcePrograms.ValueKind != JsonValueKind.Array)
+        {
+            return programs;
+        }
+
+        foreach (JsonElement program in sourcePrograms.EnumerateArray())
+        {
+            programs.Add(new ShortcutStopProgramDefinition
+            {
+                Priority = GetInt32(program, "Priority"),
+                Disabled = GetBoolean(program, "Disabled"),
+                ExecutablePath = GetString(program, "Executable"),
+                RestartAfterwards = GetBoolean(program, "RestartAfterwards"),
+                RestartProcessPriority = GetEnum(program, "RestartProcessPriority", ShortcutDefinitionProcessPriority.Normal),
+                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator")
+            });
+        }
+
+        return programs;
     }
 }
