@@ -23,20 +23,22 @@ public sealed class ClientSyncCoordinator
     private readonly MachineScheduleCoordinator _machineScheduleCoordinator;
     private readonly ControlStateCoordinator _controlStateCoordinator;
     private readonly IAgentCommandClient _agentCommandClient;
+    private readonly ControlClientEventHub? _eventHub;
     private readonly SemaphoreSlim _syncGate = new SemaphoreSlim(1, 1);
     private ClientSyncMessageManifest? _latestMessageManifest;
 
-    public ClientSyncCoordinator(MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator controlStateCoordinator, IAgentCommandClient agentCommandClient)
-        : this(new HttpClient(), machineScheduleCoordinator, controlStateCoordinator, agentCommandClient)
+    public ClientSyncCoordinator(MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator controlStateCoordinator, IAgentCommandClient agentCommandClient, ControlClientEventHub? eventHub = null)
+        : this(new HttpClient(), machineScheduleCoordinator, controlStateCoordinator, agentCommandClient, eventHub)
     {
     }
 
-    public ClientSyncCoordinator(HttpClient httpClient, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator controlStateCoordinator, IAgentCommandClient agentCommandClient)
+    public ClientSyncCoordinator(HttpClient httpClient, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator controlStateCoordinator, IAgentCommandClient agentCommandClient, ControlClientEventHub? eventHub = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _machineScheduleCoordinator = machineScheduleCoordinator ?? throw new ArgumentNullException(nameof(machineScheduleCoordinator));
         _controlStateCoordinator = controlStateCoordinator ?? throw new ArgumentNullException(nameof(controlStateCoordinator));
         _agentCommandClient = agentCommandClient ?? throw new ArgumentNullException(nameof(agentCommandClient));
+        _eventHub = eventHub;
     }
 
     public async Task<ClientSyncResult> SyncAsync(ClientSyncRequest request, string? requestingUserSid, int? requestingSessionId, CancellationToken cancellationToken)
@@ -65,7 +67,7 @@ public sealed class ClientSyncCoordinator
             }
 
             _latestMessageManifest = snapshot.MessageManifest;
-            MessageSyncResult? requestingMessageResult = await DistributeManifestAsync(snapshot.MessageManifest, requestingUserSid, requestingSessionId, cancellationToken).ConfigureAwait(false);
+            MessageSyncResult? requestingMessageResult = await DistributeManifestAsync(snapshot, requestingUserSid, requestingSessionId, cancellationToken).ConfigureAwait(false);
             _machineScheduleCoordinator.RecordClientSyncSuccess(now);
             return new ClientSyncResult
             {
@@ -143,14 +145,23 @@ public sealed class ClientSyncCoordinator
         return new ClientSyncSnapshot(stableUpdate, prereleaseUpdate, manifest);
     }
 
-    private async Task<MessageSyncResult?> DistributeManifestAsync(ClientSyncMessageManifest manifest, string? requestingUserSid, int? requestingSessionId, CancellationToken cancellationToken)
+    private async Task<MessageSyncResult?> DistributeManifestAsync(ClientSyncSnapshot snapshot, string? requestingUserSid, int? requestingSessionId, CancellationToken cancellationToken)
     {
         MessageSyncResult? requestingResult = null;
         foreach (AgentRegistration agent in _controlStateCoordinator.GetAgentRegistrations())
         {
             try
             {
-                ControlResponse response = await SendManifestAsync(agent, manifest, cancellationToken).ConfigureAwait(false);
+                ControlResponse response = await SendManifestAsync(agent, snapshot.MessageManifest, cancellationToken).ConfigureAwait(false);
+                if (response.IsSuccessful && response.MessageSync != null)
+                {
+                    _eventHub?.Publish(agent.UserSid, agent.SessionId, new ControlClientEvent
+                    {
+                        EventType = ControlClientEventType.ClientSyncCompleted,
+                        PublishedUtc = DateTime.UtcNow,
+                        ClientSync = new ClientSyncResult { WasDue = true, StableUpdate = snapshot.StableUpdate, PrereleaseUpdate = snapshot.PrereleaseUpdate, MessageSync = response.MessageSync }
+                    });
+                }
                 if (string.Equals(agent.UserSid, requestingUserSid, StringComparison.OrdinalIgnoreCase) && agent.SessionId == requestingSessionId)
                 {
                     requestingResult = response.MessageSync;

@@ -19,12 +19,14 @@ internal static class Program
         builder.Services.AddSingleton<UserDataMigrationRunner>();
         builder.Services.AddSingleton<ControlStateCoordinator>();
         builder.Services.AddSingleton<OperationStatusStore>();
+        builder.Services.AddSingleton<ControlClientEventHub>();
         builder.Services.AddSingleton<IAgentCommandClient, AgentCommandClient>();
         builder.Services.AddSingleton<ClientSyncCoordinator>();
         builder.Services.AddSingleton<ISessionLauncherClient, SessionLauncherClient>();
         builder.Services.AddSingleton<ProfileOperationRouter>();
         builder.Services.AddSingleton<NamedPipeControlServer>();
         builder.Services.AddSingleton<ControlClientPipeServer>();
+        builder.Services.AddSingleton<ControlClientEventPipeServer>();
         builder.Services.AddHostedService<ControlServiceWorker>();
 
         using IHost host = builder.Build();

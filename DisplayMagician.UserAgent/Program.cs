@@ -1,7 +1,12 @@
 using System;
+using System.Globalization;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace DisplayMagician.UserAgent;
 
@@ -12,6 +17,7 @@ internal static class Program
         // The current WinForms application still owns desktop work. This executable becomes its interactive-session host
         // once the existing profile and shortcut lifecycle is moved behind the Agent boundary.
         AgentRegistration registration = AgentIdentity.CreateRegistration(AgentBuildVersion.Current, "manual");
+        ConfigureLogging(registration.UserSid);
         ControlServiceClient serviceClient = new ControlServiceClient();
         using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         UserAgentStartupRequest startupRequest = UserAgentCommandLine.Parse(args);
@@ -49,5 +55,72 @@ internal static class Program
         await Task.WhenAny(serviceConnection, commandConnection, automaticGameDetection).ConfigureAwait(false);
         cancellationTokenSource.Cancel();
         await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection).ConfigureAwait(false);
+    }
+
+    private static void ConfigureLogging(string userSid)
+    {
+        string legacyLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs");
+        string preferredLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", userSid, "Logs");
+        string logPath = TryPrepareLogPath(preferredLogPath, legacyLogPath) ? preferredLogPath : legacyLogPath;
+        try
+        {
+            Directory.CreateDirectory(logPath);
+            LoggingConfiguration configuration = new LoggingConfiguration();
+            FileTarget fileTarget = new FileTarget("userAgentLog")
+            {
+                FileName = Path.Combine(logPath, $"UserAgent-{DateTime.UtcNow.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture)}.log"),
+                MaxArchiveFiles = 4,
+                ArchiveAboveSize = 41943040,
+                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
+            };
+            configuration.AddRule(LogLevel.Info, LogLevel.Fatal, fileTarget);
+            LogManager.Configuration = configuration;
+            LogManager.GetCurrentClassLogger().Info("UserAgent/ConfigureLogging: User Agent logging started at {0}.", logPath);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException)
+        {
+            Console.WriteLine($"UserAgent/ConfigureLogging: Could not configure logging at {logPath}: {ex.Message}");
+        }
+    }
+
+    private static bool TryPrepareLogPath(string preferredLogPath, string legacyLogPath)
+    {
+        try
+        {
+            Directory.CreateDirectory(preferredLogPath);
+            string probePath = Path.Combine(preferredLogPath, $".write-probe-{Guid.NewGuid():N}.tmp");
+            using (FileStream probe = new FileStream(probePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose))
+            {
+                probe.WriteByte(0);
+            }
+
+            if (Directory.Exists(legacyLogPath))
+            {
+                foreach (string legacyLogFile in Directory.EnumerateFiles(legacyLogPath, "UserAgent-*.log", SearchOption.TopDirectoryOnly))
+                {
+                    try
+                    {
+                        string destinationPath = Path.Combine(preferredLogPath, Path.GetFileName(legacyLogFile));
+                        if (File.Exists(destinationPath))
+                        {
+                            destinationPath = Path.Combine(preferredLogPath, $"{Path.GetFileNameWithoutExtension(legacyLogFile)}-{Guid.NewGuid():N}{Path.GetExtension(legacyLogFile)}");
+                        }
+
+                        File.Move(legacyLogFile, destinationPath);
+                    }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        Console.WriteLine($"UserAgent/TryPrepareLogPath: Could not move legacy log {legacyLogFile}: {ex.Message}");
+                    }
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException)
+        {
+            Console.WriteLine($"UserAgent/TryPrepareLogPath: ProgramData log path is unavailable: {ex.Message}");
+            return false;
+        }
     }
 }

@@ -13,19 +13,26 @@ public sealed class ControlServiceWorker : BackgroundService
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly NamedPipeControlServer _pipeServer;
     private readonly ControlClientPipeServer _clientPipeServer;
+    private readonly ControlClientEventPipeServer _clientEventPipeServer;
     private readonly StoragePaths _storagePaths;
     private readonly MachineScheduleCoordinator _machineScheduleCoordinator;
     private readonly ClientSyncCoordinator _clientSyncCoordinator;
     private readonly AnonymousMetricsSender _anonymousMetricsSender;
+    private readonly ControlClientEventHub _eventHub;
+    private readonly OperationStatusStore _operationStatusStore;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore)
     {
         _pipeServer = pipeServer;
         _clientPipeServer = clientPipeServer;
+        _clientEventPipeServer = clientEventPipeServer;
         _storagePaths = storagePaths;
         _machineScheduleCoordinator = machineScheduleCoordinator;
         _clientSyncCoordinator = clientSyncCoordinator;
         _anonymousMetricsSender = anonymousMetricsSender;
+        _eventHub = eventHub;
+        _operationStatusStore = operationStatusStore;
+        _operationStatusStore.StatusUpdated += PublishOperationStatus;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -44,8 +51,9 @@ public sealed class ControlServiceWorker : BackgroundService
         }
         Task agentServer = _pipeServer.RunAsync(stoppingToken);
         Task clientServer = _clientPipeServer.RunAsync(stoppingToken);
+        Task clientEventServer = _clientEventPipeServer.RunAsync(stoppingToken);
         Task clientSync = RunClientSyncAsync(stoppingToken);
-        await Task.WhenAll(agentServer, clientServer, clientSync).ConfigureAwait(false);
+        await Task.WhenAll(agentServer, clientServer, clientEventServer, clientSync).ConfigureAwait(false);
         _logger.Info("ControlServiceWorker/ExecuteAsync: Control Service pipe listener has stopped.");
     }
 
@@ -57,5 +65,10 @@ public sealed class ControlServiceWorker : BackgroundService
             await _anonymousMetricsSender.TrySendAsync(stoppingToken).ConfigureAwait(false);
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken).ConfigureAwait(false);
         }
+    }
+
+    private void PublishOperationStatus(OperationStatus status)
+    {
+        _eventHub.Publish(status.OwnerUserSid, status.OwnerSessionId, new ControlClientEvent { EventType = ControlClientEventType.OperationStatusUpdated, PublishedUtc = DateTime.UtcNow, OperationStatus = status });
     }
 }

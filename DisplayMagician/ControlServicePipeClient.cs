@@ -279,6 +279,40 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful && response.RepositoryCommit != null ? response.RepositoryCommit : throw new InvalidOperationException(response.Message);
     }
 
+    public async Task SubscribeClientEventsAsync(Func<ControlClientEvent, Task> onEvent, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(onEvent);
+        using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientEventPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await pipe.ConnectAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+        ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.SubscribeClientEvents };
+        await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);
+        ControlEnvelope response = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+        if (response == null || response.RequestId != request.RequestId)
+        {
+            throw new InvalidDataException("The Control Service returned an invalid event subscription response.");
+        }
+
+        ControlResponse subscriptionResponse = JsonSerializer.Deserialize<ControlResponse>(response.Payload)
+            ?? throw new InvalidDataException("The Control Service returned an unreadable event subscription response.");
+        if (!subscriptionResponse.IsSuccessful)
+        {
+            throw new InvalidOperationException(subscriptionResponse.Message);
+        }
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            ControlEnvelope clientEventEnvelope = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+            if (clientEventEnvelope == null || clientEventEnvelope.MessageType != ControlMessageType.ClientEvent)
+            {
+                throw new InvalidDataException("The Control Service closed the event subscription unexpectedly.");
+            }
+
+            ControlClientEvent clientEvent = JsonSerializer.Deserialize<ControlClientEvent>(clientEventEnvelope.Payload)
+                ?? throw new InvalidDataException("The Control Service returned an unreadable client event.");
+            await onEvent(clientEvent).ConfigureAwait(false);
+        }
+    }
+
     private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);

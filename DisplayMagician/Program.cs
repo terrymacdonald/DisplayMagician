@@ -95,7 +95,7 @@ namespace DisplayMagician {
         private static bool _startupBackgroundTasksQueued = false;
         private static SynchronizationContext _mainSynchronizationContext;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
-        private static System.Timers.Timer _startupMessagePollTimer;
+        private static readonly CancellationTokenSource _clientEventListenerCancellationSource = new CancellationTokenSource();
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
@@ -135,6 +135,56 @@ namespace DisplayMagician {
             ProgramSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
             DonationSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
             ShortcutRepository.ConfigureStoragePath(AppDataPath);
+        }
+
+        private static void ConfigureLogPath(string legacyLogPath)
+        {
+            string preferredLogPath = AppLogPath;
+            try
+            {
+                Directory.CreateDirectory(preferredLogPath);
+                string probePath = Path.Combine(preferredLogPath, $".write-probe-{Guid.NewGuid():N}.tmp");
+                using (FileStream probe = new FileStream(probePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose))
+                {
+                    probe.WriteByte(0);
+                }
+
+                if (!string.Equals(preferredLogPath, legacyLogPath, StringComparison.OrdinalIgnoreCase) && Directory.Exists(legacyLogPath))
+                {
+                    foreach (string legacyLogFile in Directory.EnumerateFiles(legacyLogPath, "*.log", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            string destinationPath = Path.Combine(preferredLogPath, Path.GetFileName(legacyLogFile));
+                            if (File.Exists(destinationPath))
+                            {
+                                destinationPath = Path.Combine(preferredLogPath, $"{Path.GetFileNameWithoutExtension(legacyLogFile)}-{Guid.NewGuid():N}{Path.GetExtension(legacyLogFile)}");
+                            }
+
+                            File.Move(legacyLogFile, destinationPath);
+                        }
+                        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                        {
+                            Console.WriteLine($"Program/ConfigureLogPath: Could not move legacy log {legacyLogFile} to {preferredLogPath}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException)
+            {
+                AppLogPath = legacyLogPath;
+                try
+                {
+                    Directory.CreateDirectory(AppLogPath);
+                }
+                catch (Exception fallbackException) when (fallbackException is IOException || fallbackException is UnauthorizedAccessException || fallbackException is NotSupportedException)
+                {
+                    Console.WriteLine($"Program/ConfigureLogPath: Cannot create a log directory at {preferredLogPath} or fallback path {AppLogPath}: {fallbackException.Message}");
+                    return;
+                }
+
+                Console.WriteLine($"Program/ConfigureLogPath: Using legacy log path {AppLogPath} because {preferredLogPath} is not writable: {ex.Message}");
+            }
         }
 
         private static CancellationTokenSource BeginActiveOperationCancellation()
@@ -197,30 +247,19 @@ namespace DisplayMagician {
         private static int Main(string[] args)
         {
             // BOOTSTRAP AND INITIALIZATION LOGIC
-            Application.ApplicationExit += (sender, eventArgs) => StopUserAgentIfIdle();
+            Application.ApplicationExit += (sender, eventArgs) =>
+            {
+                _clientEventListenerCancellationSource.Cancel();
+                StopUserAgentIfIdle();
+            };
 
+            string legacyLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs");
             if (V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
             {
                 ConfigureUserDataPath(migratedUserDataPath);
             }
 
-            // Create the Logging Dir if it doesn't exist so that it's avilable for all
-            // parts of the program to use
-            if (!Directory.Exists(AppDataPath))
-            {
-            }
-
-            if (!Directory.Exists(AppLogPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppLogPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Program/Main Exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                }
-            }
+            ConfigureLogPath(legacyLogPath);
 
 
             
@@ -1312,7 +1351,7 @@ namespace DisplayMagician {
                 try
                 {
                     await RunClientSyncAndNotifyUserAsync(manual: false);
-                    EnsureStartupMessagePollTimer();
+                    ListenForControlServiceEventsAsync(_clientEventListenerCancellationSource.Token);
                 }
                 catch (Exception ex)
                 {
@@ -1321,79 +1360,56 @@ namespace DisplayMagician {
             });
         }
 
-        private static void EnsureStartupMessagePollTimer()
+        private static async void ListenForControlServiceEventsAsync(CancellationToken cancellationToken)
         {
-            if (_startupMessagePollTimer != null)
-            {
-                return;
-            }
-
-            _startupMessagePollTimer = new System.Timers.Timer
-            {
-                Interval = TimeSpan.FromMinutes(1).TotalMilliseconds,
-                AutoReset = true,
-                Enabled = true,
-            };
-
-            _startupMessagePollTimer.Elapsed += (_, __) =>
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    MessageListResult messageList = GetMessageListFromUserAgent();
-                    List<MessageView> messagesToShow = messageList.Messages
-                        .Where(message => !message.IsRead && message.ShowOnStartup && !message.IsFaulty && string.Equals(message.Kind, "standard", StringComparison.OrdinalIgnoreCase))
-                        .OrderBy(message => message.ReceivedUtc)
-                        .ToList();
-                    if (messagesToShow.Count == 0)
-                    {
-                        return;
-                    }
-
-                    bool gotLock = AppBackgroundTaskSemaphoreSlim.Wait(0);
-                    if (!gotLock)
-                    {
-                        return;
-                    }
-
+                    await new ControlServicePipeClient().SubscribeClientEventsAsync(HandleControlServiceEventAsync, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+                {
+                    logger.Warn(ex, "Program/ListenForControlServiceEventsAsync: Control Service event listener disconnected. Retrying shortly.");
                     try
                     {
-                        if (AppMainForm != null && AppMainForm.IsHandleCreated)
-                        {
-                            AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
-                            {
-                                foreach (MessageView message in messagesToShow)
-                                {
-                                    SetMessageReadState(new[] { message.Id }, true);
-
-                                    if (string.IsNullOrWhiteSpace(message.Content))
-                                    {
-                                        continue;
-                                    }
-
-                                    StartMessageForm myMessageWindow = new StartMessageForm();
-                                    myMessageWindow.MessageMode = message.Format;
-                                    myMessageWindow.Content = message.Content;
-                                    myMessageWindow.HeadingText = message.Title;
-                                    myMessageWindow.ButtonText = "&Close";
-                                    myMessageWindow.ShowDialog(AppMainForm);
-                                }
-
-                                RefreshMessageIndicators();
-                            });
-                        }
+                        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                     }
-                    finally
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                     {
-                        AppBackgroundTaskSemaphoreSlim.Release();
+                        return;
                     }
                 }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, "Program/StartupMessagePollTimer: Error checking or showing startup messages.");
-                }
-            };
+            }
+        }
 
-            _startupMessagePollTimer.Start();
+        private static Task HandleControlServiceEventAsync(ControlClientEvent clientEvent)
+        {
+            if (clientEvent.EventType == ControlClientEventType.ClientSyncCompleted && clientEvent.ClientSync != null)
+            {
+                _mainSynchronizationContext?.Post(_ => HandleClientSyncEvent(clientEvent.ClientSync), null);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static void HandleClientSyncEvent(DisplayMagician.Contracts.ClientSyncResult syncResult)
+        {
+            if (syncResult.MessageSync?.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
+            {
+                ShowNewMessagesToast(syncResult.MessageSync.NewMessagesCount);
+            }
+
+            RefreshMessageIndicators();
+            ClientSyncUpdateView? selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
+            if (selectedUpdate != null)
+            {
+                ShowClientSyncUpdate(selectedUpdate, automatic: true);
+            }
         }
 
         private static async Task RunClientSyncAndNotifyUserAsync(bool manual)

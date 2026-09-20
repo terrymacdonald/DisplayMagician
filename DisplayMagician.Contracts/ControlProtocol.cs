@@ -7,6 +7,7 @@ public static class ControlProtocol
     public const int CurrentVersion = 1;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
     public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
+    public const string ClientEventPipeName = "DisplayMagician.ControlService.ClientEvents.v1";
     public const string AgentCommandPipePrefix = "DisplayMagician.UserAgent.Command.v1.";
     public const string SessionLauncherPipeName = "DisplayMagician.SessionLauncher.v1";
 }
@@ -56,7 +57,9 @@ public enum ControlMessageType
     GetAnonymousMetricsSettings = 40,
     UpdateAnonymousMetricsSettings = 41,
     InitializeAnonymousMetrics = 42,
-    ReportAnonymousMetricsUsage = 43
+    ReportAnonymousMetricsUsage = 43,
+    SubscribeClientEvents = 44,
+    ClientEvent = 45
 }
 
 public enum ControlErrorCode

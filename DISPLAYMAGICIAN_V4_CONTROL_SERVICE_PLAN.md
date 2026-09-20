@@ -648,7 +648,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Move WinForms startup-message polling, unread indicators, and release-note lookup to Agent message views; stop direct desktop message-file access.
 - [x] Remove the legacy desktop messaging implementation after client-sync scheduling has moved to Control Service.
 - [ ] Forward update/message events to Agent/UI.
-- [ ] Add audit records, Event Viewer service errors, diagnostic bundle support, and the administrator-only Service Recovery page.
+- [ ] Add audit records, durable plain-text service error logs, diagnostic bundle support, and the administrator-only Service Recovery page.
 - [x] Remove the `--agent-hosted-operation` desktop-executable bridge; normal Agent profile work remains in `UserProfileOperationService`.
 - [ ] Remove WinForms `Program` client-sync/metrics timers, message polling, message-file access, and the duplicated `Messaging` services after their Service/Agent replacements are live.
 - [ ] Remove desktop AppData persistence fallbacks for Agent-owned profiles, audio profiles, shortcuts, and messages; retain only interactive in-memory caches backed by Agent snapshots and commits.
