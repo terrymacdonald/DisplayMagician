@@ -87,6 +87,20 @@ public sealed class ProfileOperationRouter
         }, true, cancellationToken).ConfigureAwait(false);
     }
 
+    public Task<ControlResponse> CancelOperationAsync(string userSid, int sessionId, Guid operationId, CancellationToken cancellationToken)
+    {
+        if (operationId == Guid.Empty)
+        {
+            return Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An operation ID is required." });
+        }
+
+        return SendToAgentAsync(userSid, sessionId, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.CancelOperation,
+            Payload = JsonSerializer.Serialize(new CancelOperationRequest { OperationId = operationId })
+        }, false, cancellationToken);
+    }
+
     private async Task<ControlResponse> SendToAgentAsync(string userSid, int sessionId, ControlEnvelope command, CancellationToken cancellationToken)
     {
         return await SendToAgentAsync(userSid, sessionId, command, true, cancellationToken).ConfigureAwait(false);

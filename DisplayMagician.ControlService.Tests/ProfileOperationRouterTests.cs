@@ -84,6 +84,39 @@ public sealed class ProfileOperationRouterTests
     }
 
     [Fact]
+    public async Task CancelOperationAsync_ForwardsOperationIdToTheRegisteredAgent()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient);
+        Guid operationId = Guid.NewGuid();
+
+        ControlResponse response = await router.CancelOperationAsync(agent.UserSid, agent.SessionId, operationId, CancellationToken.None);
+
+        Assert.True(response.IsSuccessful);
+        Assert.True(commandClient.WasCalled);
+        Assert.Equal(ControlMessageType.CancelOperation, commandClient.Request!.MessageType);
+        CancelOperationRequest? request = System.Text.Json.JsonSerializer.Deserialize<CancelOperationRequest>(commandClient.Request.Payload);
+        Assert.NotNull(request);
+        Assert.Equal(operationId, request.OperationId);
+    }
+
+    [Fact]
+    public async Task CancelOperationAsync_RejectsAnEmptyOperationIdWithoutCallingAgent()
+    {
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        ProfileOperationRouter router = new ProfileOperationRouter(new ControlStateCoordinator(), commandClient);
+
+        ControlResponse response = await router.CancelOperationAsync("S-1-5-21-100", 10, Guid.Empty, CancellationToken.None);
+
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.InvalidRequest, response.ErrorCode);
+        Assert.False(commandClient.WasCalled);
+    }
+
+    [Fact]
     public async Task ManageProfileAsync_ForwardsProfileMutationToRegisteredAgent()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();

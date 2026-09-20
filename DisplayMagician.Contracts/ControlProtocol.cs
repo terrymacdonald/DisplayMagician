@@ -49,7 +49,8 @@ public enum ControlMessageType
     SyncMessages = 33,
     ListApps = 34,
     ListShortcuts = 35,
-    UpdateDisplayProfileSettings = 36
+    UpdateDisplayProfileSettings = 36,
+    CancelOperation = 37
 }
 
 public enum ControlErrorCode
@@ -231,6 +232,12 @@ public sealed class ApplyProfileResult
 public sealed class StartShortcutRequest
 {
     public string ShortcutId { get; set; } = string.Empty;
+}
+
+/// <summary>Requests cancellation of an active operation owned by the caller's User Agent.</summary>
+public sealed class CancelOperationRequest
+{
+    public Guid OperationId { get; set; }
 }
 
 public enum OperationPhase

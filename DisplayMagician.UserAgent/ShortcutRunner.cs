@@ -12,7 +12,7 @@ using DisplayMagician.GameLibraries;
 
 namespace DisplayMagician.UserAgent;
 
-/// <summary>Agent-owned shortcut lifecycle. Execution stages are added while the legacy runner remains active.</summary>
+/// <summary>Agent-owned shortcut lifecycle and recovery execution.</summary>
 public sealed class ShortcutRunner
 {
     private readonly ShortcutStore _shortcutStore;
@@ -32,19 +32,25 @@ public sealed class ShortcutRunner
 
     public bool IsRecoveryRequired => _recoveryStore.HasPendingRecovery();
 
-    public Task<ShortcutRunResult> PrepareRunAsync(string shortcutId, CancellationToken cancellationToken)
+    public Task<ShortcutRunResult> PrepareRunAsync(string shortcutId, CancellationToken cancellationToken, Guid? operationId = null)
     {
-        if (!_shortcutStore.TryGetShortcutDefinition(shortcutId, out ShortcutDefinition? shortcut))
+        Guid resolvedOperationId = operationId ?? Guid.NewGuid();
+        if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(new ShortcutRunResult(Guid.NewGuid(), ShortcutRunOutcome.ShortcutNotFound));
+            return Task.FromResult(new ShortcutRunResult(resolvedOperationId, ShortcutRunOutcome.Cancelled));
         }
 
-        return Task.FromResult(new ShortcutRunResult(Guid.NewGuid(), ShortcutRunOutcome.Prepared, shortcut));
+        if (!_shortcutStore.TryGetShortcutDefinition(shortcutId, out ShortcutDefinition? shortcut))
+        {
+            return Task.FromResult(new ShortcutRunResult(resolvedOperationId, ShortcutRunOutcome.ShortcutNotFound));
+        }
+
+        return Task.FromResult(new ShortcutRunResult(resolvedOperationId, ShortcutRunOutcome.Prepared, shortcut));
     }
 
-    public async Task<ShortcutRunResult> ApplyShortcutProfilesAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null)
+    public async Task<ShortcutRunResult> ApplyShortcutProfilesAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null, Guid? operationId = null)
     {
-        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: true, isManualRun: true, cancellationToken, publishStatusAsync).ConfigureAwait(false);
+        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: true, isManualRun: true, cancellationToken, publishStatusAsync, operationId).ConfigureAwait(false);
     }
 
     public async Task<ShortcutRunResult> ApplyDetectedGameShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null)
@@ -52,9 +58,9 @@ public sealed class ShortcutRunner
         return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: false, isManualRun: false, cancellationToken, publishStatusAsync).ConfigureAwait(false);
     }
 
-    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync)
+    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid? operationId = null)
     {
-        ShortcutRunResult preparedRun = await PrepareRunAsync(shortcutId, cancellationToken).ConfigureAwait(false);
+        ShortcutRunResult preparedRun = await PrepareRunAsync(shortcutId, cancellationToken, operationId).ConfigureAwait(false);
         if (preparedRun.Outcome != ShortcutRunOutcome.Prepared || preparedRun.Shortcut == null)
         {
             return preparedRun;

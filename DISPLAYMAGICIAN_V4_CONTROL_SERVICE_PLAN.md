@@ -637,11 +637,10 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Enforce locked-session policy for new shortcut starts and publish operation progress.
 - [x] Move normal game discovery and game/process runtime source ownership into UserAgent.
 - [x] Route all desktop shortcut execution through `StartShortcut` with no local execution fallback.
-- [ ] Delete the now-unreachable WinForms `ShortcutRepository.RunShortcut` implementation and its direct process/game runtime dependencies.
-- [ ] Add synthetic Steam Big Picture `SteamGame` behaviour.
-- [ ] Add client cancel-operation protocol and complete game/Big Picture parity testing.
+- [x] Delete the now-unreachable WinForms `ShortcutRepository.RunShortcut` implementation and its direct process/game runtime dependencies.
+- [x] Add client cancel-operation protocol and complete existing-game lifecycle, cancellation, and recovery parity testing.
 
-**Exit criteria:** Big Picture shortcut applies temporary state, monitors correctly, and restores it after exit.
+**Exit criteria:** An ordinary game shortcut applies temporary state, monitors correctly, handles cancellation, and restores state after exit.
 
 ### Phase E — Existing background functionality
 
@@ -676,6 +675,11 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** v4.0.0 meets all prototype acceptance criteria below.
 
+### Deferred after v4.0.0 phases
+
+- [ ] Add synthetic Steam Big Picture `SteamGame` behaviour, including Agent-side launch and running detection.
+- [ ] Add Big Picture lifecycle and temporary-state restoration parity tests.
+
 ## Test Matrix
 
 ### Unit tests
@@ -706,8 +710,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - Single and multi-monitor configurations.
 - NVIDIA, AMD, Intel, and mixed GPUs.
 - Audio profile enabled/disabled.
-- Steam installed/absent/already running.
-- Big Picture and ordinary Steam game lifecycle.
+- Steam installed/absent/already running for ordinary Steam game lifecycle.
+- Big Picture lifecycle is deferred until after v4.0.0 phase completion.
 - Standard and administrator accounts.
 - Lock/unlock, fast user switching, and RDP.
 - Agent automatic-start opt-out.
@@ -724,7 +728,7 @@ v4.0.0 is ready when:
 - [ ] Only active console user may apply profiles/run game shortcuts.
 - [ ] Only one physical-state operation runs at a time.
 - [ ] Existing display/audio/game behaviour executes in User Agent.
-- [ ] Steam Big Picture appears as a normal game and restores temporary state correctly.
+- [ ] Ordinary Steam game shortcuts monitor correctly and restore temporary state after exit.
 - [ ] WinForms and Console cannot bypass service rules.
 - [ ] Metrics/messages/client sync have a single machine owner.
 - [ ] Local REST is unavailable until enabled and paired.

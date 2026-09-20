@@ -52,11 +52,12 @@ public sealed class ShortcutRunnerTests
         ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
         using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
+        Guid operationId = Guid.NewGuid();
 
-        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("runner-shortcut", 0, cancellationTokenSource.Token);
+        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("runner-shortcut", 0, cancellationTokenSource.Token, operationId: operationId);
 
         Assert.Equal(ShortcutRunOutcome.Cancelled, result.Outcome);
-        Assert.NotEqual(Guid.Empty, result.OperationId);
+        Assert.Equal(operationId, result.OperationId);
     }
 
     [Fact]

@@ -74,6 +74,7 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState or ControlMessageType.SyncMessages => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
@@ -103,6 +104,14 @@ public sealed class ControlClientPipeServer
         return startRequest == null
             ? Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The shortcut request was invalid." })
             : _profileOperationRouter.StartShortcutAsync(identity.UserSid, identity.SessionId, startRequest.ShortcutId, cancellationToken);
+    }
+
+    private Task<ControlResponse> CancelOperationAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        CancelOperationRequest? cancelRequest = JsonSerializer.Deserialize<CancelOperationRequest>(request.Payload);
+        return cancelRequest == null
+            ? Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The cancellation request was invalid." })
+            : _profileOperationRouter.CancelOperationAsync(identity.UserSid, identity.SessionId, cancelRequest.OperationId, cancellationToken);
     }
 
     private ControlResponse GetOperationStatus(PipeClientIdentity identity, ControlEnvelope request)

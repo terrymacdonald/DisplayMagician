@@ -40,6 +40,20 @@ internal sealed class ControlServicePipeClient
         }, cancellationToken);
     }
 
+    public Task<ControlResponse> CancelOperationAsync(Guid operationId, CancellationToken cancellationToken)
+    {
+        if (operationId == Guid.Empty)
+        {
+            return Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An operation ID is required." });
+        }
+
+        return SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.CancelOperation,
+            Payload = JsonSerializer.Serialize(new CancelOperationRequest { OperationId = operationId })
+        }, cancellationToken);
+    }
+
     public async Task<ControlResponse> StartShortcutWhenAgentAvailableAsync(string shortcutId, CancellationToken cancellationToken)
     {
         const int maximumAttempts = 40;

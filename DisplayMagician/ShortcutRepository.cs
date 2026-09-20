@@ -1,13 +1,8 @@
-using DisplayMagician.GameLibraries;
-using DisplayMagician.Processes;
-using DisplayMagician.UIForms;
-using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -16,8 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
-using Windows.Data.Xml.Dom;
-using Windows.UI.Notifications;
 using IUserAgentRepositoryConnection = DisplayMagician.Contracts.IUserAgentRepositoryConnection;
 using RepositoryCommitRequest = DisplayMagician.Contracts.RepositoryCommitRequest;
 using RepositoryCommitResult = DisplayMagician.Contracts.RepositoryCommitResult;
@@ -887,54 +880,6 @@ namespace DisplayMagician
                 loadedShortcut.RefreshValidity();
             }
             logger.Trace($"ShortcutRepository/IsValidRefresh: IsValidRefresh completed.");
-        }
-
-        private static ProcessPriorityClass TranslatePriorityClassToClass(ProcessPriority processPriority)
-        {
-            ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
-            switch (processPriority.ToString("G"))
-            {
-                case "High":
-                    wantedPriorityClass = ProcessPriorityClass.High;
-                    break;
-                case "AboveNormal":
-                    wantedPriorityClass = ProcessPriorityClass.AboveNormal;
-                    break;
-                case "Normal":
-                    wantedPriorityClass = ProcessPriorityClass.Normal;
-                    break;
-                case "BelowNormal":
-                    wantedPriorityClass = ProcessPriorityClass.BelowNormal;
-                    break;
-                case "Idle":
-                    wantedPriorityClass = ProcessPriorityClass.Idle;
-                    break;
-                default:
-                    wantedPriorityClass = ProcessPriorityClass.Normal;
-                    break;
-            }
-            return wantedPriorityClass;
-
-        }
-
-
-        private static void ShowStatusToast(ToastContentBuilder builder)
-        {
-            var toastContent = builder.Content;
-            var doc = new Windows.Data.Xml.Dom.XmlDocument();
-            doc.LoadXml(toastContent.GetContent());
-            var toast = new ToastNotification(doc);
-            toast.SuppressPopup = false;
-            ToastNotificationManagerCompat.History.Clear();
-            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-        }
-
-        private static void SetTrayText(MainForm form, string text)
-        {
-            if (form.InvokeRequired)
-                form.BeginInvoke((MethodInvoker)delegate { form.UpdateNotifyIconText(text); });
-            else
-                form.UpdateNotifyIconText(text);
         }
 
         #endregion

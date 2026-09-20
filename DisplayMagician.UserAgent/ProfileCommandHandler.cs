@@ -39,6 +39,8 @@ public sealed class ProfileCommandHandler
     private readonly UserMessageStore _userMessageStore;
     private readonly IInteractiveSessionStateProvider _interactiveSessionStateProvider;
     private readonly ControlServiceClient _controlServiceClient;
+    private readonly object _shortcutOperationsLock = new object();
+    private readonly Dictionary<Guid, CancellationTokenSource> _shortcutOperations = new Dictionary<Guid, CancellationTokenSource>();
     private bool _stopRequested;
 
     public bool StopRequested => _stopRequested;
@@ -222,31 +224,55 @@ public sealed class ProfileCommandHandler
                 };
             }
 
-            _registration.OperationState = AgentOperationState.Running;
-            try
+            Guid operationId = Guid.NewGuid();
+            CancellationTokenSource operationCancellationSource = new CancellationTokenSource();
+            lock (_shortcutOperationsLock)
             {
-                ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(startRequest.ShortcutId, 0, cancellationToken, PublishShortcutStatusAsync).ConfigureAwait(false);
-                bool wasSuccessful = result.Outcome == ShortcutRunOutcome.Completed;
-                OperationPhase terminalPhase = result.Outcome == ShortcutRunOutcome.Cancelled ? OperationPhase.Cancelled : wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed;
-                ControlErrorCode errorCode = wasSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest;
-                OperationStatusUpdate terminalStatus = new OperationStatusUpdate
+                if (_shortcutOperations.Count > 0 || _registration.OperationState != AgentOperationState.Idle)
                 {
-                    OperationId = result.OperationId,
-                    OperationType = DisplayOperationType.StartShortcut,
-                    Phase = terminalPhase,
-                    Message = result.Outcome.ToString(),
-                    IsTerminal = true,
-                    IsSuccessful = wasSuccessful,
-                    ErrorCode = errorCode
-                };
-                await PublishShortcutStatusAsync(terminalStatus, CancellationToken.None).ConfigureAwait(false);
-                return new ControlResponse { IsSuccessful = wasSuccessful, ErrorCode = errorCode, Message = result.Outcome.ToString(), OperationStatus = new OperationStatus { OperationId = result.OperationId, OperationType = DisplayOperationType.StartShortcut, Phase = terminalPhase, IsTerminal = true, IsSuccessful = wasSuccessful, ErrorCode = errorCode } };
+                    operationCancellationSource.Dispose();
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent already has a shortcut operation in progress." };
+                }
+
+                _shortcutOperations.Add(operationId, operationCancellationSource);
+                _registration.OperationState = AgentOperationState.Running;
             }
-            finally
+
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
             {
-                _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
-                _registration.OperationState = AgentOperationState.Idle;
+                OperationId = operationId,
+                OperationType = DisplayOperationType.StartShortcut,
+                Phase = OperationPhase.Requested,
+                Message = "Shortcut operation requested."
+            }, CancellationToken.None).ConfigureAwait(false);
+            _ = RunShortcutOperationAsync(operationId, startRequest.ShortcutId, operationCancellationSource);
+            return new ControlResponse
+            {
+                IsSuccessful = true,
+                Message = "Shortcut operation started.",
+                OperationStatus = new OperationStatus { OperationId = operationId, OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.Requested }
+            };
+        }
+
+        if (request.MessageType == ControlMessageType.CancelOperation)
+        {
+            CancelOperationRequest? cancelRequest = JsonSerializer.Deserialize<CancelOperationRequest>(request.Payload);
+            if (cancelRequest == null || cancelRequest.OperationId == Guid.Empty)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An operation ID is required." };
             }
+
+            lock (_shortcutOperationsLock)
+            {
+                if (!_shortcutOperations.TryGetValue(cancelRequest.OperationId, out CancellationTokenSource? operationCancellationSource))
+                {
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested operation is not active in this User Agent." };
+                }
+
+                operationCancellationSource.Cancel();
+            }
+
+            return new ControlResponse { IsSuccessful = true, Message = "Shortcut cancellation requested.", OperationStatus = new OperationStatus { OperationId = cancelRequest.OperationId, OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.Requested } };
         }
 
         if (request.MessageType == ControlMessageType.GetRepositorySnapshot)
@@ -513,6 +539,51 @@ public sealed class ProfileCommandHandler
         finally
         {
             _registration.OperationState = AgentOperationState.Idle;
+        }
+    }
+
+    private async Task RunShortcutOperationAsync(Guid operationId, string shortcutId, CancellationTokenSource operationCancellationSource)
+    {
+        try
+        {
+            ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(shortcutId, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId).ConfigureAwait(false);
+            bool wasSuccessful = result.Outcome == ShortcutRunOutcome.Completed;
+            OperationPhase terminalPhase = result.Outcome == ShortcutRunOutcome.Cancelled ? OperationPhase.Cancelled : wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed;
+            ControlErrorCode errorCode = wasSuccessful || terminalPhase == OperationPhase.Cancelled ? ControlErrorCode.None : ControlErrorCode.InvalidRequest;
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = operationId,
+                OperationType = DisplayOperationType.StartShortcut,
+                Phase = terminalPhase,
+                Message = result.Outcome.ToString(),
+                IsTerminal = true,
+                IsSuccessful = wasSuccessful,
+                ErrorCode = errorCode
+            }, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "ProfileCommandHandler/RunShortcutOperationAsync: Shortcut operation {0} failed unexpectedly.", operationId);
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = operationId,
+                OperationType = DisplayOperationType.StartShortcut,
+                Phase = OperationPhase.Failed,
+                Message = "Shortcut operation failed unexpectedly.",
+                IsTerminal = true,
+                ErrorCode = ControlErrorCode.InvalidRequest
+            }, CancellationToken.None).ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (_shortcutOperationsLock)
+            {
+                _shortcutOperations.Remove(operationId);
+                _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
+                _registration.OperationState = AgentOperationState.Idle;
+            }
+
+            operationCancellationSource.Dispose();
         }
     }
 
