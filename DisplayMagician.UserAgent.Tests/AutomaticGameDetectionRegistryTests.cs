@@ -1,4 +1,5 @@
 using DisplayMagician.ConfigurationDefinitions;
+using DisplayMagician.Contracts;
 using DisplayMagician.UserAgent;
 using Xunit;
 
