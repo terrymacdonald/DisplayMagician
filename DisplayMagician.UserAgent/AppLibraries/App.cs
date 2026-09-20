@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using DisplayMagician.Contracts;
 using DisplayMagician.GameLibraries;
 using System.ComponentModel;
 using Newtonsoft.Json;

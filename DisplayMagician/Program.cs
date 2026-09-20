@@ -19,7 +19,6 @@ using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Win32;
 using System.Net.NetworkInformation;
-using DisplayMagician.AppLibraries;
 using System.ComponentModel;
 using System.Text;
 using System.Globalization;
@@ -74,7 +73,6 @@ namespace DisplayMagician {
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
 
         public static List<Game> AppGameList = new List<Game>();
-        public static List<App> AppAppList = new List<App>();
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static DonationSettings AppDonationSettings;

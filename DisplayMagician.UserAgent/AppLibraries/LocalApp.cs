@@ -13,6 +13,7 @@ using Windows.ApplicationModel.Core;
 using Windows.System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagician.AppLibraries
 {

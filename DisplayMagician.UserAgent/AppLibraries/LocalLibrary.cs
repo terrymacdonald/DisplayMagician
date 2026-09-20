@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 //using DisplayMagician.Processes;
 using System.Threading.Tasks;
 using DisplayMagician.Processes;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagician.AppLibraries
 {    

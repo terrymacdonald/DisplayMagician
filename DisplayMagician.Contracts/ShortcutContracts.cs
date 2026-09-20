@@ -12,6 +12,14 @@ public enum SupportedGameLibraryType
     Xbox = 6
 }
 
+/// <summary>Stable application library identifiers persisted by shortcut definitions and returned to clients.</summary>
+public enum SupportedAppLibraryType
+{
+    Unknown = 0,
+    LocalInstalledApp = 1,
+    LocalUWPApp = 2
+}
+
 public enum GameLaunchMode
 {
     StartGame = 0,

@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
@@ -659,15 +658,7 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                foreach (App appToTest in AppLibrary.AllInstalledAppsInAllLibraries)
-                {
-                    if (appToTest.Name.Equals(item.Text))
-                    {
-                        // Draw the full color image as the shortcuts is not invalid
-                        g.DrawImage(img, pos);
-                        break;
-                    }
-                }
+                g.DrawImage(img, pos);
 
                 // Draw image border
                 if (Math.Min(pos.Width, pos.Height) > 32)

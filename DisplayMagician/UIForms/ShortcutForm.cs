@@ -15,7 +15,6 @@ using System.Windows.Forms.VisualStyles;
 using DisplayMagician;
 using System.Threading;
 using System.Threading.Tasks;
-using DisplayMagician.AppLibraries;
 using static DisplayMagician.GameLibraries.ProductInformation;
 using System.ComponentModel;
 using DisplayMagician.Processes;
@@ -66,7 +65,6 @@ namespace DisplayMagician.UIForms
 
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
-        private bool _firstShow = true;
 
         // Debounce timer: delays the icon scan until the user stops typing in txt_executable
         private readonly System.Windows.Forms.Timer _exePathDebounceTimer = new System.Windows.Forms.Timer { Interval = 600 };
@@ -1915,18 +1913,6 @@ namespace DisplayMagician.UIForms
             {
                 logger.Error(ex, "ShortcutForm/ShortcutForm_Load: Could not load service-authoritative audio profiles.");
                 MessageBox.Show(this, "DisplayMagician could not load Audio Profiles through the User Agent.", "Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-            if (_firstShow)
-            {
-                if (!AppLibraries.AppLibrary.AppImagesLoaded)
-                {
-                    AppLibraries.AppLibrary.RefreshAppBitmaps();
-                }
-
-
-
-                _firstShow = false;
             }
 
             // Load the shortcut info

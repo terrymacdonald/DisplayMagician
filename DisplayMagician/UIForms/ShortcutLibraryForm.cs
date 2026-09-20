@@ -1,4 +1,3 @@
-using DisplayMagician.AppLibraries;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 //using DisplayMagician.Resources;
@@ -315,8 +314,6 @@ namespace DisplayMagician.UIForms
                 // Load the apps in background on execute
                 //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
                 //      Need to investigate why this particular part was crashing everything.
-                logger.Trace($"ShortcutLibraryForm/btn_new_Click: Starting the Loading the Apps in the background tasks.");
-                AppLibrary.LoadAppsInBackground();
             }
             _shortcutForm.Owner = this;
 
@@ -419,8 +416,6 @@ namespace DisplayMagician.UIForms
                     // Load the apps in background on execute
                     //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
                     //      Need to investigate why this particular part was crashing everything.
-                    logger.Trace($"ShortcutLibraryForm/btn_edit_Click: Starting the Loading the Apps in the background tasks.");
-                    AppLibrary.LoadAppsInBackground();
                 }
                 _shortcutForm.Owner = this;
 

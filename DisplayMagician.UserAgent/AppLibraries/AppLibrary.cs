@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using DisplayMagician;
+using DisplayMagician.Contracts;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using Newtonsoft.Json;
@@ -14,13 +15,6 @@ using Windows.System;
 
 namespace DisplayMagician.AppLibraries
 {
-    public enum SupportedAppLibraryType
-    {
-        Unknown = 0,
-        LocalInstalledApp = 1,
-        LocalUWPApp = 2
-    }
-
     public class AppLibrary
     {
 

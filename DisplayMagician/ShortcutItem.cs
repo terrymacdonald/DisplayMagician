@@ -16,7 +16,6 @@ using System.Text.RegularExpressions;
 using TsudaKageyu;
 using System.ComponentModel;
 using System.Linq;
-using DisplayMagician.AppLibraries;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using DisplayMagician.ConfigurationDefinitions;
@@ -155,7 +154,6 @@ namespace DisplayMagician
         private string _applicationId = "";
         private string _applicationName = "";
         private SupportedAppLibraryType _applicationLibrary = SupportedAppLibraryType.Unknown;
-        private App _application = null;
         private string _executableNameAndPath = "";
         private string _executableArguments = "";
         private bool _executableArgumentsRequired = false;
@@ -429,20 +427,6 @@ namespace DisplayMagician
             set
             {
                 _applicationLibrary = value;
-
-            }
-        }
-
-        public App Application
-        {
-            get
-            {
-                return _application;
-            }
-
-            set
-            {
-                _application = value;
 
             }
         }
@@ -1065,7 +1049,6 @@ namespace DisplayMagician
             _applicationId = "";
             _applicationName = "";
             _applicationLibrary = SupportedAppLibraryType.Unknown;
-            _application = new App();
 
             _gameAppId = "";
             _gameArgumentsRequired = false;
@@ -1155,7 +1138,6 @@ namespace DisplayMagician
             _applicationId = "";
             _applicationName = "";
             _applicationLibrary = SupportedAppLibraryType.Unknown;
-            _application = new App();
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -1233,7 +1215,6 @@ namespace DisplayMagician
             _applicationId = "";
             _applicationName = "";
             _applicationLibrary = SupportedAppLibraryType.Unknown;
-            _application = new App();
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -1270,7 +1251,6 @@ namespace DisplayMagician
             _applicationId = app.AppToUse.Id;
             _applicationName = app.AppToUse.Name;
             _applicationLibrary = (SupportedAppLibraryType)app.AppToUse.Library;
-            _application = null;
             _differentExecutableToMonitor = app.DifferentExecutableToMonitor;
             _executableNameAndPath = app.AppToUse.ExecutablePath;
             _runExeAsAdministrator = app.RunAsAdministrator;
@@ -1341,7 +1321,6 @@ namespace DisplayMagician
             shortcut.ApplicationId = ApplicationId;
             shortcut.ApplicationName = ApplicationName;
             shortcut.ApplicationLibrary = ApplicationLibrary;
-            shortcut.Application = Application;
             shortcut.ProcessPriority = ProcessPriority;
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
@@ -1595,19 +1574,18 @@ namespace DisplayMagician
             else if (Category.Equals(ShortcutCategory.Application))
             {
                 logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Application");
-                // Use the same application source as runtime. When the live app list is
-                // still loading, retain the persisted application data to avoid a false error.
-                App applicationToValidate = Application;
-                if (AppLibrary.AppsLoaded && AppLibrary.AllInstalledAppsInAllLibraries != null)
-                    applicationToValidate = AppLibrary.GetAnyAppById(ApplicationId);
-
-                if (applicationToValidate == null || String.IsNullOrWhiteSpace(applicationToValidate.ExePath) || !System.IO.File.Exists(applicationToValidate.ExePath))
+                bool isPackagedApplication = ApplicationLibrary == SupportedAppLibraryType.LocalUWPApp;
+                bool isValidApplication = !String.IsNullOrWhiteSpace(ApplicationId) &&
+                    !String.IsNullOrWhiteSpace(ApplicationName) &&
+                    (!ExecutableArgumentsRequired || !String.IsNullOrWhiteSpace(ExecutableArguments)) &&
+                    (isPackagedApplication || (!String.IsNullOrWhiteSpace(ExecutableNameAndPath) && System.IO.File.Exists(ExecutableNameAndPath)));
+                if (!isValidApplication)
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The application '{ApplicationName}' (ID: {ApplicationId}) could not be found or its executable is unavailable.");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The application '{ApplicationName}' (ID: {ApplicationId}) does not have runnable persisted launch data.");
                     ShortcutError error = new ShortcutError();
                     error.Name = "ApplicationNotInstalled";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The application '{ApplicationName}' is not installed or its executable cannot be accessed.";
+                    error.Message = $"The application '{ApplicationName}' does not have valid launch information.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
@@ -1649,17 +1627,13 @@ namespace DisplayMagician
 
                 if (!String.IsNullOrWhiteSpace(sp.ApplicationId))
                 {
-                    App applicationToValidate = null;
-                    if (AppLibrary.AppsLoaded && AppLibrary.AllInstalledAppsInAllLibraries != null)
-                        applicationToValidate = AppLibrary.GetAnyAppById(sp.ApplicationId);
-
-                    if (AppLibrary.AppsLoaded && (applicationToValidate == null || applicationToValidate is not LocalApp localApp || localApp.LocalAppType != InstalledAppType.UWP))
+                    if (sp.ExecutableArgumentsRequired && String.IsNullOrWhiteSpace(sp.Arguments))
                     {
-                        logger.Warn($"ShortcutItem/RefreshValidity: The UWP start program '{sp.ApplicationName}' (ID: {sp.ApplicationId}) could not be found.");
+                        logger.Warn($"ShortcutItem/RefreshValidity: The packaged start program '{sp.ApplicationName}' (ID: {sp.ApplicationId}) requires arguments but none were supplied.");
                         ShortcutError error = new ShortcutError();
-                        error.Name = "UwpStartProgramNotInstalled";
+                        error.Name = "PackagedStartProgramArgumentsMissing";
                         error.Validity = ShortcutValidity.Warning;
-                        error.Message = $"The UWP start program '{sp.ApplicationName}' is not installed or cannot be accessed.";
+                        error.Message = $"The packaged start program '{sp.ApplicationName}' requires launch arguments, but none were supplied.";
                         _shortcutErrors.Add(error);
                         if (worstError != ShortcutValidity.Error)
                             worstError = ShortcutValidity.Warning;
@@ -1841,7 +1815,7 @@ namespace DisplayMagician
 
         public string CreateCommand()
         {
-            return $"{Application.ExePath} {DisplayMagicianStartupAction.RunShortcut} \"{UUID}\"";
+            return $"{System.Windows.Forms.Application.ExecutablePath} {DisplayMagicianStartupAction.RunShortcut} \"{UUID}\"";
         }
 
         public static ProfileItem CreateSkipDisplayChangeProfile()

@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using DisplayMagician;
+using DisplayMagician.Contracts;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using Newtonsoft.Json;
@@ -14,13 +15,6 @@ using Windows.System;
 
 namespace DisplayMagician.AppLibraries
 {
-    public enum SupportedAppLibraryType
-    {
-        Unknown = 0,
-        LocalInstalledApp = 1,
-        LocalUWPApp = 2
-    }
-
     public class AppLibrary
     {
 
@@ -214,8 +208,6 @@ namespace DisplayMagician.AppLibraries
             logger.Trace($"AppLibrary/LoadAppsInBackground: Adding the installed apps we just got to the list of installed apps");
             AppLibrary.AllInstalledAppsInAllLibraries.AddRange(localLibrary.AllInstalledApps);
             logger.Trace($"AppLibrary/LoadAppsInBackground: Setting apps loaded to be true");
-
-            Program.AppAppList = AppLibrary.AllInstalledAppsInAllLibraries;
 
             AppsLoaded = true;
 
