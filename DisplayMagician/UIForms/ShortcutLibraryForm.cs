@@ -564,15 +564,10 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.SuspendLayout();
             ilv_saved_shortcuts.Refresh();
 
-            RunShortcutResult result = RunShortcutResult.Error;
+            Program.ERRORLEVEL result = Program.ERRORLEVEL.ERROR_EXCEPTION;
             try
             {
-                Program.ERRORLEVEL exitCode = await Task.Run(() => Program.RunShortcut(_selectedShortcut.UUID));
-                result = exitCode == Program.ERRORLEVEL.OK
-                    ? RunShortcutResult.Successful
-                    : exitCode == Program.ERRORLEVEL.CANCELED_BY_USER
-                        ? RunShortcutResult.Cancelled
-                        : RunShortcutResult.Error;
+                result = await Task.Run(() => Program.RunShortcut(_selectedShortcut.UUID));
             }
             catch (OperationCanceledException)
             {

@@ -41,6 +41,34 @@ public sealed class ShortcutStoreTests
     }
 
     [Fact]
+    public void Constructor_RemovesLegacyApplicationObjectAndCreatesBackup()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");
+        try
+        {
+            string shortcutDirectory = Path.Combine(root, "Shortcuts");
+            Directory.CreateDirectory(shortcutDirectory);
+            string shortcutPath = Path.Combine(shortcutDirectory, "Shortcuts.json");
+            File.WriteAllText(shortcutPath, "{\"Shortcuts\":[{\"UUID\":\"application-shortcut\",\"ApplicationId\":\"Contoso.App_abc!App\",\"Application\":{\"$type\":\"DisplayMagician.AppLibraries.LocalApp, DisplayMagician\",\"Id\":\"Contoso.App_abc!App\"}}]}", Encoding.Unicode);
+
+            ShortcutStore store = new ShortcutStore(root);
+
+            using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
+            JsonElement shortcut = document.RootElement.GetProperty("Shortcuts")[0];
+            Assert.Equal("Contoso.App_abc!App", shortcut.GetProperty("ApplicationId").GetString());
+            Assert.False(shortcut.TryGetProperty("Application", out _));
+            Assert.Single(Directory.GetFiles(shortcutDirectory, "Shortcuts.json.legacy-application.*.bak"));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+        }
+    }
+
+    [Fact]
     public void Commit_PreservesAutomaticallyDetectedGameLaunchMode()
     {
         string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");

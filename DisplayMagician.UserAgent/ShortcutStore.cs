@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
 
@@ -13,10 +14,12 @@ namespace DisplayMagician.UserAgent;
 public sealed class ShortcutStore
 {
     private readonly string _shortcutFilePath;
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     public ShortcutStore(string userDataPath)
     {
         _shortcutFilePath = Path.Combine(userDataPath, "Shortcuts", "Shortcuts.json");
+        MigrateLegacyApplicationObjects();
     }
 
     public RepositorySnapshot GetSnapshot()
@@ -124,6 +127,49 @@ public sealed class ShortcutStore
         File.WriteAllText(temporaryPath, request.Json, Encoding.Unicode);
         if (File.Exists(_shortcutFilePath)) File.Replace(temporaryPath, _shortcutFilePath, null); else File.Move(temporaryPath, _shortcutFilePath);
         return new RepositoryCommitResult { Snapshot = GetSnapshot() };
+    }
+
+    private void MigrateLegacyApplicationObjects()
+    {
+        if (!File.Exists(_shortcutFilePath))
+        {
+            return;
+        }
+
+        try
+        {
+            string json = Encoding.Unicode.GetString(File.ReadAllBytes(_shortcutFilePath)).TrimStart('\uFEFF');
+            JsonNode? root = JsonNode.Parse(json);
+            if (root is not JsonObject rootObject || rootObject["Shortcuts"] is not JsonArray shortcuts)
+            {
+                return;
+            }
+
+            bool changed = false;
+            foreach (JsonNode? shortcut in shortcuts)
+            {
+                if (shortcut is JsonObject shortcutObject && shortcutObject.Remove("Application"))
+                {
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            string backupPath = $"{_shortcutFilePath}.legacy-application.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
+            File.Copy(_shortcutFilePath, backupPath, overwrite: false);
+            string temporaryPath = Path.Combine(Path.GetDirectoryName(_shortcutFilePath)!, $".{Path.GetFileName(_shortcutFilePath)}.{Guid.NewGuid():N}.tmp");
+            File.WriteAllText(temporaryPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);
+            File.Replace(temporaryPath, _shortcutFilePath, null);
+            Logger.Info($"ShortcutStore/MigrateLegacyApplicationObjects: Removed legacy application objects and backed up shortcuts to {backupPath}.");
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+        {
+            Logger.Error(ex, $"ShortcutStore/MigrateLegacyApplicationObjects: Could not normalize legacy application objects in {_shortcutFilePath}.");
+        }
     }
 
     private static string GetString(JsonElement element, string propertyName)

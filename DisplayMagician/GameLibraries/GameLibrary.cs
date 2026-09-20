@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using DisplayMagician;
-#if !USER_AGENT
-using DisplayMagician.AppLibraries;
-#endif
 
 namespace DisplayMagician.GameLibraries
 {
