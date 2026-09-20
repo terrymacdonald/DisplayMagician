@@ -28,7 +28,7 @@ v4.0.0 must deliver:
 - Per-user profiles, audio profiles, shortcuts, and user settings.
 - One machine-wide physical display/shortcut operation at a time.
 - Existing game, Steam, Steam Big Picture, display, audio, and process monitoring continuing in the User Agent.
-- Machine-owned anonymous metrics, client sync, and message gathering.
+- Machine-owned anonymous metrics and client-sync scheduling, with per-user messages owned by the User Agent and exposed to clients through Control Service contracts.
 - An initially disabled localhost REST API foundation for future paired integrations.
 - Diagnostics, audit records, recovery handling, installer support, and tests.
 
@@ -58,7 +58,7 @@ v4.0.0 does **not** need to deliver:
 | Recovery | Agent/service loss during temporary state requires safe restoration before further display-changing work. |
 | Recovery administration | A Service Recovery page under Settings > Diagnostics is visible only to an elevated DM administrator. Normal restoration retries only through the affected user's Agent after sign-in. An emergency, UAC-elevated `Force release DM control` action requires an explicit confirmation phrase, releases the lease, marks recovery abandoned, and creates a high-severity audit record. |
 | Pairing | Explicit, user-confirmed pairing. Exact pairing UX is technology-specific and deferred behind abstractions. |
-| Metrics/messages | Existing anonymous metrics, client sync, and message gathering become machine-level Control Service responsibilities. |
+| Metrics/messages | Anonymous metrics and client-sync scheduling remain machine-level responsibilities. The User Agent owns each user's message cache, read state, content retrieval, and message RPCs; all UI clients view it through Control Service routing. |
 | Remote scope | No public endpoint in v4.0.0. Localhost integration foundation only. |
 | Build version | The root `version.json` is the sole version authority. Every shipped v4 executable, library, service registration, installer/package, diagnostics record, and protocol registration derives its version from the same Nerdbank.GitVersioning build metadata. |
 
@@ -98,10 +98,10 @@ DisplayMagicianShared
 
 | Project | Responsibility |
 |---|---|
-| `DisplayMagician.Contracts` | Versioned requests, responses, events, protocol constants, and error codes. No UI, hardware, files, or static application state. |
+| `DisplayMagician.Contracts` | Versioned requests, responses, events, protocol constants, error codes, and stable cross-process enums. No UI, hardware, files, or static application state. |
 | `DisplayMagician.ControlService` | Windows Service, ownership, authorization, machine queue, persistence coordination, audit, local API, service health, and Agent routing. |
 | `DisplayMagician.SessionLauncher` | Demand-start `LocalSystem` broker. Accepts only authenticated local requests from Control Service; starts the signed User Agent in one already-authorized interactive session and returns launch status. Never accepts remote clients or performs display work. |
-| `DisplayMagician.UserAgent` | Interactive-session executor: display/audio changes, game library loading, Steam/Big Picture monitoring, shortcut lifecycle, and notifications. |
+| `DisplayMagician.UserAgent` | Interactive-session executor: display/audio changes, game library loading, Steam/Big Picture monitoring, shortcut lifecycle, per-user message storage/sync, and notifications. |
 | `DisplayMagician.WinForms` | Current designer-backed UI, converted to a Control Service client. |
 | `DisplayMagician.Console` | Current command-line interface, converted to a Control Service client. |
 | `DisplayMagicianShared` | Existing GPU/vendor/native integration remains here initially. Do not rewrite GPU libraries as part of the structure change. |
@@ -263,6 +263,7 @@ Authorized request with missing Agent:
 - Handle Steam Big Picture mode detection.
 - Capture/restore temporary state.
 - Show user-session notifications.
+- Own per-user message content, read state, and refresh; return client-safe message views through Control Service routing.
 - Send Agent heartbeat, operation progress, result, and recovery status to the service.
 
 ### Registration
@@ -442,7 +443,7 @@ For shortcut extraction, use the following names consistently:
 - `ShortcutClient`: WinForms, Console, and future API-facing request adapter.
 - `ShortcutEditor`: the existing WinForms editing workflow.
 
-`DisplayMagician.ConfigurationDefinitions` owns portable persisted definitions, schema versions, JSON conversion, and pure configuration validation. It does not access files, hardware, processes, named pipes, or WinForms. `DisplayMagician.Contracts` remains limited to transport messages.
+`DisplayMagician.ConfigurationDefinitions` owns portable persisted definitions, schema versions, JSON conversion, and pure configuration validation. It does not access files, hardware, processes, named pipes, or WinForms. `DisplayMagician.Contracts` owns transport messages and shared cross-process enums, including shortcut category/permanence/process priority, game launch mode, and supported game-library identifiers.
 
 The User Agent owns game-library discovery, game launch, `Game.IsRunning`, and process-tree monitoring directly. Do not create a separate GameLibraries project and do not put this Windows runtime behaviour in ConfigurationDefinitions. WinForms receives game-library/game views through Agent contracts as the direct legacy implementation is retired. `DisplayMagicianShared` is migration scaffolding for existing vendor/native code, not a new permanent application layer.
 
@@ -504,7 +505,7 @@ Pairing grants scoped credentials such as `profiles:read`, `profiles:apply`, `sh
 
 ## Current Heartbeats, Messages, and Metrics
 
-Current DM uses `AnonymousMetricsService`, `ClientSyncService`, and `MessageSyncService` from the WinForms `Program` process. v4 moves their machine-wide ownership to the Control Service.
+Current DM uses `AnonymousMetricsService`, `ClientSyncService`, and `MessageSyncService` from the WinForms `Program` process. v4 separates their ownership: metrics and client-sync scheduling become machine-level service responsibilities, while messages are per-user Agent data exposed through contracts.
 
 ```text
 User Agent --> Control Service
@@ -514,10 +515,13 @@ Control Service --> DM metrics endpoint
   Existing opted-in anonymous metrics heartbeat.
 
 Control Service --> DM sync endpoint
-  Existing client sync, updates, messages, and media gathering.
+  Existing machine-level client sync and update metadata gathering.
+
+User Agent --> DM message endpoint
+  Per-user message content and media gathering, message cache, read state, and client-safe message views.
 ```
 
-The active User Agent/UI displays user-facing message/update notifications. The service gathers, validates, stores, schedules, and emits the machine-level events.
+The active User Agent/UI displays user-facing message/update notifications. The service schedules and emits machine-level update events; the Agent validates, stores, and returns the current user's messages.
 
 ## Logging, Audit, and Recovery
 
@@ -577,6 +581,15 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 ## Implementation Phases
 
+### Current migration status
+
+- [x] `Processes` and `GameLibraries` have physical UserAgent-owned source folders; UserAgent no longer links either source tree from WinForms and builds independently.
+- [x] `GameView` is returned by the Agent and the WinForms shortcut editor uses it for game selection, icon discovery, alternate-executable browsing, and persisted shortcut identity.
+- [x] Per-user messaging is Agent-owned: list, read-state, and refresh commands route through Control Service; WinForms no longer reads the message store directly.
+- [x] Cross-process shortcut/game enums are declared once in `DisplayMagician.Contracts`; persisted numeric values are unchanged.
+- [ ] WinForms still contains the legacy `ShortcutRepository.RunShortcut` compatibility runner and direct `AppLibraries`/process consumers. Remove these only after their Agent contract replacements are complete.
+- [ ] The WiX payload does not yet publish/install ControlService, SessionLauncher, and UserAgent together.
+
 ### Phase A — Structure and IPC
 
 - [x] Create Contracts, ControlService, and UserAgent projects.
@@ -618,19 +631,22 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 ### Phase D — Shortcut lifecycle and recovery
 
-- [ ] Move shortcut execution into UserAgent.
-- [ ] Preserve pre/after/stop programs, audio, and temporary restoration.
-- [ ] Persist and test recovery records.
-- [ ] Move normal Steam game monitoring.
+- [x] Move the Agent shortcut execution foundation into UserAgent.
+- [x] Preserve pre/after/stop programs, audio volume overrides, temporary restoration, and recovery records in the Agent runner.
+- [x] Enforce locked-session policy for new shortcut starts and publish operation progress.
+- [x] Move normal game discovery and game/process runtime source ownership into UserAgent.
+- [ ] Remove WinForms `ShortcutRepository.RunShortcut` and its direct process/game runtime dependencies; route all execution through `StartShortcut`.
 - [ ] Add synthetic Steam Big Picture `SteamGame` behaviour.
-- [ ] Implement cancellation and locked-session rules.
+- [ ] Add client cancel-operation protocol and complete game/Big Picture parity testing.
 
 **Exit criteria:** Big Picture shortcut applies temporary state, monitors correctly, and restores it after exit.
 
 ### Phase E — Existing background functionality
 
 - [ ] Move anonymous metrics ownership to service.
-- [ ] Move client sync/message gathering/storage to service.
+- [ ] Move machine-level client-sync/update scheduling to service.
+- [x] Move per-user message gathering/storage/read state to UserAgent and expose it through contracts.
+- [ ] Move WinForms startup-message polling and release-note lookup to Agent message views; then remove the legacy desktop messaging implementation.
 - [ ] Forward update/message events to Agent/UI.
 - [ ] Add audit and diagnostics bundle support.
 
