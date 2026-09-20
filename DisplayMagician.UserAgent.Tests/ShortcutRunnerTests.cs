@@ -104,4 +104,29 @@ public sealed class ShortcutRunnerTests
         Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
         Assert.True(registry.IsAutomaticDetectionRegistered("automatic-shortcut"));
     }
+
+    [Fact]
+    public async Task RestorePendingRecoveryAsync_FailsClosedWhenTheRecoveryRecordIsUnreadable()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutRunner-{Guid.NewGuid():N}");
+        try
+        {
+            string settingsPath = Path.Combine(root, "Settings");
+            Directory.CreateDirectory(settingsPath);
+            File.WriteAllText(Path.Combine(settingsPath, "ShortcutRecovery.json"), "not valid json");
+            ShortcutRunner runner = new ShortcutRunner(new ShortcutStore(root), new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
+
+            bool restored = await runner.RestorePendingRecoveryAsync(0, CancellationToken.None);
+
+            Assert.False(restored);
+            Assert.True(runner.IsRecoveryRequired);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+        }
+    }
 }

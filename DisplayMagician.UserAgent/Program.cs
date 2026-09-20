@@ -43,6 +43,7 @@ internal static class Program
 
         bool acquireDisplayControl = startupRequest.Action == UserAgentStartupAction.AcquireDisplayControl;
         bool migrateUserData = true;
+        ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
         TaskCompletionSource<ControlResponse> migrationCompletion = new TaskCompletionSource<ControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
         Task serviceConnection = serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, migrationCompletion, cancellationTokenSource.Token);
@@ -53,9 +54,8 @@ internal static class Program
             throw new InvalidOperationException(migrationResponse.Message);
         }
 
-        ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
-    await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-    await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
+        await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+        await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
         Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
         AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.ShortcutRunner, serviceClient, registration);
         Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(cancellationTokenSource.Token);

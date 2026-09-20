@@ -38,6 +38,11 @@ public sealed class ShortcutRecoveryStore
         }
     }
 
+    public bool HasPendingRecovery()
+    {
+        return File.Exists(_recoveryFilePath);
+    }
+
     public void Save(ShortcutRecoveryRecord recoveryRecord)
     {
         ArgumentNullException.ThrowIfNull(recoveryRecord);

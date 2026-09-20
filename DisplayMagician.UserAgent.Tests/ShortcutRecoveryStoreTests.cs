@@ -46,4 +46,27 @@ public sealed class ShortcutRecoveryStoreTests
             }
         }
     }
+
+    [Fact]
+    public void HasPendingRecovery_ReturnsTrueWhenTheRecoveryRecordCannotBeRead()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutRecovery-{Guid.NewGuid():N}");
+        try
+        {
+            string settingsPath = Path.Combine(root, "Settings");
+            Directory.CreateDirectory(settingsPath);
+            File.WriteAllText(Path.Combine(settingsPath, "ShortcutRecovery.json"), "not valid json");
+            ShortcutRecoveryStore store = new ShortcutRecoveryStore(root);
+
+            Assert.True(store.HasPendingRecovery());
+            Assert.Null(store.GetPending());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+        }
+    }
 }

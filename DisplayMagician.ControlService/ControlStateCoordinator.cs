@@ -9,7 +9,18 @@ public sealed class ControlStateCoordinator
     private static readonly TimeSpan AgentHeartbeatTimeout = TimeSpan.FromSeconds(45);
     private readonly object _syncRoot = new object();
     private readonly Dictionary<int, RegisteredAgent> _agentsBySession = new Dictionary<int, RegisteredAgent>();
+    private readonly DisplayControlLeaseStore? _leaseStore;
     private DisplayControlLease? _displayControlLease;
+
+    public ControlStateCoordinator()
+    {
+    }
+
+    public ControlStateCoordinator(DisplayControlLeaseStore leaseStore)
+    {
+        _leaseStore = leaseStore ?? throw new ArgumentNullException(nameof(leaseStore));
+        _displayControlLease = _leaseStore.Load();
+    }
 
     public void RegisterAgent(AgentRegistration registration, DateTime utcNow)
     {
@@ -28,10 +39,12 @@ public sealed class ControlStateCoordinator
                 existingAgent.Registration.IsRecoveryRequired = registration.IsRecoveryRequired;
                 existingAgent.Registration.CommandPipeName = registration.CommandPipeName;
                 existingAgent.LastHeartbeatUtc = utcNow;
+                ConfirmRecoveryRestored(registration);
                 return;
             }
 
             _agentsBySession[registration.SessionId] = new RegisteredAgent(registration, utcNow);
+            ConfirmRecoveryRestored(registration);
         }
     }
 
@@ -60,6 +73,7 @@ public sealed class ControlStateCoordinator
                 {
                     _displayControlLease.ActiveOperationId = null;
                 }
+                PersistLease();
             }
         }
     }
@@ -102,6 +116,7 @@ public sealed class ControlStateCoordinator
                 AcquiredUtc = utcNow
             };
             _displayControlLease.LastHeartbeatUtc = utcNow;
+            PersistLease();
 
             return new LeaseDecision
             {
@@ -158,10 +173,12 @@ public sealed class ControlStateCoordinator
             if (_displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired)
             {
                 _displayControlLease.IsRecoveryRequired = true;
+                PersistLease();
                 return;
             }
 
             _displayControlLease = null;
+            ClearPersistedLease();
         }
     }
 
@@ -213,7 +230,35 @@ public sealed class ControlStateCoordinator
         if (ownerIsNoLongerActiveConsoleUser || ownerHeartbeatIsStale)
         {
             _displayControlLease = null;
+            ClearPersistedLease();
         }
+    }
+
+    private void ConfirmRecoveryRestored(AgentRegistration registration)
+    {
+        if (_displayControlLease == null || !_displayControlLease.IsRecoveryRequired || registration.IsRecoveryRequired ||
+            _displayControlLease.OwnerSessionId != registration.SessionId ||
+            !string.Equals(_displayControlLease.OwnerUserSid, registration.UserSid, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _displayControlLease.IsRecoveryRequired = false;
+        _displayControlLease.ActiveOperationId = null;
+        PersistLease();
+    }
+
+    private void PersistLease()
+    {
+        if (_leaseStore != null && _displayControlLease != null)
+        {
+            _leaseStore.Save(CopyLease(_displayControlLease));
+        }
+    }
+
+    private void ClearPersistedLease()
+    {
+        _leaseStore?.Clear();
     }
 
     private static DisplayControlLease CopyLease(DisplayControlLease lease)

@@ -28,7 +28,7 @@ public sealed class ShortcutRunner
         _recoveryStore = recoveryStore ?? throw new ArgumentNullException(nameof(recoveryStore));
     }
 
-    public bool IsRecoveryRequired => _recoveryStore.GetPending() != null;
+    public bool IsRecoveryRequired => _recoveryStore.HasPendingRecovery();
 
     public Task<ShortcutRunResult> PrepareRunAsync(string shortcutId, CancellationToken cancellationToken)
     {
@@ -415,7 +415,7 @@ public sealed class ShortcutRunner
         ShortcutRecoveryRecord? recoveryRecord = _recoveryStore.GetPending();
         if (recoveryRecord == null)
         {
-            return true;
+            return !_recoveryStore.HasPendingRecovery();
         }
 
         bool recoveryRestored = true;

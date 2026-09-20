@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using DisplayMagician.Contracts;
 using Xunit;
 
@@ -91,6 +92,43 @@ public sealed class ControlStateCoordinatorTests
         ControlServiceStatus status = coordinator.GetStatus(now.AddSeconds(2));
         Assert.Single(status.Agents);
         Assert.Equal(agent.ProcessId, status.Agents[0].ProcessId);
+    }
+
+    [Fact]
+    public void RecoveryRequiredLease_SurvivesServiceRestartUntilOwnerAgentConfirmsRestoration()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ControlState-{Guid.NewGuid():N}");
+        try
+        {
+            DateTime now = DateTime.UtcNow;
+            StoragePaths storagePaths = new StoragePaths(root);
+            DisplayControlLeaseStore leaseStore = new DisplayControlLeaseStore(storagePaths);
+            ControlStateCoordinator coordinator = new ControlStateCoordinator(leaseStore);
+            AgentRegistration owner = CreateAgent("S-1-5-21-100", 10, 1000);
+            coordinator.RegisterAgent(owner, now);
+            Assert.True(coordinator.TryAcquireDisplayControl(owner.UserSid, owner.SessionId, owner.SessionId, now).IsGranted);
+            coordinator.RecordHeartbeat(owner.UserSid, owner.SessionId, AgentOperationState.RecoveryRequired, true, now.AddSeconds(1));
+
+            ControlStateCoordinator restartedCoordinator = new ControlStateCoordinator(leaseStore);
+            AgentRegistration secondUser = CreateAgent("S-1-5-21-200", 11, 2000);
+            restartedCoordinator.RegisterAgent(secondUser, now.AddSeconds(2));
+            LeaseDecision denied = restartedCoordinator.TryAcquireDisplayControl(secondUser.UserSid, secondUser.SessionId, secondUser.SessionId, now.AddSeconds(2));
+            Assert.False(denied.IsGranted);
+            Assert.Equal(ControlErrorCode.DisplayControlBusy, denied.ErrorCode);
+
+            AgentRegistration recoveredOwner = CreateAgent(owner.UserSid, owner.SessionId, owner.ProcessId);
+            restartedCoordinator.RegisterAgent(recoveredOwner, now.AddSeconds(3));
+            LeaseDecision granted = restartedCoordinator.TryAcquireDisplayControl(recoveredOwner.UserSid, recoveredOwner.SessionId, recoveredOwner.SessionId, now.AddSeconds(3));
+            Assert.True(granted.IsGranted, granted.Message);
+            Assert.False(granted.Lease!.IsRecoveryRequired);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+        }
     }
 
     private static AgentRegistration CreateAgent(string userSid, int sessionId, int processId)
