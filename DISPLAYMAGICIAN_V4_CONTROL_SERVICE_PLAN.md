@@ -429,7 +429,7 @@ To retain the mature WinForms forms while moving authority to the User Agent, `P
 5. The Agent validates the caller and expected revision, atomically writes the authoritative repository, and returns the updated snapshot/revision. Domain-reference and hardware-ownership validation is added alongside the Agent-owned shortcut runner.
 6. WinForms replaces its cache from the returned snapshot. If a commit fails, it keeps the dirty edit in memory, clearly reports that it was not saved, and offers reload/retry rather than silently writing local files.
 
-Display/audio apply already route through the Agent. Game launch, process monitoring, temporary-state capture, restoration, and shortcut runtime move to the Agent with `ShortcutRunner`; until then the legacy WinForms `ShortcutRepository.RunShortcut` remains a deliberately temporary compatibility path. The WinForms cache must not invoke `ProfileItem` display APIs or `AudioProfileItem.TrySetActive`.
+Display/audio apply already route through the Agent. Game launch, process monitoring, temporary-state capture, restoration, and shortcut runtime are Agent-owned through `ShortcutRunner`; the legacy WinForms `ShortcutRepository.RunShortcut` path has been removed. The WinForms cache must not invoke `ProfileItem` display APIs or `AudioProfileItem.TrySetActive`.
 
 Prototype status: `ProfileRepository`, `AudioProfileRepository`, and `ShortcutRepository` now each expose `ConnectToUserAgent`. They deserialize Agent snapshots into their existing item collections, retain the current revision, and save through optimistic Agent commits. Forms establish the connection but do not resolve or configure authoritative profile, audio-profile, or shortcut storage paths.
 
@@ -585,7 +585,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Per-user messaging is Agent-owned: list, read-state, and refresh commands route through Control Service; WinForms no longer reads the message store directly.
 - [x] Cross-process shortcut/game enums are declared once in `DisplayMagician.Contracts`; persisted numeric values are unchanged.
 - [x] WinForms shortcut launches, hotkeys, command-line activation, and tray actions route only through Agent `StartShortcut`; there is no local execution fallback.
-- [ ] Delete the now-unreachable legacy `ShortcutRepository.RunShortcut` implementation after its `AppLibraries`/process dependencies are extracted.
+- [x] Delete the now-unreachable legacy `ShortcutRepository.RunShortcut` implementation and its direct process/game runtime dependencies.
 - [ ] The WiX payload does not yet publish/install ControlService, SessionLauncher, and UserAgent together.
 
 ### Phase A — Structure and IPC
@@ -672,10 +672,12 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** v4.0.0 meets all prototype acceptance criteria below.
 
-### Deferred after v4.0.0 phases
+### Final v4.0.0 work — Steam Big Picture
 
 - [ ] Add synthetic Steam Big Picture `SteamGame` behaviour, including Agent-side launch and running detection.
 - [ ] Add Big Picture lifecycle and temporary-state restoration parity tests.
+
+**Exit criteria:** Big Picture behaves as a normal game shortcut and restores temporary state after it exits.
 
 ## Test Matrix
 
@@ -708,7 +710,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - NVIDIA, AMD, Intel, and mixed GPUs.
 - Audio profile enabled/disabled.
 - Steam installed/absent/already running for ordinary Steam game lifecycle.
-- Big Picture lifecycle is deferred until after v4.0.0 phase completion.
+- Big Picture lifecycle after the preceding v4 phases are complete.
 - Standard and administrator accounts.
 - Lock/unlock, fast user switching, and RDP.
 - Agent automatic-start opt-out.
@@ -726,6 +728,7 @@ v4.0.0 is ready when:
 - [ ] Only one physical-state operation runs at a time.
 - [ ] Existing display/audio/game behaviour executes in User Agent.
 - [ ] Ordinary Steam game shortcuts monitor correctly and restore temporary state after exit.
+- [ ] Steam Big Picture shortcuts monitor correctly and restore temporary state after exit.
 - [ ] WinForms and Console cannot bypass service rules.
 - [ ] Metrics/messages/client sync have a single machine owner.
 - [ ] Local REST is unavailable until enabled and paired.
