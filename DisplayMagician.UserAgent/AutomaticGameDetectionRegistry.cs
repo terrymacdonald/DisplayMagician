@@ -11,93 +11,120 @@ namespace DisplayMagician.UserAgent;
 /// </summary>
 public sealed class AutomaticGameDetectionRegistry
 {
+    private readonly object _syncRoot = new object();
     private readonly Dictionary<string, ShortcutDefinition> _registeredShortcuts = new Dictionary<string, ShortcutDefinition>(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, ShortcutDefinition> _suspendedShortcuts = new Dictionary<string, ShortcutDefinition>(StringComparer.OrdinalIgnoreCase);
 
     public AutomaticGameDetectionRegistrationResult RegisterAutomaticDetection(ShortcutDefinition shortcut)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
-        if (!IsEligibleForAutomaticDetection(shortcut))
+        lock (_syncRoot)
         {
-            return AutomaticGameDetectionRegistrationResult.NotEligible;
-        }
-
-        foreach (ShortcutDefinition registeredShortcut in _registeredShortcuts.Values)
-        {
-            if (string.Equals(registeredShortcut.Id, shortcut.Id, StringComparison.OrdinalIgnoreCase))
+            if (!IsEligibleForAutomaticDetection(shortcut))
             {
-                continue;
+                return AutomaticGameDetectionRegistrationResult.NotEligible;
             }
 
-            if (string.Equals(GetGameMonitorTarget(registeredShortcut), GetGameMonitorTarget(shortcut), StringComparison.OrdinalIgnoreCase))
+            foreach (ShortcutDefinition registeredShortcut in _registeredShortcuts.Values)
             {
-                return AutomaticGameDetectionRegistrationResult.ConflictingGameMonitorTarget;
+                if (string.Equals(registeredShortcut.Id, shortcut.Id, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (string.Equals(GetGameMonitorTarget(registeredShortcut), GetGameMonitorTarget(shortcut), StringComparison.OrdinalIgnoreCase))
+                {
+                    return AutomaticGameDetectionRegistrationResult.ConflictingGameMonitorTarget;
+                }
             }
-        }
 
-        if (_registeredShortcuts.ContainsKey(shortcut.Id))
-        {
-            _registeredShortcuts[shortcut.Id] = shortcut;
-            return AutomaticGameDetectionRegistrationResult.Updated;
-        }
+            if (_registeredShortcuts.ContainsKey(shortcut.Id))
+            {
+                _registeredShortcuts[shortcut.Id] = shortcut;
+                return AutomaticGameDetectionRegistrationResult.Updated;
+            }
 
-        _registeredShortcuts.Add(shortcut.Id, shortcut);
-        return AutomaticGameDetectionRegistrationResult.Registered;
+            _registeredShortcuts.Add(shortcut.Id, shortcut);
+            return AutomaticGameDetectionRegistrationResult.Registered;
+        }
     }
 
     public void ReplaceAutomaticDetections(IEnumerable<ShortcutDefinition> shortcuts)
     {
         ArgumentNullException.ThrowIfNull(shortcuts);
-        _registeredShortcuts.Clear();
-        _suspendedShortcuts.Clear();
-        foreach (ShortcutDefinition shortcut in shortcuts)
+        lock (_syncRoot)
         {
-            RegisterAutomaticDetection(shortcut);
+            _registeredShortcuts.Clear();
+            _suspendedShortcuts.Clear();
+            foreach (ShortcutDefinition shortcut in shortcuts)
+            {
+                RegisterAutomaticDetection(shortcut);
+            }
         }
     }
 
     public bool SuspendAutomaticDetectionForManualRun(string shortcutId)
     {
-        if (string.IsNullOrWhiteSpace(shortcutId) || !_registeredShortcuts.Remove(shortcutId, out ShortcutDefinition? shortcut))
+        lock (_syncRoot)
         {
-            return false;
-        }
+            if (string.IsNullOrWhiteSpace(shortcutId) || !_registeredShortcuts.Remove(shortcutId, out ShortcutDefinition? shortcut))
+            {
+                return false;
+            }
 
-        _suspendedShortcuts[shortcutId] = shortcut;
-        return true;
+            _suspendedShortcuts[shortcutId] = shortcut;
+            return true;
+        }
     }
 
     public AutomaticGameDetectionRegistrationResult RestoreAutomaticDetectionAfterManualRun(string shortcutId)
     {
-        if (string.IsNullOrWhiteSpace(shortcutId) || !_suspendedShortcuts.TryGetValue(shortcutId, out ShortcutDefinition? shortcut))
+        lock (_syncRoot)
         {
-            return AutomaticGameDetectionRegistrationResult.NotRegistered;
-        }
+            if (string.IsNullOrWhiteSpace(shortcutId) || !_suspendedShortcuts.TryGetValue(shortcutId, out ShortcutDefinition? shortcut))
+            {
+                return AutomaticGameDetectionRegistrationResult.NotRegistered;
+            }
 
-        AutomaticGameDetectionRegistrationResult result = RegisterAutomaticDetection(shortcut);
-        if (result == AutomaticGameDetectionRegistrationResult.Registered || result == AutomaticGameDetectionRegistrationResult.Updated)
-        {
-            _suspendedShortcuts.Remove(shortcutId);
-        }
+            AutomaticGameDetectionRegistrationResult result = RegisterAutomaticDetection(shortcut);
+            if (result == AutomaticGameDetectionRegistrationResult.Registered || result == AutomaticGameDetectionRegistrationResult.Updated)
+            {
+                _suspendedShortcuts.Remove(shortcutId);
+            }
 
-        return result;
+            return result;
+        }
     }
 
     public bool RemoveAutomaticDetection(string shortcutId)
     {
-        if (string.IsNullOrWhiteSpace(shortcutId))
+        lock (_syncRoot)
         {
-            return false;
-        }
+            if (string.IsNullOrWhiteSpace(shortcutId))
+            {
+                return false;
+            }
 
-        bool removedRegisteredShortcut = _registeredShortcuts.Remove(shortcutId);
-        bool removedSuspendedShortcut = _suspendedShortcuts.Remove(shortcutId);
-        return removedRegisteredShortcut || removedSuspendedShortcut;
+            bool removedRegisteredShortcut = _registeredShortcuts.Remove(shortcutId);
+            bool removedSuspendedShortcut = _suspendedShortcuts.Remove(shortcutId);
+            return removedRegisteredShortcut || removedSuspendedShortcut;
+        }
     }
 
     public bool IsAutomaticDetectionRegistered(string shortcutId)
     {
-        return !string.IsNullOrWhiteSpace(shortcutId) && _registeredShortcuts.ContainsKey(shortcutId);
+        lock (_syncRoot)
+        {
+            return !string.IsNullOrWhiteSpace(shortcutId) && _registeredShortcuts.ContainsKey(shortcutId);
+        }
+    }
+
+    public IReadOnlyList<ShortcutDefinition> GetRegisteredShortcuts()
+    {
+        lock (_syncRoot)
+        {
+            return new List<ShortcutDefinition>(_registeredShortcuts.Values);
+        }
     }
 
     private static bool IsEligibleForAutomaticDetection(ShortcutDefinition shortcut)

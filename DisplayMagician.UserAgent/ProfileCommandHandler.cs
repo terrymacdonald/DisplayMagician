@@ -20,9 +20,13 @@ public sealed class ProfileCommandHandler
     private readonly string _userDataPath;
     private readonly ShortcutStore _shortcutStore;
     private readonly AutomaticGameDetectionRegistry _automaticGameDetectionRegistry;
+    private readonly UserProfileOperationService _userProfileOperationService;
+    private readonly ShortcutRunner _shortcutRunner;
     private bool _stopRequested;
 
     public bool StopRequested => _stopRequested;
+    public AutomaticGameDetectionRegistry AutomaticGameDetectionRegistry => _automaticGameDetectionRegistry;
+    public ShortcutRunner ShortcutRunner => _shortcutRunner;
 
     public ProfileCommandHandler(AgentRegistration registration)
     {
@@ -33,6 +37,8 @@ public sealed class ProfileCommandHandler
         _shortcutStore = new ShortcutStore(_userDataPath);
         _automaticGameDetectionRegistry = new AutomaticGameDetectionRegistry();
         _automaticGameDetectionRegistry.ReplaceAutomaticDetections(_shortcutStore.GetShortcutDefinitions());
+        _userProfileOperationService = new UserProfileOperationService();
+        _shortcutRunner = new ShortcutRunner(_shortcutStore, _automaticGameDetectionRegistry, _userProfileOperationService);
     }
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
@@ -76,6 +82,27 @@ public sealed class ProfileCommandHandler
                 .Select(game => new GameView { Id = game.Id, Name = game.Name, Library = (int)game.GameLibraryType, ExecutablePath = game.ExePath })
                 .ToArray();
             return new ControlResponse { IsSuccessful = true, Message = "Games returned.", GameList = new GameListResult { Games = games } };
+        }
+
+        if (request.MessageType == ControlMessageType.StartShortcut)
+        {
+            StartShortcutRequest? startRequest = JsonSerializer.Deserialize<StartShortcutRequest>(request.Payload);
+            if (startRequest == null || string.IsNullOrWhiteSpace(startRequest.ShortcutId))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID is required." };
+            }
+
+            _registration.OperationState = AgentOperationState.Running;
+            try
+            {
+                ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(startRequest.ShortcutId, 0, cancellationToken).ConfigureAwait(false);
+                bool wasSuccessful = result.Outcome == ShortcutRunOutcome.Completed;
+                return new ControlResponse { IsSuccessful = wasSuccessful, ErrorCode = wasSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest, Message = result.Outcome.ToString(), OperationStatus = new OperationStatus { OperationId = result.OperationId, OperationType = DisplayOperationType.StartShortcut, Phase = wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed, IsTerminal = true, IsSuccessful = wasSuccessful } };
+            }
+            finally
+            {
+                _registration.OperationState = AgentOperationState.Idle;
+            }
         }
 
         if (request.MessageType == ControlMessageType.GetRepositorySnapshot)
@@ -159,11 +186,10 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.ApplyAudioProfile)
         {
             ApplyAudioProfileRequest? audioApplyRequest = JsonSerializer.Deserialize<ApplyAudioProfileRequest>(request.Payload);
-            AudioProfileItem? profile = audioApplyRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, audioApplyRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-            List<string> missingDeviceNames = new List<string>();
-            bool applied = profile != null && profile.TrySetActive(Math.Max(0, audioApplyRequest!.DeviceWaitMilliseconds), 500, out missingDeviceNames);
-            if (applied) AudioProfileRepository.UpdateActiveAudioProfile();
-            return new ControlResponse { IsSuccessful = applied, ErrorCode = applied ? ControlErrorCode.None : ControlErrorCode.InvalidRequest, Message = applied ? "Audio profile applied." : $"Audio profile could not be applied. Missing devices: {string.Join(", ", missingDeviceNames)}" };
+            ApplyAudioProfileOperationResult result = audioApplyRequest == null
+                ? new ApplyAudioProfileOperationResult(false, Array.Empty<string>())
+                : _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, audioApplyRequest.DeviceWaitMilliseconds);
+            return new ControlResponse { IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest, Message = result.IsSuccessful ? "Audio profile applied." : $"Audio profile could not be applied. Missing devices: {string.Join(", ", result.MissingDeviceNames)}" };
         }
 
         if (request.MessageType == ControlMessageType.CreateProfileFromCurrent)
@@ -240,22 +266,16 @@ public sealed class ProfileCommandHandler
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID is required." };
         }
 
-        ProfileItem? profileToApply = ProfileRepository.AllProfiles.FirstOrDefault(profile => string.Equals(profile.UUID, applyRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-        if (profileToApply == null)
-        {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested display profile does not exist." };
-        }
-
         _registration.OperationState = AgentOperationState.Running;
         try
         {
-            SharedApplyProfileResult result = await Task.Run(() => ProfileRepository.ApplyProfile(profileToApply), cancellationToken).ConfigureAwait(false);
+            ApplyDisplayProfileOperationResult result = await _userProfileOperationService.ApplyDisplayProfileAsync(applyRequest.ProfileId, cancellationToken).ConfigureAwait(false);
             return new ControlResponse
             {
-                IsSuccessful = result == SharedApplyProfileResult.Successful,
-                ErrorCode = result == SharedApplyProfileResult.Successful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest,
-                Message = result == SharedApplyProfileResult.Successful ? "Display profile applied." : "Display profile could not be applied.",
-                ApplyProfile = new DisplayMagician.Contracts.ApplyProfileResult { WasCancelled = result == SharedApplyProfileResult.Cancelled }
+                IsSuccessful = result.IsSuccessful,
+                ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest,
+                Message = result.IsSuccessful ? "Display profile applied." : "Display profile could not be applied.",
+                ApplyProfile = new DisplayMagician.Contracts.ApplyProfileResult { WasCancelled = result.WasCancelled }
             };
         }
         finally

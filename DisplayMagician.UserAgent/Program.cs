@@ -55,9 +55,11 @@ internal static class Program
 
         ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
         Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
+        AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.ShortcutRunner);
+        Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(cancellationTokenSource.Token);
 
-        await Task.WhenAny(serviceConnection, commandConnection).ConfigureAwait(false);
+        await Task.WhenAny(serviceConnection, commandConnection, automaticGameDetection).ConfigureAwait(false);
         cancellationTokenSource.Cancel();
-        await Task.WhenAll(serviceConnection, commandConnection).ConfigureAwait(false);
+        await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection).ConfigureAwait(false);
     }
 }
