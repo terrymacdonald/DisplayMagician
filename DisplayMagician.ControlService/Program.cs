@@ -19,6 +19,7 @@ internal static class Program
         builder.Services.AddSingleton<ControlStateCoordinator>();
         builder.Services.AddSingleton<OperationStatusStore>();
         builder.Services.AddSingleton<IAgentCommandClient, AgentCommandClient>();
+        builder.Services.AddSingleton<ClientSyncCoordinator>();
         builder.Services.AddSingleton<ISessionLauncherClient, SessionLauncherClient>();
         builder.Services.AddSingleton<ProfileOperationRouter>();
         builder.Services.AddSingleton<NamedPipeControlServer>();

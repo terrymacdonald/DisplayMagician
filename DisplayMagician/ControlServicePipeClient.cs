@@ -172,6 +172,16 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful && response.MessageSync != null ? response.MessageSync : throw new InvalidOperationException(response.Message);
     }
 
+    public async Task<ClientSyncResult> SyncClientAsync(bool isManual, bool preferPrerelease, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.SyncClient,
+            Payload = JsonSerializer.Serialize(new ClientSyncRequest { IsManual = isManual, PreferPrerelease = preferPrerelease })
+        }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.ClientSync != null ? response.ClientSync : throw new InvalidOperationException(response.Message);
+    }
+
     public Task<ControlResponse> StopAgentIfIdleAsync(CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);

@@ -16,11 +16,13 @@ public sealed class ControlClientPipeServer
 {
     private readonly ProfileOperationRouter _profileOperationRouter;
     private readonly OperationStatusStore _operationStatusStore;
+    private readonly ClientSyncCoordinator _clientSyncCoordinator;
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
+        _clientSyncCoordinator = clientSyncCoordinator ?? throw new ArgumentNullException(nameof(clientSyncCoordinator));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -72,7 +74,9 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.ListGames => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ListApps => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ListShortcuts => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                    ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState or ControlMessageType.SyncMessages => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.SyncMessages => await SyncClientAsync(identity, new ClientSyncRequest { IsManual = true }, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.SyncClient => await SyncClientAsync(identity, JsonSerializer.Deserialize<ClientSyncRequest>(request.Payload) ?? new ClientSyncRequest(), cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
@@ -113,6 +117,19 @@ public sealed class ControlClientPipeServer
         return cancelRequest == null
             ? Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The cancellation request was invalid." })
             : _profileOperationRouter.CancelOperationAsync(identity.UserSid, identity.SessionId, cancelRequest.OperationId, cancellationToken);
+    }
+
+    private async Task<ControlResponse> SyncClientAsync(PipeClientIdentity identity, ClientSyncRequest request, CancellationToken cancellationToken)
+    {
+        ClientSyncResult result = await _clientSyncCoordinator.SyncAsync(request, identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false);
+        return new ControlResponse
+        {
+            IsSuccessful = result.WasDue || !request.IsManual,
+            ErrorCode = result.WasDue || !request.IsManual ? ControlErrorCode.None : ControlErrorCode.InvalidRequest,
+            Message = result.WasDue ? "Combined client sync completed." : "Combined client sync was not due.",
+            ClientSync = result,
+            MessageSync = result.MessageSync
+        };
     }
 
     private ControlResponse GetOperationStatus(PipeClientIdentity identity, ControlEnvelope request)

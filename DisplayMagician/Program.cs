@@ -95,11 +95,8 @@ namespace DisplayMagician {
         private static string _requestedMessageUpdateChannel;
         private static bool _startupBackgroundTasksQueued = false;
         private static SynchronizationContext _mainSynchronizationContext;
-        private static MessageSyncService _messageSyncService;
-        private static ClientSyncService _clientSyncService;
         private static AnonymousMetricsService _anonymousMetricsService;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
-        private static System.Timers.Timer _clientSyncTimer;
         private static System.Timers.Timer _metricsHeartbeatTimer;
         private static System.Timers.Timer _startupMessagePollTimer;
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
@@ -404,11 +401,6 @@ namespace DisplayMagician {
             }
 
             bool settingsChanged = AppProgramSettings.EnsureInstallIdentity(false);
-            if (!AppProgramSettings.NextClientSyncUtc.HasValue)
-            {
-                AppProgramSettings.NextClientSyncUtc = DateTime.UtcNow.AddMinutes(Random.Shared.Next(0, 12 * 60 + 1));
-                settingsChanged = true;
-            }
             if (!AppProgramSettings.NextMetricsHeartbeatUtc.HasValue)
             {
                 AppProgramSettings.NextMetricsHeartbeatUtc = DateTime.UtcNow;
@@ -948,7 +940,7 @@ namespace DisplayMagician {
             try
             {
                 using CancellationTokenSource initialMetricsCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                EnsureClientSyncService();
+                EnsureAnonymousMetricsService();
                 _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: true, initialMetricsCancellation.Token).GetAwaiter().GetResult();
             }
             catch (Exception ex)
@@ -956,10 +948,6 @@ namespace DisplayMagician {
                 logger.Warn(ex, "Program/Main: Initial anonymous metrics heartbeat did not complete during orderly shutdown.");
             }
 
-            logger.Trace($"Program/Main: Stopping message sync timer.");
-            _clientSyncTimer?.Stop();
-            _clientSyncTimer?.Dispose();
-            _clientSyncTimer = null;
             _metricsHeartbeatTimer?.Stop();
             _metricsHeartbeatTimer?.Dispose();
             _metricsHeartbeatTimer = null;
@@ -1345,7 +1333,6 @@ namespace DisplayMagician {
                 try
                 {
                     await RunClientSyncAndNotifyUserAsync(manual: false);
-                    EnsureClientSyncTimer();
                     EnsureMetricsHeartbeatTimer();
                     EnsureStartupMessagePollTimer();
                 }
@@ -1354,43 +1341,6 @@ namespace DisplayMagician {
                     logger.Warn(ex, "Program/QueueStartupBackgroundTasks: Scheduled client sync failed. DisplayMagician will continue running.");
                 }
             });
-        }
-
-        private static void EnsureClientSyncTimer()
-        {
-            if (_clientSyncTimer == null)
-            {
-                _clientSyncTimer = new System.Timers.Timer { AutoReset = false };
-                _clientSyncTimer.Elapsed += async (_, __) =>
-                {
-                    try
-                    {
-                        await RunClientSyncAndNotifyUserAsync(manual: false);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, "Program/EnsureClientSyncTimer: Scheduled client sync failed.");
-                    }
-                    finally
-                    {
-                        ScheduleClientSyncTimer();
-                    }
-                };
-            }
-
-            ScheduleClientSyncTimer();
-        }
-
-        private static void ScheduleClientSyncTimer()
-        {
-            if (_clientSyncTimer == null || AppProgramSettings?.NextClientSyncUtc == null)
-            {
-                return;
-            }
-
-            _clientSyncTimer.Stop();
-            _clientSyncTimer.Interval = Math.Max(1, (AppProgramSettings.NextClientSyncUtc.Value - DateTime.UtcNow).TotalMilliseconds);
-            _clientSyncTimer.Start();
         }
 
         private static void EnsureMetricsHeartbeatTimer()
@@ -1507,53 +1457,46 @@ namespace DisplayMagician {
 
         private static async Task RunClientSyncAndNotifyUserAsync(bool manual)
         {
-            ClientSyncResult syncResult = await EnsureClientSyncService().RunAsync(manual, AppVersion, CancellationToken.None).ConfigureAwait(false);
-            if (!syncResult.Success || !syncResult.WasDue)
+            DisplayMagician.Contracts.ClientSyncResult syncResult = await new ControlServicePipeClient().SyncClientAsync(manual, AppProgramSettings?.UpgradeToPreReleases == true, CancellationToken.None).ConfigureAwait(false);
+            if (!syncResult.WasDue)
             {
                 return;
             }
 
-            if (syncResult.MessageResult?.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
+            if (syncResult.MessageSync?.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
             {
-                ShowNewMessagesToast(syncResult.MessageResult.NewMessagesCount);
+                ShowNewMessagesToast(syncResult.MessageSync.NewMessagesCount);
             }
             RefreshMessageIndicators();
-            if (syncResult.SelectedUpdate != null)
+            ClientSyncUpdateView? selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
+            if (selectedUpdate != null)
             {
-                ShowClientSyncUpdate(syncResult.SelectedUpdate, manual);
+                ShowClientSyncUpdate(selectedUpdate, manual);
             }
         }
 
-        private static ClientSyncService EnsureClientSyncService()
+        private static void EnsureAnonymousMetricsService()
         {
-            if (_messageSyncService == null)
-            {
-                _messageSyncService = new MessageSyncService(AppHttpClient, logger, ClientSyncUrl, AppMessagesPath);
-                _messageSyncService.EnsureStorage();
-            }
-
-            if (_clientSyncService == null)
-            {
-                _clientSyncService = new ClientSyncService(AppHttpClient, logger, _messageSyncService, AppProgramSettings, _useTestUpdateFeed);
-            }
             if (_anonymousMetricsService == null)
             {
                 _anonymousMetricsService = new AnonymousMetricsService(AppHttpClient, AppProgramSettings, logger, _useTestUpdateFeed);
             }
-            return _clientSyncService;
         }
 
         public static async Task CheckForNewMessagesAsync(Form owner)
         {
-            ClientSyncResult result = await EnsureClientSyncService().RunAsync(true, AppVersion, CancellationToken.None);
-            if (!result.Success)
+            DisplayMagician.Contracts.ClientSyncResult result;
+            try
+            {
+                result = await new ControlServicePipeClient().SyncClientAsync(true, AppProgramSettings?.UpgradeToPreReleases == true, CancellationToken.None);
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
             {
                 MessageBox.Show(owner, "DisplayMagician could not check for new messages. Please try again later.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             RefreshMessageIndicators();
-            ScheduleClientSyncTimer();
-            int newMessagesCount = result.MessageResult?.NewMessagesCount ?? 0;
+            int newMessagesCount = result.MessageSync?.NewMessagesCount ?? 0;
             string completionMessage = newMessagesCount == 1
                 ? "DisplayMagician found 1 new message."
                 : $"DisplayMagician found {newMessagesCount} new messages.";
@@ -1562,7 +1505,7 @@ namespace DisplayMagician {
 
         private static async Task TrySendAnonymousMetricsAsync()
         {
-            EnsureClientSyncService();
+            EnsureAnonymousMetricsService();
             await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: false, CancellationToken.None).ConfigureAwait(false);
         }
 
@@ -2044,7 +1987,7 @@ namespace DisplayMagician {
             }
         }
 
-        private static void ShowClientSyncUpdate(ClientSyncUpdate update, bool automatic)
+        private static void ShowClientSyncUpdate(ClientSyncUpdateView update, bool automatic)
         {
             if (!AppProgramSettings.UpgradeEnabled || !Version.TryParse(update.Version, out Version availableVersion) || !Version.TryParse(AppVersion, out Version installedVersion))
             {
@@ -2069,14 +2012,14 @@ namespace DisplayMagician {
                 IsUpdateAvailable = availableVersion > installedVersion,
                 Mandatory = new Mandatory
                 {
-                    Value = update.Mandatory.Value,
-                    UpdateMode = (Mode)update.Mandatory.Mode,
-                    MinimumVersion = update.Mandatory.MinVersion
+                    Value = update.Mandatory,
+                    UpdateMode = (Mode)update.MandatoryMode,
+                    MinimumVersion = update.MandatoryMinimumVersion
                 },
                 CheckSum = new CheckSum
                 {
-                    Value = update.Checksum.Value,
-                    HashingAlgorithm = update.Checksum.HashingAlgorithm
+                    Value = update.ChecksumValue,
+                    HashingAlgorithm = update.ChecksumAlgorithm
                 }
             });
         }

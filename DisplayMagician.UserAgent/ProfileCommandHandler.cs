@@ -185,9 +185,51 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.SyncMessages)
         {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "Message synchronization is managed by the Control Service." };
+        }
+
+        if (request.MessageType == ControlMessageType.ApplyClientSyncMessages)
+        {
+            ClientSyncMessageManifest? manifest = JsonSerializer.Deserialize<ClientSyncMessageManifest>(request.Payload);
+            if (manifest == null || manifest.SchemaVersion != 1)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Control Service message snapshot was invalid." };
+            }
+
+            DisplayMagician.Messaging.MessageManifestDocument messageDocument = new DisplayMagician.Messaging.MessageManifestDocument
+            {
+                SchemaVersion = manifest.SchemaVersion,
+                GeneratedUtc = manifest.GeneratedUtc,
+                Messages = manifest.Messages.Select(message => new DisplayMagician.Messaging.MessageManifestEntry
+                {
+                    Id = message.Id,
+                    Status = message.Status,
+                    Title = message.Title,
+                    Url = message.Url,
+                    Format = message.Format,
+                    Sha256 = message.Sha256,
+                    ShowOnStartup = message.ShowOnStartup,
+                    PublishedUtc = message.PublishedUtc,
+                    DeletedUtc = message.DeletedUtc,
+                    MinVersion = message.MinVersion,
+                    MaxVersion = message.MaxVersion,
+                    StartUtc = message.StartUtc,
+                    EndUtc = message.EndUtc,
+                    Vendors = message.Vendors,
+                    Kind = message.Kind,
+                    ReleaseVersion = message.ReleaseVersion,
+                    ReleaseChannel = message.ReleaseChannel,
+                    GithubReleaseId = message.GithubReleaseId,
+                    UpdateAction = message.UpdateAction,
+                    Media = message.Media.Select(media => new DisplayMagician.Messaging.MessageManifestMedia { Url = media.Url, Sha256 = media.Sha256, ContentType = media.ContentType }).ToList()
+                }).ToList()
+            };
             DisplayMagician.Messaging.MessageSyncResult syncResult = await _messageSyncService.SyncMessagesAsync(
                 typeof(ProfileCommandHandler).Assembly.GetName().Version?.ToString() ?? "0.0.0.0",
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken,
+                messageDocument,
+                new Uri("https://sync.displaymagician.com/"),
+                authoritativeSnapshot: true).ConfigureAwait(false);
             return new ControlResponse
             {
                 IsSuccessful = syncResult.Success,

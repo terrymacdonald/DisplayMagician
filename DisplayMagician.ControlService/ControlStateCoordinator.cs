@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DisplayMagician.Contracts;
 
 namespace DisplayMagician.ControlService;
@@ -146,6 +147,14 @@ public sealed class ControlStateCoordinator
             }
 
             return CopyRegistration(agent.Registration);
+        }
+    }
+
+    public AgentRegistration[] GetAgentRegistrations()
+    {
+        lock (_syncRoot)
+        {
+            return _agentsBySession.Values.Select(agent => CopyRegistration(agent.Registration)).ToArray();
         }
     }
 

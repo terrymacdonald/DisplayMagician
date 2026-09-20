@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using DisplayMagician.Contracts;
 using Microsoft.Extensions.Hosting;
 using NLog;
 
@@ -14,13 +15,15 @@ public sealed class ControlServiceWorker : BackgroundService
     private readonly ControlClientPipeServer _clientPipeServer;
     private readonly StoragePaths _storagePaths;
     private readonly MachineScheduleCoordinator _machineScheduleCoordinator;
+    private readonly ClientSyncCoordinator _clientSyncCoordinator;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator)
     {
         _pipeServer = pipeServer;
         _clientPipeServer = clientPipeServer;
         _storagePaths = storagePaths;
         _machineScheduleCoordinator = machineScheduleCoordinator;
+        _clientSyncCoordinator = clientSyncCoordinator;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,7 +42,17 @@ public sealed class ControlServiceWorker : BackgroundService
         }
         Task agentServer = _pipeServer.RunAsync(stoppingToken);
         Task clientServer = _clientPipeServer.RunAsync(stoppingToken);
-        await Task.WhenAll(agentServer, clientServer).ConfigureAwait(false);
+        Task clientSync = RunClientSyncAsync(stoppingToken);
+        await Task.WhenAll(agentServer, clientServer, clientSync).ConfigureAwait(false);
         _logger.Info("ControlServiceWorker/ExecuteAsync: Control Service pipe listener has stopped.");
+    }
+
+    private async Task RunClientSyncAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await _clientSyncCoordinator.SyncAsync(new ClientSyncRequest(), null, null, stoppingToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken).ConfigureAwait(false);
+        }
     }
 }

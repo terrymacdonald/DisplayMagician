@@ -50,7 +50,9 @@ public enum ControlMessageType
     ListApps = 34,
     ListShortcuts = 35,
     UpdateDisplayProfileSettings = 36,
-    CancelOperation = 37
+    CancelOperation = 37,
+    SyncClient = 38,
+    ApplyClientSyncMessages = 39
 }
 
 public enum ControlErrorCode
@@ -490,6 +492,8 @@ public sealed class ControlResponse
     public MessageListResult? MessageList { get; set; }
 
     public MessageSyncResult? MessageSync { get; set; }
+
+    public ClientSyncResult? ClientSync { get; set; }
 }
 
 public sealed class ControlServiceStatus

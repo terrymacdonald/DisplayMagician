@@ -23,14 +23,16 @@ public sealed class NamedPipeControlServer
     private readonly StoragePaths _storagePaths;
     private readonly UserDataMigrationRunner _userDataMigrationRunner;
     private readonly OperationStatusStore _operationStatusStore;
+    private readonly ClientSyncCoordinator _clientSyncCoordinator;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
-    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner, OperationStatusStore operationStatusStore)
+    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
         _userDataMigrationRunner = userDataMigrationRunner ?? throw new ArgumentNullException(nameof(userDataMigrationRunner));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
+        _clientSyncCoordinator = clientSyncCoordinator ?? throw new ArgumentNullException(nameof(clientSyncCoordinator));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -133,6 +135,14 @@ public sealed class NamedPipeControlServer
                 registeredIdentity = identity;
                 _logger.Info("NamedPipeControlServer/HandleClientAsync: Registered User Agent for SID {0}, session {1}, process {2}.", identity.UserSid, identity.SessionId, identity.ProcessId);
                 await SendResultAsync(pipe, envelope.RequestId, true, ControlErrorCode.None, "Agent registration accepted.", cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await _clientSyncCoordinator.SendLatestManifestAsync(registration, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+                {
+                    _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Could not deliver the latest client-sync messages to Agent SID {0}, session {1}.", identity.UserSid, identity.SessionId);
+                }
 
                 while (!cancellationToken.IsCancellationRequested && pipe.IsConnected)
                 {
