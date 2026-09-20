@@ -124,6 +124,8 @@ public sealed class GameView
     public string Name { get; set; } = string.Empty;
     public int Library { get; set; }
     public string ExecutablePath { get; set; } = string.Empty;
+    public string IconPath { get; set; } = string.Empty;
+    public string Directory { get; set; } = string.Empty;
 }
 
 public sealed class GameListResult

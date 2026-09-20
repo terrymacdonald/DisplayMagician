@@ -7,6 +7,7 @@ using System.Windows.Forms;
 //using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagician.GameLibraries;
+using DisplayMagician.Contracts;
 using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 //using NHotkey.WindowsForms;
@@ -50,7 +51,8 @@ namespace DisplayMagician.UIForms
         private bool _overrideAudioMicrophoneVolume = false;
         private int _overrideAudioSpeakerVolumeLevel = 50;
         private int _overrideAudioMicrophoneVolumeLevel = 50;
-        private Game _selectedGame = null;
+        private GameView _selectedGame = null;
+        private List<GameView> _availableGames = new List<GameView>();
         private App _selectedApp = null;
         private string _selectedAppId = "";
         private bool _isUnsaved = true;
@@ -325,40 +327,7 @@ namespace DisplayMagician.UIForms
                     ProcessPriority = (ProcessPriority)cbx_game_priority.SelectedValue,
                 };
 
-                // If the game is a SteamGame
-                if (_gameLauncher == SupportedGameLibraryType.Steam.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
-                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).FirstOrDefault();
-                }
-                // If the game is a UplayGame
-                else if (_gameLauncher == SupportedGameLibraryType.Uplay.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
-                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).FirstOrDefault();
-                }
-                // If the game is an Origin Game
-                else if (_gameLauncher == SupportedGameLibraryType.Origin.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Origin game!");
-                    _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).FirstOrDefault();
-                }
-                // If the game is an Epic Game
-                else if (_gameLauncher == SupportedGameLibraryType.Epic.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Epic game!");
-                    _gameToUse.GameToPlay = (from epicGame in EpicLibrary.GetLibrary().AllInstalledGames where epicGame.Id == _gameId select epicGame).FirstOrDefault();
-                }
-                // If the game is an GOG Game
-                else if (_gameLauncher == SupportedGameLibraryType.GOG.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an GOG game!");
-                    _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).FirstOrDefault();
-                }
-                else
-                {
-                    logger.Error($"ShortcutForm/btn_save_Click: Unknown game launcher type '{_gameLauncher}' — cannot resolve game to save.");
-                }
+                _gameToUse.GameToPlay = _availableGames.FirstOrDefault(game => string.Equals(game.Id, _gameId, StringComparison.OrdinalIgnoreCase));
 
                 if (_gameToUse.GameToPlay == null)
                 {
@@ -862,7 +831,7 @@ namespace DisplayMagician.UIForms
                     else if (rb_switch_display_temp.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
                 }
-                else if (_shortcutCategory == ShortcutCategory.Game && _selectedGame is Game)
+                else if (_shortcutCategory == ShortcutCategory.Game && _selectedGame is GameView)
                 {
                     txt_shortcut_save_name.Text = $"{_selectedGame.Name} ({_profileToUse.Name})";
                 }
@@ -1064,7 +1033,7 @@ namespace DisplayMagician.UIForms
             ilv_games.Items.Clear();
 
             // Add the rest of the true profiles
-            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
+            foreach (GameView game in _availableGames.OrderBy(game => game.Name))
             {
                 // Add the game to the game array
                 ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
@@ -1550,7 +1519,7 @@ namespace DisplayMagician.UIForms
                     // Show an error message if there isn't a game launcher selected
                     if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
                     {
-                        if (GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
+                        if (_availableGames.Count <= 0)
                         {
                             // Fill in the game library information to highlight there isn't one detected.
                             _gameLauncher = "None detected";
@@ -1606,9 +1575,9 @@ namespace DisplayMagician.UIForms
                                 MessageBoxIcon.Exclamation);
                         }
 
-                        foreach (Game game in GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+                        foreach (GameView game in _availableGames)
                         {
-                            if (game.Name == _shortcutToEdit.GameName)
+                            if (string.Equals(game.Id, _shortcutToEdit.GameAppId, StringComparison.OrdinalIgnoreCase))
                             {
                                 _selectedGame = game;
                                 break;
@@ -1649,9 +1618,9 @@ namespace DisplayMagician.UIForms
                         if (_selectedGame != null)
                         {
                             _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.IconPath));
-                            if (_selectedGame.ExePath != _selectedGame.IconPath)
+                            if (_selectedGame.ExecutablePath != _selectedGame.IconPath)
                             {
-                                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.ExePath));
+                                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.ExecutablePath));
                             }
 
                         }
@@ -1925,13 +1894,13 @@ namespace DisplayMagician.UIForms
 
         private async void ShortcutForm_Load(object sender, EventArgs e)
         {
+            ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
 
             try
             {
                 if (!Program.EnsureUserAgentStarted())
                     throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
 
-                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
                 DisplayMagician.Contracts.AudioProfileListResult audioProfiles = await controlServiceClient.ListAudioProfilesAsync(System.Threading.CancellationToken.None);
                 await Task.Run(() =>
                 {
@@ -1950,12 +1919,6 @@ namespace DisplayMagician.UIForms
 
             if (_firstShow)
             {
-                // Parse the game bitmaps now the first time as we need them
-                // We need to add a refresh button to the shortcut page now!
-                if (!GameLibraries.GameLibrary.GamesImagesLoaded)
-                {
-                    GameLibraries.GameLibrary.RefreshGameBitmaps();
-                }
                 if (!AppLibraries.AppLibrary.AppImagesLoaded)
                 {
                     AppLibraries.AppLibrary.RefreshAppBitmaps();
@@ -1967,6 +1930,17 @@ namespace DisplayMagician.UIForms
             }
 
             // Load the shortcut info
+            try
+            {
+                DisplayMagician.Contracts.GameListResult games = await controlServiceClient.ListGamesAsync(System.Threading.CancellationToken.None);
+                _availableGames = games.Games.ToList();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "ShortcutForm/ShortcutForm_Load: Could not load games through the User Agent.");
+                _availableGames = new List<GameView>();
+            }
+
             LoadShortcut();
 
             CloseTheSplashScreen();
@@ -2047,10 +2021,10 @@ namespace DisplayMagician.UIForms
 
                 if (!String.IsNullOrWhiteSpace(txt_game_name.Text) && ilv_games.SelectedItems.Count == 1 && _selectedGame != null)
                 {
-                    _gameLauncher = _selectedGame.GameLibraryType.ToString("G");
+                    _gameLauncher = ((SupportedGameLibraryType)_selectedGame.Library).ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = _selectedGame.Id;
-                    _availableImages = _selectedGame.AvailableGameBitmaps ?? new List<ShortcutBitmap>();
+                    _availableImages = GetGameImages(_selectedGame);
                     _shortcutToEdit.AvailableImages = _availableImages;
                     _selectedImage = _availableImages.Count > 0
                         ? ImageUtils.GetMeLargestAvailableBitmap(_availableImages)
@@ -2843,7 +2817,7 @@ namespace DisplayMagician.UIForms
         private void btn_choose_alternative_game_Click(object sender, EventArgs e)
         {
             string gamePath = "";
-            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            foreach (GameView game in _availableGames)
             {
                 if (game.Name == txt_game_name.Text)
                 {
@@ -3196,25 +3170,25 @@ namespace DisplayMagician.UIForms
         private void ilv_games_ItemClick(object sender, ItemClickEventArgs e)
         {
             txt_game_name.Text = e.Item.Text;
-            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            foreach (GameView game in _availableGames)
             {
                 if (game.Name == txt_game_name.Text)
                 {
                     if (_loadedShortcut)
                         _isUnsaved = true;
                     _selectedGame = game;
-                    _gameLauncher = game.GameLibraryType.ToString("G");
+                    _gameLauncher = ((SupportedGameLibraryType)game.Library).ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = game.Id;
-                    _availableImages = game.AvailableGameBitmaps ?? new List<ShortcutBitmap>();
+                    _availableImages = GetGameImages(game);
                     _shortcutToEdit.AvailableImages = _availableImages;
                     _selectedImage = _availableImages.Count > 0
                         ? ImageUtils.GetMeLargestAvailableBitmap(_availableImages)
-                        : ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExePath);
+                        : ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExecutablePath);
                     if (_selectedImage.Image == null)
                     {
                         logger.Warn($"ShortcutForm/ilv_games_ItemClick: No image resolved for game '{game.Name}'; using default exe icon.");
-                        _selectedImage = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExePath);
+                        _selectedImage = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExecutablePath);
                     }
                     _shortcutToEdit.SelectedImage = _selectedImage;
                     txt_game_name.Text = game.Name;
@@ -3341,52 +3315,36 @@ namespace DisplayMagician.UIForms
             txt_run_cmd_afterwards.Text = getExeFile();
         }
 
-        private void btn_refresh_games_list_Click(object sender, EventArgs e)
+        private async void btn_refresh_games_list_Click(object sender, EventArgs e)
         {
-            // Change the mouse crusor so the user knows something is happening
             this.Cursor = Cursors.WaitCursor;
-            // Empty the games list
-            GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Clear();
-            // Load all the new games
-            GameLibraries.GameLibrary.LoadGamesInBackground();
-            // Parse the libraries
-            GameLibraries.GameLibrary.RefreshGameBitmaps();
-            // Load all the Games into the Games ListView            
-            ImageListViewItem previouslySelectedItem = null;
-            if (ilv_games.SelectedItems.Count > 0)
+            try
             {
-                previouslySelectedItem = ilv_games.SelectedItems[0];
+                GameListResult games = await new ControlServicePipeClient().ListGamesAsync(System.Threading.CancellationToken.None);
+                _availableGames = games.Games.ToList();
+                LoadShortcut();
+                MessageBox.Show(this, "The list of available games has been updated.", "Games List Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            ilv_games.Items.Clear();
-            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
+            catch (Exception ex)
             {
-                // Add the game to the game array
-                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
-                if (previouslySelectedItem != null && newItem.Text.Equals(previouslySelectedItem.Text))
-                {
-                    newItem.Selected = true;
-                }
-                else if (_editingExistingShortcut && game.Name.Equals(_shortcutToEdit.GameName))
-                {
-                    newItem.Selected = true;
-                }
-                ilv_games.Items.Add(newItem, _gameAdaptor);
+                logger.Warn(ex, "ShortcutForm/btn_refresh_games_list_Click: Could not refresh games through the User Agent.");
+                MessageBox.Show(this, "DisplayMagician could not refresh games through the User Agent.", "Games List", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-            // Make sure that if the item is selected that it's visible
-            if (ilv_games.SelectedItems.Count > 0)
+            finally
             {
-                int selectedIndex = ilv_games.SelectedItems[0].Index;
-                ilv_games.EnsureVisible(selectedIndex);
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+        private static List<ShortcutBitmap> GetGameImages(GameView game)
+        {
+            List<ShortcutBitmap> images = ImageUtils.GetMeAllBitmapsFromFile(game.IconPath);
+            if (images.Count == 0 && !string.Equals(game.IconPath, game.ExecutablePath, StringComparison.OrdinalIgnoreCase))
+            {
+                images.AddRange(ImageUtils.GetMeAllBitmapsFromFile(game.ExecutablePath));
             }
 
-            // Change the user cursor back
-            this.Cursor = Cursors.Default;
-            // Show we're done
-            MessageBox.Show(
-                @"The list of available games has been updated.",
-                @"Games List Updated",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Exclamation);
+            return images;
         }
 
         private void pb_game_icon_Click(object sender, EventArgs e)

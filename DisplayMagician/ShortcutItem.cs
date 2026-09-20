@@ -1,3 +1,4 @@
+using DisplayMagician.Contracts;
 using DisplayMagician.GameLibraries;
 //using DisplayMagician.Resources;
 using System.Drawing;
@@ -22,36 +23,12 @@ using DisplayMagician.ConfigurationDefinitions;
 
 namespace DisplayMagician
 {
-    public enum ShortcutPermanence : int
-    {
-        Permanent = 0,
-        Temporary = 1,
-    }
-
-    public enum ShortcutCategory : int
-    {
-        Executable = 0,
-        Game = 1,
-        NoGame = 2,
-        Application = 3,
-    }
-
     public enum ShortcutValidity : int
     {
         Valid = 0,
         Warning = 1,
         Error = 2,
     }
-
-    public enum ProcessPriority : int
-    {
-        High = 2,
-        AboveNormal = 1,
-        Normal = 0,
-        BelowNormal =-1,
-        Idle = -24,
-    }
-
 
     public struct StartProgram
     {
@@ -114,7 +91,7 @@ namespace DisplayMagician
 
     public struct GameShorcutData
     {
-        public Game GameToPlay;
+        public GameView GameToPlay;
         public GameLaunchMode GameLaunchMode;
         public int StartTimeout;
         public string GameArguments;
@@ -188,7 +165,6 @@ namespace DisplayMagician
         private string _gameAppId = "";
         private string _gameName = "";
         private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
-        private Game _game = null;
         private GameLaunchMode _gameLaunchMode = GameLaunchMode.StartGame;
         private int _startTimeout = 60;
         private string _gameArguments = "";
@@ -227,18 +203,6 @@ namespace DisplayMagician
             if (String.IsNullOrWhiteSpace(_uuid))
                 _uuid = Guid.NewGuid().ToString("D");
 
-            // If there are no GameLibraries then choose executable instead
-            if (!(UplayLibrary.GetLibrary().IsGameLibraryInstalled &&
-                SteamLibrary.GetLibrary().IsGameLibraryInstalled &&
-                GogLibrary.GetLibrary().IsGameLibraryInstalled &&
-                EpicLibrary.GetLibrary().IsGameLibraryInstalled &&
-                OriginLibrary.GetLibrary().IsGameLibraryInstalled))
-            {
-                _gameLibrary = SupportedGameLibraryType.Unknown;
-                _gameName = "";
-                _gameArguments = "";
-                _category = ShortcutCategory.Executable;
-            }
             // Autocreate a name for the shortcut if AutoName is on
             // (and if we have a profile to use)
             if (AutoName && _profileToUse is ProfileItem)
@@ -598,19 +562,6 @@ namespace DisplayMagician
             set
             {
                 _gameLibrary = value;
-            }
-        }
-
-        public Game Game
-        {
-            get
-            {
-                return _game;
-            }
-
-            set
-            {
-                _game = value;
             }
         }
 
@@ -1120,7 +1071,6 @@ namespace DisplayMagician
             _gameArgumentsRequired = false;
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
-            _game = new Game();
             _gameLaunchMode = GameLaunchMode.StartGame;
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
@@ -1162,8 +1112,7 @@ namespace DisplayMagician
             _category = ShortcutCategory.Game;
             _gameAppId = game.GameToPlay.Id;
             _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibraryType;
-            _game = game.GameToPlay;
+            _gameLibrary = (SupportedGameLibraryType)game.GameToPlay.Library;
             _gameLaunchMode = game.GameLaunchMode;
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
@@ -1277,7 +1226,6 @@ namespace DisplayMagician
             _gameArgumentsRequired = false;
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
-            _game = new Game();
             _gameLaunchMode = GameLaunchMode.StartGame;
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
@@ -1362,7 +1310,6 @@ namespace DisplayMagician
             _gameArgumentsRequired = false;
             _gameArguments = "";
             _gameLibrary = SupportedGameLibraryType.Unknown;
-            _game = new Game();
             _gameLaunchMode = GameLaunchMode.StartGame;
             _monitorDifferentGameExe = false;
             _differentGameExeToMonitor = "";
@@ -1399,7 +1346,6 @@ namespace DisplayMagician
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
             shortcut.GameLibrary = GameLibrary;
-            shortcut.Game = Game;
             shortcut.GameLaunchMode = GameLaunchMode;
             shortcut.StartTimeout = StartTimeout;
             shortcut.GameArguments = GameArguments;
@@ -1673,21 +1619,13 @@ namespace DisplayMagician
             }
             else if (Category.Equals(ShortcutCategory.Game))
             {
-                // Game shortcuts intentionally leave ExecutableNameAndPath empty. Prefer the
-                // current game-library entry when the game list has loaded, and otherwise use
-                // the persisted game data so an asynchronous game-library scan cannot make a
-                // working shortcut temporarily invalid.
-                Game gameToValidate = Game;
-                if (DisplayMagician.GameLibraries.GameLibrary.GamesLoaded && DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries != null)
-                    gameToValidate = DisplayMagician.GameLibraries.GameLibrary.GetAnyGameById(GameAppId);
-
-                if (gameToValidate == null || String.IsNullOrWhiteSpace(gameToValidate.ExePath) || !System.IO.File.Exists(gameToValidate.ExePath))
+                if (string.IsNullOrWhiteSpace(GameAppId) || string.IsNullOrWhiteSpace(GameName))
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The game '{GameName}' (ID: {GameAppId}) could not be found or its executable is unavailable.");
+                    logger.Warn($"ShortcutItem/RefreshValidity: The game shortcut has no persisted game identity (ID: {GameAppId}).");
                     ShortcutError error = new ShortcutError();
                     error.Name = $"{GameName}NotInstalled";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The game '{GameName}' is not installed or its executable cannot be accessed.";
+                    error.Message = "The game shortcut does not identify a game to launch.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;

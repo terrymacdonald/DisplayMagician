@@ -1,4 +1,4 @@
-﻿using DisplayMagician.GameLibraries;
+﻿using DisplayMagician.Contracts;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
@@ -42,11 +42,18 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
+                GameView game = (GameView)key;
 
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
+                List<ShortcutBitmap> images = ImageUtils.GetMeAllBitmapsFromFile(game.IconPath);
+                if (images.Count == 0 && !string.Equals(game.IconPath, game.ExecutablePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    images = ImageUtils.GetMeAllBitmapsFromFile(game.ExecutablePath);
+                }
 
-                return game.GameBitmap.Image.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
+                return images.Count == 0 || images[0].Image == null
+                    ? Properties.Resources.exe.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero)
+                    : images[0].Image.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
 
             }
             catch (Exception ex)
@@ -76,7 +83,7 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
+                GameView game = (GameView)key;
 
                 return game.Name;
             }
@@ -101,7 +108,7 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
+                GameView game = (GameView)key;
                 return game.Name;
             }
             catch (Exception ex)
@@ -128,45 +135,12 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
+                GameView game = (GameView)key;
 
                 // Get file info
                 {
-                    // Have to do some gymnastics to get rid of the 
-                    // System.Drawing.Image exception created while accessing the Size
-                    bool gotSize = false;
                     Size mySize = new Size(256, 256);
-                    while (!gotSize)
-                    {
-                        try
-                        {
-                            mySize = game.GameBitmap.Size;
-                            gotSize = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            // catch the System.Drawing.Image exception created while accessing the Size
-                            logger.Warn(ex, "GameAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the GameBitmap Size as an Integer.");
-                        }
-                    }
-
-                    // Have to do some gymnastics to get rid of the 
-                    // System.Drawing.Image exception created while accessing the SizeF
-                    bool gotSizeF = false;
                     SizeF mySizeF = new SizeF(256, 256);
-                    while (!gotSizeF)
-                    {
-                        try
-                        {
-                            mySizeF = game.GameBitmap.Image.PhysicalDimension;
-                            gotSizeF = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            // catch the System.Drawing.Image exception created while accessing the Size
-                            logger.Warn(ex, "GameAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the GameBitmap Size as a Float.");
-                        }
-                    }
 
                     string name = game.Name;
                     //string filepath = Path.GetDirectoryName(shortcut.SavedShortcutIconCacheFilename);

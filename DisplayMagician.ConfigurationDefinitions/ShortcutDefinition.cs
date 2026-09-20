@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagician.ConfigurationDefinitions;
 
@@ -96,12 +97,6 @@ public enum ShortcutDefinitionCategory
     Game = 1,
     NoGame = 2,
     Application = 3
-}
-
-public enum GameLaunchMode
-{
-    StartGame = 0,
-    DetectGameRunning = 1
 }
 
 /// <summary>Matches the persisted values of the existing ShortcutPermanence.</summary>

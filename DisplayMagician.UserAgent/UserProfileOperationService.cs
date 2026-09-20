@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagicianShared;
+using SharedApplyProfileResult = DisplayMagicianShared.ApplyProfileResult;
 
 namespace DisplayMagician.UserAgent;
 
@@ -23,8 +24,8 @@ public sealed class UserProfileOperationService
             return new ApplyDisplayProfileOperationResult(false, false);
         }
 
-        ApplyProfileResult result = await Task.Run(() => ProfileRepository.ApplyProfile(profile), cancellationToken).ConfigureAwait(false);
-        return new ApplyDisplayProfileOperationResult(result == ApplyProfileResult.Successful, result == ApplyProfileResult.Cancelled);
+        SharedApplyProfileResult result = await Task.Run(() => ProfileRepository.ApplyProfile(profile), cancellationToken).ConfigureAwait(false);
+        return new ApplyDisplayProfileOperationResult(result == SharedApplyProfileResult.Successful, result == SharedApplyProfileResult.Cancelled);
     }
 
     public ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds)

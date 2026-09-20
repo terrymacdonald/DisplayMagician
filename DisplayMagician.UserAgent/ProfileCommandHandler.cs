@@ -105,7 +105,15 @@ public sealed class ProfileCommandHandler
             }
 
             GameView[] games = GameLibrary.AllInstalledGamesInAllLibraries
-                .Select(game => new GameView { Id = game.Id, Name = game.Name, Library = (int)game.GameLibraryType, ExecutablePath = game.ExePath })
+                .Select(game => new GameView
+                {
+                    Id = game.Id,
+                    Name = game.Name,
+                    Library = (int)game.GameLibraryType,
+                    ExecutablePath = game.ExePath,
+                    IconPath = game.IconPath,
+                    Directory = game.Directory
+                })
                 .ToArray();
             return new ControlResponse { IsSuccessful = true, Message = "Games returned.", GameList = new GameListResult { Games = games } };
         }

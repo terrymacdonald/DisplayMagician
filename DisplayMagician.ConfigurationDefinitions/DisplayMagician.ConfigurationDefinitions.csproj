@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
