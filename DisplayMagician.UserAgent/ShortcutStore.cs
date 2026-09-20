@@ -82,6 +82,7 @@ public sealed class ShortcutStore
                 AudioPermanence = GetEnum(shortcut, "AudioPermanence", ShortcutDefinitionPermanence.Temporary),
                 ProcessPriority = GetEnum(shortcut, "ProcessPriority", ShortcutDefinitionProcessPriority.Normal),
                 ExecutablePath = GetString(shortcut, "ExecutableNameAndPath"),
+                OriginalIconPath = GetString(shortcut, "OriginalIconPath"),
                 ExecutableArguments = GetString(shortcut, "ExecutableArguments"),
                 ExecutableArgumentsRequired = GetBoolean(shortcut, "ExecutableArgumentsRequired"),
                 RunExecutableAsAdministrator = GetBoolean(shortcut, "RunExeAsAdministrator"),

@@ -437,7 +437,7 @@ namespace DisplayMagician
                 if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.OrdinalIgnoreCase) && testShortcut.AutoName)
                 {
                     logger.Debug($"ShortcutRepository/RenameShortcutProfile: Renaming {testShortcut.Name} shortcut's profile to {newProfile.Name} since the original profile has just been renamed.");
-                    testShortcut.ProfileToUse = newProfile;
+                    testShortcut.ProfileToUse = new DisplayProfileView { Id = newProfile.UUID, Name = newProfile.Name };
                     testShortcut.AutoSuggestShortcutName();
                 }
             }
@@ -684,7 +684,7 @@ namespace DisplayMagician
                                 if (!String.IsNullOrWhiteSpace(profile.UUID) && profile.UUID.Equals(updatedShortcut.ProfileUUID))
                                 {
                                     // And assign the matching Profile if we find it.
-                                    updatedShortcut.ProfileToUse = profile;
+                                    updatedShortcut.ProfileToUse = new DisplayProfileView { Id = profile.UUID, Name = profile.Name };
                                     foundProfile = true;
                                     logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile!");
                                     break;
@@ -893,9 +893,10 @@ namespace DisplayMagician
                     continue;
                 }
 
-                shortcut.ProfileToUse = ProfileRepository.AllProfiles.FirstOrDefault(profile =>
+                ProfileItem profile = ProfileRepository.AllProfiles.FirstOrDefault(profile =>
                     !string.IsNullOrWhiteSpace(profile.UUID) &&
                     profile.UUID.Equals(shortcut.ProfileUUID, StringComparison.OrdinalIgnoreCase));
+                shortcut.ProfileToUse = profile == null ? null : new DisplayProfileView { Id = profile.UUID, Name = profile.Name };
             }
         }
 

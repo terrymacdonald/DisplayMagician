@@ -146,7 +146,9 @@ namespace DisplayMagician
     {
 
         private string _profileUuid = "";
-        private ProfileItem _profileToUse;
+        private DisplayProfileView _profileToUse;
+        private string _profileName = "";
+        private Bitmap _profileThumbnail;
         private string _uuid = "";
         private string _name = "";
         private ShortcutCategory _category = ShortcutCategory.Game;
@@ -190,7 +192,7 @@ namespace DisplayMagician
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         public string _savedShortcutIconCacheFilename;
-        private static ProfileItem _skipDisplayChangeProfile;
+        private static DisplayProfileView _skipDisplayChangeProfile;
 #pragma warning restore CS3008 // Identifier is not CLS-compliant
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -203,7 +205,7 @@ namespace DisplayMagician
 
             // Autocreate a name for the shortcut if AutoName is on
             // (and if we have a profile to use)
-            if (AutoName && _profileToUse is ProfileItem)
+            if (AutoName && _profileToUse is DisplayProfileView)
             {
                 // If Autoname is on, and then lets autoname it!
                 // That populates all the right things
@@ -260,19 +262,19 @@ namespace DisplayMagician
 
 
         [JsonIgnore]
-#pragma warning disable CS3003 // Type is not CLS-compliant
-        public ProfileItem ProfileToUse {
-#pragma warning restore CS3003 // Type is not CLS-compliant
+    public DisplayProfileView ProfileToUse {
             get
             {
                 return _profileToUse;
             }
             set
             {
-                if (value is ProfileItem)
+                if (value is DisplayProfileView)
                 {
                     _profileToUse = value;
-                    _profileUuid = _profileToUse.UUID;
+                    _profileUuid = _profileToUse.Id;
+                    _profileName = _profileToUse.Name;
+                    _profileThumbnail = GetProfileThumbnail(_profileToUse);
                     // We should try to set the Profile
                     // And we rename the shortcut if the AutoName is on
                     if (AutoName)
@@ -292,19 +294,18 @@ namespace DisplayMagician
             {
                 _profileUuid = value;
 
-                // The skip UUID is a special virtual profile - not in AllProfiles, handle it directly
-                if (_profileUuid.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                // The skip UUID is a special virtual profile, handled without querying a repository.
+                if (_profileUuid.Equals(SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = CreateSkipDisplayChangeProfile();
+                    _profileName = _profileToUse.Name;
+                    _profileThumbnail = GetProfileThumbnail(_profileToUse);
                     return;
                 }
 
-                // We try to find and set the ProfileToUse
-                foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-                {
-                    if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
-                        _profileToUse = profileToTest;
-                }
+                _profileToUse = null;
+                _profileName = "";
+                _profileThumbnail = null;
             }
         }
 
@@ -777,9 +778,6 @@ namespace DisplayMagician
             {
                 _originalBitmap = value;
 
-                // And we do the same for the Bitmap overlay, but only if the ProfileToUse is set
-                //if (_profileToUse is ProfileItem)
-                //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             }
         }
@@ -947,8 +945,11 @@ namespace DisplayMagician
         }
 
 
+        public const string SkipDisplayChangeUUID = "00000000-0000-4000-8000-000000000000";
+        public const string SkipDisplayChangeName = "No Change";
+
         [JsonIgnore]
-        public static ProfileItem SkipDisplayChangeProfile
+        public static DisplayProfileView SkipDisplayChangeProfile
         {
             get
             {
@@ -962,9 +963,7 @@ namespace DisplayMagician
 
         public void UpdateNoGameShortcut(
             string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
+            DisplayProfileView profile,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             string audioProfileId = null,
@@ -983,7 +982,7 @@ namespace DisplayMagician
                 _uuid = uuid;
             _name = name;
             _category = ShortcutCategory.NoGame;
-            _profileToUse = profile;
+            ProfileToUse = profile;
             _audioProfileUUID = string.IsNullOrWhiteSpace(audioProfileId) ? SkipAudioProfilesChangeUUID : audioProfileId;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
@@ -999,9 +998,8 @@ namespace DisplayMagician
             _originalIconPath = "";
 
             // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-            _originalBitmap = profile.ProfileBitmap;
-            _shortcutBitmap = profile.ProfileBitmap;
+            _originalBitmap = _profileThumbnail;
+            _shortcutBitmap = _profileThumbnail;
 
             // Empty out the unused shortcut data
             _executableNameAndPath = "";
@@ -1031,9 +1029,7 @@ namespace DisplayMagician
 
         public void UpdateGameShortcut(
             string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
+            DisplayProfileView profile,
             GameShorcutData game,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
@@ -1056,7 +1052,7 @@ namespace DisplayMagician
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
             _name = name;
-            _profileToUse = profile;
+            ProfileToUse = profile;
             _category = ShortcutCategory.Game;
             _gameAppId = game.GameToPlay.Id;
             _gameName = game.GameToPlay.Name;
@@ -1084,12 +1080,12 @@ namespace DisplayMagician
             _availableImages = availableImages;
 
             // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
+            _profileUuid = profile.Id;
 
             // We create the Bitmaps for the game
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
-            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileThumbnail, 256, 256);
 
             // Empty out the unused shortcut data
             _executableNameAndPath = "";
@@ -1109,9 +1105,7 @@ namespace DisplayMagician
 
         public void UpdateExecutableShortcut(
             string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
+            DisplayProfileView profile,
             ExecutableShortcutData executable,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
@@ -1133,7 +1127,7 @@ namespace DisplayMagician
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
             _name = name;
-            _profileToUse = profile;
+            ProfileToUse = profile;
             _category = ShortcutCategory.Executable;
             _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
             _executableNameAndPath = executable.ExecutableNameAndPath;
@@ -1159,12 +1153,12 @@ namespace DisplayMagician
             _availableImages = availableImages;
 
             // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
+            _profileUuid = profile.Id;
 
             // We create the Bitmaps for the executable
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
-            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileThumbnail, 256, 256);
 
             // Empty out the unused shortcut data
             _gameAppId = "";
@@ -1185,9 +1179,7 @@ namespace DisplayMagician
 
         public void UpdateAppShortcut(
             string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
+            DisplayProfileView profile,
             AppShortcutData app,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
@@ -1209,7 +1201,7 @@ namespace DisplayMagician
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
             _name = name;
-            _profileToUse = profile;
+            ProfileToUse = profile;
             _category = ShortcutCategory.Application;
             _applicationId = app.AppToUse.Id;
             _applicationName = app.AppToUse.Name;
@@ -1239,13 +1231,13 @@ namespace DisplayMagician
             _originalIconPath = app.AppToUse.IconPath;
 
             // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
+            _profileUuid = profile.Id;
 
 
             // We create the Bitmaps for the executable
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
-            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileThumbnail, 256, 256);
 
             // Empty out the unused shortcut data
             _gameAppId = "";
@@ -1411,11 +1403,11 @@ namespace DisplayMagician
                 logger.Warn(ex, $"ShortcutItem/SaveShortcutIconToCache: Exception while trying to save the Shortcut icon.");
                 shortcutIcon.Clear();
                 // If we fail to create an icon any other way, then we use the default profile icon
-                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileToUse.Name} as the icon instead.");
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileName} as the icon instead.");
                 SingleIcon si = shortcutIcon.Add("icon2");
                 si.Add(Properties.Resources.displaymagician);
                 shortcutIcon.SelectedIndex = 0;
-                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileName} to {_savedShortcutIconCacheFilename}.");
                 shortcutIcon.Save(_savedShortcutIconCacheFilename);
             }
 
@@ -1433,50 +1425,20 @@ namespace DisplayMagician
             logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is named: {Name}");
 
             // Does the profile we want to Use still exist?
-            if (ProfileUUID == ProfileItem.SkipDisplayChangeUUID)
+            if (ProfileUUID == SkipDisplayChangeUUID)
             {
                 // Skip Display Change is a special virtual profile - always valid, never needs checking
                 logger.Trace($"ShortcutItem/RefreshValidity: ProfileUUID is SkipDisplayChangeUUID - skipping display profile checks.");
             }
-            else
+            else if (string.IsNullOrWhiteSpace(ProfileUUID))
             {
-                ProfileItem profileToValidate = ProfileRepository.GetProfile(ProfileUUID);
-                if (profileToValidate == null)
-                {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The profile UUID {ProfileUUID} isn't in the ProfileRepository");
-                    ShortcutError error = new ShortcutError();
-                    error.Name = "ProfileNotExist";
-                    error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The profile does not exist (probably deleted) and cannot be used.";
-                    _shortcutErrors.Add(error);
-                    if (worstError != ShortcutValidity.Error)
-                        worstError = ShortcutValidity.Error;
-                }
-                else if (!profileToValidate.HasUsableSavedConfiguration(out string profileErrorMessage))
-                {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The profile '{profileToValidate.Name}' has invalid saved configuration data. {profileErrorMessage}");
-                    ShortcutError error = new ShortcutError();
-                    error.Name = "InvalidDisplayProfileConfiguration";
-                    error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The display profile '{profileToValidate.Name}' contains errors and cannot be applied. {profileErrorMessage}";
-                    _shortcutErrors.Add(error);
-                    worstError = ShortcutValidity.Error;
-                }
-                else
-                {
-                    List<string> undetectedDisplays = profileToValidate.GetUndetectedDisplayDescriptions();
-                    if (undetectedDisplays.Count > 0)
-                    {
-                        logger.Warn($"ShortcutItem/RefreshValidity: The display profile '{profileToValidate.Name}' could not detect: {String.Join(", ", undetectedDisplays)}.");
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "DisplayProfileDetectionAdvisory";
-                        error.Validity = ShortcutValidity.Warning;
-                        error.Message = $"The display profile '{profileToValidate.Name}' could not detect: {String.Join(", ", undetectedDisplays)}. You can still run the shortcut if you want to but it may not work as expected.";
-                        _shortcutErrors.Add(error);
-                        if (worstError == ShortcutValidity.Valid)
-                            worstError = ShortcutValidity.Warning;
-                    }
-                }
+                logger.Warn("ShortcutItem/RefreshValidity: ProfileUUID is empty.");
+                ShortcutError error = new ShortcutError();
+                error.Name = "DisplayProfileIdMissing";
+                error.Validity = ShortcutValidity.Error;
+                error.Message = "The display profile selected by this shortcut is missing. Please edit the shortcut and select a display profile or choose not to change the display.";
+                _shortcutErrors.Add(error);
+                worstError = ShortcutValidity.Error;
             }
 
             // The User Agent owns audio profile validation. WinForms only verifies that this
@@ -1696,13 +1658,13 @@ namespace DisplayMagician
                 if (Category == ShortcutCategory.Executable)
                 {
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", programName, ProfileToUse.Name);
+                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", _profileName);
 
                 }
                 else
                 {
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", GameName, ProfileToUse.Name);
+                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", GameName, _profileName);
                 }
 
             }
@@ -1710,7 +1672,7 @@ namespace DisplayMagician
             else
             {
                 // Prepare text for the shortcut description field
-                shortcutDescription = string.Format("Switching display profile to '{0}'.", ProfileToUse.Name);
+                shortcutDescription = string.Format("Switching display profile to '{0}'.", _profileName);
             }
 
             // Now we are ready to create a shortcut based on the filename the user gave us
@@ -1767,23 +1729,30 @@ namespace DisplayMagician
             return $"{System.Windows.Forms.Application.ExecutablePath} {DisplayMagicianStartupAction.RunShortcut} \"{UUID}\"";
         }
 
-        public static ProfileItem CreateSkipDisplayChangeProfile()
+        public static DisplayProfileView CreateSkipDisplayChangeProfile()
         {
-            return new ProfileItem
+            return new DisplayProfileView
             {
-                Name = ProfileItem.SkipDisplayChangeName,
-                UUID = ProfileItem.SkipDisplayChangeUUID,
-                ProfileBitmap = Properties.Resources.skipdisplaychange,
-                // The virtual profile has no display layout to render. Reuse its
-                // canonical bitmap for the shortcut's bottom-right overlay.
-                ProfileTightestBitmap = Properties.Resources.skipdisplaychange
+                Name = SkipDisplayChangeName,
+                Id = SkipDisplayChangeUUID
             };
+        }
+
+        private static Bitmap GetProfileThumbnail(DisplayProfileView profile)
+        {
+            if (profile == null || string.IsNullOrWhiteSpace(profile.ThumbnailPngBase64))
+                return Properties.Resources.skipdisplaychange;
+
+            byte[] thumbnailBytes = Convert.FromBase64String(profile.ThumbnailPngBase64);
+            using MemoryStream thumbnailStream = new MemoryStream(thumbnailBytes);
+            using Image thumbnail = Image.FromStream(thumbnailStream);
+            return new Bitmap(thumbnail);
         }
 
 
         public void AutoSuggestShortcutName()
         {
-            if (AutoName && _profileToUse is ProfileItem)
+            if (AutoName && _profileToUse is DisplayProfileView)
             {
                if (Category.Equals(ShortcutCategory.Game) && GameName.Length > 0)
                 {

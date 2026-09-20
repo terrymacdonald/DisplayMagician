@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Security.Cryptography;
 using DisplayMagician.ConfigurationDefinitions;
@@ -140,6 +142,21 @@ public sealed class ProfileCommandHandler
                 })
                 .ToArray();
             return new ControlResponse { IsSuccessful = true, Message = "Applications returned.", AppList = new AppListResult { Apps = apps } };
+        }
+
+        if (request.MessageType == ControlMessageType.ListShortcuts)
+        {
+            ShortcutView[] shortcuts = _shortcutStore.GetShortcutDefinitions()
+                .Select(shortcut => new ShortcutView
+                {
+                    Id = shortcut.Id,
+                    Name = shortcut.Name,
+                    Category = (ShortcutCategory)shortcut.Category,
+                    ProfileId = shortcut.ProfileId,
+                    IconPngBase64 = GetShortcutIconPngBase64(shortcut)
+                })
+                .ToArray();
+            return new ControlResponse { IsSuccessful = true, Message = "Shortcuts returned.", ShortcutList = new ShortcutListResult { Shortcuts = shortcuts } };
         }
 
         if (request.MessageType == ControlMessageType.ListMessages)
@@ -498,6 +515,85 @@ public sealed class ProfileCommandHandler
         using MemoryStream stream = new MemoryStream();
         profile.ProfileBitmap.Save(stream, ImageFormat.Png);
         return Convert.ToBase64String(stream.ToArray());
+    }
+
+    private static string? GetShortcutIconPngBase64(ShortcutDefinition shortcut)
+    {
+        using Bitmap? icon = LoadShortcutIcon(shortcut);
+        if (icon == null)
+        {
+            return null;
+        }
+
+        using Bitmap? profileThumbnail = LoadProfileThumbnail(shortcut.ProfileId);
+        using Bitmap composite = new Bitmap(256, 256, PixelFormat.Format32bppArgb);
+        using Graphics graphics = Graphics.FromImage(composite);
+        graphics.Clear(Color.Transparent);
+        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        graphics.DrawImage(icon, GetCenteredBounds(icon.Size, composite.Size));
+
+        if (profileThumbnail != null)
+        {
+            Size overlaySize = FitWithin(profileThumbnail.Size, new Size(70, 70));
+            graphics.DrawImage(profileThumbnail, composite.Width - overlaySize.Width, composite.Height - overlaySize.Height - 5, overlaySize.Width, overlaySize.Height);
+        }
+
+        using MemoryStream stream = new MemoryStream();
+        composite.Save(stream, ImageFormat.Png);
+        return Convert.ToBase64String(stream.ToArray());
+    }
+
+    private static Bitmap? LoadShortcutIcon(ShortcutDefinition shortcut)
+    {
+        string iconPath = shortcut.OriginalIconPath;
+        if (string.IsNullOrWhiteSpace(iconPath) || !File.Exists(iconPath))
+        {
+            iconPath = shortcut.ExecutablePath;
+        }
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(iconPath) && File.Exists(iconPath))
+            {
+                using Icon? icon = Icon.ExtractAssociatedIcon(iconPath);
+                if (icon != null)
+                {
+                    return icon.ToBitmap();
+                }
+
+                using Image image = Image.FromFile(iconPath);
+                return new Bitmap(image);
+            }
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is ExternalException || ex is IOException)
+        {
+            _logger.Debug(ex, "ProfileCommandHandler/LoadShortcutIcon: Could not load shortcut icon from {0}.", iconPath);
+        }
+
+        return null;
+    }
+
+    private static Bitmap? LoadProfileThumbnail(string profileId)
+    {
+        ProfileItem? profile = ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
+        return profile?.ProfileBitmap == null ? null : new Bitmap(profile.ProfileBitmap);
+    }
+
+    private static Rectangle GetCenteredBounds(Size imageSize, Size targetSize)
+    {
+        Size fittedSize = FitWithin(imageSize, targetSize);
+        return new Rectangle((targetSize.Width - fittedSize.Width) / 2, (targetSize.Height - fittedSize.Height) / 2, fittedSize.Width, fittedSize.Height);
+    }
+
+    private static Size FitWithin(Size imageSize, Size bounds)
+    {
+        if (imageSize.Width <= 0 || imageSize.Height <= 0)
+        {
+            return bounds;
+        }
+
+        double scale = Math.Min((double)bounds.Width / imageSize.Width, (double)bounds.Height / imageSize.Height);
+        return new Size(Math.Max(1, (int)Math.Round(imageSize.Width * scale)), Math.Max(1, (int)Math.Round(imageSize.Height * scale)));
     }
 
     private static RepositorySnapshot CreateSnapshot(RepositoryKind repository, string path)

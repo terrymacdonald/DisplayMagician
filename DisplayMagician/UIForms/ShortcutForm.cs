@@ -31,8 +31,8 @@ namespace DisplayMagician.UIForms
         private GameAdaptor _gameAdaptor;
         private bool _editingExistingShortcut = false;
         private ShortcutCategory _shortcutCategory = ShortcutCategory.Game;
-        //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
-        private ProfileItem _profileToUse = null;
+        private DisplayProfileView _profileToUse = null;
+        private List<DisplayProfileView> _displayProfiles = new List<DisplayProfileView>();
         private ImageListViewItem _skipDisplayChangeILVItem;
 
         private string _gameLauncher = "";
@@ -118,7 +118,7 @@ namespace DisplayMagician.UIForms
                 logger.Error(ex, $"ShortcutForm/ShortcutForm: Exception while trying to setup the game ImageListView and set the render.");
             }
 
-            _skipDisplayChangeILVItem = new ImageListViewItem(ShortcutItem.SkipDisplayChangeProfile, ProfileItem.SkipDisplayChangeName);
+            _skipDisplayChangeILVItem = new ImageListViewItem(ShortcutItem.SkipDisplayChangeProfile, ShortcutItem.SkipDisplayChangeName);
 
             lbl_profile_shown.Text = "No Display Profiles available";
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
@@ -593,7 +593,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Check the profile is set and that it's still valid
-            if (!(_profileToUse is ProfileItem))
+            if (_profileToUse == null)
             {
                 logger.Error($"ShortcutForm/AllowedToSave: The shortcut doesn't have a display profile selected!");
                 errors.Add("You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.");
@@ -819,7 +819,7 @@ namespace DisplayMagician.UIForms
 
         private void SuggestShortcutName()
         {
-            if (_autoName && _profileToUse is ProfileItem)
+            if (_autoName && _profileToUse is DisplayProfileView)
             {
                 if (_shortcutCategory == ShortcutCategory.NoGame)
                 {
@@ -847,7 +847,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void UpdateProfileImageListView(ProfileItem profile)
+        private void UpdateProfileImageListView(DisplayProfileView profile)
         {
             ilv_saved_profiles.ClearSelection();
             IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
@@ -864,7 +864,6 @@ namespace DisplayMagician.UIForms
         private void ClearForm()
         {
             // Reset all the tracking variables back to default
-            //_loadedProfiles = new List<ProfileItem>();
             _profileToUse = null;
             _gameLauncher = "";
 
@@ -917,28 +916,6 @@ namespace DisplayMagician.UIForms
             txt_alternative_executable.Text = "";
 
 
-            // Populate all the Profiles in the profile listview
-            if (ProfileRepository.ProfileCount > 0)
-            {
-
-                // Temporarily stop updating the saved_profiles listview
-                ilv_saved_profiles.SuspendLayout();
-
-                ImageListViewItem newItem = null;
-                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
-                {
-                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
-                    if (!thisLoadedProfileIsAlreadyHere)
-                    {
-                        newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                        ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
-                    }
-
-                }
-
-                // Restart updating the saved_profiles listview
-                ilv_saved_profiles.ResumeLayout();
-            }
             RefreshAudioProfilesList();
 
 
@@ -1001,7 +978,7 @@ namespace DisplayMagician.UIForms
 
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
-            ProfileItem chosenProfile = null;
+            DisplayProfileView chosenProfile = null;
 
             // Close the splash screen
             CloseTheSplashScreen();
@@ -1063,18 +1040,15 @@ namespace DisplayMagician.UIForms
 
                 // *** 1. Choose Display Profile Tab ***
                 // Find the profile
-                if (_shortcutToEdit.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.InvariantCulture))
+                if (_shortcutToEdit.ProfileUUID.Equals(ShortcutItem.SkipDisplayChangeUUID, StringComparison.InvariantCulture))
                 {
                     chosenProfile = ShortcutItem.SkipDisplayChangeProfile;
                     foundChosenProfileInLoadedProfiles = true;
                 }
-                else if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
+                else
                 {
-                    // We have loaded the profile used last time
-                    // so we need to show the selected profile in the UI
-                    chosenProfile = ProfileRepository.GetProfile(_shortcutToEdit.ProfileUUID);
-                    foundChosenProfileInLoadedProfiles = true;
-
+                    chosenProfile = _displayProfiles.FirstOrDefault(profile => string.Equals(profile.Id, _shortcutToEdit.ProfileUUID, StringComparison.OrdinalIgnoreCase));
+                    foundChosenProfileInLoadedProfiles = chosenProfile != null;
                 }
 
                 if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
@@ -1085,7 +1059,7 @@ namespace DisplayMagician.UIForms
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
 
-                    chosenProfile = ProfileRepository.CurrentProfile;
+                    chosenProfile = _displayProfiles.FirstOrDefault();
                     shortcutTweakChangesName = true;
                     _isUnsaved = true;
 
@@ -1093,37 +1067,11 @@ namespace DisplayMagician.UIForms
                 // If we get to the end of the loaded profiles and haven't
                 // found a matching profile, then we need to show the current profile
                 // that we're running now (only if that's been saved)
-                else if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
+                else if (!foundChosenProfileInLoadedProfiles && _displayProfiles.Count > 0)
                 {
-                    ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
-                    bool foundCurrentProfile = false;
-                    foreach (ProfileItem profileToCheck in ProfileRepository.AllProfiles)
-                    {
-                        if (profileToCheck.Equals(currentProfile))
-                        {
-                            chosenProfile = currentProfile;
-                            foundCurrentProfile = true;
-                        }
-                    }
-
-                    // If we get here, and we still haven't matched the profile, then just pick the first one
-                    if (!foundCurrentProfile)
-                    {
-                        MessageBox.Show(
-                            "The Display Profile used in this Game Shortcut no longer exists! You will need to either select or create another display profile, or select the 'No change' display profile, then save the Shortcut in order to use it.",
-                            "Display Profile no longer exists",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-
-                        if (ProfileRepository.ProfileCount > 0)
-                        {
-                            chosenProfile = ProfileRepository.AllProfiles[0];
-                            shortcutTweakChangesName = true;
-                            _isUnsaved = true;
-                        }
-
-                    }
-
+                    chosenProfile = _displayProfiles.First();
+                    shortcutTweakChangesName = true;
+                    _isUnsaved = true;
                 }
 
                 _profileToUse = chosenProfile;
@@ -1822,29 +1770,9 @@ namespace DisplayMagician.UIForms
 
                 // We need to show the current profile
                 // that we're running now (only if that's been saved)
-                if (ProfileRepository.ProfileCount > 0)
+                if (_displayProfiles.Count > 0)
                 {
-                    ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
-                    bool foundCurrentProfile = false;
-                    foreach (ProfileItem profileToCheck in ProfileRepository.AllProfiles)
-                    {
-                        if (profileToCheck.Equals(currentProfile))
-                        {
-                            chosenProfile = currentProfile;
-                            foundCurrentProfile = true;
-                        }
-                    }
-
-                    // If we get here, and we still haven't matched the profile, then just pick the first one
-                    if (!foundCurrentProfile)
-                    {
-                        if (ProfileRepository.ProfileCount > 0)
-                        {
-                            chosenProfile = ProfileRepository.AllProfiles[0];
-                            shortcutTweakChangesName = true;
-                        }
-
-                    }
+                    chosenProfile = _displayProfiles.First();
                     _profileToUse = chosenProfile;
                     // Also need to select the chosenProfile in the UI so it gets saved properly
                     foreach (var item in ilv_saved_profiles.Items)
@@ -1897,11 +1825,12 @@ namespace DisplayMagician.UIForms
                 if (!Program.EnsureUserAgentStarted())
                     throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
 
+                DisplayMagician.Contracts.ProfileListResult profiles = await controlServiceClient.ListProfilesAsync(CancellationToken.None);
+                _displayProfiles = profiles.Views.ToList();
                 await RefreshAudioProfilesAsync();
                 await Task.Run(() =>
                 {
                     UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(controlServiceClient);
-                    ProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                     ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                 });
             }
@@ -2146,27 +2075,21 @@ namespace DisplayMagician.UIForms
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
             // Check if the user clicked the special "Skip Display Change" item first
-            if (e.Item.EquipmentModel == ProfileItem.SkipDisplayChangeUUID)
+            if (e.Item.EquipmentModel == ShortcutItem.SkipDisplayChangeUUID)
             {
                 ChangeSelectedProfile(ShortcutItem.SkipDisplayChangeProfile);
                 SuggestShortcutName();
                 return;
             }
 
-            foreach (ProfileItem savedProfile in ProfileRepository.AllProfiles)
-            {
-                if (savedProfile.Name == e.Item.Text)
-                {
-                    ChangeSelectedProfile(savedProfile);
-                    break;
-                }
-            }
+            DisplayProfileView savedProfile = _displayProfiles.FirstOrDefault(profile => string.Equals(profile.Id, e.Item.EquipmentModel as string, StringComparison.OrdinalIgnoreCase));
+            ChangeSelectedProfile(savedProfile);
 
             SuggestShortcutName();
 
         }
 
-        private void ChangeSelectedProfile(ProfileItem profile)
+        private void ChangeSelectedProfile(DisplayProfileView profile)
         {
             // If the profile is null then return
             // (this happens when a new blank shortcut is created)
@@ -2177,9 +2100,9 @@ namespace DisplayMagician.UIForms
             _profileToUse = profile;
 
             // Handle the special "Skip Display Change" profile
-            if (profile.UUID == ProfileItem.SkipDisplayChangeUUID)
+            if (profile.Id == ShortcutItem.SkipDisplayChangeUUID)
             {
-                lbl_profile_shown.Text = ProfileItem.SkipDisplayChangeName;
+                lbl_profile_shown.Text = ShortcutItem.SkipDisplayChangeName;
                 lbl_profile_shown_subtitle.Text = "The display configuration will not be changed when this shortcut runs.";
                 lbl_profile_shown_subtitle.Visible = true;
 
@@ -2194,22 +2117,14 @@ namespace DisplayMagician.UIForms
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _profileToUse.Name;
 
-            if (_profileToUse.Equals(ProfileRepository.CurrentProfile))
-            {
-                lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
-                lbl_profile_shown_subtitle.Visible = true;
-            }
-            else
-            {
-                lbl_profile_shown_subtitle.Text = "";
-                lbl_profile_shown_subtitle.Visible = false;
-            }
+            lbl_profile_shown_subtitle.Text = "";
+            lbl_profile_shown_subtitle.Visible = false;
 
             // Refresh the image list view
             UpdateProfileImageListView(profile);
 
             // And finally show the profile in the display view
-            dv_profile.Profile = profile;
+            dv_profile.Profile = null;
             dv_profile.Refresh();
         }
 
@@ -2218,9 +2133,6 @@ namespace DisplayMagician.UIForms
         {
 
 
-            //if (ProfileRepository.ProfileCount > 0)
-            //{
-
             // Temporarily stop updating the saved_profiles listview
             ilv_saved_profiles.SuspendLayout();
 
@@ -2228,7 +2140,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.Items.Clear();
 
             ImageListViewItem newItem = null;
-            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            foreach (DisplayProfileView loadedProfile in _displayProfiles)
             {
                 bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
                 if (!thisLoadedProfileIsAlreadyHere)

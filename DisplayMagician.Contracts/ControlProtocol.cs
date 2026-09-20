@@ -47,7 +47,8 @@ public enum ControlMessageType
     ListMessages = 31,
     SetMessageReadState = 32,
     SyncMessages = 33,
-    ListApps = 34
+    ListApps = 34,
+    ListShortcuts = 35
 }
 
 public enum ControlErrorCode
@@ -150,6 +151,21 @@ public sealed class AppView
 public sealed class AppListResult
 {
     public AppView[] Apps { get; set; } = Array.Empty<AppView>();
+}
+
+/// <summary>A client-safe shortcut representation with an Agent-rendered icon.</summary>
+public sealed class ShortcutView
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public ShortcutCategory Category { get; set; }
+    public string ProfileId { get; set; } = string.Empty;
+    public string? IconPngBase64 { get; set; }
+}
+
+public sealed class ShortcutListResult
+{
+    public ShortcutView[] Shortcuts { get; set; } = Array.Empty<ShortcutView>();
 }
 
 /// <summary>A client-safe message representation owned by the interactive User Agent.</summary>
@@ -436,6 +452,8 @@ public sealed class ControlResponse
     public GameListResult? GameList { get; set; }
 
     public AppListResult? AppList { get; set; }
+
+    public ShortcutListResult? ShortcutList { get; set; }
 
     public MessageListResult? MessageList { get; set; }
 

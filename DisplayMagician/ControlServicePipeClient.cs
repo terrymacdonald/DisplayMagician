@@ -129,6 +129,12 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful && response.AppList != null ? response.AppList : throw new InvalidOperationException(response.Message);
     }
 
+    public async Task<ShortcutListResult> ListShortcutsAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListShortcuts }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.ShortcutList != null ? response.ShortcutList : throw new InvalidOperationException(response.Message);
+    }
+
     public async Task<MessageListResult> ListMessagesAsync(CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListMessages }, cancellationToken).ConfigureAwait(false);

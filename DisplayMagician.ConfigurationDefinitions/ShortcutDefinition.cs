@@ -22,6 +22,7 @@ public sealed class ShortcutDefinition
     public ShortcutDefinitionProcessPriority ProcessPriority { get; init; } = ShortcutDefinitionProcessPriority.Normal;
 
     public string ExecutablePath { get; init; } = string.Empty;
+    public string OriginalIconPath { get; init; } = string.Empty;
     public string ExecutableArguments { get; init; } = string.Empty;
     public bool ExecutableArgumentsRequired { get; init; }
     public bool RunExecutableAsAdministrator { get; init; }
