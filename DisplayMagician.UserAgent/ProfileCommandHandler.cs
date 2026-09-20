@@ -22,6 +22,7 @@ public sealed class ProfileCommandHandler
     private readonly ShortcutStore _shortcutStore;
     private readonly AutomaticGameDetectionRegistry _automaticGameDetectionRegistry;
     private readonly UserProfileOperationService _userProfileOperationService;
+    private readonly ShortcutRecoveryStore _shortcutRecoveryStore;
     private readonly ShortcutRunner _shortcutRunner;
     private bool _stopRequested;
 
@@ -39,7 +40,16 @@ public sealed class ProfileCommandHandler
         _automaticGameDetectionRegistry = new AutomaticGameDetectionRegistry();
         _automaticGameDetectionRegistry.ReplaceAutomaticDetections(_shortcutStore.GetShortcutDefinitions());
         _userProfileOperationService = new UserProfileOperationService();
-        _shortcutRunner = new ShortcutRunner(_shortcutStore, _automaticGameDetectionRegistry, _userProfileOperationService);
+        _shortcutRecoveryStore = new ShortcutRecoveryStore(_userDataPath);
+        _shortcutRunner = new ShortcutRunner(_shortcutStore, _automaticGameDetectionRegistry, _userProfileOperationService, _shortcutRecoveryStore);
+        _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
+    }
+
+    public async Task<bool> RestorePendingShortcutRecoveryAsync(CancellationToken cancellationToken)
+    {
+        bool restored = await _shortcutRunner.RestorePendingRecoveryAsync(0, cancellationToken).ConfigureAwait(false);
+        _registration.IsRecoveryRequired = !restored;
+        return restored;
     }
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
@@ -102,6 +112,7 @@ public sealed class ProfileCommandHandler
             }
             finally
             {
+                _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
                 _registration.OperationState = AgentOperationState.Idle;
             }
         }

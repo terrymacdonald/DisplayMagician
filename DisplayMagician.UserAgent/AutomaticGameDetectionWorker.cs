@@ -83,6 +83,7 @@ public sealed class AutomaticGameDetectionWorker
                         }
                         finally
                         {
+                            _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
                             _registration.OperationState = AgentOperationState.Idle;
                             ControlResponse stateResponse = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Idle, CancellationToken.None).ConfigureAwait(false);
                             if (!stateResponse.IsSuccessful)
@@ -109,7 +110,7 @@ public sealed class AutomaticGameDetectionWorker
     private static bool IsGameRunning(ShortcutDefinition shortcut, Game game)
     {
         return shortcut.MonitorDifferentGameExecutable && !string.IsNullOrWhiteSpace(shortcut.DifferentGameExecutablePathToMonitor)
-            ? !ProcessUtils.ProcessExited(shortcut.DifferentGameExecutablePathToMonitor)
+            ? ProcessTreeMonitor.IsExecutableRunning(shortcut.DifferentGameExecutablePathToMonitor)
             : game.IsRunning;
     }
 }

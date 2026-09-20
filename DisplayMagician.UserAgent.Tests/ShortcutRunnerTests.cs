@@ -18,7 +18,7 @@ public sealed class ShortcutRunnerTests
         ShortcutStore store = new ShortcutStore(root);
         RepositorySnapshot snapshot = store.GetSnapshot();
         store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = "{\"Shortcuts\":[{\"UUID\":\"runner-shortcut\",\"Name\":\"Runner shortcut\",\"Category\":0}]}" });
-        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService());
+        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
 
         ShortcutRunResult result = await runner.PrepareRunAsync("runner-shortcut", CancellationToken.None);
 
@@ -34,12 +34,58 @@ public sealed class ShortcutRunnerTests
         ShortcutStore store = new ShortcutStore(root);
         RepositorySnapshot snapshot = store.GetSnapshot();
         store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = "{\"Shortcuts\":[{\"UUID\":\"runner-shortcut\",\"Name\":\"Runner shortcut\",\"Category\":2}]}" });
-        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService());
+        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
 
         ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("runner-shortcut", 0, CancellationToken.None);
 
         Assert.Equal(ShortcutRunOutcome.Completed, result.Outcome);
         Assert.NotEqual(Guid.Empty, result.OperationId);
+    }
+
+    [Fact]
+    public async Task ApplyShortcutProfilesAsync_ReturnsCancelledWhenRequestedBeforeExecution()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutRunner-{Guid.NewGuid():N}");
+        ShortcutStore store = new ShortcutStore(root);
+        RepositorySnapshot snapshot = store.GetSnapshot();
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = "{\"Shortcuts\":[{\"UUID\":\"runner-shortcut\",\"Name\":\"Runner shortcut\",\"Category\":2}]}" });
+        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
+        using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
+
+        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("runner-shortcut", 0, cancellationTokenSource.Token);
+
+        Assert.Equal(ShortcutRunOutcome.Cancelled, result.Outcome);
+        Assert.NotEqual(Guid.Empty, result.OperationId);
+    }
+
+    [Fact]
+    public async Task ApplyShortcutProfilesAsync_FailsWhenARequiredStartProgramCannotRun()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutRunner-{Guid.NewGuid():N}");
+        ShortcutStore store = new ShortcutStore(root);
+        RepositorySnapshot snapshot = store.GetSnapshot();
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = "{\"Shortcuts\":[{\"UUID\":\"runner-shortcut\",\"Name\":\"Runner shortcut\",\"Category\":2,\"StartPrograms\":[{\"Executable\":\"C:\\\\missing-start-program.exe\"}]}]}" });
+        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
+
+        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("runner-shortcut", 0, CancellationToken.None);
+
+        Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
+    }
+
+    [Fact]
+    public async Task ApplyShortcutProfilesAsync_FailsBeforeSideEffectsWhenRequiredExecutableArgumentsAreMissing()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutRunner-{Guid.NewGuid():N}");
+        ShortcutStore store = new ShortcutStore(root);
+        RepositorySnapshot snapshot = store.GetSnapshot();
+        string executablePath = Environment.ProcessPath!;
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = $"{{\"Shortcuts\":[{{\"UUID\":\"runner-shortcut\",\"Name\":\"Runner shortcut\",\"Category\":0,\"Executable\":\"{executablePath.Replace("\\", "\\\\")}\",\"ExecutableArgumentsRequired\":true}}]}}" });
+        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
+
+        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("runner-shortcut", 0, CancellationToken.None);
+
+        Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
     }
 
     [Fact]
@@ -51,7 +97,7 @@ public sealed class ShortcutRunnerTests
         store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = "{\"Shortcuts\":[{\"UUID\":\"automatic-shortcut\",\"Name\":\"Automatic shortcut\",\"Category\":1,\"GameLaunchMode\":1,\"GameLibrary\":1,\"GameAppId\":\"missing-game\",\"ProfileUUID\":\"missing-profile\"}]}" });
         AutomaticGameDetectionRegistry registry = new AutomaticGameDetectionRegistry();
         registry.ReplaceAutomaticDetections(store.GetShortcutDefinitions());
-        ShortcutRunner runner = new ShortcutRunner(store, registry, new UserProfileOperationService());
+        ShortcutRunner runner = new ShortcutRunner(store, registry, new UserProfileOperationService(), new ShortcutRecoveryStore(root));
 
         ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("automatic-shortcut", 0, CancellationToken.None);
 

@@ -27,6 +27,10 @@ public sealed class ShortcutDefinition
     public bool MonitorExecutablePath { get; init; } = true;
     public string DifferentExecutablePathToMonitor { get; init; } = string.Empty;
 
+    public string ApplicationId { get; init; } = string.Empty;
+    public string ApplicationName { get; init; } = string.Empty;
+    public int ApplicationLibrary { get; init; } = -1;
+
     public string GameAppId { get; init; } = string.Empty;
     public string GameName { get; init; } = string.Empty;
     public int GameLibrary { get; init; }

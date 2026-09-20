@@ -195,6 +195,36 @@ namespace DisplayMagician.Processes
             return monitor;
         }
 
+        public static bool IsExecutableRunning(string executablePath)
+        {
+            if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
+                return false;
+
+            string expectedExecutablePath = Path.GetFullPath(executablePath);
+            foreach (Process process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(executablePath)))
+            {
+                try
+                {
+                    string processPath = GetProcessImagePath(process.Id);
+                    if (!string.IsNullOrWhiteSpace(processPath) &&
+                        string.Equals(Path.GetFullPath(processPath), expectedExecutablePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Trace(ex, $"ProcessTreeMonitor/IsExecutableRunning: Could not inspect a process for {expectedExecutablePath}.");
+                }
+                finally
+                {
+                    process.Dispose();
+                }
+            }
+
+            return false;
+        }
+
         public static List<Process> StartAndCapture(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false, bool captureDescendantsForStartupWindow = false)
         {
             ProcessTreeMonitor monitor = BeginWatching(executable, startTimeout);
