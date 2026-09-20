@@ -1,7 +1,7 @@
-﻿using ADLXWrapper;
-using DisplayMagicianShared;
-using DisplayMagicianShared.NVIDIA;
-using DisplayMagicianShared.Windows;
+using ADLXWrapper;
+using DisplayMagician.UserAgent.Runtime;
+using DisplayMagician.UserAgent.Runtime.NVIDIA;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using EDIDParser;
 using IGCLWrapper;
 using Microsoft.VisualBasic;
@@ -26,7 +26,7 @@ using WinRT;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace DisplayMagicianShared.AMD
+namespace DisplayMagician.UserAgent.Runtime.AMD
 {
 
     [StructLayout(LayoutKind.Sequential)]

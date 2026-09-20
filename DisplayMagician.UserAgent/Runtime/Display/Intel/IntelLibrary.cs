@@ -1,5 +1,5 @@
-using DisplayMagicianShared;
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using IGCLWrapper;
 using Microsoft.Win32.SafeHandles;
 using System;
@@ -14,7 +14,7 @@ using System.Threading;
 using EDIDParser;
 using Windows.Graphics.Display;
 
-namespace DisplayMagicianShared.Intel
+namespace DisplayMagician.UserAgent.Runtime.Intel
 {
     #region Data Structures
 

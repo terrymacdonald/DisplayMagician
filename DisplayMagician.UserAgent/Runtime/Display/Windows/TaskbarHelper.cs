@@ -1,5 +1,5 @@
-﻿using DisplayMagicianShared;
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -10,9 +10,9 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using static DisplayMagicianShared.Windows.TaskbarHelper;
+using static DisplayMagician.UserAgent.Runtime.Windows.TaskbarHelper;
 
-namespace DisplayMagicianShared.Windows
+namespace DisplayMagician.UserAgent.Runtime.Windows
 {
 
     public enum TaskbarPosition

@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.IO;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
     public class SharedLogger
     {

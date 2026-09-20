@@ -8,8 +8,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using DisplayMagicianShared;
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using Newtonsoft.Json;
 
 namespace DisplayMagician.Messaging

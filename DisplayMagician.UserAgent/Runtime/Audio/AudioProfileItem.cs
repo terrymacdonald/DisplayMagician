@@ -14,7 +14,7 @@ using System.Windows.Forms;
 using WindowsAudioWrapper;
 using AudioProfile = WindowsAudioWrapper.Models.AudioProfile;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
 
     public class AudioProfileItem : IComparable<AudioProfileItem>, IEquatable<AudioProfileItem>

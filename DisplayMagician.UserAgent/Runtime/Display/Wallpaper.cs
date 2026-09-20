@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using WindowsWallpaperWrapper;
 using WwwRect = WindowsWallpaperWrapper.Interop.RECT;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
     // ---------------------------------------------------------------------------
     // Full wallpaper configuration stored on a display profile.

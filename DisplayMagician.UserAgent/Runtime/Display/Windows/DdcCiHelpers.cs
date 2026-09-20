@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace DisplayMagicianShared.Windows
+namespace DisplayMagician.UserAgent.Runtime.Windows
 {
     public static class DdcCiHelper
     {

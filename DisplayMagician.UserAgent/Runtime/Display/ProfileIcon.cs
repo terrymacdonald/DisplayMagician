@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime.Windows;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
     public class ProfileIcon
     {

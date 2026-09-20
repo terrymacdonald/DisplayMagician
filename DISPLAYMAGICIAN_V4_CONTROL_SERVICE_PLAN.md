@@ -93,7 +93,6 @@ DisplayMagician.SessionLauncher
 DisplayMagician.UserAgent
 DisplayMagician.WinForms
 DisplayMagician.Console
-DisplayMagicianShared
 ```
 
 | Project | Responsibility |
@@ -101,16 +100,14 @@ DisplayMagicianShared
 | `DisplayMagician.Contracts` | Versioned requests, responses, events, protocol constants, error codes, and stable cross-process enums. No UI, hardware, files, or static application state. |
 | `DisplayMagician.ControlService` | Windows Service, ownership, authorization, machine queue, persistence coordination, audit, local API, service health, and Agent routing. |
 | `DisplayMagician.SessionLauncher` | Demand-start `LocalSystem` broker. Accepts only authenticated local requests from Control Service; starts the signed User Agent in one already-authorized interactive session and returns launch status. Never accepts remote clients or performs display work. |
-| `DisplayMagician.UserAgent` | Interactive-session executor: display/audio changes, game library loading, Steam/Big Picture monitoring, shortcut lifecycle, per-user message storage/sync, and notifications. |
+| `DisplayMagician.UserAgent` | Interactive-session executor: display/audio changes, game library loading, Steam game monitoring, vendor/native display runtime, shortcut lifecycle, per-user message storage/sync, and notifications. |
 | `DisplayMagician.WinForms` | Current designer-backed UI, converted to a Control Service client. |
 | `DisplayMagician.Console` | Current command-line interface, converted to a Control Service client. |
-| `DisplayMagicianShared` | Existing GPU/vendor/native integration remains here initially. Do not rewrite GPU libraries as part of the structure change. |
 
 Dependency direction:
 
 ```text
 WinForms / Console / UserAgent / ControlService --> Contracts
-UserAgent                                      --> DisplayMagicianShared
 WinForms / Console                           --> Control Service IPC client
 ControlService                               --> User Agent command/event channel
 ControlService                               --> SessionLauncher launch request channel
@@ -445,7 +442,7 @@ For shortcut extraction, use the following names consistently:
 
 `DisplayMagician.ConfigurationDefinitions` owns portable persisted definitions, schema versions, JSON conversion, and pure configuration validation. It does not access files, hardware, processes, named pipes, or WinForms. `DisplayMagician.Contracts` owns transport messages and shared cross-process enums, including shortcut category/permanence/process priority, game launch mode, and supported game-library identifiers.
 
-The User Agent owns game-library discovery, game launch, `Game.IsRunning`, and process-tree monitoring directly. Do not create a separate GameLibraries project and do not put this Windows runtime behaviour in ConfigurationDefinitions. WinForms receives game-library/game views through Agent contracts as the direct legacy implementation is retired. `DisplayMagicianShared` is migration scaffolding for existing vendor/native code, not a new permanent application layer.
+The User Agent owns game-library discovery, game launch, `Game.IsRunning`, process-tree monitoring, and vendor/native display runtime directly. Do not create a separate GameLibraries project and do not put this Windows runtime behaviour in ConfigurationDefinitions. WinForms receives game-library/game views through Agent contracts as the direct legacy implementation is retired.
 
 ### Automatically detected game starts
 

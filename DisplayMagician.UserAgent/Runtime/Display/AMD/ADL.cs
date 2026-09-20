@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using FARPROC = System.IntPtr;
 using HMODULE = System.IntPtr;
 
-namespace DisplayMagicianShared.AMD
+namespace DisplayMagician.UserAgent.Runtime.AMD
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     public delegate IntPtr ADL_Main_Memory_Alloc_Delegate(int size);

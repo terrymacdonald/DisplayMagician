@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
     public static class AtomicFile
     {

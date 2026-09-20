@@ -1,4 +1,4 @@
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using NVAPIWrapper;
 using EDIDParser;
 using Microsoft.Win32.SafeHandles;
@@ -16,7 +16,7 @@ using Windows.Devices.I2c.Provider;
 using Windows.Graphics;
 using Windows.Storage.Provider;
 
-namespace DisplayMagicianShared.NVIDIA
+namespace DisplayMagician.UserAgent.Runtime.NVIDIA
 {
 
     [StructLayout(LayoutKind.Sequential)]

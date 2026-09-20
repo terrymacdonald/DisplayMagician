@@ -1,4 +1,4 @@
-﻿namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
     public enum PixelShift
     {

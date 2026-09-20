@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Principal;
 using System.Text.Json;
 
-namespace DisplayMagicianShared;
+namespace DisplayMagician.UserAgent.Runtime;
 
 public static class V4UserDataPathResolver
 {

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DisplayMagicianShared;
-using SharedApplyProfileResult = DisplayMagicianShared.ApplyProfileResult;
+using DisplayMagician.UserAgent.Runtime;
+using SharedApplyProfileResult = DisplayMagician.UserAgent.Runtime.ApplyProfileResult;
 
 namespace DisplayMagician.UserAgent;
 

@@ -16,10 +16,10 @@ using DisplayMagician.Contracts;
 using DisplayMagician.AppLibraries;
 using DisplayMagician.Messaging;
 using DisplayMagician.UserAgent.Messaging;
-using DisplayMagicianShared;
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using DisplayMagician.GameLibraries;
-using SharedApplyProfileResult = DisplayMagicianShared.ApplyProfileResult;
+using SharedApplyProfileResult = DisplayMagician.UserAgent.Runtime.ApplyProfileResult;
 using NLog;
 
 namespace DisplayMagician.UserAgent;

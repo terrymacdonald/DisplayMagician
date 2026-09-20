@@ -17,7 +17,7 @@ using WindowsAudioWrapper;
 using AudioProfile = WindowsAudioWrapper.Models.AudioProfile;
 using DisplayMagician.Contracts;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
     
     public enum ApplyAudioProfileResult
@@ -634,6 +634,12 @@ namespace DisplayMagicianShared
                 try
                 {
                     json = File.ReadAllText(_audioProfileStorageJsonFullFileName, Encoding.Unicode);
+                    if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
+                    {
+                        AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, migratedJson, Encoding.Unicode);
+                        json = migratedJson;
+                        SharedLogger.logger.Info("AudioProfileRepository/LoadAudioProfiles: Migrated legacy DisplayMagicianShared type names in {0}.", _audioProfileStorageJsonFullFileName);
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -1,7 +1,7 @@
-using DisplayMagicianShared.AMD;
-using DisplayMagicianShared.Intel;
-using DisplayMagicianShared.NVIDIA;
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime.AMD;
+using DisplayMagician.UserAgent.Runtime.Intel;
+using DisplayMagician.UserAgent.Runtime.NVIDIA;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using IWshRuntimeLibrary;
 using NVAPIWrapper;
 using ADLXWrapper;
@@ -21,7 +21,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
 
     public enum ScreenRotation

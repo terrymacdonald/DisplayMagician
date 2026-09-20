@@ -7,10 +7,10 @@ using System.Text.RegularExpressions;
 using NLog.Targets;
 using System.Threading;
 using System.Threading.Tasks;
-using DisplayMagicianShared;
+using DisplayMagician.UserAgent.Runtime;
 using System.Diagnostics;
 
-namespace DisplayMagicianShared.Windows
+namespace DisplayMagician.UserAgent.Runtime.Windows
 {
 
     public class DisplayMonitorInfo

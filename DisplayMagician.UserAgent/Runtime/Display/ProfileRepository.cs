@@ -7,10 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using DisplayMagicianShared.AMD;
-using DisplayMagicianShared.Intel;
-using DisplayMagicianShared.NVIDIA;
-using DisplayMagicianShared.Windows;
+using DisplayMagician.UserAgent.Runtime.AMD;
+using DisplayMagician.UserAgent.Runtime.Intel;
+using DisplayMagician.UserAgent.Runtime.NVIDIA;
+using DisplayMagician.UserAgent.Runtime.Windows;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
 using WindowsWallpaperWrapper;
@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 using NLog;
 using DisplayMagician.Contracts;
 
-namespace DisplayMagicianShared
+namespace DisplayMagician.UserAgent.Runtime
 {
     
     public enum ApplyProfileResult
@@ -825,6 +825,12 @@ namespace DisplayMagicianShared
                 try
                 {
                     json = File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode);
+                    if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
+                    {
+                        AtomicFile.WriteAllText(_profileStorageJsonFullFileName, migratedJson, Encoding.Unicode);
+                        json = migratedJson;
+                        SharedLogger.logger.Info("ProfileRepository/LoadProfiles: Migrated legacy DisplayMagicianShared type names in {0}.", _profileStorageJsonFullFileName);
+                    }
                 }
                 catch (Exception ex)
                 {

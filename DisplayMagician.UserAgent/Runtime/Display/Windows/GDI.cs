@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace DisplayMagicianShared.Windows
+namespace DisplayMagician.UserAgent.Runtime.Windows
 {
     // 90% of this file is cribbed from WindowsDisplayAPI by Soroush Falahati
     // The other 10% is from MikedouglasDev's ChangeScreenResolution

@@ -1,5 +1,5 @@
 using DisplayMagician.Contracts;
-using DisplayMagicianShared;
+using DisplayMagician.UserAgent.Runtime;
 using Xunit;
 
 namespace DisplayMagician.UserAgent.Tests;
