@@ -169,12 +169,12 @@ namespace DisplayMagician
         private bool _gameArgumentsRequired = false;
         private string _differentGameExeToMonitor = "";
         private bool _monitorDifferentGameExe = false;
-        private string _audioProfileUUID = AudioProfileItem.SkipAudioProfilesChangeUUID;
+        public const string SkipAudioProfilesChangeUUID = "00000000-0000-4000-8000-000000000000";
+        private string _audioProfileUUID = SkipAudioProfilesChangeUUID;
         private bool _overrideAudioSpeakerVolume = false;
         private bool _overrideAudioMicrophoneVolume = false;
         private int _overrideAudioSpeakerVolumeLevel = 50;
         private int _overrideAudioMicrophoneVolumeLevel = 50;
-        private AudioProfileItem _audioProfileToUse = null;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private bool _autoName = true;
@@ -640,23 +640,6 @@ namespace DisplayMagician
             }
         }
 
-        [JsonIgnore]
-        public AudioProfileItem AudioProfileToUse
-        {
-            get
-            {
-                return _audioProfileToUse;
-            }
-            set
-            {
-                if (value is AudioProfileItem)
-                {
-                    _audioProfileToUse = value;
-                    _audioProfileUUID = _audioProfileToUse.UUID;
-                }
-            }
-        }
-
         [DefaultValue("")]
         public string AudioProfileUUID
         {
@@ -667,23 +650,6 @@ namespace DisplayMagician
             set
             {
                 _audioProfileUUID = value;
-                _audioProfileToUse = null;
-
-                // The skip UUID is a special virtual profile — not in AllAudioProfiles, handle it directly
-                if (_audioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-
-                // Try to find and set AudioProfileToUse from the repository
-                foreach (AudioProfileItem profileToTest in AudioProfileRepository.AllAudioProfiles)
-                {
-                    if (profileToTest.UUID.Equals(_audioProfileUUID, StringComparison.OrdinalIgnoreCase))
-                    {
-                        _audioProfileToUse = profileToTest;
-                        return;
-                    }
-                }
             }
         }
 
@@ -1001,7 +967,7 @@ namespace DisplayMagician
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
-            AudioProfileItem audioProfileToUse = null,
+            string audioProfileId = null,
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1018,8 +984,7 @@ namespace DisplayMagician
             _name = name;
             _category = ShortcutCategory.NoGame;
             _profileToUse = profile;
-            _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
+            _audioProfileUUID = string.IsNullOrWhiteSpace(audioProfileId) ? SkipAudioProfilesChangeUUID : audioProfileId;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1075,7 +1040,7 @@ namespace DisplayMagician
             string originalIconPath,
             ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages,
-            AudioProfileItem audioProfileToUse = null,
+            string audioProfileId = null,
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1103,8 +1068,7 @@ namespace DisplayMagician
             _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
             _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _processPriority = game.ProcessPriority;
-            _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
+            _audioProfileUUID = string.IsNullOrWhiteSpace(audioProfileId) ? SkipAudioProfilesChangeUUID : audioProfileId;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1154,7 +1118,7 @@ namespace DisplayMagician
             string originalIconPath,
             ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages,
-            AudioProfileItem audioProfileToUse = null,
+            string audioProfileId = null,
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1179,8 +1143,7 @@ namespace DisplayMagician
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
             _processPriority = executable.ProcessPriority;
-            _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
+            _audioProfileUUID = string.IsNullOrWhiteSpace(audioProfileId) ? SkipAudioProfilesChangeUUID : audioProfileId;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1231,7 +1194,7 @@ namespace DisplayMagician
             ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages,
             SupportedAppLibraryType supportedAppLibraryType,
-            AudioProfileItem audioProfileToUse = null,
+            string audioProfileId = null,
             bool overrideAudioSpeakerVolume = false,
             int overrideAudioSpeakerVolumeLevel = 50,
             bool overrideAudioMicrophoneVolume = false,
@@ -1259,8 +1222,7 @@ namespace DisplayMagician
             _executableArgumentsRequired = app.AppToUse.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = app.ProcessNameToMonitorUsesExecutable;
             _processPriority = app.ProcessPriority;
-            _audioProfileToUse = audioProfileToUse;
-            _audioProfileUUID = audioProfileToUse?.UUID ?? AudioProfileItem.SkipAudioProfilesChangeUUID;
+            _audioProfileUUID = string.IsNullOrWhiteSpace(audioProfileId) ? SkipAudioProfilesChangeUUID : audioProfileId;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _overrideAudioSpeakerVolume = overrideAudioSpeakerVolume;
@@ -1332,7 +1294,7 @@ namespace DisplayMagician
             shortcut.OriginalIconPath = OriginalIconPath;
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
-            shortcut.AudioProfileToUse = AudioProfileToUse;
+            shortcut.AudioProfileUUID = AudioProfileUUID;
             shortcut.OverrideAudioSpeakerVolume = OverrideAudioSpeakerVolume;
             shortcut.OverrideAudioSpeakerVolumeLevel = OverrideAudioSpeakerVolumeLevel;
             shortcut.OverrideAudioMicrophoneVolume = OverrideAudioMicrophoneVolume;
@@ -1397,7 +1359,6 @@ namespace DisplayMagician
             // Do the display and audio profiles last as AutoName will error if done earlier
             shortcut.ProfileToUse = ProfileToUse;
             shortcut.ProfileUUID = ProfileUUID;
-            shortcut.AudioProfileToUse = AudioProfileToUse;
             shortcut.AudioProfileUUID = AudioProfileUUID;
 
             // Save the shortcut incon to the icon cache
@@ -1518,34 +1479,22 @@ namespace DisplayMagician
                 }
             }
 
-            // Check that the configured saved audio profile still exists. Do not check live audio
-            // device availability here: HDMI, DisplayPort, and USB audio devices can appear only
-            // after the display profile has been applied when the shortcut runs.
-            if (AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
+            // The User Agent owns audio profile validation. WinForms only verifies that this
+            // persisted shortcut contains either the skip sentinel or a meaningful profile ID.
+            if (string.Equals(AudioProfileUUID, SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
             {
                 // Skip Audio Change is a special virtual profile - always valid, never needs checking
                 logger.Trace($"ShortcutItem/RefreshValidity: AudioProfileUUID is SkipAudioProfilesChangeUUID - skipping audio profile existence check.");
             }
-            else if (!AudioProfileRepository.ContainsAudioProfile(AudioProfileUUID))
+            else if (string.IsNullOrWhiteSpace(AudioProfileUUID))
             {
-                logger.Warn($"ShortcutItem/RefreshValidity: The audio profile UUID {AudioProfileUUID} isn't in the AudioProfileRepository");
+                logger.Warn("ShortcutItem/RefreshValidity: AudioProfileUUID is empty.");
                 ShortcutError error = new ShortcutError();
-                error.Name = "AudioProfileNotExist";
+                error.Name = "AudioProfileIdMissing";
                 error.Validity = ShortcutValidity.Error;
-                error.Message = "The audio profile selected by this shortcut no longer exists. Please edit the shortcut and select an existing audio profile.";
+                error.Message = "The audio profile selected by this shortcut is missing. Please edit the shortcut and select an audio profile or choose not to change audio settings.";
                 _shortcutErrors.Add(error);
                 worstError = ShortcutValidity.Error;
-            }
-            else if (!AudioProfileRepository.CanAccessAudioSettings)
-            {
-                logger.Warn($"ShortcutItem/RefreshValidity: Windows microphone privacy access is denied, so the audio profile for shortcut '{Name}' cannot be applied.");
-                ShortcutError warning = new ShortcutError();
-                warning.Name = "AudioAccessDenied";
-                warning.Validity = ShortcutValidity.Warning;
-                warning.Message = "Windows has denied microphone access, so this shortcut's audio profile will be skipped. You can enable microphone access for DisplayMagician in Windows Settings.";
-                _shortcutErrors.Add(warning);
-                if (worstError != ShortcutValidity.Error)
-                    worstError = ShortcutValidity.Warning;
             }
 
             // Is the main application still installed?

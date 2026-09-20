@@ -44,7 +44,9 @@ namespace DisplayMagician.UIForms
         List<StartProgram> _startPrograms = new List<StartProgram>();
         List<AfterProgram> _afterPrograms = new List<AfterProgram>();
         List<StopProgram> _stopPrograms = new List<StopProgram>();
-        private AudioProfileItem _audioProfileToUse = null;
+        private AudioProfileView _audioProfileToUse = null;
+        private List<AudioProfileView> _audioProfiles = new List<AudioProfileView>();
+        private bool _canAccessAudioSettings;
         private ShortcutItem _shortcutToEdit = null;
         private bool _overrideAudioSpeakerVolume = false;
         private bool _overrideAudioMicrophoneVolume = false;
@@ -235,7 +237,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
+                _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
                 if (_audioProfileToUse == null)
                 {
                     MessageBox.Show(this,
@@ -349,7 +351,7 @@ namespace DisplayMagician.UIForms
                         _gameToUse.GameToPlay.IconPath,
                         _selectedImage,
                         _availableImages,
-                        _audioProfileToUse,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -405,7 +407,7 @@ namespace DisplayMagician.UIForms
                         _executableToUse.ExecutableNameAndPath,
                         _selectedImage,
                         _availableImages,
-                        _audioProfileToUse,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -468,7 +470,7 @@ namespace DisplayMagician.UIForms
                         _selectedImage,
                         _availableImages,
                         (SupportedAppLibraryType)_appToUse.AppToUse.Library,
-                        _audioProfileToUse,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -494,7 +496,7 @@ namespace DisplayMagician.UIForms
                         _profileToUse,
                         _displayPermanence,
                         _audioPermanence,
-                        _audioProfileToUse,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -578,9 +580,6 @@ namespace DisplayMagician.UIForms
 
         private bool AllowedToSave(bool showErrorsToUser = false)
         {
-            // The user may have enabled microphone access in Windows Settings while this
-            // form was open, so do not rely on the startup status when saving.
-            Program.RefreshAudioAccessStatus();
             RefreshAudioAccessWarning();
 
             // initialise errors list
@@ -602,13 +601,13 @@ namespace DisplayMagician.UIForms
 
             // Audio changes are impossible without Windows microphone privacy access. Do not
             // save a shortcut which claims it will change audio but can never do so.
-            if (!cb_dont_change_audio.Checked && !AudioProfileRepository.CanAccessAudioSettings)
+            if (!cb_dont_change_audio.Checked && !_canAccessAudioSettings)
             {
                 logger.Error("ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings, but Windows microphone access is denied.");
                 errors.Add("Windows has denied microphone access, so DisplayMagician cannot apply an Audio Profile. Select 'Don't change audio settings' before saving this shortcut, or enable microphone access in Windows Settings.");
             }
             // Check if the user has selected to change the audio settings, and if so, that they have selected a valid audio profile
-            else if (!cb_dont_change_audio.Checked && !(_audioProfileToUse is AudioProfileItem))
+            else if (!cb_dont_change_audio.Checked && _audioProfileToUse == null)
             {
                 logger.Error($"ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings but doesn't have an audio profile selected!");
                 errors.Add("You need to select an Audio Profile to use with this shortcut. Please select one from the list of Audio Profiles on the left of the screen or create one if none exists, or select 'Don't change audio settings' if you don't want to change the audio settings.");
@@ -1142,8 +1141,7 @@ namespace DisplayMagician.UIForms
                 }
 
                 // *** 2. Choose Audio Tab ***
-                RefreshAudioProfilesList();
-                if (_shortcutToEdit.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(_shortcutToEdit.AudioProfileUUID, ShortcutItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
                 {
                     cb_dont_change_audio.Checked = true;
                     lb_audio_profiles.ClearSelected();
@@ -1153,7 +1151,7 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     cb_dont_change_audio.Checked = false;
-                    AudioProfileItem selectedAudioProfile = AudioProfileRepository.GetAudioProfile(_shortcutToEdit.AudioProfileUUID);
+                    AudioProfileView selectedAudioProfile = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Id, _shortcutToEdit.AudioProfileUUID, StringComparison.OrdinalIgnoreCase));
                     if (selectedAudioProfile != null)
                     {
                         // We still have ann audio profile in the audio profile repo that matches this UUID
@@ -1899,15 +1897,13 @@ namespace DisplayMagician.UIForms
                 if (!Program.EnsureUserAgentStarted())
                     throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
 
-                DisplayMagician.Contracts.AudioProfileListResult audioProfiles = await controlServiceClient.ListAudioProfilesAsync(System.Threading.CancellationToken.None);
+                await RefreshAudioProfilesAsync();
                 await Task.Run(() =>
                 {
                     UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(controlServiceClient);
                     ProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
-                    AudioProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                     ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                 });
-                RefreshAudioProfilesList(audioProfiles.Profiles.Select(profile => profile.Id));
             }
             catch (Exception ex)
             {
@@ -2543,12 +2539,27 @@ namespace DisplayMagician.UIForms
             return textToReturn;
         }
 
-        private void RefreshAudioProfilesList(IEnumerable<string> serviceProfileIds = null)
+        private async Task RefreshAudioProfilesAsync(string selectedProfileId = null)
+        {
+            AudioProfileListResult profileList = await new ControlServicePipeClient().ListAudioProfilesAsync(CancellationToken.None);
+            _audioProfiles = profileList.Views.ToList();
+            _canAccessAudioSettings = profileList.CanAccessAudioSettings;
+            RefreshAudioProfilesList(selectedProfileId);
+        }
+
+        private void RefreshAudioProfilesList(string selectedProfileId = null)
         {
             lb_audio_profiles.Items.Clear();
-            foreach (AudioProfileItem audioProfile in AudioProfileRepository.AllAudioProfiles.Where(profile => serviceProfileIds == null || serviceProfileIds.Contains(profile.UUID, StringComparer.OrdinalIgnoreCase)).OrderBy(p => p.Name))
+            lb_audio_profiles.DisplayMember = nameof(AudioProfileView.Name);
+            foreach (AudioProfileView audioProfile in _audioProfiles.OrderBy(profile => profile.Name))
             {
                 lb_audio_profiles.Items.Add(audioProfile);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedProfileId))
+            {
+                _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase));
+                lb_audio_profiles.SelectedItem = _audioProfileToUse;
             }
 
             RefreshAudioAccessWarning();
@@ -2556,7 +2567,7 @@ namespace DisplayMagician.UIForms
 
         private void RefreshAudioAccessWarning()
         {
-            bool audioAccessDenied = !AudioProfileRepository.CanAccessAudioSettings;
+            bool audioAccessDenied = !_canAccessAudioSettings;
             p_audio_access_warning.Visible = audioAccessDenied;
             btn_create_audio_profile.Enabled = !audioAccessDenied;
             btn_update_audio_profile.Enabled = !audioAccessDenied && _audioProfileToUse != null;
@@ -2570,7 +2581,6 @@ namespace DisplayMagician.UIForms
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            Program.RefreshAudioAccessStatus();
             RefreshAudioAccessWarning();
         }
 
@@ -2664,46 +2674,29 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
-            btn_update_audio_profile.Enabled = AudioProfileRepository.CanAccessAudioSettings && _audioProfileToUse != null;
+            _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
+            btn_update_audio_profile.Enabled = _canAccessAudioSettings && _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
             gb_selected_audio_settings.Enabled = _audioProfileToUse != null;
             if (_audioProfileToUse != null)
             {
-                // Save the select audio profile to the Shortcut
-                _shortcutToEdit.AudioProfileToUse = _audioProfileToUse;
-                _shortcutToEdit.AudioProfileUUID = _audioProfileToUse.UUID;
                 // Update the UI settings window too
-                txt_audio_profile_settings.Text = _audioProfileToUse.GenerateSettingsText();
+                txt_audio_profile_settings.Text = _audioProfileToUse.SettingsText;
             }
         }
 
-        private void btn_create_audio_profile_Click(object sender, EventArgs e)
+        private async void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
             string profileName = PromptForAudioProfileName("Create Audio Profile");
             if (string.IsNullOrWhiteSpace(profileName))
                 return;
 
-            if (!AudioProfileItem.IsValidName(profileName))
+            ControlResponse response = await new ControlServicePipeClient().CreateAudioProfileFromCurrentAsync(profileName, CancellationToken.None);
+            if (response.IsSuccessful)
             {
-                MessageBox.Show(this, "That Audio Profile name already exists. Please choose a unique name.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            AudioProfileItem newAudioProfile = new AudioProfileItem { Name = profileName };
-            if (!newAudioProfile.CreateProfileFromCurrentAudioSettings())
-            {
-                MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then return to DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
-            {
-                RefreshAudioProfilesList();
-                lb_audio_profiles.SelectedItem = newAudioProfile;
-                _audioProfileToUse = newAudioProfile;
-                btn_update_audio_profile.Enabled = true;
-                btn_delete_audio_profile.Enabled = true;
+                await RefreshAudioProfilesAsync();
+                _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Name, profileName, StringComparison.OrdinalIgnoreCase));
+                lb_audio_profiles.SelectedItem = _audioProfileToUse;
                 cb_dont_change_audio.Checked = false;
 
                 if (_loadedShortcut)
@@ -2711,34 +2704,32 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                MessageBox.Show(this, "Unable to create the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btn_update_audio_profile_Click(object sender, EventArgs e)
+        private async void btn_update_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileItem selected = lb_audio_profiles.SelectedItem as AudioProfileItem;
+            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
             if (selected == null)
                 return;
 
-            if (selected.CreateProfileFromCurrentAudioSettings())
+            ControlResponse response = await new ControlServicePipeClient().UpdateAudioProfileFromCurrentAsync(selected.Id, CancellationToken.None);
+            if (response.IsSuccessful)
             {
-                AudioProfileRepository.SaveAudioProfiles();
-                RefreshAudioProfilesList();
-                lb_audio_profiles.SelectedItem = selected;
-                _audioProfileToUse = selected;
+                await RefreshAudioProfilesAsync(selected.Id);
                 if (_loadedShortcut)
                     _isUnsaved = true;
             }
             else
             {
-                MessageBox.Show(this, "Unable to update the Audio Profile from current settings.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btn_delete_audio_profile_Click(object sender, EventArgs e)
+        private async void btn_delete_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileItem selected = lb_audio_profiles.SelectedItem as AudioProfileItem;
+            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
             if (selected == null)
                 return;
 
@@ -2751,18 +2742,14 @@ namespace DisplayMagician.UIForms
             if (result != DialogResult.Yes)
                 return;
 
-            if (AudioProfileRepository.RemoveAudioProfile(selected))
+            ControlResponse response = await new ControlServicePipeClient().DeleteAudioProfileAsync(selected.Id, CancellationToken.None);
+            if (response.IsSuccessful)
             {
-                //if (_audioProfileToUse != null && _audioProfileToUse.UUID.Equals(selected.UUID, StringComparison.OrdinalIgnoreCase))
-                //{
-                //    _audioProfileToUse = null;
-                //}
-
-                RefreshAudioProfilesList();
+                await RefreshAudioProfilesAsync();
                 if (lb_audio_profiles.Items.Count > 0)
                 {
                     lb_audio_profiles.SelectedIndex = 0;
-                    _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
+                    _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
                     btn_update_audio_profile.Enabled = false;
                     btn_delete_audio_profile.Enabled = false;
                 }
@@ -2778,7 +2765,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                MessageBox.Show(this, "Unable to delete the selected Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

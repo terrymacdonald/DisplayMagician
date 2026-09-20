@@ -305,9 +305,15 @@ public sealed class AudioProfileView
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string SettingsText { get; set; } = string.Empty;
+    public string[] UnavailableDeviceNames { get; set; } = Array.Empty<string>();
 }
 
-public sealed class AudioProfileListResult { public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>(); public AudioProfileView[] Views { get; set; } = Array.Empty<AudioProfileView>(); }
+public sealed class AudioProfileListResult
+{
+    public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>();
+    public AudioProfileView[] Views { get; set; } = Array.Empty<AudioProfileView>();
+    public bool CanAccessAudioSettings { get; set; }
+}
 
 public sealed class ApplyAudioProfileRequest { public string ProfileId { get; set; } = string.Empty; public int DeviceWaitMilliseconds { get; set; } }
 

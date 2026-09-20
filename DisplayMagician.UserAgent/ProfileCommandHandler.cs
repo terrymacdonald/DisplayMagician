@@ -308,7 +308,24 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.ListAudioProfiles)
         {
             ProfileSummary[] profiles = AudioProfileRepository.AllAudioProfiles.Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name }).ToArray();
-            return new ControlResponse { IsSuccessful = true, Message = "Audio profiles returned.", AudioProfileList = new AudioProfileListResult { Profiles = profiles, Views = AudioProfileRepository.AllAudioProfiles.Select(profile => new AudioProfileView { Id = profile.UUID, Name = profile.Name, SettingsText = profile.GenerateSettingsText() }).ToArray() } };
+            bool canAccessAudioSettings = AudioProfileRepository.CanAccessAudioSettings;
+            return new ControlResponse
+            {
+                IsSuccessful = true,
+                Message = "Audio profiles returned.",
+                AudioProfileList = new AudioProfileListResult
+                {
+                    Profiles = profiles,
+                    CanAccessAudioSettings = canAccessAudioSettings,
+                    Views = AudioProfileRepository.AllAudioProfiles.Select(profile => new AudioProfileView
+                    {
+                        Id = profile.UUID,
+                        Name = profile.Name,
+                        SettingsText = profile.GenerateSettingsText(),
+                        UnavailableDeviceNames = canAccessAudioSettings ? profile.GetUnavailableAudioDeviceNames().ToArray() : Array.Empty<string>()
+                    }).ToArray()
+                }
+            };
         }
 
         if (request.MessageType == ControlMessageType.ApplyAudioProfile)
@@ -318,6 +335,53 @@ public sealed class ProfileCommandHandler
                 ? new ApplyAudioProfileOperationResult(false, Array.Empty<string>())
                 : _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, audioApplyRequest.DeviceWaitMilliseconds);
             return new ControlResponse { IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest, Message = result.IsSuccessful ? "Audio profile applied." : $"Audio profile could not be applied. Missing devices: {string.Join(", ", result.MissingDeviceNames)}" };
+        }
+
+        if (request.MessageType == ControlMessageType.CreateAudioProfileFromCurrent)
+        {
+            CreateProfileRequest? createRequest = JsonSerializer.Deserialize<CreateProfileRequest>(request.Payload);
+            if (createRequest == null || !AudioProfileRepository.CanAccessAudioSettings || !AudioProfileRepository.IsValidFilename(createRequest.Name) || AudioProfileRepository.AllAudioProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The audio profile name is invalid, already exists, or audio settings cannot be read." };
+            }
+
+            AudioProfileItem profile = new AudioProfileItem { Name = createRequest.Name };
+            if (!profile.CreateProfileFromCurrentAudioSettings() || !AudioProfileRepository.AddAudioProfile(profile))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The current audio settings could not be saved." };
+            }
+
+            return new ControlResponse { IsSuccessful = true, Message = "Audio profile created." };
+        }
+
+        if (request.MessageType == ControlMessageType.RenameAudioProfile)
+        {
+            RenameProfileRequest? renameRequest = JsonSerializer.Deserialize<RenameProfileRequest>(request.Payload);
+            AudioProfileItem? profile = renameRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, renameRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            return profile != null && AudioProfileRepository.RenameAudioProfile(profile, renameRequest!.Name)
+                ? new ControlResponse { IsSuccessful = true, Message = "Audio profile renamed." }
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The audio profile could not be renamed." };
+        }
+
+        if (request.MessageType == ControlMessageType.DeleteAudioProfile)
+        {
+            DeleteProfileRequest? deleteRequest = JsonSerializer.Deserialize<DeleteProfileRequest>(request.Payload);
+            AudioProfileItem? profile = deleteRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, deleteRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            return profile != null && AudioProfileRepository.RemoveAudioProfile(profile)
+                ? new ControlResponse { IsSuccessful = true, Message = "Audio profile deleted." }
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The audio profile could not be deleted." };
+        }
+
+        if (request.MessageType == ControlMessageType.UpdateAudioProfileFromCurrent)
+        {
+            DeleteProfileRequest? updateRequest = JsonSerializer.Deserialize<DeleteProfileRequest>(request.Payload);
+            AudioProfileItem? profile = updateRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, updateRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            if (profile == null || !AudioProfileRepository.CanAccessAudioSettings || !profile.CreateProfileFromCurrentAudioSettings() || !AudioProfileRepository.SaveAudioProfiles())
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The current audio settings could not update the audio profile." };
+            }
+
+            return new ControlResponse { IsSuccessful = true, Message = "Audio profile updated." };
         }
 
         if (request.MessageType == ControlMessageType.CreateProfileFromCurrent)

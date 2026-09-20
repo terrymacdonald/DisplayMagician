@@ -59,14 +59,9 @@ namespace DisplayMagician.UIForms
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-
-            // Refresh cached warning icons after the user returns from Windows Settings.
-            if (Program.RefreshAudioAccessStatus())
-            {
-                ShortcutRepository.IsValidRefresh();
-                RefreshShortcutLibraryUI();
-                UpdateShortcutStatusPanel();
-            }
+            ShortcutRepository.IsValidRefresh();
+            RefreshShortcutLibraryUI();
+            UpdateShortcutStatusPanel();
         }
 
         private void btn_back_Click(object sender, EventArgs e)

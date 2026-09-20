@@ -173,6 +173,14 @@ internal sealed class ControlServicePipeClient
 
     public Task<ControlResponse> ApplyAudioProfileAsync(string profileId, int deviceWaitMilliseconds, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ApplyAudioProfile, Payload = JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = profileId, DeviceWaitMilliseconds = deviceWaitMilliseconds }) }, cancellationToken);
 
+    public Task<ControlResponse> CreateAudioProfileFromCurrentAsync(string name, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CreateAudioProfileFromCurrent, Payload = JsonSerializer.Serialize(new CreateProfileRequest { Name = name }) }, cancellationToken);
+
+    public Task<ControlResponse> RenameAudioProfileAsync(string profileId, string name, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RenameAudioProfile, Payload = JsonSerializer.Serialize(new RenameProfileRequest { ProfileId = profileId, Name = name }) }, cancellationToken);
+
+    public Task<ControlResponse> DeleteAudioProfileAsync(string profileId, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.DeleteAudioProfile, Payload = JsonSerializer.Serialize(new DeleteProfileRequest { ProfileId = profileId }) }, cancellationToken);
+
+    public Task<ControlResponse> UpdateAudioProfileFromCurrentAsync(string profileId, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.UpdateAudioProfileFromCurrent, Payload = JsonSerializer.Serialize(new DeleteProfileRequest { ProfileId = profileId }) }, cancellationToken);
+
     public async Task<RepositorySnapshot> GetRepositorySnapshotAsync(RepositoryKind repository, CancellationToken cancellationToken)
     {
         const int maximumAttempts = 40;

@@ -144,7 +144,6 @@ namespace DisplayMagician {
             ProgramSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
             DonationSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
             ProfileRepository.ConfigureStoragePath(AppDataPath);
-            AudioProfileRepository.ConfigureStoragePath(AppDataPath);
             ShortcutRepository.ConfigureStoragePath(AppDataPath);
         }
 
@@ -634,7 +633,6 @@ namespace DisplayMagician {
 
             // Next we create the MainForm object but keep it hidden for now
             logger.Trace($"Program/Main: Creating the MainForm object");
-            RequestAudioAccessBeforeFirstProfileCheck();
             AppMainForm = new MainForm();
 
             ShowMigrationSummary(migrationResult.Notices);
@@ -1427,9 +1425,8 @@ namespace DisplayMagician {
 
                 UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(new ControlServicePipeClient());
                 ProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
-                AudioProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                 ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
-                logger.Info("Program/ConnectRepositoriesToUserAgent: Loaded the display, audio, and shortcut repository caches from the User Agent.");
+                logger.Info("Program/ConnectRepositoriesToUserAgent: Loaded the display and shortcut repository caches from the User Agent.");
                 return true;
             }
             catch (Exception ex)
@@ -1520,105 +1517,6 @@ namespace DisplayMagician {
             }
 
             return false;
-        }
-
-        private static void RequestAudioAccessBeforeFirstProfileCheck()
-        {
-            if (!AppHasPackageIdentity)
-            {
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                logger.Warn("Program/RequestAudioAccessBeforeFirstProfileCheck: DisplayMagician has no package identity, so Windows microphone privacy access cannot be checked.");
-                return;
-            }
-
-            try
-            {
-                AppCapability microphoneCapability = AppCapability.Create("microphone");
-                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
-                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
-                logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability access is {accessStatus}.");
-
-                if (accessStatus != AppCapabilityAccessStatus.UserPromptRequired)
-                    return;
-
-                Action<IWin32Window> showPermissionDialogAndRequestAccess = owner =>
-                {
-                    using (AudioAccessPermissionForm permissionForm = new AudioAccessPermissionForm())
-                    {
-                        // Closing this explanation is deliberately equivalent to Continue. There is
-                        // no bypass because audio profile detection needs Windows' consent decision.
-                        if (owner != null)
-                            permissionForm.ShowDialog(owner);
-                        else
-                            permissionForm.ShowDialog();
-                    }
-
-                    accessStatus = AppCapability.RequestAccessForCapabilitiesAsync(new[] { "microphone" }).AsTask().GetAwaiter().GetResult()["microphone"];
-                    AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
-                    logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
-                };
-
-                // The splash has its own UI thread. Showing the modal dialog on that thread,
-                // with the splash as owner, keeps it above the loading window.
-                if (AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing && AppSplashScreen.IsHandleCreated)
-                {
-                    AppSplashScreen.Invoke(new Action(() => showPermissionDialogAndRequestAccess(AppSplashScreen)));
-                }
-                else
-                {
-                    // The splash is disabled, or has not created a window yet. The form's
-                    // normal centred, unowned modal behaviour is appropriate in this case.
-                    showPermissionDialogAndRequestAccess(null);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Retain the legacy behaviour when Windows cannot query the package capability.
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                logger.Warn(ex, "Program/RequestAudioAccessBeforeFirstProfileCheck: Could not query or request microphone access. Audio operations will be attempted and report any Windows error.");
-            }
-        }
-
-        /// <summary>
-        /// Re-reads Windows' current microphone privacy decision without asking the user
-        /// again. This lets audio features resume in the same DisplayMagician session when
-        /// the user enables access in Windows Settings.
-        /// </summary>
-        public static bool RefreshAudioAccessStatus()
-        {
-            AudioAccessStatus previousStatus = AudioProfileRepository.AudioAccessStatus;
-            if (!AppHasPackageIdentity)
-            {
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                return previousStatus != AudioProfileRepository.AudioAccessStatus;
-            }
-
-            try
-            {
-                AppCapability microphoneCapability = AppCapability.Create("microphone");
-                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
-                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
-                logger.Debug($"Program/RefreshAudioAccessStatus: Microphone capability access is {accessStatus}.");
-            }
-            catch (Exception ex)
-            {
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                logger.Warn(ex, "Program/RefreshAudioAccessStatus: Could not query Windows microphone privacy access.");
-            }
-
-            return previousStatus != AudioProfileRepository.AudioAccessStatus;
-        }
-
-        private static AudioAccessStatus ConvertAudioAccessStatus(AppCapabilityAccessStatus accessStatus)
-        {
-            return accessStatus switch
-            {
-                AppCapabilityAccessStatus.Allowed => AudioAccessStatus.Available,
-                AppCapabilityAccessStatus.UserPromptRequired => AudioAccessStatus.PromptRequired,
-                AppCapabilityAccessStatus.DeniedByUser => AudioAccessStatus.Denied,
-                AppCapabilityAccessStatus.DeniedBySystem => AudioAccessStatus.Denied,
-                _ => AudioAccessStatus.Unknown
-            };
         }
 
         private static void QueueStartupBackgroundTasks(object sender, EventArgs e)

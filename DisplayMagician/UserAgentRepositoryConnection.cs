@@ -7,7 +7,7 @@ namespace DisplayMagician;
 /// <summary>
 /// Adapts the asynchronous Control Service pipe protocol for the legacy,
 /// synchronous repository APIs. Repository callers continue working with
-/// ProfileItem and AudioProfileItem collections and never see pipe DTOs.
+/// ProfileItem collections and never see pipe DTOs.
 /// </summary>
 internal sealed class UserAgentRepositoryConnection : IUserAgentRepositoryConnection
 {

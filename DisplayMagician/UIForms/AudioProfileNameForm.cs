@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using DisplayMagicianShared;
 
 namespace DisplayMagician.UIForms
 {
@@ -15,13 +14,15 @@ namespace DisplayMagician.UIForms
     {
         private string _originalName;
         private AudioProfileNameFormMode _mode;
+        private readonly Func<string, bool> _isNameAvailable;
 
         public string ProfileName { get; private set; }
 
-        public AudioProfileNameForm(AudioProfileNameFormMode mode, string currentName = "")
+        public AudioProfileNameForm(AudioProfileNameFormMode mode, string currentName = "", Func<string, bool> isNameAvailable = null)
         {
             _mode = mode;
             _originalName = currentName ?? string.Empty;
+            _isNameAvailable = isNameAvailable ?? (_ => true);
             InitializeComponent();
         }
 
@@ -73,7 +74,7 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            if (!AudioProfileItem.IsValidName(name))
+            if (!_isNameAvailable(name))
             {
                 lbl_validation.Text = "An Audio Profile with that name already exists. Please choose another name.";
                 lbl_validation.Visible = true;

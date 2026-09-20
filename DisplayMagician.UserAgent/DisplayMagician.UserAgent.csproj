@@ -29,8 +29,11 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="WindowsAudioWrapper">
-      <HintPath>..\DisplayMagicianShared\DLL\WindowsAudioWrapper.dll</HintPath>
+      <HintPath>DLL\WindowsAudioWrapper.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DLL\" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary">
