@@ -102,7 +102,10 @@ public sealed class MachineScheduleStore
             LastMetricsReportedVersion = state.LastMetricsReportedVersion,
             ShareAnonymousUsageMetrics = state.ShareAnonymousUsageMetrics,
             TotalAnonymousMetricLaunches = state.TotalAnonymousMetricLaunches,
-            TotalAnonymousMetricActiveMinutes = state.TotalAnonymousMetricActiveMinutes
+            TotalAnonymousMetricActiveMinutes = state.TotalAnonymousMetricActiveMinutes,
+            CurrentAppVersion = state.CurrentAppVersion,
+            UpdateChannel = state.UpdateChannel,
+            MetricsStateMigrated = state.MetricsStateMigrated
         };
     }
 }
@@ -118,4 +121,7 @@ public sealed class MachineScheduleState
     public bool ShareAnonymousUsageMetrics { get; set; } = true;
     public long TotalAnonymousMetricLaunches { get; set; }
     public long TotalAnonymousMetricActiveMinutes { get; set; }
+    public string CurrentAppVersion { get; set; } = string.Empty;
+    public string UpdateChannel { get; set; } = "stable";
+    public bool MetricsStateMigrated { get; set; }
 }

@@ -13,6 +13,7 @@ internal static class Program
         builder.Services.AddSingleton<StoragePaths>();
         builder.Services.AddSingleton<MachineScheduleStore>();
         builder.Services.AddSingleton<MachineScheduleCoordinator>();
+        builder.Services.AddSingleton<AnonymousMetricsSender>();
         builder.Services.AddSingleton<DisplayControlLeaseStore>();
         builder.Services.AddSingleton<LegacyFileMigration>();
         builder.Services.AddSingleton<UserDataMigrationRunner>();

@@ -1,4 +1,5 @@
 using System;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagician.ControlService;
 
@@ -56,6 +57,63 @@ public sealed class MachineScheduleCoordinator
         MachineScheduleState state = EnsureInitialized();
         return !string.Equals(state.LastMetricsReportedVersion, appVersion, StringComparison.OrdinalIgnoreCase) ||
             !state.NextMetricsHeartbeatUtc.HasValue || utcNow >= state.NextMetricsHeartbeatUtc.Value;
+    }
+
+    public MachineScheduleState GetState()
+    {
+        return _store.Get();
+    }
+
+    public MachineScheduleState InitializeAnonymousMetrics(InitializeAnonymousMetricsRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _store.Update(state =>
+        {
+            if (state.MetricsStateMigrated)
+            {
+                return;
+            }
+
+            if (Guid.TryParse(request.InstallId, out Guid installId))
+            {
+                state.InstallId = installId.ToString();
+            }
+            else
+            {
+                EnsureInstallId(state);
+            }
+
+            state.ShareAnonymousUsageMetrics = request.ShareAnonymousUsageMetrics;
+            state.TotalAnonymousMetricLaunches = Math.Max(0, request.Launches);
+            state.TotalAnonymousMetricActiveMinutes = Math.Max(0, request.ActiveMinutes);
+            state.NextMetricsHeartbeatUtc = request.NextHeartbeatUtc?.ToUniversalTime();
+            state.LastMetricsReportedVersion = request.LastReportedVersion ?? string.Empty;
+            state.MetricsStateMigrated = true;
+        });
+    }
+
+    public MachineScheduleState UpdateAnonymousMetricsSettings(AnonymousMetricsSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        return _store.Update(state => state.ShareAnonymousUsageMetrics = settings.ShareAnonymousUsageMetrics);
+    }
+
+    public MachineScheduleState RecordAnonymousMetricsUsage(AnonymousMetricsUsageReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        ArgumentException.ThrowIfNullOrWhiteSpace(report.AppVersion);
+        return _store.Update(state =>
+        {
+            EnsureInstallId(state);
+            state.CurrentAppVersion = report.AppVersion;
+            state.UpdateChannel = string.Equals(report.UpdateChannel, "prerelease", StringComparison.OrdinalIgnoreCase) ? "prerelease" : "stable";
+            if (report.IsLaunch)
+            {
+                state.TotalAnonymousMetricLaunches++;
+            }
+
+            state.TotalAnonymousMetricActiveMinutes += Math.Max(0, report.ActiveMinutes);
+        });
     }
 
     public MachineScheduleState RecordMetricsHeartbeatSuccess(DateTime utcNow, string appVersion)

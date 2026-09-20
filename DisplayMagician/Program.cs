@@ -24,7 +24,6 @@ using System.Globalization;
 using System.Web;
 using Vortice.DirectInput;
 using System.Diagnostics;
-using DisplayMagician.Messaging;
 
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
@@ -95,9 +94,7 @@ namespace DisplayMagician {
         private static string _requestedMessageUpdateChannel;
         private static bool _startupBackgroundTasksQueued = false;
         private static SynchronizationContext _mainSynchronizationContext;
-        private static AnonymousMetricsService _anonymousMetricsService;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
-        private static System.Timers.Timer _metricsHeartbeatTimer;
         private static System.Timers.Timer _startupMessagePollTimer;
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
@@ -401,17 +398,12 @@ namespace DisplayMagician {
             }
 
             bool settingsChanged = AppProgramSettings.EnsureInstallIdentity(false);
-            if (!AppProgramSettings.NextMetricsHeartbeatUtc.HasValue)
-            {
-                AppProgramSettings.NextMetricsHeartbeatUtc = DateTime.UtcNow;
-                settingsChanged = true;
-            }
-            AppProgramSettings.TotalAnonymousMetricLaunches++;
-            settingsChanged = true;
             if (settingsChanged)
             {
                 AppProgramSettings.SaveSettings();
             }
+            InitializeAnonymousMetricsService();
+            ReportAnonymousMetricsUsage(isLaunch: true, activeMinutes: 0);
 
             // Load the Donation Settings and update the number of times run and number of starts since last donation form and button animation, and save the settings back to the file
             logger.Trace($"Program/Main: Loading Donation Settings.");
@@ -937,20 +929,7 @@ namespace DisplayMagician {
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
 
-            try
-            {
-                using CancellationTokenSource initialMetricsCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                EnsureAnonymousMetricsService();
-                _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: true, initialMetricsCancellation.Token).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, "Program/Main: Initial anonymous metrics heartbeat did not complete during orderly shutdown.");
-            }
-
-            _metricsHeartbeatTimer?.Stop();
-            _metricsHeartbeatTimer?.Dispose();
-            _metricsHeartbeatTimer = null;
+            ReportAnonymousMetricsUsage(isLaunch: false, activeMinutes: Math.Max(0, (long)_interactiveRuntimeStopwatch.Elapsed.TotalMinutes));
 
             logger.Trace($"Program/Main: Disposing the DirectInput manager.");
             AppDirectInputManager?.Dispose();
@@ -1333,7 +1312,6 @@ namespace DisplayMagician {
                 try
                 {
                     await RunClientSyncAndNotifyUserAsync(manual: false);
-                    EnsureMetricsHeartbeatTimer();
                     EnsureStartupMessagePollTimer();
                 }
                 catch (Exception ex)
@@ -1341,43 +1319,6 @@ namespace DisplayMagician {
                     logger.Warn(ex, "Program/QueueStartupBackgroundTasks: Scheduled client sync failed. DisplayMagician will continue running.");
                 }
             });
-        }
-
-        private static void EnsureMetricsHeartbeatTimer()
-        {
-            if (_metricsHeartbeatTimer == null)
-            {
-                _metricsHeartbeatTimer = new System.Timers.Timer { AutoReset = false };
-                _metricsHeartbeatTimer.Elapsed += async (_, __) =>
-                {
-                    try
-                    {
-                        await TrySendAnonymousMetricsAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, "Program/EnsureMetricsHeartbeatTimer: Scheduled anonymous metrics heartbeat failed.");
-                    }
-                    finally
-                    {
-                        ScheduleMetricsHeartbeatTimer();
-                    }
-                };
-            }
-
-            ScheduleMetricsHeartbeatTimer();
-        }
-
-        private static void ScheduleMetricsHeartbeatTimer()
-        {
-            if (_metricsHeartbeatTimer == null || AppProgramSettings?.NextMetricsHeartbeatUtc == null || string.IsNullOrWhiteSpace(AppProgramSettings.LastMetricsReportedVersion))
-            {
-                return;
-            }
-
-            _metricsHeartbeatTimer.Stop();
-            _metricsHeartbeatTimer.Interval = Math.Max(1, (AppProgramSettings.NextMetricsHeartbeatUtc.Value - DateTime.UtcNow).TotalMilliseconds);
-            _metricsHeartbeatTimer.Start();
         }
 
         private static void EnsureStartupMessagePollTimer()
@@ -1475,11 +1416,53 @@ namespace DisplayMagician {
             }
         }
 
-        private static void EnsureAnonymousMetricsService()
+        private static void InitializeAnonymousMetricsService()
         {
-            if (_anonymousMetricsService == null)
+            try
             {
-                _anonymousMetricsService = new AnonymousMetricsService(AppHttpClient, AppProgramSettings, logger, _useTestUpdateFeed);
+                ControlServicePipeClient client = new ControlServicePipeClient();
+                client.InitializeAnonymousMetricsAsync(new InitializeAnonymousMetricsRequest
+                {
+                    InstallId = AppProgramSettings.InstallId,
+                    ShareAnonymousUsageMetrics = AppProgramSettings.ShareAnonymousUsageMetrics,
+                    Launches = AppProgramSettings.TotalAnonymousMetricLaunches,
+                    ActiveMinutes = AppProgramSettings.TotalAnonymousMetricActiveMinutes,
+                    NextHeartbeatUtc = AppProgramSettings.NextMetricsHeartbeatUtc,
+                    LastReportedVersion = AppProgramSettings.LastMetricsReportedVersion
+                }, CancellationToken.None).GetAwaiter().GetResult();
+                AppProgramSettings.ShareAnonymousUsageMetrics = client.GetAnonymousMetricsSettingsAsync(CancellationToken.None).GetAwaiter().GetResult().ShareAnonymousUsageMetrics;
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/InitializeAnonymousMetricsService: The Control Service anonymous metrics store is unavailable.");
+            }
+        }
+
+        public static bool GetShareAnonymousUsageMetrics()
+        {
+            try
+            {
+                return new ControlServicePipeClient().GetAnonymousMetricsSettingsAsync(CancellationToken.None).GetAwaiter().GetResult().ShareAnonymousUsageMetrics;
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/GetShareAnonymousUsageMetrics: The Control Service anonymous metrics settings are unavailable.");
+                return AppProgramSettings.ShareAnonymousUsageMetrics;
+            }
+        }
+
+        public static bool UpdateShareAnonymousUsageMetrics(bool shareAnonymousUsageMetrics)
+        {
+            try
+            {
+                AnonymousMetricsSettings settings = new ControlServicePipeClient().UpdateAnonymousMetricsSettingsAsync(shareAnonymousUsageMetrics, CancellationToken.None).GetAwaiter().GetResult();
+                AppProgramSettings.ShareAnonymousUsageMetrics = settings.ShareAnonymousUsageMetrics;
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/UpdateShareAnonymousUsageMetrics: The Control Service anonymous metrics settings could not be updated.");
+                return false;
             }
         }
 
@@ -1503,10 +1486,22 @@ namespace DisplayMagician {
             MessageBox.Show(owner, completionMessage, "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private static async Task TrySendAnonymousMetricsAsync()
+        private static void ReportAnonymousMetricsUsage(bool isLaunch, long activeMinutes)
         {
-            EnsureAnonymousMetricsService();
-            await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: false, CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                new ControlServicePipeClient().ReportAnonymousMetricsUsageAsync(new AnonymousMetricsUsageReport
+                {
+                    AppVersion = AppVersion,
+                    UpdateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable",
+                    IsLaunch = isLaunch,
+                    ActiveMinutes = activeMinutes
+                }, CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/ReportAnonymousMetricsUsage: The Control Service anonymous metrics store is unavailable.");
+            }
         }
 
         private static MessageListResult GetMessageListFromUserAgent()

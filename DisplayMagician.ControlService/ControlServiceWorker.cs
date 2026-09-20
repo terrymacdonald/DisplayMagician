@@ -16,14 +16,16 @@ public sealed class ControlServiceWorker : BackgroundService
     private readonly StoragePaths _storagePaths;
     private readonly MachineScheduleCoordinator _machineScheduleCoordinator;
     private readonly ClientSyncCoordinator _clientSyncCoordinator;
+    private readonly AnonymousMetricsSender _anonymousMetricsSender;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender)
     {
         _pipeServer = pipeServer;
         _clientPipeServer = clientPipeServer;
         _storagePaths = storagePaths;
         _machineScheduleCoordinator = machineScheduleCoordinator;
         _clientSyncCoordinator = clientSyncCoordinator;
+        _anonymousMetricsSender = anonymousMetricsSender;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -52,6 +54,7 @@ public sealed class ControlServiceWorker : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await _clientSyncCoordinator.SyncAsync(new ClientSyncRequest(), null, null, stoppingToken).ConfigureAwait(false);
+            await _anonymousMetricsSender.TrySendAsync(stoppingToken).ConfigureAwait(false);
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken).ConfigureAwait(false);
         }
     }

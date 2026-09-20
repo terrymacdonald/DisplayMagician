@@ -165,7 +165,7 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to false");
             }
 
-            cb_share_anonymous_usage_metrics.Checked = Program.AppProgramSettings.ShareAnonymousUsageMetrics;
+            cb_share_anonymous_usage_metrics.Checked = Program.GetShareAnonymousUsageMetrics();
 
             // Set the AudioDeviceWaitSecs numeric up down control to the value from the settings
             nud_audio_device_wait.Value = Program.AppProgramSettings.AudioDeviceWaitSecs;
@@ -315,8 +315,14 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.ShowMessageToasts = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowMessageToasts as {Program.AppProgramSettings.ShowMessageToasts}");
 
-            Program.AppProgramSettings.ShareAnonymousUsageMetrics = cb_share_anonymous_usage_metrics.Checked;
-            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShareAnonymousUsageMetrics as {Program.AppProgramSettings.ShareAnonymousUsageMetrics}");
+            if (!Program.UpdateShareAnonymousUsageMetrics(cb_share_anonymous_usage_metrics.Checked))
+            {
+                MessageBox.Show(this, "DisplayMagician could not update anonymous metrics settings because the Control Service is unavailable.", "Anonymous metrics", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            else
+            {
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShareAnonymousUsageMetrics as {cb_share_anonymous_usage_metrics.Checked}");
+            }
 
             // save the wakeupgpus setting that controls loading the DLLs that keep NVIDIA and AMD from turning off their dGPUs in gaming laptops
             if (cb_wake_up_gpus.Checked == true)

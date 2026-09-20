@@ -52,7 +52,11 @@ public enum ControlMessageType
     UpdateDisplayProfileSettings = 36,
     CancelOperation = 37,
     SyncClient = 38,
-    ApplyClientSyncMessages = 39
+    ApplyClientSyncMessages = 39,
+    GetAnonymousMetricsSettings = 40,
+    UpdateAnonymousMetricsSettings = 41,
+    InitializeAnonymousMetrics = 42,
+    ReportAnonymousMetricsUsage = 43
 }
 
 public enum ControlErrorCode
@@ -494,6 +498,8 @@ public sealed class ControlResponse
     public MessageSyncResult? MessageSync { get; set; }
 
     public ClientSyncResult? ClientSync { get; set; }
+
+    public AnonymousMetricsSettings? AnonymousMetricsSettings { get; set; }
 }
 
 public sealed class ControlServiceStatus

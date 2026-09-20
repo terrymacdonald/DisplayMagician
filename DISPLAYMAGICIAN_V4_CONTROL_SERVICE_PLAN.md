@@ -641,7 +641,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 ### Phase E — Security, background ownership, and diagnostics
 
-- [ ] Move anonymous metrics ownership to service.
+- [x] Move anonymous metrics ownership to service.
 - [x] Move the existing combined client-sync download and update scheduling to Control Service as one machine-level request; route each user's message payload to that user's UserAgent without splitting the server document or increasing polling.
 - [x] Add Control Service-owned durable machine schedule state, stable installation identity, daily client-sync jitter, capped retry backoff, and weekly metrics cadence.
 - [x] Move per-user message gathering/storage/read state to UserAgent and expose it through contracts.

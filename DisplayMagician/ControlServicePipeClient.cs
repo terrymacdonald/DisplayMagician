@@ -182,9 +182,46 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful && response.ClientSync != null ? response.ClientSync : throw new InvalidOperationException(response.Message);
     }
 
+    public async Task<AnonymousMetricsSettings> GetAnonymousMetricsSettingsAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetAnonymousMetricsSettings }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.AnonymousMetricsSettings != null ? response.AnonymousMetricsSettings : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<AnonymousMetricsSettings> UpdateAnonymousMetricsSettingsAsync(bool shareAnonymousUsageMetrics, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.UpdateAnonymousMetricsSettings,
+            Payload = JsonSerializer.Serialize(new AnonymousMetricsSettings { ShareAnonymousUsageMetrics = shareAnonymousUsageMetrics })
+        }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.AnonymousMetricsSettings != null ? response.AnonymousMetricsSettings : throw new InvalidOperationException(response.Message);
+    }
+
+    public Task InitializeAnonymousMetricsAsync(InitializeAnonymousMetricsRequest initialization, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(initialization);
+        return SendRequiredAsync(new ControlEnvelope { MessageType = ControlMessageType.InitializeAnonymousMetrics, Payload = JsonSerializer.Serialize(initialization) }, cancellationToken);
+    }
+
+    public Task ReportAnonymousMetricsUsageAsync(AnonymousMetricsUsageReport usage, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(usage);
+        return SendRequiredAsync(new ControlEnvelope { MessageType = ControlMessageType.ReportAnonymousMetricsUsage, Payload = JsonSerializer.Serialize(usage) }, cancellationToken);
+    }
+
     public Task<ControlResponse> StopAgentIfIdleAsync(CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);
+    }
+
+    private async Task SendRequiredAsync(ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessful)
+        {
+            throw new InvalidOperationException(response.Message);
+        }
     }
 
     public Task<ControlResponse> CreateProfileFromCurrentAsync(string name, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CreateProfileFromCurrent, Payload = JsonSerializer.Serialize(new CreateProfileRequest { Name = name }) }, cancellationToken);

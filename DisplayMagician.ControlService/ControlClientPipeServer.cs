@@ -17,12 +17,14 @@ public sealed class ControlClientPipeServer
     private readonly ProfileOperationRouter _profileOperationRouter;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly ClientSyncCoordinator _clientSyncCoordinator;
+    private readonly MachineScheduleCoordinator _machineScheduleCoordinator;
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
         _clientSyncCoordinator = clientSyncCoordinator ?? throw new ArgumentNullException(nameof(clientSyncCoordinator));
+        _machineScheduleCoordinator = machineScheduleCoordinator ?? throw new ArgumentNullException(nameof(machineScheduleCoordinator));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -77,6 +79,10 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.SyncMessages => await SyncClientAsync(identity, new ClientSyncRequest { IsManual = true }, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.SyncClient => await SyncClientAsync(identity, JsonSerializer.Deserialize<ClientSyncRequest>(request.Payload) ?? new ClientSyncRequest(), cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.GetAnonymousMetricsSettings => GetAnonymousMetricsSettings(),
+                    ControlMessageType.UpdateAnonymousMetricsSettings => UpdateAnonymousMetricsSettings(request),
+                    ControlMessageType.InitializeAnonymousMetrics => InitializeAnonymousMetrics(request),
+                    ControlMessageType.ReportAnonymousMetricsUsage => ReportAnonymousMetricsUsage(request),
                     ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
@@ -130,6 +136,48 @@ public sealed class ControlClientPipeServer
             ClientSync = result,
             MessageSync = result.MessageSync
         };
+    }
+
+    private ControlResponse GetAnonymousMetricsSettings()
+    {
+        MachineScheduleState state = _machineScheduleCoordinator.GetState();
+        return new ControlResponse { IsSuccessful = true, Message = "Anonymous metrics settings returned.", AnonymousMetricsSettings = new AnonymousMetricsSettings { ShareAnonymousUsageMetrics = state.ShareAnonymousUsageMetrics } };
+    }
+
+    private ControlResponse UpdateAnonymousMetricsSettings(ControlEnvelope request)
+    {
+        AnonymousMetricsSettings? settings = JsonSerializer.Deserialize<AnonymousMetricsSettings>(request.Payload);
+        if (settings == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The anonymous metrics settings were invalid." };
+        }
+
+        MachineScheduleState state = _machineScheduleCoordinator.UpdateAnonymousMetricsSettings(settings);
+        return new ControlResponse { IsSuccessful = true, Message = "Anonymous metrics settings updated.", AnonymousMetricsSettings = new AnonymousMetricsSettings { ShareAnonymousUsageMetrics = state.ShareAnonymousUsageMetrics } };
+    }
+
+    private ControlResponse InitializeAnonymousMetrics(ControlEnvelope request)
+    {
+        InitializeAnonymousMetricsRequest? initialization = JsonSerializer.Deserialize<InitializeAnonymousMetricsRequest>(request.Payload);
+        if (initialization == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The anonymous metrics initialization was invalid." };
+        }
+
+        MachineScheduleState state = _machineScheduleCoordinator.InitializeAnonymousMetrics(initialization);
+        return new ControlResponse { IsSuccessful = true, Message = "Anonymous metrics initialized.", AnonymousMetricsSettings = new AnonymousMetricsSettings { ShareAnonymousUsageMetrics = state.ShareAnonymousUsageMetrics } };
+    }
+
+    private ControlResponse ReportAnonymousMetricsUsage(ControlEnvelope request)
+    {
+        AnonymousMetricsUsageReport? usage = JsonSerializer.Deserialize<AnonymousMetricsUsageReport>(request.Payload);
+        if (usage == null || string.IsNullOrWhiteSpace(usage.AppVersion))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The anonymous metrics usage report was invalid." };
+        }
+
+        _machineScheduleCoordinator.RecordAnonymousMetricsUsage(usage);
+        return new ControlResponse { IsSuccessful = true, Message = "Anonymous metrics usage recorded." };
     }
 
     private ControlResponse GetOperationStatus(PipeClientIdentity identity, ControlEnvelope request)
