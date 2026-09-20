@@ -620,8 +620,7 @@ namespace DisplayMagician.UIForms
 
                 // Run the shortcut if it's still there
                 if (shortcutToRun != null)
-                    //ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
-                    await Program.RunShortcutTaskAsync(shortcutToRun);
+                    await Task.Run(() => Program.RunShortcut(shortcutToRun.UUID));
 
                 // Also refresh the right-click menu (if we have a main form loaded)
                 if (Program.AppMainForm is Form)

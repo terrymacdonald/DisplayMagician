@@ -587,7 +587,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] `GameView` is returned by the Agent and the WinForms shortcut editor uses it for game selection, icon discovery, alternate-executable browsing, and persisted shortcut identity.
 - [x] Per-user messaging is Agent-owned: list, read-state, and refresh commands route through Control Service; WinForms no longer reads the message store directly.
 - [x] Cross-process shortcut/game enums are declared once in `DisplayMagician.Contracts`; persisted numeric values are unchanged.
-- [ ] WinForms still contains the legacy `ShortcutRepository.RunShortcut` compatibility runner and direct `AppLibraries`/process consumers. Remove these only after their Agent contract replacements are complete.
+- [x] WinForms shortcut launches, hotkeys, command-line activation, and tray actions route only through Agent `StartShortcut`; there is no local execution fallback.
+- [ ] Delete the now-unreachable legacy `ShortcutRepository.RunShortcut` implementation after its `AppLibraries`/process dependencies are extracted.
 - [ ] The WiX payload does not yet publish/install ControlService, SessionLauncher, and UserAgent together.
 
 ### Phase A — Structure and IPC
@@ -635,7 +636,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Preserve pre/after/stop programs, audio volume overrides, temporary restoration, and recovery records in the Agent runner.
 - [x] Enforce locked-session policy for new shortcut starts and publish operation progress.
 - [x] Move normal game discovery and game/process runtime source ownership into UserAgent.
-- [ ] Remove WinForms `ShortcutRepository.RunShortcut` and its direct process/game runtime dependencies; route all execution through `StartShortcut`.
+- [x] Route all desktop shortcut execution through `StartShortcut` with no local execution fallback.
+- [ ] Delete the now-unreachable WinForms `ShortcutRepository.RunShortcut` implementation and its direct process/game runtime dependencies.
 - [ ] Add synthetic Steam Big Picture `SteamGame` behaviour.
 - [ ] Add client cancel-operation protocol and complete game/Big Picture parity testing.
 

@@ -1134,86 +1134,40 @@ namespace DisplayMagician {
         {
             logger.Debug($"Program/RunShortcut: Running shortcut {shortcutUUID}");
 
-            ERRORLEVEL errLevel = ERRORLEVEL.OK;
-            ShortcutItem shortcutToRun = null;
-
             // Close the splash screen
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
-            if (ProfileRepository.UserChangingProfiles)
+            if (string.IsNullOrWhiteSpace(shortcutUUID))
             {
-                logger.Error($"Program/RunShortcut: The User is currently changing to another Display Profile. We can't run a Game Shortcut until that has finished happening. Please wait.");
-                MessageBox.Show("The User is currently changing to another Display Profile. We can't run a Game Shortcut until that has finished happening. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return ERRORLEVEL.ERROR_PROFILE_CHANGE_OCCURRING;
+                logger.Error("Program/RunShortcut: A shortcut ID is required.");
+                return ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
             }
 
             shortcutUUID = shortcutUUID.Trim('"');
-            if (TryRunShortcutThroughUserAgent(shortcutUUID, out ERRORLEVEL agentResult))
-            {
-                return agentResult;
-            }
-
-            logger.Warn("Program/RunShortcut: The Control Service or User Agent is unavailable, so the legacy shortcut runner is being used temporarily for shortcut {0}.", shortcutUUID);
-
-
-            // Match the ShortcutName to the actual shortcut listed in the shortcut library
-            // And error if we can't find it.
-            if (ShortcutRepository.ContainsShortcut(shortcutUUID))
-            {
-                shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
-                if (shortcutToRun is ShortcutItem)
-                {
-                    // We need to update the active profile if we've been run from a shortcut.
-                    ProfileRepository.UpdateActiveProfile();
-                    // Now refresh the shortcut validity
-                    shortcutToRun.RefreshValidity();
-                    //ShortcutRepository.RunShortcut(shortcutToRun);
-                    RunShortcutResult shortcutResult = Program.RunShortcutTask(shortcutToRun);
-                    if (shortcutResult == RunShortcutResult.Cancelled)
-                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                    else if (shortcutResult == RunShortcutResult.Error)
-                        errLevel = ERRORLEVEL.ERROR_EXCEPTION;
-                }
-            }
-            else
-            {
-                logger.Error($"Program/RunShortcut: Cannot find the shortcut with UUID {shortcutUUID}");
-                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
-            }
-
-            return errLevel;
-
+            return RunShortcutThroughUserAgent(shortcutUUID);
         }
 
-        private static bool TryRunShortcutThroughUserAgent(string shortcutUUID, out ERRORLEVEL result)
+        private static ERRORLEVEL RunShortcutThroughUserAgent(string shortcutUUID)
         {
-            result = ERRORLEVEL.ERROR_EXCEPTION;
             try
             {
                 ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
                 DisplayMagician.Contracts.ControlResponse response = controlServiceClient.StartShortcutWhenAgentAvailableAsync(shortcutUUID, CancellationToken.None).GetAwaiter().GetResult();
                 if (response.IsSuccessful)
                 {
-                    result = ERRORLEVEL.OK;
-                    return true;
+                    return ERRORLEVEL.OK;
                 }
 
-                if (response.ErrorCode == DisplayMagician.Contracts.ControlErrorCode.AgentUnavailable)
-                {
-                    return false;
-                }
-
-                logger.Error("Program/TryRunShortcutThroughUserAgent: The User Agent rejected shortcut {0}. ErrorCode={1}; Message={2}", shortcutUUID, response.ErrorCode, response.Message);
-                result = response.OperationStatus?.Phase == DisplayMagician.Contracts.OperationPhase.Cancelled
+                logger.Error("Program/RunShortcutThroughUserAgent: The User Agent rejected shortcut {0}. ErrorCode={1}; Message={2}", shortcutUUID, response.ErrorCode, response.Message);
+                return response.OperationStatus?.Phase == DisplayMagician.Contracts.OperationPhase.Cancelled
                     ? ERRORLEVEL.CANCELED_BY_USER
                     : ERRORLEVEL.ERROR_EXCEPTION;
-                return true;
             }
             catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
             {
-                logger.Warn(ex, "Program/TryRunShortcutThroughUserAgent: The Control Service path is unavailable for shortcut {0}.", shortcutUUID);
-                return false;
+                logger.Error(ex, "Program/RunShortcutThroughUserAgent: The Control Service path is unavailable for shortcut {0}.", shortcutUUID);
+                return ERRORLEVEL.ERROR_EXCEPTION;
             }
         }
 
@@ -1292,60 +1246,6 @@ namespace DisplayMagician {
             if (regInvalidFileName.IsMatch(testName)) { return false; };
 
             return true;
-        }
-
-        
-        
-
-        public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)
-        {
-            return RunShortcutTaskAsync(shortcutToUse).GetAwaiter().GetResult();
-        }
-
-        public static async Task<RunShortcutResult> RunShortcutTaskAsync(ShortcutItem shortcutToUse)
-        {
-            //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
-            bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
-            if (gotGreenLightToProceed)
-            {
-                logger.Trace($"Program/RunShortcutTask: Got exclusive control of the RunShortcutTask");
-            }
-            else
-            {
-                logger.Error($"Program/RunShortcutTask: Cannot run the shortcut {shortcutToUse.Name} as another task is running!");
-                return RunShortcutResult.Error;
-            }
-
-            CancellationTokenSource cancellationSource = BeginActiveOperationCancellation();
-            RunShortcutResult result = RunShortcutResult.Error;
-            try
-            {
-                CancellationToken cancelToken = cancellationSource.Token;
-                // Start the RunShortcut Task in a new thread
-                Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, cancelToken), cancelToken);
-                // Awaiting keeps a WinForms caller's message loop available for shortcut prompts.
-                result = await output;
-            }
-            catch (OperationCanceledException ex)
-            {
-                logger.Trace(ex, $"Program/RunShortcutTask: User cancelled the running the shortcut {shortcutToUse.Name}.");
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Program/RunShortcutTask: Exception while trying to run the shortcut {shortcutToUse.Name}.");
-            }
-            finally
-            {
-                CompleteActiveOperationCancellation(cancellationSource);
-                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
-                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                if (gotGreenLightToProceed)
-                {
-                    Program.AppBackgroundTaskSemaphoreSlim.Release();
-                }
-            }
-            return result;
         }
 
         //public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
