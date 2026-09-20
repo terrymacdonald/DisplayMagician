@@ -643,6 +643,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 - [ ] Move anonymous metrics ownership to service.
 - [ ] Move machine-level client-sync/update scheduling to service.
+- [x] Add Control Service-owned durable machine schedule state, stable installation identity, daily client-sync jitter, capped retry backoff, and weekly metrics cadence.
 - [x] Move per-user message gathering/storage/read state to UserAgent and expose it through contracts.
 - [x] Move WinForms startup-message polling, unread indicators, and release-note lookup to Agent message views; stop direct desktop message-file access.
 - [ ] Remove the legacy desktop messaging implementation after client-sync scheduling has moved to Control Service.

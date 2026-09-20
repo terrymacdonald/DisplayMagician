@@ -11,6 +11,8 @@ internal static class Program
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Services.AddWindowsService(options => options.ServiceName = "DisplayMagician Control Service");
         builder.Services.AddSingleton<StoragePaths>();
+        builder.Services.AddSingleton<MachineScheduleStore>();
+        builder.Services.AddSingleton<MachineScheduleCoordinator>();
         builder.Services.AddSingleton<DisplayControlLeaseStore>();
         builder.Services.AddSingleton<LegacyFileMigration>();
         builder.Services.AddSingleton<UserDataMigrationRunner>();

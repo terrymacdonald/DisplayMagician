@@ -13,12 +13,14 @@ public sealed class ControlServiceWorker : BackgroundService
     private readonly NamedPipeControlServer _pipeServer;
     private readonly ControlClientPipeServer _clientPipeServer;
     private readonly StoragePaths _storagePaths;
+    private readonly MachineScheduleCoordinator _machineScheduleCoordinator;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator)
     {
         _pipeServer = pipeServer;
         _clientPipeServer = clientPipeServer;
         _storagePaths = storagePaths;
+        _machineScheduleCoordinator = machineScheduleCoordinator;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,6 +29,7 @@ public sealed class ControlServiceWorker : BackgroundService
         try
         {
             _storagePaths.EnsureMachineDirectories();
+            _machineScheduleCoordinator.EnsureInitialized();
             _logger.Info("ControlServiceWorker/ExecuteAsync: Machine storage is ready at {0}.", _storagePaths.MachinePath);
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException)
