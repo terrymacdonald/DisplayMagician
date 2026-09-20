@@ -18,12 +18,12 @@ public sealed class UserAgentCommandLineTests
     }
 
     [Fact]
-    public void Parse_RecognisesProfileApplyAction()
+    public void Parse_UsesNormalRunForRetiredProfileApplyAction()
     {
         UserAgentStartupRequest request = UserAgentCommandLine.Parse(new[] { "--apply-profile", "profile-123" });
 
-        Assert.Equal(UserAgentStartupAction.ApplyDisplayProfile, request.Action);
-        Assert.Equal("profile-123", request.ProfileId);
+        Assert.Equal(UserAgentStartupAction.Run, request.Action);
+        Assert.Null(request.ProfileId);
     }
 
     [Theory]

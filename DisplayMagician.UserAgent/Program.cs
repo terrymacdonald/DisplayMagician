@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
@@ -25,19 +24,6 @@ internal static class Program
                 throw new System.InvalidOperationException(response.Message);
             }
 
-            return;
-        }
-
-        if (startupRequest.Action == UserAgentStartupAction.ApplyDisplayProfile)
-        {
-            string displayMagicianExecutablePath = Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe");
-            if (!File.Exists(displayMagicianExecutablePath))
-            {
-                throw new FileNotFoundException("The User Agent could not find DisplayMagician.exe beside itself.", displayMagicianExecutablePath);
-            }
-
-            int exitCode = await serviceClient.ApplyDisplayProfileAsync(registration, startupRequest.ProfileId!, displayMagicianExecutablePath, cancellationTokenSource.Token).ConfigureAwait(false);
-            Environment.ExitCode = exitCode;
             return;
         }
 

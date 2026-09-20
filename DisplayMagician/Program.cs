@@ -105,10 +105,8 @@ namespace DisplayMagician {
         internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
-        internal const string AgentHostedOperationCommandLineOption = "--agent-hosted-operation";
 
         private static volatile bool _useTestUpdateFeed;
-        private static bool _isAgentHostedOperation;
         private static Process _userAgentProcess;
 
         public static bool CancelActiveOperation()
@@ -205,7 +203,6 @@ namespace DisplayMagician {
         private static int Main(string[] args)
         {
             // BOOTSTRAP AND INITIALIZATION LOGIC
-            _isAgentHostedOperation = args.Any(argument => string.Equals(argument, AgentHostedOperationCommandLineOption, StringComparison.OrdinalIgnoreCase));
             Application.ApplicationExit += (sender, eventArgs) => StopUserAgentIfIdle();
 
             if (V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
@@ -217,14 +214,6 @@ namespace DisplayMagician {
             // parts of the program to use
             if (!Directory.Exists(AppDataPath))
             {
-                try
-                {
-                    Directory.CreateDirectory(AppDataPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Program/Main Exception: Cannot create the Application Data  Folder {AppDataPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                }
             }
 
             if (!Directory.Exists(AppLogPath))
@@ -322,13 +311,6 @@ namespace DisplayMagician {
             //{
             //logger.Trace($"Program/Main: We're not bypassing single instance mode so we need to check if we're the only instance, otherwise we have to shutdown and send that first instance our command.");
 
-
-            if (_isAgentHostedOperation)
-            {
-                // The User Agent owns this short-lived operation. It must execute locally instead of
-                // forwarding the command to the long-running WinForms instance.
-                SingleInstance.UniqueName = $"DisplayMagician.AgentOperation.{Environment.ProcessId}";
-            }
 
             // Check if we're the single instance, and if we're the second instance then we need to pass the command to the single instance and shutdown.
             // Create the remote server if we're first instance, or If we're a subsequent instance, pass the command line parameters to the first instance and then 
@@ -934,7 +916,6 @@ namespace DisplayMagician {
                 // This begins the actual execution of the application
                 string[] commandLineArguments = args
                     .Where(argument => !string.Equals(argument, TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase))
-                    .Where(argument => !string.Equals(argument, AgentHostedOperationCommandLineOption, StringComparison.OrdinalIgnoreCase))
                     .ToArray();
                 errorLevelToReturnToOS = app.Execute(commandLineArguments);
             }
@@ -1467,8 +1448,12 @@ namespace DisplayMagician {
             {
                 try
                 {
-                    List<LocalMessage> storedMessages = GetStoredMessages();
-                    if (storedMessages == null || !storedMessages.Any(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty && string.Equals(m.Kind, "standard", StringComparison.OrdinalIgnoreCase)))
+                    MessageListResult messageList = GetMessageListFromUserAgent();
+                    List<MessageView> messagesToShow = messageList.Messages
+                        .Where(message => !message.IsRead && message.ShowOnStartup && !message.IsFaulty && string.Equals(message.Kind, "standard", StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(message => message.ReceivedUtc)
+                        .ToList();
+                    if (messagesToShow.Count == 0)
                     {
                         return;
                     }
@@ -1485,24 +1470,18 @@ namespace DisplayMagician {
                         {
                             AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
                             {
-                                List<LocalMessage> messagesToShow = GetStoredMessages()
-                                    .Where(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty && string.Equals(m.Kind, "standard", StringComparison.OrdinalIgnoreCase))
-                                    .OrderBy(m => m.ReceivedUtc)
-                                    .ToList();
-
-                                foreach (LocalMessage message in messagesToShow)
+                                foreach (MessageView message in messagesToShow)
                                 {
                                     SetMessageReadState(new[] { message.Id }, true);
 
-                                    string fullPath = Path.Combine(AppMessagesPath, message.MarkdownFileName ?? string.Empty);
-                                    if (!File.Exists(fullPath))
+                                    if (string.IsNullOrWhiteSpace(message.Content))
                                     {
                                         continue;
                                     }
 
                                     StartMessageForm myMessageWindow = new StartMessageForm();
                                     myMessageWindow.MessageMode = message.Format;
-                                    myMessageWindow.Filename = fullPath;
+                                    myMessageWindow.Content = message.Content;
                                     myMessageWindow.HeadingText = message.Title;
                                     myMessageWindow.ButtonText = "&Close";
                                     myMessageWindow.ShowDialog(AppMainForm);
@@ -1587,37 +1566,34 @@ namespace DisplayMagician {
             await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: false, CancellationToken.None).ConfigureAwait(false);
         }
 
-        private static MessageSyncService EnsureMessageSyncService()
+        private static MessageListResult GetMessageListFromUserAgent()
         {
-            if (_messageSyncService == null)
+            try
             {
-                _messageSyncService = new MessageSyncService(AppHttpClient, logger, ClientSyncUrl, AppMessagesPath);
-                _messageSyncService.EnsureStorage();
+                return new ControlServicePipeClient().ListMessagesAsync(CancellationToken.None).GetAwaiter().GetResult();
             }
-            return _messageSyncService;
-        }
-
-        /*
-         * The legacy message polling method was replaced by RunClientSyncAndNotifyUserAsync.
-         */
-        private static async Task RunMessageSyncAndNotifyUserAsync(bool force)
-        {
-            await RunClientSyncAndNotifyUserAsync(force).ConfigureAwait(false);
-        }
-
-        public static List<LocalMessage> GetStoredMessages()
-        {
-            return EnsureMessageSyncService().GetMessages();
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/GetMessageListFromUserAgent: The User Agent message store is unavailable.");
+                return new MessageListResult();
+            }
         }
 
         public static int GetUnreadMessageCount()
         {
-            return EnsureMessageSyncService().GetUnreadCount();
+            return GetMessageListFromUserAgent().UnreadCount;
         }
 
-        public static void SetMessageReadState(IEnumerable<string> ids, bool isRead)
+        private static void SetMessageReadState(IEnumerable<string> ids, bool isRead)
         {
-            EnsureMessageSyncService().SetReadState(ids, isRead);
+            try
+            {
+                new ControlServicePipeClient().SetMessageReadStateAsync(ids, isRead, CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/SetMessageReadState: The User Agent message store is unavailable.");
+            }
         }
 
         public static void RefreshMessageIndicators()
@@ -2175,32 +2151,24 @@ namespace DisplayMagician {
                     upgradeForm.ReleaseHeading = $"DisplayMagician update {args.CurrentVersion} is available";
 
                     string updateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
-                    LocalMessage releaseAnnouncement = GetStoredMessages().FirstOrDefault(m =>
-                        string.Equals(m.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(m.ReleaseVersion, args.CurrentVersion, StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(m.ReleaseChannel, updateChannel, StringComparison.OrdinalIgnoreCase));
+                    MessageView releaseAnnouncement = GetMessageListFromUserAgent().Messages.FirstOrDefault(message =>
+                        string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(message.ReleaseVersion, args.CurrentVersion, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(message.ReleaseChannel, updateChannel, StringComparison.OrdinalIgnoreCase));
 
                     if (releaseAnnouncement != null)
                     {
                         SetMessageReadState(new[] { releaseAnnouncement.Id }, true);
                         RefreshMessageIndicators();
 
-                        string releaseNotesPath = Path.Combine(AppMessagesPath, releaseAnnouncement.MarkdownFileName ?? string.Empty);
-                        try
+                        if (!string.IsNullOrWhiteSpace(releaseAnnouncement.Content))
                         {
-                            if (File.Exists(releaseNotesPath))
-                            {
-                                upgradeForm.ReleaseNotesHtml = File.ReadAllText(releaseNotesPath);
-                                upgradeForm.ReleaseNotesFormat = releaseAnnouncement.Format;
-                            }
-                            else
-                            {
-                                logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent: Release announcement content is missing for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}, fullPath={releaseNotesPath}). Showing the upgrade-form fallback text instead.");
-                            }
+                            upgradeForm.ReleaseNotesHtml = releaseAnnouncement.Content;
+                            upgradeForm.ReleaseNotesFormat = releaseAnnouncement.Format;
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            logger.Warn(ex, $"Program/AutoUpdaterOnCheckForUpdateEvent: Failed to load release announcement content for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}). Showing the upgrade-form fallback text instead.");
+                            logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent: Release announcement content is missing for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}). Showing the upgrade-form fallback text instead.");
                         }
                     }
                     else

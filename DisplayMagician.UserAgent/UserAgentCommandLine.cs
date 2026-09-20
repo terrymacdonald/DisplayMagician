@@ -6,9 +6,8 @@ public enum UserAgentStartupAction
 {
     Run = 0,
     RegisterOnce = 1,
-    ApplyDisplayProfile = 2,
-    AcquireDisplayControl = 3,
-    MigrateUserData = 4
+    AcquireDisplayControl = 2,
+    MigrateUserData = 3
 }
 
 public sealed class UserAgentStartupRequest
@@ -25,11 +24,6 @@ public static class UserAgentCommandLine
         if (args?.Length == 1 && string.Equals(args[0], "--once", StringComparison.Ordinal))
         {
             return new UserAgentStartupRequest { Action = UserAgentStartupAction.RegisterOnce };
-        }
-
-        if (args?.Length == 2 && string.Equals(args[0], "--apply-profile", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(args[1]))
-        {
-            return new UserAgentStartupRequest { Action = UserAgentStartupAction.ApplyDisplayProfile, ProfileId = args[1] };
         }
 
         if (args?.Length == 1 && string.Equals(args[0], "--acquire-display-control", StringComparison.Ordinal))

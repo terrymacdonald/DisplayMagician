@@ -78,9 +78,9 @@ public sealed class NamedPipeControlServer
 
     private static NamedPipeServerStream CreatePipe()
     {
-        SecurityIdentifier everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
         PipeSecurity pipeSecurity = new PipeSecurity();
-        pipeSecurity.AddAccessRule(new PipeAccessRule(everyone, PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
 
         return NamedPipeServerStreamAcl.Create(
             ControlProtocol.ServicePipeName,

@@ -593,7 +593,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Create Contracts, ControlService, and UserAgent projects.
 - [x] Add protocol versioning and common result/error models.
 - [x] Implement authenticated named-pipe transport.
-- [ ] Complete production pipe ACL and remote-rejection enforcement; verify caller SID/session/process identity for every client and Agent connection before entering Phase E.
+- [x] Complete production pipe ACL and remote-rejection enforcement; verify caller SID/session/process identity for every client and Agent connection before entering Phase E.
 - [x] Implement Agent registration, heartbeat, and diagnostics status.
 - [x] Implement active-console and machine-operation lease state.
 - [x] Apply the root `version.json`/Nerdbank.GitVersioning configuration to all new v4 shipped projects and remove hard-coded Agent/Service version strings.
@@ -644,12 +644,17 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [ ] Move anonymous metrics ownership to service.
 - [ ] Move machine-level client-sync/update scheduling to service.
 - [x] Move per-user message gathering/storage/read state to UserAgent and expose it through contracts.
-- [ ] Move WinForms startup-message polling and release-note lookup to Agent message views; then remove the legacy desktop messaging implementation.
+- [x] Move WinForms startup-message polling, unread indicators, and release-note lookup to Agent message views; stop direct desktop message-file access.
+- [ ] Remove the legacy desktop messaging implementation after client-sync scheduling has moved to Control Service.
 - [ ] Forward update/message events to Agent/UI.
 - [ ] Add audit records, Event Viewer service errors, diagnostic bundle support, and the administrator-only Service Recovery page.
-- [ ] Remove the `--agent-hosted-operation` desktop-executable bridge, or document and test the narrow compatibility adapter; normal Agent profile work must remain in `UserProfileOperationService`.
+- [x] Remove the `--agent-hosted-operation` desktop-executable bridge; normal Agent profile work remains in `UserProfileOperationService`.
+- [ ] Remove WinForms `Program` client-sync/metrics timers, message polling, message-file access, and the duplicated `Messaging` services after their Service/Agent replacements are live.
+- [ ] Remove desktop AppData persistence fallbacks for Agent-owned profiles, audio profiles, shortcuts, and messages; retain only interactive in-memory caches backed by Agent snapshots and commits.
+- [ ] Refactor shortcut/editor UI to consume Contracts/ConfigurationDefinitions view data, then remove duplicated WinForms `GameLibraries`, `Processes`, and `AppLibraries` runtime sources. Preserve only UI-specific helpers and pure configuration/editing types in the desktop project.
+- [ ] Add a retirement verification scan/test that fails when WinForms again references Agent-owned runtime execution, storage, messaging, game-library, or process-monitoring implementations.
 
-**Exit criteria:** Local clients and Agents are identity-verified and remote callers are rejected; one machine produces one metrics/client-sync schedule regardless of UI/Agent count; user messages remain per-user Agent data; diagnostics and recovery actions are auditable.
+**Exit criteria:** Local clients and Agents are identity-verified and remote callers are rejected; one machine produces one metrics/client-sync schedule regardless of UI/Agent count; user messages remain per-user Agent data; WinForms is a UI/cache and Control Service client rather than a second runtime owner; diagnostics and recovery actions are auditable.
 
 ### Phase F — Deployment hardening
 

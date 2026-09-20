@@ -31,6 +31,10 @@ namespace DisplayMagician.UIForms
         { get; set; }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Content
+        { get; set; }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string HeadingText
         { get; set; } = "DisplayMagician Message";
 
@@ -62,6 +66,41 @@ namespace DisplayMagician.UIForms
             if (!String.IsNullOrWhiteSpace(ButtonText))
             {
                 btn_back.Text = ButtonText;
+            }
+
+            if (!String.IsNullOrWhiteSpace(Content))
+            {
+                try
+                {
+                    if (MessageMode == "html" || MessageMode == "md" || MessageMode == "markdown")
+                    {
+                        string htmlBody = MessageMode == "html"
+                            ? Content
+                            : Markdown.ToHtml(Content, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+                        string htmlDocument = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='https://sync.displaymagician.com/' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}}</style></head><body>{htmlBody}</body></html>";
+                        WebView2 webView = new WebView2
+                        {
+                            Dock = DockStyle.Fill,
+                        };
+                        pnl_richtextbox.Controls.Add(webView);
+                        webView.BringToFront();
+                        rtb_message.Hide();
+                        webView.NavigateToString(htmlDocument);
+                    }
+                    else
+                    {
+                        rtb_message.Show();
+                        rtb_message.Text = Content;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "StartMessageForm/StartMessageForm_Load: Failed to render supplied message content.");
+                    rtb_message.Show();
+                    rtb_message.Text = Content;
+                }
+
+                return;
             }
 
             // check if we're in Filename mode or URL mode
