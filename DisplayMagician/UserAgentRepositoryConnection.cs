@@ -5,9 +5,7 @@ using DisplayMagician.Contracts;
 namespace DisplayMagician;
 
 /// <summary>
-/// Adapts the asynchronous Control Service pipe protocol for the legacy,
-/// synchronous repository APIs. Repository callers continue working with
-/// ProfileItem collections and never see pipe DTOs.
+/// Adapts the asynchronous Control Service pipe protocol for the desktop shortcut repository.
 /// </summary>
 internal sealed class UserAgentRepositoryConnection : IUserAgentRepositoryConnection
 {

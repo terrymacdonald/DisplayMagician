@@ -171,6 +171,8 @@ internal sealed class ControlServicePipeClient
 
     public Task<ControlResponse> UpdateProfileFromCurrentAsync(string profileId, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.UpdateProfileFromCurrent, Payload = JsonSerializer.Serialize(new DeleteProfileRequest { ProfileId = profileId }) }, cancellationToken);
 
+    public Task<ControlResponse> UpdateDisplayProfileSettingsAsync(string profileId, DisplayProfileSettings settings, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.UpdateDisplayProfileSettings, Payload = JsonSerializer.Serialize(new UpdateDisplayProfileSettingsRequest { ProfileId = profileId, Settings = settings }) }, cancellationToken);
+
     public async Task<AudioProfileListResult> ListAudioProfilesAsync(CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListAudioProfiles }, cancellationToken).ConfigureAwait(false);

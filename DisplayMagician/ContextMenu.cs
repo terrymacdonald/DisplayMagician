@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
-using DisplayMagicianShared;
 using Microsoft.Win32;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -108,6 +107,7 @@ namespace DisplayMagician
         {
             try
             {
+                DesktopProfileViewCache.Refresh();
                 try
                 {
                     Registry.CurrentUser.DeleteSubKeyTree("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
@@ -120,21 +120,21 @@ namespace DisplayMagician
                 RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
 
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
-                foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+                foreach (DisplayMagician.Contracts.DisplayProfileView profile in DesktopProfileViewCache.Views)
                 {
                     RegistryKey pm = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name);
                     if (pm != null)
                     {
                         // Set up the ProfileMenu Registry Key contents
                         pm.SetValue("MUIVerb", profile.Name);
-                        pm.SetValue("Icon", Path.Combine(Program.AppProfilePath, profile.SavedProfileIconCacheFilename));
+                        pm.SetValue("Icon", Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe"));
                     }
                     // Set up the ProfileMenu command
 
                     RegistryKey pmc = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name + "\\command");
                     if (pmc != null)
                     {
-                        pmc.SetValue(null, Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe") + " ChangeProfile " + profile.UUID);
+                        pmc.SetValue(null, Path.Combine(AppContext.BaseDirectory, "DisplayMagician.exe") + " ChangeProfile " + profile.Id);
                     }
 
                 }

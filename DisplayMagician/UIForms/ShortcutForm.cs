@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 //using DisplayMagician.Resources;
-using DisplayMagicianShared;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Contracts;
 using Manina.Windows.Forms;
@@ -2106,9 +2105,7 @@ namespace DisplayMagician.UIForms
                 lbl_profile_shown_subtitle.Text = "The display configuration will not be changed when this shortcut runs.";
                 lbl_profile_shown_subtitle.Visible = true;
 
-                // Clear the display view - DrawEmptyView will be called automatically
-                dv_profile.Profile = null;
-                dv_profile.Refresh();
+                UpdateProfilePreview(null);
 
                 UpdateProfileImageListView(profile);
                 return;
@@ -2123,9 +2120,31 @@ namespace DisplayMagician.UIForms
             // Refresh the image list view
             UpdateProfileImageListView(profile);
 
-            // And finally show the profile in the display view
-            dv_profile.Profile = null;
-            dv_profile.Refresh();
+            UpdateProfilePreview(profile);
+        }
+
+        private void UpdateProfilePreview(DisplayProfileView profile)
+        {
+            Image previousImage = dv_profile.Image;
+            dv_profile.Image = null;
+            previousImage?.Dispose();
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.ThumbnailPngBase64))
+            {
+                return;
+            }
+
+            try
+            {
+                byte[] thumbnailBytes = Convert.FromBase64String(profile.ThumbnailPngBase64);
+                using MemoryStream thumbnailStream = new MemoryStream(thumbnailBytes);
+                using Image thumbnail = Image.FromStream(thumbnailStream);
+                dv_profile.Image = new Bitmap(thumbnail);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutForm/UpdateProfilePreview: Could not load the display profile thumbnail.");
+            }
         }
 
 

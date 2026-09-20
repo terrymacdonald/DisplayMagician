@@ -1,8 +1,8 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.IO;
 using System.Reflection;
-using DisplayMagicianShared;
 using System.Runtime.InteropServices;
 using Windows.UI.Notifications;
 using AutoUpdaterDotNET;
@@ -75,12 +75,7 @@ namespace DisplayMagician.UIForms
             // Update the message count on the Messages button to reflect any unread messages
             SetUnreadMessageCount(Program.GetUnreadMessageCount());
 
-            // Refresh display detection state and shortcut validation.
-            ProfileRepository.RefreshDisplayDetectionState();
             ShortcutRepository.IsValidRefresh();
-
-            // Update the active profile so the UI knows which profile is currently in use
-            ProfileRepository.UpdateActiveProfile();
 
             // Update the system tray menus
             notifyIcon.Visible = true;
@@ -148,19 +143,6 @@ namespace DisplayMagician.UIForms
             {
                 cb_minimise_notification_area.Checked = false;
             }
-
-            //// Set the notifyIcon text with the current profile
-            //if (notifyIcon != null)
-            //{
-            //    string shortProfileName = ProfileRepository.CurrentProfile.Name;
-            //    if (shortProfileName.Length >= 64)
-            //    {
-            //        shortProfileName = ProfileRepository.CurrentProfile.Name.Substring(0, 45);
-
-            //    }
-            //    notifyIcon.Text = $"DisplayMagician ({shortProfileName})";
-            //    Application.DoEvents();
-            //}
 
             // If we've been handed a Form of some kind, then open it straight away
             if (formToOpen is DisplayProfileForm)
@@ -447,7 +429,8 @@ namespace DisplayMagician.UIForms
 
         private void EnableShortcutButtonIfProfiles()
         {
-            if (ProfileRepository.AllProfiles.Count > 0)
+            DesktopProfileViewCache.Refresh();
+            if (DesktopProfileViewCache.Views.Count > 0)
             {
                 btn_setup_game_shortcuts.Visible = true;
                 pb_game_shortcut.Enabled = true;
@@ -471,6 +454,7 @@ namespace DisplayMagician.UIForms
 
         public void RefreshNotifyIconMenus()
         {
+            DesktopProfileViewCache.Refresh();
             // Clear all the profiles
             profileToolStripMenuItem.DropDownItems.Clear();
             // Prepare the heading shortcuts
@@ -484,12 +468,15 @@ namespace DisplayMagician.UIForms
             profileToolStripMenuItem.DropDownItems.Add(separator);
 
 
-            if (ProfileRepository.AllProfiles.Count > 0)
+            if (DesktopProfileViewCache.Views.Count > 0)
             {
                 // Add the current slist of profiles into the NotifyIcon context menu
-                foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+                foreach (DisplayProfileView profile in DesktopProfileViewCache.Views)
                 {
-                    ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, profile.ProfileBitmap, runProfileToolStripMenuItem_Click);
+                    ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, GetProfileThumbnail(profile.ThumbnailPngBase64), runProfileToolStripMenuItem_Click)
+                    {
+                        Tag = profile.Id
+                    };
                     if (profile.IsActive)
                     {
                         profileMenuItem.Enabled = true;
@@ -534,65 +521,13 @@ namespace DisplayMagician.UIForms
         private async void runProfileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var menuItem = sender as ToolStripMenuItem;
-            ProfileItem profileToRun = null;
-            if (menuItem != null)
+            if (menuItem?.Tag is string profileId && !string.IsNullOrWhiteSpace(profileId))
             {
-                foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+                Program.ERRORLEVEL result = await Task.Run(() => Program.RunProfile(profileId));
+                if (result == Program.ERRORLEVEL.OK)
                 {
-                    if (profile.Name.Equals(menuItem.Text))
-                    {
-                        profileToRun = profile;
-                        break;
-                    }
-                }
-
-                // Only apply the profile if it exists and is not already the active profile
-                if (profileToRun != null)
-                {
-                    // Use the cached active profile first. Only query the display APIs when the cache
-                    // says this profile is already active, because that is the only case where we skip applying it.
-                    if (!ProfileRepository.IsActiveProfile(profileToRun) || !ProfileRepository.RecheckIsActiveProfile(profileToRun))
-                    {
-                        ApplyProfileResult result = await Task.Run(() => Program.ApplyProfileTask(profileToRun));
-                        if (result == ApplyProfileResult.Successful)
-                        {
-                            logger.Trace($"MainForm/runProfileToolStripMenuItem_Click: Profile {profileToRun.Name} was successfully applied.");
-                            UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
-                            ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                                .AddText("Display Profile Applied", hintMaxLines: 1)
-                                .AddText($"\"{profileToRun.Name}\" has been applied successfully.")
-                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                .SetToastDuration(ToastDuration.Short);
-                            ToastContent toastContent = tcBuilder.Content;
-                            var doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            var toast = new ToastNotification(doc);
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-                        }
-                        else if (result == ApplyProfileResult.Cancelled)
-                        {
-                            logger.Warn($"MainForm/runProfileToolStripMenuItem_Click: The user cancelled changing to Profile {profileToRun.Name}.");
-                        }
-                        else
-                        {
-                            logger.Error($"MainForm/runProfileToolStripMenuItem_Click: Error applying Profile {profileToRun.Name}.");
-                        }
-                    }
-                    else
-                    {
-                        // Profile is already active - notify the user via toast
-                        logger.Trace($"MainForm/runProfileToolStripMenuItem_Click: Profile {profileToRun.Name} is already the active profile.");
-                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                            .AddText("Display Profile Already Active", hintMaxLines: 1)
-                            .AddText($"\"{profileToRun.Name}\" is already the current display profile.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short);
-                        ToastContent toastContent = tcBuilder.Content;
-                        var doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        var toast = new ToastNotification(doc);
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-                    }
+                    logger.Trace($"MainForm/runProfileToolStripMenuItem_Click: Profile {menuItem.Text} was successfully applied.");
+                    UpdateNotifyIconText($"DisplayMagician ({menuItem.Text})");
                 }
 
                 // Refresh the right-click menu to reflect the new state
@@ -600,6 +535,28 @@ namespace DisplayMagician.UIForms
                 {
                     Program.AppMainForm.RefreshNotifyIconMenus();
                 }
+            }
+        }
+
+        private static Image GetProfileThumbnail(string thumbnailPngBase64)
+        {
+            if (string.IsNullOrWhiteSpace(thumbnailPngBase64))
+            {
+                return null;
+            }
+
+            try
+            {
+                byte[] png = Convert.FromBase64String(thumbnailPngBase64);
+                using (MemoryStream stream = new MemoryStream(png))
+                using (Image image = Image.FromStream(stream))
+                {
+                    return new Bitmap(image);
+                }
+            }
+            catch (ArgumentException)
+            {
+                return null;
             }
         }
 
@@ -924,16 +881,7 @@ namespace DisplayMagician.UIForms
         {
             const int WM_DISPLAYCHANGE = 0x007E;
 
-            // If the user is changing profiles, record if a display change occurred so we can react after they finish
-            if (ProfileRepository.UserChangingProfiles)
-            {
-                if (m.Msg == WM_DISPLAYCHANGE)
-                {
-                    logger.Trace($"MainForm/WndProc: Display changed while user was changing profiles. Will update view afterwards.");
-                    _screenHasChanged = true;
-                }
-            }
-            else if (m.Msg == WM_DISPLAYCHANGE)
+            if (m.Msg == WM_DISPLAYCHANGE)
             {
                 // Display changed while idle - flag it for handling on the next message
                 logger.Trace($"MainForm/WndProc: Windows sent WM_DISPLAYCHANGE while idle. Flagging screen as changed.");
@@ -947,8 +895,6 @@ namespace DisplayMagician.UIForms
 
                 RepositionDisplayMagician();
 
-                ProfileRepository.RefreshDisplayDetectionState();
-                ProfileRepository.UpdateActiveProfile();
                 RefreshNotifyIconMenus();
 
                 // If the DisplayProfileForm is open, refresh its view too

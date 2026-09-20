@@ -35,7 +35,7 @@
     <Content Include="DisplayMagician.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
+    <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />

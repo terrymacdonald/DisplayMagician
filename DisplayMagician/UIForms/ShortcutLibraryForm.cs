@@ -1,7 +1,6 @@
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 //using DisplayMagician.Resources;
-using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
@@ -509,13 +508,6 @@ namespace DisplayMagician.UIForms
                         @"Create Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
-            }
-
-            if (ProfileRepository.UserChangingProfiles)
-            {
-                logger.Error($"ShortcutLibraryForm/btn_run_Click: The User is currently changing profiles. We can't run this Game Shortcut until they're finished.");
-                MessageBox.Show("The User is currently changing profiles. We can't run this Game Shortcut until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
             }
 
             // Revalidate immediately before running so the UI does not rely on a stale library state.

@@ -9,7 +9,6 @@ using IconLib;
 using System.Text;
 using System.Threading.Tasks;
 using TsudaKageyu;
-using DisplayMagicianShared;
 using MintPlayer.IconUtils;
 using System.Runtime.InteropServices;
 using System.IO;

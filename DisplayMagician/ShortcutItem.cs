@@ -2,7 +2,6 @@ using DisplayMagician.Contracts;
 using DisplayMagician.GameLibraries;
 //using DisplayMagician.Resources;
 using System.Drawing;
-using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -16,8 +15,6 @@ using System.Text.RegularExpressions;
 using TsudaKageyu;
 using System.ComponentModel;
 using System.Linq;
-using DisplayMagicianShared.NVIDIA;
-using DisplayMagicianShared.Windows;
 using DisplayMagician.ConfigurationDefinitions;
 
 namespace DisplayMagician

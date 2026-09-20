@@ -1,5 +1,4 @@
 //using DisplayMagician.Resources;
-using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
 {
@@ -61,7 +60,7 @@ namespace DisplayMagician.UIForms
             p_upper = new System.Windows.Forms.Panel();
             btn_donate = new System.Windows.Forms.Button();
             btn_help = new System.Windows.Forms.Button();
-            dv_profile = new DisplayView();
+            pb_profile_layout = new System.Windows.Forms.PictureBox();
             btn_profile_settings = new System.Windows.Forms.Button();
             p_lower = new System.Windows.Forms.Panel();
             btn_update = new System.Windows.Forms.Button();
@@ -415,7 +414,7 @@ namespace DisplayMagician.UIForms
             p_upper.Controls.Add(btn_view_current);
             p_upper.Controls.Add(lbl_profile_shown);
             p_upper.Controls.Add(lbl_profile_shown_subtitle);
-            p_upper.Controls.Add(dv_profile);
+            p_upper.Controls.Add(pb_profile_layout);
             p_upper.Location = new System.Drawing.Point(0, 0);
             p_upper.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             p_upper.Name = "p_upper";
@@ -458,18 +457,17 @@ namespace DisplayMagician.UIForms
             btn_help.UseVisualStyleBackColor = false;
             btn_help.Click += btn_help_Click;
             // 
-            // dv_profile
+            // pb_profile_layout
             // 
-            dv_profile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            dv_profile.AutoSize = true;
-            dv_profile.BackColor = System.Drawing.Color.DimGray;
-            dv_profile.Font = new System.Drawing.Font("Consolas", 50F);
-            dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            dv_profile.Location = new System.Drawing.Point(0, 115);
-            dv_profile.Margin = new System.Windows.Forms.Padding(247, 115, 247, 115);
-            dv_profile.Name = "dv_profile";
-            dv_profile.Size = new System.Drawing.Size(1008, 467);
-            dv_profile.TabIndex = 0;
+            pb_profile_layout.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            pb_profile_layout.BackColor = System.Drawing.Color.DimGray;
+            pb_profile_layout.Location = new System.Drawing.Point(0, 115);
+            pb_profile_layout.Margin = new System.Windows.Forms.Padding(247, 115, 247, 115);
+            pb_profile_layout.Name = "pb_profile_layout";
+            pb_profile_layout.Size = new System.Drawing.Size(1008, 467);
+            pb_profile_layout.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pb_profile_layout.TabIndex = 0;
+            pb_profile_layout.TabStop = false;
             // 
             // btn_profile_settings
             // 
@@ -632,7 +630,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ToolStripMenuItem saveProfileToDesktopToolStripMenuItem;
         private System.Windows.Forms.Button btn_donate;
         private System.Windows.Forms.Button btn_update;
-        private DisplayView dv_profile;
+        private System.Windows.Forms.PictureBox pb_profile_layout;
         private System.Windows.Forms.Panel p_middle;
         private System.Windows.Forms.Label label1;
     }

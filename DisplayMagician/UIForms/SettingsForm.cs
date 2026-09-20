@@ -1,5 +1,4 @@
 using AutoUpdaterDotNET;
-using DisplayMagicianShared;
 //using NHotkey;
 //using NHotkey.WindowsForms;
 using System;

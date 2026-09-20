@@ -7,32 +7,9 @@ using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using McMaster.Extensions.CommandLineUtils.Validation;
 using System.ComponentModel.DataAnnotations;
-using DisplayMagicianShared;
 
 namespace DisplayMagicianConsole
 {
-    class ProfileMustExistValidator : IArgumentValidator
-    {
-
-        public ValidationResult GetValidationResult(CommandArgument argumentProfileName, ValidationContext context)
-        {
-            // This validator only runs if there is a value
-            if (argumentProfileName.Value == "") return ValidationResult.Success;
-            var profileName = (string)argumentProfileName.Value;
-
-            // Try to find the Profile Name
-            if (!ProfileRepository.ContainsProfile(profileName))
-            {
-                Console.WriteLine($"ProfileMustExistValidator/GetValidationResult: Couldn't find Profile UUID supplied via command line: '{profileName}'. Please check the Profile UUID you supplied on the command line is correct.");
-                return new ValidationResult($"Couldn't find Profile UUID supplied via command line: '{profileName}'. Please check the Profile UUID you supplied on the command line is correct.");
-            }
-
-            ProfileItem profile = ProfileRepository.GetProfile(profileName);
-            //Console.WriteLine($"Using Profile: '{profile.Name}' (ID:{profile.UUID})");
-            return ValidationResult.Success;
-        }
-    }
-
     /*class ShortcutMustExistValidator : IArgumentValidator
     {
 

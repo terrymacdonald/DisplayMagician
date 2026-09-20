@@ -8,14 +8,15 @@
     <AssemblyName>DisplayMagician.UserAgent</AssemblyName>
     <RootNamespace>DisplayMagician.UserAgent</RootNamespace>
     <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
     <DefineConstants>$(DefineConstants);USER_AGENT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagician.ConfigurationDefinitions\DisplayMagician.ConfigurationDefinitions.csproj" />
     <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
-    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="EDIDParser" Version="1.2.5.4" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -28,12 +29,32 @@
     <PackageReference Include="YamlDotNet" Version="17.1.0" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="ADLXWrapper">
+      <HintPath>DLL\ADLXWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="IconLib">
+      <HintPath>..\DisplayMagician\DLL\IconLib.dll</HintPath>
+    </Reference>
+    <Reference Include="IGCLWrapper">
+      <HintPath>DLL\IGCLWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="NVAPIWrapper">
+      <HintPath>DLL\NVAPIWrapper.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsAudioWrapper">
       <HintPath>DLL\WindowsAudioWrapper.dll</HintPath>
     </Reference>
+    <Reference Include="WindowsWallpaperWrapper">
+      <HintPath>DLL\WindowsWallpaperWrapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="DLL\" />
+    <Content Include="DLL\AMDExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DLL\NVIDIAExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary">

@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
-using DisplayMagicianShared;
+using DisplayMagician.Contracts;
 using McMaster.Extensions.CommandLineUtils;
-using McMaster.Extensions.CommandLineUtils.Validation;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace DisplayMagicianConsole
 {
@@ -31,18 +25,13 @@ namespace DisplayMagicianConsole
             ERROR_CREATING_PROFILE = 107, // Errorlevel returned when CreateProfile command is used, and the profile could not be saved for an unexpected reason
         };
 
-        public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
-        //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
-        public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
         public static string AppVersion = ThisAssembly.AssemblyFileVersion;
         public static bool verboseMode = false;
         public static bool parseableMode = false;
+        private static readonly ControlServicePipeClient _controlServicePipeClient = new ControlServicePipeClient();
 
         static int Main(string[] args)
         {
-
-            // Initialise the Profiles Repository
-            ProfileRepository.InitialiseRepository();
 
             // Set up the command line processing
             var app = new CommandLineApplication
@@ -66,11 +55,10 @@ namespace DisplayMagicianConsole
             CommandOption parseable = app.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
 
             // This is the ChangeProfile command
-            app.Command(DisplayMagicianStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
+            app.Command("ChangeProfile", (runProfileCmd) =>
             {
                 
-                var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"|\"Name\"", $"(required) The UUID or the Name of the profile to use from those stored in the profile JSON file {ProfileRepository.ProfileStorageFileName}.").IsRequired();
-                argumentProfile.Validators.Add(new ProfileMustExistValidator());
+                var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"|\"Name\"", "(required) The UUID or the Name of the profile to use.").IsRequired();
 
                 //description and help text of the command.
                 runProfileCmd.Description = "Use this command to change to a display profile of your choosing.";
@@ -99,7 +87,7 @@ namespace DisplayMagicianConsole
 
             // This is the CurrentProfile command
             // This will output the current display profile if one matches, or 'Unknown'
-            app.Command(DisplayMagicianStartupAction.CurrentProfile.ToString(), (currentProfileCmd) =>
+            app.Command("CurrentProfile", (currentProfileCmd) =>
             {                
                 //description and help text of the command.
                 currentProfileCmd.Description = "Use this command to output the name of the display profile currently in use. It will return 'UNKNOWN' if the display profile doesn't match any saved display profiles";
@@ -119,7 +107,7 @@ namespace DisplayMagicianConsole
 
             // This is the AllProfiles command
             // This will output the list of all saved display profiles that DisplayMagician knows about
-            app.Command(DisplayMagicianStartupAction.AllProfiles.ToString(), (allProfilesCmd) =>
+            app.Command("AllProfiles", (allProfilesCmd) =>
             {
                 
                 //description and help text of the command.
@@ -139,7 +127,7 @@ namespace DisplayMagicianConsole
 
             // This is the CreateProfile command
             // This will save the current display configuration as a new named profile
-            app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
+            app.Command("CreateProfile", (createProfileCmd) =>
             {
                 var argumentName = createProfileCmd.Argument("\"Name\"", "(required) The name to give the new display profile.").IsRequired();
 
@@ -210,19 +198,17 @@ namespace DisplayMagicianConsole
         {
             if (verboseMode) Console.WriteLine($"Program/CurrentProfile: Finding the current profile in use");
 
-            // Lookup the profile
-            ProfileItem currentProfile;
             string profileName = "UNKNOWN";
             string profileUUID = "UNKNOWN";
             ERRORLEVEL errLevel = ERRORLEVEL.OK;
             try
             {
-                ProfileRepository.UpdateActiveProfile();
-                currentProfile = ProfileRepository.GetActiveProfile();
-                if (currentProfile is ProfileItem)
+                ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
+                DisplayProfileView currentProfile = profileList.Views.FirstOrDefault(profile => profile.IsActive) ?? profileList.CurrentLayout;
+                if (currentProfile != null)
                 {
                     profileName = currentProfile.Name;
-                    profileUUID = currentProfile.UUID;
+                    profileUUID = currentProfile.Id;
                 }
             }
             catch (Exception ex)
@@ -248,55 +234,31 @@ namespace DisplayMagicianConsole
 
         public static ERRORLEVEL RunProfile(string profileUUID)
         {
-            //Console.WriteLine($"Program/RunProfile: Running profile {profileName}");
-            ERRORLEVEL errLevel = ERRORLEVEL.OK;
-
-            Regex validateUUIDRegex = new Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$");
-
-            if (validateUUIDRegex.IsMatch(profileUUID))
+            ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
+            DisplayProfileView profileToUse = profileList.Views.FirstOrDefault(profile => string.Equals(profile.Id, profileUUID, StringComparison.OrdinalIgnoreCase))
+                ?? profileList.Views.FirstOrDefault(profile => string.Equals(profile.Name, profileUUID, StringComparison.OrdinalIgnoreCase));
+            if (profileToUse == null)
             {
-                if (ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileUUID)).Any())
-                {
-                    if (verboseMode) Console.WriteLine($"Program/RunProfile: Found profile with UUID {profileUUID} and now starting to apply the profile");
-
-                    // Get the profile
-                    ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileUUID)).First();
-
-                    ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
-                    if (result == ApplyProfileResult.Cancelled)
-                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                    else if (result == ApplyProfileResult.Error)
-                        errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
-                }
-                else
-                {
-                    Console.WriteLine($"Program/RunProfile: ERROR - We tried looking for a profile with UUID {profileUUID} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
-                    errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
-                }
+                Console.WriteLine($"Program/RunProfile: ERROR - We tried looking for a profile with UUID or Name {profileUUID} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
+                return ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
             }
-            else
+
+            if (verboseMode) Console.WriteLine($"Program/RunProfile: Found profile with Name {profileToUse.Name} and now starting to apply the profile");
+            ControlResponse response = _controlServicePipeClient.ApplyProfileAsync(profileToUse.Id, CancellationToken.None).GetAwaiter().GetResult();
+            if (response.IsSuccessful)
             {
-                if (ProfileRepository.AllProfiles.Where(p => p.Name.Equals(profileUUID)).Any())
-                {
-                    if (verboseMode) Console.WriteLine($"Program/RunProfile: Found profile with Name {profileUUID} and now starting to apply the profile");
+                Console.WriteLine($"Successfully applied the '{profileToUse.Name}' Display Profile.");
+                return ERRORLEVEL.OK;
+            }
 
-                    // Get the profile
-                    ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.Name.Equals(profileUUID)).First();
+            if (response.ApplyProfile?.WasCancelled == true)
+            {
+                Console.WriteLine($"Program/RunProfile: ERROR - The user cancelled changing to Profile {profileToUse.Name}.");
+                return ERRORLEVEL.CANCELED_BY_USER;
+            }
 
-                    ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
-                    if (result == ApplyProfileResult.Cancelled)
-                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                    else if (result == ApplyProfileResult.Error)
-                        errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
-                }
-                else
-                {
-                    Console.WriteLine($"Program/RunProfile: ERROR - We tried looking for a profile with a Name {profileUUID} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
-                    errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
-                }
-            }      
-
-            return errLevel;
+            Console.WriteLine($"Program/RunProfile: ERROR - Error applying the Profile {profileToUse.Name}. {response.Message}");
+            return ERRORLEVEL.ERROR_APPLYING_PROFILE;
         }
 
         public static ERRORLEVEL AllProfiles()
@@ -309,15 +271,16 @@ namespace DisplayMagicianConsole
 
             try
             {
-                foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+                ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
+                foreach (DisplayProfileView profile in profileList.Views)
                 {
                     if (parseableMode)
                     {
-                        Console.WriteLine($"{profile.Name}|{profile.UUID}");
+                        Console.WriteLine($"{profile.Name}|{profile.Id}");
                     }
                     else
                     {
-                        Console.WriteLine($"- \"{profile.Name}\" (UUID: \"{profile.UUID}\")");
+                        Console.WriteLine($"- \"{profile.Name}\" (UUID: \"{profile.Id}\")");
                     }
                 }
             }
@@ -334,163 +297,73 @@ namespace DisplayMagicianConsole
         {
             if (verboseMode) Console.WriteLine($"Program/CreateProfile: Attempting to create a new display profile named \"{name}\"");
 
-            ERRORLEVEL errLevel = ERRORLEVEL.OK;
-
-            // Step 1 — capture the current display settings into a new ProfileItem
-            ProfileItem newProfile = new ProfileItem();
             try
             {
-                if (!newProfile.CreateProfileFromCurrentDisplaySettings())
+                ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
+                DisplayProfileView nameMatch = profileList.Views.FirstOrDefault(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
+                if (nameMatch != null)
                 {
-                    Console.WriteLine($"Program/CreateProfile: ERROR - Failed to read the current display settings.");
-                    return ERRORLEVEL.ERROR_EXCEPTION;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Program/CreateProfile: ERROR - Exception while reading the current display settings: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                return ERRORLEVEL.ERROR_EXCEPTION;
-            }
+                    if (!force)
+                    {
+                        if (parseableMode)
+                        {
+                            Console.WriteLine($"NAME_TAKEN|{nameMatch.Name}|{nameMatch.Id}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Program/CreateProfile: ERROR - A profile named \"{name}\" already exists (UUID: \"{nameMatch.Id}\"). Use the -force option to replace it with the current display settings.");
+                        }
 
-            // Step 2 — block if the current display settings are already saved under any existing profile
-            // (equality is based on display config only, not name or UUID)
-            ProfileItem settingsMatch = ProfileRepository.AllProfiles.FirstOrDefault(p => p.Equals(newProfile));
-            if (settingsMatch != null)
-            {
+                        return ERRORLEVEL.ERROR_PROFILE_NAME_TAKEN;
+                    }
+
+                    if (verboseMode) Console.WriteLine($"Program/CreateProfile: Removing existing profile \"{nameMatch.Name}\" (UUID: \"{nameMatch.Id}\") to replace it.");
+                    ControlResponse deleteResponse = _controlServicePipeClient.DeleteProfileAsync(nameMatch.Id, CancellationToken.None).GetAwaiter().GetResult();
+                    if (!deleteResponse.IsSuccessful)
+                    {
+                        Console.WriteLine($"Program/CreateProfile: ERROR - The existing profile \"{name}\" could not be removed. {deleteResponse.Message}");
+                        return ERRORLEVEL.ERROR_CREATING_PROFILE;
+                    }
+                }
+
+                if (verboseMode) Console.WriteLine($"Program/CreateProfile: Saving new profile \"{name}\" through the Control Service.");
+                ControlResponse createResponse = _controlServicePipeClient.CreateProfileFromCurrentAsync(name, CancellationToken.None).GetAwaiter().GetResult();
+                if (!createResponse.IsSuccessful)
+                {
+                    if (createResponse.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase) || createResponse.Message.Contains("already saved", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine(parseableMode ? "DUPLICATE_SETTINGS|UNKNOWN|UNKNOWN" : $"Program/CreateProfile: ERROR - The current display settings are already saved as a profile. {createResponse.Message}");
+                        return ERRORLEVEL.ERROR_PROFILE_SETTINGS_ALREADY_EXIST;
+                    }
+
+                    Console.WriteLine($"Program/CreateProfile: ERROR - The profile \"{name}\" could not be saved. {createResponse.Message}");
+                    return ERRORLEVEL.ERROR_CREATING_PROFILE;
+                }
+
+                ProfileListResult updatedProfileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
+                DisplayProfileView createdProfile = updatedProfileList.Views.FirstOrDefault(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
+                if (createdProfile == null)
+                {
+                    Console.WriteLine($"Program/CreateProfile: ERROR - The profile \"{name}\" was created but could not be retrieved.");
+                    return ERRORLEVEL.ERROR_CREATING_PROFILE;
+                }
+
                 if (parseableMode)
                 {
-                    Console.WriteLine($"DUPLICATE_SETTINGS|{settingsMatch.Name}|{settingsMatch.UUID}");
+                    Console.WriteLine($"{createdProfile.Name}|{createdProfile.Id}");
                 }
                 else
                 {
-                    Console.WriteLine($"Program/CreateProfile: ERROR - The current display settings are already saved as profile \"{settingsMatch.Name}\" (UUID: \"{settingsMatch.UUID}\"). Cannot create a duplicate profile with the same display settings.");
-                }
-                return ERRORLEVEL.ERROR_PROFILE_SETTINGS_ALREADY_EXIST;
-            }
-
-            // Step 3 — assign the user-supplied name
-            newProfile.Name = name;
-
-            // Step 4 — check for a name conflict with a different profile
-            ProfileItem nameMatch = ProfileRepository.AllProfiles.FirstOrDefault(p => p.Name.Equals(name));
-            if (nameMatch != null)
-            {
-                if (!force)
-                {
-                    if (parseableMode)
-                    {
-                        Console.WriteLine($"NAME_TAKEN|{nameMatch.Name}|{nameMatch.UUID}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Program/CreateProfile: ERROR - A profile named \"{name}\" already exists (UUID: \"{nameMatch.UUID}\"). Use the -force option to replace it with the current display settings.");
-                    }
-                    return ERRORLEVEL.ERROR_PROFILE_NAME_TAKEN;
+                    Console.WriteLine($"Display profile \"{createdProfile.Name}\" (UUID: \"{createdProfile.Id}\") created successfully.");
                 }
 
-                // -force supplied — remove the conflicting profile before adding the new one
-                if (verboseMode) Console.WriteLine($"Program/CreateProfile: Removing existing profile \"{nameMatch.Name}\" (UUID: \"{nameMatch.UUID}\") to replace it.");
-                ProfileRepository.RemoveProfile(nameMatch);
-            }
-
-            // Step 5 — save the new profile
-            if (verboseMode) Console.WriteLine($"Program/CreateProfile: Saving new profile \"{name}\" to the profile repository.");
-            bool saved = ProfileRepository.AddProfile(newProfile);
-            if (!saved)
-            {
-                Console.WriteLine($"Program/CreateProfile: ERROR - The profile \"{name}\" could not be saved to the profile repository.");
-                return ERRORLEVEL.ERROR_CREATING_PROFILE;
-            }
-
-            if (parseableMode)
-            {
-                Console.WriteLine($"{newProfile.Name}|{newProfile.UUID}");
-            }
-            else
-            {
-                Console.WriteLine($"Display profile \"{newProfile.Name}\" (UUID: \"{newProfile.UUID}\") created successfully.");
-            }
-
-            return errLevel;
-        }
-
-        public static ApplyProfileResult ApplyProfileTask(ProfileItem profile)
-        {
-            //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
-            bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
-            if (gotGreenLightToProceed)
-            {
-                if (verboseMode) Console.WriteLine($"Program/ApplyProfileTask: Got exclusive control of the ApplyProfileTask");
-            }
-            else
-            {
-                Console.WriteLine($"Program/ApplyProfileTask: ERROR - Failed to get control of the ApplyProfileTask, so unable to continue. Returning an Error.");
-                return ApplyProfileResult.Error;
-            }
-            ApplyProfileResult result = ApplyProfileResult.Error;
-            if (Program.AppCancellationTokenSource != null)
-            {
-                Program.AppCancellationTokenSource.Dispose();
-            }
-            Program.AppCancellationTokenSource = new CancellationTokenSource();
-            try
-            {
-                Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                bool completed = taskToRun.Wait(TimeSpan.FromSeconds(120));
-                if (completed)
-                    result = taskToRun.Result;
-                else
-                    Console.WriteLine($"Program/ApplyProfileTask: ERROR - Profile apply task timed out after 120 seconds.");
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine($"Program/ApplyProfileTask: User cancelled applying the profile {profile.Name}");
+                return ERRORLEVEL.OK;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Program/ApplyProfileTask: ERROR - Exception while trying to apply Profile {profile.Name}: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                Console.WriteLine($"Program/CreateProfile: ERROR - Exception while creating the display profile: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
             }
-            finally
-            {
-                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
-                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                if (gotGreenLightToProceed)
-                {
-                    Program.AppBackgroundTaskSemaphoreSlim.Release();
-                }
-            }
-
-            //taskToRun.RunSynchronously();
-            //result = taskToRun.GetAwaiter().GetResult();                
-            if (result == ApplyProfileResult.Successful)
-            {
-                /*MainForm myMainForm = Program.AppMainForm;
-                if (myMainForm.InvokeRequired)
-                {
-                    myMainForm.BeginInvoke((MethodInvoker)delegate {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                    });
-                }
-                else
-                {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                }*/
-
-                Console.WriteLine($"Successfully applied the '{profile.Name}' Display Profile.");
-            }
-            else if (result == ApplyProfileResult.Cancelled)
-            {
-                Console.WriteLine($"Program/ApplyProfileTask: ERROR - The user cancelled changing to Profile {profile.Name}.");
-            }
-            else
-            {
-                Console.WriteLine($"Program/ApplyProfileTask: ERROR - Error applying the Profile {profile.Name}. Unable to change the display layout.");
-            }
-
-            // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
-            //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
-            return result;
         }
     }
 }

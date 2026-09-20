@@ -1,4 +1,3 @@
-using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -156,7 +155,6 @@ namespace DisplayMagician
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
-                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
@@ -207,7 +205,6 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)

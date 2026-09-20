@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using McMaster.Extensions.CommandLineUtils.Validation;
 using System.ComponentModel.DataAnnotations;
-using DisplayMagicianShared;
 using System.Windows.Forms;
 
 namespace DisplayMagician
@@ -23,17 +22,7 @@ namespace DisplayMagician
 
             // This validator only runs if there is a value
             if (argumentProfileName.Value == "") return ValidationResult.Success;
-            var profileName = (string)argumentProfileName.Value;
-
-            // Try to find the Profile Name
-            if (!ProfileRepository.ContainsProfile(profileName))
-            {
-                logger.Error($"ProfileMustExistValidator/GetValidationResult: Couldn't find Profile Name or ID supplied via command line: '{profileName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
-                return new ValidationResult($"Couldn't find Profile Name or ID supplied via command line: '{profileName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
-            }
-
-            ProfileItem profile = ProfileRepository.GetProfile(profileName);
-            logger.Trace($"ProfileMustExistValidator/GetValidationResult: Shortcut: '{profile.Name}' (ID: {profile.UUID}) is valid.");
+            logger.Trace($"ProfileMustExistValidator/GetValidationResult: Deferring profile validation to the User Agent.");
             return ValidationResult.Success;
         }
     }

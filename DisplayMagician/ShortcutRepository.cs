@@ -1,8 +1,6 @@
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.UIForms;
-using DisplayMagicianShared;
-using DisplayMagicianShared.Windows;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -423,21 +421,19 @@ namespace DisplayMagician
 
         }
 
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-        public static bool RenameShortcutProfile(ProfileItem newProfile)
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
+        public static bool RenameShortcutProfile(DisplayProfileView newProfile)
         {
             logger.Debug($"ShortcutRepository/RenameShortcutProfile: Renaming the profile in any shortcuts containing the old profile name");
 
-            if (!(newProfile is ProfileItem))
+            if (newProfile == null || string.IsNullOrWhiteSpace(newProfile.Id))
                 return false;
 
             foreach (ShortcutItem testShortcut in ShortcutRepository.AllShortcuts)
             {
-                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.OrdinalIgnoreCase) && testShortcut.AutoName)
+                if (testShortcut.ProfileUUID.Equals(newProfile.Id, StringComparison.OrdinalIgnoreCase) && testShortcut.AutoName)
                 {
                     logger.Debug($"ShortcutRepository/RenameShortcutProfile: Renaming {testShortcut.Name} shortcut's profile to {newProfile.Name} since the original profile has just been renamed.");
-                    testShortcut.ProfileToUse = new DisplayProfileView { Id = newProfile.UUID, Name = newProfile.Name };
+                    testShortcut.ProfileToUse = new DisplayProfileView { Id = newProfile.Id, Name = newProfile.Name };
                     testShortcut.AutoSuggestShortcutName();
                 }
             }
@@ -558,7 +554,6 @@ namespace DisplayMagician
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
-                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
@@ -603,7 +598,6 @@ namespace DisplayMagician
                                 NullValueHandling = NullValueHandling.Ignore,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
-                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
@@ -669,34 +663,20 @@ namespace DisplayMagician
                             continue;
                         }
 
-                        if (updatedShortcut.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                        if (updatedShortcut.ProfileUUID.Equals(ShortcutItem.SkipDisplayChangeProfile.Id, StringComparison.OrdinalIgnoreCase))
                         {
                             logger.Debug($"ShortcutRepository/LoadShortcuts: Shortcut '{updatedShortcut.Name}' uses 'No Display Change' profile. Setting ProfileToUse to null as we don't want to link it to a profile.");
                             updatedShortcut.ProfileToUse = null;
                             continue;
                         }
 
-                        bool foundProfile = false;
-                        foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+                        DisplayProfileView profile = DesktopProfileViewCache.Get(updatedShortcut.ProfileUUID);
+                        if (profile != null)
                         {
-                            try
-                            {
-                                if (!String.IsNullOrWhiteSpace(profile.UUID) && profile.UUID.Equals(updatedShortcut.ProfileUUID))
-                                {
-                                    // And assign the matching Profile if we find it.
-                                    updatedShortcut.ProfileToUse = new DisplayProfileView { Id = profile.UUID, Name = profile.Name };
-                                    foundProfile = true;
-                                    logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile!");
-                                    break;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Error looking for Profile UUID {updatedShortcut.ProfileUUID} in the list of profiles in the Profile Repository.");
-                            }
+                            updatedShortcut.ProfileToUse = new DisplayProfileView { Id = profile.Id, Name = profile.Name };
+                            logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile view.");
                         }
-
-                        if (!foundProfile)
+                        else
                         {
                             // We should only get here if there isn't a profile to match to.
                             logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
@@ -776,7 +756,6 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
@@ -864,7 +843,6 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Ignore,
                     DefaultValueHandling = DefaultValueHandling.Populate,
                     TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     ObjectCreationHandling = ObjectCreationHandling.Replace
                 };
 
@@ -887,16 +865,14 @@ namespace DisplayMagician
         {
             foreach (ShortcutItem shortcut in _allShortcuts)
             {
-                if (string.IsNullOrWhiteSpace(shortcut.ProfileUUID) || shortcut.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrWhiteSpace(shortcut.ProfileUUID) || shortcut.ProfileUUID.Equals(ShortcutItem.SkipDisplayChangeProfile.Id, StringComparison.OrdinalIgnoreCase))
                 {
                     shortcut.ProfileToUse = null;
                     continue;
                 }
 
-                ProfileItem profile = ProfileRepository.AllProfiles.FirstOrDefault(profile =>
-                    !string.IsNullOrWhiteSpace(profile.UUID) &&
-                    profile.UUID.Equals(shortcut.ProfileUUID, StringComparison.OrdinalIgnoreCase));
-                shortcut.ProfileToUse = profile == null ? null : new DisplayProfileView { Id = profile.UUID, Name = profile.Name };
+                DisplayProfileView profile = DesktopProfileViewCache.Get(shortcut.ProfileUUID);
+                shortcut.ProfileToUse = profile == null ? null : new DisplayProfileView { Id = profile.Id, Name = profile.Name };
             }
         }
 

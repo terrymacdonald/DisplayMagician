@@ -1,5 +1,4 @@
 using DisplayMagician.UIForms;
-using DisplayMagicianShared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

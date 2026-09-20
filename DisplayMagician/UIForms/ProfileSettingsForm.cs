@@ -1,8 +1,7 @@
-using DisplayMagicianShared;
+using DisplayMagician.Contracts;
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
-using WindowsWallpaperWrapper;
 
 namespace DisplayMagician.UIForms
 {
@@ -20,11 +19,11 @@ namespace DisplayMagician.UIForms
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ProfileItem Profile
+        public DisplayProfileSettings Settings
         {
             get;
             set;
-        }
+        } = new DisplayProfileSettings();
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ProfileSettingChanged
@@ -43,40 +42,30 @@ namespace DisplayMagician.UIForms
         private void ProfileSettingsForm_Load(object sender, EventArgs e)
         {
             // Wallpaper mode: select matching item, defaulting to DoNothing
-            cmb_wallpaper_mode.SelectedIndex = Profile.WallpaperConfiguration.WallpaperMode switch
-            {
-                Wallpaper.Mode.Apply => 0,
-                _                   => 1
-            };
+            cmb_wallpaper_mode.SelectedIndex = Settings.ApplyWallpaper ? 0 : 1;
 
             // Show the captured background type only when wallpapers will actually be applied
-            bool showBgType = Profile.WallpaperConfiguration.WallpaperMode == Wallpaper.Mode.Apply;
+            bool showBgType = Settings.ApplyWallpaper;
             lbl_wallpaper_bg_type_label.Visible = showBgType;
             lbl_wallpaper_bg_type.Visible = showBgType;
 
             // Show the captured background type (read-only informational label)
-            lbl_wallpaper_bg_type.Text = Profile.WallpaperConfiguration.WallpaperSettings?.BackgroundType switch
-            {
-                WindowsWallpaperBackgroundType.SolidColor => "Solid Colour (same on all displays)",
-                WindowsWallpaperBackgroundType.Slideshow  => "Slideshow (same on all displays)",
-                WindowsWallpaperBackgroundType.Spotlight  => "Windows Spotlight (same on all displays)",
-                _                                         => "Saved Pictures (unique per display)",
-            };
+            lbl_wallpaper_bg_type.Text = Settings.BackgroundDescription;
 
-            logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} loaded. Wallpaper mode: {Profile.WallpaperConfiguration.WallpaperMode}.");
+            logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile settings loaded. Apply wallpaper: {Settings.ApplyWallpaper}.");
 
-            if (Profile.ApplyProfileCount >= 0 && Profile.ApplyProfileCount <= 10)
+            if (Settings.ApplyProfileCount >= 0 && Settings.ApplyProfileCount <= 10)
             {
-                nud_apply_profile_count.Value = Profile.ApplyProfileCount;
+                nud_apply_profile_count.Value = Settings.ApplyProfileCount;
             }
             else
             {
                 nud_apply_profile_count.Value = 1;
             }
 
-            if (Profile.ApplyProfileDelay >= 0 && Profile.ApplyProfileDelay <= 1000)
+            if (Settings.ApplyProfileDelay >= 0 && Settings.ApplyProfileDelay <= 1000)
             {
-                nud_apply_profile_delay.Value = Profile.ApplyProfileDelay;
+                nud_apply_profile_delay.Value = Settings.ApplyProfileDelay;
             }
             else
             {
@@ -96,29 +85,16 @@ namespace DisplayMagician.UIForms
                 lbl_seconds.Visible = false;
             }
 
-            if (Profile.ForceExplorerRestart)
-            {
-                cb_force_restart_explorer.Checked = true;
-            }
-            else
-            {
-                cb_force_restart_explorer.Checked = false;
-            }
+            cb_force_restart_explorer.Checked = Settings.ForceExplorerRestart;
+            _profileSettingChanged = false;
         }
 
         private void ProfileSettingsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Profile.WallpaperConfiguration.WallpaperMode = cmb_wallpaper_mode.SelectedIndex switch
-            {
-                0 => Wallpaper.Mode.Apply,
-                _ => Wallpaper.Mode.DoNothing
-            };
-
-            Profile.ApplyProfileCount = (int)nud_apply_profile_count.Value;
-
-            Profile.ApplyProfileDelay = (int)nud_apply_profile_delay.Value;
-
-            Profile.ForceExplorerRestart = (bool)cb_force_restart_explorer.Checked;
+            Settings.ApplyWallpaper = cmb_wallpaper_mode.SelectedIndex == 0;
+            Settings.ApplyProfileCount = (int)nud_apply_profile_count.Value;
+            Settings.ApplyProfileDelay = (int)nud_apply_profile_delay.Value;
+            Settings.ForceExplorerRestart = cb_force_restart_explorer.Checked;
 
         }
 

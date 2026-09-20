@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System.Windows.Forms;
-using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
@@ -143,7 +142,6 @@ namespace DisplayMagician {
             AppEpicIconFilename = Path.Combine(AppIconPath, "Epic.ico");
             ProgramSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
             DonationSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
-            ProfileRepository.ConfigureStoragePath(AppDataPath);
             ShortcutRepository.ConfigureStoragePath(AppDataPath);
         }
 
@@ -290,7 +288,7 @@ namespace DisplayMagician {
             // Apply config           
             NLog.LogManager.Configuration = config;
 
-            // Make DisplayMagicianShared use the same log file by sending it the 
+            // Keep the legacy desktop helpers on the same log file by sending them the
             // details of the existing NLog logger
             sharedLogger = new SharedLogger(logger);
 
@@ -619,7 +617,7 @@ namespace DisplayMagician {
 
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
-            if (!ConnectRepositoriesToUserAgent())
+            if (!ConnectDesktopStateToUserAgent())
             {
                 MessageBox.Show("DisplayMagician could not connect to the User Agent that manages your profiles. Please restart DisplayMagician and try again.", "DisplayMagician User Agent", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return (int)ERRORLEVEL.ERROR_EXCEPTION;
@@ -895,9 +893,6 @@ namespace DisplayMagician {
 
                 
 
-                /* // Update the Active Profile before we load the Main Form
-                 ProfileRepository.UpdateActiveProfile();*/
-
                 // Keep the splash screen in the foreground until the normal main window is visible,
                 // then explicitly transfer focus to it. A minimized startup has no main window to show.
                 if (!AppProgramSettings.MinimiseOnStart)
@@ -1167,70 +1162,47 @@ namespace DisplayMagician {
             }
         }
 
-        public static ERRORLEVEL RunProfile(string profileName)
+        public static ERRORLEVEL RunProfile(string profileId)
         {
-            logger.Trace($"Program/RunProfile: Running profile {profileName}");
-            ERRORLEVEL errLevel = ERRORLEVEL.OK;
+            logger.Trace($"Program/RunProfile: Running profile {profileId}");
 
             // Close the splash screen
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
-            if (ProfileRepository.UserChangingProfiles)
+            if (string.IsNullOrWhiteSpace(profileId))
             {
-                logger.Error($"Program/RunProfile: The User is currently changing to another Display Profiles. We can't change to another Display Profile right now. Please wait.");
-                MessageBox.Show("The User is currently changing to another Display Profiles. We can't change to another Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return ERRORLEVEL.ERROR_PROFILE_CHANGE_OCCURRING;
+                logger.Error("Program/RunProfile: A display profile ID is required.");
+                return ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
             }
 
-            if (ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).Any())
+            profileId = profileId.Trim('"');
+            try
             {
-                logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
-
-                // Get the profile
-                ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
-
-                // We need to update the active profile if we've been run from a profile shortcut.
-                ProfileRepository.UpdateActiveProfile();
-
-                // Only apply the profile if it is not already active
-                if (ProfileRepository.IsActiveProfile(profileToUse))
+                if (!EnsureUserAgentStarted())
                 {
-                    logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} is already the active profile. Notifying user.");
-                    new ToastContentBuilder()
-                        .AddText("Display Profile Already Active", hintMaxLines: 1)
-                        .AddText($"\"{profileToUse.Name}\" is already the current display profile.")
-                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                        .SetToastDuration(ToastDuration.Short)
-                        .Show();
+                    return ERRORLEVEL.ERROR_APPLYING_PROFILE;
                 }
-                else
-                {
-                    // Apply the profile change
-                    ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
-                    if (result == ApplyProfileResult.Successful)
-                    {
-                        logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} was successfully applied.");
-                        new ToastContentBuilder()
-                            .AddText("Display Profile Applied", hintMaxLines: 1)
-                            .AddText($"\"{profileToUse.Name}\" has been applied successfully.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short)
-                            .Show();
-                    }
-                    else if (result == ApplyProfileResult.Cancelled)
-                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                    else if (result == ApplyProfileResult.Error)
-                        errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
-                }
-            }
-            else
-            {
-                logger.Error($"Program/RunProfile: We tried looking for a profile called {profileName} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
-                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
-            }
 
-            return errLevel;
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.ApplyProfileWhenAgentAvailableAsync(profileId, CancellationToken.None).GetAwaiter().GetResult();
+                if (response.IsSuccessful)
+                {
+                    return ERRORLEVEL.OK;
+                }
+
+                logger.Error("Program/RunProfile: The Control Service did not apply profile {0}. ErrorCode={1}; Message={2}", profileId, response.ErrorCode, response.Message);
+                return response.ApplyProfile?.WasCancelled == true
+                    ? ERRORLEVEL.CANCELED_BY_USER
+                    : response.ErrorCode == DisplayMagician.Contracts.ControlErrorCode.InvalidRequest
+                        ? ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE
+                        : ERRORLEVEL.ERROR_APPLYING_PROFILE;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/RunProfile: Could not invoke the User Agent for profile {0}.", profileId);
+                return ERRORLEVEL.ERROR_APPLYING_PROFILE;
+            }
         }
 
 
@@ -1242,152 +1214,6 @@ namespace DisplayMagician {
             if (regInvalidFileName.IsMatch(testName)) { return false; };
 
             return true;
-        }
-
-        //public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
-        public static ApplyProfileResult ApplyProfileTask(ProfileItem profile)
-        {
-            if (!_isAgentHostedOperation)
-            {
-                return ApplyProfileThroughUserAgent(profile);
-            }
-
-            //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
-            bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
-            if (gotGreenLightToProceed)
-            {
-                logger.Trace($"Program/ApplyProfileTask: Got exclusive control of the ApplyProfileTask");
-            }
-            else
-            {
-                logger.Error($"Program/ApplyProfileTask: Cannot apply the display profile {profile.Name} as another task is running!");
-                return ApplyProfileResult.Error;
-            }
-            ApplyProfileResult result = ApplyProfileResult.Error;            
-            bool semaphoreReleaseDeferred = false;
-            CancellationTokenSource cancellationSource = BeginActiveOperationCancellation();
-            try
-            {
-                Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                bool completed = taskToRun.Wait(TimeSpan.FromSeconds(120));
-                if (completed)
-                    result = taskToRun.Result;
-                else
-                {
-                    logger.Warn($"Program/ApplyProfileTask: Profile apply task timed out after 120 seconds.");
-                    semaphoreReleaseDeferred = true;
-                    _ = taskToRun.ContinueWith(completedTask =>
-                    {
-                        try
-                        {
-                            if (completedTask.IsFaulted)
-                            {
-                                logger.Error(completedTask.Exception, $"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} completed with an exception.");
-                            }
-                            else if (completedTask.IsCanceled)
-                            {
-                                logger.Warn($"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} was cancelled.");
-                            }
-                            else
-                            {
-                                logger.Warn($"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} has now finished with result {completedTask.Result}.");
-                            }
-                        }
-                        finally
-                        {
-                            CompleteActiveOperationCancellation(cancellationSource);
-                            Program.AppBackgroundTaskSemaphoreSlim.Release();
-                        }
-                    }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
-                }
-            }   
-            catch (OperationCanceledException ex)
-            {
-                logger.Trace(ex, $"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
-            }
-            catch( Exception ex)
-            {
-                logger.Error(ex, $"Program/ApplyProfileTask: Exception while trying to apply Profile {profile.Name}.");
-            }
-            finally
-            {
-                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
-                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                if (gotGreenLightToProceed && !semaphoreReleaseDeferred)
-                {
-                    CompleteActiveOperationCancellation(cancellationSource);
-                    Program.AppBackgroundTaskSemaphoreSlim.Release();
-                }                        
-            }
-
-            //taskToRun.RunSynchronously();
-            //result = taskToRun.GetAwaiter().GetResult();                
-            if (result == ApplyProfileResult.Successful)
-            {
-                MainForm myMainForm = Program.AppMainForm;
-                if (myMainForm.InvokeRequired)
-                {
-                    myMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                    });
-                }
-                else
-                {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                }
-
-                logger.Trace($"Program/ApplyProfileTask: Successfully applied Profile {profile.Name}.");
-            }
-            else if (result == ApplyProfileResult.Cancelled)
-            {
-                logger.Warn($"Program/ApplyProfileTask: The user cancelled changing to Profile {profile.Name}.");
-            }
-            else
-            {
-                logger.Warn($"Program/ApplyProfileTask: Error applying the Profile {profile.Name}. Unable to change the display layout.");
-            }
-
-            // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
-            //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
-            return result;
-        }
-
-        private static ApplyProfileResult ApplyProfileThroughUserAgent(ProfileItem profile)
-        {
-            if (profile == null || string.IsNullOrWhiteSpace(profile.UUID))
-            {
-                logger.Error("Program/ApplyProfileThroughUserAgent: The requested display profile did not have a valid UUID.");
-                return ApplyProfileResult.Error;
-            }
-
-            try
-            {
-                if (!EnsureUserAgentStarted())
-                {
-                    return ApplyProfileResult.Error;
-                }
-
-                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
-                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.ApplyProfileWhenAgentAvailableAsync(profile.UUID, CancellationToken.None).GetAwaiter().GetResult();
-                if (response.IsSuccessful)
-                {
-                    return ApplyProfileResult.Successful;
-                }
-
-                if (response.ApplyProfile?.WasCancelled == true)
-                {
-                    return ApplyProfileResult.Cancelled;
-                }
-
-                logger.Error("Program/ApplyProfileThroughUserAgent: Control Service did not apply profile {0}. ErrorCode={1}; Message={2}", profile.UUID, response.ErrorCode, response.Message);
-                return ApplyProfileResult.Error;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "Program/ApplyProfileThroughUserAgent: Could not invoke the User Agent for profile {0}.", profile.UUID);
-                return ApplyProfileResult.Error;
-            }
         }
 
         internal static bool EnsureUserAgentStarted()
@@ -1414,7 +1240,7 @@ namespace DisplayMagician {
             return true;
         }
 
-        private static bool ConnectRepositoriesToUserAgent()
+        private static bool ConnectDesktopStateToUserAgent()
         {
             try
             {
@@ -1424,14 +1250,14 @@ namespace DisplayMagician {
                 }
 
                 UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(new ControlServicePipeClient());
-                ProfileRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                 ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
-                logger.Info("Program/ConnectRepositoriesToUserAgent: Loaded the display and shortcut repository caches from the User Agent.");
+                DesktopProfileViewCache.Refresh();
+                logger.Info("Program/ConnectDesktopStateToUserAgent: Loaded display profile views and the shortcut cache from the User Agent.");
                 return true;
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Program/ConnectRepositoriesToUserAgent: Could not load the repository caches from the User Agent.");
+                logger.Error(ex, "Program/ConnectDesktopStateToUserAgent: Could not load desktop state from the User Agent.");
                 return false;
             }
         }

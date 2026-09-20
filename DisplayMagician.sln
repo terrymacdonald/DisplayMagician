@@ -4,8 +4,6 @@ VisualStudioVersion = 18.5.11723.231 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagician", "DisplayMagician\DisplayMagician.csproj", "{608D941A-B431-400C-A91D-C6F971C29577}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianShared", "DisplayMagicianShared\DisplayMagicianShared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3B959DA6-15D5-4421-A7BA-D8EB5A9F9D97}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -74,26 +72,6 @@ Global
 		{608D941A-B431-400C-A91D-C6F971C29577}.Release|x64.Build.0 = Release|Any CPU
 		{608D941A-B431-400C-A91D-C6F971C29577}.Release|x86.ActiveCfg = Release|Any CPU
 		{608D941A-B431-400C-A91D-C6F971C29577}.Release|x86.Build.0 = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|AnyCPU.Build.0 = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|ARM.Build.0 = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|x64.Build.0 = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|x86.Build.0 = Debug|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|AnyCPU.ActiveCfg = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|AnyCPU.Build.0 = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|ARM.ActiveCfg = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|ARM.Build.0 = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|ARM64.Build.0 = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x64.ActiveCfg = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x64.Build.0 = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x86.ActiveCfg = Release|Any CPU
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x86.Build.0 = Release|Any CPU
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{CF589774-7E28-4C1A-B4C3-56776A4AD3E4}.Debug|ARM.ActiveCfg = Debug|Any CPU

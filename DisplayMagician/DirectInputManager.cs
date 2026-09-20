@@ -1,5 +1,4 @@
 ﻿using DisplayMagician.UIForms;
-using DisplayMagicianShared;
 using NLog;
 using NLog.Targets;
 using SharpGen.Runtime;
@@ -53,7 +52,7 @@ namespace DisplayMagician
 
             string myDescription = task switch
             {
-                HotkeyTask.ChangeDisplayProfile => $"Change Display Profile to '{ProfileRepository.GetProfileName(uuid) ?? "Unknown"}'",
+                HotkeyTask.ChangeDisplayProfile => $"Change Display Profile to '{DesktopProfileViewCache.GetName(uuid)}'",
                 HotkeyTask.RunGameShortcut => $"Run Game Shortcut '{ShortcutRepository.GetShortcutName(uuid) ?? "Unknown"}'",
                 HotkeyTask.OpenShortcutLibraryWindow => "Open Shortcut Library Window",
                 HotkeyTask.OpenMainWindow => "Open Main Window",
@@ -122,7 +121,7 @@ namespace DisplayMagician
 
             string myDescription = task switch
             {
-                HotkeyTask.ChangeDisplayProfile => $"Change Display Profile to '{ProfileRepository.GetProfileName(uuid) ?? "Unknown"}'",
+                HotkeyTask.ChangeDisplayProfile => $"Change Display Profile to '{DesktopProfileViewCache.GetName(uuid)}'",
                 HotkeyTask.RunGameShortcut => $"Run Game Shortcut '{ShortcutRepository.GetShortcutName(uuid) ?? "Unknown"}'",
                 HotkeyTask.OpenShortcutLibraryWindow => "Open Shortcut Library Window",
                 HotkeyTask.OpenMainWindow => "Open Main Window",

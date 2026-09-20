@@ -48,7 +48,8 @@ public enum ControlMessageType
     SetMessageReadState = 32,
     SyncMessages = 33,
     ListApps = 34,
-    ListShortcuts = 35
+    ListShortcuts = 35,
+    UpdateDisplayProfileSettings = 36
 }
 
 public enum ControlErrorCode
@@ -209,6 +210,7 @@ public sealed class ProfileListResult
 {
     public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>();
     public DisplayProfileView[] Views { get; set; } = Array.Empty<DisplayProfileView>();
+    public DisplayProfileView? CurrentLayout { get; set; }
 }
 
 public sealed class ApplyProfileRequest
@@ -314,6 +316,29 @@ public sealed class DisplayProfileView
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? ThumbnailPngBase64 { get; set; }
+    public int ConnectedDisplayCount { get; set; }
+    public int PrimaryDisplayWidth { get; set; }
+    public int PrimaryDisplayHeight { get; set; }
+    public bool IsSaved { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsValid { get; set; }
+    public string DiagnosticMessage { get; set; } = string.Empty;
+    public DisplayProfileSettings Settings { get; set; } = new DisplayProfileSettings();
+}
+
+public sealed class DisplayProfileSettings
+{
+    public bool ApplyWallpaper { get; set; }
+    public string BackgroundDescription { get; set; } = string.Empty;
+    public bool ForceExplorerRestart { get; set; }
+    public int ApplyProfileCount { get; set; } = 1;
+    public int ApplyProfileDelay { get; set; }
+}
+
+public sealed class UpdateDisplayProfileSettingsRequest
+{
+    public string ProfileId { get; set; } = string.Empty;
+    public DisplayProfileSettings Settings { get; set; } = new DisplayProfileSettings();
 }
 
 public sealed class AudioProfileView

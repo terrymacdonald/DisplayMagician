@@ -31,7 +31,7 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
 # ---------------------------------------------------------------------------
-# Locate VS MSBuild.exe (required for ResolveComReference in DisplayMagicianShared)
+# Locate VS MSBuild.exe (required for ResolveComReference in the main application)
 # ---------------------------------------------------------------------------
 function Find-MSBuild {
     # Try vswhere first (present with VS 2017+)

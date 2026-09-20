@@ -10,12 +10,14 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
 using DisplayMagician.AppLibraries;
 using DisplayMagician.Messaging;
 using DisplayMagician.UserAgent.Messaging;
 using DisplayMagicianShared;
+using DisplayMagicianShared.Windows;
 using DisplayMagician.GameLibraries;
 using SharedApplyProfileResult = DisplayMagicianShared.ApplyProfileResult;
 using NLog;
@@ -85,6 +87,8 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.ListProfiles)
         {
+            ProfileRepository.RefreshDisplayDetectionState();
+            ProfileRepository.UpdateActiveProfile();
             ProfileSummary[] profiles = ProfileRepository.AllProfiles
                 .Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name })
                 .ToArray();
@@ -95,7 +99,8 @@ public sealed class ProfileCommandHandler
                 ProfileList = new ProfileListResult
                 {
                     Profiles = profiles,
-                    Views = ProfileRepository.AllProfiles.Select(profile => new DisplayProfileView { Id = profile.UUID, Name = profile.Name, ThumbnailPngBase64 = GetThumbnailPngBase64(profile) }).ToArray()
+                    Views = ProfileRepository.AllProfiles.Select(profile => CreateDisplayProfileView(profile)).ToArray(),
+                    CurrentLayout = ProfileRepository.CurrentProfile == null ? null : CreateDisplayProfileView(ProfileRepository.CurrentProfile, false)
                 }
             };
         }
@@ -459,6 +464,24 @@ public sealed class ProfileCommandHandler
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be updated." };
         }
 
+        if (request.MessageType == ControlMessageType.UpdateDisplayProfileSettings)
+        {
+            UpdateDisplayProfileSettingsRequest? settingsRequest = JsonSerializer.Deserialize<UpdateDisplayProfileSettingsRequest>(request.Payload);
+            ProfileItem? profile = settingsRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, settingsRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
+            if (profile == null || settingsRequest?.Settings == null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile settings request was invalid." };
+            }
+
+            profile.WallpaperConfiguration.WallpaperMode = settingsRequest.Settings.ApplyWallpaper ? Wallpaper.Mode.Apply : Wallpaper.Mode.DoNothing;
+            profile.ApplyProfileCount = settingsRequest.Settings.ApplyProfileCount;
+            profile.ApplyProfileDelay = settingsRequest.Settings.ApplyProfileDelay;
+            profile.ForceExplorerRestart = settingsRequest.Settings.ForceExplorerRestart;
+            return ProfileRepository.SaveProfiles()
+                ? new ControlResponse { IsSuccessful = true, Message = "Display profile settings updated." }
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile settings could not be saved." };
+        }
+
         if (request.MessageType != ControlMessageType.ApplyProfile)
         {
             return new ControlResponse
@@ -515,6 +538,41 @@ public sealed class ProfileCommandHandler
         using MemoryStream stream = new MemoryStream();
         profile.ProfileBitmap.Save(stream, ImageFormat.Png);
         return Convert.ToBase64String(stream.ToArray());
+    }
+
+    private static DisplayProfileView CreateDisplayProfileView(ProfileItem profile, bool isSaved = true)
+    {
+        bool isValid = profile.HasUsableSavedConfiguration(out string diagnosticMessage);
+        string[] undetectedDisplays = isValid ? profile.GetUndetectedDisplayDescriptions().ToArray() : Array.Empty<string>();
+        GDI_DISPLAY_SETTING? primaryDisplay = profile.WindowsDisplayConfig.GdiDisplaySettings
+            .Select(display => display.Value)
+            .FirstOrDefault(display => display.IsPrimary);
+        if (undetectedDisplays.Length > 0)
+        {
+            diagnosticMessage = string.Join(Environment.NewLine, undetectedDisplays);
+        }
+
+        return new DisplayProfileView
+        {
+            Id = profile.UUID,
+            Name = profile.Name,
+            ThumbnailPngBase64 = GetThumbnailPngBase64(profile),
+            ConnectedDisplayCount = profile.WindowsDisplayConfig.DisplayIdentifiers.Count,
+            PrimaryDisplayWidth = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsWidth,
+            PrimaryDisplayHeight = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsHeight,
+            IsSaved = isSaved,
+            IsActive = isSaved && ProfileRepository.IsActiveProfile(profile),
+            IsValid = isValid,
+            DiagnosticMessage = diagnosticMessage ?? string.Empty,
+            Settings = new DisplayProfileSettings
+            {
+                ApplyWallpaper = profile.WallpaperConfiguration.WallpaperMode == Wallpaper.Mode.Apply,
+                BackgroundDescription = profile.WallpaperConfiguration.WallpaperSettings?.BackgroundType.ToString() ?? "Saved Pictures (unique per display)",
+                ApplyProfileCount = profile.ApplyProfileCount,
+                ApplyProfileDelay = profile.ApplyProfileDelay,
+                ForceExplorerRestart = profile.ForceExplorerRestart
+            }
+        };
     }
 
     private static string? GetShortcutIconPngBase64(ShortcutDefinition shortcut)
