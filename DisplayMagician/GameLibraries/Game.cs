@@ -24,8 +24,10 @@ namespace DisplayMagician.GameLibraries
             Directory = "";
             Executable = "";
             ProcessName = "";
+#if !USER_AGENT
             GameBitmap = new ShortcutBitmap() { };
             AvailableGameBitmaps = new List<ShortcutBitmap>() { };
+#endif
         }
 
         #region Properties
@@ -60,9 +62,11 @@ namespace DisplayMagician.GameLibraries
         [JsonIgnore]
         public virtual List<Process> Processes { get; set; }
 
+#if !USER_AGENT
         public ShortcutBitmap GameBitmap { get; set; }
 
         public List<ShortcutBitmap> AvailableGameBitmaps { get; set; }
+#endif
 
         #endregion
 

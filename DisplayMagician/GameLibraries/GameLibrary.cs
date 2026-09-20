@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using DisplayMagician;
+#if !USER_AGENT
 using DisplayMagician.AppLibraries;
+#endif
 
 namespace DisplayMagician.GameLibraries
 {
@@ -37,7 +39,9 @@ namespace DisplayMagician.GameLibraries
         public static List<Game> AllInstalledGamesInAllLibraries { get; set; }
         public static bool GamesLoaded { get; set; } = false;
 
+#if !USER_AGENT
         public static bool GamesImagesLoaded { get; set; } = false;
+#endif
 
         public virtual List<Game> AllInstalledGames { get; set; }
 
@@ -289,7 +293,9 @@ namespace DisplayMagician.GameLibraries
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(epicLibrary.AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(gogLibrary.AllInstalledGames);
 
+#if !USER_AGENT
             Program.AppGameList = GameLibrary.AllInstalledGamesInAllLibraries;
+#endif
 
             // Stop creating Game Bitmaps from the Games so the rest of the program is faster later
             //RefreshGameBitmaps();
@@ -299,6 +305,7 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
+#if !USER_AGENT
         public static void RefreshGameBitmaps()
         {
             // Create Game Bitmaps from the Games so the rest of the program is faster later
@@ -370,6 +377,7 @@ namespace DisplayMagician.GameLibraries
             }
             GamesImagesLoaded = true;
         }
+#endif
 
         public static Game GetAnyGameById(string gameId)
         {

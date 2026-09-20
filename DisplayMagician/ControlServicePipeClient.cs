@@ -98,6 +98,12 @@ internal sealed class ControlServicePipeClient
         throw new InvalidOperationException("The User Agent registration retry loop completed unexpectedly.");
     }
 
+    public async Task<GameListResult> ListGamesAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListGames }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.GameList != null ? response.GameList : throw new InvalidOperationException(response.Message);
+    }
+
     public Task<ControlResponse> StopAgentIfIdleAsync(CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);

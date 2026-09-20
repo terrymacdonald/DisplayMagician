@@ -33,29 +33,37 @@ public sealed class ShortcutStore
             return false;
         }
 
+        shortcutDefinition = GetShortcutDefinitions().Find(definition => string.Equals(definition.Id, shortcutId, StringComparison.OrdinalIgnoreCase));
+        return shortcutDefinition != null;
+    }
+
+    public List<ShortcutDefinition> GetShortcutDefinitions()
+    {
+        List<ShortcutDefinition> definitions = new List<ShortcutDefinition>();
+
         RepositorySnapshot snapshot = GetSnapshot();
         if (string.IsNullOrWhiteSpace(snapshot.Json))
         {
-            return false;
+            return definitions;
         }
 
         using JsonDocument document = JsonDocument.Parse(snapshot.Json);
         if (!document.RootElement.TryGetProperty("Shortcuts", out JsonElement shortcuts) || shortcuts.ValueKind != JsonValueKind.Array)
         {
-            return false;
+            return definitions;
         }
 
         foreach (JsonElement shortcut in shortcuts.EnumerateArray())
         {
             string id = GetString(shortcut, "UUID");
-            if (!string.Equals(id, shortcutId, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(id))
             {
                 continue;
             }
 
             int category = GetInt32(shortcut, "Category");
             int launchMode = GetInt32(shortcut, "GameLaunchMode");
-            shortcutDefinition = new ShortcutDefinition
+            definitions.Add(new ShortcutDefinition
             {
                 Id = id,
                 Name = GetString(shortcut, "Name"),
@@ -88,11 +96,10 @@ public sealed class ShortcutStore
                 StartPrograms = GetStartPrograms(shortcut),
                 AfterPrograms = GetAfterPrograms(shortcut),
                 StopPrograms = GetStopPrograms(shortcut)
-            };
-            return true;
+            });
         }
 
-        return false;
+        return definitions;
     }
 
     public RepositoryCommitResult Commit(RepositoryCommitRequest request)

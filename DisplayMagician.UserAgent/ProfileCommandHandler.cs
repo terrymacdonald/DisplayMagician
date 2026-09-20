@@ -9,6 +9,7 @@ using System.Drawing.Imaging;
 using System.Security.Cryptography;
 using DisplayMagician.Contracts;
 using DisplayMagicianShared;
+using DisplayMagician.GameLibraries;
 using SharedApplyProfileResult = DisplayMagicianShared.ApplyProfileResult;
 
 namespace DisplayMagician.UserAgent;
@@ -18,6 +19,7 @@ public sealed class ProfileCommandHandler
     private readonly AgentRegistration _registration;
     private readonly string _userDataPath;
     private readonly ShortcutStore _shortcutStore;
+    private readonly AutomaticGameDetectionRegistry _automaticGameDetectionRegistry;
     private bool _stopRequested;
 
     public bool StopRequested => _stopRequested;
@@ -29,6 +31,8 @@ public sealed class ProfileCommandHandler
         ProfileRepository.ConfigureStoragePath(_userDataPath);
         AudioProfileRepository.ConfigureStoragePath(_userDataPath);
         _shortcutStore = new ShortcutStore(_userDataPath);
+        _automaticGameDetectionRegistry = new AutomaticGameDetectionRegistry();
+        _automaticGameDetectionRegistry.ReplaceAutomaticDetections(_shortcutStore.GetShortcutDefinitions());
     }
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
@@ -59,6 +63,19 @@ public sealed class ProfileCommandHandler
                     Views = ProfileRepository.AllProfiles.Select(profile => new DisplayProfileView { Id = profile.UUID, Name = profile.Name, ThumbnailPngBase64 = GetThumbnailPngBase64(profile) }).ToArray()
                 }
             };
+        }
+
+        if (request.MessageType == ControlMessageType.ListGames)
+        {
+            if (!GameLibrary.GamesLoaded)
+            {
+                await Task.Run(GameLibrary.LoadGamesInBackground, cancellationToken).ConfigureAwait(false);
+            }
+
+            GameView[] games = GameLibrary.AllInstalledGamesInAllLibraries
+                .Select(game => new GameView { Id = game.Id, Name = game.Name, Library = (int)game.GameLibraryType, ExecutablePath = game.ExePath })
+                .ToArray();
+            return new ControlResponse { IsSuccessful = true, Message = "Games returned.", GameList = new GameListResult { Games = games } };
         }
 
         if (request.MessageType == ControlMessageType.GetRepositorySnapshot)
@@ -95,6 +112,10 @@ public sealed class ProfileCommandHandler
                 try
                 {
                     RepositoryCommitResult shortcutCommit = _shortcutStore.Commit(commitRequest);
+                    if (!shortcutCommit.WasConflict)
+                    {
+                        _automaticGameDetectionRegistry.ReplaceAutomaticDetections(_shortcutStore.GetShortcutDefinitions());
+                    }
                     return new ControlResponse { IsSuccessful = true, Message = shortcutCommit.WasConflict ? "Repository commit conflicted with a newer Agent revision." : "Repository committed.", RepositoryCommit = shortcutCommit };
                 }
                 catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is ArgumentException)

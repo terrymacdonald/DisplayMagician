@@ -42,7 +42,8 @@ public enum ControlMessageType
     CommitRepositorySnapshot = 26,
     StartShortcut = 27,
     GetOperationStatus = 28,
-    ListOperationStatuses = 29
+    ListOperationStatuses = 29,
+    ListGames = 30
 }
 
 public enum ControlErrorCode
@@ -112,6 +113,19 @@ public sealed class ProfileSummary
     public string Id { get; set; } = string.Empty;
 
     public string Name { get; set; } = string.Empty;
+}
+
+public sealed class GameView
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int Library { get; set; }
+    public string ExecutablePath { get; set; } = string.Empty;
+}
+
+public sealed class GameListResult
+{
+    public GameView[] Games { get; set; } = Array.Empty<GameView>();
 }
 
 public sealed class ProfileListResult
@@ -351,6 +365,8 @@ public sealed class ControlResponse
     public OperationStatus? OperationStatus { get; set; }
 
     public OperationStatus[] OperationStatuses { get; set; } = Array.Empty<OperationStatus>();
+
+    public GameListResult? GameList { get; set; }
 }
 
 public sealed class ControlServiceStatus

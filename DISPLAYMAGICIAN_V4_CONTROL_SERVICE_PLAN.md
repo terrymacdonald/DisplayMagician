@@ -11,7 +11,7 @@ Clients (WinForms now, WinUI 3/Stream Deck/mobile later)
                          |
                   active User Agent
                          |
-                 DM Engine and hardware
+             User Agent and Windows runtime
 ```
 
 The goal is to make future integrations possible without allowing arbitrary clients to manipulate displays, launch programs, or bypass DM's shortcut lifecycle.
@@ -66,8 +66,7 @@ v4.0.0 does **not** need to deliver:
 
 ```text
 Control Service: decides, authorizes, coordinates, persists, audits.
-User Agent: executes user-session desktop work and reports progress.
-DM Engine: reusable profile and shortcut orchestration.
+User Agent: executes all user-session desktop work and reports progress.
 UI/API clients: request actions and render results.
 ```
 
@@ -118,7 +117,7 @@ ControlService                               --> SessionLauncher launch request 
 SessionLauncher                              --> UserAgent process start only
 ```
 
-Do not allow Engine code to depend on WinForms, the service host, REST, or static `Program` UI state.
+Do not allow User Agent runtime code to depend on WinForms, the service host, REST, or static `Program` UI state.
 
 ## Build Versioning
 
@@ -419,7 +418,7 @@ Refactor WinForms in this order:
 7. Audio-profile operations.
 8. Settings, migration, and diagnostics UI.
 
-WinForms remains responsible for validation presentation, modal dialogs, and marshaling updates to the UI thread. Engine/Agent code returns structured results and never shows `MessageBox` dialogs.
+WinForms remains responsible for validation presentation, modal dialogs, and marshaling updates to the UI thread. User Agent code returns structured results and never shows `MessageBox` dialogs.
 
 ### WinForms repository cache transition
 
@@ -444,6 +443,8 @@ For shortcut extraction, use the following names consistently:
 - `ShortcutEditor`: the existing WinForms editing workflow.
 
 `DisplayMagician.ConfigurationDefinitions` owns portable persisted definitions, schema versions, JSON conversion, and pure configuration validation. It does not access files, hardware, processes, named pipes, or WinForms. `DisplayMagician.Contracts` remains limited to transport messages.
+
+The User Agent owns game-library discovery, game launch, `Game.IsRunning`, and process-tree monitoring directly. Do not create a separate GameLibraries project and do not put this Windows runtime behaviour in ConfigurationDefinitions. WinForms receives game-library/game views through Agent contracts as the direct legacy implementation is retired. `DisplayMagicianShared` is migration scaffolding for existing vendor/native code, not a new permanent application layer.
 
 ### Automatically detected game starts
 
