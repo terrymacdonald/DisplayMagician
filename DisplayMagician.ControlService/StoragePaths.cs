@@ -24,11 +24,14 @@ public sealed class StoragePaths
 
     public string MachineBackupsPath => Path.Combine(MachinePath, "Backups");
 
+    public string MachineDiagnosticsPath => Path.Combine(MachinePath, "Diagnostics");
+
     public void EnsureMachineDirectories()
     {
         Directory.CreateDirectory(MachinePath);
         Directory.CreateDirectory(MachineLogsPath);
         Directory.CreateDirectory(MachineBackupsPath);
+        Directory.CreateDirectory(MachineDiagnosticsPath);
         Directory.CreateDirectory(UsersPath);
     }
 

@@ -92,6 +92,12 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful ? response.OperationStatuses : throw new InvalidOperationException(response.Message);
     }
 
+    public async Task<ControlServiceStatus> GetServiceStatusAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetServiceStatus }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.ServiceStatus != null ? response.ServiceStatus : throw new InvalidOperationException(response.Message);
+    }
+
     public async Task<ControlResponse> ApplyProfileWhenAgentAvailableAsync(string profileId, CancellationToken cancellationToken)
     {
         const int maximumAttempts = 40;
@@ -213,6 +219,20 @@ internal sealed class ControlServicePipeClient
     public Task<ControlResponse> StopAgentIfIdleAsync(CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);
+    }
+
+    public Task<ControlResponse> CreateDiagnosticBundleAsync(CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CreateDiagnosticBundle }, cancellationToken);
+    }
+
+    public Task<ControlResponse> ForceReleaseDisplayControlAsync(string confirmation, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.ForceReleaseDisplayControl,
+            Payload = JsonSerializer.Serialize(new ForceReleaseDisplayControlRequest { Confirmation = confirmation ?? string.Empty })
+        }, cancellationToken);
     }
 
     private async Task SendRequiredAsync(ControlEnvelope request, CancellationToken cancellationToken)

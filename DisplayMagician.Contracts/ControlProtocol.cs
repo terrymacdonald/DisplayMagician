@@ -59,7 +59,9 @@ public enum ControlMessageType
     InitializeAnonymousMetrics = 42,
     ReportAnonymousMetricsUsage = 43,
     SubscribeClientEvents = 44,
-    ClientEvent = 45
+    ClientEvent = 45,
+    CreateDiagnosticBundle = 46,
+    ForceReleaseDisplayControl = 47
 }
 
 public enum ControlErrorCode
@@ -75,7 +77,8 @@ public enum ControlErrorCode
     RecoveryRequired = 8,
     SessionLocked = 9,
     Unauthorized = 10,
-    AgentUnavailable = 11
+    AgentUnavailable = 11,
+    AdministratorRequired = 12
 }
 
 public enum DisplayOperationType
@@ -464,6 +467,26 @@ public sealed class LeaseDecision
     public DisplayControlLease? Lease { get; set; }
 }
 
+public sealed class ForceReleaseDisplayControlRequest
+{
+    public string Confirmation { get; set; } = string.Empty;
+}
+
+public sealed class RecoveryAdministrationRecord
+{
+    public DateTime OccurredUtc { get; set; }
+
+    public string Action { get; set; } = string.Empty;
+
+    public string Outcome { get; set; } = string.Empty;
+
+    public string AdministratorSid { get; set; } = string.Empty;
+
+    public int AdministratorSessionId { get; set; }
+
+    public DisplayControlLease? ReleasedLease { get; set; }
+}
+
 public sealed class ControlResponse
 {
     public bool IsSuccessful { get; set; }
@@ -503,6 +526,8 @@ public sealed class ControlResponse
     public ClientSyncResult? ClientSync { get; set; }
 
     public AnonymousMetricsSettings? AnonymousMetricsSettings { get; set; }
+
+    public string? DiagnosticBundlePath { get; set; }
 }
 
 public sealed class ControlServiceStatus
@@ -510,6 +535,8 @@ public sealed class ControlServiceStatus
     public AgentStatus[] Agents { get; set; } = Array.Empty<AgentStatus>();
 
     public DisplayControlLease? DisplayControlLease { get; set; }
+
+    public RecoveryAdministrationRecord? LatestRecoveryAdministration { get; set; }
 }
 
 public sealed class AgentStatus

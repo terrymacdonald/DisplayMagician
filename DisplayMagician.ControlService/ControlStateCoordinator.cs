@@ -136,6 +136,22 @@ public sealed class ControlStateCoordinator
         }
     }
 
+    public DisplayControlLease? ForceReleaseDisplayControl()
+    {
+        lock (_syncRoot)
+        {
+            if (_displayControlLease == null)
+            {
+                return null;
+            }
+
+            DisplayControlLease releasedLease = CopyLease(_displayControlLease);
+            _displayControlLease = null;
+            ClearPersistedLease();
+            return releasedLease;
+        }
+    }
+
     public AgentRegistration? GetAgentRegistration(string userSid, int sessionId)
     {
         lock (_syncRoot)

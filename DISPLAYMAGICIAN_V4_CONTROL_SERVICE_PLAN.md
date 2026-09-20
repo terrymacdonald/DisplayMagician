@@ -524,7 +524,7 @@ The active User Agent/UI displays user-facing message/update notifications. The 
 
 Use NLog with existing `ClassName/MethodName: message` conventions and include operation ID, SID, session, profile/shortcut UUID, and exception context when available.
 
-Suggested log locations:
+Log locations:
 
 ```text
 C:\ProgramData\DisplayMagician\Machine\Logs\ControlService\
@@ -532,7 +532,7 @@ C:\ProgramData\DisplayMagician\Machine\Logs\UserAgents\
 C:\ProgramData\DisplayMagician\Machine\Audit\
 ```
 
-Write major service lifecycle/fatal errors to Windows Event Viewer under `DisplayMagician.ControlService`. Do not flood Event Viewer with normal progress messages.
+Write service lifecycle and errors to rolling plain-text NLog files under the machine log path. Do not use Windows Event Viewer for DisplayMagician logging.
 
 Add a WinForms Diagnostics page:
 
@@ -647,8 +647,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Move per-user message gathering/storage/read state to UserAgent and expose it through contracts.
 - [x] Move WinForms startup-message polling, unread indicators, and release-note lookup to Agent message views; stop direct desktop message-file access.
 - [x] Remove the legacy desktop messaging implementation after client-sync scheduling has moved to Control Service.
-- [ ] Forward update/message events to Agent/UI.
-- [ ] Add audit records, durable plain-text service error logs, diagnostic bundle support, and the administrator-only Service Recovery page.
+- [x] Forward update/message events to Agent/UI.
+- [x] Add audit records, durable plain-text service error logs, diagnostic bundle support, and the administrator-only Service Recovery page.
 - [x] Remove the `--agent-hosted-operation` desktop-executable bridge; normal Agent profile work remains in `UserProfileOperationService`.
 - [ ] Remove WinForms `Program` client-sync/metrics timers, message polling, message-file access, and the duplicated `Messaging` services after their Service/Agent replacements are live.
 - [ ] Remove desktop AppData persistence fallbacks for Agent-owned profiles, audio profiles, shortcuts, and messages; retain only interactive in-memory caches backed by Agent snapshots and commits.

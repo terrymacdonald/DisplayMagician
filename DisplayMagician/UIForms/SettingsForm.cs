@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Principal;
 using System.Windows.Forms;
 using Vortice.DirectInput;
 
@@ -58,6 +59,7 @@ namespace DisplayMagician.UIForms
 
         private void SettingsForm_Load(object sender, EventArgs e)
         {
+            btn_service_recovery.Visible = IsElevatedAdministrator();
             // start displaymagician when computer starts
             if (Program.AppProgramSettings.StartOnBootUp == true)
             {
@@ -749,6 +751,18 @@ namespace DisplayMagician.UIForms
             }
 
 
+        }
+
+        private void btn_service_recovery_Click(object sender, EventArgs e)
+        {
+            using ServiceRecoveryForm recoveryForm = new ServiceRecoveryForm();
+            recoveryForm.ShowDialog(this);
+        }
+
+        private static bool IsElevatedAdministrator()
+        {
+            using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
         }
 
         private void btn_context_menu_remove_Click(object sender, EventArgs e)

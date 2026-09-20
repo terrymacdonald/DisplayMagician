@@ -71,6 +71,7 @@ namespace DisplayMagician.UIForms
             label2 = new System.Windows.Forms.Label();
             cb_upgrade_prerelease = new System.Windows.Forms.CheckBox();
             gb_support = new System.Windows.Forms.GroupBox();
+            btn_service_recovery = new System.Windows.Forms.Button();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
@@ -655,6 +656,7 @@ namespace DisplayMagician.UIForms
             // gb_support
             // 
             gb_support.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_support.Controls.Add(btn_service_recovery);
             gb_support.Controls.Add(btn_create_support_package);
             gb_support.Controls.Add(label3);
             gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
@@ -663,7 +665,7 @@ namespace DisplayMagician.UIForms
             gb_support.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             gb_support.Name = "gb_support";
             gb_support.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            gb_support.Size = new System.Drawing.Size(803, 121);
+            gb_support.Size = new System.Drawing.Size(803, 160);
             gb_support.TabIndex = 0;
             gb_support.TabStop = false;
             gb_support.Text = "Support Settings";
@@ -684,11 +686,28 @@ namespace DisplayMagician.UIForms
             btn_create_support_package.Text = "Create a Support Zip File";
             btn_create_support_package.UseVisualStyleBackColor = true;
             btn_create_support_package.Click += btn_create_support_package_Click;
+            //
+            // btn_service_recovery
+            //
+            btn_service_recovery.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_service_recovery.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_service_recovery.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_service_recovery.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_service_recovery.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_service_recovery.ForeColor = System.Drawing.Color.White;
+            btn_service_recovery.Location = new System.Drawing.Point(292, 69);
+            btn_service_recovery.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_service_recovery.Name = "btn_service_recovery";
+            btn_service_recovery.Size = new System.Drawing.Size(214, 38);
+            btn_service_recovery.TabIndex = 23;
+            btn_service_recovery.Text = "Service Recovery";
+            btn_service_recovery.UseVisualStyleBackColor = true;
+            btn_service_recovery.Click += btn_service_recovery_Click;
             // 
             // label3
             // 
             label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label3.Location = new System.Drawing.Point(180, 69);
+            label3.Location = new System.Drawing.Point(180, 113);
             label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(441, 37);
@@ -751,6 +770,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.CheckBox cb_upgrade_prerelease;
         private System.Windows.Forms.GroupBox gb_support;
+        private System.Windows.Forms.Button btn_service_recovery;
         private System.Windows.Forms.Button btn_create_support_package;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox cb_show_splashscreen;
