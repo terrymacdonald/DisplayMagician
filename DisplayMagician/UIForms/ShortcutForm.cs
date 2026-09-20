@@ -53,7 +53,7 @@ namespace DisplayMagician.UIForms
         private int _overrideAudioMicrophoneVolumeLevel = 50;
         private GameView _selectedGame = null;
         private List<GameView> _availableGames = new List<GameView>();
-        private App _selectedApp = null;
+        private AppView _selectedApp = null;
         private string _selectedAppId = "";
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
@@ -469,7 +469,7 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _selectedImage,
                         _availableImages,
-                        _appToUse.AppToUse.AppLibraryType,
+                        (SupportedAppLibraryType)_appToUse.AppToUse.Library,
                         _audioProfileToUse,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
@@ -835,7 +835,7 @@ namespace DisplayMagician.UIForms
                 {
                     txt_shortcut_save_name.Text = $"{_selectedGame.Name} ({_profileToUse.Name})";
                 }
-                else if (_shortcutCategory == ShortcutCategory.Application && _selectedApp is App)
+                else if (_shortcutCategory == ShortcutCategory.Application && _selectedApp is AppView)
                 {
                     txt_shortcut_save_name.Text = $"{_selectedApp.Name} ({_profileToUse.Name})";
                 }
@@ -1467,7 +1467,7 @@ namespace DisplayMagician.UIForms
                     // Set the executable items if we have them
                     _selectedAppId = _shortcutToEdit.ApplicationId;
                     // Now lets try and find the games
-                    _selectedApp = LocalLibrary.GetAnyAppById(_selectedAppId);
+                    _selectedApp = null;
 
 
                     txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
@@ -2448,7 +2448,7 @@ namespace DisplayMagician.UIForms
                     _shortcutCategory = ShortcutCategory.Application;
                     _selectedApp = exeForm.AppToUse;
                     _selectedAppId = exeForm.AppToUse.Id;
-                    txt_executable.Text = _selectedApp.ExePath;
+                    txt_executable.Text = _selectedApp.ExecutablePath;
                     if (!String.IsNullOrEmpty(_selectedApp.Arguments))
                     {
                         txt_args_executable.Text = _selectedApp.Arguments;
@@ -2480,12 +2480,12 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void UpdateExeImagesUI(App selectedApp = null)
+        private void UpdateExeImagesUI(AppView selectedApp = null)
         {
             _availableImages = new List<ShortcutBitmap>();
-            if (selectedApp is App)
+            if (selectedApp != null && File.Exists(selectedApp.IconPath))
             {
-                _availableImages.AddRange(selectedApp.AvailableAppBitmaps);
+                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(selectedApp.IconPath));
             }
             else
             {

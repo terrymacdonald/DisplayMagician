@@ -10,6 +10,7 @@ using System.Drawing.Imaging;
 using System.Security.Cryptography;
 using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
+using DisplayMagician.AppLibraries;
 using DisplayMagician.Messaging;
 using DisplayMagician.UserAgent.Messaging;
 using DisplayMagicianShared;
@@ -116,6 +117,29 @@ public sealed class ProfileCommandHandler
                 })
                 .ToArray();
             return new ControlResponse { IsSuccessful = true, Message = "Games returned.", GameList = new GameListResult { Games = games } };
+        }
+
+        if (request.MessageType == ControlMessageType.ListApps)
+        {
+            if (!AppLibrary.AppsLoaded)
+            {
+                await Task.Run(AppLibrary.LoadAppsInBackground, cancellationToken).ConfigureAwait(false);
+            }
+
+            AppView[] apps = AppLibrary.AllInstalledAppsInAllLibraries
+                .Select(app => new AppView
+                {
+                    Id = app.Id,
+                    Name = app.Name,
+                    Library = (int)app.AppLibraryType,
+                    ExecutablePath = app.ExePath,
+                    ExecutableArgumentsRequired = app.ExecutableArgumentsRequired,
+                    Arguments = app.Arguments,
+                    IconPath = app.IconPath,
+                    Directory = app.Directory
+                })
+                .ToArray();
+            return new ControlResponse { IsSuccessful = true, Message = "Applications returned.", AppList = new AppListResult { Apps = apps } };
         }
 
         if (request.MessageType == ControlMessageType.ListMessages)

@@ -81,7 +81,7 @@ namespace DisplayMagician
 
     public struct AppShortcutData
     {
-        public App AppToUse;
+        public AppView AppToUse;
         public string DifferentExecutableToMonitor;
         public bool RunAsAdministrator;
         public int ExecutableTimeout;
@@ -1269,10 +1269,10 @@ namespace DisplayMagician
             _category = ShortcutCategory.Application;
             _applicationId = app.AppToUse.Id;
             _applicationName = app.AppToUse.Name;
-            _applicationLibrary = app.AppToUse.AppLibraryType;
-            _application = app.AppToUse;
+            _applicationLibrary = (SupportedAppLibraryType)app.AppToUse.Library;
+            _application = null;
             _differentExecutableToMonitor = app.DifferentExecutableToMonitor;
-            _executableNameAndPath = app.AppToUse.ExePath;
+            _executableNameAndPath = app.AppToUse.ExecutablePath;
             _runExeAsAdministrator = app.RunAsAdministrator;
             _startTimeout = app.ExecutableTimeout;
             _executableArguments = app.AppToUse.Arguments;

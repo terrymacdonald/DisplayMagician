@@ -1,4 +1,4 @@
-using DisplayMagician.AppLibraries;
+using DisplayMagician.Contracts;
 using DisplayMagician.GameLibraries;
 //using DisplayMagician.Resources;
 using Manina.Windows.Forms;
@@ -10,6 +10,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -24,8 +25,9 @@ namespace DisplayMagician.UIForms
     public partial class ChooseExecutableForm : DisplayMagicianForm
     {
         private AppAdaptor _appAdaptor = new AppAdaptor();
-        private App _selectedApp = null;
-        private App _appToUse = null;
+        private readonly List<AppView> _installedApps = new List<AppView>();
+        private AppView _selectedApp = null;
+        private AppView _appToUse = null;
         private string _exeToUse = null;
         private string _previousExe = null;
         private string _previousAppId = null;
@@ -44,7 +46,7 @@ namespace DisplayMagician.UIForms
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public App AppToUse
+        public AppView AppToUse
         {
             get
             {
@@ -52,7 +54,7 @@ namespace DisplayMagician.UIForms
             }
             set
             {
-                if (value is App)
+                if (value is AppView)
                 {
                     _appToUse = value;
                 }                    
@@ -153,13 +155,25 @@ namespace DisplayMagician.UIForms
             return textToReturn;
         }
 
-        private void ChooseExecutableForm_Load(object sender, EventArgs e)
+        private async void ChooseExecutableForm_Load(object sender, EventArgs e)
         {
+            try
+            {
+                ControlServicePipeClient client = new ControlServicePipeClient();
+                AppListResult result = await client.ListAppsAsync(CancellationToken.None);
+                _installedApps.AddRange(result.Apps);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "ChooseExecutableForm/ChooseExecutableForm_Load: Failed to retrieve applications from the User Agent.");
+                MessageBox.Show(this, "DisplayMagician could not retrieve installed applications. You can still choose an executable file.", "Applications Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+
             if (!String.IsNullOrWhiteSpace(_previousExe))
             {
                 // First lookup to see if this path is an app or just an exe
                 // If it is an app then select it
-                foreach (App installedApp in AppLibrary.AllInstalledAppsInAllLibraries)
+                foreach (AppView installedApp in _installedApps)
                 {
                     if (installedApp.Id.Equals(_previousAppId))
                     {
@@ -169,7 +183,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Set up the _selectedApp if we're passed something
-            if (_chooseExecutableFormMode == ChooseExecutableFormMode.AppMode && _appToUse is App)
+            if (_chooseExecutableFormMode == ChooseExecutableFormMode.AppMode && _appToUse is AppView)
             {
                 _selectedApp = _appToUse;
             }
@@ -192,7 +206,7 @@ namespace DisplayMagician.UIForms
         private void RefreshExecutableFormUI()
         {
 
-            if (AppLibrary.AllInstalledAppsInAllLibraries.Count == 0)
+            if (_installedApps.Count == 0)
                 return;
 
             // Temporarily stop updating the saved_profiles listview
@@ -204,7 +218,7 @@ namespace DisplayMagician.UIForms
             ilv_installed_apps.Items.Clear();
 
 
-            foreach (App installedApp in AppLibrary.AllInstalledAppsInAllLibraries.OrderBy(s => s.Name))
+            foreach (AppView installedApp in _installedApps.OrderBy(app => app.Name))
             {
                 logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: Adding app {installedApp.Name} into the list of applications shown to the user ");
 
@@ -216,7 +230,7 @@ namespace DisplayMagician.UIForms
 
 
                 // Select it if its the selectedProfile
-                if (_selectedApp is App && _selectedApp.Equals(installedApp))
+                if (_selectedApp != null && _selectedApp.Id == installedApp.Id)
                 {
                     logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: This shortcut {installedApp.Name} is the selected one so selecting it in the UI");
                     newItem.Selected = true;
@@ -238,7 +252,7 @@ namespace DisplayMagician.UIForms
         private void ilv_installed_apps_ItemClick(object sender, ItemClickEventArgs e)
         {
             string selectedInstalledApp = e.Item.Text;
-            foreach (App app in AppLibrary.AllInstalledAppsInAllLibraries)
+            foreach (AppView app in _installedApps)
             {
                 if (app.Name == selectedInstalledApp)
                 {
@@ -259,7 +273,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_select_app_Click(object sender, EventArgs e)
         {
-            if (_selectedApp is App && ilv_installed_apps.SelectedItems.Count > 0)
+            if (_selectedApp != null && ilv_installed_apps.SelectedItems.Count > 0)
             {
                 _chooseExecutableFormMode = ChooseExecutableFormMode.AppMode;
                 _appToUse = _selectedApp;

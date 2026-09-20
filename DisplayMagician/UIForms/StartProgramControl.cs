@@ -1,6 +1,6 @@
 ﻿//using DisplayMagician.Resources;
 using DisplayMagician.Processes;
-using DisplayMagician.AppLibraries;
+using DisplayMagician.Contracts;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -184,8 +184,8 @@ namespace DisplayMagician.UIForms
                 try
                 {
                     if (chooseExecutableForm.Mode == ChooseExecutableFormMode.AppMode &&
-                        chooseExecutableForm.AppToUse is LocalApp localApp &&
-                        localApp.LocalAppType == InstalledAppType.UWP)
+                        chooseExecutableForm.AppToUse is AppView localApp &&
+                        localApp.Library == 2)
                     {
                         myStartProgram.ApplicationId = localApp.Id;
                         myStartProgram.ApplicationName = localApp.Name;
@@ -194,13 +194,13 @@ namespace DisplayMagician.UIForms
                         txt_start_program.ReadOnly = true;
                     }
                     else if (chooseExecutableForm.Mode == ChooseExecutableFormMode.AppMode &&
-                             chooseExecutableForm.AppToUse is App installedApp &&
-                             !String.IsNullOrWhiteSpace(installedApp.ExePath))
+                             chooseExecutableForm.AppToUse is AppView installedApp &&
+                             !String.IsNullOrWhiteSpace(installedApp.ExecutablePath))
                     {
                         myStartProgram.ApplicationId = String.Empty;
                         myStartProgram.ApplicationName = String.Empty;
-                        myStartProgram.Executable = installedApp.ExePath;
-                        txt_start_program.Text = installedApp.ExePath;
+                        myStartProgram.Executable = installedApp.ExecutablePath;
+                        txt_start_program.Text = installedApp.ExecutablePath;
                         txt_start_program.ReadOnly = false;
                     }
                     else if (chooseExecutableForm.Mode == ChooseExecutableFormMode.ExeMode && !String.IsNullOrWhiteSpace(chooseExecutableForm.ExeToUse))

@@ -46,7 +46,8 @@ public enum ControlMessageType
     ListGames = 30,
     ListMessages = 31,
     SetMessageReadState = 32,
-    SyncMessages = 33
+    SyncMessages = 33,
+    ListApps = 34
 }
 
 public enum ControlErrorCode
@@ -131,6 +132,24 @@ public sealed class GameView
 public sealed class GameListResult
 {
     public GameView[] Games { get; set; } = Array.Empty<GameView>();
+}
+
+/// <summary>A client-safe installed application representation owned by the interactive User Agent.</summary>
+public sealed class AppView
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int Library { get; set; }
+    public string ExecutablePath { get; set; } = string.Empty;
+    public bool ExecutableArgumentsRequired { get; set; }
+    public string Arguments { get; set; } = string.Empty;
+    public string IconPath { get; set; } = string.Empty;
+    public string Directory { get; set; } = string.Empty;
+}
+
+public sealed class AppListResult
+{
+    public AppView[] Apps { get; set; } = Array.Empty<AppView>();
 }
 
 /// <summary>A client-safe message representation owned by the interactive User Agent.</summary>
@@ -409,6 +428,8 @@ public sealed class ControlResponse
     public OperationStatus[] OperationStatuses { get; set; } = Array.Empty<OperationStatus>();
 
     public GameListResult? GameList { get; set; }
+
+    public AppListResult? AppList { get; set; }
 
     public MessageListResult? MessageList { get; set; }
 
