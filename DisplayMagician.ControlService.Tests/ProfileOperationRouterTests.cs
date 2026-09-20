@@ -52,6 +52,38 @@ public sealed class ProfileOperationRouterTests
     }
 
     [Fact]
+    public async Task StartShortcutAsync_ForwardsShortcutIdToRegisteredAgent()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), () => agent.SessionId);
+
+        ControlResponse response = await router.StartShortcutAsync(agent.UserSid, agent.SessionId, "shortcut-123", CancellationToken.None);
+
+        Assert.True(response.IsSuccessful);
+        Assert.True(commandClient.WasCalled);
+        Assert.Equal(ControlMessageType.StartShortcut, commandClient.Request!.MessageType);
+        StartShortcutRequest? request = System.Text.Json.JsonSerializer.Deserialize<StartShortcutRequest>(commandClient.Request.Payload);
+        Assert.NotNull(request);
+        Assert.Equal("shortcut-123", request.ShortcutId);
+    }
+
+    [Fact]
+    public async Task StartShortcutAsync_RejectsMissingShortcutIdWithoutCallingAgent()
+    {
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        ProfileOperationRouter router = new ProfileOperationRouter(new ControlStateCoordinator(), commandClient);
+
+        ControlResponse response = await router.StartShortcutAsync("S-1-5-21-100", 10, " ", CancellationToken.None);
+
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.InvalidRequest, response.ErrorCode);
+        Assert.False(commandClient.WasCalled);
+    }
+
+    [Fact]
     public async Task ManageProfileAsync_ForwardsProfileMutationToRegisteredAgent()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();

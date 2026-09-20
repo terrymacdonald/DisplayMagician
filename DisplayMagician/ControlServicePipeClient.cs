@@ -24,6 +24,41 @@ internal sealed class ControlServicePipeClient
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    public Task<ControlResponse> StartShortcutAsync(string shortcutId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(shortcutId))
+        {
+            return Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID is required." });
+        }
+
+        return SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.StartShortcut,
+            Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId })
+        }, cancellationToken);
+    }
+
+    public async Task<OperationStatus> GetOperationStatusAsync(Guid operationId, CancellationToken cancellationToken)
+    {
+        if (operationId == Guid.Empty)
+        {
+            throw new ArgumentException("An operation ID is required.", nameof(operationId));
+        }
+
+        ControlResponse response = await SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.GetOperationStatus,
+            Payload = JsonSerializer.Serialize(new OperationStatusRequest { OperationId = operationId })
+        }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.OperationStatus != null ? response.OperationStatus : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<OperationStatus[]> ListOperationStatusesAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListOperationStatuses }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful ? response.OperationStatuses : throw new InvalidOperationException(response.Message);
+    }
+
     public async Task<ControlResponse> ApplyProfileWhenAgentAvailableAsync(string profileId, CancellationToken cancellationToken)
     {
         const int maximumAttempts = 40;

@@ -22,13 +22,15 @@ public sealed class NamedPipeControlServer
     private readonly ControlStateCoordinator _coordinator;
     private readonly StoragePaths _storagePaths;
     private readonly UserDataMigrationRunner _userDataMigrationRunner;
+    private readonly OperationStatusStore _operationStatusStore;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
-    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner)
+    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner, OperationStatusStore operationStatusStore)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
         _userDataMigrationRunner = userDataMigrationRunner ?? throw new ArgumentNullException(nameof(userDataMigrationRunner));
+        _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -202,6 +204,33 @@ public sealed class NamedPipeControlServer
             return;
         }
 
+        if (request.MessageType == ControlMessageType.OperationProgress || request.MessageType == ControlMessageType.OperationCompleted)
+        {
+            OperationStatusUpdate? update = JsonSerializer.Deserialize<OperationStatusUpdate>(request.Payload);
+            if (update == null || update.OperationId == Guid.Empty)
+            {
+                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The operation status update was invalid.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            if (request.MessageType == ControlMessageType.OperationCompleted)
+            {
+                update.IsTerminal = true;
+            }
+
+            try
+            {
+                OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
+                await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Operation status recorded.", cancellationToken, operationStatus: status).ConfigureAwait(false);
+            }
+            catch (InvalidOperationException ex)
+            {
+                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.CallerIdentityMismatch, ex.Message, cancellationToken).ConfigureAwait(false);
+            }
+
+            return;
+        }
+
         if (request.MessageType == ControlMessageType.AcquireDisplayControl)
         {
             LeaseDecision decision;
@@ -287,7 +316,7 @@ public sealed class NamedPipeControlServer
         return new PipeClientIdentity(userSid, process.SessionId, checked((int)processId));
     }
 
-    private static Task SendResultAsync(NamedPipeServerStream pipe, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null)
+    private static Task SendResultAsync(NamedPipeServerStream pipe, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null)
     {
         ControlEnvelope response = new ControlEnvelope
         {
@@ -299,7 +328,8 @@ public sealed class NamedPipeControlServer
                 ErrorCode = errorCode,
                 Message = message,
                 ServiceStatus = serviceStatus,
-                LeaseDecision = leaseDecision
+                LeaseDecision = leaseDecision,
+                OperationStatus = operationStatus
             })
         };
 

@@ -15,10 +15,12 @@ namespace DisplayMagician.ControlService;
 public sealed class ControlClientPipeServer
 {
     private readonly ProfileOperationRouter _profileOperationRouter;
+    private readonly OperationStatusStore _operationStatusStore;
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
+        _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -67,11 +69,14 @@ public sealed class ControlClientPipeServer
                 {
                     ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
+                    ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
                     _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
                 };
             }
@@ -86,6 +91,28 @@ public sealed class ControlClientPipeServer
         return applyRequest == null
             ? Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile request was invalid." })
             : _profileOperationRouter.ApplyProfileAsync(identity.UserSid, identity.SessionId, applyRequest.ProfileId, cancellationToken);
+    }
+
+    private Task<ControlResponse> StartShortcutAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        StartShortcutRequest? startRequest = JsonSerializer.Deserialize<StartShortcutRequest>(request.Payload);
+        return startRequest == null
+            ? Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The shortcut request was invalid." })
+            : _profileOperationRouter.StartShortcutAsync(identity.UserSid, identity.SessionId, startRequest.ShortcutId, cancellationToken);
+    }
+
+    private ControlResponse GetOperationStatus(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        OperationStatusRequest? statusRequest = JsonSerializer.Deserialize<OperationStatusRequest>(request.Payload);
+        OperationStatus? status = statusRequest == null || statusRequest.OperationId == Guid.Empty ? null : _operationStatusStore.Get(identity.UserSid, statusRequest.OperationId);
+        return status == null
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested operation was not found." }
+            : new ControlResponse { IsSuccessful = true, Message = "Operation status returned.", OperationStatus = status };
+    }
+
+    private ControlResponse ListOperationStatuses(PipeClientIdentity identity)
+    {
+        return new ControlResponse { IsSuccessful = true, Message = "Operation statuses returned.", OperationStatuses = _operationStatusStore.GetAll(identity.UserSid) };
     }
 
     private static PipeClientIdentity GetClientIdentity(NamedPipeServerStream pipe)

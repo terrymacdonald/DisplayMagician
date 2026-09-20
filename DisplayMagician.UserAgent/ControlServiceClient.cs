@@ -175,6 +175,41 @@ public sealed class ControlServiceClient
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Sends a progress update on a short-lived authenticated Agent connection. The
+    /// long-lived heartbeat connection remains independent, so a runner can report
+    /// progress while the Agent is otherwise idle or busy.
+    /// </summary>
+    public async Task<OperationStatus> PublishOperationStatusAsync(AgentRegistration registration, OperationStatusUpdate update, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(registration);
+        ArgumentNullException.ThrowIfNull(update);
+
+        using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ServicePipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+        ControlResponse registrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.AgentRegistration,
+            Payload = JsonSerializer.Serialize(registration)
+        }, cancellationToken).ConfigureAwait(false);
+        if (!registrationResponse.IsSuccessful)
+        {
+            throw new InvalidOperationException(registrationResponse.Message);
+        }
+
+        ControlResponse statusResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = update.IsTerminal ? ControlMessageType.OperationCompleted : ControlMessageType.OperationProgress,
+            Payload = JsonSerializer.Serialize(update)
+        }, cancellationToken).ConfigureAwait(false);
+        if (!statusResponse.IsSuccessful || statusResponse.OperationStatus == null)
+        {
+            throw new InvalidOperationException(statusResponse.Message);
+        }
+
+        return statusResponse.OperationStatus;
+    }
+
     private static async Task<ControlResponse> SendAndReceiveAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)
     {
         await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);

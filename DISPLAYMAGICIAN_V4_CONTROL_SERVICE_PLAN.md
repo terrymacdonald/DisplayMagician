@@ -375,6 +375,12 @@ Cancelled
 RecoveryRequired
 ```
 
+### Multi-controller operation status
+
+The Control Service is the sole operation-status hub. The User Agent publishes authenticated progress and completion updates to it; it assigns a monotonically increasing sequence number per operation, persists active state and a bounded recent history, and fans the same status out to every authorised controller. A client must first fetch its visible operation snapshot and then subscribe from its last sequence number, so a late-connecting WinForms client, Stream Deck plugin, phone/watch app, or paired remote DM desktop app immediately shows the current phase and cannot miss an update during connection.
+
+Operation status visibility is separate from command authority. Controllers can observe an operation only when their identity is authorised for that DM user/machine; the active-console and display-control rules still determine whether any controller may start or change an operation. The first local WinForms implementation may poll the hub. REST clients use the same records through an operation-status endpoint and later an SSE/WebSocket subscription, rather than communicating directly with a User Agent.
+
 All state-changing requests return an operation ID. A successful request submission does not imply operation completion.
 
 ### Events
@@ -441,9 +447,11 @@ For shortcut extraction, use the following names consistently:
 
 ### Automatically detected game starts
 
-Game shortcuts persist a `GameLaunchMode`: `StartGame` (the existing default) or `DetectGameRunning`. The latter is for a user who starts the selected game from Steam, another launcher, a desktop shortcut, or another external source. It is not an instruction to start a second game process.
+Game shortcuts persist a `GameLaunchMode`: `StartGame` (the existing default) or `DetectGameRunning`. The latter is for a user who starts the selected game from Steam, another launcher, a desktop shortcut, or another external source. It is not an instruction to start a second game process. It does not prevent the user manually choosing **Run Shortcut**: a manual `StartShortcut` request always runs the configured game normally.
 
 `ShortcutRunner` must register every valid `DetectGameRunning` shortcut when the User Agent becomes active. It uses the same `Game.IsRunning` and process-tree/alternative-executable detection currently used after a normal game launch. When the detector sees a new process for that game, it acquires display control, applies the shortcut's pre-game work, monitors that already-running process until it exits, and finally performs normal rollback and post-game work. The runner must reject conflicting enabled automatic shortcuts for the same game/monitor target, and ignore processes already running when it registers so an Agent restart cannot incorrectly trigger a shortcut.
+
+Before manually running a `DetectGameRunning` shortcut, `ShortcutRunner` must temporarily unregister that shortcut's detector. This prevents the game process started by the manual run from creating a competing automatic run. The runner must re-register it after the run completes, is cancelled, or fails to start. Both paths enter the same runtime lifecycle immediately after the launch decision: automatic detection enters with an already-running process; manual start enters with a process to launch.
 
 The WinForms `ShortcutEditor` will expose this as **Automatically detect game running (do not start game)** once `ShortcutRunner` owns shortcut execution. Until then it must not present an option that the legacy WinForms runner cannot safely honour.
 

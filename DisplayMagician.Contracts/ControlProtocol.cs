@@ -39,7 +39,10 @@ public enum ControlMessageType
     DeleteAudioProfile = 23,
     UpdateAudioProfileFromCurrent = 24,
     GetRepositorySnapshot = 25,
-    CommitRepositorySnapshot = 26
+    CommitRepositorySnapshot = 26,
+    StartShortcut = 27,
+    GetOperationStatus = 28,
+    ListOperationStatuses = 29
 }
 
 public enum ControlErrorCode
@@ -125,6 +128,86 @@ public sealed class ApplyProfileRequest
 public sealed class ApplyProfileResult
 {
     public bool WasCancelled { get; set; }
+}
+
+/// <summary>
+/// Requests that the interactive User Agent run the shortcut identified by
+/// <see cref="ShortcutId"/>. The Agent reads the current shortcut definition
+/// from its own store rather than accepting a caller-supplied definition.
+/// </summary>
+public sealed class StartShortcutRequest
+{
+    public string ShortcutId { get; set; } = string.Empty;
+}
+
+public enum OperationPhase
+{
+    Unknown = 0,
+    Requested = 1,
+    Validating = 2,
+    ApplyingDisplayProfile = 3,
+    ApplyingAudioProfile = 4,
+    StartingPrograms = 5,
+    StartingGame = 6,
+    WaitingForGameToStart = 7,
+    WaitingForGameToClose = 8,
+    RunningAfterPrograms = 9,
+    RestoringDisplayProfile = 10,
+    RestoringAudioProfile = 11,
+    Completed = 12,
+    Cancelled = 13,
+    Failed = 14
+}
+
+/// <summary>Published by the User Agent as a shortcut or profile operation progresses.</summary>
+public sealed class OperationStatusUpdate
+{
+    public Guid OperationId { get; set; }
+
+    public DisplayOperationType OperationType { get; set; }
+
+    public OperationPhase Phase { get; set; }
+
+    public string Message { get; set; } = string.Empty;
+
+    public bool IsTerminal { get; set; }
+
+    public bool IsSuccessful { get; set; }
+
+    public ControlErrorCode ErrorCode { get; set; }
+}
+
+/// <summary>Service-owned, client-visible operation state. Sequence is per operation and always increases.</summary>
+public sealed class OperationStatus
+{
+    public Guid OperationId { get; set; }
+
+    public DisplayOperationType OperationType { get; set; }
+
+    public string OwnerUserSid { get; set; } = string.Empty;
+
+    public int OwnerSessionId { get; set; }
+
+    public long Sequence { get; set; }
+
+    public OperationPhase Phase { get; set; }
+
+    public string Message { get; set; } = string.Empty;
+
+    public DateTime StartedUtc { get; set; }
+
+    public DateTime UpdatedUtc { get; set; }
+
+    public bool IsTerminal { get; set; }
+
+    public bool IsSuccessful { get; set; }
+
+    public ControlErrorCode ErrorCode { get; set; }
+}
+
+public sealed class OperationStatusRequest
+{
+    public Guid OperationId { get; set; }
 }
 
 public enum RepositoryKind
@@ -264,6 +347,10 @@ public sealed class ControlResponse
     public RepositoryCommitResult? RepositoryCommit { get; set; }
 
     public ApplyProfileResult? ApplyProfile { get; set; }
+
+    public OperationStatus? OperationStatus { get; set; }
+
+    public OperationStatus[] OperationStatuses { get; set; } = Array.Empty<OperationStatus>();
 }
 
 public sealed class ControlServiceStatus

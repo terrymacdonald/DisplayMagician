@@ -12,17 +12,24 @@ public sealed class ProfileOperationRouter
     private readonly ControlStateCoordinator _coordinator;
     private readonly IAgentCommandClient _agentCommandClient;
     private readonly ISessionLauncherClient _sessionLauncherClient;
+    private readonly Func<int> _getActiveConsoleSessionId;
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
-        : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient())
+        : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient(), ConsoleSessionLocator.GetActiveConsoleSessionId)
     {
     }
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient)
+        : this(coordinator, agentCommandClient, sessionLauncherClient, ConsoleSessionLocator.GetActiveConsoleSessionId)
+    {
+    }
+
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> getActiveConsoleSessionId)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _agentCommandClient = agentCommandClient ?? throw new ArgumentNullException(nameof(agentCommandClient));
         _sessionLauncherClient = sessionLauncherClient ?? throw new ArgumentNullException(nameof(sessionLauncherClient));
+        _getActiveConsoleSessionId = getActiveConsoleSessionId ?? throw new ArgumentNullException(nameof(getActiveConsoleSessionId));
     }
 
     public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, CancellationToken cancellationToken)
@@ -47,7 +54,7 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID is required." };
         }
 
-        LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, ConsoleSessionLocator.GetActiveConsoleSessionId(), DateTime.UtcNow);
+        LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, _getActiveConsoleSessionId(), DateTime.UtcNow);
         if (!leaseDecision.IsGranted)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
@@ -57,6 +64,26 @@ public sealed class ProfileOperationRouter
         {
             MessageType = ControlMessageType.ApplyProfile,
             Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
+        }, true, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<ControlResponse> StartShortcutAsync(string userSid, int sessionId, string shortcutId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(shortcutId))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID is required." };
+        }
+
+        LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, _getActiveConsoleSessionId(), DateTime.UtcNow);
+        if (!leaseDecision.IsGranted)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
+        }
+
+        return await SendToAgentAsync(userSid, sessionId, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.StartShortcut,
+            Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId })
         }, true, cancellationToken).ConfigureAwait(false);
     }
 
