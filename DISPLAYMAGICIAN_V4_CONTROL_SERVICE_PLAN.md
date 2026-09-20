@@ -124,7 +124,7 @@ Requirements:
 
 - Keep the release base version in the root `version.json` (currently `4.0.0`).
 - Treat the Git commit height since that base-version update as the common build/revision number. Release builds must retain the Git history required for Nerdbank.GitVersioning to calculate it correctly; do not shallow-clone or override it with a manually supplied revision.
-- Add the existing Nerdbank.GitVersioning package/configuration to every project that produces a shipped v4 binary: WinForms, Console, Shared, Contracts, ControlService, SessionLauncher, and UserAgent.
+- Add the existing Nerdbank.GitVersioning package/configuration to every project that produces a shipped v4 binary: WinForms, Console, Contracts, ControlService, SessionLauncher, and UserAgent.
 - Ensure each project emits assembly, file, and informational versions from the generated build metadata. Respect legacy projects that intentionally provide their own assembly attributes by retaining their existing `ThisAssembly`-based mechanism rather than enabling duplicate generated attributes.
 - Replace hard-coded component registration versions (for example the User Agent's development string) with the generated assembly/file version so the Control Service records the actual installed build.
 - Pass the same generated version into service installation metadata, MSI/package versioning, diagnostic bundles, audit records, and update/metrics payloads. Where an installer format has a different version shape, transform the same source value; do not introduce another authoritative version number.
@@ -200,7 +200,7 @@ Never rename an entire legacy directory blindly. Never rename a file until its m
 - Authorize requests and route approved execution jobs to the appropriate Agent.
 - Own profile repository coordination and machine-level data.
 - Host disabled-by-default localhost REST endpoints.
-- Own audit records, diagnostic aggregation, recovery state, client sync, messages, and anonymous metrics.
+- Own audit records, diagnostic aggregation, recovery coordination, client-sync scheduling, and anonymous metrics; route User Agent-owned messages without persisting their content or read state.
 
 ### Service account
 
@@ -593,7 +593,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Create Contracts, ControlService, and UserAgent projects.
 - [x] Add protocol versioning and common result/error models.
 - [x] Implement authenticated named-pipe transport.
-- [ ] Confirm the production pipe ACL permits authenticated local users while remote callers are rejected by mandatory Windows SID/session/process verification.
+- [ ] Complete production pipe ACL and remote-rejection enforcement; verify caller SID/session/process identity for every client and Agent connection before entering Phase E.
 - [x] Implement Agent registration, heartbeat, and diagnostics status.
 - [x] Implement active-console and machine-operation lease state.
 - [x] Apply the root `version.json`/Nerdbank.GitVersioning configuration to all new v4 shipped projects and remove hard-coded Agent/Service version strings.
@@ -639,45 +639,53 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** An ordinary game shortcut applies temporary state, monitors correctly, handles cancellation, and restores state after exit.
 
-### Phase E — Existing background functionality
+### Phase E — Security, background ownership, and diagnostics
 
 - [ ] Move anonymous metrics ownership to service.
 - [ ] Move machine-level client-sync/update scheduling to service.
 - [x] Move per-user message gathering/storage/read state to UserAgent and expose it through contracts.
 - [ ] Move WinForms startup-message polling and release-note lookup to Agent message views; then remove the legacy desktop messaging implementation.
 - [ ] Forward update/message events to Agent/UI.
-- [ ] Add audit and diagnostics bundle support.
+- [ ] Add audit records, Event Viewer service errors, diagnostic bundle support, and the administrator-only Service Recovery page.
+- [ ] Remove the `--agent-hosted-operation` desktop-executable bridge, or document and test the narrow compatibility adapter; normal Agent profile work must remain in `UserProfileOperationService`.
 
-**Exit criteria:** One machine produces one metrics/sync schedule regardless of UI/Agent count.
+**Exit criteria:** Local clients and Agents are identity-verified and remote callers are rejected; one machine produces one metrics/client-sync schedule regardless of UI/Agent count; user messages remain per-user Agent data; diagnostics and recovery actions are auditable.
 
-### Phase F — Local REST foundation
+### Phase F — Deployment hardening
+
+- [ ] Package and install ControlService, SessionLauncher, and UserAgent with the WinForms and Console clients.
+- [ ] Create ProgramData directories and least-privilege ACLs for machine/service and per-SID Agent storage.
+- [ ] Configure Control Service installation, start/stop, failure recovery, upgrade, repair, and uninstall behaviour.
+- [ ] Verify fresh install and upgrade preserve migrated user data and restore service/Agent connectivity.
+- [ ] Verify all installed components report the common build version derived from root `version.json`.
+
+**Exit criteria:** A fresh install, upgrade, repair, and uninstall/reinstall deploy and recover the Control Service, SessionLauncher, UserAgent, WinForms, and Console without losing user data.
+
+### Phase G — Local REST foundation
 
 - [ ] Add disabled-by-default loopback API host.
 - [ ] Add identity/status endpoints.
-- [ ] Add pairing/provider abstractions and scoped credentials.
+- [ ] Add pairing approval, protected credential storage, expiry/revocation, provider abstractions, and scoped credentials.
 - [ ] Add profile list/apply and operation-status endpoints.
 - [ ] Add authorization, rate-limit, audit, and loopback-only tests.
 
 **Exit criteria:** Paired local test client can list/apply permitted profiles; unpaired client cannot.
 
-### Phase G — Installer, verification, release readiness
+### Phase H — Final v4.0.0 work — Steam Big Picture
 
-- [ ] Update installer and upgrade path.
-- [ ] Verify the release build gives every shipped v4 component, service registration, and installer artifact the common `version.json` build version.
-- [ ] Test fresh install, upgrade, repair, uninstall/reinstall.
+- [ ] Add synthetic Steam Big Picture `SteamGame` behaviour, including Agent-side launch and running detection.
+- [ ] Add Big Picture lifecycle and temporary-state restoration parity tests.
+
+**Exit criteria:** Big Picture behaves as a normal game shortcut and restores temporary state after it exits.
+
+### Phase I — Final verification and release readiness
+
 - [ ] Run session/hardware/manual matrix.
 - [ ] Build Diagnostics/support documentation.
 - [ ] Run build, tests, formatting, and `git diff --check`.
 - [ ] Prepare v4.0.0 release notes and migration guidance.
 
 **Exit criteria:** v4.0.0 meets all prototype acceptance criteria below.
-
-### Final v4.0.0 work — Steam Big Picture
-
-- [ ] Add synthetic Steam Big Picture `SteamGame` behaviour, including Agent-side launch and running detection.
-- [ ] Add Big Picture lifecycle and temporary-state restoration parity tests.
-
-**Exit criteria:** Big Picture behaves as a normal game shortcut and restores temporary state after it exits.
 
 ## Test Matrix
 
