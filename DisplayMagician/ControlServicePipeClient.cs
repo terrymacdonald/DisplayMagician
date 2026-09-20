@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,6 +38,23 @@ internal sealed class ControlServicePipeClient
             MessageType = ControlMessageType.StartShortcut,
             Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId })
         }, cancellationToken);
+    }
+
+    public async Task<ControlResponse> StartShortcutWhenAgentAvailableAsync(string shortcutId, CancellationToken cancellationToken)
+    {
+        const int maximumAttempts = 40;
+        for (int attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            ControlResponse response = await StartShortcutAsync(shortcutId, cancellationToken).ConfigureAwait(false);
+            if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
+            {
+                return response;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException("The User Agent registration retry loop completed unexpectedly.");
     }
 
     public async Task<OperationStatus> GetOperationStatusAsync(Guid operationId, CancellationToken cancellationToken)
@@ -102,6 +121,29 @@ internal sealed class ControlServicePipeClient
     {
         ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListGames }, cancellationToken).ConfigureAwait(false);
         return response.IsSuccessful && response.GameList != null ? response.GameList : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<MessageListResult> ListMessagesAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListMessages }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.MessageList != null ? response.MessageList : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<MessageListResult> SetMessageReadStateAsync(IEnumerable<string> messageIds, bool isRead, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(messageIds);
+        ControlResponse response = await SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.SetMessageReadState,
+            Payload = JsonSerializer.Serialize(new SetMessageReadStateRequest { MessageIds = messageIds.Where(id => !string.IsNullOrWhiteSpace(id)).ToArray(), IsRead = isRead })
+        }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.MessageList != null ? response.MessageList : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<MessageSyncResult> SyncMessagesAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.SyncMessages }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.MessageSync != null ? response.MessageSync : throw new InvalidOperationException(response.Message);
     }
 
     public Task<ControlResponse> StopAgentIfIdleAsync(CancellationToken cancellationToken)

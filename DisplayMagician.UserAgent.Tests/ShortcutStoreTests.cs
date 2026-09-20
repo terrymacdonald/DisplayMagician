@@ -115,4 +115,38 @@ public sealed class ShortcutStoreTests
             }
         }
     }
+
+    [Fact]
+    public void TryGetShortcutDefinition_ReadsApplicationShortcutIdentity()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");
+        try
+        {
+            ShortcutStore store = new ShortcutStore(root);
+            RepositorySnapshot initial = store.GetSnapshot();
+            store.Commit(new RepositoryCommitRequest
+            {
+                Repository = RepositoryKind.Shortcuts,
+                ExpectedRevision = initial.Revision,
+                Json = "{\"Shortcuts\":[{\"UUID\":\"application-shortcut\",\"Category\":3,\"ApplicationId\":\"Contoso.App_abc!App\",\"ApplicationName\":\"Contoso App\",\"ApplicationLibrary\":2,\"ExecutableArguments\":\"--fullscreen\"}]}"
+            });
+
+            bool wasFound = store.TryGetShortcutDefinition("application-shortcut", out ShortcutDefinition? shortcut);
+
+            Assert.True(wasFound);
+            Assert.NotNull(shortcut);
+            Assert.Equal(ShortcutDefinitionCategory.Application, shortcut!.Category);
+            Assert.Equal("Contoso.App_abc!App", shortcut.ApplicationId);
+            Assert.Equal("Contoso App", shortcut.ApplicationName);
+            Assert.Equal(2, shortcut.ApplicationLibrary);
+            Assert.Equal("--fullscreen", shortcut.ExecutableArguments);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+        }
+    }
 }

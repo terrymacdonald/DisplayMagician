@@ -13,6 +13,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -571,7 +572,12 @@ namespace DisplayMagician.UIForms
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                result = await Program.RunShortcutTaskAsync(_selectedShortcut);
+                Program.ERRORLEVEL exitCode = await Task.Run(() => Program.RunShortcut(_selectedShortcut.UUID));
+                result = exitCode == Program.ERRORLEVEL.OK
+                    ? RunShortcutResult.Successful
+                    : exitCode == Program.ERRORLEVEL.CANCELED_BY_USER
+                        ? RunShortcutResult.Cancelled
+                        : RunShortcutResult.Error;
             }
             catch (OperationCanceledException)
             {

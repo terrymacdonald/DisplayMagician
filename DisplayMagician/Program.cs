@@ -1148,13 +1148,19 @@ namespace DisplayMagician {
                 return ERRORLEVEL.ERROR_PROFILE_CHANGE_OCCURRING;
             }
 
+            shortcutUUID = shortcutUUID.Trim('"');
+            if (TryRunShortcutThroughUserAgent(shortcutUUID, out ERRORLEVEL agentResult))
+            {
+                return agentResult;
+            }
+
+            logger.Warn("Program/RunShortcut: The Control Service or User Agent is unavailable, so the legacy shortcut runner is being used temporarily for shortcut {0}.", shortcutUUID);
+
 
             // Match the ShortcutName to the actual shortcut listed in the shortcut library
             // And error if we can't find it.
             if (ShortcutRepository.ContainsShortcut(shortcutUUID))
             {
-                // make sure we trim the "" if there are any
-                shortcutUUID = shortcutUUID.Trim('"');
                 shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (shortcutToRun is ShortcutItem)
                 {
@@ -1178,6 +1184,37 @@ namespace DisplayMagician {
 
             return errLevel;
 
+        }
+
+        private static bool TryRunShortcutThroughUserAgent(string shortcutUUID, out ERRORLEVEL result)
+        {
+            result = ERRORLEVEL.ERROR_EXCEPTION;
+            try
+            {
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.StartShortcutWhenAgentAvailableAsync(shortcutUUID, CancellationToken.None).GetAwaiter().GetResult();
+                if (response.IsSuccessful)
+                {
+                    result = ERRORLEVEL.OK;
+                    return true;
+                }
+
+                if (response.ErrorCode == DisplayMagician.Contracts.ControlErrorCode.AgentUnavailable)
+                {
+                    return false;
+                }
+
+                logger.Error("Program/TryRunShortcutThroughUserAgent: The User Agent rejected shortcut {0}. ErrorCode={1}; Message={2}", shortcutUUID, response.ErrorCode, response.Message);
+                result = response.OperationStatus?.Phase == DisplayMagician.Contracts.OperationPhase.Cancelled
+                    ? ERRORLEVEL.CANCELED_BY_USER
+                    : ERRORLEVEL.ERROR_EXCEPTION;
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/TryRunShortcutThroughUserAgent: The Control Service path is unavailable for shortcut {0}.", shortcutUUID);
+                return false;
+            }
         }
 
         public static ERRORLEVEL RunProfile(string profileName)

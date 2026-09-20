@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -95,5 +96,7 @@ public sealed class ShortcutRecoveryRecord
     public string AudioProfileId { get; set; } = string.Empty;
     public bool RequiresDisplayRestore { get; set; }
     public bool RequiresAudioRestore { get; set; }
+    public bool RequiresAudioVolumeRestore { get; set; }
+    public List<AudioVolumeOverrideEntry> AudioVolumeOverrides { get; set; } = new List<AudioVolumeOverrideEntry>();
     public DateTime CreatedUtc { get; set; }
 }

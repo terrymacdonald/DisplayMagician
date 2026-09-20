@@ -129,4 +129,18 @@ public sealed class ShortcutRunnerTests
             }
         }
     }
+
+    [Fact]
+    public async Task ApplyShortcutProfilesAsync_RejectsUwpApplicationShortcutWithoutAnAppUserModelId()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutRunner-{Guid.NewGuid():N}");
+        ShortcutStore store = new ShortcutStore(root);
+        RepositorySnapshot snapshot = store.GetSnapshot();
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = "{\"Shortcuts\":[{\"UUID\":\"application-shortcut\",\"Category\":3,\"ApplicationLibrary\":2}]}" });
+        ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
+
+        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("application-shortcut", 0, CancellationToken.None);
+
+        Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
+    }
 }

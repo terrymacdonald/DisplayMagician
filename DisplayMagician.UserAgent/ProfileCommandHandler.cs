@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,14 +10,19 @@ using System.Drawing.Imaging;
 using System.Security.Cryptography;
 using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
+using DisplayMagician.Messaging;
+using DisplayMagician.UserAgent.Messaging;
 using DisplayMagicianShared;
 using DisplayMagician.GameLibraries;
 using SharedApplyProfileResult = DisplayMagicianShared.ApplyProfileResult;
+using NLog;
 
 namespace DisplayMagician.UserAgent;
 
 public sealed class ProfileCommandHandler
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private static readonly HttpClient _httpClient = new HttpClient();
     private readonly AgentRegistration _registration;
     private readonly string _userDataPath;
     private readonly ShortcutStore _shortcutStore;
@@ -24,15 +30,21 @@ public sealed class ProfileCommandHandler
     private readonly UserProfileOperationService _userProfileOperationService;
     private readonly ShortcutRecoveryStore _shortcutRecoveryStore;
     private readonly ShortcutRunner _shortcutRunner;
+    private readonly MessageSyncService _messageSyncService;
+    private readonly UserMessageStore _userMessageStore;
+    private readonly IInteractiveSessionStateProvider _interactiveSessionStateProvider;
+    private readonly ControlServiceClient _controlServiceClient;
     private bool _stopRequested;
 
     public bool StopRequested => _stopRequested;
     public AutomaticGameDetectionRegistry AutomaticGameDetectionRegistry => _automaticGameDetectionRegistry;
     public ShortcutRunner ShortcutRunner => _shortcutRunner;
 
-    public ProfileCommandHandler(AgentRegistration registration)
+    public ProfileCommandHandler(AgentRegistration registration, IInteractiveSessionStateProvider? interactiveSessionStateProvider = null)
     {
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
+        _interactiveSessionStateProvider = interactiveSessionStateProvider ?? new WtsInteractiveSessionStateProvider();
+        _controlServiceClient = new ControlServiceClient();
         _userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", _registration.UserSid);
         ProfileRepository.ConfigureStoragePath(_userDataPath);
         AudioProfileRepository.ConfigureStoragePath(_userDataPath);
@@ -42,6 +54,9 @@ public sealed class ProfileCommandHandler
         _userProfileOperationService = new UserProfileOperationService();
         _shortcutRecoveryStore = new ShortcutRecoveryStore(_userDataPath);
         _shortcutRunner = new ShortcutRunner(_shortcutStore, _automaticGameDetectionRegistry, _userProfileOperationService, _shortcutRecoveryStore);
+        _userMessageStore = new UserMessageStore(_userDataPath);
+        _messageSyncService = new MessageSyncService(_httpClient, _logger, "https://sync.displaymagician.com/sync/client-sync.json", Path.Combine(_userDataPath, "Messages"));
+        _messageSyncService.EnsureStorage();
         _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
     }
 
@@ -95,6 +110,43 @@ public sealed class ProfileCommandHandler
             return new ControlResponse { IsSuccessful = true, Message = "Games returned.", GameList = new GameListResult { Games = games } };
         }
 
+        if (request.MessageType == ControlMessageType.ListMessages)
+        {
+            return new ControlResponse { IsSuccessful = true, Message = "Messages returned.", MessageList = _userMessageStore.GetMessages() };
+        }
+
+        if (request.MessageType == ControlMessageType.SetMessageReadState)
+        {
+            SetMessageReadStateRequest? setReadStateRequest = JsonSerializer.Deserialize<SetMessageReadStateRequest>(request.Payload);
+            if (setReadStateRequest == null || setReadStateRequest.MessageIds.Length == 0)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "At least one message ID is required." };
+            }
+
+            _userMessageStore.SetReadState(setReadStateRequest.MessageIds, setReadStateRequest.IsRead);
+            return new ControlResponse { IsSuccessful = true, Message = "Message read state updated.", MessageList = _userMessageStore.GetMessages() };
+        }
+
+        if (request.MessageType == ControlMessageType.SyncMessages)
+        {
+            DisplayMagician.Messaging.MessageSyncResult syncResult = await _messageSyncService.SyncMessagesAsync(
+                typeof(ProfileCommandHandler).Assembly.GetName().Version?.ToString() ?? "0.0.0.0",
+                cancellationToken).ConfigureAwait(false);
+            return new ControlResponse
+            {
+                IsSuccessful = syncResult.Success,
+                ErrorCode = syncResult.Success ? ControlErrorCode.None : ControlErrorCode.InvalidRequest,
+                Message = syncResult.Success ? "Messages synchronized." : "Message synchronization failed.",
+                MessageSync = new DisplayMagician.Contracts.MessageSyncResult
+                {
+                    IsSuccessful = syncResult.Success,
+                    NewMessagesCount = syncResult.NewMessagesCount,
+                    UnreadCount = syncResult.UnreadCount
+                },
+                MessageList = _userMessageStore.GetMessages()
+            };
+        }
+
         if (request.MessageType == ControlMessageType.StartShortcut)
         {
             StartShortcutRequest? startRequest = JsonSerializer.Deserialize<StartShortcutRequest>(request.Payload);
@@ -103,12 +155,38 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID is required." };
             }
 
+            InteractiveSessionState sessionState = _interactiveSessionStateProvider.GetState(_registration.SessionId);
+            if (!InteractiveSessionPolicy.CanStartShortcut(sessionState))
+            {
+                return new ControlResponse
+                {
+                    IsSuccessful = false,
+                    ErrorCode = ControlErrorCode.SessionLocked,
+                    Message = sessionState == InteractiveSessionState.Locked
+                        ? "The User Agent cannot start a shortcut while the interactive session is locked."
+                        : "The User Agent could not verify that the interactive session is unlocked."
+                };
+            }
+
             _registration.OperationState = AgentOperationState.Running;
             try
             {
-                ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(startRequest.ShortcutId, 0, cancellationToken).ConfigureAwait(false);
+                ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(startRequest.ShortcutId, 0, cancellationToken, PublishShortcutStatusAsync).ConfigureAwait(false);
                 bool wasSuccessful = result.Outcome == ShortcutRunOutcome.Completed;
-                return new ControlResponse { IsSuccessful = wasSuccessful, ErrorCode = wasSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest, Message = result.Outcome.ToString(), OperationStatus = new OperationStatus { OperationId = result.OperationId, OperationType = DisplayOperationType.StartShortcut, Phase = wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed, IsTerminal = true, IsSuccessful = wasSuccessful } };
+                OperationPhase terminalPhase = result.Outcome == ShortcutRunOutcome.Cancelled ? OperationPhase.Cancelled : wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed;
+                ControlErrorCode errorCode = wasSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest;
+                OperationStatusUpdate terminalStatus = new OperationStatusUpdate
+                {
+                    OperationId = result.OperationId,
+                    OperationType = DisplayOperationType.StartShortcut,
+                    Phase = terminalPhase,
+                    Message = result.Outcome.ToString(),
+                    IsTerminal = true,
+                    IsSuccessful = wasSuccessful,
+                    ErrorCode = errorCode
+                };
+                await PublishShortcutStatusAsync(terminalStatus, CancellationToken.None).ConfigureAwait(false);
+                return new ControlResponse { IsSuccessful = wasSuccessful, ErrorCode = errorCode, Message = result.Outcome.ToString(), OperationStatus = new OperationStatus { OperationId = result.OperationId, OperationType = DisplayOperationType.StartShortcut, Phase = terminalPhase, IsTerminal = true, IsSuccessful = wasSuccessful, ErrorCode = errorCode } };
             }
             finally
             {
@@ -299,6 +377,18 @@ public sealed class ProfileCommandHandler
         finally
         {
             _registration.OperationState = AgentOperationState.Idle;
+        }
+    }
+
+    private async Task PublishShortcutStatusAsync(OperationStatusUpdate update, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _controlServiceClient.PublishOperationStatusAsync(_registration, update, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)
+        {
+            _logger.Warn(ex, "ProfileCommandHandler/PublishShortcutStatusAsync: Could not publish shortcut operation {0} phase {1}.", update.OperationId, update.Phase);
         }
     }
 

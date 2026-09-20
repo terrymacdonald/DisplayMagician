@@ -19,13 +19,15 @@ public sealed class ShortcutRunner
     private readonly AutomaticGameDetectionRegistry _automaticGameDetectionRegistry;
     private readonly UserProfileOperationService _profileOperationService;
     private readonly ShortcutRecoveryStore _recoveryStore;
+    private readonly AudioVolumeOverrideService _audioVolumeOverrideService;
 
-    public ShortcutRunner(ShortcutStore shortcutStore, AutomaticGameDetectionRegistry automaticGameDetectionRegistry, UserProfileOperationService profileOperationService, ShortcutRecoveryStore recoveryStore)
+    public ShortcutRunner(ShortcutStore shortcutStore, AutomaticGameDetectionRegistry automaticGameDetectionRegistry, UserProfileOperationService profileOperationService, ShortcutRecoveryStore recoveryStore, AudioVolumeOverrideService? audioVolumeOverrideService = null)
     {
         _shortcutStore = shortcutStore ?? throw new ArgumentNullException(nameof(shortcutStore));
         _automaticGameDetectionRegistry = automaticGameDetectionRegistry ?? throw new ArgumentNullException(nameof(automaticGameDetectionRegistry));
         _profileOperationService = profileOperationService ?? throw new ArgumentNullException(nameof(profileOperationService));
         _recoveryStore = recoveryStore ?? throw new ArgumentNullException(nameof(recoveryStore));
+        _audioVolumeOverrideService = audioVolumeOverrideService ?? new AudioVolumeOverrideService();
     }
 
     public bool IsRecoveryRequired => _recoveryStore.HasPendingRecovery();
@@ -40,17 +42,17 @@ public sealed class ShortcutRunner
         return Task.FromResult(new ShortcutRunResult(Guid.NewGuid(), ShortcutRunOutcome.Prepared, shortcut));
     }
 
-    public async Task<ShortcutRunResult> ApplyShortcutProfilesAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken)
+    public async Task<ShortcutRunResult> ApplyShortcutProfilesAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null)
     {
-        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: true, isManualRun: true, cancellationToken).ConfigureAwait(false);
+        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: true, isManualRun: true, cancellationToken, publishStatusAsync).ConfigureAwait(false);
     }
 
-    public async Task<ShortcutRunResult> ApplyDetectedGameShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken)
+    public async Task<ShortcutRunResult> ApplyDetectedGameShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null)
     {
-        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: false, isManualRun: false, cancellationToken).ConfigureAwait(false);
+        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: false, isManualRun: false, cancellationToken, publishStatusAsync).ConfigureAwait(false);
     }
 
-    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken)
+    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync)
     {
         ShortcutRunResult preparedRun = await PrepareRunAsync(shortcutId, cancellationToken).ConfigureAwait(false);
         if (preparedRun.Outcome != ShortcutRunOutcome.Prepared || preparedRun.Shortcut == null)
@@ -59,6 +61,7 @@ public sealed class ShortcutRunner
         }
 
         ShortcutDefinition shortcut = preparedRun.Shortcut;
+        await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.Validating, "Validating shortcut.", cancellationToken).ConfigureAwait(false);
         if (!IsShortcutRunnable(shortcut))
         {
             return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
@@ -87,15 +90,18 @@ public sealed class ShortcutRunner
         }
         List<StartedProgram> startedPrograms = new List<StartedProgram>();
         List<ShortcutStopProgramDefinition> stoppedProgramsToRestart = new List<ShortcutStopProgramDefinition>();
+        AudioVolumeOverrideState? audioVolumeOverrideState = null;
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
+            await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingPrograms, "Starting shortcut programs.", cancellationToken).ConfigureAwait(false);
             if (!RunPreGamePrograms(shortcut, startedPrograms, stoppedProgramsToRestart, cancellationToken))
             {
                 return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
             }
             if (shouldApplyDisplayProfile)
             {
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingDisplayProfile, "Applying display profile.", cancellationToken).ConfigureAwait(false);
                 ApplyDisplayProfileOperationResult displayResult = await _profileOperationService.ApplyDisplayProfileAsync(shortcut.ProfileId, cancellationToken).ConfigureAwait(false);
                 if (!displayResult.IsSuccessful)
                 {
@@ -103,24 +109,55 @@ public sealed class ShortcutRunner
                 }
             }
 
-            if (shouldApplyAudioProfile && !_profileOperationService.ApplyAudioProfile(shortcut.AudioProfileId, audioDeviceWaitMilliseconds).IsSuccessful)
+            if (shouldApplyAudioProfile)
             {
-                return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingAudioProfile, "Applying audio profile.", cancellationToken).ConfigureAwait(false);
+                if (!_profileOperationService.ApplyAudioProfile(shortcut.AudioProfileId, audioDeviceWaitMilliseconds).IsSuccessful)
+                {
+                    return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                }
             }
 
-            if (shortcut.Category == ShortcutDefinitionCategory.Executable && !string.IsNullOrWhiteSpace(shortcut.ExecutablePath))
+            if (shortcut.OverrideAudioSpeakerVolume || shortcut.OverrideAudioMicrophoneVolume)
+            {
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingAudioProfile, "Applying audio volume overrides.", cancellationToken).ConfigureAwait(false);
+                if (!_audioVolumeOverrideService.TryCapture(shortcut, out audioVolumeOverrideState))
+                {
+                    return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                }
+
+                recoveryRecord ??= new ShortcutRecoveryRecord
+                {
+                    OperationId = preparedRun.OperationId,
+                    ShortcutId = shortcut.Id,
+                    CreatedUtc = DateTime.UtcNow
+                };
+                recoveryRecord.RequiresAudioVolumeRestore = true;
+                recoveryRecord.AudioVolumeOverrides = audioVolumeOverrideState.Entries;
+                _recoveryStore.Save(recoveryRecord);
+                if (!_audioVolumeOverrideService.Apply(audioVolumeOverrideState))
+                {
+                    return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                }
+            }
+
+            if ((shortcut.Category == ShortcutDefinitionCategory.Executable ||
+                (shortcut.Category == ShortcutDefinitionCategory.Application && shortcut.ApplicationLibrary != 2)) &&
+                !string.IsNullOrWhiteSpace(shortcut.ExecutablePath))
             {
                 ProcessTreeMonitor? monitor = shortcut.MonitorExecutablePath
                     ? ProcessTreeMonitor.BeginWatching(string.IsNullOrWhiteSpace(shortcut.DifferentExecutablePathToMonitor) ? shortcut.ExecutablePath : shortcut.DifferentExecutablePathToMonitor, shortcut.StartTimeoutSeconds)
                     : null;
                 try
                 {
+                    await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting executable.", cancellationToken).ConfigureAwait(false);
                     List<System.Diagnostics.Process> processes = ProcessUtils.StartProcess(shortcut.ExecutablePath, shortcut.ExecutableArguments, (ProcessPriority)(int)shortcut.ProcessPriority, shortcut.StartTimeoutSeconds, shortcut.RunExecutableAsAdministrator);
                     if (processes.Count == 0)
                     {
                         return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                     }
                     monitor?.RegisterLaunchedProcesses(processes);
+                    await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToClose, "Waiting for executable to close.", cancellationToken).ConfigureAwait(false);
                     while (monitor != null && monitor.IsRunning)
                     {
                         await Task.Delay(500, cancellationToken).ConfigureAwait(false);
@@ -130,6 +167,22 @@ public sealed class ShortcutRunner
                 finally
                 {
                     monitor?.Dispose();
+                }
+            }
+
+            if (shortcut.Category == ShortcutDefinitionCategory.Application && shortcut.ApplicationLibrary == 2)
+            {
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting packaged application.", cancellationToken).ConfigureAwait(false);
+                using Process? process = UwpApplicationLauncher.Start(shortcut.ApplicationId, shortcut.ExecutableArguments);
+                if (process == null)
+                {
+                    return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                }
+
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToClose, "Waiting for packaged application to close.", cancellationToken).ConfigureAwait(false);
+                while (UwpApplicationLauncher.IsRunning(shortcut.ApplicationId) || !ProcessUtils.ProcessExited(process))
+                {
+                    await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -148,8 +201,10 @@ public sealed class ShortcutRunner
 
                 if (shouldStartGame)
                 {
+                    await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting game.", cancellationToken).ConfigureAwait(false);
                     game.GameLibrary.StartGame(game, shortcut.GameArguments, (ProcessPriority)(int)shortcut.ProcessPriority);
                     DateTime gameStartDeadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(shortcut.StartTimeoutSeconds, 1, 60));
+                    await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToStart, "Waiting for game to start.", cancellationToken).ConfigureAwait(false);
                     while (!IsGameRunning(shortcut, game) && DateTime.UtcNow < gameStartDeadlineUtc)
                     {
                         await Task.Delay(250, cancellationToken).ConfigureAwait(false);
@@ -160,6 +215,7 @@ public sealed class ShortcutRunner
                     }
                 }
 
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToClose, "Waiting for game to close.", cancellationToken).ConfigureAwait(false);
                 while (IsGameRunning(shortcut, game))
                 {
                     await Task.Delay(500, cancellationToken).ConfigureAwait(false);
@@ -178,13 +234,20 @@ public sealed class ShortcutRunner
             bool recoveryRestored = true;
             if (recoveryRecord?.RequiresDisplayRestore == true)
             {
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.RestoringDisplayProfile, "Restoring display profile.", CancellationToken.None).ConfigureAwait(false);
                 recoveryRestored = !string.IsNullOrWhiteSpace(recoveryRecord.DisplayProfileId) &&
                     (await _profileOperationService.ApplyDisplayProfileAsync(recoveryRecord.DisplayProfileId, CancellationToken.None).ConfigureAwait(false)).IsSuccessful;
             }
             if (recoveryRecord?.RequiresAudioRestore == true)
             {
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.RestoringAudioProfile, "Restoring audio profile.", CancellationToken.None).ConfigureAwait(false);
                 recoveryRestored = !string.IsNullOrWhiteSpace(recoveryRecord.AudioProfileId) &&
                     _profileOperationService.ApplyAudioProfile(recoveryRecord.AudioProfileId, audioDeviceWaitMilliseconds).IsSuccessful && recoveryRestored;
+            }
+            if (recoveryRecord?.RequiresAudioVolumeRestore == true)
+            {
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.RestoringAudioProfile, "Restoring audio volume overrides.", CancellationToken.None).ConfigureAwait(false);
+                recoveryRestored = _audioVolumeOverrideService.Restore(recoveryRecord.AudioVolumeOverrides) && recoveryRestored;
             }
             if (recoveryRecord != null && recoveryRestored)
             {
@@ -199,7 +262,8 @@ public sealed class ShortcutRunner
 
     private static bool IsShortcutRunnable(ShortcutDefinition shortcut)
     {
-        if (shortcut.Category == ShortcutDefinitionCategory.Executable &&
+           if ((shortcut.Category == ShortcutDefinitionCategory.Executable ||
+               (shortcut.Category == ShortcutDefinitionCategory.Application && shortcut.ApplicationLibrary != 2)) &&
             (string.IsNullOrWhiteSpace(shortcut.ExecutablePath) || !File.Exists(shortcut.ExecutablePath) ||
              (shortcut.ExecutableArgumentsRequired && string.IsNullOrWhiteSpace(shortcut.ExecutableArguments)) ||
              (shortcut.MonitorExecutablePath && !string.IsNullOrWhiteSpace(shortcut.DifferentExecutablePathToMonitor) && !File.Exists(shortcut.DifferentExecutablePathToMonitor))))
@@ -214,7 +278,14 @@ public sealed class ShortcutRunner
             return false;
         }
 
-        if (shortcut.Category is ShortcutDefinitionCategory.Unknown or ShortcutDefinitionCategory.Application)
+        if (shortcut.Category == ShortcutDefinitionCategory.Application && shortcut.ApplicationLibrary == 2 &&
+            (string.IsNullOrWhiteSpace(shortcut.ApplicationId) ||
+             (shortcut.ExecutableArgumentsRequired && string.IsNullOrWhiteSpace(shortcut.ExecutableArguments))))
+        {
+            return false;
+        }
+
+        if (shortcut.Category == ShortcutDefinitionCategory.Unknown)
         {
             return false;
         }
@@ -226,8 +297,9 @@ public sealed class ShortcutRunner
 
     private static bool IsRunnable(ShortcutStartProgramDefinition program)
     {
-        return string.IsNullOrWhiteSpace(program.ApplicationId) && !string.IsNullOrWhiteSpace(program.ExecutablePath) &&
-            File.Exists(program.ExecutablePath) && (!program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments));
+        return (!string.IsNullOrWhiteSpace(program.ApplicationId) && (!program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments))) ||
+            (string.IsNullOrWhiteSpace(program.ApplicationId) && !string.IsNullOrWhiteSpace(program.ExecutablePath) &&
+             File.Exists(program.ExecutablePath) && (!program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments)));
     }
 
     private static bool IsRunnable(ShortcutAfterProgramDefinition program)
@@ -265,7 +337,33 @@ public sealed class ShortcutRunner
 
     private static bool StartProgram(ShortcutStartProgramDefinition program, List<StartedProgram> startedPrograms)
     {
-        if (!string.IsNullOrWhiteSpace(program.ApplicationId) || string.IsNullOrWhiteSpace(program.ExecutablePath) || !File.Exists(program.ExecutablePath) || (program.ArgumentsRequired && string.IsNullOrWhiteSpace(program.Arguments)))
+        if (!string.IsNullOrWhiteSpace(program.ApplicationId))
+        {
+            if ((program.ArgumentsRequired && string.IsNullOrWhiteSpace(program.Arguments)) ||
+                (program.DoNotStartIfAlreadyRunning && UwpApplicationLauncher.IsRunning(program.ApplicationId)))
+            {
+                return !program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments);
+            }
+
+            Process? uwpProcess = UwpApplicationLauncher.Start(program.ApplicationId, program.Arguments);
+            if (uwpProcess == null)
+            {
+                return false;
+            }
+
+            if (program.CloseOnFinish)
+            {
+                startedPrograms.Add(new StartedProgram(program.Priority, new List<Process> { uwpProcess }, null));
+            }
+            else
+            {
+                uwpProcess.Dispose();
+            }
+
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(program.ExecutablePath) || !File.Exists(program.ExecutablePath) || (program.ArgumentsRequired && string.IsNullOrWhiteSpace(program.Arguments)))
         {
             return false;
         }
@@ -429,6 +527,10 @@ public sealed class ShortcutRunner
             recoveryRestored = !string.IsNullOrWhiteSpace(recoveryRecord.AudioProfileId) &&
                 _profileOperationService.ApplyAudioProfile(recoveryRecord.AudioProfileId, audioDeviceWaitMilliseconds).IsSuccessful && recoveryRestored;
         }
+        if (recoveryRecord.RequiresAudioVolumeRestore)
+        {
+            recoveryRestored = _audioVolumeOverrideService.Restore(recoveryRecord.AudioVolumeOverrides) && recoveryRestored;
+        }
         if (recoveryRestored)
         {
             _recoveryStore.Clear();
@@ -442,6 +544,19 @@ public sealed class ShortcutRunner
         return shortcut.MonitorDifferentGameExecutable && !string.IsNullOrWhiteSpace(shortcut.DifferentGameExecutablePathToMonitor)
             ? ProcessTreeMonitor.IsExecutableRunning(shortcut.DifferentGameExecutablePathToMonitor)
             : game.IsRunning;
+    }
+
+    private static Task PublishStatusAsync(Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid operationId, OperationPhase phase, string message, CancellationToken cancellationToken)
+    {
+        return publishStatusAsync == null
+            ? Task.CompletedTask
+            : publishStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = operationId,
+                OperationType = DisplayOperationType.StartShortcut,
+                Phase = phase,
+                Message = message
+            }, cancellationToken);
     }
 
     private sealed record StartedProgram(int Priority, List<Process> Processes, ProcessTreeMonitor? Monitor);

@@ -43,7 +43,10 @@ public enum ControlMessageType
     StartShortcut = 27,
     GetOperationStatus = 28,
     ListOperationStatuses = 29,
-    ListGames = 30
+    ListGames = 30,
+    ListMessages = 31,
+    SetMessageReadState = 32,
+    SyncMessages = 33
 }
 
 public enum ControlErrorCode
@@ -126,6 +129,43 @@ public sealed class GameView
 public sealed class GameListResult
 {
     public GameView[] Games { get; set; } = Array.Empty<GameView>();
+}
+
+/// <summary>A client-safe message representation owned by the interactive User Agent.</summary>
+public sealed class MessageView
+{
+    public string Id { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+    public string Format { get; set; } = string.Empty;
+    public DateTime? PublishedUtc { get; set; }
+    public DateTime ReceivedUtc { get; set; }
+    public bool IsRead { get; set; }
+    public bool ShowOnStartup { get; set; }
+    public bool IsFaulty { get; set; }
+    public string Kind { get; set; } = string.Empty;
+    public string? ReleaseVersion { get; set; }
+    public string? ReleaseChannel { get; set; }
+    public string? UpdateAction { get; set; }
+}
+
+public sealed class MessageListResult
+{
+    public MessageView[] Messages { get; set; } = Array.Empty<MessageView>();
+    public int UnreadCount { get; set; }
+}
+
+public sealed class SetMessageReadStateRequest
+{
+    public string[] MessageIds { get; set; } = Array.Empty<string>();
+    public bool IsRead { get; set; }
+}
+
+public sealed class MessageSyncResult
+{
+    public bool IsSuccessful { get; set; }
+    public int NewMessagesCount { get; set; }
+    public int UnreadCount { get; set; }
 }
 
 public sealed class ProfileListResult
@@ -367,6 +407,10 @@ public sealed class ControlResponse
     public OperationStatus[] OperationStatuses { get; set; } = Array.Empty<OperationStatus>();
 
     public GameListResult? GameList { get; set; }
+
+    public MessageListResult? MessageList { get; set; }
+
+    public MessageSyncResult? MessageSync { get; set; }
 }
 
 public sealed class ControlServiceStatus

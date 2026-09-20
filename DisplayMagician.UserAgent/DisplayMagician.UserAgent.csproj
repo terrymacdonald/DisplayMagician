@@ -16,35 +16,20 @@
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- The same monitored-process implementation remains linked from its legacy
-         location until WinForms no longer owns shortcut execution. -->
-    <Compile Include="..\DisplayMagician\Processes\ProcessTreeMonitor.cs" Link="Processes\ProcessTreeMonitor.cs" />
-    <Compile Include="..\DisplayMagician\Processes\ProcessUtils.cs" Link="Processes\ProcessUtils.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\Game.cs" Link="GameLibraries\Game.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\GameLibrary.cs" Link="GameLibraries\GameLibrary.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\GameUtils.cs" Link="GameLibraries\GameUtils.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\EpicGame.cs" Link="GameLibraries\EpicGame.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\EpicLibrary.cs" Link="GameLibraries\EpicLibrary.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\GOGGame.cs" Link="GameLibraries\GOGGame.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\GOGLibrary.cs" Link="GameLibraries\GOGLibrary.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\OriginGame.cs" Link="GameLibraries\OriginGame.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\OriginLibrary.cs" Link="GameLibraries\OriginLibrary.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\SteamGame.cs" Link="GameLibraries\SteamGame.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\SteamLibrary.cs" Link="GameLibraries\SteamLibrary.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\UplayFileStructure.cs" Link="GameLibraries\UplayFileStructure.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\UplayGame.cs" Link="GameLibraries\UplayGame.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\UplayLibrary.cs" Link="GameLibraries\UplayLibrary.cs" />
-    <Compile Include="..\DisplayMagician\GameLibraries\SteamAppInfoParser\*.cs" Link="GameLibraries\SteamAppInfoParser\%(Filename)%(Extension)" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="NLog" Version="6.1.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="protobuf-net" Version="3.2.56" />
     <PackageReference Include="System.Management" Version="10.0.7" />
     <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
     <PackageReference Include="YamlDotNet" Version="17.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="WindowsAudioWrapper">
+      <HintPath>..\DisplayMagicianShared\DLL\WindowsAudioWrapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
