@@ -613,8 +613,8 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Add an identity-verified User Agent migration request; keep it explicit until repository ownership moves to the Agent.
 - [x] Redirect current repository paths only when a completed, validated per-SID migration marker is present.
 - [x] Migrate display profiles first.
-- [ ] Migrate audio profiles, shortcuts, user settings, and message state.
-- [ ] Rename each successful legacy source file to `.old`.
+- [x] Migrate audio profiles, shortcuts, user settings, and message state.
+- [x] Rename each successful legacy source file to `.old`.
 
 **Exit criteria:** Existing DM user sees unchanged data after migration; legacy files remain as `.old`; repeated startup does not import duplicates.
 
