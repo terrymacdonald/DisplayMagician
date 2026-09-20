@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Drawing.Imaging;
 using System.Security.Cryptography;
+using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
 using DisplayMagicianShared;
 using DisplayMagician.GameLibraries;
@@ -138,6 +139,12 @@ public sealed class ProfileCommandHandler
             {
                 try
                 {
+                    List<ShortcutDefinition> shortcutDefinitions = _shortcutStore.GetShortcutDefinitions(commitRequest.Json);
+                    if (!AutomaticGameDetectionRegistry.TryValidateAutomaticDetections(shortcutDefinitions, out string validationError))
+                    {
+                        return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = validationError };
+                    }
+
                     RepositoryCommitResult shortcutCommit = _shortcutStore.Commit(commitRequest);
                     if (!shortcutCommit.WasConflict)
                     {

@@ -175,6 +175,29 @@ public sealed class ControlServiceClient
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<ControlResponse> AcquireDisplayControlAsync(AgentRegistration registration, CancellationToken cancellationToken)
+    {
+        using NamedPipeClientStream pipe = await ConnectRegisteredAgentPipeAsync(registration, cancellationToken).ConfigureAwait(false);
+        return await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.AcquireDisplayControl
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<ControlResponse> ReportAgentOperationStateAsync(AgentRegistration registration, AgentOperationState operationState, CancellationToken cancellationToken)
+    {
+        using NamedPipeClientStream pipe = await ConnectRegisteredAgentPipeAsync(registration, cancellationToken).ConfigureAwait(false);
+        return await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.AgentHeartbeat,
+            Payload = JsonSerializer.Serialize(new AgentHeartbeat
+            {
+                OperationState = operationState,
+                IsRecoveryRequired = registration.IsRecoveryRequired
+            })
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>
     /// Sends a progress update on a short-lived authenticated Agent connection. The
     /// long-lived heartbeat connection remains independent, so a runner can report
@@ -208,6 +231,32 @@ public sealed class ControlServiceClient
         }
 
         return statusResponse.OperationStatus;
+    }
+
+    private static async Task<NamedPipeClientStream> ConnectRegisteredAgentPipeAsync(AgentRegistration registration, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(registration);
+        NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ServicePipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        try
+        {
+            await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            ControlResponse registrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
+            {
+                MessageType = ControlMessageType.AgentRegistration,
+                Payload = JsonSerializer.Serialize(registration)
+            }, cancellationToken).ConfigureAwait(false);
+            if (!registrationResponse.IsSuccessful)
+            {
+                throw new InvalidOperationException(registrationResponse.Message);
+            }
+
+            return pipe;
+        }
+        catch
+        {
+            pipe.Dispose();
+            throw;
+        }
     }
 
     private static async Task<ControlResponse> SendAndReceiveAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)

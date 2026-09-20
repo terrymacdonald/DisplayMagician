@@ -39,15 +39,19 @@ public sealed class ShortcutStore
 
     public List<ShortcutDefinition> GetShortcutDefinitions()
     {
-        List<ShortcutDefinition> definitions = new List<ShortcutDefinition>();
-
         RepositorySnapshot snapshot = GetSnapshot();
-        if (string.IsNullOrWhiteSpace(snapshot.Json))
+        return GetShortcutDefinitions(snapshot.Json);
+    }
+
+    public List<ShortcutDefinition> GetShortcutDefinitions(string json)
+    {
+        List<ShortcutDefinition> definitions = new List<ShortcutDefinition>();
+        if (string.IsNullOrWhiteSpace(json))
         {
             return definitions;
         }
 
-        using JsonDocument document = JsonDocument.Parse(snapshot.Json);
+        using JsonDocument document = JsonDocument.Parse(json);
         if (!document.RootElement.TryGetProperty("Shortcuts", out JsonElement shortcuts) || shortcuts.ValueKind != JsonValueKind.Array)
         {
             return definitions;

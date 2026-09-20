@@ -56,6 +56,21 @@ public sealed class AutomaticGameDetectionRegistryTests
         Assert.True(registry.IsAutomaticDetectionRegistered("current-shortcut"));
     }
 
+    [Fact]
+    public void TryValidateAutomaticDetections_RejectsConflictingGameMonitorTargets()
+    {
+        bool isValid = AutomaticGameDetectionRegistry.TryValidateAutomaticDetections(
+            new[]
+            {
+                CreateAutomaticallyDetectedGameShortcut("shortcut-one", "570"),
+                CreateAutomaticallyDetectedGameShortcut("shortcut-two", "570")
+            },
+            out string validationError);
+
+        Assert.False(isValid);
+        Assert.Contains("shortcut-one", validationError);
+    }
+
     private static ShortcutDefinition CreateAutomaticallyDetectedGameShortcut(string id, string gameAppId)
     {
         return CreateGameShortcut(id, gameAppId, GameLaunchMode.DetectGameRunning);

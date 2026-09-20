@@ -127,6 +127,31 @@ public sealed class AutomaticGameDetectionRegistry
         }
     }
 
+    public static bool TryValidateAutomaticDetections(IEnumerable<ShortcutDefinition> shortcuts, out string validationError)
+    {
+        ArgumentNullException.ThrowIfNull(shortcuts);
+        Dictionary<string, string> shortcutIdsByMonitorTarget = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (ShortcutDefinition shortcut in shortcuts)
+        {
+            if (!IsEligibleForAutomaticDetection(shortcut))
+            {
+                continue;
+            }
+
+            string monitorTarget = GetGameMonitorTarget(shortcut);
+            if (shortcutIdsByMonitorTarget.TryGetValue(monitorTarget, out string? existingShortcutId) && !string.Equals(existingShortcutId, shortcut.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                validationError = $"The automatic game detection target for shortcut '{shortcut.Name}' conflicts with shortcut '{existingShortcutId}'.";
+                return false;
+            }
+
+            shortcutIdsByMonitorTarget[monitorTarget] = shortcut.Id;
+        }
+
+        validationError = string.Empty;
+        return true;
+    }
+
     private static bool IsEligibleForAutomaticDetection(ShortcutDefinition shortcut)
     {
         return shortcut.GameLaunchMode == GameLaunchMode.DetectGameRunning &&
