@@ -381,7 +381,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override Game GetGame(string originGameNameOrId)
+        public override Game? GetGame(string originGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return null;
@@ -410,7 +410,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override Game GetGameById(string originGameId)
+        public override Game? GetGameById(string originGameId)
         {
             foreach (OriginGame testOriginGame in _allOriginGames)
             {
@@ -673,7 +673,7 @@ namespace DisplayMagician.GameLibraries
             gameProcess.PriorityClass = processPriority;
             return gameProcess;
         }*/
-        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             List<Process> startedProcesses = new List<Process>();
             if (game.Start(out startedProcesses, gameArguments, processPriority))

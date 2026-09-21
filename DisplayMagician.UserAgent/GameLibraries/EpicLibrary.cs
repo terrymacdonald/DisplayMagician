@@ -379,7 +379,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override Game GetGame(string epicGameNameOrId)
+        public override Game? GetGame(string epicGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(epicGameNameOrId))
                 return null;
@@ -408,7 +408,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override Game GetGameById(string epicGameId)
+        public override Game? GetGameById(string epicGameId)
         {
             foreach (EpicGame testEpicGame in _allEpicGames)
             {
@@ -579,7 +579,7 @@ namespace DisplayMagician.GameLibraries
             return gameProcess;
         }*/
 
-        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             List<Process> startedProcesses = new List<Process>();
             if (game.Start(out startedProcesses, gameArguments, processPriority))
@@ -614,22 +614,22 @@ namespace DisplayMagician.GameLibraries
     {
         public class InstalledApp
         {
-            public string InstallLocation;
-            public string AppName;
+            public string InstallLocation = string.Empty;
+            public string AppName = string.Empty;
             public long AppID;
-            public string AppVersion;
+            public string AppVersion = string.Empty;
         }
 
-        public List<InstalledApp> InstallationList;
+        public List<InstalledApp> InstallationList = new List<InstalledApp>();
     }
 
     public class InstalledManifiest
     {
         public int FormatVersion;
         public bool bIsCompleteInstalln;
-        public string LaunchCommand;
-        public string LaunchExecutable;
-        public string ManifestLocation;
+        public string LaunchCommand = string.Empty;
+        public string LaunchExecutable = string.Empty;
+        public string ManifestLocation = string.Empty;
         public bool bIsApplication;
         public bool bIsExecutable;
         public bool bIsManaged;
@@ -637,25 +637,25 @@ namespace DisplayMagician.GameLibraries
         public bool bRequiresAuth;
         public bool bAllowMultipleInstances;
         public bool bCanRunOffline;
-        public string AppName;
-        public string CatalogNamespace;
-        public string CatalogItemId;
-        public List<string> AppCategories;
-        public string DisplayName;
-        public string FullAppName;
-        public string InstallationGuid;
-        public string InstallLocation;
-        public string InstallSessionId;
-        public string StagingLocation;
-        public string TechnicalType;
-        public string VaultThumbnailUrl;
-        public string VaultTitleText;
-        public string InstallSize;
-        public string MainWindowProcessName;
-        public List<string> ProcessNames;
-        public string MainGameAppName;
-        public string MainGameCatalogueItemId;
-        public string MandatoryAppFolderName;
+        public string AppName = string.Empty;
+        public string CatalogNamespace = string.Empty;
+        public string CatalogItemId = string.Empty;
+        public List<string> AppCategories = new List<string>();
+        public string DisplayName = string.Empty;
+        public string FullAppName = string.Empty;
+        public string InstallationGuid = string.Empty;
+        public string InstallLocation = string.Empty;
+        public string InstallSessionId = string.Empty;
+        public string StagingLocation = string.Empty;
+        public string TechnicalType = string.Empty;
+        public string VaultThumbnailUrl = string.Empty;
+        public string VaultTitleText = string.Empty;
+        public string InstallSize = string.Empty;
+        public string MainWindowProcessName = string.Empty;
+        public List<string> ProcessNames = new List<string>();
+        public string MainGameAppName = string.Empty;
+        public string MainGameCatalogueItemId = string.Empty;
+        public string MandatoryAppFolderName = string.Empty;
     }
 
     [global::System.Serializable]

@@ -90,12 +90,12 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public virtual Game GetGame(string gameNameOrId)
+        public virtual Game? GetGame(string gameNameOrId)
         {
             return null;
         }
 
-        public virtual Game GetGameById(string gameId)
+        public virtual Game? GetGameById(string gameId)
         {
             return null;
         }
@@ -105,7 +105,7 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
-        public virtual List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public virtual List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             return null;
         }

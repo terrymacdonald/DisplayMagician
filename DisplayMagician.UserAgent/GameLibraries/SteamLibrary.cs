@@ -401,7 +401,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override Game GetGame(string steamGameNameOrUuid)
+        public override Game? GetGame(string steamGameNameOrUuid)
         {
             if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
                 return null;
@@ -430,7 +430,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override Game GetGameById(string steamGameId)
+        public override Game? GetGameById(string steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -758,7 +758,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             List<Process> startedProcesses = new List<Process>();
             if (game.Start(out startedProcesses, gameArguments, processPriority))

@@ -390,7 +390,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override Game GetGame(string gogGameNameOrId)
+        public override Game? GetGame(string gogGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(gogGameNameOrId))
                 return null;
@@ -419,7 +419,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override Game GetGameById(string gogGameId)
+        public override Game? GetGameById(string gogGameId)
         {
             foreach (GogGame testGogGame in _allGogGames)
             {
@@ -552,7 +552,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             List<Process> startedProcesses = new List<Process>();
             if (game.Start(out startedProcesses, gameArguments, processPriority))
@@ -585,24 +585,24 @@ namespace DisplayMagician.GameLibraries
 
     public class GogPlayTask
     {
-        public string category;
-        public string compatibilityFlags;
+        public string category = string.Empty;
+        public string compatibilityFlags = string.Empty;
         public bool isPrimary;
-        public List<string> languages;
-        public string name;
-        public string path;
-        public string type;
+        public List<string> languages = new List<string>();
+        public string name = string.Empty;
+        public string path = string.Empty;
+        public string type = string.Empty;
     }
     public class GogGameInfo
     {
-        public string buildId;
-        public string clientId;
-        public string gameId;
-        public string language;
-        public List<string> languages;
-        public string name;
-        public List<GogPlayTask> playTasks;
-        public string rootGameId;
+        public string buildId = string.Empty;
+        public string clientId = string.Empty;
+        public string gameId = string.Empty;
+        public string language = string.Empty;
+        public List<string> languages = new List<string>();
+        public string name = string.Empty;
+        public List<GogPlayTask> playTasks = new List<GogPlayTask>();
+        public string rootGameId = string.Empty;
         public int version;
     }
 

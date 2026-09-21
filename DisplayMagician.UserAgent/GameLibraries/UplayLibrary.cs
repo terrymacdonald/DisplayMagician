@@ -379,7 +379,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override Game GetGame(string uplayGameNameOrId)
+        public override Game? GetGame(string uplayGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return null;
@@ -408,7 +408,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override Game GetGameById(string uplayGameId)
+        public override Game? GetGameById(string uplayGameId)
         {
             foreach (UplayGame testGame in _allGames)
             {
@@ -717,7 +717,7 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
-        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             List<Process> startedProcesses = new List<Process>();
             if (game.Start(out startedProcesses, gameArguments, processPriority))
