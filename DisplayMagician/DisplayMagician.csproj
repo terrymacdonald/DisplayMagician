@@ -81,6 +81,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Resources\**" />
+    <Compile Remove="GameLibraries\**" />
+    <Compile Remove="Processes\**" />
     <None Remove="Resources\**" />
     <Page Remove="Resources\**" />
   </ItemGroup>
@@ -249,6 +251,9 @@
 		<!-- For 64-bit Windows builds -->
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
+  <Target Name="VerifyDesktopRuntimeRetirement" BeforeTargets="CoreCompile">
+    <Error Condition="Exists('GameLibraries') Or Exists('Processes')" Text="DisplayMagician desktop must not contain Agent-owned GameLibraries or Processes source folders." />
+  </Target>
 	<PropertyGroup>
 		<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>

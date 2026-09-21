@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DisplayMagician.GameLibraries;
 using Manina.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -479,18 +478,10 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                bool gameFound = false;
-                foreach (Game gameToTest in GameLibrary.AllInstalledGamesInAllLibraries)
-                {
-                    if (gameToTest.Name.Equals(item.Text))
-                    {
-                        g.DrawImage(img, pos);
-                        gameFound = true;
-                        break;
-                    }
-                }
+                ShortcutItem shortcut = ShortcutRepository.GetShortcut(item.EquipmentModel);
+                bool isUnavailableGameShortcut = shortcut?.Category == ShortcutCategory.Game && shortcut.IsValid == ShortcutValidity.Error;
 
-                if (!gameFound)
+                if (isUnavailableGameShortcut)
                 {
                     // Game is no longer installed; draw with a greyed-out appearance as a fallback
                     try

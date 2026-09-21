@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.Contracts;
-using DisplayMagician.Processes;
 using Manina.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -238,8 +237,8 @@ namespace DisplayMagician.UIForms
 
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e) => btn_hotkey.PerformClick();
         private void Exit_Click(object sender, EventArgs e) => Close();
-        private void btn_help_Click(object sender, EventArgs e) => ProcessUtils.StartProcess("https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup", "", ProcessPriority.Normal);
-        private void btn_donate_Click(object sender, EventArgs e) { ProcessUtils.StartProcess("https://github.com/sponsors/terrymacdonald?frequency=one-time", "", ProcessPriority.Normal); Utils.UserHasDonated(); }
+        private void btn_help_Click(object sender, EventArgs e) => DesktopShellUtilities.OpenUrl("https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup");
+        private void btn_donate_Click(object sender, EventArgs e) { DesktopShellUtilities.OpenUrl("https://github.com/sponsors/terrymacdonald?frequency=one-time"); Utils.UserHasDonated(); }
         private void applyToolStripMenuItem_Click(object sender, EventArgs e) => btn_apply.PerformClick();
         private void deleteProfileToolStripMenuItem_Click(object sender, EventArgs e) => btn_delete.PerformClick();
         private void saveProfileToDesktopToolStripMenuItem_Click(object sender, EventArgs e) => Save_Click(sender, e);

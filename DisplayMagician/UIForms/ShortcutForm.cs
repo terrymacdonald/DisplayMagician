@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 //using DisplayMagician.Resources;
-using DisplayMagician.GameLibraries;
 using DisplayMagician.Contracts;
 using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
@@ -14,9 +13,7 @@ using System.Windows.Forms.VisualStyles;
 using DisplayMagician;
 using System.Threading;
 using System.Threading.Tasks;
-using static DisplayMagician.GameLibraries.ProductInformation;
 using System.ComponentModel;
-using DisplayMagician.Processes;
 using System.Globalization;
 using System.Diagnostics;
 
@@ -84,7 +81,7 @@ namespace DisplayMagician.UIForms
                 if (_shortcutCategory == ShortcutCategory.Application)
                     return;
                 string path = txt_executable.Text.Trim();
-                if (File.Exists(path) && ProcessUtils.IsExecutableFileType(path))
+                if (File.Exists(path) && DesktopShellUtilities.IsExecutableFileType(path))
                 {
                     logger.Debug($"ShortcutForm/ExePathDebounceTimer: Scanning icons for '{path}'.");
                     UpdateExeImagesUI(null);
@@ -538,7 +535,7 @@ namespace DisplayMagician.UIForms
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
-                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
+                if (File.Exists(dialog_open.FileName) && DesktopShellUtilities.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -570,7 +567,7 @@ namespace DisplayMagician.UIForms
             // we still need to scan it for icons — otherwise ShortcutBitmap will be null and the renderer crashes.
             // Restart the debounce timer so we only scan once the user stops typing.
             string typedPath = txt_executable.Text.Trim();
-            if (File.Exists(typedPath) && ProcessUtils.IsExecutableFileType(typedPath))
+            if (File.Exists(typedPath) && DesktopShellUtilities.IsExecutableFileType(typedPath))
             {
                 _exePathDebounceTimer.Stop();
                 _exePathDebounceTimer.Start();
@@ -622,7 +619,7 @@ namespace DisplayMagician.UIForms
                         logger.Error($"ShortcutForm/AllowedToSave: The executable {txt_executable.Text} doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
                         errors.Add("The executable you have chosen does not exist! Please reselect the executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                     }
-                    else if (!ProcessUtils.IsExecutableFileType(txt_executable.Text))
+                    else if (!DesktopShellUtilities.IsExecutableFileType(txt_executable.Text))
                     {
                         logger.Error($"ShortcutForm/AllowedToSave: The file '{txt_executable.Text}' is not a supported executable type.");
                         errors.Add($"The file '{Path.GetFileName(txt_executable.Text)}' is not a supported executable type. Please choose an executable file (.exe, .com, .msi, .bat, .cmd, .ps1, .lnk, or .url).");
@@ -648,7 +645,7 @@ namespace DisplayMagician.UIForms
                             logger.Error($"ShortcutForm/AllowedToSave: The alternative executable the user wants to monitor as part of an executable shortcut doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
                             errors.Add("The alternative executable you have chosen does not exist! Please reselect the alternative executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                         }
-                        else if (!ProcessUtils.IsExecutableFileType(txt_alternative_executable.Text))
+                        else if (!DesktopShellUtilities.IsExecutableFileType(txt_alternative_executable.Text))
                         {
                             logger.Error($"ShortcutForm/AllowedToSave: The alternative executable file '{txt_alternative_executable.Text}' is not a supported executable type.");
                             errors.Add($"The alternative executable file '{Path.GetFileName(txt_alternative_executable.Text)}' is not a supported executable type. Please choose a file with an executable extension (.exe, .com, .msi, .bat, .cmd, .ps1, .lnk, or .url).");
@@ -739,7 +736,7 @@ namespace DisplayMagician.UIForms
                         logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_game.Text}' is still there, and that the file has the correct permissions.");
                         errors.Add("The different game executable you have chosen to monitor does not exist! Please reselect the different game executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                     }
-                    else if (!ProcessUtils.IsExecutableFileType(txt_alternative_game.Text))
+                    else if (!DesktopShellUtilities.IsExecutableFileType(txt_alternative_game.Text))
                     {
                         logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable '{txt_alternative_game.Text}' is not a valid executable file type.");
                         errors.Add("The different game executable you have chosen to monitor is not a valid executable file type. Please select a valid executable (.exe, .com, .bat, .cmd, .ps1, .lnk, .url, .msi) using the Choose button.");
@@ -2041,7 +2038,7 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
+                if (File.Exists(dialog_open.FileName) && DesktopShellUtilities.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_alternative_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -2746,7 +2743,7 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
+                if (File.Exists(dialog_open.FileName) && DesktopShellUtilities.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_alternative_game.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -3117,13 +3114,13 @@ namespace DisplayMagician.UIForms
         private void btn_find_examples_startprograms_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Start-Program-Examples";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private void btn_find_examples_game_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Main-Game-and-Application-Examples";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private Bitmap PickBitmapBasedOnBgColour(Color bgColour, Bitmap lightBitmap, Bitmap darkBitmap)
@@ -3270,7 +3267,7 @@ namespace DisplayMagician.UIForms
         private void btn_help_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private void cb_override_speaker_volume_CheckedChanged(object sender, EventArgs e)

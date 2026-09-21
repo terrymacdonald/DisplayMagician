@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician;
-using DisplayMagician.Processes;
 using Microsoft.WindowsAPICodePack.Win32Native;
 using static DisplayMagician.WindowsThumbnailProvider;
 
@@ -519,7 +518,7 @@ namespace DisplayMagician.UIForms
 
         private void llbl_markus_ewert_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {        
-            ProcessUtils.StartProcess("https://github.com/dinex86/FOV-Calculator", "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl("https://github.com/dinex86/FOV-Calculator");
         }
     }
 }

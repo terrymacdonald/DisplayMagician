@@ -1,5 +1,4 @@
 using DisplayMagician.Contracts;
-using DisplayMagician.GameLibraries;
 //using DisplayMagician.Resources;
 using System.Drawing;
 using Newtonsoft.Json;
@@ -1381,7 +1380,9 @@ namespace DisplayMagician
         {
 
             // Work out the name of the shortcut we'll save.
-            _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
+            string shortcutIconCachePath = Path.Combine(Program.AppIconPath, "ShortcutCache");
+            Directory.CreateDirectory(shortcutIconCachePath);
+            _savedShortcutIconCacheFilename = Path.Combine(shortcutIconCachePath, $"{UUID}.ico");
             logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Planning on saving shortcut icon to cache as {_savedShortcutIconCacheFilename}.");
             MultiIcon shortcutIcon = new MultiIcon();
             try

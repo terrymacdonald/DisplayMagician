@@ -1,5 +1,4 @@
 ﻿//using DisplayMagician.Resources;
-using DisplayMagician.Processes;
 using DisplayMagician.Contracts;
 using System;
 using System.Collections.Generic;
@@ -352,7 +351,7 @@ namespace DisplayMagician.UIForms
 
         private void cbx_start_program_priority_SelectedIndexChanged(object sender, EventArgs e)
         {
-            myStartProgram.ProcessPriority = ProcessUtils.TranslateNameToPriority(cbx_start_program_priority.SelectedValue.ToString());
+            myStartProgram.ProcessPriority = DesktopShellUtilities.TranslateNameToPriority(cbx_start_program_priority.SelectedValue.ToString());
         }
 
         private void cb_run_as_administrator_CheckedChanged(object sender, EventArgs e)

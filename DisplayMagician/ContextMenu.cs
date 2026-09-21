@@ -171,7 +171,7 @@ namespace DisplayMagician
                     {
                         // Set up the ProfileMenu Registry Key contents
                         gs.SetValue("MUIVerb", shortcut.Name);
-                        gs.SetValue("Icon", Path.Combine(Program.AppShortcutPath, shortcut.SavedShortcutIconCacheFilename));
+                        gs.SetValue("Icon", shortcut.SavedShortcutIconCacheFilename);
                     }
                     // Set up the ProfileMenu command
                     RegistryKey gsc = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ShortcutMenu\\Shell\\" + shortcut.Name + "\\command");

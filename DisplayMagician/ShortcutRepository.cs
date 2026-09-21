@@ -4,9 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using IUserAgentRepositoryConnection = DisplayMagician.Contracts.IUserAgentRepositoryConnection;
 using RepositoryCommitRequest = DisplayMagician.Contracts.RepositoryCommitRequest;
 using RepositoryCommitResult = DisplayMagician.Contracts.RepositoryCommitResult;
@@ -43,11 +41,7 @@ namespace DisplayMagician
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
         private static bool _shortcutsLoaded = false;
         //private static bool _cancelWait = false;
-        // Other constants that are useful
-        private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutFileVersion = "6";
-        private static string _shortcutStorageJsonFileName = "Shortcuts.json";
-        private static string _shortcutStorageJsonFullFileName = Path.Combine(AppShortcutStoragePath, _shortcutStorageJsonFileName);
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
@@ -89,11 +83,6 @@ namespace DisplayMagician
             }
         }
 
-        public static string ShortcutStorageFileName
-        {
-            get => _shortcutStorageJsonFullFileName;
-        }
-
         public static string ShortcutStorageFileVersion
         {
             get => _shortcutFileVersion;
@@ -107,18 +96,6 @@ namespace DisplayMagician
         #endregion
 
         #region Class Methods
-        public static void ConfigureStoragePath(string applicationDataPath)
-        {
-            if (string.IsNullOrWhiteSpace(applicationDataPath))
-                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
-
-            AppShortcutStoragePath = Path.Combine(Path.GetFullPath(applicationDataPath), "Shortcuts");
-            _shortcutStorageJsonFullFileName = Path.Combine(AppShortcutStoragePath, _shortcutStorageJsonFileName);
-            _allShortcuts = new List<ShortcutItem>();
-            _shortcutsLoaded = false;
-            Directory.CreateDirectory(AppShortcutStoragePath);
-        }
-
         /// <summary>
         /// Loads this repository's local ShortcutItem cache from the User Agent.
         /// Subsequent saves are committed back through the same connection.
@@ -471,268 +448,33 @@ namespace DisplayMagician
 
         public static bool LoadShortcuts()
         {
-
-            logger.Debug($"ShortcutRepository/LoadShortcuts: Loading shortcuts from {_shortcutStorageJsonFullFileName} into the Shortcut Repository");
-
-            _shortcutsLoaded = false;
-
-            // Figure out if we need to upgrade the shortcuts file
-            if (Utils.OldFileVersionsExist(AppShortcutStoragePath,"Shortcuts_*.json"))
+            if (_userAgentRepositoryConnection == null)
             {
-                logger.Debug($"ShortcutRepository/LoadShortcuts: Upgrading the older shortcuts file to the latest version.");
-                if (!Utils.UpgradeOldFileVersions(AppShortcutStoragePath, "Shortcuts_*.json", _shortcutStorageJsonFileName))
-                {
-                    logger.Error($"ShortcutRepository/LoadShortcuts: Error upgrading the older shortcuts file to the latest version.");
-                }
-                else
-                {
-                    logger.Trace($"ShortcutRepository/LoadShortcuts: Upgraded the older shortcuts file to the latest version.");
-                }
-            }
-            else
-            {
-                logger.Debug($"ShortcutRepository/LoadShortcuts: No need to upgrade the older shortcuts file to the latest version.");
-            }
-
-
-            if (File.Exists(_shortcutStorageJsonFullFileName))
-            {
-                string json = "";
-                try
-                {
-                    json = File.ReadAllText(_shortcutStorageJsonFullFileName, Encoding.Unicode);
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to read the JSON file {_shortcutStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    // Firstly perform any modifications we need to do to update the JSON structure
-                    // to handle old versions of the file that need updating. Done with a simple regex replace
-                    try
-                    {
-
-                        // If the shortcuts file doesn't have "ProcessPriority" in it, then we need to add it
-                        if (!Regex.Match(json, @"""ProcessPriority""").Success)
-                        {
-                            // Add the ProcessPriority line as null so its in there at least and won't stop the json load
-                            json = Regex.Replace(json, "    \"DifferentExecutableToMonitor\"", "    \"ProcessPriority\": null,\n    \"DifferentExecutableToMonitor\"");
-                        }
-
-                    }
-                    catch(Exception ex)
-                    {
-                        // problem updating JSON
-                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to update the JSON in the {_shortcutStorageJsonFullFileName} but the Regex Replace threw an exception.");
-                    }
-
-#pragma warning disable IDE0059 // Unnecessary assignment of a value
-                    List<ShortcutItem> shortcuts = new List<ShortcutItem>();
-#pragma warning restore IDE0059 // Unnecessary assignment of a value
-
-                    List<string> jsonErrors = new List<string>();
-                    try
-                    {
-
-
-                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
-                        {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Ignore,
-                            DefaultValueHandling = DefaultValueHandling.Populate,
-                            TypeNameHandling = TypeNameHandling.Auto,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                            {
-                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                                args.ErrorContext.Handled = true;
-                            },
-                        };
-
-                        ShortcutFile shortcutFile = JsonConvert.DeserializeObject<ShortcutFile>(json, mySerializerSettings);
-
-                        if (shortcutFile.Shortcuts == null)
-                        {
-                            throw new Exception("ShortcutRepository/LoadShortcuts: The Shortcuts file was an older file format, so we need to upgrade it.");
-                        }
-
-                        _allShortcuts = shortcutFile.Shortcuts;
-
-                    }
-                    catch (JsonReaderException ex)
-                    {
-                        // If there is a error in the JSON format
-                        if (ex.HResult == -2146233088)
-                        {
-                            SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException - The Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException while trying to process the Shortcuts json data file {_shortcutStorageJsonFullFileName} but JsonConvert threw an exception.");
-                        }
-                        MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    catch (Exception)
-                    {
-                        // If we get here then we may need to import the shortcuts from the old format without the Shortcut Version
-                        try
-                        {
-
-
-                            JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
-                            {
-                                MissingMemberHandling = MissingMemberHandling.Ignore,
-                                NullValueHandling = NullValueHandling.Ignore,
-                                DefaultValueHandling = DefaultValueHandling.Populate,
-                                TypeNameHandling = TypeNameHandling.Auto,
-                                ObjectCreationHandling = ObjectCreationHandling.Replace,
-                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                                {
-                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                                    args.ErrorContext.Handled = true;
-                                },
-                            };
-
-                            _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, mySerializerSettings);
-
-                            // Save the Shortcuts JSON as it's different now, and we want to save the upgrade!
-                            SaveShortcuts();
-
-
-                        }
-                        catch (JsonReaderException nex)
-                        {
-                            // If there is a error in the JSON format
-                            if (nex.HResult == -2146233088)
-                            {
-                                SharedLogger.logger.Error(nex, $"ShortcutRepository/LoadShortcuts: JSONReaderException - The Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(nex, $"ShortcutRepository/LoadShortcuts: JSONReaderException while trying to process the Shortcuts json data file {_shortcutStorageJsonFullFileName} but JsonConvert threw an exception.");
-                            }
-                            MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                        catch (Exception nex)
-                        {
-                            // If we get here then we may need to import the shortcuts from the old format without the Shortcut Version
-
-
-                            logger.Error(nex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFullFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
-                            MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
-                        }
-                    }
-
-                    // If we have any JSON.net errors, then we need to records them in the logs
-                    if (jsonErrors.Count > 0)
-                    {
-                        foreach (string jsonError in jsonErrors)
-                            {
-                                logger.Error($"ShortcutRepository/LoadShortcuts: JSON.Net Error found while loading {_shortcutStorageJsonFullFileName}: {jsonError}");
-                            }
-                    }
-
-                    logger.Trace($"ShortcutRepository/LoadShortcuts: Loaded {_allShortcuts.Count} shortcuts from {_shortcutStorageJsonFullFileName} Shortcut JSON file");
-
-
-                    // Lookup all the Profile Names in the Saved Profiles
-                    // and link the profiles to the Shortcuts as we only
-                    // store the profile names to allow users to uodate profiles
-                    // separately from the shortcuts
-                    logger.Debug($"ShortcutRepository/LoadShortcuts: Connecting Shortcut profile names to the real profile objects");
-                    foreach (ShortcutItem updatedShortcut in _allShortcuts)
-                    {
-                        if (String.IsNullOrWhiteSpace(updatedShortcut.ProfileUUID))
-                        {
-                            logger.Error($"ShortcutRepository/LoadShortcuts: Shortcut '{updatedShortcut.Name}' profile UUID is null or whitespace! Skipping this processing this entry, and setting ProfileToUse to null.");
-                            updatedShortcut.ProfileToUse = null;
-                            continue;
-                        }
-
-                        if (updatedShortcut.ProfileUUID.Equals(ShortcutItem.SkipDisplayChangeProfile.Id, StringComparison.OrdinalIgnoreCase))
-                        {
-                            logger.Debug($"ShortcutRepository/LoadShortcuts: Shortcut '{updatedShortcut.Name}' uses 'No Display Change' profile. Setting ProfileToUse to null as we don't want to link it to a profile.");
-                            updatedShortcut.ProfileToUse = null;
-                            continue;
-                        }
-
-                        DisplayProfileView profile = DesktopProfileViewCache.Get(updatedShortcut.ProfileUUID);
-                        if (profile != null)
-                        {
-                            updatedShortcut.ProfileToUse = new DisplayProfileView { Id = profile.Id, Name = profile.Name };
-                            logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile view.");
-                        }
-                        else
-                        {
-                            // We should only get here if there isn't a profile to match to.
-                            logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
-                            updatedShortcut.ProfileToUse = null;
-                        }
-                    }
-
-
-                    // Sort the shortcuts alphabetically
-                    logger.Trace($"ShortcutRepository/LoadShortcuts: Sorting the Shortcuts alphabetically.");
-                    _allShortcuts.Sort();
-                }
-                else
-                {
-                    logger.Debug($"ShortcutRepository/LoadShortcuts: The {_shortcutStorageJsonFullFileName} shortcut JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
-                }
-            }
-            else
-            {
-                logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the {_shortcutStorageJsonFullFileName} shortcut JSON file that contains the Shortcuts. Didn't load any shortcuts at all.");
-            }
-            logger.Trace($"ShortcutRepository/LoadShortcuts: Checking validity of the loaded shortcuts to make sure they're ok to use now");
-            try
-            {
-                _shortcutsLoaded = true;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Exception while checking the validity of the loaded shortcuts to make sure they're ok to use");
+                logger.Error("ShortcutRepository/LoadShortcuts: The desktop shortcut cache is not connected to the User Agent.");
                 return false;
             }
+
+            RepositorySnapshot snapshot = _userAgentRepositoryConnection.GetRepositorySnapshot(RepositoryKind.Shortcuts);
+            if (snapshot.Repository != RepositoryKind.Shortcuts)
+            {
+                logger.Error("ShortcutRepository/LoadShortcuts: The User Agent returned the wrong repository snapshot for shortcuts.");
+                return false;
+            }
+
+            LoadShortcutsFromJson(snapshot.Json);
+            _userAgentRepositoryRevision = snapshot.Revision;
+            _shortcutsLoaded = true;
+            logger.Debug("ShortcutRepository/LoadShortcuts: Loaded the desktop shortcut cache from the User Agent.");
+            return true;
         }
 
         public static bool SaveShortcuts()
         {
-            logger.Debug($"ShortcutRepository/SaveShortcuts: Attempting to save the shortcut repository to the {_shortcutStorageJsonFullFileName}.");
-
-            if (!Directory.Exists(AppShortcutStoragePath))
+            if (_userAgentRepositoryConnection == null)
             {
-                logger.Debug($"ShortcutRepository/SaveShortcuts: Creating the shortcut folder {AppShortcutStoragePath} as it doesn't currently exist.");
-                try
-                {
-                    Directory.CreateDirectory(AppShortcutStoragePath);
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician doesn't have permissions to create the Shortcuts storage folder {AppShortcutStoragePath}.");
-                }
-                catch (ArgumentException ex)
-                {
-                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician can't create the Shortcuts storage folder {AppShortcutStoragePath} due to an invalid argument.");
-                }
-                catch (PathTooLongException ex)
-                {
-                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician can't create the Shortcuts storage folder {AppShortcutStoragePath} as the path is too long.");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician can't create the Shortcuts storage folder {AppShortcutStoragePath} as the parent folder isn't there.");
-                }
+                logger.Error("ShortcutRepository/SaveShortcuts: The desktop shortcut cache is not connected to the User Agent.");
+                return false;
             }
-            else
-            {
-                logger.Debug($"ShortcutRepository/SaveShortcuts: Shortcut folder {AppShortcutStoragePath} exists.");
-            }
-
 
             List<string> jsonErrors = new List<string>();
 
@@ -764,7 +506,7 @@ namespace DisplayMagician
                 var json = JsonConvert.SerializeObject(shortcutFile, Formatting.Indented, mySerializerSettings);
 
 
-                if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
+                if (!string.IsNullOrWhiteSpace(json))
                 {
                     RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
                     {
@@ -792,17 +534,10 @@ namespace DisplayMagician
                     return true;
                 }
 
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    logger.Debug($"ShortcutRepository/SaveShortcuts: Saving the shortcut repository to the {_shortcutStorageJsonFullFileName}.");
-
-                    AtomicFile.WriteAllText(_shortcutStorageJsonFullFileName, json, Encoding.Unicode);
-                    return true;
-                }
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"ShortcutRepository/SaveShortcuts: Unable to save the shortcut repository to the {_shortcutStorageJsonFullFileName}.");
+                logger.Error(ex, "ShortcutRepository/SaveShortcuts: Unable to commit the shortcut cache through the User Agent.");
             }
 
             // If we have any JSON.net errors, then we need to record them in the logs

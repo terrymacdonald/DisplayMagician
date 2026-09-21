@@ -15,6 +15,7 @@ namespace DisplayMagician.UIForms
 {
     public partial class MessagesForm : DisplayMagicianForm
     {
+        private const string MessageContentBaseUrl = "https://sync.displaymagician.com/";
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private WebView2 webView;
         private readonly bool _selectNewestUnreadOnLoad;
@@ -363,8 +364,7 @@ namespace DisplayMagician.UIForms
                 {
                     return $"https://sync.displaymagician.com{match.Value}";
                 }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                Uri manifestUri = new Uri(Program.ClientSyncUrl, UriKind.Absolute);
-                string messageBaseUrl = System.Net.WebUtility.HtmlEncode(manifestUri.GetLeftPart(UriPartial.Authority) + "/");
+                string messageBaseUrl = System.Net.WebUtility.HtmlEncode(MessageContentBaseUrl);
                 if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
                 {
                     htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='{messageBaseUrl}' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{rawContent}</body></html>";

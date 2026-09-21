@@ -1,5 +1,4 @@
 ﻿using DisplayMagician.Contracts;
-using DisplayMagician.GameLibraries;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;

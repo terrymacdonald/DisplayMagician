@@ -4,8 +4,6 @@ using AutoUpdaterDotNET;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Security.Principal;
 using System.Windows.Forms;
@@ -614,143 +612,14 @@ namespace DisplayMagician.UIForms
 
         private void btn_create_support_package_Click(object sender, EventArgs e)
         {
-            try
+            if (!IsElevatedAdministrator())
             {
-                using (SaveFileDialog saveFileDialog = new SaveFileDialog())
-                {
-                    DateTime now = DateTime.UtcNow;
-                    saveFileDialog.InitialDirectory = Environment.SpecialFolder.MyDocuments.ToString();
-                    saveFileDialog.Filter = "Zip Files(*.zip)| *.zip | All files(*.*) | *.*";
-                    saveFileDialog.FilterIndex = 2;
-                    saveFileDialog.RestoreDirectory = true;
-                    saveFileDialog.FileName = $"DisplayMagician-Support-{now.ToString("yyyyMMdd-HHmm")}.zip";
-                    saveFileDialog.Title = "Save a DisplayMagician Support ZIP file";
-
-                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        //Get the path of specified file
-                        string zipFilePath = saveFileDialog.FileName;
-                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Creating support zip file at {zipFilePath}.");
-
-                        if (File.Exists(zipFilePath))
-                        {
-                            File.Delete(zipFilePath);
-                        }
-
-                        NLog.LogManager.SuspendLogging();
-
-                        ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
-
-                        // Look for log files
-                        List<string> listOfLogFiles = Directory.GetFiles(Program.AppLogPath, "DisplayMagician*.log").ToList();
-
-
-                        // Get the list of files we want to look for to zip (they may or may not exist)
-                        List<string> listOfFilesToArchive = new List<string> {
-                            // Also try to copy the new configs if they exist
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.6.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.6.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_1.0.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.3.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.4.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.5.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.6.json"),
-                            Path.Combine(Program.AppDataPath,"Settings.json"),
-                            Path.Combine(Program.AppDataPath,"DonationSettings.json"),
-                            // Also try to copy the old configs if they exist
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.6.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles.json.bak"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.6.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts.json.bak"),
-                            Path.Combine(Program.AppDataPath,"Settings_1.0.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.0.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.4.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.5.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.6.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings.json.bak"),
-                            Path.Combine(Program.AppDataPath,"DonationSettings.json.bak")
-                        };
-                        // Also add the log files found (including the new date style formatted ones).
-                        listOfFilesToArchive.AddRange(listOfLogFiles);
-
-
-                        foreach (string filename in listOfFilesToArchive)
-                        {
-                            try
-                            {
-                                if (File.Exists(filename))
-                                {
-                                    archive.CreateEntryFromFile(filename, Path.GetFileName(filename), CompressionLevel.Optimal);
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Warn($"SettingsForm/btn_create_support_package_Click: Couldn't add {filename} to the support ZIP file {zipFilePath} as it doesn't exist.");
-                                }
-
-                            }
-                            catch (ArgumentNullException ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while adding files to the support zip file.");
-                            }
-                            catch (System.Runtime.InteropServices.ExternalException ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while adding files to the support zip file.");
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while adding files to the support zip file.");
-                            }
-
-
-                        }
-
-                        archive.Dispose();
-
-                        NLog.LogManager.ResumeLogging();
-
-                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Finished creating support zip file at {zipFilePath}.");
-                        MessageBox.Show($"Created DisplayMagician Support ZIP file {zipFilePath}. You can now attach this file to your GitHub issue using your Web Browser.");
-                    }
-                }
-            }
-            catch (ArgumentNullException ex)
-            {
-                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while creating support zip file.");
-            }
-            catch (System.Runtime.InteropServices.ExternalException ex)
-            {
-                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while creating support zip file.");
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while creating support zip file.");
+                MessageBox.Show(this, "Diagnostic bundles are created by the DisplayMagician Control Service and require an elevated administrator session.", "Administrator Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
 
-
+            using ServiceRecoveryForm recoveryForm = new ServiceRecoveryForm();
+            recoveryForm.ShowDialog(this);
         }
 
         private void btn_service_recovery_Click(object sender, EventArgs e)

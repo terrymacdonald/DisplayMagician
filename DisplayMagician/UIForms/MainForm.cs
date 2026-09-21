@@ -14,7 +14,6 @@ using Microsoft.Toolkit.Uwp.Notifications;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
-using DisplayMagician.Processes;
 using System.ComponentModel;
 using System.Threading.Tasks;
 
@@ -775,7 +774,7 @@ namespace DisplayMagician.UIForms
         private void btn_donate_Click(object sender, EventArgs e)
         {
             string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
             // revert the button back to a nice donated message
@@ -808,7 +807,7 @@ namespace DisplayMagician.UIForms
         private void btn_help_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         public void UpdateNotifyIconText(string text)
@@ -834,7 +833,7 @@ namespace DisplayMagician.UIForms
         private void lbl_donate_Click(object sender, EventArgs e)
         {
             string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
         }

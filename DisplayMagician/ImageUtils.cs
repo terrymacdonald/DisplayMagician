@@ -20,7 +20,6 @@ using System.Windows;
 using BitmapImage = System.Windows.Media.Imaging.BitmapImage;
 using Microsoft.WindowsAPICodePack.Win32Native;
 using System.Runtime.InteropServices.ComTypes;
-using DisplayMagician.Processes;
 
 namespace DisplayMagician
 {
@@ -251,7 +250,7 @@ namespace DisplayMagician
             }
 
             // PE-format binaries (.exe, .com, .msi): use TsudaKageyu.IconExtractor to pull embedded icon resources
-            if (ProcessUtils.IsPEExecutable(fileNameAndPath))
+            if (DesktopShellUtilities.IsPEExecutable(fileNameAndPath))
             {
                 try
                 {
@@ -280,7 +279,7 @@ namespace DisplayMagician
 
             // All executable types (.exe, .com, .msi, .bat, .cmd, .ps1, .lnk, .url) and .ico:
             // ask Windows Shell for its thumbnail / associated icon via WindowsThumbnailProvider.
-            if (ProcessUtils.IsExecutableFileType(fileNameAndPath) || fileNameAndPath.ToLower().EndsWith(".ico"))
+            if (DesktopShellUtilities.IsExecutableFileType(fileNameAndPath) || fileNameAndPath.ToLower().EndsWith(".ico"))
             {
                 try
                 {

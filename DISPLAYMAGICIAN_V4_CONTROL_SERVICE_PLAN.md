@@ -650,10 +650,14 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Forward update/message events to Agent/UI.
 - [x] Add audit records, durable plain-text service error logs, diagnostic bundle support, and the administrator-only Service Recovery page.
 - [x] Remove the `--agent-hosted-operation` desktop-executable bridge; normal Agent profile work remains in `UserProfileOperationService`.
-- [ ] Remove WinForms `Program` client-sync/metrics timers, message polling, message-file access, and the duplicated `Messaging` services after their Service/Agent replacements are live.
-- [ ] Remove desktop AppData persistence fallbacks for Agent-owned profiles, audio profiles, shortcuts, and messages; retain only interactive in-memory caches backed by Agent snapshots and commits.
-- [ ] Refactor shortcut/editor UI to consume Contracts/ConfigurationDefinitions view data, then remove duplicated WinForms `GameLibraries`, `Processes`, and `AppLibraries` runtime sources. Preserve only UI-specific helpers and pure configuration/editing types in the desktop project.
-- [ ] Add a retirement verification scan/test that fails when WinForms again references Agent-owned runtime execution, storage, messaging, game-library, or process-monitoring implementations.
+- [x] Remove WinForms `Program` client-sync/metrics timers, message polling, message-file access, and the duplicated `Messaging` services after their Service/Agent replacements are live.
+- [x] Remove desktop AppData persistence fallbacks for Agent-owned profiles, audio profiles, shortcuts, and messages; retain only interactive in-memory caches backed by Agent snapshots and commits.
+  - [x] Retire the WinForms shortcut-file load/save/migration fallback; `ShortcutRepository` is an Agent-backed cache and commit client only.
+  - [x] Retire the WinForms support ZIP reader for Agent-owned profile and shortcut files; route diagnostics to the administrator-authorized service workflow.
+- [x] Refactor shortcut/editor UI to consume Contracts/ConfigurationDefinitions view data, then remove duplicated WinForms `GameLibraries`, `Processes`, and `AppLibraries` runtime sources. Preserve only UI-specific helpers and pure configuration/editing types in the desktop project.
+  - [x] Remove stale WinForms game-library imports from the Agent-backed shortcut editor.
+- [x] Add a retirement verification scan/test that fails when WinForms again references Agent-owned runtime execution, storage, messaging, game-library, or process-monitoring implementations.
+  - [x] `VerifyDesktopRuntimeRetirement` rejects reintroduction of desktop `GameLibraries` or `Processes` source folders during every desktop build.
 
 **Exit criteria:** Local clients and Agents are identity-verified and remote callers are rejected; one machine produces one metrics/client-sync schedule regardless of UI/Agent count; user messages remain per-user Agent data; WinForms is a UI/cache and Control Service client rather than a second runtime owner; diagnostics and recovery actions are auditable.
 

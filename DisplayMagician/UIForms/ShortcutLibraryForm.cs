@@ -1,5 +1,3 @@
-using DisplayMagician.GameLibraries;
-using DisplayMagician.Processes;
 //using DisplayMagician.Resources;
 using Manina.Windows.Forms;
 using System;
@@ -302,12 +300,6 @@ namespace DisplayMagician.UIForms
             {
                 _shortcutForm = new ShortcutForm();
                 ShowShortcutLoadingWindow();
-                logger.Trace($"ShortcutLibraryForm/btn_new_Click: Starting the Loading the Games in the background tasks.");
-                // Load the games in background on execute
-                GameLibrary.LoadGamesInBackground();
-                // Load the apps in background on execute
-                //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                //      Need to investigate why this particular part was crashing everything.
             }
             _shortcutForm.Owner = this;
 
@@ -404,12 +396,6 @@ namespace DisplayMagician.UIForms
                 if (_shortcutForm == null)
                 {
                     _shortcutForm = new ShortcutForm();
-                    logger.Trace($"ShortcutLibraryForm / btn_edit_Click: Starting the Loading the Games in the background tasks.");
-                    // Load the games in background on execute
-                    GameLibrary.LoadGamesInBackground();
-                    // Load the apps in background on execute
-                    //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                    //      Need to investigate why this particular part was crashing everything.
                 }
                 _shortcutForm.Owner = this;
 
@@ -737,14 +723,14 @@ namespace DisplayMagician.UIForms
         {
             logger.Trace($"ShortcutLibraryForm/btn_help_Click: User clicked on the Help button.");
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Troubleshooting-DisplayMagician";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private void btn_donate_Click(object sender, EventArgs e)
         {
             logger.Trace($"ShortcutLibraryForm/btn_donate_Click: User clicked on the Donate button.");
             string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
 

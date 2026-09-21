@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System.Windows.Forms;
 using DisplayMagician.UIForms;
-using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
 using System.Drawing;
 using NLog.Config;
@@ -37,10 +36,7 @@ namespace DisplayMagician {
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppStartupPath = Application.StartupPath;
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
-        public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
-        public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         public static string AppWallpaperPath = Path.Combine(Program.AppDataPath, $"Wallpaper");
-        public static string AppMessagesPath = Path.Combine(Program.AppDataPath, $"Messages");
         public static string AppLogPath = Path.Combine(Program.AppDataPath, $"Logs");
         public static string AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, @"DisplayMagician.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
@@ -70,7 +66,6 @@ namespace DisplayMagician {
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
 
-        public static List<Game> AppGameList = new List<Game>();
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static DonationSettings AppDonationSettings;
@@ -86,7 +81,6 @@ namespace DisplayMagician {
         public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
         private static NLog.LogLevel _userWantedLogLevel = NLog.LogLevel.Info; // Default log level is Info, but can be changed later based on user settings
         private static bool _userOverrodeLogLevel = false; // Used to track if the user has overridden the log level via command line options
-        private static readonly System.Net.Http.HttpClient AppHttpClient = new System.Net.Http.HttpClient();
         private static bool _packageIdentityWarningNeeded = false;
         private static bool _autoUpdaterEventsRegistered = false;
         private static bool _lastUpdateCheckWasAutomatic = true;
@@ -96,7 +90,6 @@ namespace DisplayMagician {
         private static SynchronizationContext _mainSynchronizationContext;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
         private static readonly CancellationTokenSource _clientEventListenerCancellationSource = new CancellationTokenSource();
-        internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
 
@@ -115,26 +108,12 @@ namespace DisplayMagician {
             }
         }
 
-        public static void ConfigureUserDataPath(string applicationDataPath)
+        private static void ConfigureDesktopSettingsAndLogPath(string userDataPath)
         {
-            if (string.IsNullOrWhiteSpace(applicationDataPath))
-                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
-
-            AppDataPath = Path.GetFullPath(applicationDataPath);
-            AppIconPath = Path.Combine(AppDataPath, "Icons");
-            AppProfilePath = Path.Combine(AppDataPath, "Profiles");
-            AppShortcutPath = Path.Combine(AppDataPath, "Shortcuts");
-            AppWallpaperPath = Path.Combine(AppDataPath, "Wallpaper");
-            AppMessagesPath = Path.Combine(AppDataPath, "Messages");
-            AppLogPath = Path.Combine(AppDataPath, "Logs");
-            AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
-            AppOriginIconFilename = Path.Combine(AppIconPath, "Origin.ico");
-            AppSteamIconFilename = Path.Combine(AppIconPath, "Steam.ico");
-            AppUplayIconFilename = Path.Combine(AppIconPath, "Uplay.ico");
-            AppEpicIconFilename = Path.Combine(AppIconPath, "Epic.ico");
-            ProgramSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
-            DonationSettings.ConfigureStoragePath(Path.Combine(AppDataPath, "Settings"));
-            ShortcutRepository.ConfigureStoragePath(AppDataPath);
+            string rootPath = Path.GetFullPath(userDataPath);
+            ProgramSettings.ConfigureStoragePath(Path.Combine(rootPath, "Settings"));
+            DonationSettings.ConfigureStoragePath(Path.Combine(rootPath, "Settings"));
+            AppLogPath = Path.Combine(rootPath, "Logs");
         }
 
         private static void ConfigureLogPath(string legacyLogPath)
@@ -256,7 +235,7 @@ namespace DisplayMagician {
             string legacyLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs");
             if (V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
             {
-                ConfigureUserDataPath(migratedUserDataPath);
+                ConfigureDesktopSettingsAndLogPath(migratedUserDataPath);
             }
 
             ConfigureLogPath(legacyLogPath);
@@ -382,9 +361,6 @@ namespace DisplayMagician {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Set up some defaults for the shared HttpClient
-            AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
-
             // Check if DisplayMagician is not installed (and is portable) by looking for the installer registry key for this executable path.
             // We need to know this so that we can handle certain things differently for installed vs portable users, such as where we store the settings file, and whether we show the "you need to install DisplayMagician" message when certain errors occur that we can detect are due to the fact the user is running in portable mode without realising it.
             AppNotInstalled = DMIsNotInstalled();          
@@ -441,7 +417,6 @@ namespace DisplayMagician {
             {
                 AppProgramSettings.SaveSettings();
             }
-            InitializeAnonymousMetricsService();
             ReportAnonymousMetricsUsage(isLaunch: true, activeMinutes: 0);
 
             // Load the Donation Settings and update the number of times run and number of starts since last donation form and button animation, and save the settings back to the file
@@ -555,55 +530,6 @@ namespace DisplayMagician {
             {
                 logger.Trace($"Program/Main: Application Icon Folder {AppIconPath} already exists so skipping creating it");
             }
-            if (!Directory.Exists(AppProfilePath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppProfilePath);
-                    logger.Trace($"Program/Main: Created the Application Profile Folder {AppProfilePath}");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Profile Folder {AppProfilePath}");
-                }
-            }
-            else
-            {
-                logger.Trace($"Program/Main: Application Profile Folder {AppProfilePath} already exists so skipping creating it");
-            }
-            if (!Directory.Exists(AppShortcutPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppShortcutPath);
-                    logger.Trace($"Program/Main: Created the Application Shortcut Folder {AppShortcutPath}");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
-                }
-            }
-            else
-            {
-                logger.Trace($"Program/Main: Application Shortcut Folder {AppShortcutPath} already exists so skipping creating it");
-            }
-            if (!Directory.Exists(AppWallpaperPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppWallpaperPath);
-                    logger.Trace($"Program/Main: Created the Application Wallpaper Folder {AppWallpaperPath}");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
-                }
-            }
-            else
-            {
-                logger.Trace($"Program/Main: Application Wallpaper Folder {AppWallpaperPath} already exists so skipping creating it");
-            }
-
             //if (AppVersionUpgrade)
             //{
             //    // Do all the upgrade things
@@ -1350,17 +1276,16 @@ namespace DisplayMagician {
             {
                 try
                 {
-                    await RunClientSyncAndNotifyUserAsync(manual: false);
-                    ListenForControlServiceEventsAsync(_clientEventListenerCancellationSource.Token);
+                    await ListenForControlServiceEventsAsync(_clientEventListenerCancellationSource.Token);
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, "Program/QueueStartupBackgroundTasks: Scheduled client sync failed. DisplayMagician will continue running.");
+                    logger.Warn(ex, "Program/QueueStartupBackgroundTasks: Control Service event subscription failed. DisplayMagician will continue running.");
                 }
             });
         }
 
-        private static async void ListenForControlServiceEventsAsync(CancellationToken cancellationToken)
+        private static async Task ListenForControlServiceEventsAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -1432,28 +1357,6 @@ namespace DisplayMagician {
             }
         }
 
-        private static void InitializeAnonymousMetricsService()
-        {
-            try
-            {
-                ControlServicePipeClient client = new ControlServicePipeClient();
-                client.InitializeAnonymousMetricsAsync(new InitializeAnonymousMetricsRequest
-                {
-                    InstallId = AppProgramSettings.InstallId,
-                    ShareAnonymousUsageMetrics = AppProgramSettings.ShareAnonymousUsageMetrics,
-                    Launches = AppProgramSettings.TotalAnonymousMetricLaunches,
-                    ActiveMinutes = AppProgramSettings.TotalAnonymousMetricActiveMinutes,
-                    NextHeartbeatUtc = AppProgramSettings.NextMetricsHeartbeatUtc,
-                    LastReportedVersion = AppProgramSettings.LastMetricsReportedVersion
-                }, CancellationToken.None).GetAwaiter().GetResult();
-                AppProgramSettings.ShareAnonymousUsageMetrics = client.GetAnonymousMetricsSettingsAsync(CancellationToken.None).GetAwaiter().GetResult().ShareAnonymousUsageMetrics;
-            }
-            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
-            {
-                logger.Warn(ex, "Program/InitializeAnonymousMetricsService: The Control Service anonymous metrics store is unavailable.");
-            }
-        }
-
         public static bool GetShareAnonymousUsageMetrics()
         {
             try
@@ -1463,7 +1366,7 @@ namespace DisplayMagician {
             catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
             {
                 logger.Warn(ex, "Program/GetShareAnonymousUsageMetrics: The Control Service anonymous metrics settings are unavailable.");
-                return AppProgramSettings.ShareAnonymousUsageMetrics;
+                return false;
             }
         }
 
@@ -1471,8 +1374,7 @@ namespace DisplayMagician {
         {
             try
             {
-                AnonymousMetricsSettings settings = new ControlServicePipeClient().UpdateAnonymousMetricsSettingsAsync(shareAnonymousUsageMetrics, CancellationToken.None).GetAwaiter().GetResult();
-                AppProgramSettings.ShareAnonymousUsageMetrics = settings.ShareAnonymousUsageMetrics;
+                new ControlServicePipeClient().UpdateAnonymousMetricsSettingsAsync(shareAnonymousUsageMetrics, CancellationToken.None).GetAwaiter().GetResult();
                 return true;
             }
             catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
