@@ -1,7 +1,6 @@
 using System;
-using System.ComponentModel;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -22,7 +21,7 @@ public static class WinLibrary
             foreach (ManagementObject controller in searcher.Get())
             {
                 string deviceId = controller["PNPDeviceID"] as string;
-                Match match = Regex.Match(deviceId ?? string.Empty, @"(?:PCI|USB)\\(?:VEN|VID)_([\\d\\w]{4})&", RegexOptions.IgnoreCase);
+                Match match = Regex.Match(deviceId ?? string.Empty, @"(?:PCI|USB)\\(?:VEN|VID)_([\d\w]{4})&", RegexOptions.IgnoreCase);
                 if (match.Success && !videoCardVendorIds.Any(vendor => string.Equals(vendor, match.Groups[1].Value, StringComparison.OrdinalIgnoreCase)))
                 {
                     videoCardVendorIds.Add(match.Groups[1].Value);
@@ -92,7 +91,7 @@ public static class WinLibrary
     private static extern int RmShutdown(uint sessionHandle, int actionFlags, IntPtr statusCallback);
 
     [DllImport("rstrtmgr")]
-    private static extern int RmRestart(uint sessionHandle, int restartFlags, IntPtr statusCallback);
+    private static extern int RmRestart(uint sessionHandle, int actionFlags, IntPtr statusCallback);
 
     [DllImport("rstrtmgr")]
     private static extern int RmEndSession(uint sessionHandle);
