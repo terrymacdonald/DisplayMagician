@@ -199,6 +199,11 @@ public sealed class ShortcutRunner
                     await Task.Run(GameLibrary.LoadGamesInBackground, cancellationToken).ConfigureAwait(false);
                 }
 
+                if (string.IsNullOrWhiteSpace(shortcut.GameAppId))
+                {
+                    return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                }
+
                 Game? game = GameLibrary.GetAnyGameById(shortcut.GameAppId);
                 if (game == null)
                 {

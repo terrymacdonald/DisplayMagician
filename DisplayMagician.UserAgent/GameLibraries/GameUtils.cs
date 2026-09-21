@@ -7,7 +7,7 @@ namespace DisplayMagician.GameLibraries
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public static string GetMainModuleFilepath(int processId)
+        public static string? GetMainModuleFilepath(int processId)
         {
             logger.Debug($"GameUtils/GetMainModuleFilepath: Using an alternative thread safe way to get the main module file path from the process with ProcessId = {processId}");
 
@@ -16,11 +16,12 @@ namespace DisplayMagician.GameLibraries
             {
                 using (var results = searcher.Get())
                 {
-                    ManagementObject mo = results.Cast<ManagementObject>().FirstOrDefault();
+                    ManagementObject? mo = results.Cast<ManagementObject>().FirstOrDefault();
                     if (mo != null)
                     {
-                        logger.Debug($"GameUtils/GetMainModuleFilepath: Process eexecutable path is {(string)mo["ExecutablePath"]}");
-                        return (string)mo["ExecutablePath"];
+                        string? executablePath = mo["ExecutablePath"] as string;
+                        logger.Debug($"GameUtils/GetMainModuleFilepath: Process executable path is {executablePath}");
+                        return executablePath;
                     }
                 }
             }

@@ -176,7 +176,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool ProgressiveSet => ModeFlag == 0x0;
         public bool InterlacedSet => ModeFlag == 0x2;
 
-        public override bool Equals(object obj) => obj is ADL_MODE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_MODE other && this.Equals(other);
         public bool Equals(ADL_MODE other)
         {
             if(AdapterIndex != other.AdapterIndex)
@@ -273,7 +273,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         // DisplayTarget Value settings
         public bool DisplayTargetPreferredSet => (DisplayTargetValue & 0x1) == 0x1;
 
-        public override bool Equals(object obj) => obj is ADL_DISPLAY_TARGET other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_DISPLAY_TARGET other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_TARGET other)
         {
             if (!DisplayID.Equals(other.DisplayID))
@@ -361,7 +361,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 #define ADL_ADAPTER_DISPLAYCAP_PREFERDISPLAY_SUPPORTED            0x00000100
                 #define ADL_ADAPTER_DISPLAYCAP_BEZEL_SUPPORTED                    0x00000200*/
 
-        public override bool Equals(object obj) => obj is ADL_ADAPTER_DISPLAY_CAP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_ADAPTER_DISPLAY_CAP other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_DISPLAY_CAP other)
         {
             if(AdapterIndex != other.AdapterIndex)
@@ -434,7 +434,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         /// <summary> OS Display Index</summary>
         public int OSDisplayIndex;
 
-        public override bool Equals(object obj) => obj is ADL_ADAPTER_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_ADAPTER_INFO other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_INFO other)
         {
             if(Size != other.Size)
@@ -612,7 +612,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool MannerReserved3Set => (InfoValue & 0x80000) == 0x80000;
         public bool ShowTypeProjectorSet => (InfoValue & 0x100000) == 0x100000;
 
-        public override bool Equals(object obj) => obj is ADL_ADAPTER_INFOX2 other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_ADAPTER_INFOX2 other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_INFOX2 other)
         {
             if (Size != other.Size)
@@ -738,7 +738,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             Reserved = new int[4];
         }
 
-        public override bool Equals(object obj) => obj is ADL_DISPLAY_EDID_DATA other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_DISPLAY_EDID_DATA other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_EDID_DATA other)
         {
             if (Size != other.Size) {
@@ -920,7 +920,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool FreeSyncHDRBacklightSupported => (SupportedHDR & 0x1) == 0x1;
         public bool FreeSyncHDRLocalDimmingSupported => (SupportedHDR & 0x2) == 0x2;
 
-        public override bool Equals(object obj) => obj is ADL_DDC_INFO2 other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_DDC_INFO2 other && this.Equals(other);
         public bool Equals(ADL_DDC_INFO2 other)
         {
             if(Size != other.Size)
@@ -1143,7 +1143,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         /// <summary> Adapter Physical Index </summary>
         public int DisplayPhysicalAdapterIndex;
 
-        public override bool Equals(object obj) => obj is ADL_DISPLAY_ID other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_DISPLAY_ID other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_ID other)
         {
             if(DisplayLogicalIndex != other.DisplayLogicalIndex)
@@ -1321,7 +1321,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool MannerReserved3Set => (DisplayInfoValue & 0x80000) == 0x80000;
         public bool ShowTypeProjectorSet => (DisplayInfoValue & 0x100000) == 0x100000;
 
-        public override bool Equals(object obj) => obj is ADL_DISPLAY_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_DISPLAY_INFO other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_INFO other)
         {
             if (!DisplayID.Equals(other.DisplayID))
@@ -1413,7 +1413,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool ConnectorTypeIsHDMITypeB => ConnectorType == 9;
         public bool ConnectorTypeIsDisplayPort => ConnectorType == 10;
 
-        public override bool Equals(object obj) => obj is ADL_DISPLAY_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_CONFIG other)
         {
             if (Size != other.Size)
@@ -1488,7 +1488,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool DisplayMapVStretchSet => (DisplayMapValue & 0x40) == 0x40;
         public bool DisplayMapVLDSet => (DisplayMapValue & 0x80) == 0x80;
 
-        public override bool Equals(object obj) => obj is ADL_DISPLAY_MAP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_DISPLAY_MAP other && this.Equals(other);
         public bool Equals(ADL_DISPLAY_MAP other)
         {
             if (DisplayMapIndex != other.DisplayMapIndex)
@@ -1581,7 +1581,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool CapPreferredDisplaySet => (CapsValue & 0x100) == 0x100;
         public bool CapBezelSet => (CapsValue & 0x200) == 0x200;
 
-        public override bool Equals(object obj) => obj is ADL_ADAPTER_CAPSX2 other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_ADAPTER_CAPSX2 other && this.Equals(other);
         public bool Equals(ADL_ADAPTER_CAPSX2 other)
         {
             if(AdapterID != other.AdapterID)
@@ -1657,7 +1657,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         /// <summary> The DisplayTargets being tested </summary>
         public ADL_DISPLAY_TARGET DisplayTargets;
 
-        public override bool Equals(object obj) => obj is ADL_POSSIBLE_MAP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_POSSIBLE_MAP other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_MAP other)
         {
             if(Index != other.Index)
@@ -1738,7 +1738,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         #define ADL_DISPLAY_DISPLAYMAP_MANNER_VSTRETCH            0x00000040
         #define ADL_DISPLAY_DISPLAYMAP_MANNER_VLD                0x00000080*/
 
-        public override bool Equals(object obj) => obj is ADL_POSSIBLE_MAPPING other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_POSSIBLE_MAPPING other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_MAPPING other)
         {
             if(DisplayIndex != other.DisplayIndex)
@@ -1801,7 +1801,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         #define ADL_DISPLAY_POSSIBLEMAPRESULT_BEZELSUPPORTED    0x00000002
         #define ADL_DISPLAY_POSSIBLEMAPRESULT_OVERLAPSUPPORTED    0x00000004*/
 
-        public override bool Equals(object obj) => obj is ADL_POSSIBLE_MAP_RESULT other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_POSSIBLE_MAP_RESULT other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_MAP_RESULT other)
         {
             if(Index != other.Index)
@@ -1891,7 +1891,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             SLSGridValue = 0;
         }
 
-        public override bool Equals(object obj) => obj is ADL_SLS_GRID other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_SLS_GRID other && this.Equals(other);
         public bool Equals(ADL_SLS_GRID other)
         {
             if (AdapterIndex != other.AdapterIndex)
@@ -2037,7 +2037,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         }
 
 
-        public override bool Equals(object obj) => obj is ADL_SLS_MAP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_SLS_MAP other && this.Equals(other);
         public bool Equals(ADL_SLS_MAP other)
         {
             if (AdapterIndex != other.AdapterIndex)
@@ -2159,7 +2159,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         // SLSTargetValue settings
         public bool SLSTargetNotSLSBuilderSet => (SLSTargetValue & 0x1) == 0x1;
 
-        public override bool Equals(object obj) => obj is ADL_SLS_TARGET other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_SLS_TARGET other && this.Equals(other);
         public bool Equals(ADL_SLS_TARGET other)
         {
             if(AdapterIndex != other.AdapterIndex)
@@ -2234,7 +2234,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         /// <summary> The bit mask identifies the display status. </summary>
         public int SLSNativeModeValue;
 
-        public override bool Equals(object obj) => obj is ADL_SLS_MODE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_SLS_MODE other && this.Equals(other);
         public bool Equals(ADL_SLS_MODE other)
         {
             if(AdapterIndex != other.AdapterIndex)
@@ -2303,7 +2303,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         /// <summary> The bit mask identifies the display status.  </summary>
         public int SLSBezelTransientModeValue;
 
-        public override bool Equals(object obj) => obj is ADL_BEZEL_TRANSIENT_MODE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_BEZEL_TRANSIENT_MODE other && this.Equals(other);
         public bool Equals(ADL_BEZEL_TRANSIENT_MODE other)
         {
             if(AdapterIndex != other.AdapterIndex)
@@ -2377,7 +2377,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         /// <summary> The SLS Target List. </summary>
         public ADL_SLS_TARGET[] SLSTargets; // Not quite sure this is right
 
-        public override bool Equals(object obj) => obj is ADL_POSSIBLE_SLS_MAP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_POSSIBLE_SLS_MAP other && this.Equals(other);
         public bool Equals(ADL_POSSIBLE_SLS_MAP other)
         {
             if(SLSMapIndex != other.SLSMapIndex)
@@ -2457,7 +2457,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         /*#define ADL_DISPLAY_BEZELOFFSET_STEPBYSTEPSET            0x00000004
         #define ADL_DISPLAY_BEZELOFFSET_COMMIT                    0x00000008*/
 
-        public override bool Equals(object obj) => obj is ADL_SLS_OFFSET other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADL_SLS_OFFSET other && this.Equals(other);
         public bool Equals(ADL_SLS_OFFSET other)
         {
             if(AdapterIndex != other.AdapterIndex)

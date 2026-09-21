@@ -123,7 +123,7 @@ namespace DisplayMagician.Messaging
             return changed;
         }
 
-        public async Task<MessageSyncResult> SyncMessagesAsync(string appVersion, CancellationToken cancellationToken, MessageManifestDocument suppliedManifest = null, Uri suppliedManifestUri = null, bool authoritativeSnapshot = false)
+        public async Task<MessageSyncResult> SyncMessagesAsync(string appVersion, CancellationToken cancellationToken, MessageManifestDocument? suppliedManifest = null, Uri? suppliedManifestUri = null, bool authoritativeSnapshot = false)
         {
             MessageStoreDocument store = LoadStore();
             store.LastAttemptCheckUtc = DateTime.UtcNow;
@@ -237,7 +237,7 @@ namespace DisplayMagician.Messaging
                     existing.PublishedUtc = entry.PublishedUtc;
                     existing.Vendors = entry.Vendors ?? new List<string>();
                     existing.Format = format;
-                    existing.Sha256 = entry.Sha256;
+                    existing.Sha256 = entry.Sha256 ?? string.Empty;
                     existing.ShowOnStartup = entry.ShowOnStartup;
                     existing.Kind = messageKind;
                     existing.ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null;
@@ -337,7 +337,7 @@ namespace DisplayMagician.Messaging
                             IsRead = false,
                             Vendors = entry.Vendors ?? new List<string>(),
                             Format = format,
-                            Sha256 = entry.Sha256,
+                            Sha256 = entry.Sha256 ?? string.Empty,
                             ShowOnStartup = entry.ShowOnStartup,
                             Kind = messageKind,
                             ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null,
@@ -378,7 +378,7 @@ namespace DisplayMagician.Messaging
                     existing.MarkdownFileName = safeFileName;
                     existing.SourceMarkdownUrl = targetUrl;
                     existing.Format = format;
-                    existing.Sha256 = entry.Sha256;
+                    existing.Sha256 = entry.Sha256 ?? string.Empty;
                     existing.ShowOnStartup = entry.ShowOnStartup;
                     existing.Kind = messageKind;
                     existing.ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null;
@@ -401,7 +401,7 @@ namespace DisplayMagician.Messaging
                         IsRead = false,
                         Vendors = entry.Vendors ?? new List<string>(),
                         Format = format,
-                        Sha256 = entry.Sha256,
+                        Sha256 = entry.Sha256 ?? string.Empty,
                         ShowOnStartup = entry.ShowOnStartup,
                         Kind = messageKind,
                         ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null,
@@ -466,7 +466,7 @@ namespace DisplayMagician.Messaging
 
             try
             {
-                Uri resolved = Uri.TryCreate(markdownUrl, UriKind.Absolute, out Uri absolute)
+                Uri resolved = Uri.TryCreate(markdownUrl, UriKind.Absolute, out Uri? absolute) && absolute != null
                     ? absolute
                     : new Uri(manifestUri, markdownUrl);
 
@@ -556,19 +556,19 @@ namespace DisplayMagician.Messaging
 
         private static bool MatchesVersionRange(string? minVersionText, string? maxVersionText, string currentVersionText)
         {
-            Version current = ParseVersion(currentVersionText);
+            Version? current = ParseVersion(currentVersionText);
             if (current == null)
             {
                 return true;
             }
 
-            Version min = ParseVersion(minVersionText);
+            Version? min = ParseVersion(minVersionText);
             if (min != null && current < min)
             {
                 return false;
             }
 
-            Version max = ParseVersion(maxVersionText);
+            Version? max = ParseVersion(maxVersionText);
             if (max != null && current > max)
             {
                 return false;
@@ -597,7 +597,7 @@ namespace DisplayMagician.Messaging
                 try
                 {
                     string mediaUrl = match.Groups["url"].Value;
-                    Uri mediaUri = Uri.TryCreate(mediaUrl, UriKind.Absolute, out Uri absolute)
+                    Uri mediaUri = Uri.TryCreate(mediaUrl, UriKind.Absolute, out Uri? absolute) && absolute != null
                         ? absolute
                         : new Uri(manifestUri, mediaUrl);
                     using HttpResponseMessage response = await _httpClient.GetAsync(mediaUri, cancellationToken).ConfigureAwait(false);
@@ -650,7 +650,7 @@ namespace DisplayMagician.Messaging
                     continue;
                 }
 
-                Uri mediaUri = Uri.TryCreate(media.Url, UriKind.Absolute, out Uri absolute) ? absolute : new Uri(manifestUri, media.Url);
+                Uri mediaUri = Uri.TryCreate(media.Url, UriKind.Absolute, out Uri? absolute) && absolute != null ? absolute : new Uri(manifestUri, media.Url);
                 try
                 {
                     using HttpResponseMessage response = await _httpClient.GetAsync(mediaUri, cancellationToken).ConfigureAwait(false);
@@ -746,7 +746,7 @@ namespace DisplayMagician.Messaging
                 normalized = normalized.Substring(0, separatorIndex);
             }
 
-            return Version.TryParse(normalized, out Version version)
+            return Version.TryParse(normalized, out Version? version)
                 ? version
                 : null;
         }
@@ -874,7 +874,7 @@ namespace DisplayMagician.Messaging
                         return new MessageStoreDocument();
                     }
 
-                    MessageStoreDocument store = JsonConvert.DeserializeObject<MessageStoreDocument>(json);
+                    MessageStoreDocument? store = JsonConvert.DeserializeObject<MessageStoreDocument>(json);
                     return store ?? new MessageStoreDocument();
                 }
                 catch (Exception ex)

@@ -28,8 +28,8 @@ namespace DisplayMagician.GameLibraries
         private List<Game> _allGames = new List<Game>();
         private string uplayAppIdRegex = @"^[0-9A-F]{1,10}$";
         private bool _isUplayInstalled = false;
-        private string _uplayExe;
-        private string _uplayPath;
+        private string _uplayExe = string.Empty;
+        private string _uplayPath = string.Empty;
         private List<string> _uplayProcessList = new List<string>() { "UbisoftGameLauncher", "UbisoftGameLauncher64" };
         //private string _uplayConfigVdfFile;
         internal string registryUplayLauncherKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher";
@@ -51,14 +51,15 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Trace($"UplayLibrary/UplayLibrary: Uplay launcher registry key = HKLM\\{registryUplayLauncherKey}");
                 // Find the UplayExe location, and the UplayPath for later
-                RegistryKey uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
+                RegistryKey? uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
                 if (uplayInstallKey == null)
                 {
                     logger.Info($"UplayLibrary/UplayLibrary: Uplay library is not installed!");
                     return;
                 }
-                _uplayPath = uplayInstallKey.GetValue("InstallDir", "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\").ToString();
-                _uplayExe = $"{_uplayPath}upc.exe";
+                _uplayPath = uplayInstallKey.GetValue("InstallDir") as string
+                    ?? "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\";
+                _uplayExe = Path.Combine(_uplayPath, "upc.exe");
                 if (File.Exists(_uplayExe))
                 {
                     logger.Info($"UplayLibrary/UplayLibrary: Uplay library is installed in {_uplayPath}. Found {_uplayExe}");
@@ -223,7 +224,10 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"UplayLibrary/AddGame: Updating Uplay game {uplayGame.Name} in our Uplay library");
                 // We update the existing Shortcut with the data over
-                UplayGame uplayGameToUpdate = (UplayGame)GetGame(uplayGame.Id.ToString());
+                UplayGame? uplayGameToUpdate = GetGame(uplayGame.Id.ToString()) as UplayGame;
+                if (uplayGameToUpdate == null)
+                    return false;
+
                 uplayGame.CopyTo(uplayGameToUpdate);
             }
             else
@@ -424,7 +428,7 @@ namespace DisplayMagician.GameLibraries
         {
             filePath = "";
 
-            RegistryKey uplayGameInstallKey;
+            RegistryKey? uplayGameInstallKey;
             if (regKeyPath.StartsWith("HKEY_LOCAL_MACHINE"))
             {
                 logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKLM reg key {regKeyPath}");
@@ -451,7 +455,7 @@ namespace DisplayMagician.GameLibraries
             }
 
             // From that we lookup the actual game path
-            string gameInstallDir = uplayGameInstallKey.GetValue("InstallDir", "").ToString();
+            string gameInstallDir = uplayGameInstallKey.GetValue("InstallDir", "")?.ToString() ?? string.Empty;
             logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: gameInstallDir found  = {gameInstallDir}");
             if (!String.IsNullOrWhiteSpace(gameInstallDir))
             {
@@ -478,7 +482,7 @@ namespace DisplayMagician.GameLibraries
 
                 logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Game Installs Registry Key = HKLM\\{registryUplayInstallsKey}");
 
-                using (RegistryKey uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayInstallsKey, RegistryKeyPermissionCheck.ReadSubTree))
+                using (RegistryKey? uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayInstallsKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     if (uplayInstallKey != null)
                     {
@@ -488,12 +492,12 @@ namespace DisplayMagician.GameLibraries
                             if (int.TryParse(uplayGameKeyName, out int uplayGameId))
                             {
                                 string uplayGameKeyFullName = $"{registryUplayInstallsKey}\\{uplayGameKeyName}";
-                                using (RegistryKey uplayGameKey = Registry.LocalMachine.OpenSubKey(uplayGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
+                                using (RegistryKey? uplayGameKey = Registry.LocalMachine.OpenSubKey(uplayGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
                                     if (uplayGameKey == null)
                                         continue;
 
-                                    if (!uplayGameKey.GetValue(@"InstallDir", "").ToString().Equals(""))
+                                    if (!string.IsNullOrEmpty(uplayGameKey.GetValue(@"InstallDir", "")?.ToString()))
                                     {
                                         uplayGamesInstalledCount++;
                                     }

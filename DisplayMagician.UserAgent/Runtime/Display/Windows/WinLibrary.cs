@@ -37,7 +37,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             SDRWhiteLevel = new DISPLAYCONFIG_SDR_WHITE_LEVEL();
         }
 
-        public override bool Equals(object obj) => obj is ADVANCED_HDR_INFO_PER_PATH other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ADVANCED_HDR_INFO_PER_PATH other && this.Equals(other);
         public bool Equals(ADVANCED_HDR_INFO_PER_PATH other)
         {
             // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
@@ -83,7 +83,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             SourceDPIScalingInfo = new DPIScalingInfo();
         }
 
-        public override bool Equals(object obj) => obj is DISPLAY_SOURCE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAY_SOURCE other && this.Equals(other);
         public bool Equals(DISPLAY_SOURCE other)
         {
             //SourceId.Equals(other.SourceId) &&  // Source ID needs to be ignored in this case, as windows moves the source ids around :(
@@ -156,7 +156,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             DisplayIdentifiers = new List<string>();
         }
 
-        public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(WINDOWS_DISPLAY_CONFIG other)
         {
             if (IsCloned != other.IsCloned)

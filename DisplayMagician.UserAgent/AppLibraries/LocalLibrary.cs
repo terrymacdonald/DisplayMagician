@@ -85,7 +85,7 @@ namespace DisplayMagician.AppLibraries
             }
         }
 
-        public override string AppLibraryExe
+        public override string? AppLibraryExe
         {
             get
             {
@@ -93,7 +93,7 @@ namespace DisplayMagician.AppLibraries
             }
         }
 
-        public override string AppLibraryPath
+        public override string? AppLibraryPath
         {
             get
             {
@@ -162,8 +162,14 @@ namespace DisplayMagician.AppLibraries
             {
                 logger.Debug($"LocalLibrary/AddLocalApp: Updating Local App {LocalApp.Name} in our Local library");
                 // We update the existing Shortcut with the data over
-                LocalApp LocalAppToUpdate = (LocalApp)GetApp(LocalApp.Id.ToString());
-                LocalApp.CopyTo(LocalAppToUpdate);
+                LocalApp? localAppToUpdate = GetApp(LocalApp.Id.ToString()) as LocalApp;
+                if (localAppToUpdate == null)
+                {
+                    logger.Warn($"LocalLibrary/AddApp: Existing local app {LocalApp.Id} could not be retrieved for update.");
+                    return false;
+                }
+
+                LocalApp.CopyTo(localAppToUpdate);
             }
             else
             {
@@ -317,7 +323,7 @@ namespace DisplayMagician.AppLibraries
         }
 
 
-        public override App GetApp(string LocalAppNameOrId)
+        public override App? GetApp(string LocalAppNameOrId)
         {
             if (String.IsNullOrWhiteSpace(LocalAppNameOrId))
                 return null;
@@ -346,7 +352,7 @@ namespace DisplayMagician.AppLibraries
 
         }
 
-        public override App GetAppById(string LocalAppId)
+        public override App? GetAppById(string LocalAppId)
         {
             foreach (LocalApp testLocalApp in _allLocalApps)
             {
@@ -377,7 +383,7 @@ namespace DisplayMagician.AppLibraries
                 // Loop through the returned data, and create a list of DisplayMagician Apps
                 foreach (InstalledProgram installedProgram in installedPrograms)
                 {
-                    string localAppFilename = Path.GetFileName(installedProgram.Path);
+                    string? localAppFilename = Path.GetFileName(installedProgram.Path);
                     LocalApp localApp = new LocalApp();
                     localApp.Id = installedProgram.AppId;
                     localApp.Name = installedProgram.Name;
@@ -432,7 +438,7 @@ namespace DisplayMagician.AppLibraries
         }
 
 
-        public override List<Process> StartApp(App App, string AppArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public override List<Process>? StartApp(App App, string AppArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             //List<Process> AppProcesses = ProcessUtils.StartProcess(App.ExePath, AppArguments, processPriority);
             List<Process> appProcesses = new List<Process>();
@@ -453,9 +459,9 @@ namespace DisplayMagician.AppLibraries
             return false;
         }
 
-        public string GetProcessFromAppId(string localAppId)
+        public string? GetProcessFromAppId(string localAppId)
         {
-            App localApp = GetAppById(localAppId);
+            App? localApp = GetAppById(localAppId);
             if (localApp == null)
             {
                 // No App found, so return null
@@ -480,24 +486,24 @@ namespace DisplayMagician.AppLibraries
 
     public class LocalPlayTask
     {
-        public string category;
-        public string compatibilityFlags;
+        public string category = string.Empty;
+        public string compatibilityFlags = string.Empty;
         public bool isPrimary;
-        public List<string> languages;
-        public string name;
-        public string path;
-        public string type;
+        public List<string> languages = new List<string>();
+        public string name = string.Empty;
+        public string path = string.Empty;
+        public string type = string.Empty;
     }
     public class LocalAppInfo
     {
-        public string buildId;
-        public string clientId;
-        public string AppId;
-        public string language;
-        public List<string> languages;
-        public string name;
-        public List<LocalPlayTask> playTasks;
-        public string rootAppId;
+        public string buildId = string.Empty;
+        public string clientId = string.Empty;
+        public string AppId = string.Empty;
+        public string language = string.Empty;
+        public List<string> languages = new List<string>();
+        public string name = string.Empty;
+        public List<LocalPlayTask> playTasks = new List<LocalPlayTask>();
+        public string rootAppId = string.Empty;
         public int version;
     }
 

@@ -11,14 +11,14 @@ namespace DisplayMagician.GameLibraries
 {
     public class GogGame : Game
     {
-        private string _gogGameId;
-        private string _gogGameName;
-        private string _gogGameExePath;
-        private string _gogGameDir;
-        private string _gogGameExe;
-        private string _gogGameProcessName;
+        private string _gogGameId = string.Empty;
+        private string _gogGameName = string.Empty;
+        private string _gogGameExePath = string.Empty;
+        private string _gogGameDir = string.Empty;
+        private string _gogGameExe = string.Empty;
+        private string _gogGameProcessName = string.Empty;
         private List<Process> _gogGameProcesses = new List<Process>();
-        private string _gogGameIconPath;
+        private string _gogGameIconPath = string.Empty;
         //private string _gogURI;
         private static readonly GogLibrary _gogGameLibrary = GogLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -32,7 +32,7 @@ namespace DisplayMagician.GameLibraries
             _gogGameId = gogGameId;
             _gogGameName = gogGameName;
             _gogGameExePath = gogGameExePath;
-            _gogGameDir = Path.GetDirectoryName(gogGameExePath);
+            _gogGameDir = Path.GetDirectoryName(gogGameExePath) ?? string.Empty;
             _gogGameExe = Path.GetFileName(_gogGameExePath);
             _gogGameProcessName = Path.GetFileNameWithoutExtension(_gogGameExePath);
             _gogGameIconPath = gogGameIconPath;

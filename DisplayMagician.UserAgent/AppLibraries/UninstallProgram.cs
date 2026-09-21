@@ -12,19 +12,19 @@ namespace DisplayMagician.AppLibraries
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public string DisplayIcon { get; set; }
-        public string DisplayName { get; set; }
-        public string DisplayVersion { get; set; }
-        public string InstallLocation { get; set; }
-        public string Publisher { get; set; }
-        public string UninstallString { get; set; }
-        public string URLInfoAbout { get; set; }
-        public string RegistryKeyName { get; set; }
-        public string Path { get; set; }
+        public string? DisplayIcon { get; set; }
+        public string? DisplayName { get; set; }
+        public string? DisplayVersion { get; set; }
+        public string? InstallLocation { get; set; }
+        public string? Publisher { get; set; }
+        public string? UninstallString { get; set; }
+        public string? URLInfoAbout { get; set; }
+        public string? RegistryKeyName { get; set; }
+        public string? Path { get; set; }
 
         public override string ToString()
         {
-            return DisplayName ?? RegistryKeyName;
+            return DisplayName ?? RegistryKeyName ?? string.Empty;
         }
 
         private static readonly string[] uninstallerMasks = new string[]

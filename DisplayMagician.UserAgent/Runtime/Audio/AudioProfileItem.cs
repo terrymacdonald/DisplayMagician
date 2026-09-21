@@ -19,7 +19,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
     public class AudioProfileItem : IComparable<AudioProfileItem>, IEquatable<AudioProfileItem>
     {
-        private AudioProfile _windowsAudioConfig;
+        private AudioProfile? _windowsAudioConfig;
 
         private int _applyProfileDelay = 0;
 
@@ -79,7 +79,7 @@ namespace DisplayMagician.UserAgent.Runtime
         public virtual string Name { get; set; }
 
         [JsonRequired]
-        public AudioProfile WindowsAudioConfig
+        public AudioProfile? WindowsAudioConfig
         {
             get
             {
@@ -180,6 +180,13 @@ namespace DisplayMagician.UserAgent.Runtime
                 return false;
             }
 
+            AudioProfile? windowsAudioConfig = WindowsAudioConfig;
+            if (windowsAudioConfig == null)
+            {
+                SharedLogger.logger.Error($"AudioProfileItem/SetActive: The Windows Audio Profile {Name} has no audio settings to apply.");
+                return false;
+            }
+
             try
             {
                 bool itWorkedforWindows = false;
@@ -188,7 +195,7 @@ namespace DisplayMagician.UserAgent.Runtime
                 using (WindowsAudioController controller = new WindowsAudioController())
                 {
                     SharedLogger.logger.Trace($"AudioProfileItem/SetActive: Attempting to apply Windows audio  config {Name}...");                
-                    controller.ApplyProfile(WindowsAudioConfig); 
+                    controller.ApplyProfile(windowsAudioConfig); 
                     itWorkedforWindows = true;
                     Thread.Sleep(delayInMs);
                 }   
@@ -215,8 +222,10 @@ namespace DisplayMagician.UserAgent.Runtime
 
         }
 
-        public int CompareTo(AudioProfileItem other)
+        public int CompareTo(AudioProfileItem? other)
         {
+            if (other is null)
+                return 1;
 
             int result = CompareToValues(other);
 
@@ -266,7 +275,7 @@ namespace DisplayMagician.UserAgent.Runtime
             else if (thisType.IsSubclassOf(otherType))
                 result = 1;     // this is subclass of other class
             else if (thisType != otherType)
-                result = thisType.FullName.CompareTo(otherType.FullName);
+                result = String.Compare(thisType.FullName, otherType.FullName, StringComparison.CurrentCulture);
             // cut the tie with a test that returns
             // the same value for all objects
 
@@ -285,12 +294,12 @@ namespace DisplayMagician.UserAgent.Runtime
             // Check the object fields
             // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
             // that fact.                        
-            return WindowsAudioConfig.Equals(other.WindowsAudioConfig) &&
+            return Equals(WindowsAudioConfig, other.WindowsAudioConfig) &&
                    ApplyProfileDelay.Equals(other.ApplyProfileDelay);
         }
 
         // The public override for the Object.Equals
-        public override bool Equals(Object obj)
+        public override bool Equals(Object? obj)
         {
             // Check references
             if (ReferenceEquals(null, obj)) return false;
@@ -328,27 +337,28 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public string GenerateSettingsText()
         {
-            if (WindowsAudioConfig == null)
+            AudioProfile? windowsAudioConfig = WindowsAudioConfig;
+            if (windowsAudioConfig == null)
                 return ("No Settings Available");
 
             string settings = "Audio Profile Name: " + Name + Environment.NewLine;
             settings += Environment.NewLine + "Speaker Settings:" + Environment.NewLine;
-            settings += "\tPlayback Multimedia Device: " + WindowsAudioConfig.Playback.MultimediaDevice.FriendlyName + Environment.NewLine;
-            settings += "\tPlayback Communication Device: " + WindowsAudioConfig.Playback.CommunicationsDevice.FriendlyName + Environment.NewLine;
-            settings += "\tPlayback Console Device: " + WindowsAudioConfig.Playback.ConsoleDevice.FriendlyName + Environment.NewLine;
-            settings += "\tPlayback Volume: " + WindowsAudioConfig.Playback.VolumePercent + Environment.NewLine;
-            settings += "\tPlayback Mute: " + WindowsAudioConfig.Playback.IsMuted + Environment.NewLine;
-            if (WindowsAudioConfig.Playback.SpeakerConfiguration?.IsConfigured == true)
+            settings += "\tPlayback Multimedia Device: " + windowsAudioConfig.Playback.MultimediaDevice.FriendlyName + Environment.NewLine;
+            settings += "\tPlayback Communication Device: " + windowsAudioConfig.Playback.CommunicationsDevice.FriendlyName + Environment.NewLine;
+            settings += "\tPlayback Console Device: " + windowsAudioConfig.Playback.ConsoleDevice.FriendlyName + Environment.NewLine;
+            settings += "\tPlayback Volume: " + windowsAudioConfig.Playback.VolumePercent + Environment.NewLine;
+            settings += "\tPlayback Mute: " + windowsAudioConfig.Playback.IsMuted + Environment.NewLine;
+            if (windowsAudioConfig.Playback.SpeakerConfiguration?.IsConfigured == true)
             {
-                settings += "\tPlayback Speaker Channel Mask: 0x" + WindowsAudioConfig.Playback.SpeakerConfiguration.ChannelMask.ToString("X") + Environment.NewLine;
-                settings += "\tPlayback Full-Range Speaker Mask: 0x" + WindowsAudioConfig.Playback.SpeakerConfiguration.FullRangeSpeakersMask.ToString("X") + Environment.NewLine;
+                settings += "\tPlayback Speaker Channel Mask: 0x" + windowsAudioConfig.Playback.SpeakerConfiguration.ChannelMask.ToString("X") + Environment.NewLine;
+                settings += "\tPlayback Full-Range Speaker Mask: 0x" + windowsAudioConfig.Playback.SpeakerConfiguration.FullRangeSpeakersMask.ToString("X") + Environment.NewLine;
             }
             settings += Environment.NewLine + "Microphone Settings:" + Environment.NewLine;
-            settings += "\tRecording Multimedia Device: " + WindowsAudioConfig.Recording.MultimediaDevice.FriendlyName + Environment.NewLine;
-            settings += "\tRecording Communication Device: " + WindowsAudioConfig.Recording.CommunicationsDevice.FriendlyName + Environment.NewLine;
-            settings += "\tRecording Console Device: " + WindowsAudioConfig.Recording.ConsoleDevice.FriendlyName + Environment.NewLine;
-            settings += "\tRecording Volume: " + WindowsAudioConfig.Recording.VolumePercent + Environment.NewLine;
-            settings += "\tRecording Mute: " + WindowsAudioConfig.Recording.IsMuted + Environment.NewLine;
+            settings += "\tRecording Multimedia Device: " + windowsAudioConfig.Recording.MultimediaDevice.FriendlyName + Environment.NewLine;
+            settings += "\tRecording Communication Device: " + windowsAudioConfig.Recording.CommunicationsDevice.FriendlyName + Environment.NewLine;
+            settings += "\tRecording Console Device: " + windowsAudioConfig.Recording.ConsoleDevice.FriendlyName + Environment.NewLine;
+            settings += "\tRecording Volume: " + windowsAudioConfig.Recording.VolumePercent + Environment.NewLine;
+            settings += "\tRecording Mute: " + windowsAudioConfig.Recording.IsMuted + Environment.NewLine;
             return settings;
         }
 
@@ -439,6 +449,13 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             missingDeviceNames = new List<string>();
 
+            AudioProfile? windowsAudioConfig = WindowsAudioConfig;
+            if (windowsAudioConfig == null)
+            {
+                SharedLogger.logger.Error($"AudioProfileItem/TrySetActive: The Windows Audio Profile {Name} has no audio settings to apply.");
+                return false;
+            }
+
             try
             {
                 int clampedTimeoutInMs = Math.Max(0, timeoutInMs);
@@ -469,18 +486,18 @@ namespace DisplayMagician.UserAgent.Runtime
                         return "Unknown Audio Device";
                     }
 
-                    if (WindowsAudioConfig?.Playback != null)
+                    if (windowsAudioConfig.Playback != null)
                     {
-                        AddIfNew(WindowsAudioConfig.Playback.MultimediaDevice);
-                        AddIfNew(WindowsAudioConfig.Playback.CommunicationsDevice);
-                        AddIfNew(WindowsAudioConfig.Playback.ConsoleDevice);
+                        AddIfNew(windowsAudioConfig.Playback.MultimediaDevice);
+                        AddIfNew(windowsAudioConfig.Playback.CommunicationsDevice);
+                        AddIfNew(windowsAudioConfig.Playback.ConsoleDevice);
                     }
 
-                    if (WindowsAudioConfig?.Recording != null)
+                    if (windowsAudioConfig.Recording != null)
                     {
-                        AddIfNew(WindowsAudioConfig.Recording.MultimediaDevice);
-                        AddIfNew(WindowsAudioConfig.Recording.CommunicationsDevice);
-                        AddIfNew(WindowsAudioConfig.Recording.ConsoleDevice);
+                        AddIfNew(windowsAudioConfig.Recording.MultimediaDevice);
+                        AddIfNew(windowsAudioConfig.Recording.CommunicationsDevice);
+                        AddIfNew(windowsAudioConfig.Recording.ConsoleDevice);
                     }
 
                     var pendingEndpoints = new List<WindowsAudioWrapper.Models.AudioEndpointReference>(endpointsToWaitFor);
@@ -526,7 +543,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
                     // Apply the audio profile now that we've waited for the devices
                     SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Applying Windows audio profile {Name}...");
-                    var applyResult = controller.ApplyProfile(WindowsAudioConfig);
+                    var applyResult = controller.ApplyProfile(windowsAudioConfig);
                     bool profileAppliedSuccessfully = applyResult != null && applyResult.Successful;
                     Thread.Sleep(delayInMs);
 

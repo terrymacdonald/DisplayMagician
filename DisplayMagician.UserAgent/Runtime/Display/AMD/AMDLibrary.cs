@@ -53,7 +53,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             BezelModePercent= 0;
         }
 
-        public override bool Equals(object obj) => obj is AMD_SLSMAP_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_SLSMAP_CONFIG other && this.Equals(other);
 
         public bool Equals(AMD_SLSMAP_CONFIG other)
         => SLSMap == other.SLSMap &&
@@ -88,7 +88,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             SLSEnabledDisplayTargets = new List<ADL_MODE>();
         }
 
-        public override bool Equals(object obj) => obj is AMD_SLS_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_SLS_CONFIG other && this.Equals(other);
 
         public bool Equals(AMD_SLS_CONFIG other)
         => IsSlsEnabled == other.IsSlsEnabled &&
@@ -122,7 +122,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             Type = ADLX_DESKTOP_TYPE.DESKTOP_SINGLE;
         }
 
-        public override bool Equals(object obj) => obj is AMD_DESKTOP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_DESKTOP other && this.Equals(other);
         public bool Equals(AMD_DESKTOP other)
         {
             if (NumberOfDisplays != other.NumberOfDisplays)
@@ -194,7 +194,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
              DisplayOrientation = ADLX_ORIENTATION.ORIENTATION_LANDSCAPE;
          }
 
-         public override bool Equals(object obj) => obj is EYEFINITY_GRID_NODE other && this.Equals(other);
+         public override bool Equals(object? obj) => obj is EYEFINITY_GRID_NODE other && this.Equals(other);
          public bool Equals(EYEFINITY_GRID_NODE other)
          {
              if (Row != other.Row)
@@ -267,7 +267,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             //Grid = Array.Empty<EYEFINITY_GRID_NODE[]>();
         }
 
-        public override bool Equals(object obj) => obj is AMD_EYEFINITY_DESKTOP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_EYEFINITY_DESKTOP other && this.Equals(other);
         public bool Equals(AMD_EYEFINITY_DESKTOP other)
         {
             if (Rows != other.Rows)
@@ -398,7 +398,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }
 
-        public override bool Equals(object obj) => obj is AMD_3DLUT_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_3DLUT_INFO other && this.Equals(other);
         public bool Equals(AMD_3DLUT_INFO other)
         {
             if (IsSupportedSCE != other.IsSupportedSCE)
@@ -457,7 +457,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public int Min { get; set; }
         public int Max { get; set; }
         public int Step { get; set; }
-        public override bool Equals(object obj) => obj is IntRange other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is IntRange other && this.Equals(other);
         public bool Equals(IntRange other)
         {
             if (Min != other.Min)
@@ -553,7 +553,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }   
 
-        public override bool Equals(object obj) => obj is AMD_CONNECTIVITY_EXPERIENCE_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_CONNECTIVITY_EXPERIENCE_INFO other && this.Equals(other);
         public bool Equals(AMD_CONNECTIVITY_EXPERIENCE_INFO other)
         {
             if (IsHdmiQualityDetectionSupported != other.IsHdmiQualityDetectionSupported)
@@ -646,7 +646,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             return new GamutColorSpaceDto(new PointDto(RedX, RedY), new PointDto(GreenX, GreenY), new PointDto(BlueX, BlueY));
         }
 
-        public override bool Equals(object obj) => obj is AMD_GAMUT_COLOR_SPACE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_GAMUT_COLOR_SPACE other && this.Equals(other);
         public bool Equals(AMD_GAMUT_COLOR_SPACE other)
         {
             if (RedX != other.RedX)
@@ -794,7 +794,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }
 
-        public override bool Equals(object obj) => obj is AMD_GAMUT_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_GAMUT_INFO other && this.Equals(other);
         public bool Equals(AMD_GAMUT_INFO other)
         {
             if (IsWhitePointSupported != other.IsWhitePointSupported)
@@ -928,7 +928,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             return new RegammaCoeffDto(coefficientA0, coefficientA1, coefficientA2, coefficientA3, gamma);
         }
 
-        public override bool Equals(object obj) => obj is AMD_REGAMMA_COEFFICIENT other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_REGAMMA_COEFFICIENT other && this.Equals(other);
         public bool Equals(AMD_REGAMMA_COEFFICIENT other)
         {
             if (coefficientA0 != other.coefficientA0)
@@ -985,7 +985,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             return new GammaRampDto(Gamma);
         }
 
-        public override bool Equals(object obj) => obj is AMD_GAMMA_RAMP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_GAMMA_RAMP other && this.Equals(other);
         public bool Equals(AMD_GAMMA_RAMP other)
         {
             if (Gamma.Count != other.Gamma.Count)
@@ -1091,7 +1091,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }
 
-        public override bool Equals(object obj) => obj is AMD_GAMMA_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_GAMMA_INFO other && this.Equals(other);
         public bool Equals(AMD_GAMMA_INFO other)
         {
             if (IsSupported != other.IsSupported)
@@ -1236,7 +1236,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 temperature: Temperature
             );
         }   
-        public override bool Equals(object obj) => obj is AMD_CUSTOM_COLOR_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_CUSTOM_COLOR_INFO other && this.Equals(other);
         public bool Equals(AMD_CUSTOM_COLOR_INFO other)
         {
             if (IsSupported != other.IsSupported)
@@ -1364,7 +1364,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             VariBrightMode = VariBrightMode.Unknown;
         }
 
-        public override bool Equals(object obj) => obj is AMD_DISPLAY_WITH_SETTINGS other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_DISPLAY_WITH_SETTINGS other && this.Equals(other);
         public bool Equals(AMD_DISPLAY_WITH_SETTINGS other)
         {
             if (ConnectorType != other.ConnectorType)
@@ -1559,7 +1559,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             Type = ADLX_DISPLAY_TYPE.DISPLAY_TYPE_UNKOWN;
         }
 
-        public override bool Equals(object obj) => obj is AMD_DISPLAY other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_DISPLAY other && this.Equals(other);
         public bool Equals(AMD_DISPLAY other)
         {
             if (ConnectorType != other.ConnectorType)
@@ -1659,7 +1659,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             ManualPowerTuning = new ManualPowerTuningDto();
         }
 
-        public override bool Equals(object obj) => obj is AMD_GPU_WITH_SETTINGS other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_GPU_WITH_SETTINGS other && this.Equals(other);
 
         public bool Equals(AMD_GPU_WITH_SETTINGS other)
         {
@@ -1743,7 +1743,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             GPUs = new Dictionary<string, AMD_GPU_WITH_SETTINGS>();
         }
 
-        public override bool Equals(object obj) => obj is AMD_DISPLAY_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AMD_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(AMD_DISPLAY_CONFIG other)
         {
             if (IsInUse != other.IsInUse)

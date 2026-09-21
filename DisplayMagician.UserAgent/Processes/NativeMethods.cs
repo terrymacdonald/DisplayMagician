@@ -177,9 +177,9 @@ namespace DisplayMagician.Processes
         public class StartupInfo
         {
             public int cb;
-            public string lpReserved;
-            public string lpDesktop;
-            public string lpTitle;
+            public string? lpReserved;
+            public string? lpDesktop;
+            public string? lpTitle;
             public uint dwX;
             public uint dwY;
             public uint dwXSize;

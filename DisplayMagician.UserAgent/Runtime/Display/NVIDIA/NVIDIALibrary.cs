@@ -37,7 +37,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             //MosaicGridCount = 0;
         }
 
-        public override bool Equals(object obj) => obj is NVIDIA_MOSAIC_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is NVIDIA_MOSAIC_CONFIG other && this.Equals(other);
 
         public bool Equals(NVIDIA_MOSAIC_CONFIG other)
         {
@@ -258,7 +258,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             ScanoutConfiguration = new NVAPIGpuScanoutConfigurationDto();
         }
 
-        public override bool Equals(object obj) => obj is NVIDIA_PER_DISPLAY_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is NVIDIA_PER_DISPLAY_CONFIG other && this.Equals(other);
 
         public bool Equals(NVIDIA_PER_DISPLAY_CONFIG other)
         {
@@ -598,7 +598,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
     {
         public List<NV_CUSTOM_DISPLAY_V1> CustomDisplay;
 
-        public override bool Equals(object obj) => obj is NVIDIA_CUSTOM_DISPLAY_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is NVIDIA_CUSTOM_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(NVIDIA_CUSTOM_DISPLAY_CONFIG other)
         => CustomDisplay.SequenceEqual(other.CustomDisplay);
 
@@ -626,7 +626,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             DriverSettings = new List<NVAPIDrsSettingDto>();
         }
 
-        public override bool Equals(object obj) => obj is NVIDIA_DRS_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is NVIDIA_DRS_CONFIG other && this.Equals(other);
         public bool Equals(NVIDIA_DRS_CONFIG other)
         {
             try
@@ -726,7 +726,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             Displays = new Dictionary<string, NVIDIA_PER_DISPLAY_CONFIG>();
         }
 
-        public override bool Equals(object obj) => obj is NVIDIA_PER_ADAPTER_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is NVIDIA_PER_ADAPTER_CONFIG other && this.Equals(other);
         public bool Equals(NVIDIA_PER_ADAPTER_CONFIG other)
         {
             try
@@ -886,7 +886,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             DisplayCount = 0;
         }
 
-        public override bool Equals(object obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
 
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
         {

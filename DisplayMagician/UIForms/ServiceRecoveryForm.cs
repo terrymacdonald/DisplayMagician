@@ -84,7 +84,7 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
         try
         {
             ControlServiceStatus status = await _controlServiceClient.GetServiceStatusAsync(CancellationToken.None);
-            DisplayControlLease? lease = status.DisplayControlLease;
+            DisplayControlLease lease = status.DisplayControlLease;
             string latestAdministration = status.LatestRecoveryAdministration == null
                 ? "No emergency recovery action has been recorded."
                 : $"Last recovery administration: {status.LatestRecoveryAdministration.Action} at {status.LatestRecoveryAdministration.OccurredUtc:u}; outcome: {status.LatestRecoveryAdministration.Outcome}.";

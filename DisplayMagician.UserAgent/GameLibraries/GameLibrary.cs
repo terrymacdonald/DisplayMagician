@@ -16,11 +16,15 @@ namespace DisplayMagician.GameLibraries
 
         public struct GameAppInfo
         {
-            public string GameID;
-            public string GameName;
-            public string GameExePath;
-            public string GameInstallDir;
-            public string GameIconPath;
+            public string GameID = string.Empty;
+            public string GameName = string.Empty;
+            public string GameExePath = string.Empty;
+            public string GameInstallDir = string.Empty;
+            public string GameIconPath = string.Empty;
+
+            public GameAppInfo()
+            {
+            }
         }
 
         #region Class Properties

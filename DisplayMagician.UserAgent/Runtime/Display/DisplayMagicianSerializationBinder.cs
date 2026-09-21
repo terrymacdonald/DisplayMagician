@@ -18,7 +18,7 @@ namespace DisplayMagician.UserAgent.Runtime
         {
         }
 
-        public Type BindToType(string assemblyName, string typeName)
+        public Type BindToType(string? assemblyName, string typeName)
         {
             if (typeName.StartsWith(RuntimeNamespacePrefix, StringComparison.Ordinal))
             {
@@ -39,13 +39,13 @@ namespace DisplayMagician.UserAgent.Runtime
             };
         }
 
-        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        public void BindToName(Type serializedType, out string? assemblyName, out string typeName)
         {
             if (serializedType.Assembly == typeof(DisplayMagicianSerializationBinder).Assembly &&
                 serializedType.Namespace?.StartsWith(RuntimeNamespacePrefix.TrimEnd('.'), StringComparison.Ordinal) == true)
             {
                 assemblyName = serializedType.Assembly.GetName().Name;
-                typeName = serializedType.FullName!;
+                typeName = serializedType.FullName ?? throw new SerializationException($"DisplayMagician cannot persist unnamed type '{serializedType}'.");
                 return;
             }
 
@@ -58,7 +58,7 @@ namespace DisplayMagician.UserAgent.Runtime
             }
 
             assemblyName = serializedType.Assembly.GetName().Name;
-            typeName = serializedType.FullName;
+            typeName = serializedType.FullName ?? throw new SerializationException($"DisplayMagician cannot persist unnamed type '{serializedType}'.");
         }
 
         public static bool TryMigrateLegacyRuntimeTypeNames(string json, out string migratedJson)

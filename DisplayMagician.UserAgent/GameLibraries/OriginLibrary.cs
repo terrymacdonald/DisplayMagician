@@ -27,8 +27,8 @@ namespace DisplayMagician.GameLibraries
         // Common items to the class
         private List<Game> _allOriginGames = new List<Game>();
         private string OriginAppIdRegex = @"^[0-9A-F]{1,10}$";
-        private string _originExe;
-        private string _originPath;
+        private string _originExe = string.Empty;
+        private string _originPath = string.Empty;
         private string _originLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Origin");
         private bool _isOriginInstalled = false;
         private List<string> _originProcessList = new List<string>(){ "origin" };
@@ -52,15 +52,15 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Trace($"OriginLibrary/OriginLibrary: Origin launcher registry key = HKLM\\{registryOriginLauncherKey}");
                 // Find the OriginExe location, and the OriginPath for later
-                RegistryKey OriginInstallKey = Registry.LocalMachine.OpenSubKey(registryOriginLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
+                RegistryKey? OriginInstallKey = Registry.LocalMachine.OpenSubKey(registryOriginLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
                 if (OriginInstallKey == null)
                 {
                     logger.Info($"OriginLibrary/OriginLibrary: Origin library is not installed!");
                     return;
                 }
 
-                _originExe = OriginInstallKey.GetValue("ClientPath", @"C:\Program Files (x86)\Origin\Origin.exe").ToString();
-                _originPath = Path.GetDirectoryName(_originExe);
+                _originExe = OriginInstallKey.GetValue("ClientPath") as string ?? @"C:\Program Files (x86)\Origin\Origin.exe";
+                _originPath = Path.GetDirectoryName(_originExe) ?? string.Empty;
                 if (File.Exists(_originExe))
                 {
                     logger.Info($"OriginLibrary/OriginLibrary: Origin library is installed in {_originPath}. Found {_originExe}");
@@ -225,7 +225,10 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"OriginLibrary/AddOriginGame: Updating Origin game {originGame.Name} in our Origin library");
                 // We update the existing Shortcut with the data over
-                OriginGame originGameToUpdate = (OriginGame)GetGame(originGame.Id.ToString());
+                OriginGame? originGameToUpdate = GetGame(originGame.Id.ToString()) as OriginGame;
+                if (originGameToUpdate == null)
+                    return false;
+
                 originGame.CopyTo(originGameToUpdate);
             }
             else
@@ -499,7 +502,6 @@ namespace DisplayMagician.GameLibraries
                             continue;
                         }
 
-                        originGame.GameInstallDir = null;
                         if (manifestInfo.ContainsKey("dipinstallpath"))
                         {
                             originGame.GameInstallDir = HttpUtility.UrlDecode(manifestInfo["dipinstallpath"]);
@@ -522,18 +524,22 @@ namespace DisplayMagician.GameLibraries
                         {
                             XDocument xdoc = XDocument.Load(gameInstallerData);
                             float manifestVersion;
-                            
-                            if (xdoc.XPathSelectElement("/DiPManifest")?.Attribute("version")?.Value != null)
+
+                            XElement? dipManifest = xdoc.XPathSelectElement("/DiPManifest");
+                            string? dipManifestVersion = dipManifest?.Attribute("version")?.Value;
+                            XElement? gameManifest = xdoc.XPathSelectElement("/game");
+                            string? gameManifestVersion = gameManifest?.Attribute("manifestVersion")?.Value;
+                            if (!string.IsNullOrEmpty(dipManifestVersion))
                             {
-                                if (!Single.TryParse(xdoc.XPathSelectElement("/DiPManifest").Attribute("version").Value, out manifestVersion))
+                                if (!Single.TryParse(dipManifestVersion, out manifestVersion))
                                 {
                                     logger.Error($"OriginLibrary/LoadInstalledGames: v4 - Couldn't determine installer.xml manifest version for {gameInstallerData}. Skipping file.");
                                     continue;
                                 }
                             }
-                            else if (xdoc.XPathSelectElement("/game")?.Attribute("manifestVersion")?.Value != null)
+                            else if (!string.IsNullOrEmpty(gameManifestVersion))
                             {
-                                if (!Single.TryParse(xdoc.XPathSelectElement("/game").Attribute("manifestVersion").Value, out manifestVersion))
+                                if (!Single.TryParse(gameManifestVersion, out manifestVersion))
                                 {
                                     logger.Error($"OriginLibrary/LoadInstalledGames: v3 - Couldn't determine installer.xml manifest version for {gameInstallerData}. Skipping file.");
                                     continue;
@@ -547,36 +553,38 @@ namespace DisplayMagician.GameLibraries
 
                             if (manifestVersion >= 4.0)
                             {                                    
-                                originGame.GameName = xdoc.XPathSelectElement("/DiPManifest/gameTitles/gameTitle[@locale='en_US']")?.Value;
-                                originGame.GameExePath = GetActualFilePath(xdoc.XPathSelectElement("/DiPManifest/runtime/launcher[requires64BitOS/text() = '1']/filePath")?.Value);
-                                if (originGame.GameExePath == null)
+                                originGame.GameName = xdoc.XPathSelectElement("/DiPManifest/gameTitles/gameTitle[@locale='en_US']")?.Value ?? string.Empty;
+                                string? gameExePath = GetActualFilePath(xdoc.XPathSelectElement("/DiPManifest/runtime/launcher[requires64BitOS/text() = '1']/filePath")?.Value);
+                                if (gameExePath == null)
                                 {
-                                    originGame.GameExePath = GetActualFilePath(xdoc.XPathSelectElement("/DiPManifest/runtime/launcher[requires64BitOS/text() = '0']/filePath")?.Value);
-                                    if (originGame.GameExePath == null)
+                                    gameExePath = GetActualFilePath(xdoc.XPathSelectElement("/DiPManifest/runtime/launcher[requires64BitOS/text() = '0']/filePath")?.Value);
+                                    if (gameExePath == null)
                                     {
                                         logger.Error($"OriginLibrary/LoadInstalledGames: Couldn't find 64-bit or 32-bit game exe in version 4 manifest for {originGame.GameName}. Skipping file.");
                                         continue;
                                     }
                                 }
+                                originGame.GameExePath = gameExePath;
                             }
                             else if (manifestVersion >= 3.0 && manifestVersion < 4.0)
                             {
-                                originGame.GameName = xdoc.XPathSelectElement("/game/metadata/localeInfo[@locale='en_US']/title")?.Value;
-                                originGame.GameExePath = GetActualFilePath(xdoc.XPathSelectElement("/game/runtime/launcher[requires64BitOS/text() = '1']/filePath")?.Value);
-                                if (originGame.GameExePath == null)
+                                originGame.GameName = xdoc.XPathSelectElement("/game/metadata/localeInfo[@locale='en_US']/title")?.Value ?? string.Empty;
+                                string? gameExePath = GetActualFilePath(xdoc.XPathSelectElement("/game/runtime/launcher[requires64BitOS/text() = '1']/filePath")?.Value);
+                                if (gameExePath == null)
                                 {
-                                    originGame.GameExePath = GetActualFilePath(xdoc.XPathSelectElement("/game/runtime/launcher[requires64BitOS/text() = '0']/filePath")?.Value);
-                                    if (originGame.GameExePath == null)
+                                    gameExePath = GetActualFilePath(xdoc.XPathSelectElement("/game/runtime/launcher[requires64BitOS/text() = '0']/filePath")?.Value);
+                                    if (gameExePath == null)
                                     {
                                         logger.Error($"OriginLibrary/LoadInstalledGames: Couldn't find 64-bit or 32-bit game exe in version 3 manifest for {originGame.GameName}. Skipping file.");
                                         continue;
                                     }
                                 }
+                                originGame.GameExePath = gameExePath;
                             }
                             else if (manifestVersion >= 2.0 && manifestVersion < 3.0)
                             {
-                                originGame.GameName = xdoc.XPathSelectElement("/game/metadata/localeInfo[@locale='en_US']/title")?.Value;
-                                string mnsftRelFileName = xdoc.XPathSelectElement("/game/installManifest/filePath")?.Value;
+                                originGame.GameName = xdoc.XPathSelectElement("/game/metadata/localeInfo[@locale='en_US']/title")?.Value ?? string.Empty;
+                                string? mnsftRelFileName = xdoc.XPathSelectElement("/game/installManifest/filePath")?.Value;
                                 string mnsftFullFileName = Path.Combine(originGame.GameInstallDir, mnsftRelFileName ?? string.Empty);
                                 
                                 string mnsftData;
@@ -606,7 +614,7 @@ namespace DisplayMagician.GameLibraries
                                     MatchCollection mc = Regex.Matches(mnsftData, @"""([^/]*).exe""");
                                     if (mc.Count > 0)
                                     {
-                                        originGame.GameExePath = mc[0].Groups[1].ToString();
+                                        originGame.GameExePath = mc[0].Groups[1].Value ?? string.Empty;
                                     }
                                 }
                                 else if (parFiles.Length > 0)
@@ -615,7 +623,7 @@ namespace DisplayMagician.GameLibraries
                                     MatchCollection mc = Regex.Matches(mnsftData, $@"""{parFiles[0]}.exe""");
                                     if (mc.Count > 0)
                                     {
-                                        originGame.GameExePath = mc[0].Groups[1].ToString();
+                                        originGame.GameExePath = mc[0].Groups[1].Value ?? string.Empty;
                                     }
                                 }
                                 else
@@ -702,8 +710,13 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        private string GetActualFilePath(string gameFilePath)
-        {            
+        private string? GetActualFilePath(string? gameFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(gameFilePath))
+            {
+                return null;
+            }
+
             string originGameInstallLocation = "";
             // Check whether gameFilePath contains a registry key! Cause if it does we need to lookup the path there instead
             if (gameFilePath.StartsWith("[HKEY_LOCAL_MACHINE"))
@@ -744,7 +757,7 @@ namespace DisplayMagician.GameLibraries
                     // Lookup the reg key to figure out where the game is installed 
                     try
                     {
-                        RegistryKey originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
+                        RegistryKey? originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
                         if (originGameInstallKey == null)
                         {
                             // then we have a problem as we cannot find the game exe location!
@@ -809,7 +822,7 @@ namespace DisplayMagician.GameLibraries
 
                     try
                     {
-                        RegistryKey originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
+                        RegistryKey? originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
                         if (originGameInstallKey == null)
                         {
                             // then we have a problem as we cannot find the game exe location!

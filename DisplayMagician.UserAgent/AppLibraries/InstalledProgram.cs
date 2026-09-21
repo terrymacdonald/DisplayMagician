@@ -43,9 +43,9 @@ namespace DisplayMagician.AppLibraries
 
         public string FamilyName { get; set; } = "";
 
-        public AppListEntry AppListEntry { get; set; } = null;
+        public AppListEntry? AppListEntry { get; set; }
 
-        public Package AppPackage { get; set; } = null;
+        public Package? AppPackage { get; set; }
 
         public override string ToString()
         {
@@ -53,7 +53,7 @@ namespace DisplayMagician.AppLibraries
         }
 
 
-        public static async Task<List<InstalledProgram>> GetExecutablesFromFolder(string path, SearchOption searchOption, CancellationTokenSource cancelToken = null)
+        public static async Task<List<InstalledProgram>?> GetExecutablesFromFolder(string path, SearchOption searchOption, CancellationTokenSource? cancelToken = null)
         {
             return await Task.Run(() =>
             {
@@ -100,12 +100,15 @@ namespace DisplayMagician.AppLibraries
             if (file.Extension?.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) == true)
             {
                 var versionInfo = FileVersionInfo.GetVersionInfo(file.FullName);
-                var programName = !string.IsNullOrEmpty(versionInfo.ProductName?.Trim()) ? versionInfo.ProductName : new DirectoryInfo(System.IO.Path.GetDirectoryName(file.FullName)).Name;
+                var directoryPath = System.IO.Path.GetDirectoryName(file.FullName);
+                var programName = !string.IsNullOrEmpty(versionInfo.ProductName?.Trim())
+                    ? versionInfo.ProductName
+                    : directoryPath != null ? new DirectoryInfo(directoryPath).Name : System.IO.Path.GetFileNameWithoutExtension(file.FullName);
                 return new InstalledProgram
                 {
                     Path = file.FullName,
                     IconPath = file.FullName,
-                    WorkDir = System.IO.Path.GetDirectoryName(file.FullName),
+                    WorkDir = System.IO.Path.GetDirectoryName(file.FullName) ?? string.Empty,
                     Arguments = "",
                     Name = programName,
                     AppId = $"FromProgramData_{programName}",
@@ -164,7 +167,7 @@ namespace DisplayMagician.AppLibraries
                 {
                     Path = file.FullName,
                     Name = System.IO.Path.GetFileNameWithoutExtension(file.FullName),
-                    WorkDir = System.IO.Path.GetDirectoryName(file.FullName),
+                    WorkDir = System.IO.Path.GetDirectoryName(file.FullName) ?? string.Empty,
                     AppId = $"FromProgramData_{System.IO.Path.GetFileNameWithoutExtension(file.FullName)}",
                     Arguments = "",
                     IconPath = file.FullName,
@@ -183,7 +186,7 @@ namespace DisplayMagician.AppLibraries
             var shell = new IWshRuntimeLibrary.WshShell();
             var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutPath);
             link.TargetPath = executablePath;
-            link.WorkingDirectory = System.IO.Path.GetDirectoryName(executablePath);
+            link.WorkingDirectory = System.IO.Path.GetDirectoryName(executablePath) ?? string.Empty;
             link.Arguments = arguments;
             link.IconLocation = string.IsNullOrEmpty(iconPath) ? executablePath + ",0" : iconPath;
             link.Save();
@@ -193,13 +196,14 @@ namespace DisplayMagician.AppLibraries
         {
             var shell = new IWshRuntimeLibrary.WshShell();
             var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(lnkPath);
-            string iconLocation;
+            string targetPath = link.TargetPath ?? string.Empty;
+            string iconLocation = targetPath;
             if (!String.IsNullOrWhiteSpace(link.IconLocation))
             {
                 if (Regex.IsMatch(link.IconLocation, @"^,\d+$"))
                 {
                     // This is an empty shortcut path, so we need to use the target path instead
-                    iconLocation = link.TargetPath;
+                    iconLocation = targetPath;
                 }
                 else if (Regex.IsMatch(link.IconLocation, @",\d+$"))
                 {
@@ -211,7 +215,7 @@ namespace DisplayMagician.AppLibraries
                     }
                     else
                     {
-                        iconLocation = link.TargetPath;
+                        iconLocation = targetPath;
                     }
                 }
                 else
@@ -219,20 +223,15 @@ namespace DisplayMagician.AppLibraries
                     iconLocation = link.IconLocation;
                 }
             }
-            else
-            {
-                iconLocation = link.TargetPath;
-            }
-
 
             return new InstalledProgram()
             {
-                Path = link.TargetPath,
+                Path = targetPath,
                 IconPath = iconLocation,
-                Arguments = link.Arguments,
-                WorkDir = link.WorkingDirectory,
-                Name = link.FullName,
-                AppId = $"FromLink_{link.FullName}",
+                Arguments = link.Arguments ?? string.Empty,
+                WorkDir = link.WorkingDirectory ?? string.Empty,
+                Name = link.FullName ?? string.Empty,
+                AppId = $"FromLink_{link.FullName ?? string.Empty}",
                 AppType = InstalledAppType.InstalledProgram,
                 FamilyName = "",
                 AppListEntry = null,
@@ -240,7 +239,7 @@ namespace DisplayMagician.AppLibraries
             };
         }
 
-        public static async Task<List<InstalledProgram>> GetShortcutProgramsFromFolderAsync(string path, CancellationTokenSource cancelToken = null)
+        public static async Task<List<InstalledProgram>?> GetShortcutProgramsFromFolderAsync(string path, CancellationTokenSource? cancelToken = null)
         {
             
             var folderExceptions = new string[]
@@ -290,7 +289,7 @@ namespace DisplayMagician.AppLibraries
 
                 // Parse the link file to get access to the settings in it.
                 var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcut.FullName);
-                var target = link.TargetPath;
+                var target = link.TargetPath ?? string.Empty;
 
                 // Skip the paths we don't want to process.
                 if (pathExceptions.FirstOrDefault(a => target.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)
@@ -316,13 +315,13 @@ namespace DisplayMagician.AppLibraries
                     continue;
                 }
 
-                string iconLocation;
+                string iconLocation = target;
                 if (!String.IsNullOrWhiteSpace(link.IconLocation))
                 {
                     if (Regex.IsMatch(link.IconLocation, @"^,\d+$"))
                     {
                         // This is an empty shortcut path, so we need to use the target path instead
-                        iconLocation = link.TargetPath;
+                        iconLocation = target;
                     }
                     else if (Regex.IsMatch(link.IconLocation, @",\d+$"))
                     {
@@ -334,29 +333,24 @@ namespace DisplayMagician.AppLibraries
                         }
                         else
                         {
-                            iconLocation = link.TargetPath;
+                            iconLocation = target;
                         }
                     }                        
                 }
-                else
-                {
-                    iconLocation = link.TargetPath;
-                }
-
                 if (System.IO.File.Exists(link.IconLocation))
                 {
-                    iconLocation = link.IconLocation;
+                    iconLocation = link.IconLocation ?? target;
                 }
                 else
                 {
-                    iconLocation = link.TargetPath;
+                    iconLocation = target;
                 }
 
 
-                string workingDir = link.WorkingDirectory;
-                if (link.WorkingDirectory == null || String.IsNullOrWhiteSpace(link.WorkingDirectory) || !System.IO.File.Exists(link.WorkingDirectory))
+                string workingDir = link.WorkingDirectory ?? string.Empty;
+                if (String.IsNullOrWhiteSpace(workingDir) || !System.IO.File.Exists(workingDir))
                 {
-                    workingDir = System.IO.Path.GetDirectoryName(target);
+                    workingDir = System.IO.Path.GetDirectoryName(target) ?? string.Empty;
                 }
 
                 var app = new InstalledProgram()
@@ -379,32 +373,38 @@ namespace DisplayMagician.AppLibraries
             return apps;            
         }
 
-        public static List<InstalledProgram> GetInstalledPrograms(CancellationTokenSource cancelToken = null)
+        public static List<InstalledProgram>? GetInstalledPrograms(CancellationTokenSource? cancelToken = null)
         {
             var apps = new List<InstalledProgram>();
 
             // Get apps from All Users
             string allPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs");
-            List<InstalledProgram> allApps = GetShortcutProgramsFromFolderAsync(allPath, cancelToken).GetAwaiter().GetResult();
+            List<InstalledProgram>? allApps = GetShortcutProgramsFromFolderAsync(allPath, cancelToken).GetAwaiter().GetResult();
             if (cancelToken?.IsCancellationRequested == true)
             {
                 return null;
             }
             else
             {
-                apps.AddRange(allApps);
+                if (allApps != null)
+                {
+                    apps.AddRange(allApps);
+                }
             }
 
             // Get current user apps
             string userPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
-            List<InstalledProgram> userApps = GetShortcutProgramsFromFolderAsync(userPath, cancelToken).GetAwaiter().GetResult();
+            List<InstalledProgram>? userApps = GetShortcutProgramsFromFolderAsync(userPath, cancelToken).GetAwaiter().GetResult();
             if (cancelToken?.IsCancellationRequested == true)
             {
                 return null;
             }
             else
             {
-                apps.AddRange(userApps);
+                if (userApps != null)
+                {
+                    apps.AddRange(userApps);
+                }
             }
 
             return apps;
@@ -418,6 +418,11 @@ namespace DisplayMagician.AppLibraries
             }
 
             var folder = System.IO.Path.GetDirectoryName(defPath);
+            if (String.IsNullOrEmpty(folder))
+            {
+                return string.Empty;
+            }
+
             var fileMask = System.IO.Path.GetFileNameWithoutExtension(defPath) + ".scale*.png";
             var files = Directory.GetFiles(folder, fileMask);
 
@@ -449,17 +454,25 @@ namespace DisplayMagician.AppLibraries
             try
             {
                 var manager = new PackageManager();
-                IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
+                var currentUserSid = WindowsIdentity.GetCurrent().User?.Value;
+                if (String.IsNullOrEmpty(currentUserSid))
+                {
+                    return apps;
+                }
+
+                IEnumerable<Package> packages = manager.FindPackagesForUser(currentUserSid);
                 foreach (var package in packages)
                 {
                     if (package.IsFramework || package.IsResourcePackage || package.SignatureKind != PackageSignatureKind.Store)
                     {
                         continue;
                     }
-                    
+
+                    Windows.Storage.StorageFolder? installedLocation = null;
                     try
                     {
-                        if (package.InstalledLocation == null)
+                        installedLocation = package.InstalledLocation;
+                        if (installedLocation == null)
                         {
                             continue;
                         }
@@ -491,7 +504,7 @@ namespace DisplayMagician.AppLibraries
                             var app = new InstalledProgram()
                             {
                                 Name = AppRuntimeEnvironment.NormaliseName(name),
-                                WorkDir = package.InstalledLocation.Path,
+                                WorkDir = installedLocation.Path,
                                 Path = $"{windowsDirectoryPath}\\explorer.exe",
                                 Arguments = $"shell:AppsFolder\\{aumi}",
                                 IconPath = package.Logo.LocalPath,
@@ -521,7 +534,7 @@ namespace DisplayMagician.AppLibraries
             return apps;
         }
 
-        public static AppListEntry GetUWPAppListEntryByAUMID(string aumid)
+        public static AppListEntry? GetUWPAppListEntryByAUMID(string aumid)
         {
             if (!AppRuntimeEnvironment.HasPackageIdentity)
             {
@@ -532,7 +545,13 @@ namespace DisplayMagician.AppLibraries
             try
             {
                 var manager = new PackageManager();
-                IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
+                var currentUserSid = WindowsIdentity.GetCurrent().User?.Value;
+                if (String.IsNullOrEmpty(currentUserSid))
+                {
+                    return null;
+                }
+
+                IEnumerable<Package> packages = manager.FindPackagesForUser(currentUserSid);
                 foreach (var package in packages)
                 {
                     if (package.IsFramework || package.IsResourcePackage || package.SignatureKind != PackageSignatureKind.Store)
@@ -587,7 +606,7 @@ namespace DisplayMagician.AppLibraries
             return null;
         }
 
-        public static Package GetUWPAppPackageByAUMID(string aumid)
+        public static Package? GetUWPAppPackageByAUMID(string aumid)
         {
             if (!AppRuntimeEnvironment.HasPackageIdentity)
             {
@@ -598,7 +617,13 @@ namespace DisplayMagician.AppLibraries
             try
             {
                 var manager = new PackageManager();
-                IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
+                var currentUserSid = WindowsIdentity.GetCurrent().User?.Value;
+                if (String.IsNullOrEmpty(currentUserSid))
+                {
+                    return null;
+                }
+
+                IEnumerable<Package> packages = manager.FindPackagesForUser(currentUserSid);
                 foreach (var package in packages)
                 {
                     if (package.IsFramework || package.IsResourcePackage || package.SignatureKind != PackageSignatureKind.Store)
@@ -661,7 +686,7 @@ namespace DisplayMagician.AppLibraries
 
             try
             {
-                Package package = GetUWPAppPackageByAUMID(aumid);
+                Package? package = GetUWPAppPackageByAUMID(aumid);
                 Process process = new Process();
                 //if (package.GetAppListEntries())
             }

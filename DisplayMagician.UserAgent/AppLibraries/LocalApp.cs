@@ -30,9 +30,9 @@ namespace DisplayMagician.AppLibraries
         private string _LocalAppIconPath;
         private InstalledAppType _LocalAppType = InstalledAppType.InstalledProgram;
         //private Package _LocalAppPackage;
-        private AppListEntry _LocalAppListEntry;
-        private Package _LocalAppPackage;
-        private AppDiagnosticInfoWatcher _LocalAppUWPWatcher = null;
+        private AppListEntry? _LocalAppListEntry;
+        private Package? _LocalAppPackage;
+        private AppDiagnosticInfoWatcher? _LocalAppUWPWatcher;
         private string _LocalAppFamilyName = "";
         private AppResourceGroupExecutionState _LocalAppIsRunning = AppResourceGroupExecutionState.NotRunning;
         //private string _gogURI;
@@ -58,7 +58,7 @@ namespace DisplayMagician.AppLibraries
             _LocalAppId = LocalAppId;
             _LocalAppName = LocalAppName;
             _LocalAppExePath = LocalAppExePath;
-            _LocalAppDir = Path.GetDirectoryName(LocalAppExePath);
+            _LocalAppDir = Path.GetDirectoryName(LocalAppExePath) ?? string.Empty;
             _LocalAppExe = Path.GetFileName(_LocalAppExePath);
             _LocalAppProcessName = Path.GetFileNameWithoutExtension(_LocalAppExePath);
             _LocalAppIconPath = LocalAppIconPath;
@@ -152,14 +152,14 @@ namespace DisplayMagician.AppLibraries
         }
 
         [JsonIgnore]
-        public AppListEntry AppListEntry
+        public AppListEntry? AppListEntry
         {
             get => _LocalAppListEntry;
             set => _LocalAppListEntry = value;
         }
 
         [JsonIgnore]
-        public Package AppPackage
+        public Package? AppPackage
         {
             get => _LocalAppPackage;
             set => _LocalAppPackage = value;
@@ -193,10 +193,10 @@ namespace DisplayMagician.AppLibraries
                             catch (Exception ex)
                             {
                                 logger.Debug(ex, $"LocalApp/IsRunning: Accessing Process.ProcessName caused exception. Trying AppProcess.MainModule.FileName instead");
-                                string filePath = null;
+                                string? filePath = null;
                                 try
                                 {
-                                    filePath = AppProcess.MainModule.FileName;
+                                    filePath = AppProcess.MainModule?.FileName;
                                 }
                                 catch (Exception ex2)
                                 {
@@ -530,6 +530,11 @@ namespace DisplayMagician.AppLibraries
 
         private async Task<bool> StartUWPProcess()
         {
+            if (_LocalAppListEntry == null)
+            {
+                return false;
+            }
+
             bool result = await _LocalAppListEntry.LaunchAsync();
 
             return result;

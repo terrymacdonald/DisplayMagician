@@ -15,14 +15,14 @@ namespace DisplayMagician.GameLibraries
         [ProtoMember(2)]
         public uint InstallId { get; set; }
         [ProtoMember(3)]
-        public string GameInfo { get; set; }
+        public string GameInfo { get; set; } = string.Empty;
     }
 
     [ProtoContract]
     public class UplayCachedGameCollection
     {
         [ProtoMember(1)]
-        public List<UplayCachedGame> Games { get; set; }
+        public List<UplayCachedGame> Games { get; set; } = new List<UplayCachedGame>();
     }
 
     // #####################################################################################################
@@ -34,21 +34,21 @@ namespace DisplayMagician.GameLibraries
         {
             public class Path
             {
-                public string relative;
+                public string relative = string.Empty;
             }
 
             public class WorkingDirectory
             {
-                public string register;
-                public string append;
+                public string register = string.Empty;
+                public string append = string.Empty;
             }
 
-            public Path path;
-            public WorkingDirectory working_directory;
-            public string internal_name;
-            public string description;
-            public string shortcut_name;
-            public string icon_image;
+            public Path? path;
+            public WorkingDirectory? working_directory;
+            public string internal_name = string.Empty;
+            public string description = string.Empty;
+            public string shortcut_name = string.Empty;
+            public string icon_image = string.Empty;
         }
 
         public class StartGameItem
@@ -59,14 +59,14 @@ namespace DisplayMagician.GameLibraries
             public bool overlay_required;
             public bool overlay_shop_enabled;
             public bool legacy_ticket_enabled;
-            public List<Executable> executables;
+            public List<Executable> executables = new List<Executable>();
 
         }
 
         public class StartGame
         {
-            public StartGameItem online;
-            public StartGameItem offline;
+            public StartGameItem? online;
+            public StartGameItem? offline;
         }
 
         public class DigitalDistribution
@@ -76,7 +76,7 @@ namespace DisplayMagician.GameLibraries
 
         public class Localization
         {
-            public string l1;
+            public string l1 = string.Empty;
         }
 
         public class Club
@@ -88,55 +88,55 @@ namespace DisplayMagician.GameLibraries
         {
             public uint id;
             public bool is_visible;
-            public string name;
-            public string description;
-            public string thumb_image;
+            public string name = string.Empty;
+            public string description = string.Empty;
+            public string thumb_image = string.Empty;
         }
 
         public class Uplay
         {
-            public string game_code;
-            public string achievements;
-            public string achievements_sync_id;
+            public string game_code = string.Empty;
+            public string achievements = string.Empty;
+            public string achievements_sync_id = string.Empty;
         }
 
         public class ThirdPartyPlatform
         {
-            public string name;
+            public string name = string.Empty;
         }
 
         public class Product
         {
-            public string name;
-            public string background_image;
-            public string thumb_image;
-            public string logo_image;
-            public string dialog_image;
-            public string icon_image;
-            public ThirdPartyPlatform third_party_platform;
-            public string sort_string;
+            public string name = string.Empty;
+            public string background_image = string.Empty;
+            public string thumb_image = string.Empty;
+            public string logo_image = string.Empty;
+            public string dialog_image = string.Empty;
+            public string icon_image = string.Empty;
+            public ThirdPartyPlatform? third_party_platform;
+            public string sort_string = string.Empty;
             public bool cloud_saves;
-            public string forum_url;
-            public string homepage_url;
-            public string facebook_url;
-            public string help_url;
+            public string forum_url = string.Empty;
+            public string homepage_url = string.Empty;
+            public string facebook_url = string.Empty;
+            public string help_url = string.Empty;
             public bool after_game_report_ad;
             public bool force_safe_mode;
             public bool uplay_pipe_required;
             public bool show_properties;
             public bool game_streaming_enabled;
-            public Uplay uplay;
-            public List<Addon> addons;
-            public Club club;
-            public DigitalDistribution digital_distribution;
+            public Uplay? uplay;
+            public List<Addon> addons = new List<Addon>();
+            public Club? club;
+            public DigitalDistribution? digital_distribution;
             public bool is_ulc;
             public bool is_visible;
-            public StartGame start_game;
+            public StartGame? start_game;
         }
 
-        public string version;
-        public Product root;
-        public Dictionary<string,Localization> localizations;
+        public string version = string.Empty;
+        public Product? root;
+        public Dictionary<string, Localization> localizations = new Dictionary<string, Localization>();
         public uint uplay_id;
         public uint install_id;
     }

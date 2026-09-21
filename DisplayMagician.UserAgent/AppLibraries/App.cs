@@ -35,7 +35,7 @@ namespace DisplayMagician.AppLibraries
         public virtual SupportedAppLibraryType AppLibraryType { get; }
 
         [JsonIgnore]
-        public virtual AppLibrary AppLibrary { get; }
+        public virtual AppLibrary? AppLibrary { get; }
 
         [JsonIgnore]
         public virtual bool IsRunning { get; set; }
@@ -68,7 +68,7 @@ namespace DisplayMagician.AppLibraries
         public virtual string ProcessName { get; set; }
 
         [JsonIgnore]
-        public virtual List<Process> Processes { get; set; }
+        public virtual List<Process> Processes { get; set; } = new List<Process>();
        
         #endregion
 

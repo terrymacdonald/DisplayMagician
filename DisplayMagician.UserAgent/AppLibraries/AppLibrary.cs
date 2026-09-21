@@ -31,13 +31,13 @@ namespace DisplayMagician.AppLibraries
 
         public virtual int InstalledAppCount { get; set; }
 
-        public virtual string AppLibraryName { get; set; }
+        public virtual string? AppLibraryName { get; set; }
 
         public virtual SupportedAppLibraryType AppLibraryType { get; set; }
         
-        public virtual string AppLibraryExe { get; set; }
+        public virtual string? AppLibraryExe { get; set; }
 
-        public virtual string AppLibraryPath { get; set; }
+        public virtual string? AppLibraryPath { get; set; }
 
         public virtual bool IsAppLibraryInstalled { get; set; }
 
@@ -85,12 +85,12 @@ namespace DisplayMagician.AppLibraries
         }
 
 
-        public virtual App GetApp(string appNameOrId)
+        public virtual App? GetApp(string appNameOrId)
         {
             return null;
         }
 
-        public virtual App GetAppById(string appId)
+        public virtual App? GetAppById(string appId)
         {
             return null;
         }
@@ -100,7 +100,7 @@ namespace DisplayMagician.AppLibraries
             return false;
         }
 
-        public virtual List<Process> StartApp(App App, string AppArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        public virtual List<Process>? StartApp(App App, string AppArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             return null;
         }

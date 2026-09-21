@@ -14,11 +14,11 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
         public ulong Token { get; set; }
 
-        public ReadOnlyCollection<byte> Hash { get; set; }
-        public ReadOnlyCollection<byte> BinaryDataHash { get; set; }
+        public ReadOnlyCollection<byte>? Hash { get; set; }
+        public ReadOnlyCollection<byte>? BinaryDataHash { get; set; }
 
         public uint ChangeNumber { get; set; }
 
-        public KVObject Data { get; set; }
+        public KVObject? Data { get; set; }
     }
 }

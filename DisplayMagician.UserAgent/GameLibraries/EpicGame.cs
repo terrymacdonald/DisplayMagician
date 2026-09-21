@@ -11,14 +11,14 @@ namespace DisplayMagician.GameLibraries
 {
     public class EpicGame : Game
     {
-        private string _epicGameId;
-        private string _epicGameName;
-        private string _epicGameExePath;
-        private string _epicGameDir;
-        private string _epicGameExe;
-        private string _epicGameProcessName;
+        private string _epicGameId = string.Empty;
+        private string _epicGameName = string.Empty;
+        private string _epicGameExePath = string.Empty;
+        private string _epicGameDir = string.Empty;
+        private string _epicGameExe = string.Empty;
+        private string _epicGameProcessName = string.Empty;
         private List<Process> _epicGameProcesses = new List<Process>();
-        private string _epicGameIconPath;
+        private string _epicGameIconPath = string.Empty;
         //private string _epicURI;
         private static readonly EpicLibrary _epicGameLibrary = EpicLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -32,7 +32,7 @@ namespace DisplayMagician.GameLibraries
             _epicGameId = epicGameId;
             _epicGameName = epicGameName;
             _epicGameExePath = epicGameExePath;
-            _epicGameDir = Path.GetDirectoryName(epicGameExePath);
+            _epicGameDir = Path.GetDirectoryName(epicGameExePath) ?? string.Empty;
             _epicGameExe = Path.GetFileName(_epicGameExePath);
             _epicGameProcessName = Path.GetFileNameWithoutExtension(_epicGameExePath);
             _epicGameIconPath = epicGameIconPath;
@@ -192,7 +192,7 @@ namespace DisplayMagician.GameLibraries
             logger.Info($"EpicGame/Start: No custom arguments. Requesting URI Protocol: {address}");
 
             // Trigger URL Protocol Handler via ProcessUtils
-            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            var launcherProcesses = ProcessUtils.StartProcess(address, string.Empty, priority, timeout, runExeAsAdmin);
             if (launcherProcesses != null && launcherProcesses.Count > 0)
             {
                 processesStarted.AddRange(launcherProcesses);

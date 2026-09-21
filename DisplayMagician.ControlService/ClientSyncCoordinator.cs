@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -185,7 +186,7 @@ public sealed class ClientSyncCoordinator
         }, cancellationToken);
     }
 
-    private static bool TryCreateUpdate(JsonElement source, out ClientSyncUpdateView? update)
+    private static bool TryCreateUpdate(JsonElement source, [NotNullWhen(true)] out ClientSyncUpdateView? update)
     {
         update = null;
         if (!source.TryGetProperty("version", out JsonElement versionValue) || !Version.TryParse(versionValue.GetString(), out Version? version) || version.Build < 0 || version.Revision < 0 ||
@@ -211,7 +212,7 @@ public sealed class ClientSyncCoordinator
         return true;
     }
 
-    private static bool TryCreateMessage(JsonElement source, out ClientSyncMessageEntry? entry)
+    private static bool TryCreateMessage(JsonElement source, [NotNullWhen(true)] out ClientSyncMessageEntry? entry)
     {
         entry = null;
         if (!source.TryGetProperty("id", out JsonElement id) || !Guid.TryParse(id.GetString(), out Guid _) ||

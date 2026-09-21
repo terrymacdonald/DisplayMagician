@@ -40,7 +40,7 @@ namespace DisplayMagician.UserAgent.Runtime
         public DateTime LastUpdated;
         public List<ProfileItem> Profiles;
 
-        public override bool Equals(object obj) => obj is ProfileFile other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ProfileFile other && this.Equals(other);
         public bool Equals(ProfileFile other)
         => ProfileFileVersion.Equals(other.ProfileFileVersion) &&
            LastUpdated.Equals(other.LastUpdated) &&

@@ -370,7 +370,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [FieldOffset(120)]
         public UInt32 DisplayFrequency;
 
-        public override bool Equals(object obj) => obj is DEVICE_MODE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DEVICE_MODE other && this.Equals(other);
 
         public bool Equals(DEVICE_MODE other)
             => //DeviceName.Equals(other.DeviceName) &&  // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
@@ -430,7 +430,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         public string DeviceKey;
 
-        public override bool Equals(object obj) => obj is DISPLAY_DEVICE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAY_DEVICE other && this.Equals(other);
 
         public bool Equals(DISPLAY_DEVICE other)
             => Size == other.Size &&
@@ -464,7 +464,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = DataPoints)]
         public UInt16[] Blue;
 
-        public override bool Equals(object obj) => obj is GAMMA_RAMP other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is GAMMA_RAMP other && this.Equals(other);
 
         public bool Equals(GAMMA_RAMP other)
             => Red.SequenceEqual(other.Red) &&
@@ -493,7 +493,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public string DisplayName;
 
-        public override bool Equals(object obj) => obj is MONITOR_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is MONITOR_INFO other && this.Equals(other);
 
         public bool Equals(MONITOR_INFO other)
             => Size == other.Size &&
@@ -519,7 +519,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public DISPLAY_DEVICE Device;
         public DEVICE_MODE DeviceMode;
 
-        public override bool Equals(object obj) => obj is GDI_DISPLAY_SETTING other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is GDI_DISPLAY_SETTING other && this.Equals(other);
 
         public bool Equals(GDI_DISPLAY_SETTING other)
             => IsEnabled == other.IsEnabled &&

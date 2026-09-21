@@ -53,7 +53,7 @@ namespace DisplayMagician.Processes
         {
             List<Process> returnedProcesses = new List<Process>();
             ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
-            Process processCreated = TryExecute(executable, arguments, runAsAdministrator, wantedPriority);
+            Process? processCreated = TryExecute(executable, arguments, runAsAdministrator, wantedPriority);
 
             if (processCreated != null)
             {
@@ -336,7 +336,7 @@ namespace DisplayMagician.Processes
         /// <param name="runAsAdministrator">Launch with elevated rights.</param>
         /// <param name="priorityClass">Process priority class to request.</param>
         /// <returns>The started <see cref="Process"/>, or <c>null</c> on failure.</returns>
-        private static Process TryExecute(string executable, string arguments, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal)
+        private static Process? TryExecute(string executable, string arguments, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal)
         {
             ProcessStartInfo psi;
             if (File.Exists(executable) && IsExecutableFileType(executable))
@@ -372,7 +372,7 @@ namespace DisplayMagician.Processes
                 };
             }
 
-            Process processCreated = new Process {
+            Process? processCreated = new Process {
                 StartInfo = psi,
                 EnableRaisingEvents = true
             };

@@ -12,7 +12,7 @@ namespace DisplayMagician.GameLibraries
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private ProcessTreeMonitor _processTreeMonitor;
+        private ProcessTreeMonitor? _processTreeMonitor;
 
         public Game()
         {
@@ -36,7 +36,7 @@ namespace DisplayMagician.GameLibraries
         public virtual SupportedGameLibraryType GameLibraryType { get; }
 
         [JsonIgnore]
-        public virtual GameLibrary GameLibrary { get; }
+        public virtual GameLibrary? GameLibrary { get; }
 
         [JsonIgnore]
         public virtual bool IsRunning { get; set; }
@@ -60,7 +60,7 @@ namespace DisplayMagician.GameLibraries
         public virtual string ProcessName { get; set; }
 
         [JsonIgnore]
-        public virtual List<Process> Processes { get; set; }
+        public virtual List<Process> Processes { get; set; } = new List<Process>();
 
 #if !USER_AGENT
         public ShortcutBitmap GameBitmap { get; set; }

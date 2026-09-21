@@ -27,8 +27,8 @@ namespace DisplayMagician.GameLibraries
         // Common items to the class
         private List<Game> _allGogGames = new List<Game>();
         private string GogAppIdRegex = @"^[0-9A-F]{1,10}$";
-        private string _gogExe;
-        private string _gogPath;
+        private string _gogExe = string.Empty;
+        private string _gogPath = string.Empty;
         private string _gogLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "GOG.com");
         private string _gogProgramFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy");
         private bool _isGogInstalled = false;
@@ -53,21 +53,21 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Trace($"GogLibrary/GogLibrary: Gog Online Services registry key = HKLM\\{registryGogGalaxyClientKey}");
                 // Find the GogExe location, and the GogPath for later
-                RegistryKey GogGalaxyClientKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientKey, RegistryKeyPermissionCheck.ReadSubTree);
+                RegistryKey? GogGalaxyClientKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientKey, RegistryKeyPermissionCheck.ReadSubTree);
                 if (GogGalaxyClientKey == null)
                 {
                     logger.Info($"GogLibrary/GogLibrary: GOG library is not installed!");
                     return;
                 }
-                string gogClientExeFilename = GogGalaxyClientKey.GetValue("clientExecutable", @"GalaxyClient.exe").ToString();
+                string gogClientExeFilename = GogGalaxyClientKey.GetValue("clientExecutable") as string ?? @"GalaxyClient.exe";
 
-                RegistryKey GogGalaxyClientPathKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientPathKey, RegistryKeyPermissionCheck.ReadSubTree);
+                RegistryKey? GogGalaxyClientPathKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientPathKey, RegistryKeyPermissionCheck.ReadSubTree);
                 if (GogGalaxyClientPathKey == null)
                 {
                     logger.Info($"GogLibrary/GogLibrary: GOG library paths registry key not found!");
                     return;
                 }
-                string gogClientPath = GogGalaxyClientPathKey.GetValue("client", @"C:\Program Files (x86)\GOG Galaxy")?.ToString()
+                string gogClientPath = GogGalaxyClientPathKey.GetValue("client") as string
                     ?? @"C:\Program Files (x86)\GOG Galaxy";
                 _gogPath = gogClientPath;
                 _gogExe = Path.Combine(gogClientPath, gogClientExeFilename);                
@@ -234,7 +234,10 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"GogLibrary/AddGogGame: Updating Gog game {gogGame.Name} in our Gog library");
                 // We update the existing Shortcut with the data over
-                GogGame gogGameToUpdate = (GogGame)GetGame(gogGame.Id.ToString());
+                GogGame? gogGameToUpdate = GetGame(gogGame.Id.ToString()) as GogGame;
+                if (gogGameToUpdate == null)
+                    return false;
+
                 gogGame.CopyTo(gogGameToUpdate);
             }
             else
@@ -483,7 +486,7 @@ namespace DisplayMagician.GameLibraries
                         continue;
                     }
 
-                    GogGameInfo gogGameInfo;
+                    GogGameInfo? gogGameInfo;
                     try
                     {
                         gogGameInfo = JsonConvert.DeserializeObject<GogGameInfo>(File.ReadAllText(gogGameInfoFilename));
@@ -510,7 +513,7 @@ namespace DisplayMagician.GameLibraries
                     string registryGogGalaxyGameKey = registryGogGalaxyGamesKey + gogGameInfo.gameId;
                     logger.Trace($"GogLibrary/GogLibrary: GOG Galaxy Games registry key = HKLM\\{registryGogGalaxyGameKey}");
                     
-                    using (RegistryKey GogGalaxyGameKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGameKey, RegistryKeyPermissionCheck.ReadSubTree))
+                    using (RegistryKey? GogGalaxyGameKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGameKey, RegistryKeyPermissionCheck.ReadSubTree))
                     {
                         if (GogGalaxyGameKey == null)
                         {
@@ -518,8 +521,8 @@ namespace DisplayMagician.GameLibraries
                             continue;
                         }
 
-                        string gameDirectory = GogGalaxyGameKey.GetValue("path", "").ToString();
-                        string gameExePath = GogGalaxyGameKey.GetValue("exe", "").ToString();
+                        string gameDirectory = GogGalaxyGameKey.GetValue("path", "")?.ToString() ?? string.Empty;
+                        string gameExePath = GogGalaxyGameKey.GetValue("exe", "")?.ToString() ?? string.Empty;
                         if (!File.Exists(gameExePath))
                         {
                             logger.Info($"GogLibrary/GogLibrary: Could not verify game file target path {gameExePath}. Skipping entry.");
@@ -530,7 +533,7 @@ namespace DisplayMagician.GameLibraries
                         gogGame.Id = gogGameInfo.gameId;
                         gogGame.Name = gogGameInfo.name;
                         gogGame.Directory = gameDirectory;
-                        gogGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "").ToString();
+                        gogGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "")?.ToString() ?? string.Empty;
                         gogGame.ExePath = gameExePath;
                         gogGame.IconPath = gameExePath;
                         gogGame.ProcessName = Path.GetFileNameWithoutExtension(gogGame.ExePath);

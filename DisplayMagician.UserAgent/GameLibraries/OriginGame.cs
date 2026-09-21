@@ -11,14 +11,14 @@ namespace DisplayMagician.GameLibraries
 {
     public class OriginGame : Game
     {
-        private string _originGameId;
-        private string _originGameName;
-        private string _originGameExePath;
-        private string _originGameDir;
-        private string _originGameExe;
-        private string _originGameProcessName;
+        private string _originGameId = string.Empty;
+        private string _originGameName = string.Empty;
+        private string _originGameExePath = string.Empty;
+        private string _originGameDir = string.Empty;
+        private string _originGameExe = string.Empty;
+        private string _originGameProcessName = string.Empty;
         private List<Process> _originGameProcesses = new List<Process>();
-        private string _originGameIconPath;
+        private string _originGameIconPath = string.Empty;
         //private string _originURI;
         private static readonly OriginLibrary _originGameLibrary = OriginLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -31,7 +31,7 @@ namespace DisplayMagician.GameLibraries
             _originGameId = originGameId;
             _originGameName = originGameName;
             _originGameExePath = originGameExePath;
-            _originGameDir = Path.GetDirectoryName(originGameExePath);
+            _originGameDir = Path.GetDirectoryName(originGameExePath) ?? string.Empty;
             _originGameExe = Path.GetFileName(_originGameExePath);
             _originGameProcessName = Path.GetFileNameWithoutExtension(_originGameExePath);
             _originGameIconPath = originGameIconPath;
@@ -215,7 +215,7 @@ namespace DisplayMagician.GameLibraries
             logger.Info($"OriginGame/Start: Launching via Launcher URI Protocol: {address}");
 
             // Fire the launcher command 
-            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            var launcherProcesses = ProcessUtils.StartProcess(address, string.Empty, priority, timeout, runExeAsAdmin);
             if (launcherProcesses != null && launcherProcesses.Count > 0)
             {
                 processesStarted.AddRange(launcherProcesses);

@@ -1330,7 +1330,7 @@ namespace DisplayMagician {
             }
 
             RefreshMessageIndicators();
-            ClientSyncUpdateView? selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
+            ClientSyncUpdateView selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
             if (selectedUpdate != null)
             {
                 ShowClientSyncUpdate(selectedUpdate, automatic: true);
@@ -1350,7 +1350,7 @@ namespace DisplayMagician {
                 ShowNewMessagesToast(syncResult.MessageSync.NewMessagesCount);
             }
             RefreshMessageIndicators();
-            ClientSyncUpdateView? selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
+            ClientSyncUpdateView selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
             if (selectedUpdate != null)
             {
                 ShowClientSyncUpdate(selectedUpdate, manual);

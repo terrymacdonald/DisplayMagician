@@ -34,8 +34,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public WallpaperConfig() { }
 
-        public override bool Equals(object obj) => obj is WallpaperConfig other && Equals(other);
-        public bool Equals(WallpaperConfig other)
+        public override bool Equals(object? obj) => obj is WallpaperConfig other && Equals(other);
+        public bool Equals(WallpaperConfig? other)
         {
             if (other is null) return false;
             if (WallpaperMode != other.WallpaperMode) return false;

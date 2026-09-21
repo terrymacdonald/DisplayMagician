@@ -228,7 +228,7 @@ namespace DisplayMagician.Processes
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool LookupPrivilegeValue(string lpSystemName,
+        private static extern bool LookupPrivilegeValue(string? lpSystemName,
                                                         string lpName,
                                                         out LUID lpLuid);
 
@@ -320,7 +320,7 @@ namespace DisplayMagician.Processes
         /// <param name="folderPath">Will be set to the folder path if the result value is <c>true</c>.</param>
         /// <returns><c>true</c>, if the specified special folder could be retrieved. Else <c>false</c>
         /// will be returned.</returns>
-        public static bool GetSpecialFolder(Environment.SpecialFolder folder, out string folderPath)
+        public static bool GetSpecialFolder(Environment.SpecialFolder folder, out string? folderPath)
         {
             folderPath = null;
             switch (folder)

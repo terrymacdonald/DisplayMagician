@@ -180,7 +180,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
             return hash.ToHashCode();
         }
 
-        public override bool Equals(object obj) => obj is INTEL_DISPLAY_WITH_SETTINGS other && Equals(other);
+        public override bool Equals(object? obj) => obj is INTEL_DISPLAY_WITH_SETTINGS other && Equals(other);
         
         public bool Equals(INTEL_DISPLAY_WITH_SETTINGS other)
         {
@@ -489,7 +489,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
             IsSupportedStandardColorCorrection = false;
             StandardColorCorrection = new StandardColorCorrectionDto();
         }
-        public override bool Equals(object obj) => obj is INTEL_ADAPTER other && Equals(other);
+        public override bool Equals(object? obj) => obj is INTEL_ADAPTER other && Equals(other);
         
         public  bool Equals(INTEL_ADAPTER other)
         {
@@ -585,7 +585,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
             DisplayIdentifiers = new List<string>();
         }
 
-        public override bool Equals(object obj) => obj is INTEL_DISPLAY_CONFIG other && Equals(other);
+        public override bool Equals(object? obj) => obj is INTEL_DISPLAY_CONFIG other && Equals(other);
         
         public bool Equals(INTEL_DISPLAY_CONFIG other)
         {

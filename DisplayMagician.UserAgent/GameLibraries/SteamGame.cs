@@ -34,7 +34,7 @@ namespace DisplayMagician.GameLibraries
             _steamGameId = steamGameId;
             _steamGameName = steamGameName;
             _steamGameExePath = steamGameExePath;
-            _steamGameDir = Path.GetDirectoryName(steamGameExePath);
+            _steamGameDir = Path.GetDirectoryName(steamGameExePath) ?? string.Empty;
             _steamGameExe = Path.GetFileName(_steamGameExePath);
             _steamGameProcessName = Path.GetFileNameWithoutExtension(_steamGameExePath);
             _steamGameIconPath = steamGameIconPath;
@@ -253,7 +253,7 @@ namespace DisplayMagician.GameLibraries
             string address = $@"steam://rungameid/{Id}";
             logger.Info($"SteamGame/Start: No arguments. Requesting standard URI Protocol: {address}");
 
-            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            var launcherProcesses = ProcessUtils.StartProcess(address, string.Empty, priority, timeout, runExeAsAdmin);
             if (launcherProcesses != null && launcherProcesses.Count > 0)
             {
                 processesStarted.AddRange(launcherProcesses);

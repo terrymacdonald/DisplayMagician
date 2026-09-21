@@ -42,7 +42,7 @@ namespace DisplayMagician.UserAgent.Runtime
         public DateTime LastUpdated;
         public List<AudioProfileItem> AudioProfiles;
 
-        public override bool Equals(object obj) => obj is AudioProfileFile other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is AudioProfileFile other && this.Equals(other);
         public bool Equals(AudioProfileFile other)
         => AudioProfileFileVersion.Equals(other.AudioProfileFileVersion) &&
            LastUpdated.Equals(other.LastUpdated) &&
@@ -63,13 +63,13 @@ namespace DisplayMagician.UserAgent.Runtime
         // Common items to the class
         private static List<AudioProfileItem> _allAudioProfiles = new List<AudioProfileItem>();
         private static bool _audioProfilesLoaded = false;
-        private static AudioProfileItem _currentAudioProfile;
+        private static AudioProfileItem? _currentAudioProfile;
         private static WindowsAudioController _audioController = new WindowsAudioController();
         private static AudioAccessStatus _audioAccessStatus = AudioAccessStatus.Unknown;
 
 
         private static volatile bool _userChangingAudioProfiles = false;
-        private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
+        private static IUserAgentRepositoryConnection? _userAgentRepositoryConnection;
         private static long _userAgentRepositoryRevision;
 
         // Other constants that are useful
@@ -144,7 +144,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool CanAccessAudioSettings => _audioAccessStatus != AudioAccessStatus.Denied;
 
-        public static AudioProfileItem CurrentAudioProfile
+        public static AudioProfileItem? CurrentAudioProfile
         {
             get
             {
@@ -434,7 +434,7 @@ namespace DisplayMagician.UserAgent.Runtime
             return false;
         }
 
-        public static AudioProfileItem GetAudioProfile(string AudioProfileNameOrId)
+        public static AudioProfileItem? GetAudioProfile(string AudioProfileNameOrId)
         {
 
             SharedLogger.logger.Debug($"AudioProfileRepository/GetAudioProfile: Finding and returning {AudioProfileNameOrId} if it exists in our audioProfile repository");
@@ -584,7 +584,7 @@ namespace DisplayMagician.UserAgent.Runtime
             _currentAudioProfile = audioProfile;
         }
 
-        public static AudioProfileItem GetActiveAudioProfile()
+        public static AudioProfileItem? GetActiveAudioProfile()
         {
             if (!(_currentAudioProfile is AudioProfileItem))
                 return null;
@@ -664,7 +664,7 @@ namespace DisplayMagician.UserAgent.Runtime
                             TypeNameHandling = TypeNameHandling.Auto,
                             SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                                 args.ErrorContext.Handled = true;
@@ -814,7 +814,7 @@ namespace DisplayMagician.UserAgent.Runtime
                     SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
-                    Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                    Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                     {
                         jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                         //errors.Add(new AudioProfileRepositoryException(String.Format("Parse error: {0}", args.ErrorContext.Error.Message), args.ErrorContext.Error));
@@ -960,7 +960,7 @@ namespace DisplayMagician.UserAgent.Runtime
                                 TypeNameHandling = TypeNameHandling.Auto,
                                 SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
-                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
                                     jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                                     args.ErrorContext.Handled = true;

@@ -12,14 +12,14 @@ namespace DisplayMagician.GameLibraries
     public class UplayGame : Game
     {
         //private string _gameRegistryKey;
-        private string _uplayGameId;
-        private string _uplayGameName;
-        private string _uplayGameExePath;
-        private string _uplayGameDir;
-        private string _uplayGameExe;
-        private string _uplayGameProcessName;
+        private string _uplayGameId = string.Empty;
+        private string _uplayGameName = string.Empty;
+        private string _uplayGameExePath = string.Empty;
+        private string _uplayGameDir = string.Empty;
+        private string _uplayGameExe = string.Empty;
+        private string _uplayGameProcessName = string.Empty;
         private List<Process> _uplayGameProcesses = new List<Process>();
-        private string _uplayGameIconPath;
+        private string _uplayGameIconPath = string.Empty;
         private static readonly UplayLibrary _uplayGameLibrary = UplayLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -31,7 +31,7 @@ namespace DisplayMagician.GameLibraries
             _uplayGameId = uplayGameId;
             _uplayGameName = uplayGameName;
             _uplayGameExePath = uplayGameExePath;
-            _uplayGameDir = Path.GetDirectoryName(uplayGameExePath);
+            _uplayGameDir = Path.GetDirectoryName(uplayGameExePath) ?? string.Empty;
             _uplayGameExe = Path.GetFileName(_uplayGameExePath);
             _uplayGameProcessName = Path.GetFileNameWithoutExtension(_uplayGameExePath);
             _uplayGameIconPath = uplayGameIconPath;
@@ -218,7 +218,7 @@ namespace DisplayMagician.GameLibraries
             string address = $@"uplay://launch/{Id}";
             logger.Info($"UplayGame/Start: No arguments. Requesting standard URI Protocol: {address}");
 
-            var launcherProcesses = ProcessUtils.StartProcess(address, null, priority, timeout, runExeAsAdmin);
+            var launcherProcesses = ProcessUtils.StartProcess(address, string.Empty, priority, timeout, runExeAsAdmin);
             if (launcherProcesses != null && launcherProcesses.Count > 0)
             {
                 processesStarted.AddRange(launcherProcesses);

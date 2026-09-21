@@ -61,7 +61,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             return new Rect(x, y, x + width, y + height);
         }
 
-        public override bool Equals(object obj) => obj is Rect other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is Rect other && this.Equals(other);
         public bool Equals(Rect other)
             => Left == other.Left &&
                Top == other.Top &&
@@ -388,12 +388,12 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
     public class RectTypeConverter : TypeConverter
     {
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
         {
             return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
         }
 
-        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
         {
             if (value is string rectString)
             {
@@ -410,12 +410,12 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             return base.ConvertFrom(context, culture, value);
         }
 
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
         {
             return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
         }
 
-        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
             if (destinationType == typeof(string) && value is Rect rect)
             {

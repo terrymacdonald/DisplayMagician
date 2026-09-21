@@ -11,15 +11,15 @@ namespace DisplayMagician.GameLibraries
 {
     public class XboxGame : Game
     {
-        private string _xboxGameId;
-        private string _xboxGameName;
-        private string _xboxGameExePath;
-        private string _xboxGameDir;
-        private string _xboxGameExe;
-        private string _xboxGameProcessName;
+        private string _xboxGameId = string.Empty;
+        private string _xboxGameName = string.Empty;
+        private string _xboxGameExePath = string.Empty;
+        private string _xboxGameDir = string.Empty;
+        private string _xboxGameExe = string.Empty;
+        private string _xboxGameProcessName = string.Empty;
         private List<Process> _xboxGameProcesses = new List<Process>();
-        private string _xboxGameIconPath;
-        private string _xboxGameAUMID;
+        private string _xboxGameIconPath = string.Empty;
+        private string _xboxGameAUMID = string.Empty;
         private static readonly XboxLibrary _xboxGameLibrary = XboxLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -31,7 +31,7 @@ namespace DisplayMagician.GameLibraries
             _xboxGameId = xboxGameId;
             _xboxGameName = xboxGameName;
             _xboxGameExePath = xboxGameExePath;
-            _xboxGameDir = !String.IsNullOrWhiteSpace(xboxGameExePath) ? Path.GetDirectoryName(xboxGameExePath) : "";
+            _xboxGameDir = !String.IsNullOrWhiteSpace(xboxGameExePath) ? Path.GetDirectoryName(xboxGameExePath) ?? string.Empty : string.Empty;
             _xboxGameExe = !String.IsNullOrWhiteSpace(xboxGameExePath) ? Path.GetFileName(xboxGameExePath) : "";
             _xboxGameProcessName = !String.IsNullOrWhiteSpace(xboxGameExePath) ? Path.GetFileNameWithoutExtension(xboxGameExePath) : "";
             _xboxGameIconPath = xboxGameIconPath;

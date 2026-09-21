@@ -36,9 +36,9 @@ namespace DisplayMagician.GameLibraries
         // Common items to the class
         private List<Game> _allSteamGames = new List<Game>();
         private string steamAppIdRegex = @"^[0-9A-F]{1,10}$";
-        private string _steamExe;
-        private string _steamPath;
-        private string _steamConfigVdfFile;
+        private string _steamExe = string.Empty;
+        private string _steamPath = string.Empty;
+        private string _steamConfigVdfFile = string.Empty;
         private List<string> _steamProcessList = new List<string>() { "steam"};
         private string _registrySteamKey = @"SOFTWARE\WOW6432Node\Valve\Steam"; // under LocalMachine
         private string _registryAppsKey = $@"SOFTWARE\Valve\Steam\Apps"; // under CurrentUser
@@ -64,7 +64,7 @@ namespace DisplayMagician.GameLibraries
                         logger.Info($"SteamLibrary/SteamLibrary: Steam library is not installed!");
                         return;
                     }
-                    _steamPath = steamInstallKey.GetValue("InstallPath", "C:\\Program Files (x86)\\Steam").ToString();
+                    _steamPath = steamInstallKey.GetValue("InstallPath", "C:\\Program Files (x86)\\Steam")?.ToString() ?? string.Empty;
                     _steamExe = $"{_steamPath}\\steam.exe";
                 }                   
                 if (File.Exists(_steamExe))
@@ -245,7 +245,12 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"SteamLibrary/AddSteamGame: Updating Steam game {steamGame.Name} in our Steam library");
                 // We update the existing Shortcut with the data over
-                SteamGame steamGameToUpdate = (SteamGame)GetGameById(steamGame.Id.ToString());
+                SteamGame? steamGameToUpdate = GetGameById(steamGame.Id.ToString()) as SteamGame;
+                if (steamGameToUpdate == null)
+                {
+                    return false;
+                }
+
                 steamGame.CopyTo(steamGameToUpdate);
             }
             else
@@ -459,7 +464,7 @@ namespace DisplayMagician.GameLibraries
                 _allSteamGames.Clear();
 
                 List<string> steamAppIdsInstalled = new List<string>();
-                using (RegistryKey steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
+                using (RegistryKey? steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     if (steamAppsKey != null)
                     {
@@ -469,11 +474,11 @@ namespace DisplayMagician.GameLibraries
                             if (!String.IsNullOrWhiteSpace(steamAppId))
                             {
                                 string steamGameKeyFullName = $"{_registryAppsKey}\\{steamAppId}";
-                                using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
+                                using (RegistryKey? steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
                                     if (steamGameKey == null)
                                         continue;
-                                    if ((int)steamGameKey.GetValue(@"Installed", 0) == 1)
+                                    if (steamGameKey.GetValue(@"Installed", 0) is int installedValue && installedValue == 1)
                                     {
                                         logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} is an installed Steam App.");
                                         steamAppIdsInstalled.Add(steamAppId);
@@ -519,9 +524,17 @@ namespace DisplayMagician.GameLibraries
                             SteamAppInfo steamGameAppInfo = new SteamAppInfo
                             {
                                 GameID = detectedAppID,
-                                GameExes = new List<string>()
+                                GameName = string.Empty,
+                                GameExes = new List<string>(),
+                                GameInstallDir = string.Empty,
+                                GameIconPath = string.Empty
                             };
                             string steamAppType = "";
+
+                            if (app.Data == null)
+                            {
+                                continue;
+                            }
 
                             foreach (var (dataKey, data) in app.Data)
                             {
@@ -535,7 +548,11 @@ namespace DisplayMagician.GameLibraries
                                         }
                                         else if (commonKey == "clienticon")
                                         {
-                                            steamGameAppInfo.GameIconPath = Path.Combine(_steamPath, @"steam", @"games", String.Concat((string)common, @".ico"));
+                                            string? iconName = (string)common;
+                                            if (!string.IsNullOrWhiteSpace(iconName))
+                                            {
+                                                steamGameAppInfo.GameIconPath = Path.Combine(_steamPath, @"steam", @"games", string.Concat(iconName, @".ico"));
+                                            }
                                         }
                                         else if (commonKey == "type")
                                         {
@@ -682,7 +699,7 @@ namespace DisplayMagician.GameLibraries
                 }
 
                 // Non-Steam Game Parsing Section
-                using (RegistryKey steamUsersKey = Registry.CurrentUser.OpenSubKey(_registryUsersKey, RegistryKeyPermissionCheck.ReadSubTree))
+                using (RegistryKey? steamUsersKey = Registry.CurrentUser.OpenSubKey(_registryUsersKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     if (steamUsersKey != null)
                     {
@@ -726,8 +743,9 @@ namespace DisplayMagician.GameLibraries
                                                             shortcutGameIconPath = shortcutGameExe;
                                                         break;
                                                     case "icon":
-                                                        if (!String.IsNullOrWhiteSpace((string)subItem) && File.Exists((string)subItem))
-                                                            shortcutGameIconPath = (string)subItem;
+                                                        string? shortcutIconPath = (string)subItem;
+                                                        if (!string.IsNullOrWhiteSpace(shortcutIconPath) && File.Exists(shortcutIconPath))
+                                                            shortcutGameIconPath = shortcutIconPath;
                                                         break;
                                                 }
                                             }

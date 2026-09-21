@@ -56,7 +56,7 @@ namespace DisplayMagician.UserAgent.Runtime
         public string ColorEncoding;
         public int BitsPerColorChannel;
 
-        public override bool Equals(object obj) => obj is ScreenPosition other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is ScreenPosition other && this.Equals(other);
         public bool Equals(ScreenPosition other)
         => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
            //Id == other.Id && // Removed the ID too, as that changes if the user has a Clone!
@@ -120,7 +120,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
             //convert from byte to bitmap (deserialize)
 
-            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
             {
                 string image = (string)reader.Value;
 
@@ -138,7 +138,7 @@ namespace DisplayMagician.UserAgent.Runtime
             }
 
             //convert bitmap to byte (serialize)
-            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
             {
                 Bitmap bitmap = (Bitmap)value;
 
@@ -2384,8 +2384,10 @@ namespace DisplayMagician.UserAgent.Runtime
         }
 
 
-        public int CompareTo(ProfileItem other)
+        public int CompareTo(ProfileItem? other)
         {
+            if (other is null)
+                return 1;
 
             int result = CompareToValues(other);
 
@@ -2445,7 +2447,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
         // The object specific Equals
-        public bool Equals(ProfileItem other)
+        public bool Equals(ProfileItem? other)
         {
             // Check references
             if (ReferenceEquals(null, other)) return false;
@@ -2462,7 +2464,7 @@ namespace DisplayMagician.UserAgent.Runtime
         }
 
         // The public override for the Object.Equals
-        public override bool Equals(Object obj)
+        public override bool Equals(object? obj)
         {
             // Check references
             if (ReferenceEquals(null, obj)) return false;
@@ -2483,12 +2485,12 @@ namespace DisplayMagician.UserAgent.Runtime
 
         }
 
-        public static bool operator ==(ProfileItem lhs, ProfileItem rhs)
+        public static bool operator ==(ProfileItem? lhs, ProfileItem? rhs)
         {
             return Equals(lhs, rhs);
         }
 
-        public static bool operator !=(ProfileItem lhs, ProfileItem rhs)
+        public static bool operator !=(ProfileItem? lhs, ProfileItem? rhs)
         {
             return !Equals(lhs, rhs);
         }

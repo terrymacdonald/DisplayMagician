@@ -27,8 +27,8 @@ namespace DisplayMagician.GameLibraries
         // Common items to the class
         private List<Game> _allEpicGames = new List<Game>();
         private string EpicAppIdRegex = @"^[0-9A-F]{1,10}$";
-        private string _epicExe;
-        private string _epicPath;
+        private string _epicExe = string.Empty;
+        private string _epicPath = string.Empty;
         private string _epicLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic");
         private string _epicProgramFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Epic Games");
         private bool _isEpicInstalled = false;
@@ -51,15 +51,16 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Trace($"EpicLibrary/EpicLibrary: Epic Online Services registry key = HKCU\\{registryEpicOnlineServicesKey}");
                 // Find the EpicExe location, and the EpicPath for later
-                RegistryKey EpicOnlineServicesKey = Registry.CurrentUser.OpenSubKey(registryEpicOnlineServicesKey, RegistryKeyPermissionCheck.ReadSubTree);
+                RegistryKey? EpicOnlineServicesKey = Registry.CurrentUser.OpenSubKey(registryEpicOnlineServicesKey, RegistryKeyPermissionCheck.ReadSubTree);
                 if (EpicOnlineServicesKey == null)
                 {
                     logger.Info($"EpicLibrary/EpicLibrary: Epic library is not installed!");
                     return;
                 }
                     
-                _epicExe = EpicOnlineServicesKey.GetValue("ModSdkCommand", @"C:/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win64/EpicGamesLauncher.exe").ToString();
-                _epicPath = Path.GetDirectoryName(_epicExe);
+                _epicExe = EpicOnlineServicesKey.GetValue("ModSdkCommand") as string
+                    ?? @"C:/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win64/EpicGamesLauncher.exe";
+                _epicPath = Path.GetDirectoryName(_epicExe) ?? string.Empty;
                 if (File.Exists(_epicExe))
                 {
                     logger.Info($"EpicLibrary/EpicLibrary: Epic library is installed in {_epicPath}. Found {_epicExe}");
@@ -224,7 +225,10 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"EpicLibrary/AddEpicGame: Updating Epic game {epicGame.Name} in our Epic library");
                 // We update the existing Shortcut with the data over
-                EpicGame epicGameToUpdate = (EpicGame)GetGame(epicGame.Id.ToString());
+                EpicGame? epicGameToUpdate = GetGame(epicGame.Id.ToString()) as EpicGame;
+                if (epicGameToUpdate == null)
+                    return false;
+
                 epicGame.CopyTo(epicGameToUpdate);
             }
             else
@@ -447,7 +451,7 @@ namespace DisplayMagician.GameLibraries
                 }
 
                 logger.Trace($"EpicLibrary/LoadInstalledGames: Locally installed games file {localInstalledGameListFile} exists!");
-                LauncherInstalled epicLauncherInstalledDat;
+                LauncherInstalled? epicLauncherInstalledDat;
                 try
                 {
                     epicLauncherInstalledDat = JsonConvert.DeserializeObject<LauncherInstalled>(File.ReadAllText(localInstalledGameListFile));
@@ -474,7 +478,7 @@ namespace DisplayMagician.GameLibraries
 
                 foreach (string localInstalledGameManifestFile in Directory.GetFiles(installListPath, "*.item"))
                 {
-                    InstalledManifiest epicManifest;
+                    InstalledManifiest? epicManifest;
                     try
                     {
                         epicManifest = JsonConvert.DeserializeObject<InstalledManifiest>(File.ReadAllText(localInstalledGameManifestFile));
@@ -507,7 +511,7 @@ namespace DisplayMagician.GameLibraries
                         continue;
                     }
 
-                    InstalledManifiest installedAppManifest = allManifests.FirstOrDefault(a => a.AppName == installedApp.AppName);
+                    InstalledManifiest? installedAppManifest = allManifests.FirstOrDefault(a => a.AppName == installedApp.AppName);
 
                     if (installedAppManifest == null)
                         continue;
@@ -526,8 +530,8 @@ namespace DisplayMagician.GameLibraries
 
                     // Extract the info into an EpicGame object                    
                     EpicGame epicGame = new EpicGame();
-                    epicGame.Name = installedAppManifest?.DisplayName ?? Path.GetFileName(installedApp.InstallLocation);
-                    epicGame.Directory = installedAppManifest?.InstallLocation ?? installedApp.InstallLocation;
+                    epicGame.Name = installedAppManifest.DisplayName ?? Path.GetFileName(installedApp.InstallLocation) ?? string.Empty;
+                    epicGame.Directory = installedAppManifest.InstallLocation ?? installedApp.InstallLocation;
                     epicGame.Executable = installedAppManifest.LaunchExecutable;
                     epicGame.ExePath = Path.Combine(epicGame.Directory, installedAppManifest.LaunchExecutable);
                     epicGame.IconPath = epicGame.ExePath;
@@ -539,7 +543,7 @@ namespace DisplayMagician.GameLibraries
                     // =========================================================================
                     string sandboxId = installedAppManifest.CatalogNamespace;
                     string catalogItemId = installedAppManifest.CatalogItemId;
-                    string artifactId = installedAppManifest?.MainGameAppName ?? installedApp.AppName;
+                    string artifactId = installedAppManifest.MainGameAppName ?? installedApp.AppName;
 
                     if (!string.IsNullOrWhiteSpace(sandboxId) && !string.IsNullOrWhiteSpace(catalogItemId))
                     {

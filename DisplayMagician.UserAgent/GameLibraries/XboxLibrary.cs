@@ -25,8 +25,8 @@ namespace DisplayMagician.GameLibraries
         // Common items to the class
         private List<Game> _allXboxGames = new List<Game>();
         private string _xboxAppIdRegex = @"^[0-9A-F]{1,16}$";
-        private string _xboxExe;
-        private string _xboxPath;
+        private string _xboxExe = string.Empty;
+        private string _xboxPath = string.Empty;
         private bool _isXboxInstalled = false;
         private List<string> _xboxProcessList = new List<string>(){ "XboxAppServices" };
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -60,7 +60,7 @@ namespace DisplayMagician.GameLibraries
                 // Xbox Game Pass relies on Windows Gaming Services (XboxAppServices.exe).
                 // Detect availability by checking for its presence in the Windows System32 folder.
                 _xboxExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "XboxAppServices.exe");
-                _xboxPath = Path.GetDirectoryName(_xboxExe);
+                _xboxPath = Path.GetDirectoryName(_xboxExe) ?? string.Empty;
                 if (File.Exists(_xboxExe))
                 {
                     logger.Info($"XboxLibrary/XboxLibrary: Xbox library is available. Found {_xboxExe}");
@@ -214,8 +214,13 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"XboxLibrary/AddXboxGame: Updating Xbox game {xboxGame.Name} in our Xbox library");
                 // We update the existing Shortcut with the data over
-                XboxGame XboxGameToUpdate = (XboxGame)GetGame(xboxGame.Id.ToString());
-                xboxGame.CopyTo(XboxGameToUpdate);
+                XboxGame? xboxGameToUpdate = GetGame(xboxGame.Id.ToString()) as XboxGame;
+                if (xboxGameToUpdate == null)
+                {
+                    return false;
+                }
+
+                xboxGame.CopyTo(xboxGameToUpdate);
             }
             else
             {
@@ -431,7 +436,14 @@ namespace DisplayMagician.GameLibraries
                 _allXboxGames.Clear();
 
                 var manager = new PackageManager();
-                IEnumerable<Package> packages = manager.FindPackagesForUser(WindowsIdentity.GetCurrent().User.Value);
+                string? currentUserSid = WindowsIdentity.GetCurrent().User?.Value;
+                if (string.IsNullOrWhiteSpace(currentUserSid))
+                {
+                    logger.Warn("XboxLibrary/LoadInstalledGames: Skipping Xbox game enumeration because the current user SID is unavailable.");
+                    return false;
+                }
+
+                IEnumerable<Package> packages = manager.FindPackagesForUser(currentUserSid);
 
                 foreach (var package in packages)
                 {
@@ -441,7 +453,7 @@ namespace DisplayMagician.GameLibraries
                         continue;
                     }
 
-                    string installPath;
+                        string installPath = string.Empty;
                     try
                     {
                         if (package.InstalledLocation == null)
@@ -470,8 +482,8 @@ namespace DisplayMagician.GameLibraries
                             continue;
                         }
 
-                        string aumid = null;
-                        string entryDisplayName = null;
+                        string? aumid = null;
+                        string? entryDisplayName = null;
                         try
                         {
                             IReadOnlyList<AppListEntry> appListEntries = (IReadOnlyList<AppListEntry>)package.GetAppListEntries();
@@ -486,25 +498,25 @@ namespace DisplayMagician.GameLibraries
                             logger.Debug(ex, $"XboxLibrary/LoadInstalledGames: Could not get AppListEntry for {package.Id.FamilyName}");
                         }
 
-                        string gameName = gameElement.Element("ShellVisuals")?.Attribute("DefaultDisplayName")?.Value;
+                        string? gameName = gameElement.Element("ShellVisuals")?.Attribute("DefaultDisplayName")?.Value;
                         if (String.IsNullOrWhiteSpace(gameName))
                             gameName = entryDisplayName;
                         if (String.IsNullOrWhiteSpace(gameName))
                             gameName = package.Id.FamilyName;
                         gameName = NormaliseGameName(gameName);
 
-                        string titleId = gameElement.Element("TitleId")?.Value;
+                        string? titleId = gameElement.Element("TitleId")?.Value;
                         if (String.IsNullOrWhiteSpace(titleId))
                             titleId = package.Id.FamilyName;
 
-                        string exePath = null;
+                        string? exePath = null;
                         var executableList = gameElement.Element("ExecutableList");
                         if (executableList != null)
                         {
                             var exeElement = executableList.Elements("Executable")
                                 .FirstOrDefault(e => e.Attribute("TargetDeviceFamily")?.Value == "PC")
                                 ?? executableList.Elements("Executable").FirstOrDefault();
-                            string exeName = exeElement?.Attribute("Name")?.Value;
+                            string? exeName = exeElement?.Attribute("Name")?.Value;
                             if (!String.IsNullOrWhiteSpace(exeName))
                                 exePath = Path.Combine(installPath, exeName);
                         }
@@ -515,9 +527,9 @@ namespace DisplayMagician.GameLibraries
                             continue;
                         }
 
-                        string iconPath = !String.IsNullOrWhiteSpace(exePath) ? exePath : package.Logo.LocalPath;
+                        string iconPath = !string.IsNullOrWhiteSpace(exePath) ? exePath : package.Logo?.LocalPath ?? string.Empty;
 
-                        var xboxGame = new XboxGame(titleId, gameName, exePath ?? "", iconPath, aumid ?? "");
+                        var xboxGame = new XboxGame(titleId ?? string.Empty, gameName ?? string.Empty, exePath ?? string.Empty, iconPath, aumid ?? string.Empty);
                         _allXboxGames.Add(xboxGame);
                         logger.Debug($"XboxLibrary/LoadInstalledGames: Found Xbox game '{gameName}' (TitleId={titleId}, AUMID={aumid})");
                     }
@@ -598,24 +610,24 @@ namespace DisplayMagician.GameLibraries
 
     public class XboxPlayTask
     {
-        public string category;
-        public string compatibilityFlags;
+        public string category = string.Empty;
+        public string compatibilityFlags = string.Empty;
         public bool isPrimary;
-        public List<string> languages;
-        public string name;
-        public string path;
-        public string type;
+        public List<string> languages = new List<string>();
+        public string name = string.Empty;
+        public string path = string.Empty;
+        public string type = string.Empty;
     }
     public class XboxGameInfo
     {
-        public string buildId;
-        public string clientId;
-        public string gameId;
-        public string language;
-        public List<string> languages;
-        public string name;
-        public List<XboxPlayTask> playTasks;
-        public string rootGameId;
+        public string buildId = string.Empty;
+        public string clientId = string.Empty;
+        public string gameId = string.Empty;
+        public string language = string.Empty;
+        public List<string> languages = new List<string>();
+        public string name = string.Empty;
+        public List<XboxPlayTask> playTasks = new List<XboxPlayTask>();
+        public string rootGameId = string.Empty;
         public int version;
     }
 

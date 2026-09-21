@@ -22,7 +22,7 @@ namespace DisplayMagician.Processes
         private readonly HashSet<int> _existingExpectedProcessIds = new HashSet<int>();
         private readonly HashSet<int> _trackedProcessIds = new HashSet<int>();
         private readonly DateTime _deadlineUtc;
-        private Timer _snapshotTimer;
+        private Timer? _snapshotTimer;
         private int _snapshotInProgress;
         private int _completedSnapshotCount;
         private int _minimumSnapshotCountForDirectLaunch;
@@ -143,13 +143,13 @@ namespace DisplayMagician.Processes
             return processes;
         }
 
-        public void RegisterLaunchedProcesses(IEnumerable<Process> launchedProcesses)
+        public void RegisterLaunchedProcesses(IEnumerable<Process?>? launchedProcesses)
         {
             if (launchedProcesses == null)
                 return;
 
             bool registeredLaunchedProcess = false;
-            foreach (Process process in launchedProcesses)
+            foreach (Process? process in launchedProcesses)
             {
                 try
                 {
@@ -185,7 +185,7 @@ namespace DisplayMagician.Processes
             }
         }
 
-        public static ProcessTreeMonitor BeginWatching(string expectedExecutablePath, int startTimeout)
+        public static ProcessTreeMonitor? BeginWatching(string expectedExecutablePath, int startTimeout)
         {
             if (string.IsNullOrWhiteSpace(expectedExecutablePath) || !File.Exists(expectedExecutablePath))
                 return null;
@@ -205,7 +205,7 @@ namespace DisplayMagician.Processes
             {
                 try
                 {
-                    string processPath = GetProcessImagePath(process.Id);
+                    string? processPath = GetProcessImagePath(process.Id);
                     if (!string.IsNullOrWhiteSpace(processPath) &&
                         string.Equals(Path.GetFullPath(processPath), expectedExecutablePath, StringComparison.OrdinalIgnoreCase))
                     {
@@ -227,7 +227,7 @@ namespace DisplayMagician.Processes
 
         public static List<Process> StartAndCapture(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false, bool captureDescendantsForStartupWindow = false)
         {
-            ProcessTreeMonitor monitor = BeginWatching(executable, startTimeout);
+            ProcessTreeMonitor? monitor = BeginWatching(executable, startTimeout);
             List<Process> startedProcesses = ProcessUtils.StartProcess(executable, arguments, processPriority, startTimeout, runAsAdministrator);
             if (monitor == null)
                 return startedProcesses;
@@ -264,7 +264,7 @@ namespace DisplayMagician.Processes
             logger.Debug($"ProcessTreeMonitor/Start: Capturing native process snapshots for {_expectedExecutablePath} until {_deadlineUtc:O}.");
         }
 
-        private void CaptureProcessTree(object state)
+        private void CaptureProcessTree(object? state)
         {
             if (_disposed || IsDiscoveryComplete || Interlocked.Exchange(ref _snapshotInProgress, 1) != 0)
                 return;
@@ -394,12 +394,12 @@ namespace DisplayMagician.Processes
 
         private bool PathsMatch(Process process)
         {
-            string processPath = GetProcessImagePath(process.Id);
+            string? processPath = GetProcessImagePath(process.Id);
             return !string.IsNullOrWhiteSpace(processPath)
                 && string.Equals(Path.GetFullPath(processPath), _expectedExecutablePath, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string GetProcessImagePath(int processId)
+        private static string? GetProcessImagePath(int processId)
         {
             IntPtr processHandle = OpenProcess(ProcessQueryLimitedInformation, false, processId);
             if (processHandle == IntPtr.Zero)
@@ -465,7 +465,7 @@ namespace DisplayMagician.Processes
             public int PriorityClassBase;
             public uint Flags;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-            public string ExecutableFile;
+            public string? ExecutableFile;
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]

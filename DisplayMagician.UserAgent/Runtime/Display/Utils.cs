@@ -1043,7 +1043,7 @@ namespace DisplayMagician.UserAgent.Runtime
             return true;
         }
 
-        public static bool AreEquivalent(object obj1, object obj2)
+        public static bool AreEquivalent(object? obj1, object? obj2)
         {
             if (ReferenceEquals(obj1, obj2)) return true;
             if (obj1 == null || obj2 == null) return false;
@@ -1111,7 +1111,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
     public class ObjectComparer : IEqualityComparer<object>
     {
-        public new bool Equals(object x, object y)
+        public new bool Equals(object? x, object? y)
         {
             return CollectionComparer.AreEquivalent(x, y);
         }
