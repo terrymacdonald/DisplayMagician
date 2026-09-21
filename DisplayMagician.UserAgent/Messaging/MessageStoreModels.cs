@@ -64,16 +64,16 @@ namespace DisplayMagician.Messaging
         public string Kind { get; set; } = "standard";
 
         [JsonProperty("releaseVersion")]
-        public string ReleaseVersion { get; set; }
+        public string? ReleaseVersion { get; set; }
 
         [JsonProperty("releaseChannel")]
-        public string ReleaseChannel { get; set; }
+        public string? ReleaseChannel { get; set; }
 
         [JsonProperty("githubReleaseId")]
         public long? GithubReleaseId { get; set; }
 
         [JsonProperty("updateAction")]
-        public string UpdateAction { get; set; }
+        public string? UpdateAction { get; set; }
     }
 
     public sealed class MessageSyncResult

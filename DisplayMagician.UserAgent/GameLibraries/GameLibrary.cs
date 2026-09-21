@@ -25,24 +25,24 @@ namespace DisplayMagician.GameLibraries
 
         #region Class Properties
 
-        public static List<Game> AllInstalledGamesInAllLibraries { get; set; }
+        public static List<Game> AllInstalledGamesInAllLibraries { get; set; } = new List<Game>();
         public static bool GamesLoaded { get; set; } = false;
 
 #if !USER_AGENT
         public static bool GamesImagesLoaded { get; set; } = false;
 #endif
 
-        public virtual List<Game> AllInstalledGames { get; set; }
+        public virtual List<Game> AllInstalledGames { get; set; } = new List<Game>();
 
         public virtual int InstalledGameCount { get; set; }
 
-        public virtual string GameLibraryName { get; set; }
+        public virtual string GameLibraryName { get; set; } = string.Empty;
 
         public virtual SupportedGameLibraryType GameLibraryType { get; set; }
 
-        public virtual string GameLibraryExe { get; set; }
+        public virtual string GameLibraryExe { get; set; } = string.Empty;
 
-        public virtual string GameLibraryPath { get; set; }
+        public virtual string GameLibraryPath { get; set; } = string.Empty;
 
         public virtual bool IsGameLibraryInstalled { get; set; }
 
@@ -50,7 +50,7 @@ namespace DisplayMagician.GameLibraries
 
         public virtual bool IsUpdating { get; set; }
 
-        public virtual List<string> GameLibraryProcesses { get; set; }
+        public virtual List<string> GameLibraryProcesses { get; set; } = new List<string>();
         #endregion
 
         #region Class Methods
@@ -368,9 +368,9 @@ namespace DisplayMagician.GameLibraries
         }
 #endif
 
-        public static Game GetAnyGameById(string gameId)
+        public static Game? GetAnyGameById(string gameId)
         {
-            Game gameToUse = null;
+            Game? gameToUse = null;
             foreach (Game game in GameLibrary.AllInstalledGamesInAllLibraries)
             {
                 if (game.Id.Equals(gameId))

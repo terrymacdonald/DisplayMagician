@@ -13,7 +13,7 @@ namespace DisplayMagician.Messaging
         public DateTime? PublishedUtc { get; set; }
 
         [JsonProperty("updates")]
-        public ClientSyncUpdates Updates { get; set; }
+        public ClientSyncUpdates Updates { get; set; } = new ClientSyncUpdates();
 
         [JsonProperty("messages")]
         public List<MessageManifestEntry> Messages { get; set; } = new List<MessageManifestEntry>();
@@ -22,28 +22,28 @@ namespace DisplayMagician.Messaging
     public sealed class ClientSyncUpdates
     {
         [JsonProperty("stable")]
-        public ClientSyncUpdate Stable { get; set; }
+        public ClientSyncUpdate Stable { get; set; } = new ClientSyncUpdate();
 
         [JsonProperty("prerelease")]
-        public ClientSyncUpdate Prerelease { get; set; }
+        public ClientSyncUpdate Prerelease { get; set; } = new ClientSyncUpdate();
     }
 
     public sealed class ClientSyncUpdate
     {
         [JsonProperty("version")]
-        public string Version { get; set; }
+        public string Version { get; set; } = string.Empty;
 
         [JsonProperty("changelog")]
-        public string Changelog { get; set; }
+        public string Changelog { get; set; } = string.Empty;
 
         [JsonProperty("url")]
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
 
         [JsonProperty("mandatory")]
-        public ClientSyncMandatory Mandatory { get; set; }
+        public ClientSyncMandatory Mandatory { get; set; } = new ClientSyncMandatory();
 
         [JsonProperty("checksum")]
-        public ClientSyncChecksum Checksum { get; set; }
+        public ClientSyncChecksum Checksum { get; set; } = new ClientSyncChecksum();
     }
 
     public sealed class ClientSyncMandatory
@@ -55,16 +55,16 @@ namespace DisplayMagician.Messaging
         public int Mode { get; set; }
 
         [JsonProperty("minVersion")]
-        public string MinVersion { get; set; }
+        public string? MinVersion { get; set; }
     }
 
     public sealed class ClientSyncChecksum
     {
         [JsonProperty("value")]
-        public string Value { get; set; }
+        public string Value { get; set; } = string.Empty;
 
         [JsonProperty("hashingAlgorithm")]
-        public string HashingAlgorithm { get; set; }
+        public string HashingAlgorithm { get; set; } = string.Empty;
     }
 
     public sealed class MessageManifestDocument
@@ -109,10 +109,10 @@ namespace DisplayMagician.Messaging
         public DateTime? DeletedUtc { get; set; }
 
         [JsonProperty("minVersion")]
-        public string MinVersion { get; set; }
+        public string? MinVersion { get; set; }
 
         [JsonProperty("maxVersion")]
-        public string MaxVersion { get; set; }
+        public string? MaxVersion { get; set; }
 
         [JsonProperty("startUtc")]
         public DateTime? StartUtc { get; set; }
@@ -127,16 +127,16 @@ namespace DisplayMagician.Messaging
         public string Kind { get; set; } = "standard";
 
         [JsonProperty("releaseVersion")]
-        public string ReleaseVersion { get; set; }
+        public string? ReleaseVersion { get; set; }
 
         [JsonProperty("releaseChannel")]
-        public string ReleaseChannel { get; set; }
+        public string? ReleaseChannel { get; set; }
 
         [JsonProperty("githubReleaseId")]
         public long? GithubReleaseId { get; set; }
 
         [JsonProperty("updateAction")]
-        public string UpdateAction { get; set; }
+        public string? UpdateAction { get; set; }
 
         [JsonProperty("media")]
         public List<MessageManifestMedia> Media { get; set; } = new List<MessageManifestMedia>();
@@ -145,12 +145,12 @@ namespace DisplayMagician.Messaging
     public sealed class MessageManifestMedia
     {
         [JsonProperty("url")]
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
 
         [JsonProperty("sha256")]
-        public string Sha256 { get; set; }
+        public string Sha256 { get; set; } = string.Empty;
 
         [JsonProperty("contentType")]
-        public string ContentType { get; set; }
+        public string ContentType { get; set; } = string.Empty;
     }
 }

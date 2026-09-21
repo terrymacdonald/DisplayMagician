@@ -276,7 +276,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
         // The object specific Equals
-        public bool Equals(AudioProfileItem other)
+        public bool Equals(AudioProfileItem? other)
         {
             // Check references
             if (ReferenceEquals(null, other)) return false;
@@ -311,12 +311,12 @@ namespace DisplayMagician.UserAgent.Runtime
 
         }
 
-        public static bool operator ==(AudioProfileItem lhs, AudioProfileItem rhs)
+        public static bool operator ==(AudioProfileItem? lhs, AudioProfileItem? rhs)
         {
             return Equals(lhs, rhs);
         }
 
-        public static bool operator !=(AudioProfileItem lhs, AudioProfileItem rhs)
+        public static bool operator !=(AudioProfileItem? lhs, AudioProfileItem? rhs)
         {
             return !Equals(lhs, rhs);
         }

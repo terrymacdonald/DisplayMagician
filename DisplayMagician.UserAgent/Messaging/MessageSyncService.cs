@@ -131,7 +131,7 @@ namespace DisplayMagician.Messaging
 
             _logger.Trace($"MessageSyncService/SyncMessagesAsync: Starting sync (manifestUrl={_manifestUrl}, appVersion={appVersion}, existingMessages={store.Messages.Count}).");
 
-            MessageManifestDocument manifest = suppliedManifest ?? await DownloadManifestAsync(cancellationToken).ConfigureAwait(false);
+            MessageManifestDocument? manifest = suppliedManifest ?? await DownloadManifestAsync(cancellationToken).ConfigureAwait(false);
             if (manifest == null)
             {
                 _logger.Warn($"MessageSyncService/SyncMessagesAsync: Manifest download/parsing returned null (manifestUrl={_manifestUrl}).");
@@ -177,7 +177,7 @@ namespace DisplayMagician.Messaging
                 // Process retraction and message deletion directly in metadata flow
                 if (entry.Status != null && entry.Status.Equals("deleted", StringComparison.OrdinalIgnoreCase))
                 {
-                    LocalMessage localToRemove = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
+                    LocalMessage? localToRemove = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
                     if (localToRemove != null)
                     {
                         store.Messages.Remove(localToRemove);
@@ -222,7 +222,7 @@ namespace DisplayMagician.Messaging
 
                 string messageKind = GetMessageKind(entry);
 
-                LocalMessage existing = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
+                LocalMessage? existing = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
                 if (existing != null)
                 {
                     if (existing.IsFaulty)
@@ -278,7 +278,7 @@ namespace DisplayMagician.Messaging
                 }
 
                 string targetUrl = entry.Url;
-                string content = await DownloadMarkdownAsync(manifestUri, targetUrl, cancellationToken).ConfigureAwait(false);
+                string? content = await DownloadMarkdownAsync(manifestUri, targetUrl, cancellationToken).ConfigureAwait(false);
 
                 // Compute and verify hash if provided in manifest
                 bool isHashValid = true;
@@ -429,7 +429,7 @@ namespace DisplayMagician.Messaging
             };
         }
 
-        private async Task<MessageManifestDocument> DownloadManifestAsync(CancellationToken cancellationToken)
+        private async Task<MessageManifestDocument?> DownloadManifestAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -456,7 +456,7 @@ namespace DisplayMagician.Messaging
             }
         }
 
-        private async Task<string> DownloadMarkdownAsync(Uri manifestUri, string markdownUrl, CancellationToken cancellationToken)
+        private async Task<string?> DownloadMarkdownAsync(Uri manifestUri, string markdownUrl, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(markdownUrl))
             {
@@ -493,7 +493,7 @@ namespace DisplayMagician.Messaging
             }
         }
 
-        private bool TryValidateEntry(MessageManifestEntry entry, HashSet<string> seenIds)
+        private bool TryValidateEntry(MessageManifestEntry? entry, HashSet<string> seenIds)
         {
             if (entry == null)
             {
@@ -554,7 +554,7 @@ namespace DisplayMagician.Messaging
             return currentVendorIds.Overlaps(requiredVendors);
         }
 
-        private static bool MatchesVersionRange(string minVersionText, string maxVersionText, string currentVersionText)
+        private static bool MatchesVersionRange(string? minVersionText, string? maxVersionText, string currentVersionText)
         {
             Version current = ParseVersion(currentVersionText);
             if (current == null)
@@ -689,9 +689,9 @@ namespace DisplayMagician.Messaging
                 "image/jpeg" => ".jpg",
                 "image/gif" => ".gif",
                 "image/webp" => ".webp",
-                _ => null,
+                _ => string.Empty,
             };
-            return extension != null;
+            return extension.Length > 0;
         }
 
         private static string ComputeSha256(byte[] bytes)
@@ -732,7 +732,7 @@ namespace DisplayMagician.Messaging
             return "releaseAnnouncement";
         }
 
-        private static Version ParseVersion(string versionText)
+        private static Version? ParseVersion(string? versionText)
         {
             if (string.IsNullOrWhiteSpace(versionText))
             {

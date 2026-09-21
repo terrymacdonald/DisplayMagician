@@ -22,12 +22,12 @@ namespace DisplayMagician.AppLibraries
 
         #region Class Properties
 
-        public static List<App> AllInstalledAppsInAllLibraries { get; set; }
+        public static List<App> AllInstalledAppsInAllLibraries { get; set; } = new List<App>();
         public static bool AppsLoaded { get; set; } = false;
 
         public static bool AppImagesLoaded { get; set; } = false;
 
-        public virtual List<App> AllInstalledApps { get; set; }
+        public virtual List<App> AllInstalledApps { get; set; } = new List<App>();
 
         public virtual int InstalledAppCount { get; set; }
 
@@ -45,7 +45,7 @@ namespace DisplayMagician.AppLibraries
 
         public virtual bool IsUpdating { get; set; }
 
-        public virtual List<string> AppLibraryProcesses { get; set; }
+        public virtual List<string> AppLibraryProcesses { get; set; } = new List<string>();
         #endregion
 
         #region Class Methods
@@ -114,9 +114,9 @@ namespace DisplayMagician.AppLibraries
             return false;
         }
 
-        public static App GetAnyAppById(string appId)
+        public static App? GetAnyAppById(string appId)
         {
-            App appToUse = null;
+            App? appToUse = null;
             foreach (App app in AppLibrary.AllInstalledAppsInAllLibraries)
             {
                 if (app.Id.Equals(appId))
