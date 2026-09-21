@@ -46,6 +46,7 @@
 			<Custom Action="SetUnregisterIdentityPkgCommand" Before="UnregisterIdentityPkg" Condition='REMOVE~="ALL"' />
 			<Custom Action="UnregisterIdentityPkg" Before="RemoveFiles" Condition='REMOVE~="ALL"' />
 			<Custom Action="CleanUserData" After="RemoveFiles" Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
+			<Custom Action="CleanProgramData" After="CleanUserData" Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
 		</InstallExecuteSequence>
 
 		<!-- Set our executable (its ID) as custom action target -->
@@ -83,7 +84,7 @@
 			Return="check" />
 
 		<SetProperty Id="CleanUserData"
-			Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$ErrorActionPreference = 'Stop'; $appDataPath = Join-Path $env:LOCALAPPDATA 'DisplayMagician'; if (Test-Path -LiteralPath $appDataPath) { Remove-Item -LiteralPath $appDataPath -Recurse -Force; if (Test-Path -LiteralPath $appDataPath) { throw 'DisplayMagician user data could not be removed.' } }; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { Remove-Item -LiteralPath 'HKCU:\Software\DisplayMagician' -Recurse -Force; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { throw 'DisplayMagician user registry data could not be removed.' } }&quot;"
+			Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$ErrorActionPreference = 'Stop'; $appDataPath = Join-Path $env:LOCALAPPDATA 'DisplayMagician'; if (Test-Path -LiteralPath $appDataPath) { Remove-Item -LiteralPath $appDataPath -Recurse -Force; if (Test-Path -LiteralPath $appDataPath) { throw 'DisplayMagician user data could not be removed.' } }; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { Remove-Item -LiteralPath 'HKCU:\Software\DisplayMagician' -Recurse -Force; if (Test-Path -LiteralPath 'HKCU:\Software\DisplayMagician') { throw 'DisplayMagician user registry data could not be removed.' } }; $startupKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'; if ((Get-ItemProperty -LiteralPath $startupKey -Name 'DisplayMagician' -ErrorAction SilentlyContinue).DisplayMagician -ne $null) { Remove-ItemProperty -LiteralPath $startupKey -Name 'DisplayMagician' -ErrorAction Stop; if ((Get-ItemProperty -LiteralPath $startupKey -Name 'DisplayMagician' -ErrorAction SilentlyContinue).DisplayMagician -ne $null) { throw 'DisplayMagician startup entry could not be removed.' } }&quot;"
 			Before="CleanUserData"
 			Sequence="execute"
 			Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
@@ -92,6 +93,18 @@
 			DllEntry="WixQuietExec64"
 			Execute="deferred"
 			Impersonate="yes"
+			Return="check" />
+
+		<SetProperty Id="CleanProgramData"
+			Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$ErrorActionPreference = 'Stop'; $programDataPath = Join-Path $env:ProgramData 'DisplayMagician'; if (Test-Path -LiteralPath $programDataPath) { Remove-Item -LiteralPath $programDataPath -Recurse -Force; if (Test-Path -LiteralPath $programDataPath) { throw 'DisplayMagician ProgramData could not be removed.' } }&quot;"
+			Before="CleanProgramData"
+			Sequence="execute"
+			Condition='REMOVE~="ALL" AND REMOVE_USER_DATA="1" AND NOT UPGRADINGPRODUCTCODE' />
+		<CustomAction Id="CleanProgramData"
+			BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+			DllEntry="WixQuietExec64"
+			Execute="deferred"
+			Impersonate="no"
 			Return="check" />
 					
 		<!-- Set application components that will be installed -->
