@@ -101,7 +101,7 @@ public sealed class SessionLauncherPipeServer
         try
         {
             using Process process = Process.GetProcessById(checked((int)processId));
-            string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "DisplayMagician.ControlService.exe"));
+            string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "ControlService", "DisplayMagician.ControlService.exe"));
             return string.Equals(process.MainModule?.FileName, expectedPath, StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception || ex is UnauthorizedAccessException)
@@ -127,7 +127,7 @@ public sealed class InteractiveUserProcessLauncher
             return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested User Agent session is not the active physical console session." };
         }
 
-        string executablePath = Path.Combine(AppContext.BaseDirectory, "DisplayMagician.UserAgent.exe");
+        string executablePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "UserAgent", "DisplayMagician.UserAgent.exe"));
         if (!File.Exists(executablePath))
         {
             _logger.Error("InteractiveUserProcessLauncher/Launch: The fixed User Agent executable was not found at {0}.", executablePath);

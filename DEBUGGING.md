@@ -25,6 +25,13 @@ The Debug installer carries matching PDBs, so breakpoints resolve to this
 solution's source. Build and reinstall after changing a component that is
 being debugged.
 
+For normal Debug iteration after the initial installation, run
+`./debug_displaymagician.ps1` from an elevated PowerShell window instead of
+rebuilding the MSI. It publishes the four runtime components, copies their
+Debug payloads and PDBs into the existing installation, starts the services,
+and launches the installed client. Use `-NoLaunch` when you only need the
+services. It does not build WiX, the bundle, or the sparse MSIX package.
+
 ## Component debugging with F5
 
 The checked-in launch profiles provide direct project startup for focused work:

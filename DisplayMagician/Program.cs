@@ -1136,7 +1136,7 @@ namespace DisplayMagician {
                 return true;
             }
 
-            string userAgentPath = Path.Combine(AppStartupPath, "DisplayMagician.UserAgent.exe");
+            string userAgentPath = Path.Combine(AppStartupPath, "UserAgent", "DisplayMagician.UserAgent.exe");
             if (!File.Exists(userAgentPath))
             {
                 logger.Error("Program/EnsureUserAgentStarted: Could not find the User Agent at {0}.", userAgentPath);
