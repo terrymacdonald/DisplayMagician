@@ -353,7 +353,7 @@ if ($pfxExists) {
     $password = Read-Host "  PFX password" -AsSecureString
 } else {
     Write-Host "Choose a password to protect the new PFX file."
-    Write-Host "  The password is never stored in plain text anywhere." -ForegroundColor Yellow
+    Write-Host "  The password will be stored in local, gitignored SigningConfig.props for MSIX signing." -ForegroundColor Yellow
     Write-Host ""
     do {
         $password  = Read-Host "  Enter PFX password" -AsSecureString

@@ -33,6 +33,9 @@ namespace DisplayMagician.UserAgent.Runtime
 
         private static void NormalizeValue<T>(ref T value)
         {
+            if (value is null)
+                return;
+
             object boxedValue = value;
             NormalizeObject(boxedValue, new HashSet<object>());
             value = (T)boxedValue;
@@ -54,7 +57,7 @@ namespace DisplayMagician.UserAgent.Runtime
             {
                 foreach (object key in dictionary.Keys.Cast<object>().ToList())
                 {
-                    object item = dictionary[key];
+                    object? item = dictionary[key];
                     if (item == null)
                         continue;
 
@@ -69,7 +72,7 @@ namespace DisplayMagician.UserAgent.Runtime
             {
                 for (int index = 0; index < list.Count; index++)
                 {
-                    object item = list[index];
+                    object? item = list[index];
                     if (item == null)
                         continue;
 
@@ -92,7 +95,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
             foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
-                object fieldValue = field.GetValue(value);
+                object? fieldValue = field.GetValue(value);
                 if (fieldValue == null)
                 {
                     SetEmptyValue(field.FieldType, emptyValue => field.SetValue(value, emptyValue));
@@ -108,7 +111,7 @@ namespace DisplayMagician.UserAgent.Runtime
             foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(property => property.CanRead && property.CanWrite && property.GetIndexParameters().Length == 0))
             {
-                object propertyValue;
+                object? propertyValue;
                 try
                 {
                     propertyValue = property.GetValue(value);
@@ -140,26 +143,28 @@ namespace DisplayMagician.UserAgent.Runtime
             }
         }
 
-        private static void SetEmptyValue(Type type, Action<object> setValue)
+        private static void SetEmptyValue(Type type, Action<object?> setValue)
         {
-            object emptyValue = null;
+            object? emptyValue = null;
             if (type == typeof(string))
             {
                 emptyValue = String.Empty;
             }
-            else if (type.IsArray && type.GetElementType() != null)
+            else if (type.IsArray)
             {
-                emptyValue = Array.CreateInstance(type.GetElementType(), 0);
+                Type? elementType = type.GetElementType();
+                if (elementType != null)
+                    emptyValue = Array.CreateInstance(elementType, 0);
             }
             else if (type.IsGenericType)
             {
                 Type genericType = type.GetGenericTypeDefinition();
                 Type[] typeArguments = type.GenericTypeArguments;
-                if (genericType == typeof(List<>) || genericType == typeof(IList<>) || genericType == typeof(ICollection<>) || genericType == typeof(IEnumerable<>))
+                if (typeArguments.Length == 1 && (genericType == typeof(List<>) || genericType == typeof(IList<>) || genericType == typeof(ICollection<>) || genericType == typeof(IEnumerable<>)))
                     emptyValue = Activator.CreateInstance(typeof(List<>).MakeGenericType(typeArguments[0]));
-                else if (genericType == typeof(HashSet<>) || genericType == typeof(ISet<>))
+                else if (typeArguments.Length == 1 && (genericType == typeof(HashSet<>) || genericType == typeof(ISet<>)))
                     emptyValue = Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(typeArguments[0]));
-                else if (genericType == typeof(Dictionary<,>) || genericType == typeof(IDictionary<,>))
+                else if (typeArguments.Length == 2 && (genericType == typeof(Dictionary<,>) || genericType == typeof(IDictionary<,>)))
                     emptyValue = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeArguments[0], typeArguments[1]));
             }
             else if (typeof(IList).IsAssignableFrom(type) || typeof(IDictionary).IsAssignableFrom(type))

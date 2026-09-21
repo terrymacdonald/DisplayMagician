@@ -210,10 +210,16 @@ public sealed class ShortcutRunner
                     return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                 }
 
+                GameLibrary? gameLibrary = game.GameLibrary;
+                if (gameLibrary == null)
+                {
+                    return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                }
+
                 if (shouldStartGame)
                 {
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting game.", cancellationToken).ConfigureAwait(false);
-                    game.GameLibrary.StartGame(game, shortcut.GameArguments, (ProcessPriority)(int)shortcut.ProcessPriority);
+                    gameLibrary.StartGame(game, shortcut.GameArguments, (ProcessPriority)(int)shortcut.ProcessPriority);
                     DateTime gameStartDeadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(shortcut.StartTimeoutSeconds, 1, 60));
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToStart, "Waiting for game to start.", cancellationToken).ConfigureAwait(false);
                     while (!IsGameRunning(shortcut, game) && DateTime.UtcNow < gameStartDeadlineUtc)

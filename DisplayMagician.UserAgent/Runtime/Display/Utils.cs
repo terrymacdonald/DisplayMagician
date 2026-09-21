@@ -29,7 +29,7 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             // Marshal the lParam parameter to an WINDOWPOS structure,
             // and return the new structure
-            return (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
+            return Marshal.PtrToStructure<WINDOWPOS>(lParam);
         }
 
         // Replaces the original WINDOWPOS structure pointed to by the lParam
@@ -522,10 +522,10 @@ namespace DisplayMagician.UserAgent.Runtime
         #endregion // enum HChangeNotifyFlags
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern IntPtr FindWindow(string lpClassName, String lpWindowName);
+        public static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
+        public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string? lpszWindow);
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern IntPtr SendMessageTimeout(IntPtr windowHandle, uint message, IntPtr wordParameter, IntPtr longParameter, SendMessageTimeoutFlag flag, uint timeout, out IntPtr resultHandle);
@@ -948,7 +948,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
     public static class CollectionComparer
     {
-        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2) where T : notnull
         {
 
             if (list1.Count != list2.Count)
@@ -997,6 +997,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
         public static bool EqualButDifferentOrder<TKey, TValue>(IDictionary<TKey, TValue> dict1, IDictionary<TKey, TValue> dict2)
+            where TKey : notnull
+            where TValue : notnull
         {
 
             if (dict1.Count != dict2.Count)

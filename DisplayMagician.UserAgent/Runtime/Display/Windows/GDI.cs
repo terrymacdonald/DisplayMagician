@@ -654,7 +654,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         );
 
         [DllImport("gdi32", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr CreateDC(string driver, string device, string port, IntPtr deviceMode);
+        internal static extern IntPtr CreateDC(string driver, string? device, string? port, IntPtr deviceMode);
 
         [DllImport("gdi32")]
         internal static extern bool DeleteDC(DCHandle dcHandle);

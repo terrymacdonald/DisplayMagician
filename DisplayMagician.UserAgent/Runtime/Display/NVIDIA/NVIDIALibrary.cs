@@ -968,7 +968,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
-        private static NVIDIALibrary _instance = new NVIDIALibrary();
+        private static NVIDIALibrary? _instance = new NVIDIALibrary();
 
         private bool _initialised = false;
         private NVIDIA_DISPLAY_CONFIG? _activeDisplayConfig;
@@ -982,7 +982,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
 
         // NVAPI API Handle
-        private NVAPIApiHelper _nvapiApiHelper;
+        private NVAPIApiHelper? _nvapiApiHelper;
 
         public IntPtr hNVAPIModule = IntPtr.Zero;
         public const string NVIDIA_NVAPI_DLL = "nvapi64.dll";
@@ -1345,7 +1345,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                     try
                     {
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Attempting to get the full name of the physical GPU adapter {adapterNum}.");
-                        myAdapter.FullName = adapter.GetFullName();
+                        myAdapter.FullName = adapter.GetFullName() ?? String.Empty;
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Successfully got the GPU full name '{myAdapter.FullName}' for adapter {adapterNum}.");
                     }
                     catch (Exception ex)
@@ -1458,7 +1458,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                     try
                     {
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Attempting to get the VBIOS version string of the physical GPU adapter {adapterNum}.");
-                        myAdapter.VbiosVersionString = adapter.GetVbiosVersionString();
+                        myAdapter.VbiosVersionString = adapter.GetVbiosVersionString() ?? String.Empty;
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Successfully got the VBIOS version string '{myAdapter.VbiosVersionString}' for adapter {adapterNum}.");
                     }
                     catch (Exception ex)
@@ -1713,6 +1713,12 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Attempting to get the EDID information for Display {displayNum} on Adapter {adapterNum}.");
                             var edidInfo = display.GetEdidData(NV_EDID_FLAG.NV_EDID_FLAG_DEFAULT);
                             SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Successfully got the EDID information for Display {displayNum} on Adapter {adapterNum}.");
+                            if (!edidInfo.HasValue)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: NVIDIA did not return EDID data for Display {displayNum} on Adapter {adapterNum}.");
+                                continue;
+                            }
+
                             EDID edidParsedInfo = new EDID(edidInfo.Value.Data);
                             manufacturerName = edidParsedInfo.ManufacturerCode;
                             productCode = edidParsedInfo.ProductCode;
@@ -2601,7 +2607,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         public bool SetActiveConfig(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs)
         {
 
-            if (_initialised)
+            if (_initialised && _nvapiApiHelper != null)
             {
                 // We want to check if we need to apply a NVIDIA Surround (Mosaic) config
                 SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Testing whether the display configuration uses NVIDIA Surround");
@@ -2674,9 +2680,16 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         {
             SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Mosaic config that is currently set is no longer needed. Removing Mosaic config.");
 
+            NVAPIApiHelper? nvapiApiHelper = _nvapiApiHelper;
+            if (nvapiApiHelper == null)
+            {
+                SharedLogger.logger.Error("NVIDIALibrary/TurnOffMosaic: NVIDIA NVAPI helper is unavailable.");
+                return false;
+            }
+
             try
             {
-                using (var mosaicHelper = _nvapiApiHelper.GetMosaicHelper())
+                using (var mosaicHelper = nvapiApiHelper.GetMosaicHelper())
                 {
                     // First attempt: Create 1x1 grids for each display and apply them
                     SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Trying to set a 1x1 DisplayGrid to disable Mosaic.");
@@ -2739,7 +2752,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         public bool SetActiveConfigOverride(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs)
         {
 
-            if (_initialised)
+            if (_initialised && _nvapiApiHelper != null)
             {
 
                 // We need to first update the active config to make sure it's set
@@ -2950,7 +2963,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                         }
 
                         // Get the NVAPIDisplayHelper for this display
-                        if (!displayHelperLookup.TryGetValue(displayId, out NVAPIDisplayHelper displayHelper))
+                        if (!displayHelperLookup.TryGetValue(displayId, out NVAPIDisplayHelper? displayHelper) || displayHelper == null)
                         {
                             SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Could not find NVAPIDisplayHelper for display {displayId}. Skipping per-display settings.");
                             continue;

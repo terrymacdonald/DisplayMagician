@@ -735,6 +735,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
         public ADL_DISPLAY_EDID_DATA()
         {
+            EDIDData = string.Empty;
             Reserved = new int[4];
         }
 
@@ -867,6 +868,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
         public ADL_DDC_INFO2()
         {
+            DisplayName = string.Empty;
             Reserved = new int[4];
         }
 

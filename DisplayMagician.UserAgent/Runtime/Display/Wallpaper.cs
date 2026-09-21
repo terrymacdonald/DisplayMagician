@@ -22,7 +22,7 @@ namespace DisplayMagician.UserAgent.Runtime
         /// Stored as the concrete subtype using Newtonsoft.Json TypeNameHandling.Auto,
         /// which is already enabled in ProfileRepository.
         /// </summary>
-        public WindowsWallpaperConfig WallpaperSettings { get; set; }
+        public WindowsWallpaperConfig? WallpaperSettings { get; set; }
 
         // Convenience accessor — returns the per-monitor list when in Picture mode,
         // or an empty list for all other modes. Allows callers (DisplayView,
@@ -41,7 +41,7 @@ namespace DisplayMagician.UserAgent.Runtime
             if (WallpaperMode != other.WallpaperMode) return false;
             if (WallpaperSettings is null != other.WallpaperSettings is null) return false;
             if (WallpaperSettings is null) return true;
-            if (WallpaperSettings.GetType() != other.WallpaperSettings.GetType()) return false;
+            if (WallpaperSettings.GetType() != other.WallpaperSettings?.GetType()) return false;
             // Deep equality via JSON round-trip – good enough for profile comparison.
             return JsonConvert.SerializeObject(WallpaperSettings) ==
                    JsonConvert.SerializeObject(other.WallpaperSettings);

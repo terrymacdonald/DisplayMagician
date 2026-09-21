@@ -11,6 +11,7 @@ using NLog.Targets;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -77,8 +78,11 @@ namespace DisplayMagician.UserAgent.Runtime
     public class ProfileItem : IComparable<ProfileItem>, IEquatable<ProfileItem>
     {
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
-        private ProfileIcon _profileIcon;
-        private Bitmap _profileBitmap, _profileShortcutBitmap;
+        private ProfileIcon? _profileIcon;
+        private Bitmap? _profileBitmap;
+        private Bitmap? _profileShortcutBitmap;
+        private string _name = "Current Display Profile";
+        private string _savedProfileIconCacheFilename = String.Empty;
         private List<string> _profileDisplayIdentifiers = new List<string>();
         private List<ScreenPosition> _screens = new List<ScreenPosition>();
         private NVIDIA_DISPLAY_CONFIG _nvidiaDisplayConfig;
@@ -120,13 +124,13 @@ namespace DisplayMagician.UserAgent.Runtime
 
             //convert from byte to bitmap (deserialize)
 
-            public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+            public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
             {
-                string image = (string)reader.Value;
+                string? image = reader.Value as string;
 
                 if (string.IsNullOrEmpty(image)) 
                 { 
-                    return (Bitmap)default(Bitmap);
+                    return null;
                 }
 
                 byte[] byteBuffer = Convert.FromBase64String(image);
@@ -140,10 +144,17 @@ namespace DisplayMagician.UserAgent.Runtime
             //convert bitmap to byte (serialize)
             public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
             {
-                Bitmap bitmap = (Bitmap)value;
+                if (value is not Bitmap bitmap)
+                {
+                    writer.WriteNull();
+                    return;
+                }
 
                 ImageConverter converter = new ImageConverter();
-                writer.WriteValue((byte[])converter.ConvertTo(bitmap, typeof(byte[])));
+                if (converter.ConvertTo(bitmap, typeof(byte[])) is byte[] image)
+                    writer.WriteValue(image);
+                else
+                    writer.WriteNull();
             }
 
             public static System.Drawing.Imaging.ImageFormat GetImageFormat(Bitmap bitmap)
@@ -267,7 +278,12 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
         [DefaultValue("")]
-        public virtual string Name { get; set; }
+        public virtual string Name
+        {
+            get => _name;
+            [param: AllowNull]
+            set => _name = value ?? String.Empty;
+        }
 
         [JsonRequired]       
         public NVIDIA_DISPLAY_CONFIG NVIDIADisplayConfig
@@ -353,19 +369,23 @@ namespace DisplayMagician.UserAgent.Runtime
                 }
                 return _screens;
             }
-            set
-            {
-                _screens = value;
-            }
+            [param: AllowNull]
+            set => _screens = value ?? new List<ScreenPosition>();
         }
 
         [DefaultValue("")]
-        public string SavedProfileIconCacheFilename { get; set; }
+        public string SavedProfileIconCacheFilename
+        {
+            get => _savedProfileIconCacheFilename;
+            [param: AllowNull]
+            set => _savedProfileIconCacheFilename = value ?? String.Empty;
+        }
 
         [JsonRequired]
         public WallpaperConfig WallpaperConfiguration
         {
             get => _wallpaperConfiguration;
+            [param: AllowNull]
             set => _wallpaperConfiguration = value ?? new WallpaperConfig { WallpaperMode = Wallpaper.Mode.DoNothing };
         }
 
@@ -380,11 +400,8 @@ namespace DisplayMagician.UserAgent.Runtime
                 }
                 return _profileDisplayIdentifiers;
             }
-            set
-            {
-                if (value is List<string>)
-                    _profileDisplayIdentifiers = value;
-            }
+            [param: AllowNull]
+            set => _profileDisplayIdentifiers = value ?? new List<string>();
         }
 
         [JsonIgnore]
@@ -410,16 +427,14 @@ namespace DisplayMagician.UserAgent.Runtime
                     return _profileBitmap;
                 }
             }
-            set
-            {
-                _profileBitmap = value;
-            }
+            [param: AllowNull]
+            set => _profileBitmap = value;
 
         }
 
         [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
-        public virtual Bitmap ProfileTightestBitmap
+        public virtual Bitmap? ProfileTightestBitmap
         {
             get
             {
@@ -439,10 +454,7 @@ namespace DisplayMagician.UserAgent.Runtime
                     return null;
                 }
             }
-            set
-            {
-                _profileShortcutBitmap = value;
-            }
+            set => _profileShortcutBitmap = value;
 
         }
 
@@ -616,7 +628,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
             if (parts[0].Equals("WINAPI", StringComparison.OrdinalIgnoreCase))
             {
-                string displayName = parts.LastOrDefault();
+                string? displayName = parts.LastOrDefault();
                 string connectionType = parts.Length > 2 ? GetFriendlyConnectionType(parts[2]) : String.Empty;
 
                 if (!String.IsNullOrWhiteSpace(displayName))
@@ -634,17 +646,17 @@ namespace DisplayMagician.UserAgent.Runtime
                 return String.Empty;
 
             string monitorIdentifier = $"DISPLAY#{manufacturerCode}{productCodeValue:X4}";
-            string matchingIdentifier = _windowsDisplayConfig.DisplayIdentifiers.FirstOrDefault(identifier => identifier.IndexOf(monitorIdentifier, StringComparison.OrdinalIgnoreCase) >= 0);
+            string? matchingIdentifier = _windowsDisplayConfig.DisplayIdentifiers.FirstOrDefault(identifier => identifier.IndexOf(monitorIdentifier, StringComparison.OrdinalIgnoreCase) >= 0);
             if (String.IsNullOrWhiteSpace(matchingIdentifier))
                 return String.Empty;
 
-            string displayName = matchingIdentifier.Split('|').LastOrDefault();
+            string? displayName = matchingIdentifier.Split('|').LastOrDefault();
             return displayName ?? String.Empty;
         }
 
         private string GetNvidiaDisplayNumber(string displayId)
         {
-            if (String.IsNullOrWhiteSpace(displayId) || _nvidiaDisplayConfig.DisplayNames == null || !_nvidiaDisplayConfig.DisplayNames.TryGetValue(displayId, out string displayName))
+            if (String.IsNullOrWhiteSpace(displayId) || _nvidiaDisplayConfig.DisplayNames == null || !_nvidiaDisplayConfig.DisplayNames.TryGetValue(displayId, out string? displayName))
                 return String.Empty;
 
             return displayName.Replace("\\\\.\\DISPLAY", "Windows display ", StringComparison.OrdinalIgnoreCase);
@@ -806,7 +818,12 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
                     WshShell shell = new WshShell();
-                    IWshShortcut shortcut = shell.CreateShortcut(shortcutFileName) as IWshShortcut;
+                    IWshShortcut? shortcut = shell.CreateShortcut(shortcutFileName) as IWshShortcut;
+                    if (shortcut == null)
+                    {
+                        SharedLogger.logger.Error("ProfileItem/CreateShortcut: Unable to create a Windows shell shortcut.");
+                        return false;
+                    }
 
                     shortcut.TargetPath = Environment.ProcessPath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
@@ -1581,7 +1598,8 @@ namespace DisplayMagician.UserAgent.Runtime
                                 int targetInfoIndex = 0;
                                 SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing screen source index #{targetInfoIndex}.");
 
-                                foreach (NVAPIDisplayConfigTargetDto targetInfo in displaySource.Targets ?? Array.Empty<NVAPIDisplayConfigTargetDto>())
+                                NVAPIDisplayConfigTargetDto[] displayTargets = displaySource.Targets ?? Array.Empty<NVAPIDisplayConfigTargetDto>();
+                                foreach (NVAPIDisplayConfigTargetDto targetInfo in displayTargets)
                                 {
                                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing target screen ID:{targetInfo.DisplayId}.");
 
@@ -1596,14 +1614,14 @@ namespace DisplayMagician.UserAgent.Runtime
                                     screen.ScreenY = displaySource.SourceModeInfo.Position.y;
 
                                     // Find out if we're a cloned screen
-                                    if (_nvidiaDisplayConfig.IsCloned && displaySource.Targets.Length > 1)
+                                    if (_nvidiaDisplayConfig.IsCloned && displayTargets.Length > 1)
                                     {
                                         if (targetInfoIndex == 0)
                                         {
                                             // Show that this window has clones, and show how many there are.
                                             SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is the source of a cloned group.");
                                             screen.IsClone = true;
-                                            screen.ClonedCopies = displaySource.Targets.Length;
+                                            screen.ClonedCopies = displayTargets.Length;
                                         }
                                         else
                                         {
@@ -2417,6 +2435,9 @@ namespace DisplayMagician.UserAgent.Runtime
         protected int CompareTypes(ProfileItem other)
         {
 
+            if (other is null)
+                return 1;
+
             // Base type is considered less than derived type
             // when two instances have the same values of
             // base fields.
@@ -2437,7 +2458,7 @@ namespace DisplayMagician.UserAgent.Runtime
             else if (thisType.IsSubclassOf(otherType))
                 result = 1;     // this is subclass of other class
             else if (thisType != otherType)
-                result = thisType.FullName.CompareTo(otherType.FullName);
+                result = String.Compare(thisType.FullName, otherType.FullName, StringComparison.Ordinal);
             // cut the tie with a test that returns
             // the same value for all objects
 

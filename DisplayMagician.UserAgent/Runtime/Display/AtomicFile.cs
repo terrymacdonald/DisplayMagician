@@ -8,7 +8,7 @@ namespace DisplayMagician.UserAgent.Runtime
     {
         public static void WriteAllText(string fileName, string contents, Encoding encoding)
         {
-            string directory = Path.GetDirectoryName(fileName);
+            string? directory = Path.GetDirectoryName(fileName);
             if (!string.IsNullOrWhiteSpace(directory))
                 Directory.CreateDirectory(directory);
 

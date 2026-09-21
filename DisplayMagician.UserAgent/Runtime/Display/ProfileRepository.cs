@@ -40,6 +40,13 @@ namespace DisplayMagician.UserAgent.Runtime
         public DateTime LastUpdated;
         public List<ProfileItem> Profiles;
 
+        public ProfileFile()
+        {
+            ProfileFileVersion = string.Empty;
+            LastUpdated = default;
+            Profiles = new List<ProfileItem>();
+        }
+
         public override bool Equals(object? obj) => obj is ProfileFile other && this.Equals(other);
         public bool Equals(ProfileFile other)
         => ProfileFileVersion.Equals(other.ProfileFileVersion) &&
@@ -61,11 +68,11 @@ namespace DisplayMagician.UserAgent.Runtime
         // Common items to the class
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
         private static bool _profilesLoaded = false;
-        private static ProfileItem _currentProfile;
+        private static ProfileItem? _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
 
         private static volatile bool _userChangingProfiles = false;
-        private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
+        private static IUserAgentRepositoryConnection? _userAgentRepositoryConnection;
         private static long _userAgentRepositoryRevision;
 
         // Other constants that are useful
@@ -128,7 +135,7 @@ namespace DisplayMagician.UserAgent.Runtime
             }
         }
 
-        public static ProfileItem CurrentProfile
+        public static ProfileItem? CurrentProfile
         {
             get
             {
@@ -594,7 +601,7 @@ namespace DisplayMagician.UserAgent.Runtime
             return false;
         }
 
-        public static ProfileItem GetProfile(string ProfileNameOrId)
+        public static ProfileItem? GetProfile(string ProfileNameOrId)
         {
 
             SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Finding and returning {ProfileNameOrId} if it exists in our profile repository");
@@ -743,7 +750,7 @@ namespace DisplayMagician.UserAgent.Runtime
             _currentProfile = profile;
         }
 
-        public static ProfileItem GetActiveProfile()
+        public static ProfileItem? GetActiveProfile()
         {
             if (!(_currentProfile is ProfileItem))
                 return null;
@@ -855,21 +862,21 @@ namespace DisplayMagician.UserAgent.Runtime
                             TypeNameHandling = TypeNameHandling.Auto,
                             SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                         jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                                         args.ErrorContext.Handled = true;
                                     },
                                 };
 
-                                ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
+                                ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
 
-                        if (profileFile.Profiles == null)
+                            if (profileFile is not ProfileFile loadedProfileFile || loadedProfileFile.Profiles == null)
                         {
                             throw new Exception("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
                         }
 
-                        _allProfiles = profileFile.Profiles;
+                            _allProfiles = loadedProfileFile.Profiles;
 
                         // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                         foreach (ProfileItem profile in _allProfiles)
@@ -904,14 +911,18 @@ namespace DisplayMagician.UserAgent.Runtime
                                 TypeNameHandling = TypeNameHandling.Auto,
                                 SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
-                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
                                     jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                                     args.ErrorContext.Handled = true;
                                 },
                             };
 
-                            _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+                            List<ProfileItem>? profiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+                            if (profiles == null)
+                                throw new InvalidDataException("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
+
+                            _allProfiles = profiles;
 
                             // Save the Profiles JSON as it's different now, and we want to save the upgrade!
                             SaveProfiles();
@@ -999,11 +1010,11 @@ namespace DisplayMagician.UserAgent.Runtime
                     ObjectCreationHandling = ObjectCreationHandling.Replace
                 };
 
-                ProfileFile profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, serializerSettings);
-                if (profileFile.Profiles == null)
+                ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, serializerSettings);
+                if (profileFile is not ProfileFile loadedProfileFile || loadedProfileFile.Profiles == null)
                     throw new InvalidDataException("The User Agent returned display profiles in an unsupported format.");
 
-                _allProfiles = profileFile.Profiles;
+                _allProfiles = loadedProfileFile.Profiles;
                 foreach (ProfileItem profile in _allProfiles)
                     PatchLoadedProfile(profile);
 
@@ -1178,7 +1189,7 @@ namespace DisplayMagician.UserAgent.Runtime
                     SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
-                    Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                    Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                     {
                         jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                         //errors.Add(new ProfileRepositoryException(String.Format("Parse error: {0}", args.ErrorContext.Error.Message), args.ErrorContext.Error));
@@ -1324,15 +1335,18 @@ namespace DisplayMagician.UserAgent.Runtime
                                 TypeNameHandling = TypeNameHandling.Auto,
                                 SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
-                                Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
                                     jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
                                     args.ErrorContext.Handled = true;
                                 },
                             };
 
-                            ProfileFile profilesFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
-                            profilesToValidate = profilesFile.Profiles;
+                            ProfileFile? profilesFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
+                            if (profilesFile is not ProfileFile loadedProfilesFile || loadedProfilesFile.Profiles == null)
+                                return false;
+
+                            profilesToValidate = loadedProfilesFile.Profiles;
 
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in profilesToValidate)

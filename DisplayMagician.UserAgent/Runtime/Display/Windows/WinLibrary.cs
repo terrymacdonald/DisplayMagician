@@ -15,10 +15,10 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
     public class DisplayMonitorInfo
     {
-        public string FriendlyName { get; set; }
+        public string FriendlyName { get; set; } = string.Empty;
         public ushort ManufacturerId { get; set; }
         public ushort ProductCodeId { get; set; }
-        public string DevicePath { get; set; }
+        public string DevicePath { get; set; } = string.Empty;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -286,6 +286,13 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
     public class WinLibrary : IDisposable
     {
 
+        [DllImport("user32")]
+        private static extern bool EnumDisplayDevices(
+            string? deviceName,
+            UInt32 deviceNumber,
+            ref DISPLAY_DEVICE displayDevice,
+            UInt32 flags);
+
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
@@ -359,7 +366,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             {
                 if (_activeDisplayConfig == null)
                 {
-                    _activeDisplayConfig = default(WINDOWS_DISPLAY_CONFIG);
+                    _activeDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
                 }
                 return _activeDisplayConfig.Value;
             }
@@ -369,7 +376,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         {
             get
             {
-                return _activeDisplayConfig.Value.DisplayIdentifiers;
+                return ActiveDisplayConfig.DisplayIdentifiers;
             }
         }
 
@@ -445,7 +452,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             Dictionary<ulong, string> currentAdapterMap = GetAllAdapterIDs();
 
             ulong fallbackAdapterId = 0;
-            bool hasFallbackAdapter = currentAdapterMap != null && currentAdapterMap.Count > 0;
+            bool hasFallbackAdapter = currentAdapterMap.Count > 0;
             if (hasFallbackAdapter)
             {
                 fallbackAdapterId = currentAdapterMap.First().Key;
@@ -1279,7 +1286,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             UInt32 displayDeviceNum = 0;
             DISPLAY_DEVICE displayDevice = new DISPLAY_DEVICE();
             displayDevice.Size = (UInt32)Marshal.SizeOf<DISPLAY_DEVICE>();
-            while (GDIImport.EnumDisplayDevices(null, displayDeviceNum, ref displayDevice, 0))
+            while (EnumDisplayDevices(null, displayDeviceNum, ref displayDevice, 0))
             {
                 // Now we try and grab the GDI Device Settings for each display device
                 SharedLogger.logger.Trace($"WinLibrary/GetGdiDisplaySettings: Getting the current Display Settings for {displayDevice.DeviceName}");
@@ -1663,7 +1670,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             DISPLAY_DEVICE displayDevice = new DISPLAY_DEVICE();
             displayDevice.Size = (UInt32)Marshal.SizeOf<DISPLAY_DEVICE>();
             stringToReturn += $"----++++==== GDI Device Information ====++++----\n";
-            while (GDIImport.EnumDisplayDevices(null, displayDeviceNum, ref displayDevice, 0))
+            while (EnumDisplayDevices(null, displayDeviceNum, ref displayDevice, 0))
             {
                 // Now we try and grab the GDI Device Info for each display device
                 stringToReturn += $"****** Display Device Info for Display {displayDevice.DeviceName} *******\n";
@@ -1782,7 +1789,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             // - We use the SDC_ALLOW_CHANGES flag to allow Windows to make changes to the display configuration to just make something work.
             // - We use the SDC_ALLOW_PATH_ORDER_CHANGES flag to allow Windows to change the order of the display paths we supplied.
             // The outcome of this process should be a configuration that enables all connected displays.
-            WIN32STATUS err = CCDImport.SetDisplayConfig(0, null, 0, null, SDC.SDC_APPLY | SDC.SDC_USE_DATABASE_CURRENT );
+            WIN32STATUS err = CCDImport.SetDisplayConfig(0, Array.Empty<DISPLAYCONFIG_PATH_INFO>(), 0, Array.Empty<DISPLAYCONFIG_MODE_INFO>(), SDC.SDC_APPLY | SDC.SDC_USE_DATABASE_CURRENT );
 
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {
@@ -3011,7 +3018,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                     Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, (y << 16) + x);
         }
 
-        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2) where T : notnull
         {
 
             if (list1.Count != list2.Count)

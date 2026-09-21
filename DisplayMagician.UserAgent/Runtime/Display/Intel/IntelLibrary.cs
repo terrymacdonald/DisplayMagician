@@ -659,7 +659,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
-        private static IntelLibrary _instance = new IntelLibrary();
+        private static IntelLibrary? _instance = new IntelLibrary();
 
         private bool _initialised = false;
         
@@ -670,7 +670,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         
         // IGCL API Handle
-        private IGCLApiHelper _igclApiHelper;
+        private IGCLApiHelper? _igclApiHelper;
         
         private INTEL_DISPLAY_CONFIG? _activeDisplayConfig;
         public List<string> _allConnectedDisplayIdentifiers;
@@ -1800,7 +1800,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
 
                         SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Attempting to create the Intel Combined Display on adapter {adapterNum}");
 
-                        if (currentCombinedDisplayInUse)
+                        if (currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.NumOutputs > 1)
                         {
                             CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay.Value;
                             disableCombinedDisplayArgs.OpType = ctl_combined_display_optype_t.CTL_COMBINED_DISPLAY_OPTYPE_DISABLE;
@@ -1862,7 +1862,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     {
                         SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Combined Display in use but new display layout does NOT require a Combined Display on adapter {adapterNum}");
 
-                        if (currentCombinedDisplayInUse)
+                        if (currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.NumOutputs > 1)
                         {
                             CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay.Value;
                             disableCombinedDisplayArgs.OpType = ctl_combined_display_optype_t.CTL_COMBINED_DISPLAY_OPTYPE_DISABLE;
@@ -2656,7 +2656,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
             // so we will just assume that if any of the display identifiers in the config are part of a combined display,
             // then they are available now. This is not ideal, but there is no other way to do this with IGCL.
             // TODO: Find a way to use the Windows IDs to identify combined displays in IGCL.
-            if (displayConfig.CombinedDisplayIsInUse || _activeDisplayConfig.Value.CombinedDisplayIsInUse)
+            if (displayConfig.CombinedDisplayIsInUse || ActiveDisplayConfig.CombinedDisplayIsInUse)
             {
                 return true;
             }
@@ -2733,7 +2733,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
             return topologyHiddenIdentifiers;
         }
 
-        private static bool AddCombinedDisplayEncoderIds(INTEL_DISPLAY_CONFIG displayConfig, HashSet<uint> requiredPhysicalEncoderIds, HashSet<uint> topologyHiddenEncoderIds, bool updateRequiredPhysicalEncoderIds, HashSet<uint> activeCombinedChildEncoderIds = null)
+        private static bool AddCombinedDisplayEncoderIds(INTEL_DISPLAY_CONFIG displayConfig, HashSet<uint> requiredPhysicalEncoderIds, HashSet<uint> topologyHiddenEncoderIds, bool updateRequiredPhysicalEncoderIds, HashSet<uint>? activeCombinedChildEncoderIds = null)
         {
             if (!displayConfig.CombinedDisplayIsInUse)
                 return true;

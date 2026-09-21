@@ -1818,7 +1818,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
-        private static AMDLibrary _instance = new AMDLibrary();
+        private static AMDLibrary? _instance = new AMDLibrary();
 
         private bool _initialised = false;
         private bool _initialisedADL2 = false;
@@ -1830,12 +1830,12 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _adlContextHandle = IntPtr.Zero;
-        private ADLXApiHelper _adlxHelper;
+        private ADLXApiHelper? _adlxHelper;
         //private ADLXHelper _adlxHelper;
-        private ADLXSystemServicesHelper _adlxSystem;
+        private ADLXSystemServicesHelper? _adlxSystem;
         //private int _adlxHighestSupportedSystemVersion = 0; // Only the base SystemServices is supported in all versions of ADLX
         private AMD_DISPLAY_CONFIG? _activeDisplayConfig;
-        public List<string> _allConnectedDisplayIdentifiers;
+        public List<string> _allConnectedDisplayIdentifiers = new List<string>();
         //public IntPtr hADLXBindingModule = IntPtr.Zero;
         public IntPtr hADLXModule = IntPtr.Zero;
         public const string AMD_ADLX_BINDING_DLL = "ADLXWrapper.dll";
@@ -1866,6 +1866,19 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 return true;
 
             SharedLogger.logger.Error($"AMDLibrary/IsValidADLReturnedArray: ADL returned an invalid buffer/count combination for '{arrayName}' (buffer: {buffer}, count: {count}).");
+            return false;
+        }
+
+        private static bool TryReadADLStructure<T>(IntPtr buffer, string bufferName, out T value) where T : struct
+        {
+            if (Marshal.PtrToStructure<T>(buffer) is T structure)
+            {
+                value = structure;
+                return true;
+            }
+
+            SharedLogger.logger.Error($"AMDLibrary/TryReadADLStructure: ADL returned a null {typeof(T).Name} structure for '{bufferName}'.");
+            value = default;
             return false;
         }
 
@@ -2005,7 +2018,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                     {
                         SharedLogger.logger.Error(ex, $"AMDLibrary/AMDLibrary: Exception getting the ADLX System Services");
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Disposing the ADLXHelper to avoid memory leaks");
-                        _adlxHelper.Dispose();
+                        _adlxHelper?.Dispose();
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Setting ADLXHelper to null");
                         _adlxHelper = null;
                         _initialised = false;
@@ -2021,7 +2034,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                     {
                         _activeDisplayConfig = CreateDefaultConfig();
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: The active AMD Display Configuration is null. Disposing the ADLXHelper to avoid memory leaks");
-                        _adlxHelper.Dispose();
+                        _adlxHelper?.Dispose();
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Setting ADLXHelper to null");
                         _adlxHelper = null;
                         _initialised = false;
@@ -2246,7 +2259,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             // Creat empty config struct so we know there are no nulls in there to break the json serializer
             AMD_DISPLAY_CONFIG myDisplayConfig = CreateDefaultConfig();
 
-            if (_initialised)
+            if (_initialised && _adlxSystem != null)
             {
                 // Get the desktop services
                 // This is how we get and iterate through the various desktops. 
@@ -2668,7 +2681,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                     // build a structure in the array slot
                                     adapterArray[i] = new ADL_ADAPTER_INFOX2();
                                     // fill the array slot structure with the data from the buffer
-                                    adapterArray[i] = (ADL_ADAPTER_INFOX2)Marshal.PtrToStructure(currentAdaptersInfoBuffer, typeof(ADL_ADAPTER_INFOX2));
+                                    if (!TryReadADLStructure(currentAdaptersInfoBuffer, nameof(adapterInfoBuffer), out ADL_ADAPTER_INFOX2 adapterInfo))
+                                        return myDisplayConfig;
+
+                                    adapterArray[i] = adapterInfo;
                                     // destroy the bit of memory we no longer need
                                     //Marshal.DestroyStructure(currentAdaptersInfoBuffer, typeof(ADL_ADAPTER_INFOX2));
                                     // advance the buffer forwards to the next object
@@ -2760,7 +2776,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                             // build a structure in the array slot
                                             displayTargetArray[i] = new ADL_DISPLAY_TARGET();
                                             // fill the array slot structure with the data from the buffer
-                                            displayTargetArray[i] = (ADL_DISPLAY_TARGET)Marshal.PtrToStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
+                                            if (!TryReadADLStructure(currentDisplayTargetBuffer, nameof(displayTargetBuffer), out ADL_DISPLAY_TARGET displayTarget))
+                                                return myDisplayConfig;
+
+                                            displayTargetArray[i] = displayTarget;
                                             // destroy the bit of memory we no longer need
                                             Marshal.DestroyStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
                                             // advance the buffer forwards to the next object
@@ -2873,7 +2892,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     slsTargetArray[i] = new ADL_SLS_TARGET();
                                                     // fill the array slot structure with the data from the buffer
-                                                    slsTargetArray[i] = (ADL_SLS_TARGET)Marshal.PtrToStructure(currentSLSTargetBuffer, typeof(ADL_SLS_TARGET));
+                                                    if (!TryReadADLStructure(currentSLSTargetBuffer, nameof(slsTargetBuffer), out ADL_SLS_TARGET slsTarget))
+                                                        return myDisplayConfig;
+
+                                                    slsTargetArray[i] = slsTarget;
                                                     // advance the buffer forwards to the next object
                                                     currentSLSTargetBuffer = IntPtr.Add(currentSLSTargetBuffer, Marshal.SizeOf<ADL_SLS_TARGET>());
                                                 }
@@ -2898,7 +2920,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     nativeModeArray[i] = new ADL_SLS_MODE();
                                                     // fill the array slot structure with the data from the buffer
-                                                    nativeModeArray[i] = (ADL_SLS_MODE)Marshal.PtrToStructure(currentNativeModeBuffer, typeof(ADL_SLS_MODE));
+                                                    if (!TryReadADLStructure(currentNativeModeBuffer, nameof(nativeModeBuffer), out ADL_SLS_MODE nativeMode))
+                                                        return myDisplayConfig;
+
+                                                    nativeModeArray[i] = nativeMode;
                                                     // advance the buffer forwards to the next object
                                                     currentNativeModeBuffer = IntPtr.Add(currentNativeModeBuffer, Marshal.SizeOf<ADL_SLS_MODE>());
                                                 }
@@ -2923,7 +2948,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     nativeModeOffsetArray[i] = new ADL_SLS_OFFSET();
                                                     // fill the array slot structure with the data from the buffer
-                                                    nativeModeOffsetArray[i] = (ADL_SLS_OFFSET)Marshal.PtrToStructure(currentNativeModeOffsetsBuffer, typeof(ADL_SLS_OFFSET));
+                                                    if (!TryReadADLStructure(currentNativeModeOffsetsBuffer, nameof(nativeModeOffsetsBuffer), out ADL_SLS_OFFSET nativeModeOffset))
+                                                        return myDisplayConfig;
+
+                                                    nativeModeOffsetArray[i] = nativeModeOffset;
                                                     // advance the buffer forwards to the next object
                                                     currentNativeModeOffsetsBuffer = IntPtr.Add(currentNativeModeOffsetsBuffer, Marshal.SizeOf<ADL_SLS_OFFSET>());
                                                 }
@@ -2948,7 +2976,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     bezelModeArray[i] = new ADL_BEZEL_TRANSIENT_MODE();
                                                     // fill the array slot structure with the data from the buffer
-                                                    bezelModeArray[i] = (ADL_BEZEL_TRANSIENT_MODE)Marshal.PtrToStructure(currentBezelModeBuffer, typeof(ADL_BEZEL_TRANSIENT_MODE));
+                                                    if (!TryReadADLStructure(currentBezelModeBuffer, nameof(bezelModeBuffer), out ADL_BEZEL_TRANSIENT_MODE bezelMode))
+                                                        return myDisplayConfig;
+
+                                                    bezelModeArray[i] = bezelMode;
                                                     // advance the buffer forwards to the next object
                                                     currentBezelModeBuffer = IntPtr.Add(currentBezelModeBuffer, Marshal.SizeOf<ADL_BEZEL_TRANSIENT_MODE>());
                                                 }
@@ -2973,7 +3004,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     transientModeArray[i] = new ADL_BEZEL_TRANSIENT_MODE();
                                                     // fill the array slot structure with the data from the buffer
-                                                    transientModeArray[i] = (ADL_BEZEL_TRANSIENT_MODE)Marshal.PtrToStructure(currentTransientModeBuffer, typeof(ADL_BEZEL_TRANSIENT_MODE));
+                                                    if (!TryReadADLStructure(currentTransientModeBuffer, nameof(transientModeBuffer), out ADL_BEZEL_TRANSIENT_MODE transientMode))
+                                                        return myDisplayConfig;
+
+                                                    transientModeArray[i] = transientMode;
                                                     // advance the buffer forwards to the next object
                                                     currentTransientModeBuffer = IntPtr.Add(currentTransientModeBuffer, Marshal.SizeOf<ADL_BEZEL_TRANSIENT_MODE>());
                                                 }
@@ -2997,7 +3031,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     slsOffsetArray[i] = new ADL_SLS_OFFSET();
                                                     // fill the array slot structure with the data from the buffer
-                                                    slsOffsetArray[i] = (ADL_SLS_OFFSET)Marshal.PtrToStructure(currentSLSOffsetBuffer, typeof(ADL_SLS_OFFSET));
+                                                    if (!TryReadADLStructure(currentSLSOffsetBuffer, nameof(slsOffsetBuffer), out ADL_SLS_OFFSET slsOffset))
+                                                        return myDisplayConfig;
+
+                                                    slsOffsetArray[i] = slsOffset;
                                                     // advance the buffer forwards to the next object
                                                     currentSLSOffsetBuffer = IntPtr.Add(currentSLSOffsetBuffer, Marshal.SizeOf<ADL_SLS_OFFSET>());
                                                 }
@@ -3066,7 +3103,10 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                         // build a structure in the array slot
                                                         displayModeArray[i] = new ADL_MODE();
                                                         // fill the array slot structure with the data from the buffer
-                                                        displayModeArray[i] = (ADL_MODE)Marshal.PtrToStructure(currentDisplayModeBuffer, typeof(ADL_MODE));
+                                                        if (!TryReadADLStructure(currentDisplayModeBuffer, nameof(displayModeBuffer), out ADL_MODE displayMode))
+                                                            return myDisplayConfig;
+
+                                                        displayModeArray[i] = displayMode;
                                                         // advance the buffer forwards to the next object
                                                         currentDisplayModeBuffer = IntPtr.Add(currentDisplayModeBuffer, Marshal.SizeOf<ADL_MODE>());
                                                     }
@@ -3304,7 +3344,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
         public string PrintActiveConfig()
         {
-            if (!_initialised)
+            if (!_initialised || _adlxSystem == null)
             {
                 SharedLogger.logger.Error($"AMDLibrary/PrintActiveConfig: ERROR - Tried to run PrintActiveConfig but the AMD ADLX library isn't initialised!");
                 throw new AMDLibraryException($"Tried to run PrintActiveConfig but the AMD ADLX library isn't initialised!");
@@ -3557,7 +3597,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool SetActiveConfig(AMD_DISPLAY_CONFIG displayConfig, bool useADLEyefinity, int delayInMs)
         {
 
-            if (_initialised)
+            if (_initialised && _adlxSystem != null)
             {
                 // This is how we control the various desktops. 
                 // - A single desktop is associated with one display.
@@ -3825,7 +3865,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
         public bool SetActiveConfigOverride(AMD_DISPLAY_CONFIG displayConfig, int delayInMs)
         {
-            if (_initialised)
+            if (_initialised && _adlxSystem != null)
             {                
                 // Get the current list of all displays available on the system
                 var displaysList = _adlxSystem.EnumerateDisplays().ToList();
@@ -4486,7 +4526,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             List<string> displayIdentifiers = new List<string>();
             failure = false;
 
-            if (_initialised)
+            if (_initialised && _adlxSystem != null)
             {
                 // Get the desktop services
                 // This is how we get and iterate through the various desktops. 
@@ -4619,7 +4659,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             List<string> displayIdentifiers = new List<string>();
             failure = false;
 
-            if (_initialised)
+            if (_initialised && _adlxSystem != null)
             {
                 try
                 {

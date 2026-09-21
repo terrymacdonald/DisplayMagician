@@ -2,9 +2,9 @@
   Copy this file to SigningConfig.props in the same directory and fill in your values.
   SigningConfig.props is gitignored — never commit it.
 
-  To generate a self-signed certificate for development use:
-    create_new_self-signed_cert.ps1
-  Then export it to a .pfx and set the path/password below.
+  To generate a self-signed certificate and this configuration for development use:
+    .\prepare_displaymagician.ps1
+  Or set the path/password below for an existing PFX.
 -->
 <Project>
   <PropertyGroup>

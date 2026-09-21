@@ -123,8 +123,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [DllImport("rstrtmgr.dll")]
         private static extern int RmRegisterResources(uint dwSessionHandle,
             uint nFiles, string[] rgsFilenames,
-            uint nApplications, RM_UNIQUE_PROCESS[] rgApplications,
-            uint nServices, string[] rgsServiceNames);
+            uint nApplications, RM_UNIQUE_PROCESS[]? rgApplications,
+            uint nServices, string[]? rgsServiceNames);
 
         [DllImport("rstrtmgr.dll")]
         private static extern int RmShutdown(uint pSessionHandle, uint lActionFlags, IntPtr fnStatus);
