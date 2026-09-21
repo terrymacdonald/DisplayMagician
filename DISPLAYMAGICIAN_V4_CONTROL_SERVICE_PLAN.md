@@ -586,7 +586,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Cross-process shortcut/game enums are declared once in `DisplayMagician.Contracts`; persisted numeric values are unchanged.
 - [x] WinForms shortcut launches, hotkeys, command-line activation, and tray actions route only through Agent `StartShortcut`; there is no local execution fallback.
 - [x] Delete the now-unreachable legacy `ShortcutRepository.RunShortcut` implementation and its direct process/game runtime dependencies.
-- [ ] The WiX payload does not yet publish/install ControlService, SessionLauncher, and UserAgent together.
+- [x] The WiX payload publishes/installs ControlService, SessionLauncher, and UserAgent together.
 
 ### Phase A — Structure and IPC
 
@@ -663,9 +663,9 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 ### Phase F — Deployment hardening
 
-- [ ] Package and install ControlService, SessionLauncher, and UserAgent with the WinForms and Console clients.
+- [x] Package and install ControlService, SessionLauncher, and UserAgent with the WinForms and Console clients.
 - [ ] Create ProgramData directories and least-privilege ACLs for machine/service and per-SID Agent storage.
-- [ ] Configure Control Service installation, start/stop, failure recovery, upgrade, repair, and uninstall behaviour.
+- [x] Configure Control Service installation, start/stop, failure recovery, upgrade, repair, and uninstall behaviour.
 - [ ] Verify fresh install and upgrade preserve migrated user data and restore service/Agent connectivity.
 - [ ] Verify all installed components report the common build version derived from root `version.json`.
 

@@ -98,6 +98,9 @@
 		<Feature Id="Main">
 			<ComponentGroupRef Id="DisplayMagicianComponents" />
 			<ComponentGroupRef Id="DisplayMagicianConsoleComponents" />
+			<ComponentGroupRef Id="DisplayMagicianControlServiceComponents" />
+			<ComponentGroupRef Id="DisplayMagicianSessionLauncherComponents" />
+			<ComponentGroupRef Id="DisplayMagicianUserAgentComponents" />
 			<ComponentRef Id="IdentityMsixComponent" />
 			<ComponentGroupRef Id="ContextMenuCleanupComponents" />
 		</Feature>

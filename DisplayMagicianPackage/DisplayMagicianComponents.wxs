@@ -1,4 +1,4 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
 	<Fragment>
 		<ComponentGroup Id="DisplayMagicianComponents" Directory="INSTALLFOLDER">
 			<Component>
@@ -77,6 +77,72 @@
 						   Value="1"
 						   KeyPath="yes" />
 			</Component>
+		</ComponentGroup>
+
+		<ComponentGroup Id="DisplayMagicianControlServiceComponents" Directory="ControlServiceFolder">
+			<Component Id="ControlServiceComponent">
+				<File Id="ControlServiceExe" Source="$(var.DmControlServicePublishDir)DisplayMagician.ControlService.exe" KeyPath="yes" />
+				<ServiceInstall Id="InstallControlService"
+							Name="DisplayMagicianControlService"
+							DisplayName="DisplayMagician Control Service"
+							Description="Coordinates DisplayMagician machine operations and user agents."
+							Start="auto"
+							Type="ownProcess"
+							ErrorControl="normal"
+							Vital="yes">
+					<util:ServiceConfig FirstFailureActionType="restart"
+										SecondFailureActionType="restart"
+										ThirdFailureActionType="restart"
+										RestartServiceDelayInSeconds="60"
+										ResetPeriodInDays="1" />
+				</ServiceInstall>
+				<ServiceControl Id="ControlControlService"
+							Name="DisplayMagicianControlService"
+							Start="install"
+							Stop="both"
+							Remove="uninstall"
+							Wait="yes" />
+			</Component>
+			<Files Include="$(var.DmControlServicePublishDir)**">
+				<Exclude Files="$(var.DmControlServicePublishDir)DisplayMagician.ControlService.exe" />
+			</Files>
+		</ComponentGroup>
+
+		<ComponentGroup Id="DisplayMagicianSessionLauncherComponents" Directory="SessionLauncherFolder">
+			<Component Id="SessionLauncherComponent">
+				<File Id="SessionLauncherExe" Source="$(var.DmSessionLauncherPublishDir)DisplayMagician.SessionLauncher.exe" KeyPath="yes" />
+				<ServiceInstall Id="InstallSessionLauncher"
+							Name="DisplayMagicianSessionLauncher"
+							DisplayName="DisplayMagician Session Launcher"
+							Description="Starts the DisplayMagician user agent in the active user session."
+							Start="demand"
+							Type="ownProcess"
+							ErrorControl="normal"
+							Vital="yes">
+					<util:ServiceConfig FirstFailureActionType="restart"
+										SecondFailureActionType="restart"
+										ThirdFailureActionType="restart"
+										RestartServiceDelayInSeconds="60"
+										ResetPeriodInDays="1" />
+				</ServiceInstall>
+				<ServiceControl Id="ControlSessionLauncher"
+							Name="DisplayMagicianSessionLauncher"
+							Stop="both"
+							Remove="uninstall"
+							Wait="yes" />
+			</Component>
+			<Files Include="$(var.DmSessionLauncherPublishDir)**">
+				<Exclude Files="$(var.DmSessionLauncherPublishDir)DisplayMagician.SessionLauncher.exe" />
+			</Files>
+		</ComponentGroup>
+
+		<ComponentGroup Id="DisplayMagicianUserAgentComponents" Directory="UserAgentFolder">
+			<Component>
+				<File Id="UserAgentExe" Source="$(var.DmUserAgentPublishDir)DisplayMagician.UserAgent.exe" KeyPath="yes" />
+			</Component>
+			<Files Include="$(var.DmUserAgentPublishDir)**">
+				<Exclude Files="$(var.DmUserAgentPublishDir)DisplayMagician.UserAgent.exe" />
+			</Files>
 		</ComponentGroup>
 
 		<ComponentGroup Id="DisplayMagicianConsoleComponents" Directory="INSTALLFOLDER">

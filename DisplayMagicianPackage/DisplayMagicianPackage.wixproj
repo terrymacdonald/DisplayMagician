@@ -11,7 +11,10 @@
 	<!-- Publish output dirs passed to WiX as preprocessor variables via DefineConstants -->
 	<DmPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician\</DmPublishDir>
 	<DmConsolePublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagicianConsole\</DmConsolePublishDir>
-	<DefineConstants>DmPublishDir=$(DmPublishDir);DmConsolePublishDir=$(DmConsolePublishDir)</DefineConstants>
+  <DmControlServicePublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician.ControlService\</DmControlServicePublishDir>
+  <DmSessionLauncherPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician.SessionLauncher\</DmSessionLauncherPublishDir>
+  <DmUserAgentPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician.UserAgent\</DmUserAgentPublishDir>
+  <DefineConstants>DmPublishDir=$(DmPublishDir);DmConsolePublishDir=$(DmConsolePublishDir);DmControlServicePublishDir=$(DmControlServicePublishDir);DmSessionLauncherPublishDir=$(DmSessionLauncherPublishDir);DmUserAgentPublishDir=$(DmUserAgentPublishDir)</DefineConstants>
   </PropertyGroup>
 
 
@@ -34,6 +37,9 @@
     <ProjectReference Include="..\DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj" Condition="'$(UseExistingIdentityPackage)' != 'true'" />
     <ProjectReference Include="..\DisplayMagicianConsole\DisplayMagicianConsole.csproj" Publish="true" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" Publish="true" />
+	<ProjectReference Include="..\DisplayMagician.ControlService\DisplayMagician.ControlService.csproj" Publish="true" />
+	<ProjectReference Include="..\DisplayMagician.SessionLauncher\DisplayMagician.SessionLauncher.csproj" Publish="true" />
+	<ProjectReference Include="..\DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj" Publish="true" />
   </ItemGroup>
 
   <!-- Define the configuration (Debug/Release) based on the build -->
