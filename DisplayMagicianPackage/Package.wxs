@@ -109,6 +109,7 @@
 					
 		<!-- Set application components that will be installed -->
 		<Feature Id="Main">
+			<ComponentGroupRef Id="DisplayMagicianProgramDataComponents" />
 			<ComponentGroupRef Id="DisplayMagicianComponents" />
 			<ComponentGroupRef Id="DisplayMagicianConsoleComponents" />
 			<ComponentGroupRef Id="DisplayMagicianControlServiceComponents" />

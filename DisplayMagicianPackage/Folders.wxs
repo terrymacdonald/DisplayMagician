@@ -11,5 +11,15 @@
 	  <StandardDirectory Id="ProgramMenuFolder">
 	    <Directory Id="DisplayMagicianStartMenuFolder" Name="DisplayMagician" />
 	  </StandardDirectory>
+	  <StandardDirectory Id="CommonAppDataFolder">
+		  <Directory Id="DisplayMagicianProgramDataFolder" Name="DisplayMagician">
+			  <Directory Id="DisplayMagicianMachineDataFolder" Name="Machine">
+				  <Directory Id="DisplayMagicianMachineLogsFolder" Name="Logs" />
+				  <Directory Id="DisplayMagicianMachineBackupsFolder" Name="Backups" />
+				  <Directory Id="DisplayMagicianMachineDiagnosticsFolder" Name="Diagnostics" />
+			  </Directory>
+			  <Directory Id="DisplayMagicianUsersDataFolder" Name="Users" />
+		  </Directory>
+	  </StandardDirectory>
   </Fragment>
 </Wix>

@@ -1,5 +1,38 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
 	<Fragment>
+		<!--
+			ProgramData is deliberately split into a machine-only branch and a per-SID
+			branch. The installer grants the LocalService Control Service access to the
+			machine branch and to create per-SID roots; StoragePaths then grants each
+			interactive user Modify access only to their own SID root.
+		-->
+		<ComponentGroup Id="DisplayMagicianProgramDataComponents" Directory="DisplayMagicianProgramDataFolder">
+			<Component Id="DisplayMagicianProgramDataRootComponent" Guid="{C5E1A210-1E8C-4C6A-888D-B360C6D67527}">
+				<CreateFolder>
+					<PermissionEx Sddl="D:PAI(A;OICI;GA;;;SY)(A;OICI;GA;;;BA)" />
+				</CreateFolder>
+			</Component>
+			<Component Id="DisplayMagicianMachineDataComponent" Guid="{F1DEF9AA-C98E-4651-9003-D29599035F5C}" Directory="DisplayMagicianMachineDataFolder">
+				<CreateFolder>
+					<PermissionEx Sddl="D:PAI(A;OICI;GA;;;SY)(A;OICI;GA;;;BA)(A;OICI;GA;;;LS)" />
+				</CreateFolder>
+			</Component>
+			<Component Id="DisplayMagicianMachineLogsComponent" Guid="{D51483FD-8081-4703-B6C0-0EF75AB6FDA2}" Directory="DisplayMagicianMachineLogsFolder">
+				<CreateFolder />
+			</Component>
+			<Component Id="DisplayMagicianMachineBackupsComponent" Guid="{D1639CC6-CC33-4394-9D99-4C13BD58ACA7}" Directory="DisplayMagicianMachineBackupsFolder">
+				<CreateFolder />
+			</Component>
+			<Component Id="DisplayMagicianMachineDiagnosticsComponent" Guid="{FC967F83-39A0-4B8C-9EEB-D7C3CA5C25F2}" Directory="DisplayMagicianMachineDiagnosticsFolder">
+				<CreateFolder />
+			</Component>
+			<Component Id="DisplayMagicianUsersDataComponent" Guid="{E275B377-2857-4618-A375-F7C0D5745C58}" Directory="DisplayMagicianUsersDataFolder">
+				<CreateFolder>
+					<PermissionEx Sddl="D:PAI(A;OICI;GA;;;SY)(A;OICI;GA;;;BA)(A;OICI;GA;;;LS)" />
+				</CreateFolder>
+			</Component>
+		</ComponentGroup>
+
 		<ComponentGroup Id="DisplayMagicianComponents" Directory="INSTALLFOLDER">
 			<Component>
 				<RegistryKey Root="HKLM" Key="Software\DisplayMagician" ForceDeleteOnUninstall="yes"/>
