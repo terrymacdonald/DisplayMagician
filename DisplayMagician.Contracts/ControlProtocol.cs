@@ -61,7 +61,8 @@ public enum ControlMessageType
     SubscribeClientEvents = 44,
     ClientEvent = 45,
     CreateDiagnosticBundle = 46,
-    ForceReleaseDisplayControl = 47
+    ForceReleaseDisplayControl = 47,
+    CreateUserSupportBundle = 48
 }
 
 public enum ControlErrorCode
@@ -472,6 +473,20 @@ public sealed class ForceReleaseDisplayControlRequest
     public string Confirmation { get; set; } = string.Empty;
 }
 
+public sealed class CreateUserSupportBundleRequest
+{
+    public string DestinationPath { get; set; } = string.Empty;
+
+    public string MachineLogsStagingPath { get; set; } = string.Empty;
+}
+
+public sealed class UserSupportBundleResult
+{
+    public string DestinationPath { get; set; } = string.Empty;
+
+    public string[] Warnings { get; set; } = Array.Empty<string>();
+}
+
 public sealed class RecoveryAdministrationRecord
 {
     public DateTime OccurredUtc { get; set; }
@@ -528,6 +543,8 @@ public sealed class ControlResponse
     public AnonymousMetricsSettings? AnonymousMetricsSettings { get; set; }
 
     public string? DiagnosticBundlePath { get; set; }
+
+    public UserSupportBundleResult? UserSupportBundle { get; set; }
 }
 
 public sealed class ControlServiceStatus

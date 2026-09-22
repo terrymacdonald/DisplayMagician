@@ -226,6 +226,15 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CreateDiagnosticBundle }, cancellationToken);
     }
 
+    public Task<ControlResponse> CreateUserSupportBundleAsync(string destinationPath, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.CreateUserSupportBundle,
+            Payload = JsonSerializer.Serialize(new CreateUserSupportBundleRequest { DestinationPath = destinationPath ?? string.Empty })
+        }, cancellationToken);
+    }
+
     public Task<ControlResponse> ForceReleaseDisplayControlAsync(string confirmation, CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope

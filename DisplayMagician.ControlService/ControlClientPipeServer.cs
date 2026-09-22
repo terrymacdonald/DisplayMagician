@@ -9,11 +9,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
 using Microsoft.Win32.SafeHandles;
+using NLog;
 
 namespace DisplayMagician.ControlService;
 
 public sealed class ControlClientPipeServer
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly ProfileOperationRouter _profileOperationRouter;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly ClientSyncCoordinator _clientSyncCoordinator;
@@ -22,8 +24,9 @@ public sealed class ControlClientPipeServer
     private readonly AuditStore _auditStore;
     private readonly RecoveryAdministrationStore _recoveryAdministrationStore;
     private readonly DiagnosticBundleGenerator _diagnosticBundleGenerator;
+    private readonly StoragePaths _storagePaths;
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, DiagnosticBundleGenerator diagnosticBundleGenerator)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, DiagnosticBundleGenerator diagnosticBundleGenerator, StoragePaths storagePaths)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
@@ -33,6 +36,7 @@ public sealed class ControlClientPipeServer
         _auditStore = auditStore ?? throw new ArgumentNullException(nameof(auditStore));
         _recoveryAdministrationStore = recoveryAdministrationStore ?? throw new ArgumentNullException(nameof(recoveryAdministrationStore));
         _diagnosticBundleGenerator = diagnosticBundleGenerator ?? throw new ArgumentNullException(nameof(diagnosticBundleGenerator));
+        _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -99,6 +103,7 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.CreateUserSupportBundle => await CreateUserSupportBundleAsync(identity, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
                     ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
                     ControlMessageType.GetServiceStatus => GetServiceStatus(),
@@ -230,6 +235,59 @@ public sealed class ControlClientPipeServer
             _auditStore.Append("DiagnosticBundleCreated", "Failure", ex.Message, identity.UserSid, identity.SessionId);
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Control Service could not create the machine diagnostic bundle." };
         }
+    }
+
+    private async Task<ControlResponse> CreateUserSupportBundleAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        CreateUserSupportBundleRequest? supportBundleRequest = JsonSerializer.Deserialize<CreateUserSupportBundleRequest>(request.Payload);
+        if (supportBundleRequest == null || string.IsNullOrWhiteSpace(supportBundleRequest.DestinationPath))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A support ZIP destination is required." };
+        }
+
+        string stagingPath = Path.Combine(_storagePaths.GetUserPaths(identity.UserSid).BackupsPath, "SupportStaging", Guid.NewGuid().ToString("N"), "MachineLogs");
+        try
+        {
+            Directory.CreateDirectory(stagingPath);
+            if (Directory.Exists(_storagePaths.MachineLogsPath))
+            {
+                foreach (string sourcePath in Directory.EnumerateFiles(_storagePaths.MachineLogsPath, "*", SearchOption.AllDirectories))
+                {
+                    string destinationPath = Path.Combine(stagingPath, Path.GetRelativePath(_storagePaths.MachineLogsPath, sourcePath));
+                    string? destinationDirectory = Path.GetDirectoryName(destinationPath);
+                    if (!string.IsNullOrWhiteSpace(destinationDirectory))
+                    {
+                        Directory.CreateDirectory(destinationDirectory);
+                    }
+
+                    CopyMachineLogFile(sourcePath, destinationPath);
+                }
+            }
+
+            supportBundleRequest.MachineLogsStagingPath = stagingPath;
+            request.Payload = JsonSerializer.Serialize(supportBundleRequest);
+            return await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+        {
+            _logger.Error(ex, "ControlClientPipeServer/CreateUserSupportBundleAsync: Could not stage Control Service logs for SID {0}.", identity.UserSid);
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "DisplayMagician could not collect Control Service logs for the support ZIP file." };
+        }
+        finally
+        {
+            string? stagingRoot = Directory.GetParent(stagingPath)?.FullName;
+            if (!string.IsNullOrWhiteSpace(stagingRoot) && Directory.Exists(stagingRoot))
+            {
+                Directory.Delete(stagingRoot, true);
+            }
+        }
+    }
+
+    private static void CopyMachineLogFile(string sourcePath, string destinationPath)
+    {
+        using FileStream source = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using FileStream destination = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        source.CopyTo(destination);
     }
 
     private ControlResponse ForceReleaseDisplayControl(PipeClientIdentity identity, ControlEnvelope request)

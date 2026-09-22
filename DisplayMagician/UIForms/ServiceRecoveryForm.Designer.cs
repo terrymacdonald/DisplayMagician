@@ -81,7 +81,7 @@ namespace DisplayMagician.UIForms
             btn_create_bundle.Name = "btn_create_bundle";
             btn_create_bundle.Size = new System.Drawing.Size(156, 32);
             btn_create_bundle.TabIndex = 3;
-            btn_create_bundle.Text = "Create Diagnostic Bundle";
+            btn_create_bundle.Text = "Create Machine Bundle";
             btn_create_bundle.UseVisualStyleBackColor = true;
             btn_create_bundle.Click += btn_create_bundle_Click;
             // 

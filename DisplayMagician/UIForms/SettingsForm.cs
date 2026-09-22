@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Security.Principal;
 using System.Windows.Forms;
+using DisplayMagician.Contracts;
 using Vortice.DirectInput;
 
 namespace DisplayMagician.UIForms
@@ -610,16 +611,48 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_create_support_package_Click(object sender, EventArgs e)
+        private async void btn_create_support_package_Click(object sender, EventArgs e)
         {
-            if (!IsElevatedAdministrator())
+            using SaveFileDialog saveFileDialog = new SaveFileDialog
             {
-                MessageBox.Show(this, "Diagnostic bundles are created by the DisplayMagician Control Service and require an elevated administrator session.", "Administrator Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                Filter = "ZIP files (*.zip)|*.zip|All files (*.*)|*.*",
+                FilterIndex = 1,
+                RestoreDirectory = true,
+                OverwritePrompt = true,
+                FileName = $"DisplayMagician-Support-{DateTime.Now:yyyyMMdd-HHmm}.zip",
+                Title = "Save a DisplayMagician Support ZIP File"
+            };
+
+            if (saveFileDialog.ShowDialog(this) != DialogResult.OK)
+            {
                 return;
             }
 
-            using ServiceRecoveryForm recoveryForm = new ServiceRecoveryForm();
-            recoveryForm.ShowDialog(this);
+            btn_create_support_package.Enabled = false;
+            try
+            {
+                ControlResponse response = await new ControlServicePipeClient().CreateUserSupportBundleAsync(saveFileDialog.FileName, System.Threading.CancellationToken.None);
+                if (!response.IsSuccessful || response.UserSupportBundle == null)
+                {
+                    MessageBox.Show(this, response.Message, "Support ZIP File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string warnings = response.UserSupportBundle.Warnings.Length == 0
+                    ? string.Empty
+                    : $"\r\n\r\nSome files were unavailable:\r\n- {string.Join("\r\n- ", response.UserSupportBundle.Warnings)}";
+                MessageBox.Show(this, $"Created DisplayMagician Support ZIP file:\r\n{response.UserSupportBundle.DestinationPath}{warnings}", "Support ZIP File", MessageBoxButtons.OK, response.UserSupportBundle.Warnings.Length == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "SettingsForm/btn_create_support_package_Click: Could not create a support ZIP file at {0}.", saveFileDialog.FileName);
+                MessageBox.Show(this, "DisplayMagician could not create the support ZIP file. Check the selected location and try again.", "Support ZIP File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btn_create_support_package.Enabled = true;
+            }
         }
 
         private void btn_service_recovery_Click(object sender, EventArgs e)

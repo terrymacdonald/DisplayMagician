@@ -37,6 +37,7 @@ public sealed class ProfileCommandHandler
     private readonly ShortcutRunner _shortcutRunner;
     private readonly MessageSyncService _messageSyncService;
     private readonly UserMessageStore _userMessageStore;
+    private readonly UserSupportBundleGenerator _userSupportBundleGenerator;
     private readonly IInteractiveSessionStateProvider _interactiveSessionStateProvider;
     private readonly ControlServiceClient _controlServiceClient;
     private readonly object _shortcutOperationsLock = new object();
@@ -62,6 +63,7 @@ public sealed class ProfileCommandHandler
         _shortcutRecoveryStore = new ShortcutRecoveryStore(_userDataPath);
         _shortcutRunner = new ShortcutRunner(_shortcutStore, _automaticGameDetectionRegistry, _userProfileOperationService, _shortcutRecoveryStore);
         _userMessageStore = new UserMessageStore(_userDataPath);
+        _userSupportBundleGenerator = new UserSupportBundleGenerator(_userDataPath, _registration);
         _messageSyncService = new MessageSyncService(_httpClient, _logger, "https://sync.displaymagician.com/sync/client-sync.json", Path.Combine(_userDataPath, "Messages"));
         _messageSyncService.EnsureStorage();
         _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
@@ -76,6 +78,26 @@ public sealed class ProfileCommandHandler
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
+        if (request.MessageType == ControlMessageType.CreateUserSupportBundle)
+        {
+            CreateUserSupportBundleRequest? supportBundleRequest = JsonSerializer.Deserialize<CreateUserSupportBundleRequest>(request.Payload);
+            if (supportBundleRequest == null || string.IsNullOrWhiteSpace(supportBundleRequest.DestinationPath))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A destination path is required for the support ZIP file." };
+            }
+
+            try
+            {
+                UserSupportBundleResult result = _userSupportBundleGenerator.Create(supportBundleRequest.DestinationPath, supportBundleRequest.MachineLogsStagingPath);
+                return new ControlResponse { IsSuccessful = true, Message = "Support ZIP file created.", UserSupportBundle = result };
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+            {
+                _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Could not create a support ZIP file at {0}.", supportBundleRequest.DestinationPath);
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "DisplayMagician could not create the support ZIP file at the selected location." };
+            }
+        }
+
         if (request.MessageType == ControlMessageType.StopAgentIfIdle)
         {
             if (_registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
