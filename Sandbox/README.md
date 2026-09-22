@@ -16,4 +16,6 @@ Inside Sandbox, the startup script opens the Bundle folder, creates a GitHub Rel
 
 This harness is for installer, service, migration, and storage debugging. It does not replace hardware validation for displays, GPUs, audio devices, Steam, or session-switching behaviour.
 
+Use [OPERATION_STATUS_DECISION_TEST_PLAN.md](OPERATION_STATUS_DECISION_TEST_PLAN.md) to validate Phase E Part 3 operation status and shared-decision behaviour in the sandbox.
+
 `Generated` is machine-specific and intentionally excluded from source control.

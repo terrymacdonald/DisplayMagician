@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -61,6 +61,36 @@ namespace DisplayMagicianConsole
 
             CommandOption verbose= app.Option("-v", "Communicate more about what is happening whilst doing it", CommandOptionType.NoValue);
             CommandOption parseable = app.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
+
+            app.Command("OperationStatus", operationStatusCmd =>
+            {
+                operationStatusCmd.Description = "List the current and recently completed DisplayMagician operations for this Windows session.";
+                CommandOption parseableStatus = operationStatusCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
+                operationStatusCmd.OnExecute(() =>
+                {
+                    if (parseableStatus.HasValue()) parseableMode = true;
+                    return (int)ListOperationStatuses();
+                });
+            });
+
+            app.Command("OperationDecisions", operationDecisionsCmd =>
+            {
+                operationDecisionsCmd.Description = "List pending operation decisions that may be answered by this Windows session.";
+                CommandOption parseableDecisions = operationDecisionsCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
+                operationDecisionsCmd.OnExecute(() =>
+                {
+                    if (parseableDecisions.HasValue()) parseableMode = true;
+                    return (int)ListOperationDecisions();
+                });
+            });
+
+            app.Command("ResolveOperationDecision", resolveDecisionCmd =>
+            {
+                resolveDecisionCmd.Description = "Answer a pending operation decision. Use Continue or StopAndRestore.";
+                CommandArgument promptId = resolveDecisionCmd.Argument("Prompt_ID", "The pending decision prompt ID.").IsRequired();
+                CommandArgument choice = resolveDecisionCmd.Argument("Choice", "Continue or StopAndRestore.").IsRequired();
+                resolveDecisionCmd.OnExecute(() => (int)ResolveOperationDecision(promptId.Value, choice.Value));
+            });
 
             // This is the ChangeProfile command
             app.Command("ChangeProfile", (runProfileCmd) =>
@@ -310,6 +340,72 @@ namespace DisplayMagicianConsole
             }
 
             return errLevel;
+        }
+
+        public static ERRORLEVEL ListOperationStatuses()
+        {
+            try
+            {
+                foreach (OperationStatus status in _controlServicePipeClient.ListOperationStatusesAsync(CancellationToken.None).GetAwaiter().GetResult())
+                {
+                    string updatedUtc = status.UpdatedUtc.ToUniversalTime().ToString("O");
+                    Console.WriteLine(parseableMode
+                        ? $"{status.OperationId}|{status.Sequence}|{status.Phase}|{status.IsTerminal}|{status.IsSuccessful}|{updatedUtc}|{status.Message}"
+                        : $"{status.OperationId} #{status.Sequence}: {status.Phase} - {status.Message} ({updatedUtc})");
+                }
+
+                return ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ListOperationStatuses: Could not retrieve operation statuses.");
+                Console.Error.WriteLine($"DisplayMagicianConsole could not retrieve operation statuses: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL ListOperationDecisions()
+        {
+            try
+            {
+                foreach (OperationDecision decision in _controlServicePipeClient.ListOperationDecisionsAsync(CancellationToken.None).GetAwaiter().GetResult())
+                {
+                    string expiresUtc = decision.ExpiresUtc.ToUniversalTime().ToString("O");
+                    Console.WriteLine(parseableMode
+                        ? $"{decision.PromptId}|{decision.OperationId}|{decision.DefaultChoice}|{expiresUtc}|{decision.Title}|{decision.Message}"
+                        : $"{decision.PromptId}: {decision.Title}{Environment.NewLine}{decision.Message}{Environment.NewLine}Default: {decision.DefaultChoice}; expires {expiresUtc}");
+                }
+
+                return ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ListOperationDecisions: Could not retrieve pending operation decisions.");
+                Console.Error.WriteLine($"DisplayMagicianConsole could not retrieve pending operation decisions: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL ResolveOperationDecision(string promptIdText, string choiceText)
+        {
+            if (!Guid.TryParse(promptIdText, out Guid promptId) || !Enum.TryParse(choiceText, true, out OperationDecisionChoice choice) || choice == OperationDecisionChoice.Unknown)
+            {
+                Console.Error.WriteLine("Specify a valid prompt ID and either Continue or StopAndRestore.");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+
+            try
+            {
+                OperationDecision decision = _controlServicePipeClient.ResolveOperationDecisionAsync(promptId, choice, CancellationToken.None).GetAwaiter().GetResult();
+                Console.WriteLine($"Operation decision {decision.PromptId} resolved as {decision.ResolvedChoice}.");
+                return ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ResolveOperationDecision: Could not resolve operation decision {0}.", promptIdText);
+                Console.Error.WriteLine($"DisplayMagicianConsole could not resolve the operation decision: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
         }
 
 
