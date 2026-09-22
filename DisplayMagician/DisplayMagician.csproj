@@ -196,17 +196,18 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\AudioAccessPermissionForm.resx" />
+    <EmbeddedResource Include="UIForms\AudioApplyFailureForm.resx" />
     <EmbeddedResource Include="UIForms\ChooseExecutableForm.resx" />
     <EmbeddedResource Include="UIForms\ChooseImageForm.resx" />
     <EmbeddedResource Include="UIForms\AudioProfileNameForm.resx" />
     <EmbeddedResource Include="UIForms\AudioProfilesForm.resx" />
+    <EmbeddedResource Include="UIForms\DisplayApplyFailureForm.resx" />
+    <EmbeddedResource Include="UIForms\DisplayMagicianForm.resx" />
     <EmbeddedResource Include="UIForms\DisplayProfileForm.resx" />
     <EmbeddedResource Include="UIForms\DonationForm.resx" />
     <EmbeddedResource Include="UIForms\FovCalcForm.resx" />
@@ -216,6 +217,7 @@
     <EmbeddedResource Include="UIForms\MainForm.resx" />
     <EmbeddedResource Include="UIForms\MessagesForm.resx" />
     <EmbeddedResource Include="UIForms\ProfileSettingsForm.resx" />
+    <EmbeddedResource Include="UIForms\ServiceRecoveryForm.resx" />
     <EmbeddedResource Include="UIForms\SettingsForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutErrorForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutForm.resx" />

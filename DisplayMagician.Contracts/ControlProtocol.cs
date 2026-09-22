@@ -60,7 +60,6 @@ public enum ControlMessageType
     ReportAnonymousMetricsUsage = 43,
     SubscribeClientEvents = 44,
     ClientEvent = 45,
-    CreateDiagnosticBundle = 46,
     ForceReleaseDisplayControl = 47,
     CreateUserSupportBundle = 48
 }
@@ -549,8 +548,6 @@ public sealed class ControlResponse
     public ClientSyncResult? ClientSync { get; set; }
 
     public AnonymousMetricsSettings? AnonymousMetricsSettings { get; set; }
-
-    public string? DiagnosticBundlePath { get; set; }
 
     public UserSupportBundleResult? UserSupportBundle { get; set; }
 }

@@ -161,7 +161,7 @@ namespace DisplayMagician.UIForms
             // 
             label2.AutoSize = true;
             label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label2.Location = new System.Drawing.Point(64, 184);
+            label2.Location = new System.Drawing.Point(64, 170);
             label2.Margin = new System.Windows.Forms.Padding(41, 0, 41, 0);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(462, 13);
@@ -171,7 +171,7 @@ namespace DisplayMagician.UIForms
             // cb_force_restart_explorer
             // 
             cb_force_restart_explorer.AutoSize = true;
-            cb_force_restart_explorer.Location = new System.Drawing.Point(46, 161);
+            cb_force_restart_explorer.Location = new System.Drawing.Point(46, 147);
             cb_force_restart_explorer.Margin = new System.Windows.Forms.Padding(41, 19, 41, 19);
             cb_force_restart_explorer.Name = "cb_force_restart_explorer";
             cb_force_restart_explorer.Size = new System.Drawing.Size(442, 20);
@@ -182,7 +182,7 @@ namespace DisplayMagician.UIForms
             // 
             // nud_apply_profile_delay
             // 
-            nud_apply_profile_delay.Location = new System.Drawing.Point(204, 103);
+            nud_apply_profile_delay.Location = new System.Drawing.Point(204, 89);
             nud_apply_profile_delay.Margin = new System.Windows.Forms.Padding(562, 122, 562, 122);
             nud_apply_profile_delay.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
             nud_apply_profile_delay.Name = "nud_apply_profile_delay";
@@ -193,7 +193,7 @@ namespace DisplayMagician.UIForms
             // lbl_apply_profile_delay
             // 
             lbl_apply_profile_delay.AutoSize = true;
-            lbl_apply_profile_delay.Location = new System.Drawing.Point(46, 105);
+            lbl_apply_profile_delay.Location = new System.Drawing.Point(46, 91);
             lbl_apply_profile_delay.Margin = new System.Windows.Forms.Padding(41, 0, 41, 0);
             lbl_apply_profile_delay.Name = "lbl_apply_profile_delay";
             lbl_apply_profile_delay.Size = new System.Drawing.Size(154, 16);
@@ -202,7 +202,7 @@ namespace DisplayMagician.UIForms
             // 
             // nud_apply_profile_count
             // 
-            nud_apply_profile_count.Location = new System.Drawing.Point(300, 52);
+            nud_apply_profile_count.Location = new System.Drawing.Point(300, 38);
             nud_apply_profile_count.Margin = new System.Windows.Forms.Padding(562, 122, 562, 122);
             nud_apply_profile_count.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
             nud_apply_profile_count.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
@@ -215,7 +215,7 @@ namespace DisplayMagician.UIForms
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(46, 54);
+            label1.Location = new System.Drawing.Point(46, 40);
             label1.Margin = new System.Windows.Forms.Padding(41, 0, 41, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(248, 16);
@@ -226,7 +226,7 @@ namespace DisplayMagician.UIForms
             // 
             lbl_seconds.AutoSize = true;
             lbl_seconds.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_seconds.Location = new System.Drawing.Point(262, 106);
+            lbl_seconds.Location = new System.Drawing.Point(262, 92);
             lbl_seconds.Margin = new System.Windows.Forms.Padding(41, 0, 41, 0);
             lbl_seconds.Name = "lbl_seconds";
             lbl_seconds.Size = new System.Drawing.Size(61, 15);

@@ -227,11 +227,6 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);
     }
 
-    public Task<ControlResponse> CreateDiagnosticBundleAsync(CancellationToken cancellationToken)
-    {
-        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CreateDiagnosticBundle }, cancellationToken);
-    }
-
     public Task<ControlResponse> CreateUserSupportBundleAsync(string destinationPath, CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope

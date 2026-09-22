@@ -25,10 +25,9 @@ public sealed class ControlClientPipeServer
     private readonly ControlStateCoordinator _stateCoordinator;
     private readonly AuditStore _auditStore;
     private readonly RecoveryAdministrationStore _recoveryAdministrationStore;
-    private readonly DiagnosticBundleGenerator _diagnosticBundleGenerator;
     private readonly StoragePaths _storagePaths;
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, DiagnosticBundleGenerator diagnosticBundleGenerator, StoragePaths storagePaths)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, StoragePaths storagePaths)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
@@ -37,7 +36,6 @@ public sealed class ControlClientPipeServer
         _stateCoordinator = stateCoordinator ?? throw new ArgumentNullException(nameof(stateCoordinator));
         _auditStore = auditStore ?? throw new ArgumentNullException(nameof(auditStore));
         _recoveryAdministrationStore = recoveryAdministrationStore ?? throw new ArgumentNullException(nameof(recoveryAdministrationStore));
-        _diagnosticBundleGenerator = diagnosticBundleGenerator ?? throw new ArgumentNullException(nameof(diagnosticBundleGenerator));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
     }
 
@@ -110,7 +108,6 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
                     ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
                     ControlMessageType.GetServiceStatus => GetServiceStatus(),
-                    ControlMessageType.CreateDiagnosticBundle => CreateDiagnosticBundle(identity),
                     ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
                     _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
                 };
@@ -223,26 +220,6 @@ public sealed class ControlClientPipeServer
         ControlServiceStatus status = _stateCoordinator.GetStatus(DateTime.UtcNow);
         status.LatestRecoveryAdministration = _recoveryAdministrationStore.GetLatest();
         return new ControlResponse { IsSuccessful = true, Message = "Control Service status returned.", ServiceStatus = status };
-    }
-
-    private ControlResponse CreateDiagnosticBundle(PipeClientIdentity identity)
-    {
-        if (!identity.IsAdministrator)
-        {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AdministratorRequired, Message = "Creating a machine diagnostic bundle requires an elevated administrator session." };
-        }
-
-        try
-        {
-            string bundlePath = _diagnosticBundleGenerator.Create();
-            _auditStore.Append("DiagnosticBundleCreated", "Success", "A machine diagnostic bundle was created.", identity.UserSid, identity.SessionId);
-            return new ControlResponse { IsSuccessful = true, Message = "Machine diagnostic bundle created.", DiagnosticBundlePath = bundlePath };
-        }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-        {
-            _auditStore.Append("DiagnosticBundleCreated", "Failure", ex.Message, identity.UserSid, identity.SessionId);
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Control Service could not create the machine diagnostic bundle." };
-        }
     }
 
     private async Task<ControlResponse> CreateUserSupportBundleAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)

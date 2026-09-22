@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Text.Json;
 using DisplayMagician.Contracts;
 using Xunit;
@@ -29,36 +27,6 @@ public sealed class DiagnosticsAndRecoveryTests
             Assert.Equal("HighSeverity", record.Outcome);
             Assert.Equal("S-1-5-21-100", record.UserSid);
             Assert.Equal(10, record.SessionId);
-        }
-        finally
-        {
-            DeleteStorageRoot(storageRoot);
-        }
-    }
-
-    [Fact]
-    public void Create_IncludesOnlyMachineDiagnosticsAndServiceStatus()
-    {
-        string storageRoot = CreateStorageRoot();
-        try
-        {
-            StoragePaths storagePaths = new StoragePaths(storageRoot);
-            storagePaths.EnsureMachineDirectories();
-            File.WriteAllText(Path.Combine(storagePaths.MachinePath, "DisplayControlLease.json"), "{\"OwnerSessionId\":10}");
-            File.WriteAllText(Path.Combine(storagePaths.MachineLogsPath, "ControlService-2026-09-21.log"), "service log");
-            File.WriteAllText(Path.Combine(storagePaths.UsersPath, "user-private.txt"), "must not be included");
-            new AuditStore(storagePaths).Append("DiagnosticBundleCreated", "Success", "Created for test.");
-            DiagnosticBundleGenerator generator = new DiagnosticBundleGenerator(storagePaths, new ControlStateCoordinator(new DisplayControlLeaseStore(storagePaths)));
-
-            string bundlePath = generator.Create();
-
-            using ZipArchive bundle = ZipFile.OpenRead(bundlePath);
-            string[] entries = bundle.Entries.Select(entry => entry.FullName).ToArray();
-            Assert.Contains("service-status.json", entries);
-            Assert.Contains("DisplayControlLease.json", entries);
-            Assert.Contains("Audit.jsonl", entries);
-            Assert.Contains(Path.Combine("Logs", "ControlService-2026-09-21.log"), entries);
-            Assert.DoesNotContain(entries, entry => entry.Contains("user-private", StringComparison.OrdinalIgnoreCase));
         }
         finally
         {

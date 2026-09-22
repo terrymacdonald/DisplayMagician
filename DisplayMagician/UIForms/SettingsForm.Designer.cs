@@ -41,8 +41,6 @@ namespace DisplayMagician.UIForms
             label6 = new System.Windows.Forms.Label();
             cmb_notify_icon_double_click = new System.Windows.Forms.ComboBox();
             cb_wake_up_gpus = new System.Windows.Forms.CheckBox();
-            lbl_anonymous_metrics = new System.Windows.Forms.Label();
-            cb_share_anonymous_usage_metrics = new System.Windows.Forms.CheckBox();
             btn_context_menu_reinstall = new System.Windows.Forms.Button();
             cb_show_status_action = new System.Windows.Forms.CheckBox();
             cb_show_message_toasts = new System.Windows.Forms.CheckBox();
@@ -54,6 +52,8 @@ namespace DisplayMagician.UIForms
             label1 = new System.Windows.Forms.Label();
             cmb_loglevel = new System.Windows.Forms.ComboBox();
             cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
+            lbl_anonymous_metrics = new System.Windows.Forms.Label();
+            cb_share_anonymous_usage_metrics = new System.Windows.Forms.CheckBox();
             gb_hotkeys = new System.Windows.Forms.GroupBox();
             lbl_hotkey_exit = new System.Windows.Forms.Label();
             btn_hotkey_exit = new System.Windows.Forms.Button();
@@ -74,6 +74,7 @@ namespace DisplayMagician.UIForms
             btn_service_recovery = new System.Windows.Forms.Button();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
+            label10 = new System.Windows.Forms.Label();
             gb_general.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nud_audio_device_wait).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nud_display_profile_wait).BeginInit();
@@ -164,9 +165,9 @@ namespace DisplayMagician.UIForms
             label5.Size = new System.Drawing.Size(386, 16);
             label5.TabIndex = 0;
             label5.Text = "Max time to wait for audio device to appear (default 20 seconds):";
-            //
+            // 
             // label9
-            //
+            // 
             label9.AutoSize = true;
             label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label9.ForeColor = System.Drawing.Color.Transparent;
@@ -176,25 +177,26 @@ namespace DisplayMagician.UIForms
             label9.Size = new System.Drawing.Size(59, 16);
             label9.TabIndex = 0;
             label9.Text = "seconds";
-            //
+            // 
             // nud_display_profile_wait
-            //
+            // 
             nud_display_profile_wait.Location = new System.Drawing.Point(429, 296);
             nud_display_profile_wait.Maximum = new decimal(new int[] { 120, 0, 0, 0 });
             nud_display_profile_wait.Minimum = new decimal(new int[] { 5, 0, 0, 0 });
             nud_display_profile_wait.Name = "nud_display_profile_wait";
             nud_display_profile_wait.Size = new System.Drawing.Size(60, 22);
             nud_display_profile_wait.TabIndex = 9;
-            //
+            nud_display_profile_wait.Value = new decimal(new int[] { 5, 0, 0, 0 });
+            // 
             // label8
-            //
+            // 
             label8.AutoSize = true;
             label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             label8.ForeColor = System.Drawing.Color.Transparent;
             label8.Location = new System.Drawing.Point(33, 298);
             label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label8.Name = "label8";
-            label8.Size = new System.Drawing.Size(319, 16);
+            label8.Size = new System.Drawing.Size(361, 16);
             label8.TabIndex = 0;
             label8.Text = "Max display profile wait before recovery options (default 30):";
             // 
@@ -235,29 +237,6 @@ namespace DisplayMagician.UIForms
             cb_wake_up_gpus.TabIndex = 7;
             cb_wake_up_gpus.Text = "Keep GPUs awake to make laptops display changes reliable";
             cb_wake_up_gpus.UseVisualStyleBackColor = true;
-            // 
-            // lbl_anonymous_metrics
-            // 
-            lbl_anonymous_metrics.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            lbl_anonymous_metrics.ForeColor = System.Drawing.Color.White;
-            lbl_anonymous_metrics.Location = new System.Drawing.Point(49, 150);
-            lbl_anonymous_metrics.Name = "lbl_anonymous_metrics";
-            lbl_anonymous_metrics.Size = new System.Drawing.Size(553, 48);
-            lbl_anonymous_metrics.TabIndex = 51;
-            lbl_anonymous_metrics.Text = resources.GetString("lbl_anonymous_metrics.Text");
-            // 
-            // cb_share_anonymous_usage_metrics
-            // 
-            cb_share_anonymous_usage_metrics.AutoSize = true;
-            cb_share_anonymous_usage_metrics.Checked = true;
-            cb_share_anonymous_usage_metrics.CheckState = System.Windows.Forms.CheckState.Checked;
-            cb_share_anonymous_usage_metrics.ForeColor = System.Drawing.Color.White;
-            cb_share_anonymous_usage_metrics.Location = new System.Drawing.Point(30, 127);
-            cb_share_anonymous_usage_metrics.Name = "cb_share_anonymous_usage_metrics";
-            cb_share_anonymous_usage_metrics.Size = new System.Drawing.Size(222, 20);
-            cb_share_anonymous_usage_metrics.TabIndex = 50;
-            cb_share_anonymous_usage_metrics.Text = "Share anonymous usage metrics";
-            cb_share_anonymous_usage_metrics.UseVisualStyleBackColor = true;
             // 
             // btn_context_menu_reinstall
             // 
@@ -416,6 +395,29 @@ namespace DisplayMagician.UIForms
             cb_minimise_notification_area.TabIndex = 2;
             cb_minimise_notification_area.Text = "Start DisplayMagician minimised in notification area";
             cb_minimise_notification_area.UseVisualStyleBackColor = true;
+            // 
+            // lbl_anonymous_metrics
+            // 
+            lbl_anonymous_metrics.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_anonymous_metrics.ForeColor = System.Drawing.Color.White;
+            lbl_anonymous_metrics.Location = new System.Drawing.Point(49, 150);
+            lbl_anonymous_metrics.Name = "lbl_anonymous_metrics";
+            lbl_anonymous_metrics.Size = new System.Drawing.Size(553, 48);
+            lbl_anonymous_metrics.TabIndex = 51;
+            lbl_anonymous_metrics.Text = resources.GetString("lbl_anonymous_metrics.Text");
+            // 
+            // cb_share_anonymous_usage_metrics
+            // 
+            cb_share_anonymous_usage_metrics.AutoSize = true;
+            cb_share_anonymous_usage_metrics.Checked = true;
+            cb_share_anonymous_usage_metrics.CheckState = System.Windows.Forms.CheckState.Checked;
+            cb_share_anonymous_usage_metrics.ForeColor = System.Drawing.Color.White;
+            cb_share_anonymous_usage_metrics.Location = new System.Drawing.Point(30, 127);
+            cb_share_anonymous_usage_metrics.Name = "cb_share_anonymous_usage_metrics";
+            cb_share_anonymous_usage_metrics.Size = new System.Drawing.Size(222, 20);
+            cb_share_anonymous_usage_metrics.TabIndex = 50;
+            cb_share_anonymous_usage_metrics.Text = "Share anonymous usage metrics";
+            cb_share_anonymous_usage_metrics.UseVisualStyleBackColor = true;
             // 
             // gb_hotkeys
             // 
@@ -656,6 +658,7 @@ namespace DisplayMagician.UIForms
             // gb_support
             // 
             gb_support.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_support.Controls.Add(label10);
             gb_support.Controls.Add(btn_service_recovery);
             gb_support.Controls.Add(btn_create_support_package);
             gb_support.Controls.Add(label3);
@@ -670,32 +673,15 @@ namespace DisplayMagician.UIForms
             gb_support.TabStop = false;
             gb_support.Text = "Support Settings";
             // 
-            // btn_create_support_package
-            // 
-            btn_create_support_package.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btn_create_support_package.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            btn_create_support_package.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            btn_create_support_package.ForeColor = System.Drawing.Color.White;
-            btn_create_support_package.Location = new System.Drawing.Point(292, 24);
-            btn_create_support_package.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            btn_create_support_package.Name = "btn_create_support_package";
-            btn_create_support_package.Size = new System.Drawing.Size(214, 38);
-            btn_create_support_package.TabIndex = 21;
-            btn_create_support_package.Text = "Create a Support Zip File";
-            btn_create_support_package.UseVisualStyleBackColor = true;
-            btn_create_support_package.Click += btn_create_support_package_Click;
-            //
             // btn_service_recovery
-            //
+            // 
             btn_service_recovery.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btn_service_recovery.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             btn_service_recovery.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_service_recovery.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_service_recovery.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             btn_service_recovery.ForeColor = System.Drawing.Color.White;
-            btn_service_recovery.Location = new System.Drawing.Point(292, 69);
+            btn_service_recovery.Location = new System.Drawing.Point(37, 88);
             btn_service_recovery.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             btn_service_recovery.Name = "btn_service_recovery";
             btn_service_recovery.Size = new System.Drawing.Size(214, 38);
@@ -704,16 +690,44 @@ namespace DisplayMagician.UIForms
             btn_service_recovery.UseVisualStyleBackColor = true;
             btn_service_recovery.Click += btn_service_recovery_Click;
             // 
+            // btn_create_support_package
+            // 
+            btn_create_support_package.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_create_support_package.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            btn_create_support_package.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            btn_create_support_package.ForeColor = System.Drawing.Color.White;
+            btn_create_support_package.Location = new System.Drawing.Point(37, 36);
+            btn_create_support_package.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btn_create_support_package.Name = "btn_create_support_package";
+            btn_create_support_package.Size = new System.Drawing.Size(214, 38);
+            btn_create_support_package.TabIndex = 21;
+            btn_create_support_package.Text = "Create a Support Zip File";
+            btn_create_support_package.UseVisualStyleBackColor = true;
+            btn_create_support_package.Click += btn_create_support_package_Click;
+            // 
             // label3
             // 
             label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            label3.Location = new System.Drawing.Point(180, 113);
+            label3.Location = new System.Drawing.Point(273, 37);
             label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label3.Name = "label3";
-            label3.Size = new System.Drawing.Size(441, 37);
+            label3.Size = new System.Drawing.Size(488, 37);
             label3.TabIndex = 0;
             label3.Text = "Use this button to save a support zip file to your computer. You can then upload this file to GitHub when you have a problem you need me to fix";
-            label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            label3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label10
+            // 
+            label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            label10.Location = new System.Drawing.Point(273, 88);
+            label10.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label10.Name = "label10";
+            label10.Size = new System.Drawing.Size(488, 37);
+            label10.TabIndex = 0;
+            label10.Text = "Use this button to fix an error with the DisplayMagician ControlService. This can happen with a failed display profile change.";
+            label10.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SettingsForm
             // 
@@ -732,7 +746,6 @@ namespace DisplayMagician.UIForms
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(1544, 834);
             Name = "SettingsForm";
-            ShowIcon = true;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Settings";
@@ -796,5 +809,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.NumericUpDown nud_display_profile_wait;
         private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label10;
     }
 }

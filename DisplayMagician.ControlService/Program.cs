@@ -23,7 +23,6 @@ internal static class Program
         builder.Services.AddSingleton<DisplayControlLeaseStore>();
         builder.Services.AddSingleton<AuditStore>();
         builder.Services.AddSingleton<RecoveryAdministrationStore>();
-        builder.Services.AddSingleton<DiagnosticBundleGenerator>();
         builder.Services.AddSingleton<LegacyFileMigration>();
         builder.Services.AddSingleton<UserDataMigrationRunner>();
         builder.Services.AddSingleton<ControlStateCoordinator>();
