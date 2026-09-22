@@ -2,6 +2,6 @@
   <Target Name="VerifySupportLogTargets"
           BeforeTargets="CoreCompile"
           Condition="'$(SkipSupportLogTargetVerification)' != 'true' and ('$(MSBuildProjectName)' == 'DisplayMagician' or '$(MSBuildProjectName)' == 'DisplayMagicianConsole' or '$(MSBuildProjectName)' == 'DisplayMagician.UserAgent' or '$(MSBuildProjectName)' == 'DisplayMagician.ControlService' or '$(MSBuildProjectName)' == 'DisplayMagician.SessionLauncher')">
-    <Exec Command="&quot;$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)VerifySupportLogTargets.ps1&quot; -ProjectDirectory &quot;$(MSBuildProjectDirectory)&quot; -ProjectName &quot;$(MSBuildProjectName)&quot;" />
+    <Exec Command="&quot;$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)BuildScripts\verify_support_log_targets.ps1&quot; -ProjectDirectory &quot;$(MSBuildProjectDirectory)&quot; -ProjectName &quot;$(MSBuildProjectName)&quot;" />
   </Target>
 </Project>

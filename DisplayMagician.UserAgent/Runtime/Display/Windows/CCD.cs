@@ -960,7 +960,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         {
             if (!Header.Equals(other.Header))
             {
-                SharedLogger.logger.Warn($"CCD/DISPLAYCONFIG_ADAPTER_NAME Equals: The Header values don't equal each other");
+                SharedLogger.logger.Warn($"CCD/DISPLAYCONFIG_ADAPTER_NAME: The Header values don't equal each other");
                 return false;
             }
             // We have to ignore the DISPLAY ID part of the AdapterDevicePath as it is changed by the Intel driver after a Combinbed Display Change
@@ -976,7 +976,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 }
                 if (thisDevicePathParts[i] != otherDevicePathParts[i])
                 {
-                    SharedLogger.logger.Warn($"CCD/DISPLAYCONFIG_ADAPTER_NAME Equals: The AdapterDevicePath values don't equal each other");
+                    SharedLogger.logger.Warn($"CCD/DISPLAYCONFIG_ADAPTER_NAME: The AdapterDevicePath values don't equal each other");
                     return false;
                 }
             }

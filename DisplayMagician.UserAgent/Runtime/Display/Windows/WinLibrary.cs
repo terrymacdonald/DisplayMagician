@@ -1782,7 +1782,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public static bool EnableAllConnectedDisplays()
         {
 
-            SharedLogger.logger.Trace("WinLibraryEnableAllConnectedDisplays: The temporary display configuration is valid, so we are going to apply it to enable all connected displays.");
+            SharedLogger.logger.Trace("WinLibrary/EnableAllConnectedDisplays: The temporary display configuration is valid, so we are going to apply it to enable all connected displays.");
             // Set the display configuration to enable all connected displays.
             // - We use the topology supplied flag, where we specify the order of the displays, but SetDisplayCConfig is free to find the modes that work best.
             // - We also use the SDC_NO_OPTIMIZATION flag to prevent Windows from trying to optimize the display configuration.
@@ -1793,12 +1793,12 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {
-                SharedLogger.logger.Trace("WinLibraryEnableAllConnectedDisplays: Successfully applied configuration to enable all connected displays.");
+                SharedLogger.logger.Trace("WinLibrary/EnableAllConnectedDisplays: Successfully applied configuration to enable all connected displays.");
                 return true;
             }
             else
             {
-                SharedLogger.logger.Warn($"WinLibraryEnableAllConnectedDisplays: Failed to set display config: {err}");
+                SharedLogger.logger.Warn($"WinLibrary/EnableAllConnectedDisplays: Failed to set display config: {err}");
                 return false;
             }
         }
