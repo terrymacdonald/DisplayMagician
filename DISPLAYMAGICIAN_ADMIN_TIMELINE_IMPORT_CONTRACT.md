@@ -72,6 +72,12 @@ The manifest records the product and component versions, ZIP creation UTC time, 
 
 The installer enables verbose MSI logging without the property-dump mode and records the most recent transaction path. If that temporary MSI log has already been removed or cannot be read, it is absent from the ZIP and the importer must rely on the manifest warning rather than treating the ZIP as invalid.
 
+Each `IncludedEntries` record identifies the ZIP `Path`, byte `Length`, `Category` (`Log`, `LegacyLog`, or `Configuration`), applicable runtime `Component`, input `Format` (`logfmt-v1`, `legacy-text`, `msi-verbose`, `json`, or `file`), and `CollectionResult` (`Included`). Sources that could not be collected are represented by a manifest warning rather than a fictitious ZIP entry.
+
+## Privacy and redaction
+
+The log writer redacts values labelled as passwords, tokens, secrets, or API keys, and Bearer credentials, from messages and exception detail before writing. Support ZIP collection excludes credentials, pairing data, unrelated documents, media, wallpapers, and cached icons. Future components must not log unrestricted command arguments or credentials; reduce personal paths and values when they are not diagnostically necessary.
+
 ## Import model and table
 
 Parse each line into one event record. The default table shows values, never raw field names:

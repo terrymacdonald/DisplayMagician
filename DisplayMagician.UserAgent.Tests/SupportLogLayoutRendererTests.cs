@@ -41,6 +41,25 @@ public sealed class SupportLogLayoutRendererTests
     }
 
     [Fact]
+    public void Append_UsesDashCorrelationValuesAfterScopesAreDisposed()
+    {
+        SupportLogLayoutRenderer renderer = new SupportLogLayoutRenderer { Component = "UserAgent" };
+        MethodInfo append = typeof(SupportLogLayoutRenderer).GetMethod("Append", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("The support log renderer Append method was not found.");
+        using (SupportLogScope.BeginOperation(Guid.NewGuid()))
+        using (SupportLogScope.BeginRequest(Guid.NewGuid()))
+        {
+            // Dispose both scopes before rendering the unrelated lifecycle event.
+        }
+
+        StringBuilder output = new StringBuilder();
+        append.Invoke(renderer, new object[] { output, new LogEventInfo(LogLevel.Info, "DisplayMagician.UserAgent.Program", "Program/Main: Started.") });
+
+        Assert.Contains("operation_id=-", output.ToString());
+        Assert.Contains("request_id=-", output.ToString());
+    }
+
+    [Fact]
     public void Append_RendersOneEscapedLogfmtLineForAnExceptionEvent()
     {
         SupportLogLayoutRenderer renderer = new SupportLogLayoutRenderer { Component = "ControlService" };

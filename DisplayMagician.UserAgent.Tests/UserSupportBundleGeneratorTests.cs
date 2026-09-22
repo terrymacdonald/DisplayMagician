@@ -12,6 +12,39 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class UserSupportBundleGeneratorTests
 {
     [Fact]
+    public void Create_ReturnsAWarningAndContinuesWhenALogFileIsLocked()
+    {
+        string fixtureRoot = Path.Combine(Path.GetTempPath(), $"DisplayMagician-SupportBundle-{Guid.NewGuid():N}");
+        try
+        {
+            string userDataPath = Path.Combine(fixtureRoot, "UserData");
+            string logsPath = Path.Combine(userDataPath, "Logs");
+            Directory.CreateDirectory(logsPath);
+            string lockedLogPath = Path.Combine(logsPath, "UserAgent-locked.log");
+            File.WriteAllText(lockedLogPath, "active log");
+            string destinationPath = Path.Combine(fixtureRoot, "DisplayMagician-Support.zip");
+            UserSupportBundleGenerator generator = new UserSupportBundleGenerator(userDataPath, new AgentRegistration { UserSid = "S-1-5-18", Version = "4.0.0-test" }, Path.Combine(fixtureRoot, "NoLegacyLogs"));
+
+            using (FileStream lockedLog = new FileStream(lockedLogPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                UserSupportBundleResult result = generator.Create(destinationPath, Path.Combine(userDataPath, "Backups", "SupportStaging", "Missing"));
+
+                Assert.Contains(result.Warnings, warning => warning.StartsWith($"Logs{Path.DirectorySeparatorChar}UserAgent-locked.log could not be added:", StringComparison.Ordinal));
+            }
+
+            using ZipArchive archive = ZipFile.OpenRead(destinationPath);
+            Assert.Null(archive.GetEntry("Logs/UserAgent-locked.log"));
+        }
+        finally
+        {
+            if (Directory.Exists(fixtureRoot))
+            {
+                Directory.Delete(fixtureRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void Create_IncludesAllUserLogsAndConfigurationFiles()
     {
         string fixtureRoot = Path.Combine(Path.GetTempPath(), $"DisplayMagician-SupportBundle-{Guid.NewGuid():N}");
@@ -33,9 +66,12 @@ public sealed class UserSupportBundleGeneratorTests
             File.WriteAllText(Path.Combine(userDataPath, "Logs", "UserAgent.log"), "agent log");
             File.WriteAllText(Path.Combine(userDataPath, "LegacyFiles", "Donation.json"), "legacy configuration");
             File.WriteAllText(Path.Combine(userDataPath, "Migration.json"), "migration");
+            string legacyLogPath = Path.Combine(fixtureRoot, "LegacyLogs");
+            Directory.CreateDirectory(legacyLogPath);
+            File.WriteAllText(Path.Combine(legacyLogPath, "DisplayMagician.log"), "legacy desktop log");
 
             string destinationPath = Path.Combine(fixtureRoot, "DisplayMagician-Support.zip");
-            UserSupportBundleGenerator generator = new UserSupportBundleGenerator(userDataPath, new AgentRegistration { UserSid = "S-1-5-18", Version = "4.0.0-test" });
+            UserSupportBundleGenerator generator = new UserSupportBundleGenerator(userDataPath, new AgentRegistration { UserSid = "S-1-5-18", Version = "4.0.0-test" }, legacyLogPath);
             string machineLogsPath = Path.Combine(userDataPath, "Backups", "SupportStaging", "test", "MachineLogs");
             Directory.CreateDirectory(machineLogsPath);
             File.WriteAllText(Path.Combine(machineLogsPath, "ControlService.log"), "service log");
@@ -62,6 +98,7 @@ public sealed class UserSupportBundleGeneratorTests
             Assert.Contains("MachineLogs/SessionLauncher-20260922.log", entryNames);
             Assert.Contains("Configuration/Machine/ScheduleState.json", entryNames);
             Assert.Contains("Configuration/LegacyFiles/Donation.json", entryNames);
+            Assert.Contains("Logs/Legacy/DisplayMagician.log", entryNames);
             Assert.Contains("Configuration/Migration.json", entryNames);
             Assert.Contains("support-manifest.json", entryNames);
             ZipArchiveEntry manifestEntry = archive.GetEntry("support-manifest.json")!;
@@ -74,6 +111,19 @@ public sealed class UserSupportBundleGeneratorTests
             Assert.Contains(manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray(), entry => entry.GetProperty("Path").GetString() == "Logs/DesktopConsole-20260922.log");
             Assert.Contains(manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray(), entry => entry.GetProperty("Path").GetString() == "MachineLogs/SessionLauncher-20260922.log");
             Assert.Contains(manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray(), entry => entry.GetProperty("Path").GetString() == "Configuration/Machine/ScheduleState.json");
+            JsonElement consoleLog = manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray().Single(entry => entry.GetProperty("Path").GetString() == "Logs/DesktopConsole-20260922.log");
+            Assert.Equal("Log", consoleLog.GetProperty("Category").GetString());
+            Assert.Equal("DesktopConsole", consoleLog.GetProperty("Component").GetString());
+            Assert.Equal("logfmt-v1", consoleLog.GetProperty("Format").GetString());
+            Assert.Equal("Included", consoleLog.GetProperty("CollectionResult").GetString());
+            JsonElement machineConfiguration = manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray().Single(entry => entry.GetProperty("Path").GetString() == "Configuration/Machine/ScheduleState.json");
+            Assert.Equal("Configuration", machineConfiguration.GetProperty("Category").GetString());
+            Assert.Equal("ControlService", machineConfiguration.GetProperty("Component").GetString());
+            Assert.Equal("json", machineConfiguration.GetProperty("Format").GetString());
+            JsonElement legacyLog = manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray().Single(entry => entry.GetProperty("Path").GetString() == "Logs/Legacy/DisplayMagician.log");
+            Assert.Equal("LegacyLog", legacyLog.GetProperty("Category").GetString());
+            Assert.Equal("DesktopApp", legacyLog.GetProperty("Component").GetString());
+            Assert.Equal("legacy-text", legacyLog.GetProperty("Format").GetString());
         }
         finally
         {

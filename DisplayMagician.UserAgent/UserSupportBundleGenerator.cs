@@ -14,11 +14,13 @@ public sealed class UserSupportBundleGenerator
 {
     private readonly string _userDataPath;
     private readonly AgentRegistration _registration;
+    private readonly string _legacyLogPath;
 
-    public UserSupportBundleGenerator(string userDataPath, AgentRegistration registration)
+    public UserSupportBundleGenerator(string userDataPath, AgentRegistration registration, string? legacyLogPath = null)
     {
         _userDataPath = string.IsNullOrWhiteSpace(userDataPath) ? throw new ArgumentException("A user data path is required.", nameof(userDataPath)) : userDataPath;
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
+        _legacyLogPath = string.IsNullOrWhiteSpace(legacyLogPath) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs") : legacyLogPath;
     }
 
     public UserSupportBundleResult Create(string destinationPath, string machineLogsStagingPath, string machineConfigurationStagingPath = "", string[]? machineCollectionWarnings = null)
@@ -55,10 +57,9 @@ public sealed class UserSupportBundleGenerator
         AddDirectory(archive, "Configuration/Shortcuts", Path.Combine(_userDataPath, "Shortcuts"), null, warnings, includedEntries);
         AddDirectory(archive, "Configuration/Settings", Path.Combine(_userDataPath, "Settings"), null, warnings, includedEntries);
         AddDirectory(archive, "Logs", Path.Combine(_userDataPath, "Logs"), null, warnings, includedEntries);
-        string legacyLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs");
-        if (Directory.Exists(legacyLogPath))
+        if (Directory.Exists(_legacyLogPath))
         {
-            AddDirectory(archive, "Logs/Legacy", legacyLogPath, null, warnings, includedEntries);
+            AddDirectory(archive, "Logs/Legacy", _legacyLogPath, null, warnings, includedEntries);
         }
 
         AddMachineLogs(archive, machineLogsStagingPath, warnings, includedEntries);
@@ -212,7 +213,7 @@ public sealed class UserSupportBundleGenerator
                 warnings.Add($"{entryName} was limited to {maximumBytes.Value} bytes.");
             }
 
-            includedEntries.Add(new SupportBundleEntry { Path = entryName.Replace('\\', '/'), Length = input.Length });
+            includedEntries.Add(DescribeEntry(entryName.Replace('\\', '/'), input.Length));
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
         {
@@ -220,10 +221,88 @@ public sealed class UserSupportBundleGenerator
         }
     }
 
+    private static SupportBundleEntry DescribeEntry(string entryName, long length)
+    {
+        SupportBundleEntry entry = new SupportBundleEntry
+        {
+            Path = entryName,
+            Length = length,
+            CollectionResult = "Included"
+        };
+
+        if (entryName.StartsWith("Logs/Legacy/", StringComparison.OrdinalIgnoreCase))
+        {
+            entry.Category = "LegacyLog";
+            entry.Component = GetLogComponent(Path.GetFileName(entryName));
+            entry.Format = "legacy-text";
+            return entry;
+        }
+
+        if (entryName.StartsWith("Logs/", StringComparison.OrdinalIgnoreCase))
+        {
+            entry.Category = "Log";
+            entry.Format = "logfmt-v1";
+            entry.Component = GetLogComponent(Path.GetFileName(entryName));
+            return entry;
+        }
+
+        if (entryName.StartsWith("MachineLogs/", StringComparison.OrdinalIgnoreCase))
+        {
+            entry.Category = "Log";
+            string fileName = Path.GetFileName(entryName);
+            entry.Component = fileName.StartsWith("Installer-", StringComparison.OrdinalIgnoreCase) ? "Installer" : GetLogComponent(fileName);
+            entry.Format = string.Equals(entry.Component, "Installer", StringComparison.Ordinal) ? "msi-verbose" : "logfmt-v1";
+            return entry;
+        }
+
+        entry.Category = "Configuration";
+        entry.Component = entryName.StartsWith("Configuration/Machine/", StringComparison.OrdinalIgnoreCase) ? "ControlService" : "UserAgent";
+        entry.Format = entryName.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ? "json" : "file";
+        return entry;
+    }
+
+    private static string? GetLogComponent(string fileName)
+    {
+        if (fileName.StartsWith("DesktopConsole", StringComparison.OrdinalIgnoreCase))
+        {
+            return "DesktopConsole";
+        }
+
+        if (fileName.StartsWith("UserAgent", StringComparison.OrdinalIgnoreCase))
+        {
+            return "UserAgent";
+        }
+
+        if (fileName.StartsWith("ControlService", StringComparison.OrdinalIgnoreCase))
+        {
+            return "ControlService";
+        }
+
+        if (fileName.StartsWith("SessionLauncher", StringComparison.OrdinalIgnoreCase))
+        {
+            return "SessionLauncher";
+        }
+
+        if (fileName.StartsWith("DisplayMagician", StringComparison.OrdinalIgnoreCase))
+        {
+            return "DesktopApp";
+        }
+
+        return null;
+    }
+
     private sealed class SupportBundleEntry
     {
         public string Path { get; set; } = string.Empty;
 
         public long Length { get; set; }
+
+        public string Category { get; set; } = string.Empty;
+
+        public string? Component { get; set; }
+
+        public string Format { get; set; } = string.Empty;
+
+        public string CollectionResult { get; set; } = string.Empty;
     }
 }
