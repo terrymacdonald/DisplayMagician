@@ -210,7 +210,7 @@ public sealed class ControlClientPipeServer
         OperationStatusRequest? statusRequest = JsonSerializer.Deserialize<OperationStatusRequest>(request.Payload);
         OperationStatus? status = statusRequest == null || statusRequest.OperationId == Guid.Empty ? null : _operationStatusStore.Get(identity.UserSid, statusRequest.OperationId);
         return status == null
-            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested operation was not found." }
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "The requested operation was not found." }
             : new ControlResponse { IsSuccessful = true, Message = "Operation status returned.", OperationStatus = status };
     }
 
@@ -231,12 +231,12 @@ public sealed class ControlClientPipeServer
         ResolveOperationDecisionRequest? resolution = JsonSerializer.Deserialize<ResolveOperationDecisionRequest>(request.Payload);
         if (resolution == null || resolution.PromptId == Guid.Empty || resolution.Choice == OperationDecisionChoice.Unknown)
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A valid operation decision is required." };
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid operation decision is required." };
         }
 
         OperationDecision? decision = _operationDecisionStore.Resolve(identity.UserSid, identity.SessionId, resolution.PromptId, resolution.Choice, DateTime.UtcNow);
         return decision == null
-            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The operation decision is unavailable, expired, or has already been resolved." }
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DecisionUnavailable, Message = "The operation decision is unavailable, expired, or has already been resolved." }
             : new ControlResponse { IsSuccessful = true, Message = "Operation decision recorded.", OperationDecision = decision };
     }
 

@@ -14,7 +14,7 @@ internal static class DesktopProfileViewCache
     private static DisplayProfileView[] _views = Array.Empty<DisplayProfileView>();
     private static DisplayProfileView _currentLayout;
 
-    public static IReadOnlyList<DisplayProfileView> Views
+    public static IReadOnlyList<DisplayProfileView> SavedProfiles
     {
         get
         {
@@ -43,7 +43,7 @@ internal static class DesktopProfileViewCache
             ProfileListResult profiles = new ControlServicePipeClient().ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
             lock (_syncRoot)
             {
-                _views = profiles.Views ?? Array.Empty<DisplayProfileView>();
+                _views = profiles.SavedProfiles ?? Array.Empty<DisplayProfileView>();
                 _currentLayout = profiles.CurrentLayout;
             }
 

@@ -310,7 +310,7 @@ The service validates named-pipe client SID/session identity. Pipe ACLs must pre
 
 All DisplayMagician clients, including WinForms, DisplayMagicianConsole, and future paired-device clients, use the same versioned models from `DisplayMagician.Contracts`. A client may format a model differently for its UI, but it must not define a client-specific request, response, list result, or view model for Control Service data. Extend the shared contract once, preserve backward compatibility, and have every client consume that shared type.
 
-For example, display and audio profile lists both expose saved `Profiles`/`Views` plus a `CurrentLayout` view. Saved views identify their state with `IsSaved` and `IsActive`; a current layout that is not saved remains a view with `IsSaved=false`. Shortcut lists deliberately have no `CurrentLayout`, because shortcut activity is represented by the operation-status contract rather than a single current shortcut.
+For example, display and audio profile lists both expose `SavedProfiles` plus a `CurrentLayout` view. Saved profile views identify their state with `IsSaved` and `IsActive`; a current layout that is not saved remains a view with `IsSaved=false`. Shortcut lists deliberately have no `CurrentLayout`, because shortcut activity is represented by the operation-status contract rather than a single current shortcut.
 
 ### Required requests
 
@@ -345,20 +345,25 @@ GetDiagnosticsSummary
 ### Required errors
 
 ```text
-NotAuthenticated
-NotAuthorized
-ExternalControlDisabled
-NoActiveConsoleUser
+UnsupportedProtocolVersion
+InvalidRequest
+CallerIdentityMismatch
+Unauthorized
+AdministratorRequired
+AgentNotConnected
+AgentNotHealthy
 NotActiveConsoleUser
-DisplayControlHeldByAnotherUser
+DisplayControlBusy
 AgentUnavailable
 SessionLocked
-OperationAlreadyRunning
+RecoveryRequired
 ProfileNotFound
+AudioProfileNotFound
 ShortcutNotFound
 ValidationFailed
 ExecutionFailed
-RecoveryRequired
+OperationNotFound
+DecisionUnavailable
 ```
 
 ### Operation states

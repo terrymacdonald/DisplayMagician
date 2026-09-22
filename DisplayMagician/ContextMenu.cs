@@ -120,7 +120,7 @@ namespace DisplayMagician
                 RegistryKey dp = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell");
 
                 // Create the ProfileMenu (Level 2) Profile Entry Registry Keys
-                foreach (DisplayMagician.Contracts.DisplayProfileView profile in DesktopProfileViewCache.Views)
+                foreach (DisplayMagician.Contracts.DisplayProfileView profile in DesktopProfileViewCache.SavedProfiles)
                 {
                     RegistryKey pm = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Classes\\DisplayMagician.ContextMenus\\ContextMenus\\ProfileMenu\\Shell\\" + profile.Name);
                     if (pm != null)

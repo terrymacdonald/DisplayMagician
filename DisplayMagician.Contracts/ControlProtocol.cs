@@ -4,12 +4,13 @@ namespace DisplayMagician.Contracts;
 
 public static class ControlProtocol
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
     public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
     public const string ClientEventPipeName = "DisplayMagician.ControlService.ClientEvents.v1";
     public const string AgentCommandPipePrefix = "DisplayMagician.UserAgent.Command.v1.";
     public const string SessionLauncherPipeName = "DisplayMagician.SessionLauncher.v1";
+    public const int DefaultAudioDeviceWaitMilliseconds = 20000;
 }
 
 public enum ControlMessageType
@@ -81,7 +82,14 @@ public enum ControlErrorCode
     SessionLocked = 9,
     Unauthorized = 10,
     AgentUnavailable = 11,
-    AdministratorRequired = 12
+    AdministratorRequired = 12,
+    ProfileNotFound = 13,
+    AudioProfileNotFound = 14,
+    ShortcutNotFound = 15,
+    ValidationFailed = 16,
+    ExecutionFailed = 17,
+    OperationNotFound = 18,
+    DecisionUnavailable = 19
 }
 
 public enum DisplayOperationType
@@ -224,8 +232,7 @@ public sealed class MessageSyncResult
 
 public sealed class ProfileListResult
 {
-    public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>();
-    public DisplayProfileView[] Views { get; set; } = Array.Empty<DisplayProfileView>();
+    public DisplayProfileView[] SavedProfiles { get; set; } = Array.Empty<DisplayProfileView>();
     public DisplayProfileView? CurrentLayout { get; set; }
 }
 
@@ -439,13 +446,12 @@ public sealed class AudioProfileView
 
 public sealed class AudioProfileListResult
 {
-    public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>();
-    public AudioProfileView[] Views { get; set; } = Array.Empty<AudioProfileView>();
+    public AudioProfileView[] SavedProfiles { get; set; } = Array.Empty<AudioProfileView>();
     public AudioProfileView? CurrentLayout { get; set; }
     public bool CanAccessAudioSettings { get; set; }
 }
 
-public sealed class ApplyAudioProfileRequest { public string ProfileId { get; set; } = string.Empty; public int DeviceWaitMilliseconds { get; set; } }
+public sealed class ApplyAudioProfileRequest { public string ProfileId { get; set; } = string.Empty; public int DeviceWaitMilliseconds { get; set; } = ControlProtocol.DefaultAudioDeviceWaitMilliseconds; }
 
 public sealed class CreateProfileRequest { public string Name { get; set; } = string.Empty; }
 

@@ -43,7 +43,7 @@ namespace DisplayMagician.UIForms
                 logger.Error(ex, "AudioProfilesForm/AudioProfilesForm_Load: Could not load service-authoritative audio profiles.");
                 MessageBox.Show(this, "DisplayMagician could not load your Audio Profiles through the User Agent.", "Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            if (lb_audio_profiles.Items.Count > 0)
+            if (lb_audio_profiles.SelectedIndex < 0 && lb_audio_profiles.Items.Count > 0)
             {
                 lb_audio_profiles.SelectedIndex = 0;
             }
@@ -56,14 +56,19 @@ namespace DisplayMagician.UIForms
             _canAccessAudioSettings = profileList.CanAccessAudioSettings;
             lb_audio_profiles.Items.Clear();
             lb_audio_profiles.DisplayMember = nameof(AudioProfileView.Name);
-            foreach (AudioProfileView audioProfile in profileList.Views.OrderBy(profile => profile.Name))
+            foreach (AudioProfileView audioProfile in profileList.SavedProfiles.OrderBy(profile => profile.Name))
             {
                 lb_audio_profiles.Items.Add(audioProfile);
             }
 
             if (!string.IsNullOrWhiteSpace(selectedProfileId))
             {
-                _selectedAudioProfile = profileList.Views.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase));
+                _selectedAudioProfile = profileList.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase));
+                lb_audio_profiles.SelectedItem = _selectedAudioProfile;
+            }
+            else
+            {
+                _selectedAudioProfile = profileList.SavedProfiles.FirstOrDefault(profile => profile.IsActive);
                 lb_audio_profiles.SelectedItem = _selectedAudioProfile;
             }
         }
@@ -222,7 +227,7 @@ namespace DisplayMagician.UIForms
             if (response.IsSuccessful)
             {
                 await RefreshAudioProfilesAsync();
-                if (lb_audio_profiles.Items.Count > 0)
+                if (lb_audio_profiles.SelectedIndex < 0 && lb_audio_profiles.Items.Count > 0)
                 {
                     lb_audio_profiles.SelectedIndex = 0;
                     _selectedAudioProfile = lb_audio_profiles.SelectedItem as AudioProfileView;

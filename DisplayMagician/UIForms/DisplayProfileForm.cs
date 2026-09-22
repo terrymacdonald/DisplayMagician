@@ -83,12 +83,12 @@ namespace DisplayMagician.UIForms
             DisplayMagician.Contracts.ProfileListResult profiles = await _controlServiceClient.ListProfilesAsync(cancellationToken);
             _currentLayout = profiles.CurrentLayout;
             DisplayProfileView selected = !string.IsNullOrWhiteSpace(selectedProfileId)
-                ? profiles.Views.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase))
-                : profiles.Views.FirstOrDefault(profile => profile.IsActive);
-            ChangeSelectedProfile(selected ?? _currentLayout ?? profiles.Views.FirstOrDefault());
+                ? profiles.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase))
+                : profiles.SavedProfiles.FirstOrDefault(profile => profile.IsActive);
+            ChangeSelectedProfile(selected ?? _currentLayout ?? profiles.SavedProfiles.FirstOrDefault());
             ilv_saved_profiles.SuspendLayout();
             ilv_saved_profiles.Items.Clear();
-            foreach (DisplayProfileView profile in profiles.Views.OrderBy(profile => profile.Name))
+            foreach (DisplayProfileView profile in profiles.SavedProfiles.OrderBy(profile => profile.Name))
             {
                 ImageListViewItem item = new ImageListViewItem(profile, profile.Name) { Selected = profile.Id == _selectedProfile?.Id };
                 ilv_saved_profiles.Items.Add(item, _profileAdaptor);

@@ -429,7 +429,7 @@ namespace DisplayMagician.UIForms
         private void EnableShortcutButtonIfProfiles()
         {
             DesktopProfileViewCache.Refresh();
-            if (DesktopProfileViewCache.Views.Count > 0)
+            if (DesktopProfileViewCache.SavedProfiles.Count > 0)
             {
                 btn_setup_game_shortcuts.Visible = true;
                 pb_game_shortcut.Enabled = true;
@@ -467,10 +467,10 @@ namespace DisplayMagician.UIForms
             profileToolStripMenuItem.DropDownItems.Add(separator);
 
 
-            if (DesktopProfileViewCache.Views.Count > 0)
+            if (DesktopProfileViewCache.SavedProfiles.Count > 0)
             {
                 // Add the current slist of profiles into the NotifyIcon context menu
-                foreach (DisplayProfileView profile in DesktopProfileViewCache.Views)
+                foreach (DisplayProfileView profile in DesktopProfileViewCache.SavedProfiles)
                 {
                     ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, GetProfileThumbnail(profile.ThumbnailPngBase64), runProfileToolStripMenuItem_Click)
                     {

@@ -368,8 +368,8 @@ namespace DisplayMagicianConsole
             try
             {
                 ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
-                DisplayProfileView currentProfile = profileList.Views.FirstOrDefault(profile => profile.IsActive) ?? profileList.CurrentLayout;
-                if (currentProfile != null)
+                DisplayProfileView currentProfile = profileList.SavedProfiles.FirstOrDefault(profile => profile.IsActive) ?? profileList.CurrentLayout;
+                if (currentProfile?.IsSaved == true)
                 {
                     profileName = currentProfile.Name;
                     profileUUID = currentProfile.Id;
@@ -393,7 +393,7 @@ namespace DisplayMagicianConsole
                 Console.WriteLine($"- \"{profileName}\" (UUID: \"{profileUUID}\")");
             }
 
-            return errLevel;
+            return profileName == "UNKNOWN" && errLevel == ERRORLEVEL.OK ? ERRORLEVEL.PROFILE_UNKNOWN : errLevel;
         }
 
         public static ERRORLEVEL CreateAudioProfile(string name)
@@ -416,7 +416,7 @@ namespace DisplayMagicianConsole
         {
             try
             {
-                foreach (AudioProfileView profile in _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult().Views)
+                foreach (AudioProfileView profile in _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult().SavedProfiles)
                 {
                     Console.WriteLine(parseableMode ? $"{profile.Name}|{profile.Id}" : $"- \"{profile.Name}\" (UUID: \"{profile.Id}\")");
                 }
@@ -436,11 +436,11 @@ namespace DisplayMagicianConsole
             try
             {
                 AudioProfileListResult profiles = _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
-                AudioProfileView currentProfile = profiles.Views.FirstOrDefault(profile => profile.IsActive) ?? profiles.CurrentLayout;
+                AudioProfileView currentProfile = profiles.SavedProfiles.FirstOrDefault(profile => profile.IsActive) ?? profiles.CurrentLayout;
                 string name = currentProfile?.IsSaved == true ? currentProfile.Name : "UNKNOWN";
                 string id = currentProfile?.IsSaved == true ? currentProfile.Id : "UNKNOWN";
                 Console.WriteLine(parseableMode ? $"{name}|{id}" : $"Current audio profile: \"{name}\" (UUID: \"{id}\")");
-                return ERRORLEVEL.OK;
+                return name == "UNKNOWN" ? ERRORLEVEL.PROFILE_UNKNOWN : ERRORLEVEL.OK;
             }
             catch (Exception ex)
             {
@@ -454,7 +454,7 @@ namespace DisplayMagicianConsole
         {
             try
             {
-                AudioProfileView profile = _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult().Views.FirstOrDefault(item => string.Equals(item.Id, profileIdOrName, StringComparison.OrdinalIgnoreCase) || string.Equals(item.Name, profileIdOrName, StringComparison.OrdinalIgnoreCase));
+                AudioProfileView profile = _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult().SavedProfiles.FirstOrDefault(item => string.Equals(item.Id, profileIdOrName, StringComparison.OrdinalIgnoreCase) || string.Equals(item.Name, profileIdOrName, StringComparison.OrdinalIgnoreCase));
                 if (profile == null)
                 {
                     Console.Error.WriteLine($"No audio profile named or identified by '{profileIdOrName}' was found.");
@@ -585,8 +585,8 @@ namespace DisplayMagicianConsole
         public static ERRORLEVEL RunProfile(string profileUUID)
         {
             ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
-            DisplayProfileView profileToUse = profileList.Views.FirstOrDefault(profile => string.Equals(profile.Id, profileUUID, StringComparison.OrdinalIgnoreCase))
-                ?? profileList.Views.FirstOrDefault(profile => string.Equals(profile.Name, profileUUID, StringComparison.OrdinalIgnoreCase));
+            DisplayProfileView profileToUse = profileList.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Id, profileUUID, StringComparison.OrdinalIgnoreCase))
+                ?? profileList.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Name, profileUUID, StringComparison.OrdinalIgnoreCase));
             if (profileToUse == null)
             {
                 Console.WriteLine($"Program/RunProfile: ERROR - We tried looking for a profile with UUID or Name {profileUUID} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
@@ -622,7 +622,7 @@ namespace DisplayMagicianConsole
             try
             {
                 ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
-                foreach (DisplayProfileView profile in profileList.Views)
+                foreach (DisplayProfileView profile in profileList.SavedProfiles)
                 {
                     if (parseableMode)
                     {
@@ -651,7 +651,7 @@ namespace DisplayMagicianConsole
             try
             {
                 ProfileListResult profileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
-                DisplayProfileView nameMatch = profileList.Views.FirstOrDefault(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
+                DisplayProfileView nameMatch = profileList.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
                 if (nameMatch != null)
                 {
                     if (!force)
@@ -692,7 +692,7 @@ namespace DisplayMagicianConsole
                 }
 
                 ProfileListResult updatedProfileList = _controlServicePipeClient.ListProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
-                DisplayProfileView createdProfile = updatedProfileList.Views.FirstOrDefault(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
+                DisplayProfileView createdProfile = updatedProfileList.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase));
                 if (createdProfile == null)
                 {
                     Console.WriteLine($"Program/CreateProfile: ERROR - The profile \"{name}\" was created but could not be retrieved.");

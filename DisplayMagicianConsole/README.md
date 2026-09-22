@@ -112,6 +112,7 @@ The console returns `0` on success. Common non-zero exit codes are:
 | Code | Meaning |
 | --- | --- |
 | `1` | The user cancelled a display-profile change. |
+| `50` | The current display or audio setup does not match a saved profile. |
 | `100` | An unexpected error occurred. |
 | `101` | The requested shortcut was not found. |
 | `102` | The requested display or audio profile was not found. |

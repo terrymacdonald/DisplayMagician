@@ -113,17 +113,13 @@ public sealed class ProfileCommandHandler
         {
             ProfileRepository.RefreshDisplayDetectionState();
             ProfileRepository.UpdateActiveProfile();
-            ProfileSummary[] profiles = ProfileRepository.AllProfiles
-                .Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name })
-                .ToArray();
             return new ControlResponse
             {
                 IsSuccessful = true,
                 Message = "Profiles returned.",
                 ProfileList = new ProfileListResult
                 {
-                    Profiles = profiles,
-                    Views = ProfileRepository.AllProfiles.Select(profile => CreateDisplayProfileView(profile)).ToArray(),
+                    SavedProfiles = ProfileRepository.AllProfiles.Select(profile => CreateDisplayProfileView(profile)).ToArray(),
                     CurrentLayout = ProfileRepository.CurrentProfile == null ? null : CreateDisplayProfileView(ProfileRepository.CurrentProfile, false)
                 }
             };
@@ -423,7 +419,6 @@ public sealed class ProfileCommandHandler
         {
             AudioProfileItem[] savedProfiles = AudioProfileRepository.AllAudioProfiles.ToArray();
             AudioProfileRepository.UpdateActiveAudioProfile();
-            ProfileSummary[] profiles = savedProfiles.Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name }).ToArray();
             bool canAccessAudioSettings = AudioProfileRepository.CanAccessAudioSettings;
             AudioProfileItem? currentProfile = AudioProfileRepository.CurrentAudioProfile;
             return new ControlResponse
@@ -432,9 +427,8 @@ public sealed class ProfileCommandHandler
                 Message = "Audio profiles returned.",
                 AudioProfileList = new AudioProfileListResult
                 {
-                    Profiles = profiles,
                     CanAccessAudioSettings = canAccessAudioSettings,
-                    Views = savedProfiles.Select(profile => CreateAudioProfileView(profile, canAccessAudioSettings)).ToArray(),
+                    SavedProfiles = savedProfiles.Select(profile => CreateAudioProfileView(profile, canAccessAudioSettings)).ToArray(),
                     CurrentLayout = currentProfile == null ? null : CreateAudioProfileView(currentProfile, canAccessAudioSettings, false)
                 }
             };
@@ -443,10 +437,19 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.ApplyAudioProfile)
         {
             ApplyAudioProfileRequest? audioApplyRequest = JsonSerializer.Deserialize<ApplyAudioProfileRequest>(request.Payload);
-            ApplyAudioProfileOperationResult result = audioApplyRequest == null
-                ? new ApplyAudioProfileOperationResult(false, Array.Empty<string>())
-                : _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, audioApplyRequest.DeviceWaitMilliseconds);
-            return new ControlResponse { IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest, Message = result.IsSuccessful ? "Audio profile applied." : $"Audio profile could not be applied. Missing devices: {string.Join(", ", result.MissingDeviceNames)}" };
+            if (audioApplyRequest == null || string.IsNullOrWhiteSpace(audioApplyRequest.ProfileId))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "An audio profile ID is required." };
+            }
+
+            if (!AudioProfileRepository.AllAudioProfiles.Any(profile => string.Equals(profile.UUID, audioApplyRequest.ProfileId, StringComparison.OrdinalIgnoreCase)))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
+            }
+
+            int deviceWaitMilliseconds = audioApplyRequest.DeviceWaitMilliseconds > 0 ? audioApplyRequest.DeviceWaitMilliseconds : ControlProtocol.DefaultAudioDeviceWaitMilliseconds;
+            ApplyAudioProfileOperationResult result = _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, deviceWaitMilliseconds);
+            return new ControlResponse { IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed, Message = result.IsSuccessful ? "Audio profile applied." : $"Audio profile could not be applied. Missing devices: {string.Join(", ", result.MissingDeviceNames)}" };
         }
 
         if (request.MessageType == ControlMessageType.CreateAudioProfileFromCurrent)
@@ -454,13 +457,13 @@ public sealed class ProfileCommandHandler
             CreateProfileRequest? createRequest = JsonSerializer.Deserialize<CreateProfileRequest>(request.Payload);
             if (createRequest == null || !AudioProfileRepository.CanAccessAudioSettings || !AudioProfileRepository.IsValidFilename(createRequest.Name) || AudioProfileRepository.AllAudioProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The audio profile name is invalid, already exists, or audio settings cannot be read." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The audio profile name is invalid, already exists, or audio settings cannot be read." };
             }
 
             AudioProfileItem profile = new AudioProfileItem { Name = createRequest.Name };
             if (!profile.CreateProfileFromCurrentAudioSettings() || !AudioProfileRepository.AddAudioProfile(profile))
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The current audio settings could not be saved." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current audio settings could not be saved." };
             }
 
             return new ControlResponse { IsSuccessful = true, Message = "Audio profile created." };
@@ -470,27 +473,42 @@ public sealed class ProfileCommandHandler
         {
             RenameProfileRequest? renameRequest = JsonSerializer.Deserialize<RenameProfileRequest>(request.Payload);
             AudioProfileItem? profile = renameRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, renameRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-            return profile != null && AudioProfileRepository.RenameAudioProfile(profile, renameRequest!.Name)
+            if (profile == null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
+            }
+
+            return AudioProfileRepository.RenameAudioProfile(profile, renameRequest!.Name)
                 ? new ControlResponse { IsSuccessful = true, Message = "Audio profile renamed." }
-                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The audio profile could not be renamed." };
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The audio profile could not be renamed." };
         }
 
         if (request.MessageType == ControlMessageType.DeleteAudioProfile)
         {
             DeleteProfileRequest? deleteRequest = JsonSerializer.Deserialize<DeleteProfileRequest>(request.Payload);
             AudioProfileItem? profile = deleteRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, deleteRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-            return profile != null && AudioProfileRepository.RemoveAudioProfile(profile)
+            if (profile == null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
+            }
+
+            return AudioProfileRepository.RemoveAudioProfile(profile)
                 ? new ControlResponse { IsSuccessful = true, Message = "Audio profile deleted." }
-                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The audio profile could not be deleted." };
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The audio profile could not be deleted." };
         }
 
         if (request.MessageType == ControlMessageType.UpdateAudioProfileFromCurrent)
         {
             DeleteProfileRequest? updateRequest = JsonSerializer.Deserialize<DeleteProfileRequest>(request.Payload);
             AudioProfileItem? profile = updateRequest == null ? null : AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, updateRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-            if (profile == null || !AudioProfileRepository.CanAccessAudioSettings || !profile.CreateProfileFromCurrentAudioSettings() || !AudioProfileRepository.SaveAudioProfiles())
+            if (profile == null)
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The current audio settings could not update the audio profile." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
+            }
+
+            if (!AudioProfileRepository.CanAccessAudioSettings || !profile.CreateProfileFromCurrentAudioSettings() || !AudioProfileRepository.SaveAudioProfiles())
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current audio settings could not update the audio profile." };
             }
 
             return new ControlResponse { IsSuccessful = true, Message = "Audio profile updated." };
@@ -501,7 +519,7 @@ public sealed class ProfileCommandHandler
             CreateProfileRequest? createRequest = JsonSerializer.Deserialize<CreateProfileRequest>(request.Payload);
             if (createRequest == null || !ProfileRepository.IsValidFilename(createRequest.Name) || ProfileRepository.AllProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile name is invalid or already in use." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The display profile name is invalid or already in use." };
             }
 
             ProfileRepository.RefreshDisplayDetectionState();
@@ -509,22 +527,27 @@ public sealed class ProfileCommandHandler
             ProfileItem? profile = ProfileRepository.CurrentProfile;
             if (profile == null)
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The current display configuration could not be captured." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current display configuration could not be captured." };
             }
 
             profile.Name = createRequest.Name;
             return ProfileRepository.AddProfile(profile)
                 ? new ControlResponse { IsSuccessful = true, Message = "Display profile created." }
-                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be saved." };
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be saved." };
         }
 
         if (request.MessageType == ControlMessageType.RenameProfile)
         {
             RenameProfileRequest? renameRequest = JsonSerializer.Deserialize<RenameProfileRequest>(request.Payload);
             ProfileItem? profile = renameRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, renameRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-            if (profile == null || !ProfileRepository.RenameProfile(profile, renameRequest!.Name))
+            if (profile == null)
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be renamed." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
+            }
+
+            if (!ProfileRepository.RenameProfile(profile, renameRequest!.Name))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The display profile could not be renamed." };
             }
 
             return new ControlResponse { IsSuccessful = true, Message = "Display profile renamed." };
@@ -534,9 +557,14 @@ public sealed class ProfileCommandHandler
         {
             DeleteProfileRequest? deleteRequest = JsonSerializer.Deserialize<DeleteProfileRequest>(request.Payload);
             ProfileItem? profile = deleteRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, deleteRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-            return profile != null && ProfileRepository.RemoveProfile(profile)
+            if (profile == null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
+            }
+
+            return ProfileRepository.RemoveProfile(profile)
                 ? new ControlResponse { IsSuccessful = true, Message = "Display profile deleted." }
-                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be deleted." };
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be deleted." };
         }
 
         if (request.MessageType == ControlMessageType.UpdateProfileFromCurrent)
@@ -545,22 +573,27 @@ public sealed class ProfileCommandHandler
             ProfileItem? profile = updateRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, updateRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
             if (profile == null)
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile does not exist." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
             }
 
             ProfileRepository.CopyCurrentLayoutToProfile(profile);
             return ProfileRepository.SaveProfiles()
                 ? new ControlResponse { IsSuccessful = true, Message = "Display profile updated." }
-                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile could not be updated." };
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be updated." };
         }
 
         if (request.MessageType == ControlMessageType.UpdateDisplayProfileSettings)
         {
             UpdateDisplayProfileSettingsRequest? settingsRequest = JsonSerializer.Deserialize<UpdateDisplayProfileSettingsRequest>(request.Payload);
             ProfileItem? profile = settingsRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, settingsRequest.ProfileId, StringComparison.OrdinalIgnoreCase));
-            if (profile == null || settingsRequest?.Settings == null)
+            if (settingsRequest?.Settings == null)
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile settings request was invalid." };
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The display profile settings request was invalid." };
+            }
+
+            if (profile == null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
             }
 
             profile.WallpaperConfiguration.WallpaperMode = settingsRequest.Settings.ApplyWallpaper ? Wallpaper.Mode.Apply : Wallpaper.Mode.DoNothing;
@@ -569,7 +602,7 @@ public sealed class ProfileCommandHandler
             profile.ForceExplorerRestart = settingsRequest.Settings.ForceExplorerRestart;
             return ProfileRepository.SaveProfiles()
                 ? new ControlResponse { IsSuccessful = true, Message = "Display profile settings updated." }
-                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The display profile settings could not be saved." };
+                : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile settings could not be saved." };
         }
 
         if (request.MessageType != ControlMessageType.ApplyProfile)
@@ -585,7 +618,12 @@ public sealed class ProfileCommandHandler
         ApplyProfileRequest? applyRequest = JsonSerializer.Deserialize<ApplyProfileRequest>(request.Payload);
         if (applyRequest == null || string.IsNullOrWhiteSpace(applyRequest.ProfileId))
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID is required." };
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A display profile ID is required." };
+        }
+
+        if (!ProfileRepository.AllProfiles.Any(profile => string.Equals(profile.UUID, applyRequest.ProfileId, StringComparison.OrdinalIgnoreCase)))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
         }
 
         _registration.OperationState = AgentOperationState.Running;
@@ -595,7 +633,7 @@ public sealed class ProfileCommandHandler
             return new ControlResponse
             {
                 IsSuccessful = result.IsSuccessful,
-                ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.InvalidRequest,
+                ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed,
                 Message = result.IsSuccessful ? "Display profile applied." : "Display profile could not be applied.",
                 ApplyProfile = new DisplayMagician.Contracts.ApplyProfileResult { WasCancelled = result.WasCancelled }
             };
@@ -614,7 +652,11 @@ public sealed class ProfileCommandHandler
             ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(shortcutId, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId, RequestShortcutDecisionAsync).ConfigureAwait(false);
             bool wasSuccessful = result.Outcome == ShortcutRunOutcome.Completed;
             OperationPhase terminalPhase = result.Outcome == ShortcutRunOutcome.Cancelled ? OperationPhase.Cancelled : wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed;
-            ControlErrorCode errorCode = wasSuccessful || terminalPhase == OperationPhase.Cancelled ? ControlErrorCode.None : ControlErrorCode.InvalidRequest;
+            ControlErrorCode errorCode = wasSuccessful || terminalPhase == OperationPhase.Cancelled
+                ? ControlErrorCode.None
+                : result.Outcome == ShortcutRunOutcome.ShortcutNotFound
+                    ? ControlErrorCode.ShortcutNotFound
+                    : ControlErrorCode.ExecutionFailed;
             await PublishShortcutStatusAsync(new OperationStatusUpdate
             {
                 OperationId = operationId,
@@ -636,7 +678,7 @@ public sealed class ProfileCommandHandler
                 Phase = OperationPhase.Failed,
                 Message = "Shortcut operation failed unexpectedly.",
                 IsTerminal = true,
-                ErrorCode = ControlErrorCode.InvalidRequest
+                ErrorCode = ControlErrorCode.ExecutionFailed
             }, CancellationToken.None).ConfigureAwait(false);
         }
         finally

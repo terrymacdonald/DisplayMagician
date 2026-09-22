@@ -1822,7 +1822,7 @@ namespace DisplayMagician.UIForms
                     throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
 
                 DisplayMagician.Contracts.ProfileListResult profiles = await controlServiceClient.ListProfilesAsync(CancellationToken.None);
-                _displayProfiles = profiles.Views.ToList();
+                _displayProfiles = profiles.SavedProfiles.ToList();
                 await RefreshAudioProfilesAsync();
                 await Task.Run(() =>
                 {
@@ -2470,7 +2470,7 @@ namespace DisplayMagician.UIForms
         private async Task RefreshAudioProfilesAsync(string selectedProfileId = null)
         {
             AudioProfileListResult profileList = await new ControlServicePipeClient().ListAudioProfilesAsync(CancellationToken.None);
-            _audioProfiles = profileList.Views.ToList();
+            _audioProfiles = profileList.SavedProfiles.ToList();
             _canAccessAudioSettings = profileList.CanAccessAudioSettings;
             RefreshAudioProfilesList(selectedProfileId);
         }
