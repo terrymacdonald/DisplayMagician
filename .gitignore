@@ -23,6 +23,7 @@ bld/
 [Oo]bj/
 *.editorconfig
 [Oo]utput/
+Sandbox/Generated/
 
 # Visual Studio 2015 cache/options directory
 .vs/

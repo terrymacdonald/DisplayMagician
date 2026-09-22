@@ -1,0 +1,24 @@
+<Configuration>
+  <VGpu>Disable</VGpu>
+  <Networking>Enable</Networking>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>__BUNDLE_HOST_FOLDER__</HostFolder>
+      <SandboxFolder>C:\DisplayMagician\Bundle</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>__SANDBOX_HOST_FOLDER__</HostFolder>
+      <SandboxFolder>C:\DisplayMagician\Sandbox</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>__REMOTE_DEBUGGER_HOST_FOLDER__</HostFolder>
+      <SandboxFolder>C:\DisplayMagician\RemoteDebugger</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\DisplayMagician\Sandbox\Scripts\Start-DisplayMagicianSandbox.ps1</Command>
+  </LogonCommand>
+</Configuration>
