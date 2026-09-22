@@ -59,8 +59,10 @@ public sealed class ProfileOperationRouterTests
         coordinator.RegisterAgent(agent, DateTime.UtcNow);
         RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
         ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), () => agent.SessionId);
+        Guid operationId = Guid.NewGuid();
+        Guid requestId = Guid.NewGuid();
 
-        ControlResponse response = await router.StartShortcutAsync(agent.UserSid, agent.SessionId, "shortcut-123", CancellationToken.None);
+        ControlResponse response = await router.StartShortcutAsync(agent.UserSid, agent.SessionId, "shortcut-123", operationId, requestId, CancellationToken.None);
 
         Assert.True(response.IsSuccessful);
         Assert.True(commandClient.WasCalled);
@@ -68,6 +70,8 @@ public sealed class ProfileOperationRouterTests
         StartShortcutRequest? request = System.Text.Json.JsonSerializer.Deserialize<StartShortcutRequest>(commandClient.Request.Payload);
         Assert.NotNull(request);
         Assert.Equal("shortcut-123", request.ShortcutId);
+        Assert.Equal(operationId, request.OperationId);
+        Assert.Equal(requestId, commandClient.Request.RequestId);
     }
 
     [Fact]
@@ -81,6 +85,29 @@ public sealed class ProfileOperationRouterTests
         Assert.False(response.IsSuccessful);
         Assert.Equal(ControlErrorCode.InvalidRequest, response.ErrorCode);
         Assert.False(commandClient.WasCalled);
+    }
+
+    [Fact]
+    public async Task StartShortcutAsync_PreservesCorrelationWhenSessionLauncherStartsTheAgent()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        RegisteringSessionLauncherClient sessionLauncherClient = new RegisteringSessionLauncherClient(coordinator, agent);
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient, () => agent.SessionId);
+        Guid operationId = Guid.NewGuid();
+        Guid requestId = Guid.NewGuid();
+
+        ControlResponse response = await router.StartShortcutAsync(agent.UserSid, agent.SessionId, "shortcut-123", operationId, requestId, CancellationToken.None);
+
+        Assert.True(sessionLauncherClient.WasCalled);
+        Assert.True(response.IsSuccessful, response.Message);
+        Assert.Equal(requestId, sessionLauncherClient.RequestId);
+        Assert.Equal(operationId, sessionLauncherClient.OperationId);
+        Assert.Equal(requestId, commandClient.Request!.RequestId);
+        StartShortcutRequest? request = System.Text.Json.JsonSerializer.Deserialize<StartShortcutRequest>(commandClient.Request.Payload);
+        Assert.NotNull(request);
+        Assert.Equal(operationId, request.OperationId);
     }
 
     [Fact]
@@ -146,6 +173,7 @@ public sealed class ProfileOperationRouterTests
         Assert.True(response.IsSuccessful);
         Assert.True(sessionLauncherClient.WasCalled);
         Assert.True(commandClient.WasCalled);
+        Assert.Equal(commandClient.Request!.RequestId, sessionLauncherClient.RequestId);
     }
 
     private static AgentRegistration CreateAgent()
@@ -183,9 +211,15 @@ public sealed class ProfileOperationRouterTests
 
         public bool WasCalled { get; private set; }
 
-        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+        public Guid RequestId { get; private set; }
+
+        public Guid? OperationId { get; private set; }
+
+        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
         {
             WasCalled = true;
+            RequestId = requestId;
+            OperationId = operationId;
             _coordinator.RegisterAgent(_agent, DateTime.UtcNow);
             return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = true, Message = "Test Agent launched." });
         }

@@ -69,9 +69,31 @@ public sealed class ProfileOperationRouter
 
     public async Task<ControlResponse> StartShortcutAsync(string userSid, int sessionId, string shortcutId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(shortcutId))
+        return await StartShortcutAsync(userSid, sessionId, shortcutId, Guid.NewGuid(), Guid.NewGuid(), cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<ControlResponse> StartShortcutAsync(string userSid, int sessionId, string shortcutId, Guid operationId, Guid requestId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(shortcutId) || operationId == Guid.Empty || requestId == Guid.Empty)
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID is required." };
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID and correlation IDs are required." };
+        }
+
+        if (sessionId != _getActiveConsoleSessionId())
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.NotActiveConsoleUser, Message = "Only the active physical-console user can control displays." };
+        }
+
+        ControlEnvelope command = new ControlEnvelope
+        {
+            MessageType = ControlMessageType.StartShortcut,
+            RequestId = requestId,
+            Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId, OperationId = operationId })
+        };
+        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
+        if (agent == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
         }
 
         LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, _getActiveConsoleSessionId(), DateTime.UtcNow);
@@ -80,11 +102,14 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
         }
 
-        return await SendToAgentAsync(userSid, sessionId, new ControlEnvelope
+        try
         {
-            MessageType = ControlMessageType.StartShortcut,
-            Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId })
-        }, true, cancellationToken).ConfigureAwait(false);
+            return await _agentCommandClient.SendAsync(agent, command, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
+        }
     }
 
     public Task<ControlResponse> CancelOperationAsync(string userSid, int sessionId, Guid operationId, CancellationToken cancellationToken)
@@ -109,7 +134,7 @@ public sealed class ProfileOperationRouter
     private async Task<ControlResponse> SendToAgentAsync(string userSid, int sessionId, ControlEnvelope command, bool startAgentIfMissing, CancellationToken cancellationToken)
     {
         AgentRegistration? agent = startAgentIfMissing
-            ? await GetOrStartAgentAsync(userSid, sessionId, cancellationToken).ConfigureAwait(false)
+            ? await GetOrStartAgentAsync(userSid, sessionId, command.RequestId, GetOperationId(command), cancellationToken).ConfigureAwait(false)
             : _coordinator.GetAgentRegistration(userSid, sessionId);
         if (agent == null)
         {
@@ -126,7 +151,7 @@ public sealed class ProfileOperationRouter
         }
     }
 
-    private async Task<AgentRegistration?> GetOrStartAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+    private async Task<AgentRegistration?> GetOrStartAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
     {
         AgentRegistration? agent = _coordinator.GetAgentRegistration(userSid, sessionId);
         if (agent != null)
@@ -137,7 +162,7 @@ public sealed class ProfileOperationRouter
         UserAgentLaunchResult launchResult;
         try
         {
-            launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, cancellationToken).ConfigureAwait(false);
+            launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
         {
@@ -165,9 +190,26 @@ public sealed class ProfileOperationRouter
 
     private sealed class UnavailableSessionLauncherClient : ISessionLauncherClient
     {
-        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
         {
             return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = false, Message = "The Session Launcher is not configured." });
         }
+    }
+
+    private static Guid? GetOperationId(ControlEnvelope command)
+    {
+        if (command.MessageType == ControlMessageType.StartShortcut)
+        {
+            Guid operationId = JsonSerializer.Deserialize<StartShortcutRequest>(command.Payload)?.OperationId ?? Guid.Empty;
+            return operationId == Guid.Empty ? null : operationId;
+        }
+
+        if (command.MessageType == ControlMessageType.CancelOperation)
+        {
+            Guid operationId = JsonSerializer.Deserialize<CancelOperationRequest>(command.Payload)?.OperationId ?? Guid.Empty;
+            return operationId == Guid.Empty ? null : operationId;
+        }
+
+        return null;
     }
 }

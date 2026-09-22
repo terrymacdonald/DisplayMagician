@@ -661,6 +661,91 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** Local clients and Agents are identity-verified and remote callers are rejected; one machine produces one metrics/client-sync schedule regardless of UI/Agent count; user messages remain per-user Agent data; WinForms is a UI/cache and Control Service client rather than a second runtime owner; diagnostics and recovery actions are auditable.
 
+### Phase E Part 2 — Unified support logging and timeline contract
+
+**Purpose:** Before deployment hardening, make every retained diagnostic event and configuration snapshot suitable for one user-facing Support ZIP and deterministic import into a future separate administrator timeline application. This phase does not create the administrator application; it defines and implements the stable data contract it will consume.
+
+#### Scope and component ownership
+
+- [ ] Treat these as the only support-log component names: `DesktopApp`, `DesktopConsole`, `UserAgent`, `ControlService`, `SessionLauncher`, and `Installer`.
+  - `DesktopApp` owns WinForms and its in-process AutoUpdater.NET events. There is no separate `Updater` component until there is a separate updater executable.
+  - `DesktopConsole` owns command-line invocation and Control Service client diagnostics.
+  - `UserAgent` owns per-user background work.
+  - `ControlService` owns machine-wide coordination.
+  - `SessionLauncher` owns the demand-start LocalSystem Agent-launch broker.
+  - `Installer` owns installation, repair, upgrade, and uninstall diagnostics.
+  - Do not create a `SandboxHarness` component; Sandbox tooling is development-only and outside customer support bundles.
+- [ ] Keep component identity at process/host level. Use `source` and, where useful later, a bounded subsystem field for features such as display, audio, shortcuts, migration, or update handling.
+
+#### Common plain-text event contract
+
+- [x] Define a versioned, UTF-8, one-physical-line `logfmt`-style contract for every newly written component log. Use ISO-8601 UTC timestamps so lexical and chronological ordering agree.
+- [x] Emit these fields, in this order, on every event:
+
+  ```text
+  ts=2026-09-22T08:15:12.345Z component=ControlService level=ERROR source=ControlClientPipeServer/CreateUserSupportBundleAsync operation_id=7fe7d61d-06c8-454e-af5b-846ea8da1cf1 request_id=8c2f99d4-4d89-4df6-a178-e9fe073bc3d3 msg="Could not stage Control Service logs"
+  ```
+
+  Required fields are `ts`, `component`, `level`, `source`, `operation_id`, `request_id`, and `msg`. Use `operation_id=-` and `request_id=-` when not applicable.
+- [x] On exception events, append `ex_type`, `ex_message`, and `ex_stack`. Escape quotes, backslashes, tabs, carriage returns, and line feeds so the complete exception remains on one physical log line. Do not emit unescaped delimiters or multi-line stack traces.
+- [ ] Retain the existing `ClassName/MethodName:` convention as the authoritative `source` value. Do not depend on automatic call-site capture as the source of truth, particularly across async code.
+- [x] Add shared logging/correlation support or equivalent common layout configuration so escaping, field order, UTC rendering, component identity, and absent-ID representation cannot drift between hosts.
+- [ ] Define redaction rules before adoption: never log secrets, tokens, passwords, pairing credentials, or unrestricted command arguments; reduce personally identifying paths and values where diagnostic value does not require them.
+
+#### NLog source migration — all C# files
+
+- [ ] Create a complete inventory of logging and diagnostic-output call sites in every C# file under `DisplayMagician`, `DisplayMagicianConsole`, `DisplayMagician.UserAgent`, `DisplayMagician.ControlService`, and `DisplayMagician.SessionLauncher`. Include direct NLog calls at every severity, `SharedLogger`, helper/wrapper calls, and diagnostic `Console.WriteLine` calls.
+- [ ] Establish one reviewed disposition for every inventoried call site: migrate it to the common logging helper; retain it as intentional end-user command output; replace it with a structured result/error; or remove it because it is obsolete. Record the decision in the migration checklist rather than leaving unexplained exceptions.
+- [ ] Refactor every retained diagnostic NLog call in those component C# files to the common logging/correlation path. It must render the required fields and explicit `source`, correctly serialize C# exceptions, and carry current request/operation IDs where available.
+- [ ] Preserve `DesktopConsole` command results, help, and machine-parseable stdout/stderr behaviour as its public CLI contract. Only its diagnostics are migrated to the log contract; do not pollute normal command output with logfmt events.
+- [ ] Remove legacy message decorations that duplicate structured fields, such as `ERROR -`, ad-hoc timestamps, or inconsistent component prefixes. Preserve diagnostically useful human text in `msg` and retain the existing `ClassName/MethodName` source identity.
+- [ ] Replace direct component-level NLog configuration with the shared contract configuration, while allowing only the approved bootstrap/configuration files to create targets or obtain raw NLog loggers.
+- [ ] Add an automated source scan that fails builds if a new direct NLog diagnostic call, legacy layout, or unreviewed diagnostic `Console.WriteLine` is introduced outside the approved logging infrastructure and DesktopConsole’s defined user-output boundary.
+- [ ] Build every shipped component after migration and produce representative log fixtures from each one. Review the raw text to confirm field order, escaping, component value, source value, and exception one-line behaviour.
+
+#### Correlation and propagation
+
+- [x] Preserve the existing `ControlEnvelope.RequestId` as the ID for one pipe/control request.
+- [ ] Preserve the existing `OperationId` GUID as the ID for one meaningful multi-step user action, such as a shortcut run. Generate it once at the action boundary and pass it through status updates, Service routing, Agent work, recovery, and related logs.
+- [ ] Add correlation context that flows correctly through asynchronous work and explicitly crosses the DesktopApp/Console -> ControlService -> SessionLauncher -> UserAgent boundaries. Do not generate a replacement operation ID downstream.
+- [ ] Ensure background, startup, and unrelated lifecycle events render `operation_id=-` and `request_id=-` rather than inheriting stale context.
+
+#### Component log retention and Support ZIP contents
+
+- [x] Configure durable rolling log files for `DesktopApp`, `DesktopConsole`, `UserAgent`, `ControlService`, and `SessionLauncher`; use their respective user- or machine-owned storage paths and safe sharing so active logs can be collected.
+- [x] Update the user-selected Support ZIP flow so it includes every retained log file from all five runtime components, including ControlService and SessionLauncher machine logs staged by the Control Service.
+- [ ] Define an Installer log policy: installation, repair, upgrade, and uninstall must be able to produce a verbose MSI log with a known support-collectable location or user-selected export path. Do not claim installer logs are available when installation was run without logging enabled.
+- [x] Include an explicit `Configuration/` area containing authoritative profiles, audio profiles, shortcuts, settings, migration state, legacy configuration required for migration/recovery, and relevant machine service configuration/state. Exclude credentials, tokens, unrelated user documents, media, wallpapers, and cached icons unless separately approved.
+- [x] Add `support-manifest.json` with schema version, bundle creation UTC time, product/component versions, included log/configuration inventory, and collection warnings. The manifest is the compatibility contract for the administrator application.
+- [ ] Maintain backward compatibility for retained legacy log files: include them where safe, identify their format in the manifest, and do not require the timeline importer to guess that they follow the new contract.
+
+#### Administrator timeline application contract
+
+- [x] Create a separate-repository design specification for an offline administrator application that imports a Support ZIP without modifying it.
+- [ ] Define its importer to parse one log line into table cells: time, component, level, source/function, operation ID, request ID, message, and optional exception details.
+- [ ] Require fast multi-select intersection filtering by time range, component, level, source, operation ID, request ID, and free-text message/exception search. Show exception details and the original raw line in an expandable event-details view rather than default table columns.
+- [ ] Merge parsed events by UTC timestamp, retain a deterministic tie-breaker (bundle path plus line number), and clearly flag malformed or legacy lines without discarding the rest of a bundle.
+- [ ] Use manifest schema/version and log inventory to select parsers; support future schema additions without breaking older Support ZIP imports.
+
+#### Verification
+
+- [ ] Unit-test rendering and parsing for whitespace, quotes, delimiters, Unicode, and multi-line nested C# exceptions; prove every resulting event occupies exactly one physical line.
+- [ ] Unit-test correlation propagation and reset across all control, Agent, and SessionLauncher paths.
+- [ ] Integration-test that a Support ZIP created while each component is running contains retained logs and the required configuration snapshot, with a valid manifest and no staging artefacts left behind.
+- [ ] Test standard text-tool usability: `findstr`, `Select-String`, and `grep` filtering by `component=`, `level=`, `operation_id=`, and `request_id=` must identify expected events without a custom parser.
+- [ ] Test ZIP privacy/redaction and installer-log absence/presence behaviour.
+- [ ] Produce representative Support ZIP fixtures for the separate administrator application: normal shortcut execution, failed profile apply, Agent restart/recovery, SessionLauncher Agent start, and install/upgrade diagnostics.
+
+#### Final Support ZIP completion
+
+- [ ] Update the user-facing **Create a Support ZIP File** workflow after the new component log targets exist. It must collect every retained log file for `DesktopApp`, `DesktopConsole`, `UserAgent`, `ControlService`, and `SessionLauncher`; do not rely on a shared directory name to imply that a component is covered.
+- [ ] Have the Control Service stage both machine-owned sources (`ControlService` and `SessionLauncher`) for the current authorized user, then remove the staging copy after the User Agent has written the ZIP. The desktop client must never read protected machine log paths directly.
+- [ ] Include every approved configuration source in a clearly named `Configuration/` area: profiles, audio profiles, shortcuts, settings, migration state, legacy/recovery configuration, and relevant machine service state. Retain the agreed exclusions for credentials, tokens, unrelated user content, media, wallpapers, and cached icons.
+- [ ] Add each included component log and configuration file to `support-manifest.json`, including component name, ZIP entry path, source format/version, collection result, and a warning for every unavailable source. Do not silently omit a requested component or configuration area.
+- [ ] Add an end-to-end test that creates a bundle with representative files from all five runtime components and every approved configuration area, then asserts each expected ZIP entry and manifest inventory record. Test the missing/locked-file path separately and assert a visible warning rather than bundle failure or silent loss.
+
+**Exit criteria:** All five runtime hosts emit the common one-line event contract to retained logs; meaningful cross-process work carries stable request/operation correlation; a Support ZIP contains retained runtime logs plus approved user and machine configuration with an accurate manifest; and the administrator timeline application has a documented, tested import contract and representative fixtures.
+
 ### Phase F — Deployment hardening
 
 - [x] Package and install ControlService, SessionLauncher, and UserAgent with the WinForms and Console clients.

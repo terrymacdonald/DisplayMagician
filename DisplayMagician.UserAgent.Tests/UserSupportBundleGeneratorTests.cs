@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.Json;
 using DisplayMagician.Contracts;
 using DisplayMagician.UserAgent;
 using Xunit;
@@ -28,6 +29,7 @@ public sealed class UserSupportBundleGeneratorTests
             File.WriteAllText(Path.Combine(userDataPath, "Shortcuts", "Shortcuts.json"), "shortcuts");
             File.WriteAllText(Path.Combine(userDataPath, "Settings", "Settings.json"), "settings");
             File.WriteAllText(Path.Combine(userDataPath, "Logs", "DisplayMagician.log"), "desktop log");
+            File.WriteAllText(Path.Combine(userDataPath, "Logs", "DesktopConsole-20260922.log"), "console log");
             File.WriteAllText(Path.Combine(userDataPath, "Logs", "UserAgent.log"), "agent log");
             File.WriteAllText(Path.Combine(userDataPath, "LegacyFiles", "Donation.json"), "legacy configuration");
             File.WriteAllText(Path.Combine(userDataPath, "Migration.json"), "migration");
@@ -37,23 +39,41 @@ public sealed class UserSupportBundleGeneratorTests
             string machineLogsPath = Path.Combine(userDataPath, "Backups", "SupportStaging", "test", "MachineLogs");
             Directory.CreateDirectory(machineLogsPath);
             File.WriteAllText(Path.Combine(machineLogsPath, "ControlService.log"), "service log");
-            UserSupportBundleResult result = generator.Create(destinationPath, machineLogsPath);
+            File.WriteAllText(Path.Combine(machineLogsPath, "SessionLauncher-20260922.log"), "session launcher log");
+            string machineConfigurationPath = Path.Combine(userDataPath, "Backups", "SupportStaging", "test", "Configuration", "Machine");
+            Directory.CreateDirectory(machineConfigurationPath);
+            File.WriteAllText(Path.Combine(machineConfigurationPath, "ScheduleState.json"), "schedule state");
+            UserSupportBundleResult result = generator.Create(destinationPath, machineLogsPath, machineConfigurationPath, new[] { "The last installer transaction log was no longer available." });
 
             Assert.Equal(destinationPath, result.DestinationPath);
+            Assert.Contains("The last installer transaction log was no longer available.", result.Warnings);
             using ZipArchive archive = ZipFile.OpenRead(destinationPath);
             string[] entryNames = archive.Entries
                 .Select(entry => entry.FullName.Replace('\\', '/'))
                 .ToArray();
-            Assert.Contains("Profiles/DisplayProfiles.json", entryNames);
-            Assert.Contains("AudioProfiles/AudioProfiles.json", entryNames);
-            Assert.Contains("Shortcuts/Shortcuts.json", entryNames);
-            Assert.Contains("Settings/Settings.json", entryNames);
+            Assert.Contains("Configuration/Profiles/DisplayProfiles.json", entryNames);
+            Assert.Contains("Configuration/AudioProfiles/AudioProfiles.json", entryNames);
+            Assert.Contains("Configuration/Shortcuts/Shortcuts.json", entryNames);
+            Assert.Contains("Configuration/Settings/Settings.json", entryNames);
             Assert.Contains("Logs/DisplayMagician.log", entryNames);
+            Assert.Contains("Logs/DesktopConsole-20260922.log", entryNames);
             Assert.Contains("Logs/UserAgent.log", entryNames);
             Assert.Contains("MachineLogs/ControlService.log", entryNames);
-            Assert.Contains("LegacyFiles/Donation.json", entryNames);
-            Assert.Contains("Migration.json", entryNames);
+            Assert.Contains("MachineLogs/SessionLauncher-20260922.log", entryNames);
+            Assert.Contains("Configuration/Machine/ScheduleState.json", entryNames);
+            Assert.Contains("Configuration/LegacyFiles/Donation.json", entryNames);
+            Assert.Contains("Configuration/Migration.json", entryNames);
             Assert.Contains("support-manifest.json", entryNames);
+            ZipArchiveEntry manifestEntry = archive.GetEntry("support-manifest.json")!;
+            using StreamReader manifestReader = new StreamReader(manifestEntry.Open());
+            using JsonDocument manifest = JsonDocument.Parse(manifestReader.ReadToEnd());
+            Assert.Equal(1, manifest.RootElement.GetProperty("LogContractVersion").GetInt32());
+            Assert.Equal("4.0.0-test", manifest.RootElement.GetProperty("ComponentVersions").GetProperty("UserAgent").GetString());
+            Assert.Contains(manifest.RootElement.GetProperty("Warnings").EnumerateArray(), warning => warning.GetString() == "The last installer transaction log was no longer available.");
+            Assert.Contains(manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray(), entry => entry.GetProperty("Path").GetString() == "MachineLogs/ControlService.log");
+            Assert.Contains(manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray(), entry => entry.GetProperty("Path").GetString() == "Logs/DesktopConsole-20260922.log");
+            Assert.Contains(manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray(), entry => entry.GetProperty("Path").GetString() == "MachineLogs/SessionLauncher-20260922.log");
+            Assert.Contains(manifest.RootElement.GetProperty("IncludedEntries").EnumerateArray(), entry => entry.GetProperty("Path").GetString() == "Configuration/Machine/ScheduleState.json");
         }
         finally
         {

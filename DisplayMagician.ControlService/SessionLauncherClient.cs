@@ -10,19 +10,20 @@ namespace DisplayMagician.ControlService;
 
 public interface ISessionLauncherClient
 {
-    Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken);
+    Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken);
 }
 
 public sealed class SessionLauncherClient : ISessionLauncherClient
 {
-    public async Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+    public async Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
     {
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.SessionLauncherPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
         ControlEnvelope request = new ControlEnvelope
         {
             MessageType = ControlMessageType.LaunchUserAgent,
-            Payload = JsonSerializer.Serialize(new UserAgentLaunchRequest { UserSid = userSid, SessionId = sessionId })
+            RequestId = requestId,
+            Payload = JsonSerializer.Serialize(new UserAgentLaunchRequest { UserSid = userSid, SessionId = sessionId, OperationId = operationId })
         };
         await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);
         ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);

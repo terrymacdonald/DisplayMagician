@@ -39,6 +39,8 @@
 				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstalledVersion" Value="!(bind.fileVersion.DisplayMagicianExe)"/>
 				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstalledDate" Value="[Date]"/>
 				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="InstalledDir" Value="[INSTALLFOLDER]"/>
+				<!-- MsiLogging populates this standard property with the current transaction log path. -->
+				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Name="LastInstallerLogPath" Value="[MsiLogFileLocation]"/>
 			</Component>
 			<Component>
 				<File Source="$(var.DmPublishDir)DisplayMagician.exe" Id="DisplayMagicianExe" KeyPath="yes" />

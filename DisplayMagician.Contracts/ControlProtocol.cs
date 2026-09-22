@@ -245,6 +245,8 @@ public sealed class ApplyProfileResult
 public sealed class StartShortcutRequest
 {
     public string ShortcutId { get; set; } = string.Empty;
+
+    public Guid OperationId { get; set; }
 }
 
 /// <summary>Requests cancellation of an active operation owned by the caller's User Agent.</summary>
@@ -426,6 +428,8 @@ public sealed class UserAgentLaunchRequest
     public string UserSid { get; set; } = string.Empty;
 
     public int SessionId { get; set; }
+
+    public Guid? OperationId { get; set; }
 }
 
 public sealed class UserAgentLaunchResult
@@ -478,6 +482,10 @@ public sealed class CreateUserSupportBundleRequest
     public string DestinationPath { get; set; } = string.Empty;
 
     public string MachineLogsStagingPath { get; set; } = string.Empty;
+
+    public string MachineConfigurationStagingPath { get; set; } = string.Empty;
+
+    public string[] MachineCollectionWarnings { get; set; } = Array.Empty<string>();
 }
 
 public sealed class UserSupportBundleResult

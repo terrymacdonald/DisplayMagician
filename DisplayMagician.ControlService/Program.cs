@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using DisplayMagician.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NLog;
@@ -46,13 +47,14 @@ internal static class Program
         try
         {
             storagePaths.EnsureMachineDirectories();
+            SupportLogLayout.Register();
             LoggingConfiguration configuration = new LoggingConfiguration();
             FileTarget logFile = new FileTarget("control-service-log")
             {
                 FileName = System.IO.Path.Combine(storagePaths.MachineLogsPath, "ControlService-${shortdate}.log"),
                 ArchiveAboveSize = 41943040,
                 MaxArchiveFiles = 7,
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}}"
+                Layout = "${displaymagicianlog:component=ControlService}"
             };
             LoggingRule loggingRule = new LoggingRule("ControlServiceFileLog");
             loggingRule.EnableLoggingForLevels(LogLevel.Info, LogLevel.Fatal);

@@ -200,6 +200,7 @@ public sealed class NamedPipeControlServer
 
     private async Task HandleAgentMessageAsync(NamedPipeServerStream pipe, PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
     {
+        using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
         if (request.MessageType == ControlMessageType.AgentHeartbeat)
         {
             AgentHeartbeat? heartbeat = JsonSerializer.Deserialize<AgentHeartbeat>(request.Payload);
@@ -228,6 +229,7 @@ public sealed class NamedPipeControlServer
                 update.IsTerminal = true;
             }
 
+            using IDisposable operationScope = SupportLogScope.BeginOperation(update.OperationId);
             try
             {
                 OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);

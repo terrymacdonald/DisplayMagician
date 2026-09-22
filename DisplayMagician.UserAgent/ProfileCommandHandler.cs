@@ -88,7 +88,7 @@ public sealed class ProfileCommandHandler
 
             try
             {
-                UserSupportBundleResult result = _userSupportBundleGenerator.Create(supportBundleRequest.DestinationPath, supportBundleRequest.MachineLogsStagingPath);
+                UserSupportBundleResult result = _userSupportBundleGenerator.Create(supportBundleRequest.DestinationPath, supportBundleRequest.MachineLogsStagingPath, supportBundleRequest.MachineConfigurationStagingPath, supportBundleRequest.MachineCollectionWarnings);
                 return new ControlResponse { IsSuccessful = true, Message = "Support ZIP file created.", UserSupportBundle = result };
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
@@ -288,7 +288,8 @@ public sealed class ProfileCommandHandler
                 };
             }
 
-            Guid operationId = Guid.NewGuid();
+            Guid operationId = startRequest.OperationId == Guid.Empty ? Guid.NewGuid() : startRequest.OperationId;
+            using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
             CancellationTokenSource operationCancellationSource = new CancellationTokenSource();
             lock (_shortcutOperationsLock)
             {
@@ -326,6 +327,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An operation ID is required." };
             }
 
+            using IDisposable operationScope = SupportLogScope.BeginOperation(cancelRequest.OperationId);
             lock (_shortcutOperationsLock)
             {
                 if (!_shortcutOperations.TryGetValue(cancelRequest.OperationId, out CancellationTokenSource? operationCancellationSource))
@@ -608,6 +610,7 @@ public sealed class ProfileCommandHandler
 
     private async Task RunShortcutOperationAsync(Guid operationId, string shortcutId, CancellationTokenSource operationCancellationSource)
     {
+        using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
         try
         {
             ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(shortcutId, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId).ConfigureAwait(false);

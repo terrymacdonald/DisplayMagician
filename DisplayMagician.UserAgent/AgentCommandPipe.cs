@@ -54,6 +54,7 @@ public sealed class AgentCommandServer
                     continue;
                 }
 
+                using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
                 ControlResponse response = request.ProtocolVersion == ControlProtocol.CurrentVersion
                     ? await commandHandler(request, cancellationToken).ConfigureAwait(false)
                     : new ControlResponse

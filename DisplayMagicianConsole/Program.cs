@@ -1,9 +1,14 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Principal;
 using System.Threading;
 using DisplayMagician.Contracts;
 using McMaster.Extensions.CommandLineUtils;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace DisplayMagicianConsole
 {
@@ -28,10 +33,13 @@ namespace DisplayMagicianConsole
         public static string AppVersion = ThisAssembly.AssemblyFileVersion;
         public static bool verboseMode = false;
         public static bool parseableMode = false;
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private static readonly ControlServicePipeClient _controlServicePipeClient = new ControlServicePipeClient();
 
         static int Main(string[] args)
         {
+            ConfigureLogging();
+            logger.Info("Program/Main: Desktop Console started with {0} argument(s).", args.Length);
 
             // Set up the command line processing
             var app = new CommandLineApplication
@@ -79,6 +87,7 @@ namespace DisplayMagicianConsole
                     }
                     catch (Exception ex)
                     {
+                        logger.Error(ex, "Program/Main: Exception running ApplyProfile {0}.", argumentProfile.Value);
                         Console.WriteLine($"Program/Main: Exception running ApplyProfile {argumentProfile.Value}: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         return (int)ERRORLEVEL.ERROR_EXCEPTION;
                     }
@@ -151,6 +160,7 @@ namespace DisplayMagicianConsole
                     }
                     catch (Exception ex)
                     {
+                        logger.Error(ex, "Program/Main: Exception running CreateProfile.");
                         Console.WriteLine($"Program/Main: Exception running CreateProfile: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         return (int)ERRORLEVEL.ERROR_EXCEPTION;
                     }
@@ -178,11 +188,13 @@ namespace DisplayMagicianConsole
             }
             catch (CommandParsingException ex)
             {
+                logger.Warn(ex, "Program/Main: The supplied command-line options were not recognized.");
                 Console.WriteLine($"Program/Main exception: ERROR - Didn't recognise the supplied commandline options: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return (int)ERRORLEVEL.ERROR_UNKNOWN_COMMAND;
             }
             catch (Exception ex)
             {
+                logger.Error(ex, "Program/Main: Unable to execute the Desktop Console command.");
                 //Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
@@ -192,6 +204,74 @@ namespace DisplayMagicianConsole
             }
 
             return (int)ERRORLEVEL.OK;
+        }
+
+        private static void ConfigureLogging()
+        {
+            string userSid = WindowsIdentity.GetCurrent().User?.Value ?? "UnknownUser";
+            string legacyLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs");
+            string preferredLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", userSid, "Logs");
+            string logPath = TryPrepareLogPath(preferredLogPath, legacyLogPath) ? preferredLogPath : legacyLogPath;
+            try
+            {
+                Directory.CreateDirectory(logPath);
+                SupportLogLayout.Register();
+                LoggingConfiguration configuration = new LoggingConfiguration();
+                FileTarget logFile = new FileTarget("desktop-console-log")
+                {
+                    FileName = Path.Combine(logPath, "DesktopConsole-${shortdate}.log"),
+                    ArchiveAboveSize = 41943040,
+                    MaxArchiveFiles = 4,
+                    Layout = "${displaymagicianlog:component=DesktopConsole}"
+                };
+                configuration.AddRule(LogLevel.Info, LogLevel.Fatal, logFile);
+                LogManager.Configuration = configuration;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException)
+            {
+                Console.Error.WriteLine($"DisplayMagicianConsole could not configure diagnostic logging: {ex.Message}");
+            }
+        }
+
+        private static bool TryPrepareLogPath(string preferredLogPath, string legacyLogPath)
+        {
+            try
+            {
+                Directory.CreateDirectory(preferredLogPath);
+                string probePath = Path.Combine(preferredLogPath, $".write-probe-{Guid.NewGuid():N}.tmp");
+                using (FileStream probe = new FileStream(probePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose))
+                {
+                    probe.WriteByte(0);
+                }
+
+                if (Directory.Exists(legacyLogPath))
+                {
+                    foreach (string legacyLogFile in Directory.EnumerateFiles(legacyLogPath, "DesktopConsole-*.log", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            string destinationPath = Path.Combine(preferredLogPath, Path.GetFileName(legacyLogFile));
+                            if (File.Exists(destinationPath))
+                            {
+                                destinationPath = Path.Combine(preferredLogPath, $"{Path.GetFileNameWithoutExtension(legacyLogFile)}-{Guid.NewGuid():N}{Path.GetExtension(legacyLogFile)}");
+                            }
+
+                            File.Move(legacyLogFile, destinationPath);
+                        }
+                        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                        {
+                            Console.Error.WriteLine($"DisplayMagicianConsole could not migrate legacy log {legacyLogFile}: {ex.Message}");
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException)
+            {
+                Console.Error.WriteLine($"DisplayMagicianConsole is using its legacy log path because ProgramData is unavailable: {ex.Message}");
+                return false;
+            }
         }
 
         public static ERRORLEVEL CurrentProfile()
@@ -213,6 +293,7 @@ namespace DisplayMagicianConsole
             }
             catch (Exception ex)
             {
+                logger.Error(ex, "Program/CurrentProfile: Could not retrieve the current display profile.");
                 Console.WriteLine($"Program/CurrentProfile: ERROR - Exception while trying to get the name and UUID of the DisplayMagician profile currently in use: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }
@@ -286,6 +367,7 @@ namespace DisplayMagicianConsole
             }
             catch (Exception ex)
             {
+                logger.Error(ex, "Program/AllProfiles: Could not retrieve saved display profiles.");
                 Console.WriteLine($"Program/CurrentProfile: ERROR - Exception while trying to get the list of all saved DisplayMagician profiles: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }            
@@ -361,6 +443,7 @@ namespace DisplayMagicianConsole
             }
             catch (Exception ex)
             {
+                logger.Error(ex, "Program/CreateProfile: Could not create a display profile.");
                 Console.WriteLine($"Program/CreateProfile: ERROR - Exception while creating the display profile: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return ERRORLEVEL.ERROR_EXCEPTION;
             }

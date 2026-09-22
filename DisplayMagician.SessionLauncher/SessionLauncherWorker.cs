@@ -81,7 +81,9 @@ public sealed class SessionLauncherPipeServer
         }
         else
         {
+            using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
             UserAgentLaunchRequest? launchRequest = JsonSerializer.Deserialize<UserAgentLaunchRequest>(request.Payload);
+            using IDisposable? operationScope = launchRequest?.OperationId is Guid operationId && operationId != Guid.Empty ? SupportLogScope.BeginOperation(operationId) : null;
             result = launchRequest == null ? new UserAgentLaunchResult { IsSuccessful = false, Message = "The User Agent launch request was invalid." } : _processLauncher.Launch(launchRequest);
         }
 

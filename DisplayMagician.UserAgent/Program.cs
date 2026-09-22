@@ -65,13 +65,14 @@ internal static class Program
         try
         {
             Directory.CreateDirectory(logPath);
+            SupportLogLayout.Register();
             LoggingConfiguration configuration = new LoggingConfiguration();
             FileTarget fileTarget = new FileTarget("userAgentLog")
             {
                 FileName = Path.Combine(logPath, $"UserAgent-{DateTime.UtcNow.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture)}.log"),
                 MaxArchiveFiles = 4,
                 ArchiveAboveSize = 41943040,
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
+                Layout = "${displaymagicianlog:component=UserAgent}"
             };
             configuration.AddRule(LogLevel.Info, LogLevel.Fatal, fileTarget);
             LogManager.Configuration = configuration;

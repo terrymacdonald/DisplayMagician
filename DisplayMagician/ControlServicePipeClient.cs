@@ -28,6 +28,11 @@ internal sealed class ControlServicePipeClient
 
     public Task<ControlResponse> StartShortcutAsync(string shortcutId, CancellationToken cancellationToken)
     {
+        return StartShortcutAsync(shortcutId, Guid.NewGuid(), cancellationToken);
+    }
+
+    private Task<ControlResponse> StartShortcutAsync(string shortcutId, Guid operationId, CancellationToken cancellationToken)
+    {
         if (string.IsNullOrWhiteSpace(shortcutId))
         {
             return Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID is required." });
@@ -36,7 +41,7 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope
         {
             MessageType = ControlMessageType.StartShortcut,
-            Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId })
+            Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId, OperationId = operationId })
         }, cancellationToken);
     }
 
@@ -56,10 +61,11 @@ internal sealed class ControlServicePipeClient
 
     public async Task<ControlResponse> StartShortcutWhenAgentAvailableAsync(string shortcutId, CancellationToken cancellationToken)
     {
+        Guid operationId = Guid.NewGuid();
         const int maximumAttempts = 40;
         for (int attempt = 1; attempt <= maximumAttempts; attempt++)
         {
-            ControlResponse response = await StartShortcutAsync(shortcutId, cancellationToken).ConfigureAwait(false);
+            ControlResponse response = await StartShortcutAsync(shortcutId, operationId, cancellationToken).ConfigureAwait(false);
             if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
             {
                 return response;

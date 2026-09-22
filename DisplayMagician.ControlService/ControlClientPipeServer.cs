@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -8,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
+using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 using NLog;
 
@@ -74,6 +76,7 @@ public sealed class ControlClientPipeServer
                 return;
             }
 
+            using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
             ControlResponse response;
             if (request.ProtocolVersion != ControlProtocol.CurrentVersion)
             {
@@ -125,12 +128,17 @@ public sealed class ControlClientPipeServer
             : _profileOperationRouter.ApplyProfileAsync(identity.UserSid, identity.SessionId, applyRequest.ProfileId, cancellationToken);
     }
 
-    private Task<ControlResponse> StartShortcutAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
+    private async Task<ControlResponse> StartShortcutAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
     {
         StartShortcutRequest? startRequest = JsonSerializer.Deserialize<StartShortcutRequest>(request.Payload);
-        return startRequest == null
-            ? Task.FromResult(new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The shortcut request was invalid." })
-            : _profileOperationRouter.StartShortcutAsync(identity.UserSid, identity.SessionId, startRequest.ShortcutId, cancellationToken);
+        if (startRequest == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The shortcut request was invalid." };
+        }
+
+        Guid operationId = startRequest.OperationId == Guid.Empty ? Guid.NewGuid() : startRequest.OperationId;
+        using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
+        return await _profileOperationRouter.StartShortcutAsync(identity.UserSid, identity.SessionId, startRequest.ShortcutId, operationId, request.RequestId, cancellationToken).ConfigureAwait(false);
     }
 
     private Task<ControlResponse> CancelOperationAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
@@ -245,26 +253,48 @@ public sealed class ControlClientPipeServer
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A support ZIP destination is required." };
         }
 
-        string stagingPath = Path.Combine(_storagePaths.GetUserPaths(identity.UserSid).BackupsPath, "SupportStaging", Guid.NewGuid().ToString("N"), "MachineLogs");
+        string stagingRoot = Path.Combine(_storagePaths.GetUserPaths(identity.UserSid).BackupsPath, "SupportStaging", Guid.NewGuid().ToString("N"));
+        string machineLogsStagingPath = Path.Combine(stagingRoot, "MachineLogs");
+        string machineConfigurationStagingPath = Path.Combine(stagingRoot, "Configuration", "Machine");
+        List<string> machineCollectionWarnings = new List<string>();
         try
         {
-            Directory.CreateDirectory(stagingPath);
+            Directory.CreateDirectory(machineLogsStagingPath);
             if (Directory.Exists(_storagePaths.MachineLogsPath))
             {
                 foreach (string sourcePath in Directory.EnumerateFiles(_storagePaths.MachineLogsPath, "*", SearchOption.AllDirectories))
                 {
-                    string destinationPath = Path.Combine(stagingPath, Path.GetRelativePath(_storagePaths.MachineLogsPath, sourcePath));
+                    string destinationPath = Path.Combine(machineLogsStagingPath, Path.GetRelativePath(_storagePaths.MachineLogsPath, sourcePath));
                     string? destinationDirectory = Path.GetDirectoryName(destinationPath);
                     if (!string.IsNullOrWhiteSpace(destinationDirectory))
                     {
                         Directory.CreateDirectory(destinationDirectory);
                     }
 
-                    CopyMachineLogFile(sourcePath, destinationPath);
+                    CopyStagedFile(sourcePath, destinationPath);
                 }
             }
 
-            supportBundleRequest.MachineLogsStagingPath = stagingPath;
+            StageInstallerLog(machineLogsStagingPath, machineCollectionWarnings);
+
+            Directory.CreateDirectory(machineConfigurationStagingPath);
+            foreach (string sourcePath in new[]
+            {
+                Path.Combine(_storagePaths.MachinePath, "DisplayControlLease.json"),
+                Path.Combine(_storagePaths.MachinePath, "OperationStatuses.json"),
+                Path.Combine(_storagePaths.MachinePath, "ScheduleState.json"),
+                Path.Combine(_storagePaths.MachineDiagnosticsPath, "RecoveryAdministration.json")
+            })
+            {
+                if (File.Exists(sourcePath))
+                {
+                    CopyStagedFile(sourcePath, Path.Combine(machineConfigurationStagingPath, Path.GetFileName(sourcePath)));
+                }
+            }
+
+            supportBundleRequest.MachineLogsStagingPath = machineLogsStagingPath;
+            supportBundleRequest.MachineConfigurationStagingPath = machineConfigurationStagingPath;
+            supportBundleRequest.MachineCollectionWarnings = machineCollectionWarnings.ToArray();
             request.Payload = JsonSerializer.Serialize(supportBundleRequest);
             return await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false);
         }
@@ -275,19 +305,44 @@ public sealed class ControlClientPipeServer
         }
         finally
         {
-            string? stagingRoot = Directory.GetParent(stagingPath)?.FullName;
-            if (!string.IsNullOrWhiteSpace(stagingRoot) && Directory.Exists(stagingRoot))
+            if (Directory.Exists(stagingRoot))
             {
                 Directory.Delete(stagingRoot, true);
             }
         }
     }
 
-    private static void CopyMachineLogFile(string sourcePath, string destinationPath)
+    private static void CopyStagedFile(string sourcePath, string destinationPath)
     {
         using FileStream source = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         using FileStream destination = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
         source.CopyTo(destination);
+    }
+
+    private static void StageInstallerLog(string machineLogsStagingPath, List<string> warnings)
+    {
+        try
+        {
+            using RegistryKey? registryKey = Registry.LocalMachine.OpenSubKey(@"Software\DisplayMagician", false);
+            string? installerLogPath = registryKey?.GetValue("LastInstallerLogPath") as string;
+            if (string.IsNullOrWhiteSpace(installerLogPath))
+            {
+                return;
+            }
+
+            if (!File.Exists(installerLogPath))
+            {
+                warnings.Add("The last installer transaction log was no longer available.");
+                return;
+            }
+
+            CopyStagedFile(installerLogPath, Path.Combine(machineLogsStagingPath, "Installer-LastTransaction.log"));
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException || ex is ArgumentException || ex is NotSupportedException)
+        {
+            _logger.Warn(ex, "ControlClientPipeServer/StageInstallerLog: The retained installer log could not be staged for the support ZIP.");
+            warnings.Add("The last installer transaction log could not be collected.");
+        }
     }
 
     private ControlResponse ForceReleaseDisplayControl(PipeClientIdentity identity, ControlEnvelope request)

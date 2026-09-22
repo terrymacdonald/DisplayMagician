@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System.Windows.Forms;
+using DisplayMagician.Contracts;
 using DisplayMagician.UIForms;
 using System.Text.RegularExpressions;
 using System.Drawing;
@@ -247,6 +248,7 @@ namespace DisplayMagician {
             //NLog.Common.InternalLogger.LogToConsole = true;
             //NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
 
+            SupportLogLayout.Register();
             var config = new NLog.Config.LoggingConfiguration();
 
             // To enable us to start logging early, set the logLevel to Info, and then later on we can change it if the user wants it different
@@ -276,7 +278,7 @@ namespace DisplayMagician {
                 FileName = appLogFilename,
                 MaxArchiveFiles = 4,
                 ArchiveAboveSize = 41943040, // 40MB max file size
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
+                Layout = "${displaymagicianlog:component=DesktopApp}"
             };
 
             // Create a logging rule to use the log file target
