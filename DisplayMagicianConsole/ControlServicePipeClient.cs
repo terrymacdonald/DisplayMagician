@@ -45,6 +45,45 @@ namespace DisplayMagicianConsole
             }, cancellationToken);
         }
 
+        public async Task<AudioProfileListResult> ListAudioProfilesAsync(CancellationToken cancellationToken)
+        {
+            ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListAudioProfiles }, cancellationToken).ConfigureAwait(false);
+            return response.IsSuccessful && response.AudioProfileList != null ? response.AudioProfileList : throw new InvalidOperationException(response.Message);
+        }
+
+        public Task<ControlResponse> CreateAudioProfileFromCurrentAsync(string name, CancellationToken cancellationToken)
+        {
+            return SendAsync(new ControlEnvelope
+            {
+                MessageType = ControlMessageType.CreateAudioProfileFromCurrent,
+                Payload = JsonSerializer.Serialize(new CreateProfileRequest { Name = name })
+            }, cancellationToken);
+        }
+
+        public Task<ControlResponse> ApplyAudioProfileAsync(string profileId, CancellationToken cancellationToken)
+        {
+            return SendAsync(new ControlEnvelope
+            {
+                MessageType = ControlMessageType.ApplyAudioProfile,
+                Payload = JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = profileId })
+            }, cancellationToken);
+        }
+
+        public async Task<ShortcutListResult> ListShortcutsAsync(CancellationToken cancellationToken)
+        {
+            ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListShortcuts }, cancellationToken).ConfigureAwait(false);
+            return response.IsSuccessful && response.ShortcutList != null ? response.ShortcutList : throw new InvalidOperationException(response.Message);
+        }
+
+        public Task<ControlResponse> StartShortcutAsync(string shortcutId, CancellationToken cancellationToken)
+        {
+            return SendAsync(new ControlEnvelope
+            {
+                MessageType = ControlMessageType.StartShortcut,
+                Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId, OperationId = Guid.NewGuid() })
+            }, cancellationToken);
+        }
+
         public async Task<OperationStatus[]> ListOperationStatusesAsync(CancellationToken cancellationToken)
         {
             ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListOperationStatuses }, cancellationToken).ConfigureAwait(false);

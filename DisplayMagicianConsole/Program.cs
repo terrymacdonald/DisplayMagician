@@ -62,7 +62,7 @@ namespace DisplayMagicianConsole
             CommandOption verbose= app.Option("-v", "Communicate more about what is happening whilst doing it", CommandOptionType.NoValue);
             CommandOption parseable = app.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
 
-            app.Command("OperationStatus", operationStatusCmd =>
+            app.Command("Status", operationStatusCmd =>
             {
                 operationStatusCmd.Description = "List the current and recently completed DisplayMagician operations for this Windows session.";
                 CommandOption parseableStatus = operationStatusCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
@@ -73,7 +73,7 @@ namespace DisplayMagicianConsole
                 });
             });
 
-            app.Command("OperationDecisions", operationDecisionsCmd =>
+            app.Command("ListDecisions", operationDecisionsCmd =>
             {
                 operationDecisionsCmd.Description = "List pending operation decisions that may be answered by this Windows session.";
                 CommandOption parseableDecisions = operationDecisionsCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
@@ -84,12 +84,66 @@ namespace DisplayMagicianConsole
                 });
             });
 
-            app.Command("ResolveOperationDecision", resolveDecisionCmd =>
+            app.Command("AnswerDecision", resolveDecisionCmd =>
             {
                 resolveDecisionCmd.Description = "Answer a pending operation decision. Use Continue or StopAndRestore.";
                 CommandArgument promptId = resolveDecisionCmd.Argument("Prompt_ID", "The pending decision prompt ID.").IsRequired();
                 CommandArgument choice = resolveDecisionCmd.Argument("Choice", "Continue or StopAndRestore.").IsRequired();
                 resolveDecisionCmd.OnExecute(() => (int)ResolveOperationDecision(promptId.Value, choice.Value));
+            });
+
+            app.Command("CreateAudioProfile", createAudioProfileCmd =>
+            {
+                createAudioProfileCmd.Description = "Save the current audio setup as a new audio profile.";
+                CommandArgument name = createAudioProfileCmd.Argument("Name", "The name for the new audio profile.").IsRequired();
+                createAudioProfileCmd.OnExecute(() => (int)CreateAudioProfile(name.Value));
+            });
+
+            app.Command("AllAudioProfiles", allAudioProfilesCmd =>
+            {
+                allAudioProfilesCmd.Description = "List all saved audio profiles.";
+                CommandOption parseableAudioProfiles = allAudioProfilesCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
+                allAudioProfilesCmd.OnExecute(() =>
+                {
+                    if (parseableAudioProfiles.HasValue()) parseableMode = true;
+                    return (int)ListAudioProfiles();
+                });
+            });
+
+            app.Command("CurrentAudioProfile", currentAudioProfileCmd =>
+            {
+                currentAudioProfileCmd.Description = "Show the saved audio profile matching the current audio setup, or UNKNOWN.";
+                CommandOption parseableCurrentAudio = currentAudioProfileCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
+                currentAudioProfileCmd.OnExecute(() =>
+                {
+                    if (parseableCurrentAudio.HasValue()) parseableMode = true;
+                    return (int)CurrentAudioProfile();
+                });
+            });
+
+            app.Command("ChangeAudioProfile", changeAudioProfileCmd =>
+            {
+                changeAudioProfileCmd.Description = "Apply a saved audio profile by UUID or name.";
+                CommandArgument profile = changeAudioProfileCmd.Argument("Profile_UUID|Name", "The UUID or name of the audio profile.").IsRequired();
+                changeAudioProfileCmd.OnExecute(() => (int)ChangeAudioProfile(profile.Value));
+            });
+
+            app.Command("RunShortcut", runShortcutCmd =>
+            {
+                runShortcutCmd.Description = "Run a saved shortcut by UUID or name.";
+                CommandArgument shortcut = runShortcutCmd.Argument("Shortcut_UUID|Name", "The UUID or name of the shortcut.").IsRequired();
+                runShortcutCmd.OnExecute(() => (int)RunShortcut(shortcut.Value));
+            });
+
+            app.Command("AllShortcuts", allShortcutsCmd =>
+            {
+                allShortcutsCmd.Description = "List all saved game, application, and executable shortcuts.";
+                CommandOption parseableShortcuts = allShortcutsCmd.Option("-p", "Make the output easier to parse with regex", CommandOptionType.NoValue);
+                allShortcutsCmd.OnExecute(() =>
+                {
+                    if (parseableShortcuts.HasValue()) parseableMode = true;
+                    return (int)ListShortcuts();
+                });
             });
 
             // This is the ChangeProfile command
@@ -340,6 +394,125 @@ namespace DisplayMagicianConsole
             }
 
             return errLevel;
+        }
+
+        public static ERRORLEVEL CreateAudioProfile(string name)
+        {
+            try
+            {
+                ControlResponse response = _controlServicePipeClient.CreateAudioProfileFromCurrentAsync(name, CancellationToken.None).GetAwaiter().GetResult();
+                Console.WriteLine(response.IsSuccessful ? $"Audio profile '{name}' created." : $"Could not create audio profile '{name}'. {response.Message}");
+                return response.IsSuccessful ? ERRORLEVEL.OK : ERRORLEVEL.ERROR_CREATING_PROFILE;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/CreateAudioProfile: Could not create audio profile {0}.", name);
+                Console.Error.WriteLine($"DisplayMagicianConsole could not create the audio profile: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL ListAudioProfiles()
+        {
+            try
+            {
+                foreach (AudioProfileView profile in _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult().Views)
+                {
+                    Console.WriteLine(parseableMode ? $"{profile.Name}|{profile.Id}" : $"- \"{profile.Name}\" (UUID: \"{profile.Id}\")");
+                }
+
+                return ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ListAudioProfiles: Could not retrieve audio profiles.");
+                Console.Error.WriteLine($"DisplayMagicianConsole could not retrieve audio profiles: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL CurrentAudioProfile()
+        {
+            try
+            {
+                AudioProfileListResult profiles = _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult();
+                AudioProfileView currentProfile = profiles.Views.FirstOrDefault(profile => profile.IsActive) ?? profiles.CurrentLayout;
+                string name = currentProfile?.IsSaved == true ? currentProfile.Name : "UNKNOWN";
+                string id = currentProfile?.IsSaved == true ? currentProfile.Id : "UNKNOWN";
+                Console.WriteLine(parseableMode ? $"{name}|{id}" : $"Current audio profile: \"{name}\" (UUID: \"{id}\")");
+                return ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/CurrentAudioProfile: Could not retrieve current audio profile.");
+                Console.Error.WriteLine($"DisplayMagicianConsole could not retrieve the current audio profile: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL ChangeAudioProfile(string profileIdOrName)
+        {
+            try
+            {
+                AudioProfileView profile = _controlServicePipeClient.ListAudioProfilesAsync(CancellationToken.None).GetAwaiter().GetResult().Views.FirstOrDefault(item => string.Equals(item.Id, profileIdOrName, StringComparison.OrdinalIgnoreCase) || string.Equals(item.Name, profileIdOrName, StringComparison.OrdinalIgnoreCase));
+                if (profile == null)
+                {
+                    Console.Error.WriteLine($"No audio profile named or identified by '{profileIdOrName}' was found.");
+                    return ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
+                }
+
+                ControlResponse response = _controlServicePipeClient.ApplyAudioProfileAsync(profile.Id, CancellationToken.None).GetAwaiter().GetResult();
+                Console.WriteLine(response.IsSuccessful ? $"Audio profile '{profile.Name}' applied." : $"Could not apply audio profile '{profile.Name}'. {response.Message}");
+                return response.IsSuccessful ? ERRORLEVEL.OK : ERRORLEVEL.ERROR_APPLYING_PROFILE;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ChangeAudioProfile: Could not apply audio profile {0}.", profileIdOrName);
+                Console.Error.WriteLine($"DisplayMagicianConsole could not apply the audio profile: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL RunShortcut(string shortcutIdOrName)
+        {
+            try
+            {
+                ShortcutView shortcut = _controlServicePipeClient.ListShortcutsAsync(CancellationToken.None).GetAwaiter().GetResult().Shortcuts.FirstOrDefault(item => string.Equals(item.Id, shortcutIdOrName, StringComparison.OrdinalIgnoreCase) || string.Equals(item.Name, shortcutIdOrName, StringComparison.OrdinalIgnoreCase));
+                if (shortcut == null)
+                {
+                    Console.Error.WriteLine($"No shortcut named or identified by '{shortcutIdOrName}' was found.");
+                    return ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
+                }
+
+                ControlResponse response = _controlServicePipeClient.StartShortcutAsync(shortcut.Id, CancellationToken.None).GetAwaiter().GetResult();
+                Console.WriteLine(response.IsSuccessful ? $"Shortcut '{shortcut.Name}' started." : $"Could not start shortcut '{shortcut.Name}'. {response.Message}");
+                return response.IsSuccessful ? ERRORLEVEL.OK : ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/RunShortcut: Could not start shortcut {0}.", shortcutIdOrName);
+                Console.Error.WriteLine($"DisplayMagicianConsole could not start the shortcut: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL ListShortcuts()
+        {
+            try
+            {
+                foreach (ShortcutView shortcut in _controlServicePipeClient.ListShortcutsAsync(CancellationToken.None).GetAwaiter().GetResult().Shortcuts)
+                {
+                    Console.WriteLine(parseableMode ? $"{shortcut.Name}|{shortcut.Id}|{shortcut.Category}" : $"- \"{shortcut.Name}\" (UUID: \"{shortcut.Id}\", category: {shortcut.Category})");
+                }
+
+                return ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ListShortcuts: Could not retrieve shortcuts.");
+                Console.Error.WriteLine($"DisplayMagicianConsole could not retrieve shortcuts: {ex.Message}");
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
         }
 
         public static ERRORLEVEL ListOperationStatuses()

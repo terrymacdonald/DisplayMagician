@@ -431,6 +431,8 @@ public sealed class AudioProfileView
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public bool IsSaved { get; set; }
+    public bool IsActive { get; set; }
     public string SettingsText { get; set; } = string.Empty;
     public string[] UnavailableDeviceNames { get; set; } = Array.Empty<string>();
 }
@@ -439,6 +441,7 @@ public sealed class AudioProfileListResult
 {
     public ProfileSummary[] Profiles { get; set; } = Array.Empty<ProfileSummary>();
     public AudioProfileView[] Views { get; set; } = Array.Empty<AudioProfileView>();
+    public AudioProfileView? CurrentLayout { get; set; }
     public bool CanAccessAudioSettings { get; set; }
 }
 

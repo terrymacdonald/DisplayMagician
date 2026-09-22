@@ -308,6 +308,10 @@ The service validates named-pipe client SID/session identity. Pipe ACLs must pre
 
 ## Contracts
 
+All DisplayMagician clients, including WinForms, DisplayMagicianConsole, and future paired-device clients, use the same versioned models from `DisplayMagician.Contracts`. A client may format a model differently for its UI, but it must not define a client-specific request, response, list result, or view model for Control Service data. Extend the shared contract once, preserve backward compatibility, and have every client consume that shared type.
+
+For example, display and audio profile lists both expose saved `Profiles`/`Views` plus a `CurrentLayout` view. Saved views identify their state with `IsSaved` and `IsActive`; a current layout that is not saved remains a view with `IsSaved=false`. Shortcut lists deliberately have no `CurrentLayout`, because shortcut activity is represented by the operation-status contract rather than a single current shortcut.
+
 ### Required requests
 
 ```text

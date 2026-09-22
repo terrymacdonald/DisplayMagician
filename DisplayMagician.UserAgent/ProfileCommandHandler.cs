@@ -421,8 +421,11 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.ListAudioProfiles)
         {
-            ProfileSummary[] profiles = AudioProfileRepository.AllAudioProfiles.Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name }).ToArray();
+            AudioProfileItem[] savedProfiles = AudioProfileRepository.AllAudioProfiles.ToArray();
+            AudioProfileRepository.UpdateActiveAudioProfile();
+            ProfileSummary[] profiles = savedProfiles.Select(profile => new ProfileSummary { Id = profile.UUID, Name = profile.Name }).ToArray();
             bool canAccessAudioSettings = AudioProfileRepository.CanAccessAudioSettings;
+            AudioProfileItem? currentProfile = AudioProfileRepository.CurrentAudioProfile;
             return new ControlResponse
             {
                 IsSuccessful = true,
@@ -431,13 +434,8 @@ public sealed class ProfileCommandHandler
                 {
                     Profiles = profiles,
                     CanAccessAudioSettings = canAccessAudioSettings,
-                    Views = AudioProfileRepository.AllAudioProfiles.Select(profile => new AudioProfileView
-                    {
-                        Id = profile.UUID,
-                        Name = profile.Name,
-                        SettingsText = profile.GenerateSettingsText(),
-                        UnavailableDeviceNames = canAccessAudioSettings ? profile.GetUnavailableAudioDeviceNames().ToArray() : Array.Empty<string>()
-                    }).ToArray()
+                    Views = savedProfiles.Select(profile => CreateAudioProfileView(profile, canAccessAudioSettings)).ToArray(),
+                    CurrentLayout = currentProfile == null ? null : CreateAudioProfileView(currentProfile, canAccessAudioSettings, false)
                 }
             };
         }
@@ -715,6 +713,19 @@ public sealed class ProfileCommandHandler
                 ApplyProfileDelay = profile.ApplyProfileDelay,
                 ForceExplorerRestart = profile.ForceExplorerRestart
             }
+        };
+    }
+
+    private static AudioProfileView CreateAudioProfileView(AudioProfileItem profile, bool canAccessAudioSettings, bool isSaved = true)
+    {
+        return new AudioProfileView
+        {
+            Id = profile.UUID,
+            Name = profile.Name,
+            IsSaved = isSaved,
+            IsActive = isSaved && AudioProfileRepository.IsActiveAudioProfile(profile),
+            SettingsText = profile.GenerateSettingsText(),
+            UnavailableDeviceNames = canAccessAudioSettings ? profile.GetUnavailableAudioDeviceNames().ToArray() : Array.Empty<string>()
         };
     }
 
