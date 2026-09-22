@@ -98,6 +98,27 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful ? response.OperationStatuses : throw new InvalidOperationException(response.Message);
     }
 
+    public async Task<OperationDecision> ResolveOperationDecisionAsync(Guid promptId, OperationDecisionChoice choice, CancellationToken cancellationToken)
+    {
+        if (promptId == Guid.Empty || choice == OperationDecisionChoice.Unknown)
+        {
+            throw new ArgumentException("A prompt ID and decision choice are required.");
+        }
+
+        ControlResponse response = await SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.ResolveOperationDecision,
+            Payload = JsonSerializer.Serialize(new ResolveOperationDecisionRequest { PromptId = promptId, Choice = choice })
+        }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.OperationDecision != null ? response.OperationDecision : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<OperationDecision[]> ListOperationDecisionsAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListOperationDecisions }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful ? response.OperationDecisions : throw new InvalidOperationException(response.Message);
+    }
+
     public async Task<ControlServiceStatus> GetServiceStatusAsync(CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetServiceStatus }, cancellationToken).ConfigureAwait(false);

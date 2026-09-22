@@ -613,7 +613,7 @@ public sealed class ProfileCommandHandler
         using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
         try
         {
-            ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(shortcutId, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId).ConfigureAwait(false);
+            ShortcutRunResult result = await _shortcutRunner.ApplyShortcutProfilesAsync(shortcutId, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId, RequestShortcutDecisionAsync).ConfigureAwait(false);
             bool wasSuccessful = result.Outcome == ShortcutRunOutcome.Completed;
             OperationPhase terminalPhase = result.Outcome == ShortcutRunOutcome.Cancelled ? OperationPhase.Cancelled : wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed;
             ControlErrorCode errorCode = wasSuccessful || terminalPhase == OperationPhase.Cancelled ? ControlErrorCode.None : ControlErrorCode.InvalidRequest;
@@ -652,6 +652,11 @@ public sealed class ProfileCommandHandler
 
             operationCancellationSource.Dispose();
         }
+    }
+
+    private Task<OperationDecision> RequestShortcutDecisionAsync(RequestOperationDecisionRequest request, CancellationToken cancellationToken)
+    {
+        return _controlServiceClient.RequestOperationDecisionAsync(_registration, request, cancellationToken);
     }
 
     private async Task PublishShortcutStatusAsync(OperationStatusUpdate update, CancellationToken cancellationToken)

@@ -24,15 +24,17 @@ public sealed class NamedPipeControlServer
     private readonly UserDataMigrationRunner _userDataMigrationRunner;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly ClientSyncCoordinator _clientSyncCoordinator;
+    private readonly OperationDecisionStore _operationDecisionStore;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
-    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator)
+    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, OperationDecisionStore operationDecisionStore)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
         _userDataMigrationRunner = userDataMigrationRunner ?? throw new ArgumentNullException(nameof(userDataMigrationRunner));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
         _clientSyncCoordinator = clientSyncCoordinator ?? throw new ArgumentNullException(nameof(clientSyncCoordinator));
+        _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -243,6 +245,30 @@ public sealed class NamedPipeControlServer
             return;
         }
 
+        if (request.MessageType == ControlMessageType.RequestOperationDecision)
+        {
+            RequestOperationDecisionRequest? decisionRequest = JsonSerializer.Deserialize<RequestOperationDecisionRequest>(request.Payload);
+            if (decisionRequest == null || decisionRequest.OperationId == Guid.Empty || decisionRequest.AllowedChoices.Length == 0 || Array.IndexOf(decisionRequest.AllowedChoices, decisionRequest.DefaultChoice) < 0)
+            {
+                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The operation decision request was invalid.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            DateTime now = DateTime.UtcNow;
+            int timeoutSeconds = Math.Clamp(decisionRequest.TimeoutSeconds, 5, 300);
+            OperationDecision decision = _operationDecisionStore.Create(identity.UserSid, identity.SessionId, decisionRequest.OperationId, decisionRequest.Title, decisionRequest.Message, decisionRequest.AllowedChoices, decisionRequest.DefaultChoice, now.AddSeconds(timeoutSeconds), now);
+            _operationStatusStore.Publish(identity.UserSid, identity.SessionId, new OperationStatusUpdate { OperationId = decisionRequest.OperationId, OperationType = decisionRequest.OperationType, Phase = OperationPhase.AwaitingUserDecision, Message = decisionRequest.Message }, now);
+            Task<OperationDecision> resolutionTask = _operationDecisionStore.WaitForResolutionAsync(decision.PromptId, cancellationToken);
+            if (await Task.WhenAny(resolutionTask, Task.Delay(TimeSpan.FromSeconds(timeoutSeconds), cancellationToken)).ConfigureAwait(false) != resolutionTask)
+            {
+                _operationDecisionStore.Expire(DateTime.UtcNow);
+            }
+
+            OperationDecision resolvedDecision = await resolutionTask.ConfigureAwait(false);
+            await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Operation decision resolved.", cancellationToken, operationDecision: resolvedDecision).ConfigureAwait(false);
+            return;
+        }
+
         if (request.MessageType == ControlMessageType.AcquireDisplayControl)
         {
             LeaseDecision decision;
@@ -328,7 +354,7 @@ public sealed class NamedPipeControlServer
         return new PipeClientIdentity(userSid, process.SessionId, checked((int)processId));
     }
 
-    private static Task SendResultAsync(NamedPipeServerStream pipe, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null)
+    private static Task SendResultAsync(NamedPipeServerStream pipe, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null, OperationDecision? operationDecision = null)
     {
         ControlEnvelope response = new ControlEnvelope
         {
@@ -341,7 +367,8 @@ public sealed class NamedPipeControlServer
                 Message = message,
                 ServiceStatus = serviceStatus,
                 LeaseDecision = leaseDecision,
-                OperationStatus = operationStatus
+                OperationStatus = operationStatus,
+                OperationDecision = operationDecision
             })
         };
 

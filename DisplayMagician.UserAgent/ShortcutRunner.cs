@@ -9,12 +9,14 @@ using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
 using DisplayMagician.Processes;
 using DisplayMagician.GameLibraries;
+using NLog;
 
 namespace DisplayMagician.UserAgent;
 
 /// <summary>Agent-owned shortcut lifecycle and recovery execution.</summary>
 public sealed class ShortcutRunner
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly ShortcutStore _shortcutStore;
     private readonly AutomaticGameDetectionRegistry _automaticGameDetectionRegistry;
     private readonly UserProfileOperationService _profileOperationService;
@@ -48,9 +50,9 @@ public sealed class ShortcutRunner
         return Task.FromResult(new ShortcutRunResult(resolvedOperationId, ShortcutRunOutcome.Prepared, shortcut));
     }
 
-    public async Task<ShortcutRunResult> ApplyShortcutProfilesAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null, Guid? operationId = null)
+    public async Task<ShortcutRunResult> ApplyShortcutProfilesAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null, Guid? operationId = null, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync = null)
     {
-        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: true, isManualRun: true, cancellationToken, publishStatusAsync, operationId).ConfigureAwait(false);
+        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: true, isManualRun: true, cancellationToken, publishStatusAsync, operationId, requestDecisionAsync).ConfigureAwait(false);
     }
 
     public async Task<ShortcutRunResult> ApplyDetectedGameShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null)
@@ -58,7 +60,7 @@ public sealed class ShortcutRunner
         return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: false, isManualRun: false, cancellationToken, publishStatusAsync).ConfigureAwait(false);
     }
 
-    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid? operationId = null)
+    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid? operationId = null, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync = null)
     {
         ShortcutRunResult preparedRun = await PrepareRunAsync(shortcutId, cancellationToken, operationId).ConfigureAwait(false);
         if (preparedRun.Outcome != ShortcutRunOutcome.Prepared || preparedRun.Shortcut == null)
@@ -101,7 +103,8 @@ public sealed class ShortcutRunner
         {
             cancellationToken.ThrowIfCancellationRequested();
             await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingPrograms, "Starting shortcut programs.", cancellationToken).ConfigureAwait(false);
-            if (!RunPreGamePrograms(shortcut, startedPrograms, stoppedProgramsToRestart, cancellationToken))
+            string? preGameProgramFailure = RunPreGamePrograms(shortcut, startedPrograms, stoppedProgramsToRestart, cancellationToken);
+            if (preGameProgramFailure != null && !await ShouldContinueAfterFailureAsync(requestDecisionAsync, preparedRun.OperationId, "Shortcut program step failed", preGameProgramFailure, cancellationToken).ConfigureAwait(false))
             {
                 return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
             }
@@ -111,14 +114,18 @@ public sealed class ShortcutRunner
                 ApplyDisplayProfileOperationResult displayResult = await _profileOperationService.ApplyDisplayProfileAsync(shortcut.ProfileId, cancellationToken).ConfigureAwait(false);
                 if (!displayResult.IsSuccessful)
                 {
-                    return new ShortcutRunResult(preparedRun.OperationId, displayResult.WasCancelled ? ShortcutRunOutcome.Cancelled : ShortcutRunOutcome.Failed, shortcut);
+                    if (displayResult.WasCancelled || !await ShouldContinueAfterFailureAsync(requestDecisionAsync, preparedRun.OperationId, "Display profile could not be applied", "Continue starting the shortcut without applying its display profile?", cancellationToken).ConfigureAwait(false))
+                    {
+                        return new ShortcutRunResult(preparedRun.OperationId, displayResult.WasCancelled ? ShortcutRunOutcome.Cancelled : ShortcutRunOutcome.Failed, shortcut);
+                    }
                 }
             }
 
             if (shouldApplyAudioProfile)
             {
                 await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingAudioProfile, "Applying audio profile.", cancellationToken).ConfigureAwait(false);
-                if (!_profileOperationService.ApplyAudioProfile(shortcut.AudioProfileId, audioDeviceWaitMilliseconds).IsSuccessful)
+                if (!_profileOperationService.ApplyAudioProfile(shortcut.AudioProfileId, audioDeviceWaitMilliseconds).IsSuccessful &&
+                    !await ShouldContinueAfterFailureAsync(requestDecisionAsync, preparedRun.OperationId, "Audio profile could not be applied", "Continue starting the shortcut without applying its audio profile?", cancellationToken).ConfigureAwait(false))
                 {
                     return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                 }
@@ -325,7 +332,7 @@ public sealed class ShortcutRunner
             (!program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments));
     }
 
-    private static bool RunPreGamePrograms(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<ShortcutStopProgramDefinition> stoppedProgramsToRestart, CancellationToken cancellationToken)
+    private static string? RunPreGamePrograms(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<ShortcutStopProgramDefinition> stoppedProgramsToRestart, CancellationToken cancellationToken)
     {
         List<(int Priority, ShortcutStartProgramDefinition? StartProgram, ShortcutStopProgramDefinition? StopProgram)> actions = new List<(int, ShortcutStartProgramDefinition?, ShortcutStopProgramDefinition?)>();
         actions.AddRange(shortcut.StartPrograms.Where(program => !program.Disabled).Select(program => (Priority: program.Priority, StartProgram: (ShortcutStartProgramDefinition?)program, StopProgram: (ShortcutStopProgramDefinition?)null)));
@@ -338,18 +345,50 @@ public sealed class ShortcutRunner
             {
                 if (!StopProgram(stopProgram, stoppedProgramsToRestart))
                 {
-                    return false;
+                    return $"Could not stop '{stopProgram.ExecutablePath}'.";
                 }
                 continue;
             }
 
             if (startProgram == null || !StartProgram(startProgram, startedPrograms))
             {
-                return false;
+                return $"Could not start '{startProgram?.ExecutablePath ?? startProgram?.ApplicationId ?? "the configured program"}'.";
             }
         }
 
-        return true;
+        return null;
+    }
+
+    private static async Task<bool> ShouldContinueAfterFailureAsync(Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, Guid operationId, string title, string message, CancellationToken cancellationToken)
+    {
+        if (requestDecisionAsync == null)
+        {
+            return true;
+        }
+
+        try
+        {
+            OperationDecision decision = await requestDecisionAsync(new RequestOperationDecisionRequest
+            {
+                OperationId = operationId,
+                OperationType = DisplayOperationType.StartShortcut,
+                Title = title,
+                Message = message,
+                AllowedChoices = new[] { OperationDecisionChoice.Continue, OperationDecisionChoice.StopAndRestore },
+                DefaultChoice = OperationDecisionChoice.Continue
+            }, cancellationToken).ConfigureAwait(false);
+            return decision.ResolvedChoice != OperationDecisionChoice.StopAndRestore;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // If the Control Service cannot present the prompt, preserve the product policy: continue toward launching the shortcut.
+            _logger.Warn(ex, "ShortcutRunner/ShouldContinueAfterFailureAsync: Could not request an operation decision for {0}; continuing by default.", operationId);
+            return true;
+        }
     }
 
     private static bool StartProgram(ShortcutStartProgramDefinition program, List<StartedProgram> startedPrograms)

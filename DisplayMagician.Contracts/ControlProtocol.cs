@@ -58,10 +58,13 @@ public enum ControlMessageType
     UpdateAnonymousMetricsSettings = 41,
     InitializeAnonymousMetrics = 42,
     ReportAnonymousMetricsUsage = 43,
+    ListOperationDecisions = 51,
     SubscribeClientEvents = 44,
     ClientEvent = 45,
     ForceReleaseDisplayControl = 47,
-    CreateUserSupportBundle = 48
+    CreateUserSupportBundle = 48,
+    ResolveOperationDecision = 49,
+    RequestOperationDecision = 50
 }
 
 public enum ControlErrorCode
@@ -270,7 +273,69 @@ public enum OperationPhase
     RestoringAudioProfile = 11,
     Completed = 12,
     Cancelled = 13,
-    Failed = 14
+    Failed = 14,
+    AwaitingUserDecision = 15
+}
+
+public enum OperationDecisionChoice
+{
+    Unknown = 0,
+    Continue = 1,
+    StopAndRestore = 2
+}
+
+/// <summary>A service-owned prompt that an authorized client may resolve once for an active operation.</summary>
+public sealed class OperationDecision
+{
+    public Guid PromptId { get; set; }
+
+    public Guid OperationId { get; set; }
+
+    public string OwnerUserSid { get; set; } = string.Empty;
+
+    public int OwnerSessionId { get; set; }
+
+    public string Title { get; set; } = string.Empty;
+
+    public string Message { get; set; } = string.Empty;
+
+    public OperationDecisionChoice[] AllowedChoices { get; set; } = Array.Empty<OperationDecisionChoice>();
+
+    public OperationDecisionChoice DefaultChoice { get; set; } = OperationDecisionChoice.Continue;
+
+    public DateTime CreatedUtc { get; set; }
+
+    public DateTime ExpiresUtc { get; set; }
+
+    public bool IsResolved { get; set; }
+
+    public OperationDecisionChoice ResolvedChoice { get; set; }
+
+    public DateTime? ResolvedUtc { get; set; }
+}
+
+public sealed class ResolveOperationDecisionRequest
+{
+    public Guid PromptId { get; set; }
+
+    public OperationDecisionChoice Choice { get; set; }
+}
+
+public sealed class RequestOperationDecisionRequest
+{
+    public Guid OperationId { get; set; }
+
+    public DisplayOperationType OperationType { get; set; }
+
+    public string Title { get; set; } = string.Empty;
+
+    public string Message { get; set; } = string.Empty;
+
+    public OperationDecisionChoice[] AllowedChoices { get; set; } = Array.Empty<OperationDecisionChoice>();
+
+    public OperationDecisionChoice DefaultChoice { get; set; } = OperationDecisionChoice.Continue;
+
+    public int TimeoutSeconds { get; set; } = 60;
 }
 
 /// <summary>Published by the User Agent as a shortcut or profile operation progresses.</summary>
@@ -534,6 +599,10 @@ public sealed class ControlResponse
     public OperationStatus? OperationStatus { get; set; }
 
     public OperationStatus[] OperationStatuses { get; set; } = Array.Empty<OperationStatus>();
+
+    public OperationDecision? OperationDecision { get; set; }
+
+    public OperationDecision[] OperationDecisions { get; set; } = Array.Empty<OperationDecision>();
 
     public GameListResult? GameList { get; set; }
 

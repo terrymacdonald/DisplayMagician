@@ -588,7 +588,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Delete the now-unreachable legacy `ShortcutRepository.RunShortcut` implementation and its direct process/game runtime dependencies.
 - [x] The WiX payload publishes/installs ControlService, SessionLauncher, and UserAgent together.
 
-### Phase A — Structure and IPC
+### Phase A â€” Structure and IPC
 
 - [x] Create Contracts, ControlService, and UserAgent projects.
 - [x] Add protocol versioning and common result/error models.
@@ -601,7 +601,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** Service can show a verified Agent SID/session and deny a second conflicting display lease.
 
-### Phase B — Storage and migration
+### Phase B â€” Storage and migration
 
 - [x] Add ProgramData storage abstraction and per-SID paths.
 - [x] Add safe write/backup helpers.
@@ -615,7 +615,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** Existing DM user sees unchanged data after migration; legacy files remain as `.old`; repeated startup does not import duplicates.
 
-### Phase C — First end-to-end profile operation
+### Phase C â€” First end-to-end profile operation
 
 - [x] Implement `ListProfiles` through service/repositories.
 - [x] Refactor WinForms profile list to use service requests.
@@ -627,7 +627,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** Active console user applies their own migrated profile; another session is denied.
 
-### Phase D — Shortcut lifecycle and recovery
+### Phase D â€” Shortcut lifecycle and recovery
 
 - [x] Move the Agent shortcut execution foundation into UserAgent.
 - [x] Preserve pre/after/stop programs, audio volume overrides, temporary restoration, and recovery records in the Agent runner.
@@ -639,7 +639,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** An ordinary game shortcut applies temporary state, monitors correctly, handles cancellation, and restores state after exit.
 
-### Phase E — Security, background ownership, and diagnostics
+### Phase E â€” Security, background ownership, and diagnostics
 
 - [x] Move anonymous metrics ownership to service.
 - [x] Move the existing combined client-sync download and update scheduling to Control Service as one machine-level request; route each user's message payload to that user's UserAgent without splitting the server document or increasing polling.
@@ -661,7 +661,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** Local clients and Agents are identity-verified and remote callers are rejected; one machine produces one metrics/client-sync schedule regardless of UI/Agent count; user messages remain per-user Agent data; WinForms is a UI/cache and Control Service client rather than a second runtime owner; diagnostics and recovery actions are auditable.
 
-### Phase E Part 2 — Unified support logging and timeline contract
+### Phase E Part 2 â€” Unified support logging and timeline contract
 
 **Purpose:** Before deployment hardening, make every retained diagnostic event and configuration snapshot suitable for one user-facing Support ZIP and deterministic import into a future separate administrator timeline application. This phase does not create the administrator application; it defines and implements the stable data contract it will consume.
 
@@ -692,7 +692,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Add shared logging/correlation support or equivalent common layout configuration so escaping, field order, UTC rendering, component identity, and absent-ID representation cannot drift between hosts.
 - [x] Define redaction rules before adoption: never log secrets, tokens, passwords, pairing credentials, or unrestricted command arguments; reduce personally identifying paths and values where diagnostic value does not require them.
 
-#### NLog source migration — all C# files
+#### NLog source migration â€” all C# files
 
 - [x] Audit direct NLog calls in every C# file under `DisplayMagician`, `DisplayMagicianConsole`, `DisplayMagician.UserAgent`, `DisplayMagician.ControlService`, and `DisplayMagician.SessionLauncher` with `verify_log_message_formatting.ps1`. It accepts `ClassName/MethodName:` and `ClassName/~MethodName:` source forms.
 - [x] Review the audit findings; retain DesktopConsole stdout/stderr as intentional end-user command output and correct every nonstandard retained NLog source prefix.
@@ -747,7 +747,40 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** All five runtime hosts emit the common one-line event contract to retained logs; meaningful cross-process work carries stable request/operation correlation; a Support ZIP contains retained runtime logs plus approved user and machine configuration with an accurate manifest; and the administrator timeline application has a documented, tested import contract and representative fixtures.
 
-### Phase F — Deployment hardening
+### Phase E Part 3 â€” Shared operation status and user decisions
+
+**Purpose:** Make Control Service the durable authority for user-visible operation progress and required decisions. Every authorized interface for a user may observe an operation; any authorized associated device may answer a pending decision exactly once. This phase establishes the transport-neutral contract and the WinForms implementation before later paired-device and relay work.
+
+#### Shared operation contract
+
+- [x] Keep `OperationStatus` service-owned, durable, ordered by per-operation sequence, and available by poll or subscription to the owner user/session.
+- [x] Publish progress, success, cancellation, and failure status from UserAgent through ControlService to every authorized subscriber for that user/session. Do not make UserAgent present UI directly.
+- [x] Add a first-class `OperationDecisionRequest` with an immutable prompt ID, operation ID, message/details, bounded choices, creation/expiry times, and default choice.
+- [x] Represent a pending decision as an explicit `AwaitingUserDecision` operation phase. The service alone resolves it using an atomic first-valid-response-wins rule, broadcasts the resolved outcome, and rejects late/duplicate responses.
+- [x] Use **Continue** as the default for an optional shortcut-step failure: display-profile apply, audio-profile apply, start-program, or stop-program failure continues shortcut execution using the current machine state when no answer arrives. Do not use a prompt where continuing is impossible or unsafe; report a terminal failure instead.
+- [x] Preserve stable operation IDs and correlation fields across status, prompts, decisions, retries, restoration, and terminal records.
+
+#### Client behaviour
+
+- [x] WinForms subscribes to operation status events and shows non-intrusive toast updates for progress, completion, cancellation, and failure, regardless of whether WinForms, DesktopConsole, or a future client initiated the operation.
+- [x] WinForms presents a modal dialog only for a pending decision; it submits the selected choice to ControlService and closes when another authorized client resolves the prompt first.
+- [x] DesktopConsole and future clients retain poll/subscribe access and can render their own progress/decision UX. They must never depend on WinForms being running.
+- [ ] Define an operation origin and notification preference for future clients without trusting unverified client-supplied identity. The current same-user/session broadcast remains the default.
+
+#### Future device transport boundary
+
+- [x] Keep the status/prompt/decision payloads independent of WinForms and named-pipe implementation so Phase G paired local clients, a Stream Deck integration, and a future relay/phone/watch client can use the same state machine.
+- [ ] Restrict observation and responses to authenticated devices associated with the operation owner. Device authorization, pairing, remote delivery, and push notifications remain Phase G and later work.
+
+#### Verification
+
+- [ ] Unit-test ordered status publication, operation correlation, default Continue on expiry, first-valid-response-wins, duplicate/late rejection, and display/audio/start-program/stop-program recovery or terminal transitions.
+- [ ] Test WinForms event handling for externally initiated shortcut progress and terminal toast behaviour.
+- [ ] Test a required decision in WinForms, and verify a response from another authorized client closes the local prompt without sending a duplicate decision.
+
+**Exit criteria:** WinForms visibly reports same-user/session operation progress and outcomes from ControlService; the service contract supports durable, shared, single-resolution decisions with Continue as the optional display-failure default; later paired clients can use the same contract without changing UserAgent operation semantics.
+
+### Phase F â€” Deployment hardening
 
 - [x] Package and install ControlService, SessionLauncher, and UserAgent with the WinForms and Console clients.
 - [x] Create ProgramData directories and least-privilege ACLs for machine/service and per-SID Agent storage.
@@ -757,7 +790,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** A fresh install, upgrade, repair, and uninstall/reinstall deploy and recover the Control Service, SessionLauncher, UserAgent, WinForms, and Console without losing user data.
 
-### Phase G — Local REST foundation
+### Phase G â€” Local REST foundation
 
 - [ ] Add disabled-by-default loopback API host.
 - [ ] Add identity/status endpoints.
@@ -767,14 +800,14 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 
 **Exit criteria:** Paired local test client can list/apply permitted profiles; unpaired client cannot.
 
-### Phase H — Final v4.0.0 work — Steam Big Picture
+### Phase H â€” Final v4.0.0 work â€” Steam Big Picture
 
 - [ ] Add synthetic Steam Big Picture `SteamGame` behaviour, including Agent-side launch and running detection.
 - [ ] Add Big Picture lifecycle and temporary-state restoration parity tests.
 
 **Exit criteria:** Big Picture behaves as a normal game shortcut and restores temporary state after it exits.
 
-### Phase I — Final verification and release readiness
+### Phase I â€” Final verification and release readiness
 
 - [ ] Run session/hardware/manual matrix.
 - [ ] Build Diagnostics/support documentation.

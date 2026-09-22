@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Drawing;
 using NLog.Config;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Threading;
@@ -91,6 +92,9 @@ namespace DisplayMagician {
         private static SynchronizationContext _mainSynchronizationContext;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
         private static readonly CancellationTokenSource _clientEventListenerCancellationSource = new CancellationTokenSource();
+        private static readonly ConcurrentDictionary<Guid, long> _lastOperationStatusSequences = new ConcurrentDictionary<Guid, long>();
+        private static readonly ConcurrentDictionary<Guid, byte> _displayedOperationDecisionPrompts = new ConcurrentDictionary<Guid, byte>();
+        private static readonly ConcurrentDictionary<Guid, OperationDecisionForm> _operationDecisionForms = new ConcurrentDictionary<Guid, OperationDecisionForm>();
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
 
@@ -1293,6 +1297,12 @@ namespace DisplayMagician {
             {
                 try
                 {
+                    OperationDecision[] pendingDecisions = await new ControlServicePipeClient().ListOperationDecisionsAsync(cancellationToken).ConfigureAwait(false);
+                    foreach (OperationDecision decision in pendingDecisions)
+                    {
+                        _mainSynchronizationContext?.Post(_ => HandleOperationDecisionEvent(decision), null);
+                    }
+
                     await new ControlServicePipeClient().SubscribeClientEventsAsync(HandleControlServiceEventAsync, cancellationToken);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -1320,8 +1330,82 @@ namespace DisplayMagician {
             {
                 _mainSynchronizationContext?.Post(_ => HandleClientSyncEvent(clientEvent.ClientSync), null);
             }
+            else if (clientEvent.EventType == ControlClientEventType.OperationStatusUpdated && clientEvent.OperationStatus != null)
+            {
+                _mainSynchronizationContext?.Post(_ => HandleOperationStatusEvent(clientEvent.OperationStatus), null);
+            }
+            else if (clientEvent.EventType == ControlClientEventType.OperationDecisionUpdated && clientEvent.OperationDecision != null)
+            {
+                _mainSynchronizationContext?.Post(_ => HandleOperationDecisionEvent(clientEvent.OperationDecision), null);
+            }
 
             return Task.CompletedTask;
+        }
+
+        private static void HandleOperationStatusEvent(OperationStatus status)
+        {
+            if (_lastOperationStatusSequences.TryGetValue(status.OperationId, out long lastSequence) && status.Sequence <= lastSequence)
+            {
+                return;
+            }
+
+            _lastOperationStatusSequences[status.OperationId] = status.Sequence;
+            if (status.IsTerminal)
+            {
+                _lastOperationStatusSequences.TryRemove(status.OperationId, out _);
+            }
+
+            ShowOperationStatusToast(status);
+        }
+
+        private static void HandleOperationDecisionEvent(OperationDecision decision)
+        {
+            if (decision.IsResolved)
+            {
+                if (_operationDecisionForms.TryRemove(decision.PromptId, out OperationDecisionForm activeForm) && !activeForm.IsDisposed)
+                {
+                    activeForm.CloseBecauseAnotherClientResponded();
+                }
+
+                _displayedOperationDecisionPrompts.TryRemove(decision.PromptId, out _);
+                return;
+            }
+
+            if (!_displayedOperationDecisionPrompts.TryAdd(decision.PromptId, 0))
+            {
+                return;
+            }
+
+            using OperationDecisionForm form = new OperationDecisionForm(decision);
+            _operationDecisionForms[decision.PromptId] = form;
+            try
+            {
+                form.ShowDialog(AppMainForm);
+                if (!form.WasResolvedByAnotherClient)
+                {
+                    _ = ResolveOperationDecisionAsync(decision.PromptId, form.SelectedChoice);
+                }
+            }
+            finally
+            {
+                _operationDecisionForms.TryRemove(decision.PromptId, out _);
+            }
+        }
+
+        private static async Task ResolveOperationDecisionAsync(Guid promptId, OperationDecisionChoice choice)
+        {
+            try
+            {
+                await new ControlServicePipeClient().ResolveOperationDecisionAsync(promptId, choice, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/ResolveOperationDecisionAsync: Could not resolve operation decision {0}; the Control Service will use its Continue default.", promptId);
+            }
+            finally
+            {
+                _displayedOperationDecisionPrompts.TryRemove(promptId, out _);
+            }
         }
 
         private static void HandleClientSyncEvent(DisplayMagician.Contracts.ClientSyncResult syncResult)
@@ -1501,6 +1585,38 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 logger.Warn(ex, $"Program/ShowNewMessagesToast: Could not show messages toast.");
+            }
+        }
+
+        private static void ShowOperationStatusToast(OperationStatus status)
+        {
+            try
+            {
+                string operationName = status.OperationType == DisplayOperationType.StartShortcut ? "Game shortcut" : "Display operation";
+                string outcome = status.Phase switch
+                {
+                    OperationPhase.Completed => "completed",
+                    OperationPhase.Cancelled => "cancelled",
+                    OperationPhase.Failed => "failed",
+                    _ => "update"
+                };
+                string headerText = status.IsTerminal ? $"{operationName} {outcome}" : $"{operationName}: {status.Phase}";
+                string message = string.IsNullOrWhiteSpace(status.Message) ? "DisplayMagician is processing your request." : status.Message;
+
+                ToastContentBuilder toast = new ToastContentBuilder()
+                    .AddText(headerText, hintMaxLines: 1)
+                    .AddText(message)
+                    .SetToastDuration(ToastDuration.Short);
+                if (status.IsTerminal)
+                {
+                    toast.AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
+                }
+
+                toast.Show();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/ShowOperationStatusToast: Could not show operation status toast for {0} sequence {1}.", status.OperationId, status.Sequence);
             }
         }
 

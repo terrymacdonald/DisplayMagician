@@ -154,6 +154,25 @@ public sealed class ControlServiceClient
         return statusResponse.OperationStatus;
     }
 
+    public async Task<OperationDecision> RequestOperationDecisionAsync(AgentRegistration registration, RequestOperationDecisionRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(registration);
+        ArgumentNullException.ThrowIfNull(request);
+
+        using NamedPipeClientStream pipe = await ConnectRegisteredAgentPipeAsync(registration, cancellationToken).ConfigureAwait(false);
+        ControlResponse response = await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.RequestOperationDecision,
+            Payload = JsonSerializer.Serialize(request)
+        }, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessful || response.OperationDecision == null)
+        {
+            throw new InvalidOperationException(response.Message);
+        }
+
+        return response.OperationDecision;
+    }
+
     private static async Task<NamedPipeClientStream> ConnectRegisteredAgentPipeAsync(AgentRegistration registration, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);

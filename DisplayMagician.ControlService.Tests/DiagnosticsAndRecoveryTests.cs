@@ -9,6 +9,36 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class DiagnosticsAndRecoveryTests
 {
     [Fact]
+    public void OperationDecisionStore_UsesFirstValidResponseAndDefaultsToContinueOnExpiry()
+    {
+        string storageRoot = CreateStorageRoot();
+        try
+        {
+            OperationDecisionStore store = new OperationDecisionStore(new StoragePaths(storageRoot));
+            DateTime now = DateTime.UtcNow;
+            OperationDecision decision = store.Create("S-1-5-21-100", 10, Guid.NewGuid(), "Display profile failed", "Continue with the current display configuration?", new[] { OperationDecisionChoice.Continue, OperationDecisionChoice.StopAndRestore }, OperationDecisionChoice.Continue, now.AddMinutes(1), now);
+
+            Assert.Equal(decision.PromptId, Assert.Single(store.GetPending("S-1-5-21-100", 10)).PromptId);
+            Assert.Empty(store.GetPending("S-1-5-21-999", 10));
+            Assert.Null(store.Resolve("S-1-5-21-999", 10, decision.PromptId, OperationDecisionChoice.StopAndRestore, now));
+            OperationDecision? resolved = store.Resolve("S-1-5-21-100", 10, decision.PromptId, OperationDecisionChoice.StopAndRestore, now);
+            Assert.NotNull(resolved);
+            Assert.Equal(OperationDecisionChoice.StopAndRestore, resolved!.ResolvedChoice);
+            Assert.Empty(store.GetPending("S-1-5-21-100", 10));
+            Assert.Null(store.Resolve("S-1-5-21-100", 10, decision.PromptId, OperationDecisionChoice.Continue, now));
+
+            OperationDecision expiringDecision = store.Create("S-1-5-21-100", 10, Guid.NewGuid(), "Audio profile failed", "Continue with current audio?", new[] { OperationDecisionChoice.Continue, OperationDecisionChoice.StopAndRestore }, OperationDecisionChoice.Continue, now.AddSeconds(1), now);
+            OperationDecision expired = Assert.Single(store.Expire(now.AddSeconds(2)));
+            Assert.Equal(expiringDecision.PromptId, expired.PromptId);
+            Assert.Equal(OperationDecisionChoice.Continue, expired.ResolvedChoice);
+        }
+        finally
+        {
+            DeleteStorageRoot(storageRoot);
+        }
+    }
+
+    [Fact]
     public void Append_WritesDurableStructuredAuditRecord()
     {
         string storageRoot = CreateStorageRoot();

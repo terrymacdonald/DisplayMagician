@@ -27,6 +27,7 @@ internal static class Program
         builder.Services.AddSingleton<UserDataMigrationRunner>();
         builder.Services.AddSingleton<ControlStateCoordinator>();
         builder.Services.AddSingleton<OperationStatusStore>();
+        builder.Services.AddSingleton<OperationDecisionStore>();
         builder.Services.AddSingleton<ControlClientEventHub>();
         builder.Services.AddSingleton<IAgentCommandClient, AgentCommandClient>();
         builder.Services.AddSingleton<ClientSyncCoordinator>();

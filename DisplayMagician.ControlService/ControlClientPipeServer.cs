@@ -25,9 +25,10 @@ public sealed class ControlClientPipeServer
     private readonly ControlStateCoordinator _stateCoordinator;
     private readonly AuditStore _auditStore;
     private readonly RecoveryAdministrationStore _recoveryAdministrationStore;
+    private readonly OperationDecisionStore _operationDecisionStore;
     private readonly StoragePaths _storagePaths;
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, StoragePaths storagePaths)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
@@ -36,6 +37,7 @@ public sealed class ControlClientPipeServer
         _stateCoordinator = stateCoordinator ?? throw new ArgumentNullException(nameof(stateCoordinator));
         _auditStore = auditStore ?? throw new ArgumentNullException(nameof(auditStore));
         _recoveryAdministrationStore = recoveryAdministrationStore ?? throw new ArgumentNullException(nameof(recoveryAdministrationStore));
+        _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
     }
 
@@ -105,6 +107,8 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.CreateUserSupportBundle => await CreateUserSupportBundleAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                    ControlMessageType.ResolveOperationDecision => ResolveOperationDecision(identity, request),
+                    ControlMessageType.ListOperationDecisions => ListOperationDecisions(identity),
                     ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
                     ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
                     ControlMessageType.GetServiceStatus => GetServiceStatus(),
@@ -222,6 +226,25 @@ public sealed class ControlClientPipeServer
         return new ControlResponse { IsSuccessful = true, Message = "Control Service status returned.", ServiceStatus = status };
     }
 
+    private ControlResponse ResolveOperationDecision(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        ResolveOperationDecisionRequest? resolution = JsonSerializer.Deserialize<ResolveOperationDecisionRequest>(request.Payload);
+        if (resolution == null || resolution.PromptId == Guid.Empty || resolution.Choice == OperationDecisionChoice.Unknown)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A valid operation decision is required." };
+        }
+
+        OperationDecision? decision = _operationDecisionStore.Resolve(identity.UserSid, identity.SessionId, resolution.PromptId, resolution.Choice, DateTime.UtcNow);
+        return decision == null
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The operation decision is unavailable, expired, or has already been resolved." }
+            : new ControlResponse { IsSuccessful = true, Message = "Operation decision recorded.", OperationDecision = decision };
+    }
+
+    private ControlResponse ListOperationDecisions(PipeClientIdentity identity)
+    {
+        return new ControlResponse { IsSuccessful = true, Message = "Pending operation decisions returned.", OperationDecisions = _operationDecisionStore.GetPending(identity.UserSid, identity.SessionId) };
+    }
+
     private async Task<ControlResponse> CreateUserSupportBundleAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
     {
         CreateUserSupportBundleRequest? supportBundleRequest = JsonSerializer.Deserialize<CreateUserSupportBundleRequest>(request.Payload);
@@ -258,6 +281,7 @@ public sealed class ControlClientPipeServer
             foreach (string sourcePath in new[]
             {
                 Path.Combine(_storagePaths.MachinePath, "DisplayControlLease.json"),
+                Path.Combine(_storagePaths.MachinePath, "OperationDecisions.json"),
                 Path.Combine(_storagePaths.MachinePath, "OperationStatuses.json"),
                 Path.Combine(_storagePaths.MachinePath, "ScheduleState.json"),
                 Path.Combine(_storagePaths.MachineDiagnosticsPath, "RecoveryAdministration.json")
