@@ -48,6 +48,47 @@ public sealed class ClientSyncCoordinatorTests
         }
     }
 
+    [Fact]
+    public async Task SyncAsync_TreatsAnHttpTimeoutAsARecoverableFailure()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            using HttpClient httpClient = new HttpClient(new TimeoutHandler());
+            ClientSyncCoordinator coordinator = new ClientSyncCoordinator(httpClient, new MachineScheduleCoordinator(new MachineScheduleStore(new StoragePaths(storageRoot))), new ControlStateCoordinator(), new RecordingAgentCommandClient());
+
+            ClientSyncResult result = await coordinator.SyncAsync(new ClientSyncRequest { IsManual = true }, null, null, CancellationToken.None);
+
+            Assert.False(result.WasDue);
+        }
+        finally
+        {
+            if (Directory.Exists(storageRoot))
+            {
+                Directory.Delete(storageRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SyncAsync_TreatsAnUnavailableScheduleStoreAsARecoverableFailure()
+    {
+        string storageRoot = Path.GetTempFileName();
+        try
+        {
+            using HttpClient httpClient = new HttpClient(new StaticDocumentHandler(CreateDocument()));
+            ClientSyncCoordinator coordinator = new ClientSyncCoordinator(httpClient, new MachineScheduleCoordinator(new MachineScheduleStore(new StoragePaths(storageRoot))), new ControlStateCoordinator(), new RecordingAgentCommandClient());
+
+            ClientSyncResult result = await coordinator.SyncAsync(new ClientSyncRequest(), null, null, CancellationToken.None);
+
+            Assert.False(result.WasDue);
+        }
+        finally
+        {
+            File.Delete(storageRoot);
+        }
+    }
+
     private static string CreateDocument()
     {
         const string hash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
@@ -76,6 +117,14 @@ public sealed class ClientSyncCoordinatorTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(_document, Encoding.UTF8, "application/json") });
+        }
+    }
+
+    private sealed class TimeoutHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            return Task.FromCanceled<HttpResponseMessage>(new CancellationToken(canceled: true));
         }
     }
 

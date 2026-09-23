@@ -375,10 +375,22 @@ public sealed class ControlClientPipeServer
         }
         finally
         {
+            DeleteSupportStagingDirectory(stagingRoot);
+        }
+    }
+
+    private static void DeleteSupportStagingDirectory(string stagingRoot)
+    {
+        try
+        {
             if (Directory.Exists(stagingRoot))
             {
                 Directory.Delete(stagingRoot, true);
             }
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+        {
+            _logger.Warn(ex, "ControlClientPipeServer/DeleteSupportStagingDirectory: Could not remove support ZIP staging directory {0}. It was left in place for later cleanup.", stagingRoot);
         }
     }
 

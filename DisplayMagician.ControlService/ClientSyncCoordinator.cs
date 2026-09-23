@@ -46,11 +46,6 @@ public sealed class ClientSyncCoordinator
     {
         ArgumentNullException.ThrowIfNull(request);
         DateTime now = DateTime.UtcNow;
-        if (!request.IsManual && !_machineScheduleCoordinator.IsClientSyncDue(now))
-        {
-            return new ClientSyncResult { WasDue = false };
-        }
-
         await _syncGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -63,7 +58,7 @@ public sealed class ClientSyncCoordinator
             ClientSyncSnapshot? snapshot = await DownloadAndValidateAsync(cancellationToken).ConfigureAwait(false);
             if (snapshot == null)
             {
-                _machineScheduleCoordinator.RecordClientSyncFailure(now);
+                RecordClientSyncFailure(now);
                 return new ClientSyncResult();
             }
 
@@ -78,15 +73,33 @@ public sealed class ClientSyncCoordinator
                 MessageSync = requestingMessageResult
             };
         }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            RecordClientSyncFailure(now);
+            Logger.Warn(ex, "ClientSyncCoordinator/SyncAsync: Combined client sync timed out.");
+            return new ClientSyncResult();
+        }
         catch (Exception ex) when (ex is HttpRequestException || ex is JsonException || ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
         {
-            _machineScheduleCoordinator.RecordClientSyncFailure(now);
+            RecordClientSyncFailure(now);
             Logger.Warn(ex, "ClientSyncCoordinator/SyncAsync: Combined client sync failed.");
             return new ClientSyncResult();
         }
         finally
         {
             _syncGate.Release();
+        }
+    }
+
+    private void RecordClientSyncFailure(DateTime utcNow)
+    {
+        try
+        {
+            _machineScheduleCoordinator.RecordClientSyncFailure(utcNow);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException)
+        {
+            Logger.Error(ex, "ClientSyncCoordinator/RecordClientSyncFailure: Could not record the combined client-sync failure.");
         }
     }
 
