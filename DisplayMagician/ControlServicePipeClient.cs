@@ -19,19 +19,25 @@ internal sealed class ControlServicePipeClient
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID is required." };
         }
 
-        return await SendAsync(new ControlEnvelope
+        return await ApplyProfileAsync(profileId, Guid.NewGuid(), cancellationToken).ConfigureAwait(false);
+    }
+
+    private static Task<ControlResponse> ApplyProfileAsync(string profileId, Guid requestId, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope
         {
             MessageType = ControlMessageType.ApplyProfile,
+            RequestId = requestId,
             Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
-        }, cancellationToken).ConfigureAwait(false);
+        }, cancellationToken);
     }
 
     public Task<ControlResponse> StartShortcutAsync(string shortcutId, CancellationToken cancellationToken)
     {
-        return StartShortcutAsync(shortcutId, Guid.NewGuid(), cancellationToken);
+        return StartShortcutAsync(shortcutId, Guid.NewGuid(), Guid.NewGuid(), cancellationToken);
     }
 
-    private Task<ControlResponse> StartShortcutAsync(string shortcutId, Guid operationId, CancellationToken cancellationToken)
+    private Task<ControlResponse> StartShortcutAsync(string shortcutId, Guid operationId, Guid requestId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(shortcutId))
         {
@@ -41,6 +47,7 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope
         {
             MessageType = ControlMessageType.StartShortcut,
+            RequestId = requestId,
             Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId, OperationId = operationId })
         }, cancellationToken);
     }
@@ -62,10 +69,11 @@ internal sealed class ControlServicePipeClient
     public async Task<ControlResponse> StartShortcutWhenAgentAvailableAsync(string shortcutId, CancellationToken cancellationToken)
     {
         Guid operationId = Guid.NewGuid();
+        Guid requestId = Guid.NewGuid();
         const int maximumAttempts = 40;
         for (int attempt = 1; attempt <= maximumAttempts; attempt++)
         {
-            ControlResponse response = await StartShortcutAsync(shortcutId, operationId, cancellationToken).ConfigureAwait(false);
+            ControlResponse response = await StartShortcutAsync(shortcutId, operationId, requestId, cancellationToken).ConfigureAwait(false);
             if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
             {
                 return response;
@@ -127,10 +135,11 @@ internal sealed class ControlServicePipeClient
 
     public async Task<ControlResponse> ApplyProfileWhenAgentAvailableAsync(string profileId, CancellationToken cancellationToken)
     {
+        Guid requestId = Guid.NewGuid();
         const int maximumAttempts = 40;
         for (int attempt = 1; attempt <= maximumAttempts; attempt++)
         {
-            ControlResponse response = await ApplyProfileAsync(profileId, cancellationToken).ConfigureAwait(false);
+            ControlResponse response = await ApplyProfileAsync(profileId, requestId, cancellationToken).ConfigureAwait(false);
             if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
             {
                 return response;
@@ -262,13 +271,9 @@ internal sealed class ControlServicePipeClient
         }, cancellationToken);
     }
 
-    public Task<ControlResponse> ForceReleaseDisplayControlAsync(string confirmation, CancellationToken cancellationToken)
+    public Task<ControlResponse> ForceReleaseDisplayControlAsync(CancellationToken cancellationToken)
     {
-        return SendAsync(new ControlEnvelope
-        {
-            MessageType = ControlMessageType.ForceReleaseDisplayControl,
-            Payload = JsonSerializer.Serialize(new ForceReleaseDisplayControlRequest { Confirmation = confirmation ?? string.Empty })
-        }, cancellationToken);
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ForceReleaseDisplayControl }, cancellationToken);
     }
 
     public Task<ControlResponse> RecordRecoveryAdministrationAsync(string action, string outcome, CancellationToken cancellationToken)
@@ -348,11 +353,10 @@ internal sealed class ControlServicePipeClient
     {
         ArgumentNullException.ThrowIfNull(onEvent);
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientEventPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await pipe.ConnectAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+        await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.SubscribeClientEvents };
-        await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-        ControlEnvelope response = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
-        if (response == null || response.RequestId != request.RequestId)
+        ControlEnvelope response = await SendAndReceiveEnvelopeAsync(pipe, request, cancellationToken).ConfigureAwait(false);
+        if (response.MessageType != ControlMessageType.SubscribeClientEvents)
         {
             throw new InvalidDataException("The Control Service returned an invalid event subscription response.");
         }
@@ -401,15 +405,32 @@ internal sealed class ControlServicePipeClient
     private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await pipe.ConnectAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
-        await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-        ControlEnvelope response = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
-        if (response == null || response.RequestId != request.RequestId)
-        {
-            throw new InvalidDataException("The Control Service returned an invalid response.");
-        }
+        await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
+        ControlEnvelope response = await SendAndReceiveEnvelopeAsync(pipe, request, cancellationToken).ConfigureAwait(false);
 
         return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
             ?? throw new InvalidDataException("The Control Service returned an unreadable response.");
+    }
+
+    private static async Task<ControlEnvelope> SendAndReceiveEnvelopeAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(ControlProtocol.ResponseTimeout);
+        try
+        {
+            await ControlEnvelopeSerializer.WriteAsync(pipe, request, timeoutSource.Token).ConfigureAwait(false);
+            ControlEnvelope response = await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutSource.Token).ConfigureAwait(false)
+                ?? throw new InvalidDataException("The Control Service returned an invalid response.");
+            if (response == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType)
+            {
+                throw new InvalidDataException("The Control Service returned an invalid response.");
+            }
+
+            return response;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("The Control Service did not respond within the permitted time.");
+        }
     }
 }

@@ -6,6 +6,8 @@ It does not show UI, launch games, inspect Steam or desktop windows, or change d
 
 When an authorised active user has no connected Agent, the service can request `DisplayMagician.SessionLauncher` to demand-start one in that user's session.
 
+Control Service routes work only to a ready Agent whose process and command-pipe identity match the fixed installed payload. It bounds pipe handshakes and subscribers, retains successful mutating client responses for 24 hours for safe retry, and makes lagging event subscribers reconnect for an authoritative status/decision snapshot.
+
 ## Development
 
 ```powershell

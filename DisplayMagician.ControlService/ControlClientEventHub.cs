@@ -25,7 +25,12 @@ public sealed class ControlClientEventHub
         {
             if (string.Equals(subscription.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
             {
-                subscription.Events.Writer.TryWrite(clientEvent);
+                if (!subscription.Events.Writer.TryWrite(clientEvent))
+                {
+                    // A client that cannot keep up must reconnect and receive a fresh
+                    // authoritative snapshot rather than silently missing an event.
+                    subscription.Events.Writer.TryComplete();
+                }
             }
         }
     }
@@ -48,7 +53,7 @@ public sealed class ControlClientEventHub
             UserSid = userSid;
             SessionId = sessionId;
             _owner = owner;
-            Events = Channel.CreateBounded<ControlClientEvent>(new BoundedChannelOptions(32) { FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true, SingleWriter = false });
+            Events = Channel.CreateBounded<ControlClientEvent>(new BoundedChannelOptions(32) { FullMode = BoundedChannelFullMode.Wait, SingleReader = true, SingleWriter = false });
         }
 
         public Guid Id { get; }

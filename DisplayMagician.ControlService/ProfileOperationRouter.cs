@@ -14,6 +14,7 @@ public sealed class ProfileOperationRouter
     private readonly ISessionLauncherClient _sessionLauncherClient;
     private readonly Func<int> _getActiveConsoleSessionId;
     private readonly RecoveryAdministrationStore? _recoveryAdministrationStore;
+    private readonly SemaphoreSlim _agentLaunchLock = new SemaphoreSlim(1, 1);
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
         : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient(), ConsoleSessionLocator.GetActiveConsoleSessionId)
@@ -108,23 +109,22 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID is required." };
         }
 
+        Guid operationId = Guid.NewGuid();
+        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, Guid.NewGuid(), operationId, cancellationToken).ConfigureAwait(false);
+        if (agent == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
+        }
+
         LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, _getActiveConsoleSessionId(), DateTime.UtcNow);
         if (!leaseDecision.IsGranted)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
         }
 
-        Guid operationId = Guid.NewGuid();
         if (!_coordinator.TryBeginDisplayOperation(userSid, sessionId, operationId, DateTime.UtcNow))
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "Display control is already being used by another operation." };
-        }
-
-        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, Guid.NewGuid(), operationId, cancellationToken).ConfigureAwait(false);
-        if (agent == null)
-        {
-            _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
         }
 
         try
@@ -138,7 +138,7 @@ public sealed class ProfileOperationRouter
             _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
             return response;
         }
-        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is InvalidDataException || ex is TimeoutException)
         {
             _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, true, DateTime.UtcNow);
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
@@ -225,7 +225,7 @@ public sealed class ProfileOperationRouter
     {
         AgentRegistration? agent = startAgentIfMissing
             ? await GetOrStartAgentAsync(userSid, sessionId, command.RequestId, GetOperationId(command), cancellationToken).ConfigureAwait(false)
-            : _coordinator.GetAgentRegistration(userSid, sessionId);
+            : _coordinator.GetReadyAgentRegistration(userSid, sessionId);
         if (agent == null)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
@@ -235,7 +235,7 @@ public sealed class ProfileOperationRouter
         {
             return await _agentCommandClient.SendAsync(agent, command, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is InvalidOperationException || ex is System.IO.IOException || ex is TimeoutException)
+        catch (Exception ex) when (ex is InvalidOperationException || ex is System.IO.IOException || ex is InvalidDataException || ex is TimeoutException)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
         }
@@ -243,35 +243,64 @@ public sealed class ProfileOperationRouter
 
     private async Task<AgentRegistration?> GetOrStartAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
     {
-        AgentRegistration? agent = _coordinator.GetAgentRegistration(userSid, sessionId);
+        AgentRegistration? agent = _coordinator.GetReadyAgentRegistration(userSid, sessionId);
         if (agent != null)
         {
             return agent;
         }
 
-        UserAgentLaunchResult launchResult;
+        await _agentLaunchLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
-        {
-            return null;
-        }
+            agent = _coordinator.GetReadyAgentRegistration(userSid, sessionId);
+            if (agent != null)
+            {
+                return agent;
+            }
 
-        if (!launchResult.IsSuccessful)
-        {
-            return null;
-        }
+            if (_coordinator.GetAgentRegistration(userSid, sessionId) != null)
+            {
+                return await WaitForReadyAgentAsync(userSid, sessionId, cancellationToken).ConfigureAwait(false);
+            }
 
+            UserAgentLaunchResult launchResult;
+            try
+            {
+                launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                return null;
+            }
+
+            if (!launchResult.IsSuccessful)
+            {
+                return null;
+            }
+
+            return await WaitForReadyAgentAsync(userSid, sessionId, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _agentLaunchLock.Release();
+        }
+    }
+
+    private async Task<AgentRegistration?> WaitForReadyAgentAsync(string userSid, int sessionId, CancellationToken cancellationToken)
+    {
         const int maximumAttempts = 40;
         for (int attempt = 1; attempt <= maximumAttempts; attempt++)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
-            agent = _coordinator.GetAgentRegistration(userSid, sessionId);
+            AgentRegistration? agent = _coordinator.GetReadyAgentRegistration(userSid, sessionId);
             if (agent != null)
             {
                 return agent;
+            }
+
+            if (_coordinator.GetAgentRegistration(userSid, sessionId) == null)
+            {
+                return null;
             }
         }
 

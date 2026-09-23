@@ -121,7 +121,7 @@ public sealed class DiagnosticsAndRecoveryTests
             RecoveryAdministrationStore store = new RecoveryAdministrationStore(storagePaths);
             DisplayControlLease lease = new DisplayControlLease { OwnerUserSid = "S-1-5-21-100", OwnerSessionId = 10, IsRecoveryRequired = true };
 
-            store.MarkForceReleased(lease, "S-1-5-21-999", 20);
+            Assert.True(store.MarkForceReleased(lease, "S-1-5-21-999", 20));
 
             RecoveryAdministrationRecord? record = new RecoveryAdministrationStore(storagePaths).GetLatest();
             Assert.NotNull(record);
@@ -144,8 +144,8 @@ public sealed class DiagnosticsAndRecoveryTests
         {
             RecoveryAdministrationStore store = new RecoveryAdministrationStore(new StoragePaths(storageRoot));
 
-            store.Record("RestartUserAgent", "Succeeded", "S-1-5-21-100", 10);
-            store.Record("RestartControlService", "Succeeded", "S-1-5-21-999", 20);
+            Assert.True(store.Record("RestartUserAgent", "Succeeded", "S-1-5-21-100", 10));
+            Assert.True(store.Record("RestartControlService", "Succeeded", "S-1-5-21-999", 20));
 
             RecoveryAdministrationRecord[] records = new RecoveryAdministrationStore(new StoragePaths(storageRoot)).GetAll();
             Assert.Equal(2, records.Length);

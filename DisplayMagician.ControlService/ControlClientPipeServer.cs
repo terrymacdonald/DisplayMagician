@@ -29,9 +29,11 @@ public sealed class ControlClientPipeServer
     private readonly RecoveryAdministrationStore _recoveryAdministrationStore;
     private readonly OperationDecisionStore _operationDecisionStore;
     private readonly StoragePaths _storagePaths;
+    private readonly ControlRequestReplayStore _requestReplayStore;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
+    private readonly SemaphoreSlim _replayableMutationLock = new SemaphoreSlim(1, 1);
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
@@ -42,6 +44,7 @@ public sealed class ControlClientPipeServer
         _recoveryAdministrationStore = recoveryAdministrationStore ?? throw new ArgumentNullException(nameof(recoveryAdministrationStore));
         _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
+        _requestReplayStore = requestReplayStore ?? throw new ArgumentNullException(nameof(requestReplayStore));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -121,45 +124,73 @@ public sealed class ControlClientPipeServer
                 else
                 {
                     PipeClientIdentity identity = GetClientIdentity(pipe);
+                    bool isReplayableMutation = IsReplayableMutation(request.MessageType);
+                    if (isReplayableMutation)
+                    {
+                        await _replayableMutationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
                     try
                     {
-                        response = request.MessageType switch
+                        if (isReplayableMutation && _requestReplayStore.TryGet(identity.UserSid, request, DateTime.UtcNow, out ControlResponse replayedResponse))
                         {
-                            ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.ListGames => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.ListApps => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.ListShortcuts => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.SyncMessages => await SyncClientAsync(identity, new ClientSyncRequest { IsManual = true }, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.SyncClient => await SyncClientAsync(identity, JsonSerializer.Deserialize<ClientSyncRequest>(request.Payload) ?? new ClientSyncRequest(), cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.GetAnonymousMetricsSettings => GetAnonymousMetricsSettings(),
-                            ControlMessageType.UpdateAnonymousMetricsSettings => UpdateAnonymousMetricsSettings(request),
-                            ControlMessageType.InitializeAnonymousMetrics => InitializeAnonymousMetrics(request),
-                            ControlMessageType.ReportAnonymousMetricsUsage => ReportAnonymousMetricsUsage(request),
-                            ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.RestartUserAgent => await _profileOperationRouter.RestartUserAgentAsync(identity.UserSid, identity.SessionId, request.RequestId, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.CreateUserSupportBundle => await CreateUserSupportBundleAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                            ControlMessageType.ResolveOperationDecision => ResolveOperationDecision(identity, request),
-                            ControlMessageType.ListOperationDecisions => ListOperationDecisions(identity),
-                            ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
-                            ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
-                            ControlMessageType.GetServiceStatus => GetServiceStatus(),
-                            ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
-                            ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
-                            _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
-                        };
+                            response = replayedResponse;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                response = request.MessageType switch
+                                {
+                                    ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.ListGames => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.ListApps => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.ListShortcuts => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.SyncMessages => await SyncClientAsync(identity, new ClientSyncRequest { IsManual = true }, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.SyncClient => await SyncClientAsync(identity, JsonSerializer.Deserialize<ClientSyncRequest>(request.Payload) ?? new ClientSyncRequest(), cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.GetAnonymousMetricsSettings => GetAnonymousMetricsSettings(),
+                                    ControlMessageType.UpdateAnonymousMetricsSettings => UpdateAnonymousMetricsSettings(request),
+                                    ControlMessageType.InitializeAnonymousMetrics => InitializeAnonymousMetrics(request),
+                                    ControlMessageType.ReportAnonymousMetricsUsage => ReportAnonymousMetricsUsage(request),
+                                    ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.RestartUserAgent => await _profileOperationRouter.RestartUserAgentAsync(identity.UserSid, identity.SessionId, request.RequestId, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.CreateUserSupportBundle => await CreateUserSupportBundleAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.ResolveOperationDecision => ResolveOperationDecision(identity, request),
+                                    ControlMessageType.ListOperationDecisions => ListOperationDecisions(identity),
+                                    ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
+                                    ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
+                                    ControlMessageType.GetServiceStatus => GetServiceStatus(identity),
+                                    ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
+                                    ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
+                                    _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
+                                };
+                            }
+                            catch (JsonException ex)
+                            {
+                                _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: The client sent an invalid JSON request payload.");
+                                response = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The client request payload was invalid." };
+                            }
+
+                            if (isReplayableMutation && response.IsSuccessful)
+                            {
+                                _requestReplayStore.Store(identity.UserSid, request, response, DateTime.UtcNow);
+                            }
+                        }
                     }
-                    catch (JsonException ex)
+                    finally
                     {
-                        _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: The client sent an invalid JSON request payload.");
-                        response = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The client request payload was invalid." };
+                        if (isReplayableMutation)
+                        {
+                            _replayableMutationLock.Release();
+                        }
                     }
                 }
 
@@ -187,6 +218,16 @@ public sealed class ControlClientPipeServer
         {
             throw new TimeoutException($"The client did not send a complete request within {timeout.TotalSeconds:0} seconds.", ex);
         }
+    }
+
+    private static bool IsReplayableMutation(ControlMessageType messageType)
+    {
+        return messageType is ControlMessageType.ApplyProfile or ControlMessageType.StartShortcut or ControlMessageType.CancelOperation or
+            ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings or
+            ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent or
+            ControlMessageType.CommitRepositorySnapshot or ControlMessageType.SetMessageReadState or ControlMessageType.ResolveOperationDecision or ControlMessageType.UpdateAnonymousMetricsSettings or
+            ControlMessageType.InitializeAnonymousMetrics or ControlMessageType.ForceReleaseDisplayControl or ControlMessageType.RecordRecoveryAdministration or ControlMessageType.RestartUserAgent or
+            ControlMessageType.CreateUserSupportBundle;
     }
 
     private Task<ControlResponse> ApplyProfileAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
@@ -287,11 +328,20 @@ public sealed class ControlClientPipeServer
         return new ControlResponse { IsSuccessful = true, Message = "Operation statuses returned.", OperationStatuses = _operationStatusStore.GetAll(identity.UserSid) };
     }
 
-    private ControlResponse GetServiceStatus()
+    private ControlResponse GetServiceStatus(PipeClientIdentity identity)
     {
         ControlServiceStatus status = _stateCoordinator.GetStatus(DateTime.UtcNow);
-        status.LatestRecoveryAdministration = _recoveryAdministrationStore.GetLatest();
-        status.RecoveryAdministrations = _recoveryAdministrationStore.GetAll();
+        status.Agents = Array.FindAll(status.Agents, agent => string.Equals(agent.UserSid, identity.UserSid, StringComparison.OrdinalIgnoreCase));
+        if (!identity.IsAdministrator && !string.Equals(status.DisplayControlLease?.OwnerUserSid, identity.UserSid, StringComparison.OrdinalIgnoreCase))
+        {
+            status.DisplayControlLease = null;
+        }
+        if (identity.IsAdministrator)
+        {
+            status.LatestRecoveryAdministration = _recoveryAdministrationStore.GetLatest();
+            status.RecoveryAdministrations = _recoveryAdministrationStore.GetAll();
+        }
+
         return new ControlResponse { IsSuccessful = true, Message = "Control Service status returned.", ServiceStatus = status };
     }
 
@@ -434,21 +484,15 @@ public sealed class ControlClientPipeServer
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AdministratorRequired, Message = "Force-releasing display control requires an elevated administrator session." };
         }
 
-        ForceReleaseDisplayControlRequest? forceReleaseRequest = JsonSerializer.Deserialize<ForceReleaseDisplayControlRequest>(request.Payload);
-        if (!string.Equals(forceReleaseRequest?.Confirmation, "FORCE RELEASE", StringComparison.Ordinal))
-        {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The force-release confirmation was not accepted." };
-        }
-
         DisplayControlLease? releasedLease = _stateCoordinator.ForceReleaseDisplayControl();
         if (releasedLease == null)
         {
             return new ControlResponse { IsSuccessful = true, Message = "No display-control lease was active." };
         }
 
-        _recoveryAdministrationStore.MarkForceReleased(releasedLease, identity.UserSid, identity.SessionId);
+        bool wasRecoveryRecordStored = _recoveryAdministrationStore.MarkForceReleased(releasedLease, identity.UserSid, identity.SessionId);
         _auditStore.Append("DisplayControlForceReleased", "HighSeverity", $"Released lease held by session {releasedLease.OwnerSessionId}; recovery required: {releasedLease.IsRecoveryRequired}.", identity.UserSid, identity.SessionId);
-        return new ControlResponse { IsSuccessful = true, Message = "Display control was force-released. Any interrupted operation must be checked before further use." };
+        return new ControlResponse { IsSuccessful = true, Message = wasRecoveryRecordStored ? "Display control was force-released. Any interrupted operation must be checked before further use." : "Display control was force-released, but its recovery audit record could not be saved. Any interrupted operation must be checked before further use." };
     }
 
     private ControlResponse RecordRecoveryAdministration(PipeClientIdentity identity, ControlEnvelope request)
@@ -464,7 +508,11 @@ public sealed class ControlClientPipeServer
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The recovery administration record was invalid." };
         }
 
-        _recoveryAdministrationStore.Record(recoveryRequest.Action, recoveryRequest.Outcome, identity.UserSid, identity.SessionId);
+        if (!_recoveryAdministrationStore.Record(recoveryRequest.Action, recoveryRequest.Outcome, identity.UserSid, identity.SessionId))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The recovery administration record could not be stored." };
+        }
+
         _auditStore.Append(recoveryRequest.Action, "HighSeverity", recoveryRequest.Outcome, identity.UserSid, identity.SessionId);
         return new ControlResponse { IsSuccessful = true, Message = "Recovery administration record stored." };
     }

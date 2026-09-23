@@ -76,6 +76,22 @@ public sealed class ProfileOperationRouterTests
     }
 
     [Fact]
+    public async Task ApplyProfileAsync_StartsAndWaitsForAReadyAgentBeforeAcquiringTheDisplayLease()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        RegisteringSessionLauncherClient sessionLauncherClient = new RegisteringSessionLauncherClient(coordinator, agent);
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient, () => agent.SessionId);
+
+        ControlResponse response = await router.ApplyProfileAsync(agent.UserSid, agent.SessionId, "display-profile", CancellationToken.None);
+
+        Assert.True(response.IsSuccessful, response.Message);
+        Assert.True(sessionLauncherClient.WasCalled);
+        Assert.True(commandClient.WasCalled);
+    }
+
+    [Fact]
     public async Task StartShortcutAsync_ForwardsShortcutIdToRegisteredAgent()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();
@@ -286,7 +302,7 @@ public sealed class ProfileOperationRouterTests
 
     private static AgentRegistration CreateAgent()
     {
-        return new AgentRegistration { UserSid = "S-1-5-21-100", SessionId = 10, ProcessId = 1000, CommandPipeName = "test-agent-command" };
+        return new AgentRegistration { UserSid = "S-1-5-21-100", SessionId = 10, ProcessId = 1000, IsReady = true, CommandPipeName = "test-agent-command" };
     }
 
     private sealed class RecordingAgentCommandClient : IAgentCommandClient

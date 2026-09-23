@@ -38,6 +38,7 @@ public sealed class ControlStateCoordinator
                 existingAgent.Registration.StartupMode = registration.StartupMode;
                 existingAgent.Registration.OperationState = registration.OperationState;
                 existingAgent.Registration.IsRecoveryRequired = registration.IsRecoveryRequired;
+                existingAgent.Registration.IsReady = registration.IsReady;
                 existingAgent.Registration.CommandPipeName = registration.CommandPipeName;
                 existingAgent.LastHeartbeatUtc = utcNow;
                 ConfirmRecoveryRestored(registration);
@@ -205,6 +206,21 @@ public sealed class ControlStateCoordinator
         }
     }
 
+    public AgentRegistration? GetReadyAgentRegistration(string userSid, int sessionId)
+    {
+        lock (_syncRoot)
+        {
+            if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent)
+                || !agent.Registration.IsReady
+                || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return CopyRegistration(agent.Registration);
+        }
+    }
+
     public AgentRegistration[] GetAgentRegistrations()
     {
         lock (_syncRoot)
@@ -261,7 +277,8 @@ public sealed class ControlStateCoordinator
                     OperationState = agent.Registration.OperationState,
                     IsRecoveryRequired = agent.Registration.IsRecoveryRequired,
                     LastHeartbeatUtc = agent.LastHeartbeatUtc,
-                    IsHealthy = utcNow - agent.LastHeartbeatUtc <= AgentHeartbeatTimeout
+                    IsHealthy = utcNow - agent.LastHeartbeatUtc <= AgentHeartbeatTimeout,
+                    IsReady = agent.Registration.IsReady
                 });
             }
 
@@ -349,6 +366,7 @@ public sealed class ControlStateCoordinator
             StartupMode = registration.StartupMode,
             OperationState = registration.OperationState,
             IsRecoveryRequired = registration.IsRecoveryRequired,
+            IsReady = registration.IsReady,
             CommandPipeName = registration.CommandPipeName
         };
     }

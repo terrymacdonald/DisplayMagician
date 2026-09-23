@@ -18,7 +18,7 @@ public sealed class AgentCommandClient : IAgentCommandClient
     private readonly TimeSpan _responseTimeout;
 
     public AgentCommandClient()
-        : this(TimeSpan.FromSeconds(30))
+        : this(ControlProtocol.ResponseTimeout)
     {
     }
 
@@ -42,14 +42,14 @@ public sealed class AgentCommandClient : IAgentCommandClient
         }
 
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", agent.CommandPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await pipe.ConnectAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+        await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         using CancellationTokenSource responseTimeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         responseTimeoutSource.CancelAfter(_responseTimeout);
         try
         {
             await ControlEnvelopeSerializer.WriteAsync(pipe, request, responseTimeoutSource.Token).ConfigureAwait(false);
             ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, responseTimeoutSource.Token).ConfigureAwait(false);
-            if (response == null || response.RequestId != request.RequestId)
+            if (response == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType)
             {
                 throw new InvalidDataException("The User Agent returned an invalid command response.");
             }

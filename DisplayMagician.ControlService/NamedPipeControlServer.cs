@@ -115,28 +115,28 @@ public sealed class NamedPipeControlServer
 
                 if (envelope.ProtocolVersion != ControlProtocol.CurrentVersion)
                 {
-                    await SendResultAsync(pipe, envelope.RequestId, false, ControlErrorCode.UnsupportedProtocolVersion, "The client uses an unsupported protocol version.", cancellationToken).ConfigureAwait(false);
+                    await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, false, ControlErrorCode.UnsupportedProtocolVersion, "The client uses an unsupported protocol version.", cancellationToken).ConfigureAwait(false);
                     return;
                 }
 
                 if (envelope.MessageType != ControlMessageType.AgentRegistration)
                 {
-                    await SendResultAsync(pipe, envelope.RequestId, false, ControlErrorCode.InvalidRequest, "The first pipe message must be an Agent registration.", cancellationToken).ConfigureAwait(false);
+                    await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, false, ControlErrorCode.InvalidRequest, "The first pipe message must be an Agent registration.", cancellationToken).ConfigureAwait(false);
                     return;
                 }
 
                 AgentRegistration? registration = JsonSerializer.Deserialize<AgentRegistration>(envelope.Payload);
-                if (registration == null || !string.Equals(registration.UserSid, identity.UserSid, StringComparison.OrdinalIgnoreCase) || registration.SessionId != identity.SessionId || registration.ProcessId != identity.ProcessId)
+                if (registration == null || !string.Equals(registration.UserSid, identity.UserSid, StringComparison.OrdinalIgnoreCase) || registration.SessionId != identity.SessionId || registration.ProcessId != identity.ProcessId || !IsInstalledUserAgent(identity, registration))
                 {
                     _logger.Warn("NamedPipeControlServer/HandleClientAsync: Rejected Agent registration because its claimed identity did not match the Windows pipe client. ProcessId={0}", identity.ProcessId);
-                    await SendResultAsync(pipe, envelope.RequestId, false, ControlErrorCode.CallerIdentityMismatch, "The claimed Agent identity does not match the Windows pipe client.", cancellationToken).ConfigureAwait(false);
+                    await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, false, ControlErrorCode.CallerIdentityMismatch, "The claimed Agent identity does not match the Windows pipe client.", cancellationToken).ConfigureAwait(false);
                     return;
                 }
 
                 _coordinator.RegisterAgent(registration, DateTime.UtcNow);
                 registeredIdentity = identity;
                 _logger.Info("NamedPipeControlServer/HandleClientAsync: Registered User Agent for SID {0}, session {1}, process {2}.", identity.UserSid, identity.SessionId, identity.ProcessId);
-                await SendResultAsync(pipe, envelope.RequestId, true, ControlErrorCode.None, "Agent registration accepted.", cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, true, ControlErrorCode.None, "Agent registration accepted.", cancellationToken).ConfigureAwait(false);
                 try
                 {
                     await _clientSyncCoordinator.SendLatestManifestAsync(registration, cancellationToken).ConfigureAwait(false);
@@ -156,7 +156,7 @@ public sealed class NamedPipeControlServer
 
                     if (request.ProtocolVersion != ControlProtocol.CurrentVersion)
                     {
-                        await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.UnsupportedProtocolVersion, "The client uses an unsupported protocol version.", cancellationToken).ConfigureAwait(false);
+                        await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.UnsupportedProtocolVersion, "The client uses an unsupported protocol version.", cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
@@ -208,12 +208,12 @@ public sealed class NamedPipeControlServer
             AgentHeartbeat? heartbeat = JsonSerializer.Deserialize<AgentHeartbeat>(request.Payload);
             if (heartbeat == null)
             {
-                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The Agent heartbeat was invalid.", cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The Agent heartbeat was invalid.", cancellationToken).ConfigureAwait(false);
                 return;
             }
 
             _coordinator.RecordHeartbeat(identity.UserSid, identity.SessionId, heartbeat.OperationState, heartbeat.IsRecoveryRequired, DateTime.UtcNow);
-            await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Agent heartbeat recorded.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Agent heartbeat recorded.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
             return;
         }
 
@@ -222,7 +222,7 @@ public sealed class NamedPipeControlServer
             OperationStatusUpdate? update = JsonSerializer.Deserialize<OperationStatusUpdate>(request.Payload);
             if (update == null || update.OperationId == Guid.Empty)
             {
-                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The operation status update was invalid.", cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The operation status update was invalid.", cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -235,11 +235,11 @@ public sealed class NamedPipeControlServer
             try
             {
                 OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
-                await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Operation status recorded.", cancellationToken, operationStatus: status).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Operation status recorded.", cancellationToken, operationStatus: status).ConfigureAwait(false);
             }
             catch (InvalidOperationException ex)
             {
-                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.CallerIdentityMismatch, ex.Message, cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.CallerIdentityMismatch, ex.Message, cancellationToken).ConfigureAwait(false);
             }
 
             return;
@@ -250,7 +250,7 @@ public sealed class NamedPipeControlServer
             RequestOperationDecisionRequest? decisionRequest = JsonSerializer.Deserialize<RequestOperationDecisionRequest>(request.Payload);
             if (decisionRequest == null || decisionRequest.OperationId == Guid.Empty || decisionRequest.AllowedChoices.Length == 0 || Array.IndexOf(decisionRequest.AllowedChoices, decisionRequest.DefaultChoice) < 0)
             {
-                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The operation decision request was invalid.", cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The operation decision request was invalid.", cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -265,7 +265,7 @@ public sealed class NamedPipeControlServer
             }
 
             OperationDecision resolvedDecision = await resolutionTask.ConfigureAwait(false);
-            await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Operation decision resolved.", cancellationToken, operationDecision: resolvedDecision).ConfigureAwait(false);
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Operation decision resolved.", cancellationToken, operationDecision: resolvedDecision).ConfigureAwait(false);
             return;
         }
 
@@ -285,13 +285,13 @@ public sealed class NamedPipeControlServer
                 };
             }
 
-            await SendResultAsync(pipe, request.RequestId, decision.IsGranted, decision.ErrorCode, decision.Message, cancellationToken, leaseDecision: decision).ConfigureAwait(false);
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, decision.IsGranted, decision.ErrorCode, decision.Message, cancellationToken, leaseDecision: decision).ConfigureAwait(false);
             return;
         }
 
         if (request.MessageType == ControlMessageType.GetServiceStatus)
         {
-            await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, "Service status returned.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Service status returned.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
             return;
         }
 
@@ -301,7 +301,7 @@ public sealed class NamedPipeControlServer
             pipe.RunAsClient(() => legacyAppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician"));
             if (string.IsNullOrWhiteSpace(legacyAppDataPath))
             {
-                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The User Agent's legacy application-data path could not be determined.", cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The User Agent's legacy application-data path could not be determined.", cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -314,25 +314,25 @@ public sealed class NamedPipeControlServer
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
             {
                 _logger.Error(ex, "NamedPipeControlServer/HandleAgentMessageAsync: Could not provision v4 storage for SID {0}.", identity.UserSid);
-                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "DisplayMagician could not provision writable storage for this user.", cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "DisplayMagician could not provision writable storage for this user.", cancellationToken).ConfigureAwait(false);
                 return;
             }
 
             if (migrationResult.IsSuccessful)
             {
                 _logger.Info("NamedPipeControlServer/HandleAgentMessageAsync: Completed user-data migration for SID {0} from {1}.", identity.UserSid, legacyAppDataPath);
-                await SendResultAsync(pipe, request.RequestId, true, ControlErrorCode.None, migrationResult.Message, cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, migrationResult.Message, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 _logger.Error("NamedPipeControlServer/HandleAgentMessageAsync: User-data migration failed for SID {0}. {1}", identity.UserSid, migrationResult.Message);
-                await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, migrationResult.Message, cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, migrationResult.Message, cancellationToken).ConfigureAwait(false);
             }
 
             return;
         }
 
-        await SendResultAsync(pipe, request.RequestId, false, ControlErrorCode.InvalidRequest, "The Agent message type is not supported.", cancellationToken).ConfigureAwait(false);
+        await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The Agent message type is not supported.", cancellationToken).ConfigureAwait(false);
     }
 
     private static PipeClientIdentity GetClientIdentity(NamedPipeServerStream pipe)
@@ -354,11 +354,31 @@ public sealed class NamedPipeControlServer
         return new PipeClientIdentity(userSid, process.SessionId, checked((int)processId));
     }
 
-    private static Task SendResultAsync(NamedPipeServerStream pipe, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null, OperationDecision? operationDecision = null)
+    private static bool IsInstalledUserAgent(PipeClientIdentity identity, AgentRegistration registration)
+    {
+        if (!string.Equals(registration.CommandPipeName, $"{ControlProtocol.AgentCommandPipePrefix}{identity.ProcessId}", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        try
+        {
+            using Process process = Process.GetProcessById(identity.ProcessId);
+            string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "UserAgent", "DisplayMagician.UserAgent.exe"));
+            return string.Equals(process.MainModule?.FileName, expectedPath, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception || ex is UnauthorizedAccessException)
+        {
+            _logger.Warn(ex, "NamedPipeControlServer/IsInstalledUserAgent: Could not verify the User Agent executable for pipe process {0}.", identity.ProcessId);
+            return false;
+        }
+    }
+
+    private static Task SendResultAsync(NamedPipeServerStream pipe, ControlMessageType messageType, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null, OperationDecision? operationDecision = null)
     {
         ControlEnvelope response = new ControlEnvelope
         {
-            MessageType = ControlMessageType.GetServiceStatus,
+            MessageType = messageType,
             RequestId = requestId,
             Payload = JsonSerializer.Serialize(new ControlResponse
             {

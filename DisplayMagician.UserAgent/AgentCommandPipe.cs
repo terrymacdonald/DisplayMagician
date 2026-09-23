@@ -27,6 +27,7 @@ public static class AgentCommandPipe
 public sealed class AgentCommandServer
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private readonly string _pipeName;
 
     public AgentCommandServer(string pipeName)
@@ -50,7 +51,7 @@ public sealed class AgentCommandServer
                     continue;
                 }
 
-                ControlEnvelope? request = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+                ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, cancellationToken).ConfigureAwait(false);
                 if (request == null)
                 {
                     continue;
@@ -75,7 +76,7 @@ public sealed class AgentCommandServer
             {
                 return;
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException || ex is TimeoutException)
             {
                 Logger.Debug(ex, "AgentCommandServer/RunAsync: Control Service command connection ended or was invalid.");
             }
@@ -122,6 +123,39 @@ public sealed class AgentCommandServer
             using WindowsIdentity identity = WindowsIdentity.GetCurrent();
             isLocalService = identity.User?.IsWellKnown(WellKnownSidType.LocalServiceSid) == true;
         });
-        return isLocalService;
+        if (!isLocalService || !GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint processId))
+        {
+            return false;
+        }
+
+        try
+        {
+            using System.Diagnostics.Process process = System.Diagnostics.Process.GetProcessById(checked((int)processId));
+            string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "ControlService", "DisplayMagician.ControlService.exe"));
+            return string.Equals(process.MainModule?.FileName, expectedPath, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception || ex is UnauthorizedAccessException)
+        {
+            Logger.Warn(ex, "AgentCommandServer/IsControlService: Could not verify the Control Service executable for pipe process {0}.", processId);
+            return false;
+        }
     }
+
+    private static async Task<ControlEnvelope?> ReadEnvelopeWithTimeoutAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(RequestTimeout);
+        try
+        {
+            return await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("The Control Service did not send a complete Agent command in time.", ex);
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool GetNamedPipeClientProcessId(Microsoft.Win32.SafeHandles.SafePipeHandle pipe, out uint clientProcessId);
 }

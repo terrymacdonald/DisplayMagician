@@ -47,8 +47,16 @@ internal static class Program
         }
 
         await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-        await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
         Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
+        registration.IsReady = true;
+        ControlResponse readyResponse = await serviceClient.RegisterOnceAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
+        if (!readyResponse.IsSuccessful)
+        {
+            cancellationTokenSource.Cancel();
+            throw new InvalidOperationException(readyResponse.Message);
+        }
+
+        await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
         AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.RunDetectedShortcutAsync);
         Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(cancellationTokenSource.Token);
 

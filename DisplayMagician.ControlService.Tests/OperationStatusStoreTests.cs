@@ -81,4 +81,34 @@ public sealed class OperationStatusStoreTests
         Assert.Equal(activeOperationId, activeStatus.OperationId);
         Assert.Single(store.GetActive("S-1-5-21-200"));
     }
+
+    [Fact]
+    public void Publish_DoesNotAllowALateProgressUpdateToReopenATerminalOperation()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        OperationStatusStore store = new OperationStatusStore(new StoragePaths(storageRoot));
+        Guid operationId = Guid.NewGuid();
+        DateTime now = DateTime.UtcNow;
+
+        OperationStatus completed = store.Publish("S-1-5-21-100", 10, new OperationStatusUpdate
+        {
+            OperationId = operationId,
+            OperationType = DisplayOperationType.StartShortcut,
+            Phase = OperationPhase.Completed,
+            Message = "Completed.",
+            IsTerminal = true,
+            IsSuccessful = true
+        }, now);
+        OperationStatus lateProgress = store.Publish("S-1-5-21-100", 10, new OperationStatusUpdate
+        {
+            OperationId = operationId,
+            OperationType = DisplayOperationType.StartShortcut,
+            Phase = OperationPhase.WaitingForGameToClose,
+            Message = "Late progress."
+        }, now.AddSeconds(1));
+
+        Assert.Equal(completed.Sequence, lateProgress.Sequence);
+        Assert.True(lateProgress.IsTerminal);
+        Assert.Equal(OperationPhase.Completed, lateProgress.Phase);
+    }
 }

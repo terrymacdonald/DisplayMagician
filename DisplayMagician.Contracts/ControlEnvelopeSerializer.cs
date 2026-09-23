@@ -8,7 +8,6 @@ namespace DisplayMagician.Contracts;
 
 public static class ControlEnvelopeSerializer
 {
-    private const int MaximumMessageLength = 1024 * 1024;
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
     {
         PropertyNameCaseInsensitive = true
@@ -20,7 +19,7 @@ public static class ControlEnvelopeSerializer
         ArgumentNullException.ThrowIfNull(envelope);
 
         byte[] payload = JsonSerializer.SerializeToUtf8Bytes(envelope, _jsonSerializerOptions);
-        if (payload.Length > MaximumMessageLength)
+        if (payload.Length > ControlProtocol.MaximumMessageLength)
         {
             throw new InvalidDataException("The control message exceeds the maximum permitted size.");
         }
@@ -42,7 +41,7 @@ public static class ControlEnvelopeSerializer
         }
 
         int payloadLength = BitConverter.ToInt32(length, 0);
-        if (payloadLength <= 0 || payloadLength > MaximumMessageLength)
+        if (payloadLength <= 0 || payloadLength > ControlProtocol.MaximumMessageLength)
         {
             throw new InvalidDataException("The control message has an invalid length.");
         }

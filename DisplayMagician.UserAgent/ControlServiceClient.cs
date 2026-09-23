@@ -21,7 +21,7 @@ public sealed class ControlServiceClient
                 PipeDirection.InOut,
                 PipeOptions.Asynchronous);
 
-            await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
 
             ControlEnvelope request = new ControlEnvelope
             {
@@ -87,7 +87,7 @@ public sealed class ControlServiceClient
     public async Task<ControlResponse> RegisterOnceAsync(AgentRegistration registration, CancellationToken cancellationToken)
     {
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ServicePipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+        await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         return await SendAndReceiveAsync(pipe, new ControlEnvelope
         {
             MessageType = ControlMessageType.AgentRegistration,
@@ -129,7 +129,7 @@ public sealed class ControlServiceClient
         ArgumentNullException.ThrowIfNull(update);
 
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ServicePipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+        await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         ControlResponse registrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
         {
             MessageType = ControlMessageType.AgentRegistration,
@@ -178,7 +178,7 @@ public sealed class ControlServiceClient
         NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ServicePipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         try
         {
-            await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
             ControlResponse registrationResponse = await SendAndReceiveAsync(pipe, new ControlEnvelope
             {
                 MessageType = ControlMessageType.AgentRegistration,
@@ -200,14 +200,23 @@ public sealed class ControlServiceClient
 
     private static async Task<ControlResponse> SendAndReceiveAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)
     {
-        await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-        ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
-        if (response == null || response.RequestId != request.RequestId)
+        using CancellationTokenSource responseTimeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        responseTimeoutSource.CancelAfter(ControlProtocol.ResponseTimeout);
+        try
         {
-            throw new InvalidDataException("The Control Service returned an invalid response.");
-        }
+            await ControlEnvelopeSerializer.WriteAsync(pipe, request, responseTimeoutSource.Token).ConfigureAwait(false);
+            ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, responseTimeoutSource.Token).ConfigureAwait(false);
+            if (response == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType)
+            {
+                throw new InvalidDataException("The Control Service returned an invalid response.");
+            }
 
-        return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
-            ?? throw new InvalidDataException("The Control Service returned an unreadable registration response.");
+            return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
+                ?? throw new InvalidDataException("The Control Service returned an unreadable registration response.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("The Control Service did not respond within the permitted time.");
+        }
     }
 }

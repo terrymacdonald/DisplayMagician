@@ -109,10 +109,21 @@ namespace DisplayMagicianConsole
         private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
         {
             using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            await pipe.ConnectAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
-            await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-            ControlEnvelope response = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
-            if (response == null || response.RequestId != request.RequestId)
+            await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
+            using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutSource.CancelAfter(ControlProtocol.ResponseTimeout);
+            ControlEnvelope response;
+            try
+            {
+                await ControlEnvelopeSerializer.WriteAsync(pipe, request, timeoutSource.Token).ConfigureAwait(false);
+                response = await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutSource.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException("The Control Service did not respond within the permitted time.");
+            }
+
+            if (response.RequestId != request.RequestId || response.MessageType != request.MessageType)
             {
                 throw new InvalidDataException("The Control Service returned an invalid response.");
             }

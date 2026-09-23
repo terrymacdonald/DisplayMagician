@@ -36,6 +36,7 @@ public sealed class SessionLauncherWorker : BackgroundService
 public sealed class SessionLauncherPipeServer
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private readonly InteractiveUserProcessLauncher _processLauncher;
 
     public SessionLauncherPipeServer(InteractiveUserProcessLauncher processLauncher)
@@ -73,7 +74,7 @@ public sealed class SessionLauncherPipeServer
 
     private async Task HandleClientAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
     {
-        ControlEnvelope? request = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+        ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, cancellationToken).ConfigureAwait(false);
         UserAgentLaunchResult result;
         if (request == null || request.ProtocolVersion != ControlProtocol.CurrentVersion || request.MessageType is not (ControlMessageType.LaunchUserAgent or ControlMessageType.StopUserAgent) || !IsControlService(pipe))
         {
@@ -97,6 +98,20 @@ public sealed class SessionLauncherPipeServer
 
         Guid requestId = request?.RequestId ?? Guid.NewGuid();
         await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope { MessageType = request?.MessageType ?? ControlMessageType.Unknown, RequestId = requestId, Payload = JsonSerializer.Serialize(result) }, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<ControlEnvelope?> ReadEnvelopeWithTimeoutAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(RequestTimeout);
+        try
+        {
+            return await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("The Control Service did not send a complete Session Launcher request in time.", ex);
+        }
     }
 
     private static bool IsControlService(NamedPipeServerStream pipe)

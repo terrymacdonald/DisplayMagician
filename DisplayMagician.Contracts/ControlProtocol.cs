@@ -4,13 +4,16 @@ namespace DisplayMagician.Contracts;
 
 public static class ControlProtocol
 {
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 1;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
     public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
     public const string ClientEventPipeName = "DisplayMagician.ControlService.ClientEvents.v1";
     public const string AgentCommandPipePrefix = "DisplayMagician.UserAgent.Command.v1.";
     public const string SessionLauncherPipeName = "DisplayMagician.SessionLauncher.v1";
     public const int DefaultAudioDeviceWaitMilliseconds = 20000;
+    public const int MaximumMessageLength = 5 * 1024 * 1024;
+    public static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(10);
+    public static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(30);
 }
 
 public enum ControlMessageType
@@ -19,11 +22,8 @@ public enum ControlMessageType
     AgentRegistration = 1,
     AgentHeartbeat = 2,
     AcquireDisplayControl = 3,
-    ReleaseDisplayControl = 4,
-    ExecuteOperation = 5,
     OperationProgress = 6,
     OperationCompleted = 7,
-    RecoveryStatus = 8,
     GetServiceStatus = 9,
     MigrateUserData = 10,
     ListProfiles = 11,
@@ -137,6 +137,8 @@ public sealed class AgentRegistration
     public AgentOperationState OperationState { get; set; }
 
     public bool IsRecoveryRequired { get; set; }
+
+    public bool IsReady { get; set; }
 
     public string CommandPipeName { get; set; } = string.Empty;
 }
@@ -554,11 +556,6 @@ public sealed class LeaseDecision
     public DisplayControlLease? Lease { get; set; }
 }
 
-public sealed class ForceReleaseDisplayControlRequest
-{
-    public string Confirmation { get; set; } = string.Empty;
-}
-
 public sealed class CreateUserSupportBundleRequest
 {
     public string DestinationPath { get; set; } = string.Empty;
@@ -670,4 +667,6 @@ public sealed class AgentStatus
     public DateTime LastHeartbeatUtc { get; set; }
 
     public bool IsHealthy { get; set; }
+
+    public bool IsReady { get; set; }
 }

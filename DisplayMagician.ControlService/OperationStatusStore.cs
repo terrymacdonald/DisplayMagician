@@ -48,6 +48,11 @@ public sealed class OperationStatusStore
                     throw new InvalidOperationException("An operation can only be updated by its owning User Agent session.");
                 }
 
+                if (existing.IsTerminal)
+                {
+                    return Copy(existing);
+                }
+
                 status = Copy(existing);
                 status.Sequence++;
             }

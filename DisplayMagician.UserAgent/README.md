@@ -2,7 +2,7 @@
 
 This project is the per-user background executor that runs in the interactive Windows session. It receives authenticated commands through the Control Service and performs display and audio changes, shortcut lifecycle and restoration, process/game monitoring, game-library discovery, vendor/native display integration, per-user message storage/sync, and user notifications.
 
-The Agent is the owner of interactive desktop work. It registers its SID and session with the Control Service; the service performs machine-wide coordination and routing, but must not take over these responsibilities.
+The Agent is the owner of interactive desktop work. It starts its command pipe and restores pending state before it reports itself ready to the Control Service. The service performs machine-wide coordination and routing, but must not take over these responsibilities.
 
 ## Development
 

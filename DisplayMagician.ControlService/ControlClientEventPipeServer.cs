@@ -15,10 +15,13 @@ namespace DisplayMagician.ControlService;
 
 public sealed class ControlClientEventPipeServer
 {
+    private const int MaximumConnectedClients = 16;
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly ControlClientEventHub _eventHub;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
+    private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
     public ControlClientEventPipeServer(ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore)
     {
@@ -36,7 +39,14 @@ public sealed class ControlClientEventPipeServer
             {
                 pipe = CreatePipe();
                 await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
-                _ = HandleClientAsync(pipe, cancellationToken);
+                if (!await _connectedClientSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                {
+                    Logger.Warn("ControlClientEventPipeServer/RunAsync: Rejected an event subscriber because the connected-client limit of {0} was reached.", MaximumConnectedClients);
+                    pipe.Dispose();
+                    continue;
+                }
+
+                _ = HandleClientWithSlotAsync(pipe, cancellationToken);
                 pipe = null;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -49,6 +59,22 @@ public sealed class ControlClientEventPipeServer
                 pipe?.Dispose();
                 Logger.Error(ex, "ControlClientEventPipeServer/RunAsync: Unable to accept an event subscriber.");
             }
+        }
+    }
+
+    private async Task HandleClientWithSlotAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleClientAsync(pipe, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "ControlClientEventPipeServer/HandleClientWithSlotAsync: An event subscriber handler ended unexpectedly.");
+        }
+        finally
+        {
+            _connectedClientSlots.Release();
         }
     }
 
@@ -66,7 +92,7 @@ public sealed class ControlClientEventPipeServer
         {
             try
             {
-                ControlEnvelope? request = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+                ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, cancellationToken).ConfigureAwait(false);
                 if (request == null || request.ProtocolVersion != ControlProtocol.CurrentVersion || request.MessageType != ControlMessageType.SubscribeClientEvents)
                 {
                     return;
@@ -94,10 +120,24 @@ public sealed class ControlClientEventPipeServer
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException || ex is TimeoutException)
             {
                 Logger.Debug(ex, "ControlClientEventPipeServer/HandleClientAsync: Client event subscription ended or sent an invalid request.");
             }
+        }
+    }
+
+    private static async Task<ControlEnvelope?> ReadEnvelopeWithTimeoutAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(RequestTimeout);
+        try
+        {
+            return await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("The client did not send an event subscription request in time.", ex);
         }
     }
 

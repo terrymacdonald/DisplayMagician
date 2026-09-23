@@ -945,7 +945,7 @@ namespace DisplayMagician {
             {
                 logger.Info("Program/ForceReleaseDisplayControlFromElevatedProcess: Processing the elevated emergency display-control release request.");
                 ControlResponse response = new ControlServicePipeClient()
-                    .ForceReleaseDisplayControlAsync("FORCE RELEASE", CancellationToken.None)
+                    .ForceReleaseDisplayControlAsync(CancellationToken.None)
                     .GetAwaiter()
                     .GetResult();
                 if (response.IsSuccessful)
@@ -981,7 +981,7 @@ namespace DisplayMagician {
                         return (int)ERRORLEVEL.ERROR_EXCEPTION;
                     }
                 }
-                catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+                catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is InvalidOperationException)
                 {
                     logger.Warn(ex, "Program/RestartControlServiceFromElevatedProcess: Could not obtain Control Service status before restarting it; continuing with the administrator-requested restart.");
                 }
