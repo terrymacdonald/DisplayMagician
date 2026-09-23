@@ -144,4 +144,30 @@ public sealed class ShortcutRunnerTests
 
         Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
     }
+
+    [Fact]
+    public void BuildPreGameProgramActions_InterleavesStartAndStopProgramsByPriority()
+    {
+        ShortcutDefinition shortcut = new ShortcutDefinition
+        {
+            StartPrograms = new[]
+            {
+                new ShortcutStartProgramDefinition { Priority = 30, ExecutablePath = "start-last.exe" },
+                new ShortcutStartProgramDefinition { Priority = 20, ExecutablePath = "start-middle.exe" }
+            },
+            StopPrograms = new[]
+            {
+                new ShortcutStopProgramDefinition { Priority = 10, ExecutablePath = "stop-first.exe" },
+                new ShortcutStopProgramDefinition { Priority = 25, ExecutablePath = "stop-before-last.exe" }
+            }
+        };
+
+        var actions = ShortcutRunner.BuildPreGameProgramActions(shortcut);
+
+        Assert.Collection(actions,
+            action => { Assert.Equal(10, action.Priority); Assert.NotNull(action.StopProgram); },
+            action => { Assert.Equal(20, action.Priority); Assert.NotNull(action.StartProgram); },
+            action => { Assert.Equal(25, action.Priority); Assert.NotNull(action.StopProgram); },
+            action => { Assert.Equal(30, action.Priority); Assert.NotNull(action.StartProgram); });
+    }
 }

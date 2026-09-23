@@ -97,17 +97,11 @@ public sealed class ShortcutRunner
             _recoveryStore.Save(recoveryRecord);
         }
         List<StartedProgram> startedPrograms = new List<StartedProgram>();
-        List<ShortcutStopProgramDefinition> stoppedProgramsToRestart = new List<ShortcutStopProgramDefinition>();
+        List<StoppedProgram> stoppedProgramsToRestart = new List<StoppedProgram>();
         AudioVolumeOverrideState? audioVolumeOverrideState = null;
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingPrograms, "Starting shortcut programs.", cancellationToken).ConfigureAwait(false);
-            string? preGameProgramFailure = RunPreGamePrograms(shortcut, startedPrograms, stoppedProgramsToRestart, cancellationToken);
-            if (preGameProgramFailure != null && !await ShouldContinueAfterFailureAsync(requestDecisionAsync, preparedRun.OperationId, "Shortcut program step failed", preGameProgramFailure, cancellationToken).ConfigureAwait(false))
-            {
-                return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
-            }
             if (shouldApplyDisplayProfile)
             {
                 await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingDisplayProfile, "Applying display profile.", cancellationToken).ConfigureAwait(false);
@@ -152,6 +146,12 @@ public sealed class ShortcutRunner
                 {
                     return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                 }
+            }
+
+            await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingPrograms, "Starting shortcut programs.", cancellationToken).ConfigureAwait(false);
+            if (!await RunPreGameProgramsAsync(shortcut, startedPrograms, stoppedProgramsToRestart, requestDecisionAsync, preparedRun.OperationId, cancellationToken).ConfigureAwait(false))
+            {
+                return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
             }
 
             if ((shortcut.Category == ShortcutDefinitionCategory.Executable ||
@@ -254,7 +254,7 @@ public sealed class ShortcutRunner
         }
         finally
         {
-            RunPostGameProgramCleanup(shortcut, startedPrograms, stoppedProgramsToRestart);
+            RunPostGameProgramCleanup(startedPrograms, stoppedProgramsToRestart);
             bool recoveryRestored = true;
             if (recoveryRecord?.RequiresDisplayRestore == true)
             {
@@ -277,6 +277,7 @@ public sealed class ShortcutRunner
             {
                 _recoveryStore.Clear();
             }
+            RunAfterPrograms(shortcut);
             if (automaticDetectionWasSuspended)
             {
                 _automaticGameDetectionRegistry.RestoreAutomaticDetectionAfterManualRun(shortcut.Id);
@@ -332,31 +333,46 @@ public sealed class ShortcutRunner
             (!program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments));
     }
 
-    private static string? RunPreGamePrograms(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<ShortcutStopProgramDefinition> stoppedProgramsToRestart, CancellationToken cancellationToken)
+    private static async Task<bool> RunPreGameProgramsAsync(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<StoppedProgram> stoppedProgramsToRestart, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, Guid operationId, CancellationToken cancellationToken)
     {
-        List<(int Priority, ShortcutStartProgramDefinition? StartProgram, ShortcutStopProgramDefinition? StopProgram)> actions = new List<(int, ShortcutStartProgramDefinition?, ShortcutStopProgramDefinition?)>();
-        actions.AddRange(shortcut.StartPrograms.Where(program => !program.Disabled).Select(program => (Priority: program.Priority, StartProgram: (ShortcutStartProgramDefinition?)program, StopProgram: (ShortcutStopProgramDefinition?)null)));
-        actions.AddRange(shortcut.StopPrograms.Where(program => !program.Disabled).Select(program => (Priority: program.Priority, StartProgram: (ShortcutStartProgramDefinition?)null, StopProgram: (ShortcutStopProgramDefinition?)program)));
+        IReadOnlyList<PreGameProgramAction> actions = BuildPreGameProgramActions(shortcut);
 
-        foreach ((int _, ShortcutStartProgramDefinition? startProgram, ShortcutStopProgramDefinition? stopProgram) in actions.OrderBy(action => action.Priority))
+        int executionOrder = 0;
+        foreach (PreGameProgramAction action in actions)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (stopProgram != null)
+            string? failure = null;
+            if (action.StopProgram != null)
             {
-                if (!StopProgram(stopProgram, stoppedProgramsToRestart))
+                if (!StopProgram(action.StopProgram, executionOrder, stoppedProgramsToRestart))
                 {
-                    return $"Could not stop '{stopProgram.ExecutablePath}'.";
+                    failure = $"Could not stop '{action.StopProgram.ExecutablePath}'.";
                 }
-                continue;
+            }
+            else if (action.StartProgram == null || !StartProgram(action.StartProgram, executionOrder, startedPrograms))
+            {
+                failure = $"Could not start '{action.StartProgram?.ExecutablePath ?? action.StartProgram?.ApplicationId ?? "the configured program"}'.";
             }
 
-            if (startProgram == null || !StartProgram(startProgram, startedPrograms))
+            if (failure != null && !await ShouldContinueAfterFailureAsync(requestDecisionAsync, operationId, "Shortcut program step failed", failure, cancellationToken).ConfigureAwait(false))
             {
-                return $"Could not start '{startProgram?.ExecutablePath ?? startProgram?.ApplicationId ?? "the configured program"}'.";
+                return false;
             }
+
+            executionOrder++;
         }
 
-        return null;
+        return true;
+    }
+
+    internal static IReadOnlyList<PreGameProgramAction> BuildPreGameProgramActions(ShortcutDefinition shortcut)
+    {
+        ArgumentNullException.ThrowIfNull(shortcut);
+        List<PreGameProgramAction> actions = new List<PreGameProgramAction>();
+        int sequence = 0;
+        actions.AddRange(shortcut.StartPrograms.Where(program => !program.Disabled).Select(program => new PreGameProgramAction(program.Priority, sequence++, program, null)));
+        actions.AddRange(shortcut.StopPrograms.Where(program => !program.Disabled).Select(program => new PreGameProgramAction(program.Priority, sequence++, null, program)));
+        return actions.OrderBy(action => action.Priority).ThenBy(action => action.Sequence).ToArray();
     }
 
     private static async Task<bool> ShouldContinueAfterFailureAsync(Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, Guid operationId, string title, string message, CancellationToken cancellationToken)
@@ -391,7 +407,7 @@ public sealed class ShortcutRunner
         }
     }
 
-    private static bool StartProgram(ShortcutStartProgramDefinition program, List<StartedProgram> startedPrograms)
+    private static bool StartProgram(ShortcutStartProgramDefinition program, int sequence, List<StartedProgram> startedPrograms)
     {
         if (!string.IsNullOrWhiteSpace(program.ApplicationId))
         {
@@ -409,7 +425,7 @@ public sealed class ShortcutRunner
 
             if (program.CloseOnFinish)
             {
-                startedPrograms.Add(new StartedProgram(program.Priority, new List<Process> { uwpProcess }, null));
+                startedPrograms.Add(new StartedProgram(program.Priority, sequence, new List<Process> { uwpProcess }, null));
             }
             else
             {
@@ -448,7 +464,7 @@ public sealed class ShortcutRunner
 
         if (program.CloseOnFinish)
         {
-            startedPrograms.Add(new StartedProgram(program.Priority, startedProcesses, monitor));
+            startedPrograms.Add(new StartedProgram(program.Priority, sequence, startedProcesses, monitor));
         }
         else
         {
@@ -459,7 +475,7 @@ public sealed class ShortcutRunner
         return true;
     }
 
-    private static bool StopProgram(ShortcutStopProgramDefinition program, List<ShortcutStopProgramDefinition> stoppedProgramsToRestart)
+    private static bool StopProgram(ShortcutStopProgramDefinition program, int sequence, List<StoppedProgram> stoppedProgramsToRestart)
     {
         if (string.IsNullOrWhiteSpace(program.ExecutablePath))
         {
@@ -480,7 +496,7 @@ public sealed class ShortcutRunner
             }
             if (program.RestartAfterwards)
             {
-                stoppedProgramsToRestart.Add(program);
+                stoppedProgramsToRestart.Add(new StoppedProgram(program, sequence));
             }
 
             return true;
@@ -491,48 +507,58 @@ public sealed class ShortcutRunner
         }
     }
 
-    private static void RunPostGameProgramCleanup(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<ShortcutStopProgramDefinition> stoppedProgramsToRestart)
+    private static void RunPostGameProgramCleanup(List<StartedProgram> startedPrograms, List<StoppedProgram> stoppedProgramsToRestart)
     {
-        foreach (StartedProgram startedProgram in startedPrograms.OrderBy(program => program.Priority))
-        {
-            try
-            {
-                List<Process> processesToStop = startedProgram.Monitor?.GetTrackedProcesses() ?? new List<Process>();
-                foreach (Process process in startedProgram.Processes)
-                {
-                    if (!ProcessUtils.ProcessExited(process) && processesToStop.All(trackedProcess => trackedProcess.Id != process.Id))
-                    {
-                        processesToStop.Add(process);
-                    }
-                }
-                ProcessUtils.StopProcess(processesToStop);
-                ProcessUtils.DisposeProcesses(processesToStop);
-            }
-            catch
-            {
-                // Cleanup continues so other temporary shortcut state is still restored.
-            }
-            finally
-            {
-                ProcessUtils.DisposeProcesses(startedProgram.Processes);
-                startedProgram.Monitor?.Dispose();
-            }
-        }
-        startedPrograms.Clear();
+        List<PreGameCleanupAction> cleanupActions = new List<PreGameCleanupAction>();
+        cleanupActions.AddRange(startedPrograms.Select(program => new PreGameCleanupAction(program.Sequence, program, null)));
+        cleanupActions.AddRange(stoppedProgramsToRestart.Select(program => new PreGameCleanupAction(program.Sequence, null, program)));
 
-        foreach (ShortcutStopProgramDefinition stoppedProgram in stoppedProgramsToRestart.OrderBy(program => program.Priority))
+        foreach (PreGameCleanupAction action in cleanupActions.OrderByDescending(action => action.Sequence))
         {
-            try
+            if (action.StartedProgram != null)
             {
-                ProcessUtils.DisposeProcesses(ProcessUtils.StartProcess(stoppedProgram.ExecutablePath, string.Empty, (ProcessPriority)(int)stoppedProgram.RestartProcessPriority, 10, stoppedProgram.RunAsAdministrator));
+                try
+                {
+                    List<Process> processesToStop = action.StartedProgram.Monitor?.GetTrackedProcesses() ?? new List<Process>();
+                    foreach (Process process in action.StartedProgram.Processes)
+                    {
+                        if (!ProcessUtils.ProcessExited(process) && processesToStop.All(trackedProcess => trackedProcess.Id != process.Id))
+                        {
+                            processesToStop.Add(process);
+                        }
+                    }
+                    ProcessUtils.StopProcess(processesToStop);
+                    ProcessUtils.DisposeProcesses(processesToStop);
+                }
+                catch
+                {
+                    // Cleanup continues so other temporary shortcut state is still restored.
+                }
+                finally
+                {
+                    ProcessUtils.DisposeProcesses(action.StartedProgram.Processes);
+                    action.StartedProgram.Monitor?.Dispose();
+                }
             }
-            catch
+            else if (action.StoppedProgram != null)
             {
-                // Cleanup continues so other temporary shortcut state is still restored.
+                try
+                {
+                    ShortcutStopProgramDefinition stoppedProgram = action.StoppedProgram.Program;
+                    ProcessUtils.DisposeProcesses(ProcessUtils.StartProcess(stoppedProgram.ExecutablePath, string.Empty, (ProcessPriority)(int)stoppedProgram.RestartProcessPriority, 10, stoppedProgram.RunAsAdministrator));
+                }
+                catch
+                {
+                    // Cleanup continues so other temporary shortcut state is still restored.
+                }
             }
         }
         stoppedProgramsToRestart.Clear();
+        startedPrograms.Clear();
+    }
 
+    private static void RunAfterPrograms(ShortcutDefinition shortcut)
+    {
         foreach (ShortcutAfterProgramDefinition afterProgram in shortcut.AfterPrograms.Where(program => !program.Disabled).OrderBy(program => program.Priority))
         {
             if (string.IsNullOrWhiteSpace(afterProgram.ExecutablePath) || !File.Exists(afterProgram.ExecutablePath) || (afterProgram.ArgumentsRequired && string.IsNullOrWhiteSpace(afterProgram.Arguments)))
@@ -615,8 +641,14 @@ public sealed class ShortcutRunner
             }, cancellationToken);
     }
 
-    private sealed record StartedProgram(int Priority, List<Process> Processes, ProcessTreeMonitor? Monitor);
+    private sealed record StartedProgram(int Priority, int Sequence, List<Process> Processes, ProcessTreeMonitor? Monitor);
+
+    private sealed record StoppedProgram(ShortcutStopProgramDefinition Program, int Sequence);
+
+    private sealed record PreGameCleanupAction(int Sequence, StartedProgram? StartedProgram, StoppedProgram? StoppedProgram);
 }
+
+internal sealed record PreGameProgramAction(int Priority, int Sequence, ShortcutStartProgramDefinition? StartProgram, ShortcutStopProgramDefinition? StopProgram);
 
 public sealed record ShortcutRunResult(Guid OperationId, ShortcutRunOutcome Outcome, ShortcutDefinition? Shortcut = null);
 
