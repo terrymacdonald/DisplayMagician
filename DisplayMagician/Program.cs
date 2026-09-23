@@ -1113,7 +1113,7 @@ namespace DisplayMagician {
                 logger.Error("Program/RunProfile: The Control Service did not apply profile {0}. ErrorCode={1}; Message={2}", profileId, response.ErrorCode, response.Message);
                 return response.ApplyProfile?.WasCancelled == true
                     ? ERRORLEVEL.CANCELED_BY_USER
-                    : response.ErrorCode == DisplayMagician.Contracts.ControlErrorCode.InvalidRequest
+                    : response.ErrorCode is DisplayMagician.Contracts.ControlErrorCode.InvalidRequest or DisplayMagician.Contracts.ControlErrorCode.ProfileNotFound
                         ? ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE
                         : ERRORLEVEL.ERROR_APPLYING_PROFILE;
             }

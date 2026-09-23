@@ -36,7 +36,7 @@ namespace DisplayMagicianConsole
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private static readonly ControlServicePipeClient _controlServicePipeClient = new ControlServicePipeClient();
 
-        static int Main(string[] args)
+        internal static int Main(string[] args)
         {
             ConfigureLogging();
             logger.Info("Program/Main: Desktop Console started with {0} argument(s).", args.Length);
@@ -268,7 +268,7 @@ namespace DisplayMagicianConsole
             try
             {
                 // This begins the actual execution of the application
-                app.Execute(args);
+                return app.Execute(args);
             }
             catch (CommandParsingException ex)
             {
@@ -287,7 +287,6 @@ namespace DisplayMagicianConsole
                 return (int)ERRORLEVEL.ERROR_EXCEPTION;
             }
 
-            return (int)ERRORLEVEL.OK;
         }
 
         private static void ConfigureLogging()

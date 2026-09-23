@@ -138,13 +138,6 @@ public sealed class AgentRegistration
     public string CommandPipeName { get; set; } = string.Empty;
 }
 
-public sealed class ProfileSummary
-{
-    public string Id { get; set; } = string.Empty;
-
-    public string Name { get; set; } = string.Empty;
-}
-
 public sealed class GameView
 {
     public string Id { get; set; } = string.Empty;

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
@@ -11,3 +11,4 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("cf589774-7e28-4c1a-b4c3-56776a4ad3e4")]
+[assembly: InternalsVisibleTo("DisplayMagicianConsole.Tests")]

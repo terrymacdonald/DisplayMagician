@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DisplayMagician.Contracts;
 using DisplayMagician.UserAgent.Runtime;
 using SharedApplyProfileResult = DisplayMagician.UserAgent.Runtime.ApplyProfileResult;
 
@@ -32,7 +33,8 @@ public sealed class UserProfileOperationService
     {
         AudioProfileItem? profile = AudioProfileRepository.AllAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
         List<string> missingDeviceNames = new List<string>();
-        bool applied = profile != null && profile.TrySetActive(Math.Max(0, deviceWaitMilliseconds), 500, out missingDeviceNames);
+        int effectiveDeviceWaitMilliseconds = deviceWaitMilliseconds > 0 ? deviceWaitMilliseconds : ControlProtocol.DefaultAudioDeviceWaitMilliseconds;
+        bool applied = profile != null && profile.TrySetActive(effectiveDeviceWaitMilliseconds, 500, out missingDeviceNames);
         if (applied)
         {
             AudioProfileRepository.UpdateActiveAudioProfile();
