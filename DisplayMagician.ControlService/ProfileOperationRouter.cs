@@ -13,6 +13,7 @@ public sealed class ProfileOperationRouter
     private readonly IAgentCommandClient _agentCommandClient;
     private readonly ISessionLauncherClient _sessionLauncherClient;
     private readonly Func<int> _getActiveConsoleSessionId;
+    private readonly RecoveryAdministrationStore? _recoveryAdministrationStore;
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
         : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient(), ConsoleSessionLocator.GetActiveConsoleSessionId)
@@ -24,12 +25,13 @@ public sealed class ProfileOperationRouter
     {
     }
 
-    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> getActiveConsoleSessionId)
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> getActiveConsoleSessionId, RecoveryAdministrationStore? recoveryAdministrationStore = null)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _agentCommandClient = agentCommandClient ?? throw new ArgumentNullException(nameof(agentCommandClient));
         _sessionLauncherClient = sessionLauncherClient ?? throw new ArgumentNullException(nameof(sessionLauncherClient));
         _getActiveConsoleSessionId = getActiveConsoleSessionId ?? throw new ArgumentNullException(nameof(getActiveConsoleSessionId));
+        _recoveryAdministrationStore = recoveryAdministrationStore;
     }
 
     public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, CancellationToken cancellationToken)
@@ -61,14 +63,31 @@ public sealed class ProfileOperationRouter
 
             if (_coordinator.GetAgentRegistration(userSid, sessionId) != null)
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The User Agent did not stop in time and was not restarted." };
+                UserAgentLaunchResult forcedStopResult = await _sessionLauncherClient.StopUserAgentAsync(userSid, sessionId, existingAgent.ProcessId, requestId, cancellationToken).ConfigureAwait(false);
+                if (!forcedStopResult.IsSuccessful)
+                {
+                    RecordRestart(userSid, sessionId, "Failed");
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The User Agent did not stop in time and could not be safely replaced." };
+                }
+
+                _coordinator.UnregisterAgent(userSid, sessionId, existingAgent.ProcessId);
             }
         }
 
         AgentRegistration? restartedAgent = await GetOrStartAgentAsync(userSid, sessionId, requestId, null, cancellationToken).ConfigureAwait(false);
-        return restartedAgent == null
-            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent could not be started for this session." }
-            : new ControlResponse { IsSuccessful = true, Message = "The User Agent was restarted and is ready." };
+        if (restartedAgent == null)
+        {
+            RecordRestart(userSid, sessionId, "Failed");
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent could not be started for this session." };
+        }
+
+        RecordRestart(userSid, sessionId, "Succeeded");
+        return new ControlResponse { IsSuccessful = true, Message = "The User Agent was restarted and is ready." };
+    }
+
+    private void RecordRestart(string userSid, int sessionId, string outcome)
+    {
+        _recoveryAdministrationStore?.Record("RestartUserAgent", outcome, userSid, sessionId);
     }
 
     public Task<ControlResponse> ManageProfileAsync(string userSid, int sessionId, ControlEnvelope request, CancellationToken cancellationToken)
@@ -220,6 +239,11 @@ public sealed class ProfileOperationRouter
     private sealed class UnavailableSessionLauncherClient : ISessionLauncherClient
     {
         public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = false, Message = "The Session Launcher is not configured." });
+        }
+
+        public Task<UserAgentLaunchResult> StopUserAgentAsync(string userSid, int sessionId, int processId, Guid requestId, CancellationToken cancellationToken)
         {
             return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = false, Message = "The Session Launcher is not configured." });
         }

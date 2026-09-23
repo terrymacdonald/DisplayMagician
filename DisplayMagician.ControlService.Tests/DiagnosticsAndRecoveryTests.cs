@@ -117,6 +117,28 @@ public sealed class DiagnosticsAndRecoveryTests
         }
     }
 
+    [Fact]
+    public void RecoveryAdministrationStore_RetainsRecentRecoveryHistory()
+    {
+        string storageRoot = CreateStorageRoot();
+        try
+        {
+            RecoveryAdministrationStore store = new RecoveryAdministrationStore(new StoragePaths(storageRoot));
+
+            store.Record("RestartUserAgent", "Succeeded", "S-1-5-21-100", 10);
+            store.Record("RestartControlService", "Succeeded", "S-1-5-21-999", 20);
+
+            RecoveryAdministrationRecord[] records = new RecoveryAdministrationStore(new StoragePaths(storageRoot)).GetAll();
+            Assert.Equal(2, records.Length);
+            Assert.Equal("RestartUserAgent", records[0].Action);
+            Assert.Equal("RestartControlService", records[1].Action);
+        }
+        finally
+        {
+            DeleteStorageRoot(storageRoot);
+        }
+    }
+
     private static string CreateStorageRoot()
     {
         return Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));

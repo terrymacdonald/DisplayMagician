@@ -143,9 +143,12 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
             string latestAdministration = status.LatestRecoveryAdministration == null
                 ? "No emergency recovery action has been recorded."
                 : $"Last recovery administration: {status.LatestRecoveryAdministration.Action} at {status.LatestRecoveryAdministration.OccurredUtc:u}; outcome: {status.LatestRecoveryAdministration.Outcome}.";
+            string recoveryHistory = status.RecoveryAdministrations.Length > 1
+                ? $" Recovery history contains {status.RecoveryAdministrations.Length} actions."
+                : string.Empty;
             lbl_status.Text = lease == null
-                ? $"Display control is not currently leased. {latestAdministration}"
-                : $"Display control is leased by {lease.OwnerUserSid}, session {lease.OwnerSessionId}. Last heartbeat: {lease.LastHeartbeatUtc:u}. Recovery required: {lease.IsRecoveryRequired}. Active operation: {lease.ActiveOperationId?.ToString() ?? "none"}. {latestAdministration}";
+                ? $"Display control is not currently leased. {latestAdministration}{recoveryHistory}"
+                : $"Display control is leased by {lease.OwnerUserSid}, session {lease.OwnerSessionId}. Last heartbeat: {lease.LastHeartbeatUtc:u}. Recovery required: {lease.IsRecoveryRequired}. Active operation: {lease.ActiveOperationId?.ToString() ?? "none"}. {latestAdministration}{recoveryHistory}";
         }
         catch (Exception ex)
         {

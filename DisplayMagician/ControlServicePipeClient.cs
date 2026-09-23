@@ -271,6 +271,15 @@ internal sealed class ControlServicePipeClient
         }, cancellationToken);
     }
 
+    public Task<ControlResponse> RecordRecoveryAdministrationAsync(string action, string outcome, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.RecordRecoveryAdministration,
+            Payload = JsonSerializer.Serialize(new RecoveryAdministrationRequest { Action = action ?? string.Empty, Outcome = outcome ?? string.Empty })
+        }, cancellationToken);
+    }
+
     private async Task SendRequiredAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(request, cancellationToken).ConfigureAwait(false);

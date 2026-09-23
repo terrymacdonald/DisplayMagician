@@ -4,7 +4,7 @@ namespace DisplayMagician.Contracts;
 
 public static class ControlProtocol
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
     public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
     public const string ClientEventPipeName = "DisplayMagician.ControlService.ClientEvents.v1";
@@ -66,7 +66,9 @@ public enum ControlMessageType
     CreateUserSupportBundle = 48,
     ResolveOperationDecision = 49,
     RequestOperationDecision = 50,
-    RestartUserAgent = 52
+    RestartUserAgent = 52,
+    StopUserAgent = 53,
+    RecordRecoveryAdministration = 54
 }
 
 public enum ControlErrorCode
@@ -506,6 +508,19 @@ public sealed class UserAgentLaunchResult
     public string Message { get; set; } = string.Empty;
 }
 
+public sealed class UserAgentStopRequest
+{
+    public string UserSid { get; set; } = string.Empty;
+    public int SessionId { get; set; }
+    public int ProcessId { get; set; }
+}
+
+public sealed class RecoveryAdministrationRequest
+{
+    public string Action { get; set; } = string.Empty;
+    public string Outcome { get; set; } = string.Empty;
+}
+
 public sealed class AgentHeartbeat
 {
     public AgentOperationState OperationState { get; set; }
@@ -577,6 +592,11 @@ public sealed class RecoveryAdministrationRecord
     public DisplayControlLease? ReleasedLease { get; set; }
 }
 
+public sealed class RecoveryAdministrationHistory
+{
+    public RecoveryAdministrationRecord[] Records { get; set; } = Array.Empty<RecoveryAdministrationRecord>();
+}
+
 public sealed class ControlResponse
 {
     public bool IsSuccessful { get; set; }
@@ -631,6 +651,8 @@ public sealed class ControlServiceStatus
     public DisplayControlLease? DisplayControlLease { get; set; }
 
     public RecoveryAdministrationRecord? LatestRecoveryAdministration { get; set; }
+
+    public RecoveryAdministrationRecord[] RecoveryAdministrations { get; set; } = Array.Empty<RecoveryAdministrationRecord>();
 }
 
 public sealed class AgentStatus

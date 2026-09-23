@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using DisplayMagician.Contracts;
 using NLog;
@@ -20,29 +22,53 @@ public sealed class RecoveryAdministrationStore
 
     public RecoveryAdministrationRecord? GetLatest()
     {
+        return GetAll().LastOrDefault();
+    }
+
+    public RecoveryAdministrationRecord[] GetAll()
+    {
         try
         {
-            return File.Exists(_storagePath) ? JsonSerializer.Deserialize<RecoveryAdministrationRecord>(File.ReadAllText(_storagePath)) : null;
+            if (!File.Exists(_storagePath))
+            {
+                return Array.Empty<RecoveryAdministrationRecord>();
+            }
+
+            string json = File.ReadAllText(_storagePath);
+            RecoveryAdministrationHistory? history = JsonSerializer.Deserialize<RecoveryAdministrationHistory>(json);
+            if (history?.Records?.Length > 0)
+            {
+                return history.Records;
+            }
+
+            RecoveryAdministrationRecord? legacyRecord = JsonSerializer.Deserialize<RecoveryAdministrationRecord>(json);
+            return legacyRecord == null || string.IsNullOrWhiteSpace(legacyRecord.Action) ? Array.Empty<RecoveryAdministrationRecord>() : [legacyRecord];
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
         {
             Logger.Error(ex, "RecoveryAdministrationStore/GetLatest: Could not read recovery administration record from {0}.", _storagePath);
-            return null;
+            return Array.Empty<RecoveryAdministrationRecord>();
         }
     }
 
     public void MarkForceReleased(DisplayControlLease releasedLease, string administratorSid, int administratorSessionId)
     {
         ArgumentNullException.ThrowIfNull(releasedLease);
-        RecoveryAdministrationRecord record = new RecoveryAdministrationRecord
+        Record("ForceReleaseDisplayControl", "RecoveryAbandoned", administratorSid, administratorSessionId, releasedLease);
+    }
+
+    public void Record(string action, string outcome, string actorSid, int actorSessionId, DisplayControlLease? releasedLease = null)
+    {
+        List<RecoveryAdministrationRecord> records = GetAll().ToList();
+        records.Add(new RecoveryAdministrationRecord
         {
             OccurredUtc = DateTime.UtcNow,
-            Action = "ForceReleaseDisplayControl",
-            Outcome = "RecoveryAbandoned",
-            AdministratorSid = administratorSid,
-            AdministratorSessionId = administratorSessionId,
+            Action = action,
+            Outcome = outcome,
+            AdministratorSid = actorSid,
+            AdministratorSessionId = actorSessionId,
             ReleasedLease = releasedLease
-        };
-        AtomicFileStore.WriteAllText(_storagePath, JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true }), $"{_storagePath}.bak");
+        });
+        AtomicFileStore.WriteAllText(_storagePath, JsonSerializer.Serialize(new RecoveryAdministrationHistory { Records = records.TakeLast(50).ToArray() }, new JsonSerializerOptions { WriteIndented = true }), $"{_storagePath}.bak");
     }
 }

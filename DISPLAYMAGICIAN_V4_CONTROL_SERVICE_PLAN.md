@@ -56,7 +56,7 @@ v4.0.0 does **not** need to deliver:
 | Agent startup | WinForms starts and retains the hidden, tray-less User Agent while WinForms is open or minimised to its existing tray icon. On full WinForms exit, an idle Agent stops; an Agent with an active shortcut, game monitor, apply, or recovery stays until safe completion. The demand-start Session Launcher starts a missing Agent only for an already-authorized request targeting the active console user. |
 | Locked session | Applying a profile is allowed while locked. Starting a new game/application shortcut is denied while locked. Existing shortcuts continue to be monitored and restored. |
 | Recovery | Agent/service loss during temporary state requires safe restoration before further display-changing work. |
-| Recovery administration | A Service Recovery page under Settings > Diagnostics is visible only to an elevated DM administrator. Normal restoration retries only through the affected user's Agent after sign-in. An emergency, UAC-elevated `Force release DM control` action requires an explicit confirmation phrase, releases the lease, marks recovery abandoned, and creates a high-severity audit record. |
+| Recovery administration | A Service Recovery page under Settings > Diagnostics is visible to the desktop user. Restart User Agent is a safe per-session action: it refuses active/recovery work, then stops and verifies a replacement Agent. Restart Control Service and Clear Stuck Display Change require UAC. All recovery actions retain a bounded machine history; the UAC-elevated actions also create high-severity audit records. |
 | Pairing | Explicit, user-confirmed pairing. Exact pairing UX is technology-specific and deferred behind abstractions. |
 | Metrics/messages | Anonymous metrics and client-sync scheduling remain machine-level responsibilities. The User Agent owns each user's message cache, read state, content retrieval, and message RPCs; all UI clients view it through Control Service routing. |
 | Remote scope | No public endpoint in v4.0.0. Localhost integration foundation only. |
@@ -561,7 +561,7 @@ Before applying temporary state, persist a recovery record. Clear it only after 
 
 ### Recovery administration interface
 
-Add a Service Recovery page under **Settings > Diagnostics**. It is available only to the elevated DM administrator and displays the current lease, recovery record, affected user/session, the last Agent heartbeat, and the most recent restoration result. A normal retry is sent only to the affected user's Agent after that user signs in; the service must not attempt desktop recovery itself or impersonate another user.
+Add a Service Recovery page under **Settings > Diagnostics**. It displays the current lease, recovery history, affected user/session, the last Agent heartbeat, and the most recent restoration result. Restart User Agent is available only when its session is idle and recovery is not required. Restart Control Service and Clear Stuck Display Change are UAC-elevated actions. A normal retry is sent only to the affected user's Agent after that user signs in; the service must not attempt desktop recovery itself or impersonate another user.
 
 `Force release DM control` is an emergency action, not normal workflow. It must request UAC elevation, clearly explain that DM can no longer safely restore the previous temporary state, require the administrator to type a confirmation phrase, set the recovery record to forced/abandoned, release the lease, and write a high-severity audit entry. The current active user can then manually apply a known-good profile. A machine-wide fallback profile is deferred.
 
@@ -657,7 +657,7 @@ Future packaged WinUI 3 remains viable: a full-trust WinUI 3 desktop client can 
 - [x] Move WinForms startup-message polling, unread indicators, and release-note lookup to Agent message views; stop direct desktop message-file access.
 - [x] Remove the legacy desktop messaging implementation after client-sync scheduling has moved to Control Service.
 - [x] Forward update/message events to Agent/UI.
-- [x] Add audit records, durable plain-text service error logs, diagnostic bundle support, and the administrator-only Service Recovery page.
+- [x] Add audit records, durable plain-text service error logs, diagnostic bundle support, and the Service Recovery page with safe UserAgent restart plus UAC-protected ControlService restart and stuck display-change clearing.
 - [x] Remove the `--agent-hosted-operation` desktop-executable bridge; normal Agent profile work remains in `UserProfileOperationService`.
 - [x] Remove WinForms `Program` client-sync/metrics timers, message polling, message-file access, and the duplicated `Messaging` services after their Service/Agent replacements are live.
 - [x] Remove desktop AppData persistence fallbacks for Agent-owned profiles, audio profiles, shortcuts, and messages; retain only interactive in-memory caches backed by Agent snapshots and commits.

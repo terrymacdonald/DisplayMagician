@@ -75,20 +75,28 @@ public sealed class SessionLauncherPipeServer
     {
         ControlEnvelope? request = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
         UserAgentLaunchResult result;
-        if (request == null || request.ProtocolVersion != ControlProtocol.CurrentVersion || request.MessageType != ControlMessageType.LaunchUserAgent || !IsControlService(pipe))
+        if (request == null || request.ProtocolVersion != ControlProtocol.CurrentVersion || request.MessageType is not (ControlMessageType.LaunchUserAgent or ControlMessageType.StopUserAgent) || !IsControlService(pipe))
         {
             result = new UserAgentLaunchResult { IsSuccessful = false, Message = "The Session Launcher rejected the caller or request." };
         }
         else
         {
             using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
-            UserAgentLaunchRequest? launchRequest = JsonSerializer.Deserialize<UserAgentLaunchRequest>(request.Payload);
-            using IDisposable? operationScope = launchRequest?.OperationId is Guid operationId && operationId != Guid.Empty ? SupportLogScope.BeginOperation(operationId) : null;
-            result = launchRequest == null ? new UserAgentLaunchResult { IsSuccessful = false, Message = "The User Agent launch request was invalid." } : _processLauncher.Launch(launchRequest);
+            if (request.MessageType == ControlMessageType.LaunchUserAgent)
+            {
+                UserAgentLaunchRequest? launchRequest = JsonSerializer.Deserialize<UserAgentLaunchRequest>(request.Payload);
+                using IDisposable? operationScope = launchRequest?.OperationId is Guid operationId && operationId != Guid.Empty ? SupportLogScope.BeginOperation(operationId) : null;
+                result = launchRequest == null ? new UserAgentLaunchResult { IsSuccessful = false, Message = "The User Agent launch request was invalid." } : _processLauncher.Launch(launchRequest);
+            }
+            else
+            {
+                UserAgentStopRequest? stopRequest = JsonSerializer.Deserialize<UserAgentStopRequest>(request.Payload);
+                result = stopRequest == null ? new UserAgentLaunchResult { IsSuccessful = false, Message = "The User Agent stop request was invalid." } : _processLauncher.Stop(stopRequest);
+            }
         }
 
         Guid requestId = request?.RequestId ?? Guid.NewGuid();
-        await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope { MessageType = ControlMessageType.LaunchUserAgent, RequestId = requestId, Payload = JsonSerializer.Serialize(result) }, cancellationToken).ConfigureAwait(false);
+        await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope { MessageType = request?.MessageType ?? ControlMessageType.Unknown, RequestId = requestId, Payload = JsonSerializer.Serialize(result) }, cancellationToken).ConfigureAwait(false);
     }
 
     private static bool IsControlService(NamedPipeServerStream pipe)
@@ -175,6 +183,39 @@ public sealed class InteractiveUserProcessLauncher
             if (environment != IntPtr.Zero) DestroyEnvironmentBlock(environment);
             if (primaryToken != IntPtr.Zero) CloseHandle(primaryToken);
             if (userToken != IntPtr.Zero) CloseHandle(userToken);
+        }
+    }
+
+    public UserAgentLaunchResult Stop(UserAgentStopRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.UserSid) || request.SessionId < 0 || request.ProcessId <= 0 || WTSGetActiveConsoleSessionId() != (uint)request.SessionId)
+        {
+            return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested User Agent process is not in the active physical-console session." };
+        }
+
+        try
+        {
+            using Process process = Process.GetProcessById(request.ProcessId);
+            string executablePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "UserAgent", "DisplayMagician.UserAgent.exe"));
+            if (process.SessionId != request.SessionId || !string.Equals(process.MainModule?.FileName, executablePath, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.Warn("InteractiveUserProcessLauncher/Stop: Rejected process {0} because it was not the verified User Agent for session {1}.", request.ProcessId, request.SessionId);
+                return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested process is not the verified User Agent for the active session." };
+            }
+
+            process.Kill(true);
+            if (!process.WaitForExit(10000))
+            {
+                return new UserAgentLaunchResult { IsSuccessful = false, Message = "The verified User Agent did not stop in time." };
+            }
+
+            _logger.Info("InteractiveUserProcessLauncher/Stop: Stopped User Agent process {0} for SID {1}, session {2}.", request.ProcessId, request.UserSid, request.SessionId);
+            return new UserAgentLaunchResult { IsSuccessful = true, Message = "The User Agent was stopped." };
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+        {
+            _logger.Error(ex, "InteractiveUserProcessLauncher/Stop: Could not stop verified User Agent process {0}.", request.ProcessId);
+            return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not stop the User Agent process." };
         }
     }
 

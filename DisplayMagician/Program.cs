@@ -1011,6 +1011,15 @@ namespace DisplayMagician {
                     return (int)ERRORLEVEL.ERROR_EXCEPTION;
                 }
 
+                try
+                {
+                    new ControlServicePipeClient().RecordRecoveryAdministrationAsync("RestartControlService", "Succeeded", CancellationToken.None).GetAwaiter().GetResult();
+                }
+                catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+                {
+                    logger.Warn(ex, "Program/RestartControlServiceFromElevatedProcess: Control Service restarted but its recovery history could not be recorded.");
+                }
+
                 logger.Info("Program/RestartControlServiceFromElevatedProcess: Control Service restarted successfully.");
                 return (int)ERRORLEVEL.OK;
             }
@@ -1049,8 +1058,9 @@ namespace DisplayMagician {
             Stopwatch stopwatch = Stopwatch.StartNew();
             while (stopwatch.Elapsed < timeout)
             {
+                int expectedStateCode = string.Equals(expectedState, "STOPPED", StringComparison.Ordinal) ? 1 : 4;
                 int queryExitCode = RunServiceControlCommand("query", out string queryOutput);
-                if (queryExitCode == 0 && queryOutput.IndexOf(expectedState, StringComparison.OrdinalIgnoreCase) >= 0)
+                if (queryExitCode == 0 && queryOutput.IndexOf($"STATE              : {expectedStateCode}", StringComparison.Ordinal) >= 0)
                 {
                     return true;
                 }

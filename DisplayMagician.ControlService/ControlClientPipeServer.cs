@@ -114,6 +114,7 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
                     ControlMessageType.GetServiceStatus => GetServiceStatus(),
                     ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
+                    ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
                     _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
                 };
             }
@@ -224,6 +225,7 @@ public sealed class ControlClientPipeServer
     {
         ControlServiceStatus status = _stateCoordinator.GetStatus(DateTime.UtcNow);
         status.LatestRecoveryAdministration = _recoveryAdministrationStore.GetLatest();
+        status.RecoveryAdministrations = _recoveryAdministrationStore.GetAll();
         return new ControlResponse { IsSuccessful = true, Message = "Control Service status returned.", ServiceStatus = status };
     }
 
@@ -369,6 +371,24 @@ public sealed class ControlClientPipeServer
         _recoveryAdministrationStore.MarkForceReleased(releasedLease, identity.UserSid, identity.SessionId);
         _auditStore.Append("DisplayControlForceReleased", "HighSeverity", $"Released lease held by session {releasedLease.OwnerSessionId}; recovery required: {releasedLease.IsRecoveryRequired}.", identity.UserSid, identity.SessionId);
         return new ControlResponse { IsSuccessful = true, Message = "Display control was force-released. Any interrupted operation must be checked before further use." };
+    }
+
+    private ControlResponse RecordRecoveryAdministration(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        if (!identity.IsAdministrator)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AdministratorRequired, Message = "Recording this recovery action requires an elevated administrator session." };
+        }
+
+        RecoveryAdministrationRequest? recoveryRequest = JsonSerializer.Deserialize<RecoveryAdministrationRequest>(request.Payload);
+        if (recoveryRequest?.Action != "RestartControlService" || string.IsNullOrWhiteSpace(recoveryRequest.Outcome))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The recovery administration record was invalid." };
+        }
+
+        _recoveryAdministrationStore.Record(recoveryRequest.Action, recoveryRequest.Outcome, identity.UserSid, identity.SessionId);
+        _auditStore.Append(recoveryRequest.Action, "HighSeverity", recoveryRequest.Outcome, identity.UserSid, identity.SessionId);
+        return new ControlResponse { IsSuccessful = true, Message = "Recovery administration record stored." };
     }
 
     private static PipeClientIdentity GetClientIdentity(NamedPipeServerStream pipe)

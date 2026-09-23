@@ -273,5 +273,10 @@ public sealed class ProfileOperationRouterTests
             _coordinator.RegisterAgent(_agent, DateTime.UtcNow);
             return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = true, Message = "Test Agent launched." });
         }
+
+        public Task<UserAgentLaunchResult> StopUserAgentAsync(string userSid, int sessionId, int processId, Guid requestId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = true, Message = "Test Agent stopped." });
+        }
     }
 }
