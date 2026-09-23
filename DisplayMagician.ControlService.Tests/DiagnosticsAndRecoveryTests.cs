@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using DisplayMagician.Contracts;
 using Xunit;
 
@@ -19,9 +21,10 @@ public sealed class DiagnosticsAndRecoveryTests
             OperationDecision decision = store.Create("S-1-5-21-100", 10, Guid.NewGuid(), "Display profile failed", "Continue with the current display configuration?", new[] { OperationDecisionChoice.Continue, OperationDecisionChoice.StopAndRestore }, OperationDecisionChoice.Continue, now.AddMinutes(1), now);
 
             Assert.Equal(decision.PromptId, Assert.Single(store.GetPending("S-1-5-21-100", 10)).PromptId);
+            Assert.Equal(decision.PromptId, Assert.Single(store.GetPending("S-1-5-21-100", 11)).PromptId);
             Assert.Empty(store.GetPending("S-1-5-21-999", 10));
             Assert.Null(store.Resolve("S-1-5-21-999", 10, decision.PromptId, OperationDecisionChoice.StopAndRestore, now));
-            OperationDecision? resolved = store.Resolve("S-1-5-21-100", 10, decision.PromptId, OperationDecisionChoice.StopAndRestore, now);
+            OperationDecision? resolved = store.Resolve("S-1-5-21-100", 11, decision.PromptId, OperationDecisionChoice.StopAndRestore, now);
             Assert.NotNull(resolved);
             Assert.Equal(OperationDecisionChoice.StopAndRestore, resolved!.ResolvedChoice);
             Assert.Empty(store.GetPending("S-1-5-21-100", 10));
@@ -36,6 +39,22 @@ public sealed class DiagnosticsAndRecoveryTests
         {
             DeleteStorageRoot(storageRoot);
         }
+    }
+
+    [Fact]
+    public async Task ControlClientEventHub_PublishesToEverySessionForTheSameUser()
+    {
+        ControlClientEventHub hub = new ControlClientEventHub();
+        using ControlClientEventSubscription firstSession = hub.Subscribe("S-1-5-21-100", 10);
+        using ControlClientEventSubscription secondSession = hub.Subscribe("S-1-5-21-100", 11);
+        using ControlClientEventSubscription otherUser = hub.Subscribe("S-1-5-21-999", 10);
+        ControlClientEvent clientEvent = new ControlClientEvent { EventType = ControlClientEventType.OperationStatusUpdated, PublishedUtc = DateTime.UtcNow };
+
+        hub.Publish("S-1-5-21-100", 10, clientEvent);
+
+        Assert.Equal(clientEvent.EventType, (await firstSession.Reader.ReadAsync(CancellationToken.None)).EventType);
+        Assert.Equal(clientEvent.EventType, (await secondSession.Reader.ReadAsync(CancellationToken.None)).EventType);
+        Assert.False(otherUser.Reader.TryRead(out _));
     }
 
     [Fact]

@@ -83,9 +83,9 @@ public sealed class ControlClientEventPipeServer
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException)
             {
-                Logger.Debug(ex, "ControlClientEventPipeServer/HandleClientAsync: Client event subscription ended.");
+                Logger.Debug(ex, "ControlClientEventPipeServer/HandleClientAsync: Client event subscription ended or sent an invalid request.");
             }
         }
     }

@@ -15,6 +15,23 @@ public interface IAgentCommandClient
 
 public sealed class AgentCommandClient : IAgentCommandClient
 {
+    private readonly TimeSpan _responseTimeout;
+
+    public AgentCommandClient()
+        : this(TimeSpan.FromSeconds(30))
+    {
+    }
+
+    public AgentCommandClient(TimeSpan responseTimeout)
+    {
+        if (responseTimeout <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(responseTimeout));
+        }
+
+        _responseTimeout = responseTimeout;
+    }
+
     public async Task<ControlResponse> SendAsync(AgentRegistration agent, ControlEnvelope request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(agent);
@@ -26,14 +43,23 @@ public sealed class AgentCommandClient : IAgentCommandClient
 
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", agent.CommandPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
-        await ControlEnvelopeSerializer.WriteAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-        ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
-        if (response == null || response.RequestId != request.RequestId)
+        using CancellationTokenSource responseTimeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        responseTimeoutSource.CancelAfter(_responseTimeout);
+        try
         {
-            throw new InvalidDataException("The User Agent returned an invalid command response.");
-        }
+            await ControlEnvelopeSerializer.WriteAsync(pipe, request, responseTimeoutSource.Token).ConfigureAwait(false);
+            ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, responseTimeoutSource.Token).ConfigureAwait(false);
+            if (response == null || response.RequestId != request.RequestId)
+            {
+                throw new InvalidDataException("The User Agent returned an invalid command response.");
+            }
 
-        return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
-            ?? throw new InvalidDataException("The User Agent returned an unreadable command response.");
+            return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
+                ?? throw new InvalidDataException("The User Agent returned an unreadable command response.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("The User Agent did not respond within the permitted time.");
+        }
     }
 }

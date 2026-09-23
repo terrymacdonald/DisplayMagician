@@ -86,7 +86,7 @@ public sealed class OperationDecisionStore
         OperationDecision? resolved = null;
         lock (_syncRoot)
         {
-            if (!_decisions.TryGetValue(promptId, out OperationDecision? decision) || !string.Equals(decision.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) || decision.OwnerSessionId != ownerSessionId || decision.IsResolved || !decision.AllowedChoices.Contains(choice))
+            if (!_decisions.TryGetValue(promptId, out OperationDecision? decision) || !string.Equals(decision.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) || decision.IsResolved || !decision.AllowedChoices.Contains(choice))
             {
                 return null;
             }
@@ -133,7 +133,7 @@ public sealed class OperationDecisionStore
         lock (_syncRoot)
         {
             return _decisions.Values
-                .Where(decision => !decision.IsResolved && string.Equals(decision.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) && decision.OwnerSessionId == ownerSessionId)
+                .Where(decision => !decision.IsResolved && string.Equals(decision.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(decision => decision.CreatedUtc)
                 .Select(Copy)
                 .ToArray();
