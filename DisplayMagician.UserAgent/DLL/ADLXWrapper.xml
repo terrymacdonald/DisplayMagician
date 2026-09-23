@@ -288,9 +288,27 @@
             Enumerate displays that compose this Eyefinity desktop.
             </summary>
         </member>
+        <member name="M:ADLXWrapper.ADLXDesktop.GetEyefinityTopology">
+            <summary>
+            Gets the complete read-only topology of this Eyefinity desktop.
+            </summary>
+            <returns>Desktop geometry and every display cell in the Eyefinity grid.</returns>
+            <exception cref="T:ADLXWrapper.ADLXException">If this is not an Eyefinity desktop or the topology cannot be read.</exception>
+            <exception cref="T:System.ObjectDisposedException">If disposed.</exception>
+        </member>
         <member name="M:ADLXWrapper.ADLXDesktop.GetGPU">
             <summary>
             GPU that drives this desktop (first GPU owning any display on the desktop).
+            </summary>
+        </member>
+        <member name="T:ADLXWrapper.EyefinityTopologyDto">
+            <summary>
+            Describes an active ADLX Eyefinity desktop and its display grid.
+            </summary>
+        </member>
+        <member name="T:ADLXWrapper.EyefinityGridCellDto">
+            <summary>
+            Describes one display cell in an ADLX Eyefinity desktop.
             </summary>
         </member>
         <member name="T:ADLXWrapper.ADLXDesktopServicesHelper">
