@@ -101,6 +101,17 @@ public sealed class OperationDecisionStore
         return resolved;
     }
 
+    public OperationDecision? Get(string ownerUserSid, Guid promptId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
+        lock (_syncRoot)
+        {
+            return _decisions.TryGetValue(promptId, out OperationDecision? decision) && string.Equals(decision.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase)
+                ? Copy(decision)
+                : null;
+        }
+    }
+
     public OperationDecision[] Expire(DateTime utcNow)
     {
         List<OperationDecision> expired = new List<OperationDecision>();

@@ -19,16 +19,16 @@ internal sealed class ControlServicePipeClient
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID is required." };
         }
 
-        return await ApplyProfileAsync(profileId, Guid.NewGuid(), cancellationToken).ConfigureAwait(false);
+        return await ApplyProfileAsync(profileId, Guid.NewGuid(), Guid.NewGuid(), cancellationToken).ConfigureAwait(false);
     }
 
-    private static Task<ControlResponse> ApplyProfileAsync(string profileId, Guid requestId, CancellationToken cancellationToken)
+    private static Task<ControlResponse> ApplyProfileAsync(string profileId, Guid operationId, Guid requestId, CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope
         {
             MessageType = ControlMessageType.ApplyProfile,
             RequestId = requestId,
-            Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
+            Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId, OperationId = operationId })
         }, cancellationToken);
     }
 
@@ -136,10 +136,11 @@ internal sealed class ControlServicePipeClient
     public async Task<ControlResponse> ApplyProfileWhenAgentAvailableAsync(string profileId, CancellationToken cancellationToken)
     {
         Guid requestId = Guid.NewGuid();
+        Guid operationId = Guid.NewGuid();
         const int maximumAttempts = 40;
         for (int attempt = 1; attempt <= maximumAttempts; attempt++)
         {
-            ControlResponse response = await ApplyProfileAsync(profileId, requestId, cancellationToken).ConfigureAwait(false);
+            ControlResponse response = await ApplyProfileAsync(profileId, operationId, requestId, cancellationToken).ConfigureAwait(false);
             if (!ControlServiceRetryPolicy.ShouldRetryAfterStartingAgent(response) || attempt == maximumAttempts)
             {
                 return response;
@@ -390,7 +391,17 @@ internal sealed class ControlServicePipeClient
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            ControlEnvelope clientEventEnvelope = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+            using CancellationTokenSource eventIdleTimeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            eventIdleTimeoutSource.CancelAfter(ControlProtocol.EventIdleTimeout);
+            ControlEnvelope clientEventEnvelope;
+            try
+            {
+                clientEventEnvelope = await ControlEnvelopeSerializer.ReadAsync(pipe, eventIdleTimeoutSource.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested && eventIdleTimeoutSource.IsCancellationRequested)
+            {
+                throw new TimeoutException("The Control Service event subscription became idle and will be reconnected.", ex);
+            }
             if (clientEventEnvelope == null || clientEventEnvelope.MessageType != ControlMessageType.ClientEvent)
             {
                 throw new InvalidDataException("The Control Service closed the event subscription unexpectedly.");

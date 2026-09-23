@@ -703,9 +703,9 @@ public sealed class ProfileCommandHandler
         }
 
         ApplyProfileRequest? applyRequest = JsonSerializer.Deserialize<ApplyProfileRequest>(request.Payload);
-        if (applyRequest == null || string.IsNullOrWhiteSpace(applyRequest.ProfileId))
+        if (applyRequest == null || string.IsNullOrWhiteSpace(applyRequest.ProfileId) || applyRequest.OperationId == Guid.Empty)
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A display profile ID is required." };
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A display profile ID and operation ID are required." };
         }
 
         if (!ProfileRepository.AllProfiles.Any(profile => string.Equals(profile.UUID, applyRequest.ProfileId, StringComparison.OrdinalIgnoreCase)))
@@ -713,21 +713,68 @@ public sealed class ProfileCommandHandler
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
         }
 
+        Guid profileOperationId = applyRequest.OperationId;
         _registration.OperationState = AgentOperationState.Running;
+        await PublishShortcutStatusAsync(new OperationStatusUpdate
+        {
+            OperationId = profileOperationId,
+            OperationType = DisplayOperationType.ApplyDisplayProfile,
+            Phase = OperationPhase.Requested,
+            Message = "Display profile operation requested."
+        }, CancellationToken.None).ConfigureAwait(false);
         try
         {
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = profileOperationId,
+                OperationType = DisplayOperationType.ApplyDisplayProfile,
+                Phase = OperationPhase.ApplyingDisplayProfile,
+                Message = "Applying display profile."
+            }, CancellationToken.None).ConfigureAwait(false);
             ApplyDisplayProfileOperationResult result = await _userProfileOperationService.ApplyDisplayProfileAsync(applyRequest.ProfileId, cancellationToken).ConfigureAwait(false);
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = profileOperationId,
+                OperationType = DisplayOperationType.ApplyDisplayProfile,
+                Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed,
+                Message = result.IsSuccessful ? "Display profile applied." : "Display profile could not be applied.",
+                IsTerminal = true,
+                IsSuccessful = result.IsSuccessful,
+                ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed
+            }, CancellationToken.None).ConfigureAwait(false);
             return new ControlResponse
             {
                 IsSuccessful = result.IsSuccessful,
                 ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed,
                 Message = result.IsSuccessful ? "Display profile applied." : "Display profile could not be applied.",
-                ApplyProfile = new DisplayMagician.Contracts.ApplyProfileResult { WasCancelled = result.WasCancelled }
+                ApplyProfile = new DisplayMagician.Contracts.ApplyProfileResult { WasCancelled = result.WasCancelled },
+                OperationStatus = new OperationStatus { OperationId = profileOperationId, OperationType = DisplayOperationType.ApplyDisplayProfile, Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed, IsTerminal = true, IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed }
+            };
+        }
+        catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
+        {
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = profileOperationId,
+                OperationType = DisplayOperationType.ApplyDisplayProfile,
+                Phase = OperationPhase.Failed,
+                Message = "Display profile operation failed unexpectedly.",
+                IsTerminal = true,
+                ErrorCode = ControlErrorCode.ExecutionFailed
+            }, CancellationToken.None).ConfigureAwait(false);
+            _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Display profile operation {0} failed unexpectedly.", profileOperationId);
+            return new ControlResponse
+            {
+                IsSuccessful = false,
+                ErrorCode = ControlErrorCode.ExecutionFailed,
+                Message = "Display profile operation failed unexpectedly.",
+                OperationStatus = new OperationStatus { OperationId = profileOperationId, OperationType = DisplayOperationType.ApplyDisplayProfile, Phase = OperationPhase.Failed, IsTerminal = true, ErrorCode = ControlErrorCode.ExecutionFailed }
             };
         }
         finally
         {
             _registration.OperationState = AgentOperationState.Idle;
+            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
         }
     }
 

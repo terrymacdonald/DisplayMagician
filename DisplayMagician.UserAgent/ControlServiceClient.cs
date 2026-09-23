@@ -169,7 +169,34 @@ public sealed class ControlServiceClient
             throw new InvalidOperationException(response.Message);
         }
 
-        return response.OperationDecision;
+        OperationDecision decision = response.OperationDecision;
+        while (!decision.IsResolved)
+        {
+            TimeSpan untilExpiry = decision.ExpiresUtc - DateTime.UtcNow;
+            if (untilExpiry <= TimeSpan.Zero)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await Task.Delay(untilExpiry < TimeSpan.FromSeconds(1) ? untilExpiry : TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+            }
+
+            using NamedPipeClientStream statusPipe = await ConnectRegisteredAgentPipeAsync(registration, cancellationToken).ConfigureAwait(false);
+            ControlResponse statusResponse = await SendAndReceiveAsync(statusPipe, new ControlEnvelope
+            {
+                MessageType = ControlMessageType.GetOperationDecision,
+                Payload = JsonSerializer.Serialize(new OperationDecisionStatusRequest { PromptId = decision.PromptId })
+            }, cancellationToken).ConfigureAwait(false);
+            if (!statusResponse.IsSuccessful || statusResponse.OperationDecision == null)
+            {
+                throw new InvalidOperationException(statusResponse.Message);
+            }
+
+            decision = statusResponse.OperationDecision;
+        }
+
+        return decision;
     }
 
     private static async Task<NamedPipeClientStream> ConnectRegisteredAgentPipeAsync(AgentRegistration registration, CancellationToken cancellationToken)

@@ -258,14 +258,28 @@ public sealed class NamedPipeControlServer
             int timeoutSeconds = Math.Clamp(decisionRequest.TimeoutSeconds, 5, 300);
             OperationDecision decision = _operationDecisionStore.Create(identity.UserSid, identity.SessionId, decisionRequest.OperationId, decisionRequest.Title, decisionRequest.Message, decisionRequest.AllowedChoices, decisionRequest.DefaultChoice, now.AddSeconds(timeoutSeconds), now);
             _operationStatusStore.Publish(identity.UserSid, identity.SessionId, new OperationStatusUpdate { OperationId = decisionRequest.OperationId, OperationType = decisionRequest.OperationType, Phase = OperationPhase.AwaitingUserDecision, Message = decisionRequest.Message }, now);
-            Task<OperationDecision> resolutionTask = _operationDecisionStore.WaitForResolutionAsync(decision.PromptId, cancellationToken);
-            if (await Task.WhenAny(resolutionTask, Task.Delay(TimeSpan.FromSeconds(timeoutSeconds), cancellationToken)).ConfigureAwait(false) != resolutionTask)
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Operation decision created.", cancellationToken, operationDecision: decision).ConfigureAwait(false);
+            return;
+        }
+
+        if (request.MessageType == ControlMessageType.GetOperationDecision)
+        {
+            OperationDecisionStatusRequest? decisionStatusRequest = JsonSerializer.Deserialize<OperationDecisionStatusRequest>(request.Payload);
+            if (decisionStatusRequest == null || decisionStatusRequest.PromptId == Guid.Empty)
             {
-                _operationDecisionStore.Expire(DateTime.UtcNow);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "An operation decision prompt ID is required.", cancellationToken).ConfigureAwait(false);
+                return;
             }
 
-            OperationDecision resolvedDecision = await resolutionTask.ConfigureAwait(false);
-            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Operation decision resolved.", cancellationToken, operationDecision: resolvedDecision).ConfigureAwait(false);
+            _operationDecisionStore.Expire(DateTime.UtcNow);
+            OperationDecision? decision = _operationDecisionStore.Get(identity.UserSid, decisionStatusRequest.PromptId);
+            if (decision == null)
+            {
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.DecisionUnavailable, "The operation decision is unavailable.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, decision.IsResolved ? "Operation decision resolved." : "Operation decision is pending.", cancellationToken, operationDecision: decision).ConfigureAwait(false);
             return;
         }
 

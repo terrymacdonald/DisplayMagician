@@ -109,12 +109,16 @@ public sealed class ProfileOperationRouter
 
     public async Task<ControlResponse> ApplyProfileAsync(string userSid, int sessionId, string profileId, Guid requestId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(profileId) || requestId == Guid.Empty)
+        return await ApplyProfileAsync(userSid, sessionId, profileId, Guid.NewGuid(), requestId, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<ControlResponse> ApplyProfileAsync(string userSid, int sessionId, string profileId, Guid operationId, Guid requestId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(profileId) || operationId == Guid.Empty || requestId == Guid.Empty)
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID and request ID are required." };
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID and correlation IDs are required." };
         }
 
-        Guid operationId = Guid.NewGuid();
         AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
         if (agent == null)
         {
@@ -138,7 +142,7 @@ public sealed class ProfileOperationRouter
             {
                 MessageType = ControlMessageType.ApplyProfile,
                 RequestId = requestId,
-                Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
+                Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId, OperationId = operationId })
             }, cancellationToken).ConfigureAwait(false);
             _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
             return response;

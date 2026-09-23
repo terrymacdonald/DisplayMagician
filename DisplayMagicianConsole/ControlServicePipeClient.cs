@@ -23,7 +23,7 @@ namespace DisplayMagicianConsole
             return SendAsync(new ControlEnvelope
             {
                 MessageType = ControlMessageType.ApplyProfile,
-                Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
+                Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId, OperationId = Guid.NewGuid() })
             }, cancellationToken);
         }
 

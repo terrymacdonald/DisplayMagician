@@ -300,26 +300,18 @@ namespace DisplayMagician
         {
             logger.Trace($"SingleInstance/NamedPipeServerCreateServer: Sending the primary DisplayMagician the message through the NamedPipe.");
 
-            // Create a new pipe accessible by local authenticated users, disallow network
-            var sidNetworkService = new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
-            var sidWorld = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-
             var pipeSecurity = new PipeSecurity();
-
-            // Deny network access to the pipe
-            var accessRule = new PipeAccessRule(sidNetworkService, PipeAccessRights.ReadWrite, AccessControlType.Deny);
-            pipeSecurity.AddAccessRule(accessRule);
-
-            // Alow Everyone to read/write
-            accessRule = new PipeAccessRule(sidWorld, PipeAccessRights.ReadWrite, AccessControlType.Allow);
-            pipeSecurity.AddAccessRule(accessRule);
-
-            // Current user is the owner
-            SecurityIdentifier sidOwner = WindowsIdentity.GetCurrent().Owner;
-            if (sidOwner != null)
+            // A forwarded command can start a shortcut or change a display profile.
+            // Only another instance owned by this same Windows user may send one.
+            SecurityIdentifier sidUser = WindowsIdentity.GetCurrent().User;
+            if (sidUser != null)
             {
-                accessRule = new PipeAccessRule(sidOwner, PipeAccessRights.FullControl, AccessControlType.Allow);
+                PipeAccessRule accessRule = new PipeAccessRule(sidUser, PipeAccessRights.FullControl, AccessControlType.Allow);
                 pipeSecurity.AddAccessRule(accessRule);
+            }
+            else
+            {
+                throw new InvalidOperationException("The current Windows user has no SID for the single-instance pipe.");
             }
 
             try

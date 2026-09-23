@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
@@ -29,6 +31,7 @@ public sealed class AgentCommandServer
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private readonly string _pipeName;
+    private readonly Dictionary<Guid, (ControlMessageType MessageType, string Payload, ControlResponse Response, DateTime CompletedUtc)> _successfulResponses = new Dictionary<Guid, (ControlMessageType, string, ControlResponse, DateTime)>();
 
     public AgentCommandServer(string pipeName)
     {
@@ -58,7 +61,33 @@ public sealed class AgentCommandServer
                 }
 
                 using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
-                ControlResponse response = await ExecuteCommandAsync(request, commandHandler, cancellationToken).ConfigureAwait(false);
+                ControlResponse response;
+                lock (_successfulResponses)
+                {
+                    RemoveExpiredResponses();
+                    if (_successfulResponses.TryGetValue(request.RequestId, out var replay))
+                    {
+                        response = replay.MessageType == request.MessageType && string.Equals(replay.Payload, request.Payload, StringComparison.Ordinal)
+                            ? replay.Response
+                            : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A request ID cannot be reused for a different User Agent command." };
+                    }
+                    else
+                    {
+                        response = null!;
+                    }
+                }
+                if (response == null)
+                {
+                    response = await ExecuteCommandAsync(request, commandHandler, cancellationToken).ConfigureAwait(false);
+                    if (response.IsSuccessful)
+                    {
+                        lock (_successfulResponses)
+                        {
+                            RemoveExpiredResponses();
+                            _successfulResponses[request.RequestId] = (request.MessageType, request.Payload, response, DateTime.UtcNow);
+                        }
+                    }
+                }
 
                 await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope
                 {
@@ -152,6 +181,15 @@ public sealed class AgentCommandServer
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             throw new TimeoutException("The Control Service did not send a complete Agent command in time.", ex);
+        }
+    }
+
+    private void RemoveExpiredResponses()
+    {
+        DateTime cutoffUtc = DateTime.UtcNow.AddHours(-24);
+        foreach (Guid requestId in _successfulResponses.Where(pair => pair.Value.CompletedUtc < cutoffUtc).Select(pair => pair.Key).ToArray())
+        {
+            _successfulResponses.Remove(requestId);
         }
     }
 

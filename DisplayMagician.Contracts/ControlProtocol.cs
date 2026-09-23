@@ -14,6 +14,7 @@ public static class ControlProtocol
     public const int MaximumMessageLength = 5 * 1024 * 1024;
     public static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(10);
     public static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan EventIdleTimeout = TimeSpan.FromSeconds(45);
 }
 
 public enum ControlMessageType
@@ -68,7 +69,8 @@ public enum ControlMessageType
     RequestOperationDecision = 50,
     RestartUserAgent = 52,
     StopUserAgent = 53,
-    RecordRecoveryAdministration = 54
+    RecordRecoveryAdministration = 54,
+    GetOperationDecision = 55
 }
 
 public enum ControlErrorCode
@@ -237,6 +239,8 @@ public sealed class ProfileListResult
 public sealed class ApplyProfileRequest
 {
     public string ProfileId { get; set; } = string.Empty;
+
+    public Guid OperationId { get; set; }
 }
 
 public sealed class ApplyProfileResult
@@ -341,6 +345,12 @@ public sealed class RequestOperationDecisionRequest
     public OperationDecisionChoice DefaultChoice { get; set; } = OperationDecisionChoice.Continue;
 
     public int TimeoutSeconds { get; set; } = 60;
+}
+
+/// <summary>Gets the current state of a previously-created operation decision.</summary>
+public sealed class OperationDecisionStatusRequest
+{
+    public Guid PromptId { get; set; }
 }
 
 /// <summary>Published by the User Agent as a shortcut or profile operation progresses.</summary>
