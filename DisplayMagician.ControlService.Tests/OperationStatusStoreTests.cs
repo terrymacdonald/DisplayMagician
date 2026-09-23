@@ -62,4 +62,23 @@ public sealed class OperationStatusStoreTests
         Assert.Single(reloadedStore.GetAll("S-1-5-21-100"));
         Assert.Single(reloadedStore.GetAll("S-1-5-21-200"));
     }
+
+    [Fact]
+    public void GetActive_ReturnsOnlyTheRequestingUsersUnfinishedOperations()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        OperationStatusStore store = new OperationStatusStore(new StoragePaths(storageRoot));
+        DateTime now = DateTime.UtcNow;
+        Guid activeOperationId = Guid.NewGuid();
+        Guid completedOperationId = Guid.NewGuid();
+
+        store.Publish("S-1-5-21-100", 10, new OperationStatusUpdate { OperationId = activeOperationId, OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.StartingGame, Message = "Starting game." }, now);
+        store.Publish("S-1-5-21-100", 10, new OperationStatusUpdate { OperationId = completedOperationId, OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.Completed, Message = "Shortcut completed.", IsTerminal = true, IsSuccessful = true }, now);
+        store.Publish("S-1-5-21-200", 20, new OperationStatusUpdate { OperationId = Guid.NewGuid(), OperationType = DisplayOperationType.ApplyDisplayProfile, Phase = OperationPhase.ApplyingDisplayProfile, Message = "Applying." }, now);
+
+        OperationStatus activeStatus = Assert.Single(store.GetActive("S-1-5-21-100"));
+
+        Assert.Equal(activeOperationId, activeStatus.OperationId);
+        Assert.Single(store.GetActive("S-1-5-21-200"));
+    }
 }

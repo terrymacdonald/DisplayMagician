@@ -180,12 +180,24 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
         }
 
+        if (!_coordinator.TryBeginDisplayOperation(userSid, sessionId, operationId, DateTime.UtcNow))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "Display control is already being used by another operation." };
+        }
+
         try
         {
-            return await _agentCommandClient.SendAsync(agent, command, cancellationToken).ConfigureAwait(false);
+            ControlResponse response = await _agentCommandClient.SendAsync(agent, command, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessful)
+            {
+                _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
+            }
+
+            return response;
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
         {
+            _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, true, DateTime.UtcNow);
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
         }
     }

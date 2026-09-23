@@ -102,6 +102,18 @@ public sealed class OperationStatusStore
         }
     }
 
+    public OperationStatus[] GetActive(string ownerUserSid)
+    {
+        lock (_syncRoot)
+        {
+            return _operations.Values
+                .Where(status => !status.IsTerminal && string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(status => status.UpdatedUtc)
+                .Select(Copy)
+                .ToArray();
+        }
+    }
+
     private void Load()
     {
         try

@@ -38,7 +38,7 @@ internal static class Program
         ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
         TaskCompletionSource<ControlResponse> migrationCompletion = new TaskCompletionSource<ControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
-        Task serviceConnection = serviceClient.RunAsync(registration, System.TimeSpan.FromSeconds(15), acquireDisplayControl, migrateUserData, migrationCompletion, cancellationTokenSource.Token);
+        Task serviceConnection = RunServiceConnectionWithRetryAsync(serviceClient, registration, acquireDisplayControl, migrateUserData, migrationCompletion, cancellationTokenSource.Token);
         ControlResponse migrationResponse = await migrationCompletion.Task.ConfigureAwait(false);
         if (!migrationResponse.IsSuccessful)
         {
@@ -52,9 +52,38 @@ internal static class Program
         AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.RunDetectedShortcutAsync);
         Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(cancellationTokenSource.Token);
 
-        await Task.WhenAny(serviceConnection, commandConnection, automaticGameDetection).ConfigureAwait(false);
+        await Task.WhenAny(commandConnection, automaticGameDetection).ConfigureAwait(false);
         cancellationTokenSource.Cancel();
         await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection).ConfigureAwait(false);
+    }
+
+    private static async Task RunServiceConnectionWithRetryAsync(ControlServiceClient serviceClient, AgentRegistration registration, bool acquireDisplayControl, bool migrateUserData, TaskCompletionSource<ControlResponse> migrationCompletion, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                bool requiresInitialisation = !migrationCompletion.Task.IsCompleted;
+                await serviceClient.RunAsync(registration, TimeSpan.FromSeconds(15), acquireDisplayControl && requiresInitialisation, migrateUserData && requiresInitialisation, migrationCompletion, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                LogManager.GetCurrentClassLogger().Warn(ex, "Program/RunServiceConnectionWithRetryAsync: Control Service connection ended. Retrying shortly without stopping the User Agent.");
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+        }
     }
 
     private static void ConfigureLogging(string userSid)

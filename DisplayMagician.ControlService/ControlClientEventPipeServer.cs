@@ -17,10 +17,14 @@ public sealed class ControlClientEventPipeServer
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly ControlClientEventHub _eventHub;
+    private readonly OperationStatusStore _operationStatusStore;
+    private readonly OperationDecisionStore _operationDecisionStore;
 
-    public ControlClientEventPipeServer(ControlClientEventHub eventHub)
+    public ControlClientEventPipeServer(ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore)
     {
         _eventHub = eventHub ?? throw new ArgumentNullException(nameof(eventHub));
+        _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
+        _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -69,8 +73,15 @@ public sealed class ControlClientEventPipeServer
                 }
 
                 PipeClientIdentity identity = GetClientIdentity(pipe);
-                await SendResponseAsync(pipe, request.RequestId, new ControlResponse { IsSuccessful = true, Message = "Client event subscription accepted." }, cancellationToken).ConfigureAwait(false);
                 using ControlClientEventSubscription subscription = _eventHub.Subscribe(identity.UserSid, identity.SessionId);
+                ControlResponse subscriptionResponse = new ControlResponse
+                {
+                    IsSuccessful = true,
+                    Message = "Client event subscription accepted.",
+                    OperationStatuses = _operationStatusStore.GetActive(identity.UserSid),
+                    OperationDecisions = _operationDecisionStore.GetPending(identity.UserSid, identity.SessionId)
+                };
+                await SendResponseAsync(pipe, request.RequestId, subscriptionResponse, cancellationToken).ConfigureAwait(false);
                 await foreach (ControlClientEvent clientEvent in subscription.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
                 {
                     await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope

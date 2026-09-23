@@ -1455,12 +1455,6 @@ namespace DisplayMagician {
             {
                 try
                 {
-                    OperationDecision[] pendingDecisions = await new ControlServicePipeClient().ListOperationDecisionsAsync(cancellationToken).ConfigureAwait(false);
-                    foreach (OperationDecision decision in pendingDecisions)
-                    {
-                        _mainSynchronizationContext?.Post(_ => HandleOperationDecisionEvent(decision), null);
-                    }
-
                     await new ControlServicePipeClient().SubscribeClientEventsAsync(HandleControlServiceEventAsync, cancellationToken);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

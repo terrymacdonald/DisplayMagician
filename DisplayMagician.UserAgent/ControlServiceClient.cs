@@ -78,9 +78,8 @@ public sealed class ControlServiceClient
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            migrationCompletion?.TrySetException(ex);
             throw;
         }
     }

@@ -364,6 +364,26 @@ internal sealed class ControlServicePipeClient
             throw new InvalidOperationException(subscriptionResponse.Message);
         }
 
+        foreach (OperationStatus status in subscriptionResponse.OperationStatuses)
+        {
+            await onEvent(new ControlClientEvent
+            {
+                EventType = ControlClientEventType.OperationStatusUpdated,
+                PublishedUtc = status.UpdatedUtc,
+                OperationStatus = status
+            }).ConfigureAwait(false);
+        }
+
+        foreach (OperationDecision decision in subscriptionResponse.OperationDecisions)
+        {
+            await onEvent(new ControlClientEvent
+            {
+                EventType = ControlClientEventType.OperationDecisionUpdated,
+                PublishedUtc = decision.CreatedUtc,
+                OperationDecision = decision
+            }).ConfigureAwait(false);
+        }
+
         while (!cancellationToken.IsCancellationRequested)
         {
             ControlEnvelope clientEventEnvelope = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);

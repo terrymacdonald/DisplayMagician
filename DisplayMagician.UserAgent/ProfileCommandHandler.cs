@@ -112,7 +112,7 @@ public sealed class ProfileCommandHandler
             {
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, leaseResponse.Message, leaseResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
                 CompleteShortcutOperation(operationId, operationCancellationSource);
-                await ReportIdleAfterDetectedShortcutAsync().ConfigureAwait(false);
+                await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
                 return false;
             }
 
@@ -121,18 +121,18 @@ public sealed class ProfileCommandHandler
             {
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, stateResponse.Message, stateResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
                 CompleteShortcutOperation(operationId, operationCancellationSource);
-                await ReportIdleAfterDetectedShortcutAsync().ConfigureAwait(false);
+                await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
                 return false;
             }
 
             await RunShortcutOperationAsync(operationId, shortcutId, operationCancellationSource, isAutomaticallyDetected: true).ConfigureAwait(false);
-            await ReportIdleAfterDetectedShortcutAsync().ConfigureAwait(false);
+            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
             return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             CompleteShortcutOperation(operationId, operationCancellationSource);
-            await ReportIdleAfterDetectedShortcutAsync().ConfigureAwait(false);
+            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
             return false;
         }
         catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
@@ -374,6 +374,25 @@ public sealed class ProfileCommandHandler
                 Phase = OperationPhase.Requested,
                 Message = "Shortcut operation requested."
             }, CancellationToken.None).ConfigureAwait(false);
+
+            try
+            {
+                ControlResponse stateResponse = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Running, cancellationToken).ConfigureAwait(false);
+                if (!stateResponse.IsSuccessful)
+                {
+                    await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, stateResponse.Message, stateResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
+                    CompleteShortcutOperation(operationId, operationCancellationSource);
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = stateResponse.ErrorCode, Message = stateResponse.Message };
+                }
+            }
+            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
+            {
+                _logger.Warn(ex, "ProfileCommandHandler/HandleAsync: Could not report the manual shortcut operation {0} as running.", operationId);
+                await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, "The shortcut could not start because the Control Service is unavailable.", ControlErrorCode.AgentUnavailable), CancellationToken.None).ConfigureAwait(false);
+                CompleteShortcutOperation(operationId, operationCancellationSource);
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The Control Service is unavailable." };
+            }
+
             _ = RunShortcutOperationAsync(operationId, startRequest.ShortcutId, operationCancellationSource, isAutomaticallyDetected: false);
             return new ControlResponse
             {
@@ -754,6 +773,7 @@ public sealed class ProfileCommandHandler
         finally
         {
             CompleteShortcutOperation(operationId, operationCancellationSource);
+            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
         }
     }
 
@@ -782,19 +802,19 @@ public sealed class ProfileCommandHandler
         operationCancellationSource.Dispose();
     }
 
-    private async Task ReportIdleAfterDetectedShortcutAsync()
+    private async Task ReportIdleAfterShortcutAsync()
     {
         try
         {
             ControlResponse response = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Idle, CancellationToken.None).ConfigureAwait(false);
             if (!response.IsSuccessful)
             {
-                _logger.Warn("ProfileCommandHandler/ReportIdleAfterDetectedShortcutAsync: Could not report the User Agent as idle after an automatic shortcut: {0}", response.Message);
+                _logger.Warn("ProfileCommandHandler/ReportIdleAfterShortcutAsync: Could not report the User Agent as idle after a shortcut: {0}", response.Message);
             }
         }
         catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
         {
-            _logger.Warn(ex, "ProfileCommandHandler/ReportIdleAfterDetectedShortcutAsync: Could not report the User Agent as idle after an automatic shortcut.");
+            _logger.Warn(ex, "ProfileCommandHandler/ReportIdleAfterShortcutAsync: Could not report the User Agent as idle after a shortcut.");
         }
     }
 

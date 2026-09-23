@@ -75,6 +75,10 @@ public sealed class AgentCommandServer
             {
                 return;
             }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException)
+            {
+                Logger.Debug(ex, "AgentCommandServer/RunAsync: Control Service command connection ended or was invalid.");
+            }
         }
     }
 

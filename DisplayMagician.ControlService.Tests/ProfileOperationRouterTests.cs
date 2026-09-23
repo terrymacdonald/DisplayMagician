@@ -96,6 +96,7 @@ public sealed class ProfileOperationRouterTests
         Assert.Equal("shortcut-123", request.ShortcutId);
         Assert.Equal(operationId, request.OperationId);
         Assert.Equal(requestId, commandClient.Request.RequestId);
+        Assert.Equal(operationId, coordinator.GetDisplayControlLease()!.ActiveOperationId);
     }
 
     [Fact]
