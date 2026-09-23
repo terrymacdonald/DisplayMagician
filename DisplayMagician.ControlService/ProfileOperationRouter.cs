@@ -104,13 +104,18 @@ public sealed class ProfileOperationRouter
 
     public async Task<ControlResponse> ApplyProfileAsync(string userSid, int sessionId, string profileId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(profileId))
+        return await ApplyProfileAsync(userSid, sessionId, profileId, Guid.NewGuid(), cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<ControlResponse> ApplyProfileAsync(string userSid, int sessionId, string profileId, Guid requestId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(profileId) || requestId == Guid.Empty)
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID is required." };
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID and request ID are required." };
         }
 
         Guid operationId = Guid.NewGuid();
-        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, Guid.NewGuid(), operationId, cancellationToken).ConfigureAwait(false);
+        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
         if (agent == null)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
@@ -132,7 +137,7 @@ public sealed class ProfileOperationRouter
             ControlResponse response = await _agentCommandClient.SendAsync(agent, new ControlEnvelope
             {
                 MessageType = ControlMessageType.ApplyProfile,
-                RequestId = Guid.NewGuid(),
+                RequestId = requestId,
                 Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
             }, cancellationToken).ConfigureAwait(false);
             _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);

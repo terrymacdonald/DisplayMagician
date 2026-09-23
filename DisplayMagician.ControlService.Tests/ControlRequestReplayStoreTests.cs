@@ -56,4 +56,23 @@ public sealed class ControlRequestReplayStoreTests
             }
         }
     }
+
+    [Fact]
+    public void TryGet_DoesNotReplayARequestOlderThanTwentyFourHours()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            ControlRequestReplayStore store = new ControlRequestReplayStore(new StoragePaths(storageRoot));
+            ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.ApplyProfile, Payload = "{\"profileId\":\"one\"}" };
+            DateTime now = DateTime.UtcNow;
+            store.Store("S-1-5-21-100", request, new ControlResponse { IsSuccessful = true }, now);
+
+            Assert.False(store.TryGet("S-1-5-21-100", request, now.AddHours(24).AddTicks(1), out _));
+        }
+        finally
+        {
+            if (Directory.Exists(storageRoot)) Directory.Delete(storageRoot, true);
+        }
+    }
 }

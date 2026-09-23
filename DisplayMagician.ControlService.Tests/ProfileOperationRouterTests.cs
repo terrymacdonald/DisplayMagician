@@ -92,6 +92,23 @@ public sealed class ProfileOperationRouterTests
     }
 
     [Fact]
+    public async Task ApplyProfileAsync_PreservesTheClientRequestIdAcrossTheAgentLaunchAndCommand()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        RegisteringSessionLauncherClient sessionLauncherClient = new RegisteringSessionLauncherClient(coordinator, agent);
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient, () => agent.SessionId);
+        Guid requestId = Guid.NewGuid();
+
+        ControlResponse response = await router.ApplyProfileAsync(agent.UserSid, agent.SessionId, "display-profile", requestId, CancellationToken.None);
+
+        Assert.True(response.IsSuccessful, response.Message);
+        Assert.Equal(requestId, sessionLauncherClient.RequestId);
+        Assert.Equal(requestId, commandClient.Request!.RequestId);
+    }
+
+    [Fact]
     public async Task StartShortcutAsync_ForwardsShortcutIdToRegisteredAgent()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();

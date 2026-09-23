@@ -17,6 +17,10 @@ public static class ControlEnvelopeSerializer
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(envelope);
+        if (envelope.RequestId == Guid.Empty)
+        {
+            throw new InvalidDataException("The control message must have a request ID.");
+        }
 
         byte[] payload = JsonSerializer.SerializeToUtf8Bytes(envelope, _jsonSerializerOptions);
         if (payload.Length > ControlProtocol.MaximumMessageLength)
@@ -48,8 +52,14 @@ public static class ControlEnvelopeSerializer
 
         byte[] payload = new byte[payloadLength];
         await ReadExactlyAsync(stream, payload, allowEndOfStream: false, cancellationToken).ConfigureAwait(false);
-        return JsonSerializer.Deserialize<ControlEnvelope>(payload, _jsonSerializerOptions)
+        ControlEnvelope envelope = JsonSerializer.Deserialize<ControlEnvelope>(payload, _jsonSerializerOptions)
             ?? throw new InvalidDataException("The control message could not be deserialized.");
+        if (envelope.RequestId == Guid.Empty)
+        {
+            throw new InvalidDataException("The control message must have a request ID.");
+        }
+
+        return envelope;
     }
 
     private static async Task<bool> ReadExactlyAsync(Stream stream, byte[] buffer, bool allowEndOfStream, CancellationToken cancellationToken)

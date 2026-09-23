@@ -162,6 +162,10 @@ public sealed class OperationDecisionStore
                 if (decision.PromptId != Guid.Empty && decision.OperationId != Guid.Empty && !string.IsNullOrWhiteSpace(decision.OwnerUserSid))
                 {
                     _decisions[decision.PromptId] = decision;
+                    if (!decision.IsResolved)
+                    {
+                        _pendingDecisions[decision.PromptId] = new TaskCompletionSource<OperationDecision>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    }
                 }
             }
         }
