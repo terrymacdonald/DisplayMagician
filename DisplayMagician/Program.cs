@@ -89,6 +89,7 @@ namespace DisplayMagician {
         private static string _requestedMessageUpdateVersion;
         private static string _requestedMessageUpdateChannel;
         private static bool _startupBackgroundTasksQueued = false;
+        private static bool _isElevatedRecoveryAction;
         private static SynchronizationContext _mainSynchronizationContext;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
         private static readonly CancellationTokenSource _clientEventListenerCancellationSource = new CancellationTokenSource();
@@ -97,6 +98,9 @@ namespace DisplayMagician {
         private static readonly ConcurrentDictionary<Guid, OperationDecisionForm> _operationDecisionForms = new ConcurrentDictionary<Guid, OperationDecisionForm>();
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
+        internal const string ForceReleaseDisplayControlCommandLineOption = "--force-release-display-control";
+        internal const string RestartControlServiceCommandLineOption = "--restart-control-service";
+        private const string ControlServiceName = "DisplayMagicianControlService";
 
         private static volatile bool _useTestUpdateFeed;
         private static Process _userAgentProcess;
@@ -233,6 +237,9 @@ namespace DisplayMagician {
             // BOOTSTRAP AND INITIALIZATION LOGIC
             Application.ApplicationExit += (sender, eventArgs) =>
             {
+                if (_isElevatedRecoveryAction)
+                    return;
+
                 _clientEventListenerCancellationSource.Cancel();
                 StopUserAgentIfIdle();
             };
@@ -301,6 +308,18 @@ namespace DisplayMagician {
 
             // Start the Log file
             logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
+
+            if (args.Any(argument => string.Equals(argument, ForceReleaseDisplayControlCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                return ForceReleaseDisplayControlFromElevatedProcess();
+            }
+
+            if (args.Any(argument => string.Equals(argument, RestartControlServiceCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                return RestartControlServiceFromElevatedProcess();
+            }
 
             // Check for the --test-update-feed to check for the test update feed instead of the normal update feed. This is useful for testing the update feed without having to change the code.
             if (args.Any(argument => string.Equals(argument, TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase)))
@@ -918,6 +937,129 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Returning the following errorlevel to the OS: {errorLevelToReturnToOS} ({((ERRORLEVEL)errorLevelToReturnToOS).ToString()})");
             return errorLevelToReturnToOS;
         }       
+
+        private static int ForceReleaseDisplayControlFromElevatedProcess()
+        {
+            try
+            {
+                logger.Info("Program/ForceReleaseDisplayControlFromElevatedProcess: Processing the elevated emergency display-control release request.");
+                ControlResponse response = new ControlServicePipeClient()
+                    .ForceReleaseDisplayControlAsync("FORCE RELEASE", CancellationToken.None)
+                    .GetAwaiter()
+                    .GetResult();
+                if (response.IsSuccessful)
+                {
+                    logger.Info("Program/ForceReleaseDisplayControlFromElevatedProcess: {0}", response.Message);
+                    return (int)ERRORLEVEL.OK;
+                }
+
+                logger.Error("Program/ForceReleaseDisplayControlFromElevatedProcess: The Control Service rejected the emergency release. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ForceReleaseDisplayControlFromElevatedProcess: The emergency display-control release request failed.");
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown();
+            }
+        }
+
+        private static int RestartControlServiceFromElevatedProcess()
+        {
+            try
+            {
+                try
+                {
+                    ControlServiceStatus status = new ControlServicePipeClient().GetServiceStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    if (status.DisplayControlLease?.ActiveOperationId != null || status.DisplayControlLease?.IsRecoveryRequired == true)
+                    {
+                        logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service restart was refused because display control is active or recovery is required.");
+                        return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                    }
+                }
+                catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+                {
+                    logger.Warn(ex, "Program/RestartControlServiceFromElevatedProcess: Could not obtain Control Service status before restarting it; continuing with the administrator-requested restart.");
+                }
+
+                int stopExitCode = RunServiceControlCommand("stop", out string stopOutput);
+                if (stopExitCode != 0 && stopExitCode != 1062)
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service stop command failed. ExitCode={0}; Output={1}", stopExitCode, stopOutput);
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                if (!WaitForControlServiceState("STOPPED", TimeSpan.FromSeconds(30)))
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service did not stop within the expected time.");
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                int startExitCode = RunServiceControlCommand("start", out string startOutput);
+                if (startExitCode != 0)
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service start command failed. ExitCode={0}; Output={1}", startExitCode, startOutput);
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                if (!WaitForControlServiceState("RUNNING", TimeSpan.FromSeconds(30)))
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service did not start within the expected time.");
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                logger.Info("Program/RestartControlServiceFromElevatedProcess: Control Service restarted successfully.");
+                return (int)ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/RestartControlServiceFromElevatedProcess: Control Service restart failed.");
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown();
+            }
+        }
+
+        private static int RunServiceControlCommand(string action, out string output)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "sc.exe"), $"{action} \"{ControlServiceName}\"")
+            {
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+            using Process process = Process.Start(startInfo) ?? throw new InvalidOperationException("Windows could not start the Service Control command.");
+            output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+            if (!process.WaitForExit(10000))
+            {
+                throw new TimeoutException("The Service Control command did not finish in time.");
+            }
+
+            return process.ExitCode;
+        }
+
+        private static bool WaitForControlServiceState(string expectedState, TimeSpan timeout)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            while (stopwatch.Elapsed < timeout)
+            {
+                int queryExitCode = RunServiceControlCommand("query", out string queryOutput);
+                if (queryExitCode == 0 && queryOutput.IndexOf(expectedState, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+
+                Thread.Sleep(500);
+            }
+
+            return false;
+        }
 
         public static ERRORLEVEL CreateProfile()
         {

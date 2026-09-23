@@ -23,8 +23,8 @@ namespace DisplayMagician.UIForms
             lbl_administrator_notice = new System.Windows.Forms.Label();
             btn_refresh = new System.Windows.Forms.Button();
             btn_force_release = new System.Windows.Forms.Button();
-            lbl_confirmation = new System.Windows.Forms.Label();
-            txt_confirmation = new System.Windows.Forms.TextBox();
+            btn_restart_user_agent = new System.Windows.Forms.Button();
+            btn_restart_control_service = new System.Windows.Forms.Button();
             lbl_result = new System.Windows.Forms.Label();
             btn_back = new System.Windows.Forms.Button();
             gb_service_release = new System.Windows.Forms.GroupBox();
@@ -83,36 +83,42 @@ namespace DisplayMagician.UIForms
             btn_force_release.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             btn_force_release.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btn_force_release.ForeColor = System.Drawing.Color.White;
-            btn_force_release.Location = new System.Drawing.Point(450, 40);
+            btn_force_release.Location = new System.Drawing.Point(426, 24);
             btn_force_release.Name = "btn_force_release";
-            btn_force_release.Size = new System.Drawing.Size(156, 32);
+            btn_force_release.Size = new System.Drawing.Size(180, 32);
             btn_force_release.TabIndex = 3;
-            btn_force_release.Text = "Release Stuck Service";
+            btn_force_release.Text = "Clear Stuck Display Change";
             btn_force_release.UseVisualStyleBackColor = true;
             btn_force_release.Click += btn_force_release_Click;
-            // 
-            // lbl_confirmation
-            // 
-            lbl_confirmation.ForeColor = System.Drawing.Color.White;
-            lbl_confirmation.Location = new System.Drawing.Point(18, 21);
-            lbl_confirmation.Name = "lbl_confirmation";
-            lbl_confirmation.Size = new System.Drawing.Size(412, 24);
-            lbl_confirmation.TabIndex = 4;
-            lbl_confirmation.Text = "Type FORCE RELEASE then press button to enable emergency release:";
-            lbl_confirmation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // txt_confirmation
-            // 
-            txt_confirmation.Location = new System.Drawing.Point(18, 51);
-            txt_confirmation.Name = "txt_confirmation";
-            txt_confirmation.Size = new System.Drawing.Size(412, 21);
-            txt_confirmation.TabIndex = 4;
-            txt_confirmation.TextChanged += txt_confirmation_TextChanged;
+            //
+            // btn_restart_user_agent
+            //
+            btn_restart_user_agent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_restart_user_agent.ForeColor = System.Drawing.Color.White;
+            btn_restart_user_agent.Location = new System.Drawing.Point(18, 24);
+            btn_restart_user_agent.Name = "btn_restart_user_agent";
+            btn_restart_user_agent.Size = new System.Drawing.Size(180, 32);
+            btn_restart_user_agent.TabIndex = 4;
+            btn_restart_user_agent.Text = "Restart User Agent";
+            btn_restart_user_agent.UseVisualStyleBackColor = true;
+            btn_restart_user_agent.Click += btn_restart_user_agent_Click;
+            //
+            // btn_restart_control_service
+            //
+            btn_restart_control_service.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_restart_control_service.ForeColor = System.Drawing.Color.White;
+            btn_restart_control_service.Location = new System.Drawing.Point(222, 24);
+            btn_restart_control_service.Name = "btn_restart_control_service";
+            btn_restart_control_service.Size = new System.Drawing.Size(180, 32);
+            btn_restart_control_service.TabIndex = 5;
+            btn_restart_control_service.Text = "Restart Control Service";
+            btn_restart_control_service.UseVisualStyleBackColor = true;
+            btn_restart_control_service.Click += btn_restart_control_service_Click;
             // 
             // lbl_result
             // 
             lbl_result.ForeColor = System.Drawing.Color.White;
-            lbl_result.Location = new System.Drawing.Point(18, 75);
+            lbl_result.Location = new System.Drawing.Point(18, 68);
             lbl_result.Name = "lbl_result";
             lbl_result.Size = new System.Drawing.Size(588, 25);
             lbl_result.TabIndex = 4;
@@ -136,16 +142,16 @@ namespace DisplayMagician.UIForms
             // 
             gb_service_release.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             gb_service_release.Controls.Add(btn_force_release);
-            gb_service_release.Controls.Add(lbl_confirmation);
+            gb_service_release.Controls.Add(btn_restart_user_agent);
+            gb_service_release.Controls.Add(btn_restart_control_service);
             gb_service_release.Controls.Add(lbl_result);
-            gb_service_release.Controls.Add(txt_confirmation);
             gb_service_release.ForeColor = System.Drawing.Color.White;
             gb_service_release.Location = new System.Drawing.Point(18, 163);
             gb_service_release.Name = "gb_service_release";
             gb_service_release.Size = new System.Drawing.Size(624, 112);
             gb_service_release.TabIndex = 6;
             gb_service_release.TabStop = false;
-            gb_service_release.Text = "Release Stuck Service";
+            gb_service_release.Text = "Recovery Actions";
             // 
             // ServiceRecoveryForm
             // 
@@ -179,8 +185,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_administrator_notice;
         private System.Windows.Forms.Button btn_refresh;
         private System.Windows.Forms.Button btn_force_release;
-        private System.Windows.Forms.Label lbl_confirmation;
-        private System.Windows.Forms.TextBox txt_confirmation;
+        private System.Windows.Forms.Button btn_restart_user_agent;
+        private System.Windows.Forms.Button btn_restart_control_service;
         private System.Windows.Forms.Label lbl_result;
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.GroupBox gb_service_release;

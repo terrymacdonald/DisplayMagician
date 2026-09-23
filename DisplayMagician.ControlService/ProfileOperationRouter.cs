@@ -42,6 +42,35 @@ public sealed class ProfileOperationRouter
         return SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, false, cancellationToken);
     }
 
+    public async Task<ControlResponse> RestartUserAgentAsync(string userSid, int sessionId, Guid requestId, CancellationToken cancellationToken)
+    {
+        AgentRegistration? existingAgent = _coordinator.GetAgentRegistration(userSid, sessionId);
+        if (existingAgent != null)
+        {
+            ControlResponse stopResponse = await SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle, RequestId = requestId }, false, cancellationToken).ConfigureAwait(false);
+            if (!stopResponse.IsSuccessful)
+            {
+                return stopResponse;
+            }
+
+            DateTime stopDeadlineUtc = DateTime.UtcNow.AddSeconds(10);
+            while (_coordinator.GetAgentRegistration(userSid, sessionId) != null && DateTime.UtcNow < stopDeadlineUtc)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            }
+
+            if (_coordinator.GetAgentRegistration(userSid, sessionId) != null)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The User Agent did not stop in time and was not restarted." };
+            }
+        }
+
+        AgentRegistration? restartedAgent = await GetOrStartAgentAsync(userSid, sessionId, requestId, null, cancellationToken).ConfigureAwait(false);
+        return restartedAgent == null
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent could not be started for this session." }
+            : new ControlResponse { IsSuccessful = true, Message = "The User Agent was restarted and is ready." };
+    }
+
     public Task<ControlResponse> ManageProfileAsync(string userSid, int sessionId, ControlEnvelope request, CancellationToken cancellationToken)
     {
         return SendToAgentAsync(userSid, sessionId, request, cancellationToken);

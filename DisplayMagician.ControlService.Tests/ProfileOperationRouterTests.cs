@@ -176,6 +176,53 @@ public sealed class ProfileOperationRouterTests
         Assert.Equal(commandClient.Request!.RequestId, sessionLauncherClient.RequestId);
     }
 
+    [Fact]
+    public async Task RestartUserAgentAsync_StartsAnAgentWhenNoneIsConnected()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        RegisteringSessionLauncherClient sessionLauncherClient = new RegisteringSessionLauncherClient(coordinator, agent);
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient);
+
+        ControlResponse response = await router.RestartUserAgentAsync(agent.UserSid, agent.SessionId, Guid.NewGuid(), CancellationToken.None);
+
+        Assert.True(response.IsSuccessful, response.Message);
+        Assert.True(sessionLauncherClient.WasCalled);
+        Assert.False(commandClient.WasCalled);
+        Assert.NotNull(coordinator.GetAgentRegistration(agent.UserSid, agent.SessionId));
+    }
+
+    [Fact]
+    public async Task RestartUserAgentAsync_StopsAnIdleConnectedAgentBeforeStartingItsReplacement()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration oldAgent = CreateAgent();
+        AgentRegistration replacementAgent = CreateAgent();
+        replacementAgent.ProcessId = 2000;
+        coordinator.RegisterAgent(oldAgent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient
+        {
+            OnSend = (agent, request) =>
+            {
+                if (request.MessageType == ControlMessageType.StopAgentIfIdle)
+                {
+                    coordinator.UnregisterAgent(agent.UserSid, agent.SessionId, agent.ProcessId);
+                }
+            }
+        };
+        RegisteringSessionLauncherClient sessionLauncherClient = new RegisteringSessionLauncherClient(coordinator, replacementAgent);
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient);
+
+        ControlResponse response = await router.RestartUserAgentAsync(oldAgent.UserSid, oldAgent.SessionId, Guid.NewGuid(), CancellationToken.None);
+
+        Assert.True(response.IsSuccessful, response.Message);
+        Assert.True(commandClient.WasCalled);
+        Assert.Equal(ControlMessageType.StopAgentIfIdle, commandClient.Request!.MessageType);
+        Assert.True(sessionLauncherClient.WasCalled);
+        Assert.Equal(replacementAgent.ProcessId, coordinator.GetAgentRegistration(oldAgent.UserSid, oldAgent.SessionId)!.ProcessId);
+    }
+
     private static AgentRegistration CreateAgent()
     {
         return new AgentRegistration { UserSid = "S-1-5-21-100", SessionId = 10, ProcessId = 1000, CommandPipeName = "test-agent-command" };
@@ -189,11 +236,14 @@ public sealed class ProfileOperationRouterTests
 
         public ControlEnvelope? Request { get; private set; }
 
+        public Action<AgentRegistration, ControlEnvelope>? OnSend { get; init; }
+
         public Task<ControlResponse> SendAsync(AgentRegistration agent, ControlEnvelope request, CancellationToken cancellationToken)
         {
             WasCalled = true;
             Agent = agent;
             Request = request;
+            OnSend?.Invoke(agent, request);
             return Task.FromResult(new ControlResponse { IsSuccessful = true, Message = "Test command response." });
         }
     }

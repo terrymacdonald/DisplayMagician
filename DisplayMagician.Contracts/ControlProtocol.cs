@@ -4,7 +4,7 @@ namespace DisplayMagician.Contracts;
 
 public static class ControlProtocol
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
     public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
     public const string ClientEventPipeName = "DisplayMagician.ControlService.ClientEvents.v1";
@@ -65,7 +65,8 @@ public enum ControlMessageType
     ForceReleaseDisplayControl = 47,
     CreateUserSupportBundle = 48,
     ResolveOperationDecision = 49,
-    RequestOperationDecision = 50
+    RequestOperationDecision = 50,
+    RestartUserAgent = 52
 }
 
 public enum ControlErrorCode

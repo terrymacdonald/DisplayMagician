@@ -248,6 +248,11 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, cancellationToken);
     }
 
+    public Task<ControlResponse> RestartUserAgentAsync(CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RestartUserAgent }, cancellationToken);
+    }
+
     public Task<ControlResponse> CreateUserSupportBundleAsync(string destinationPath, CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope
