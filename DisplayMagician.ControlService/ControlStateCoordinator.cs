@@ -136,6 +136,45 @@ public sealed class ControlStateCoordinator
         }
     }
 
+    public bool TryBeginDisplayOperation(string userSid, int sessionId, Guid operationId, DateTime utcNow)
+    {
+        if (operationId == Guid.Empty)
+        {
+            return false;
+        }
+
+        lock (_syncRoot)
+        {
+            if (_displayControlLease == null || _displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired ||
+                _displayControlLease.OwnerSessionId != sessionId || !string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            _displayControlLease.ActiveOperationId = operationId;
+            _displayControlLease.LastHeartbeatUtc = utcNow;
+            PersistLease();
+            return true;
+        }
+    }
+
+    public void CompleteDisplayOperation(string userSid, int sessionId, Guid operationId, bool requiresRecovery, DateTime utcNow)
+    {
+        lock (_syncRoot)
+        {
+            if (_displayControlLease == null || _displayControlLease.ActiveOperationId != operationId ||
+                _displayControlLease.OwnerSessionId != sessionId || !string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _displayControlLease.LastHeartbeatUtc = utcNow;
+            _displayControlLease.IsRecoveryRequired = requiresRecovery;
+            _displayControlLease.ActiveOperationId = requiresRecovery ? operationId : null;
+            PersistLease();
+        }
+    }
+
     public DisplayControlLease? ForceReleaseDisplayControl()
     {
         lock (_syncRoot)

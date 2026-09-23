@@ -79,6 +79,43 @@ public sealed class ControlStateCoordinatorTests
     }
 
     [Fact]
+    public void TryBeginDisplayOperation_MarksTheLeaseActiveUntilTheAgentResponds()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        DateTime now = DateTime.UtcNow;
+        AgentRegistration agent = CreateAgent("S-1-5-21-100", 10, 1000);
+        coordinator.RegisterAgent(agent, now);
+        Assert.True(coordinator.TryAcquireDisplayControl(agent.UserSid, agent.SessionId, agent.SessionId, now).IsGranted);
+        Guid operationId = Guid.NewGuid();
+
+        Assert.True(coordinator.TryBeginDisplayOperation(agent.UserSid, agent.SessionId, operationId, now.AddSeconds(1)));
+        Assert.Equal(operationId, coordinator.GetDisplayControlLease()!.ActiveOperationId);
+
+        coordinator.CompleteDisplayOperation(agent.UserSid, agent.SessionId, operationId, false, now.AddSeconds(2));
+
+        Assert.Null(coordinator.GetDisplayControlLease()!.ActiveOperationId);
+        Assert.False(coordinator.GetDisplayControlLease()!.IsRecoveryRequired);
+    }
+
+    [Fact]
+    public void CompleteDisplayOperation_PreservesTheLeaseForRecoveryWhenTheAgentCannotConfirmCompletion()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        DateTime now = DateTime.UtcNow;
+        AgentRegistration agent = CreateAgent("S-1-5-21-100", 10, 1000);
+        coordinator.RegisterAgent(agent, now);
+        Assert.True(coordinator.TryAcquireDisplayControl(agent.UserSid, agent.SessionId, agent.SessionId, now).IsGranted);
+        Guid operationId = Guid.NewGuid();
+        Assert.True(coordinator.TryBeginDisplayOperation(agent.UserSid, agent.SessionId, operationId, now.AddSeconds(1)));
+
+        coordinator.CompleteDisplayOperation(agent.UserSid, agent.SessionId, operationId, true, now.AddSeconds(2));
+
+        DisplayControlLease lease = coordinator.GetDisplayControlLease()!;
+        Assert.True(lease.IsRecoveryRequired);
+        Assert.Equal(operationId, lease.ActiveOperationId);
+    }
+
+    [Fact]
     public void UnregisterAgent_KeepsPersistentRegistrationWhenAnOperationConnectionCloses()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();

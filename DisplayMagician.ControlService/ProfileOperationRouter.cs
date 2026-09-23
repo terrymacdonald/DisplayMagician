@@ -114,11 +114,35 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
         }
 
-        return await SendToAgentAsync(userSid, sessionId, new ControlEnvelope
+        Guid operationId = Guid.NewGuid();
+        if (!_coordinator.TryBeginDisplayOperation(userSid, sessionId, operationId, DateTime.UtcNow))
         {
-            MessageType = ControlMessageType.ApplyProfile,
-            Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
-        }, true, cancellationToken).ConfigureAwait(false);
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "Display control is already being used by another operation." };
+        }
+
+        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, Guid.NewGuid(), operationId, cancellationToken).ConfigureAwait(false);
+        if (agent == null)
+        {
+            _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
+        }
+
+        try
+        {
+            ControlResponse response = await _agentCommandClient.SendAsync(agent, new ControlEnvelope
+            {
+                MessageType = ControlMessageType.ApplyProfile,
+                RequestId = Guid.NewGuid(),
+                Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId })
+            }, cancellationToken).ConfigureAwait(false);
+            _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
+            return response;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+        {
+            _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, true, DateTime.UtcNow);
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
+        }
     }
 
     public async Task<ControlResponse> StartShortcutAsync(string userSid, int sessionId, string shortcutId, CancellationToken cancellationToken)

@@ -15,17 +15,13 @@ public sealed class AutomaticGameDetectionWorker
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly AutomaticGameDetectionRegistry _registry;
-    private readonly ShortcutRunner _shortcutRunner;
-    private readonly ControlServiceClient _controlServiceClient;
-    private readonly AgentRegistration _registration;
+    private readonly Func<string, CancellationToken, Task<bool>> _runDetectedShortcutAsync;
     private readonly AutomaticGameDetectionStateTracker _stateTracker = new AutomaticGameDetectionStateTracker();
 
-    public AutomaticGameDetectionWorker(AutomaticGameDetectionRegistry registry, ShortcutRunner shortcutRunner, ControlServiceClient controlServiceClient, AgentRegistration registration)
+    public AutomaticGameDetectionWorker(AutomaticGameDetectionRegistry registry, Func<string, CancellationToken, Task<bool>> runDetectedShortcutAsync)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _shortcutRunner = shortcutRunner ?? throw new ArgumentNullException(nameof(shortcutRunner));
-        _controlServiceClient = controlServiceClient ?? throw new ArgumentNullException(nameof(controlServiceClient));
-        _registration = registration ?? throw new ArgumentNullException(nameof(registration));
+        _runDetectedShortcutAsync = runDetectedShortcutAsync ?? throw new ArgumentNullException(nameof(runDetectedShortcutAsync));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -59,37 +55,14 @@ public sealed class AutomaticGameDetectionWorker
                     if (_stateTracker.HasNewlyStarted(shortcut.Id, isRunning))
                     {
                         Logger.Info($"AutomaticGameDetectionWorker/RunAsync: Detected game start for shortcut '{shortcut.Name}' ({shortcut.Id}).");
-                        ControlResponse leaseResponse = await _controlServiceClient.AcquireDisplayControlAsync(_registration, cancellationToken).ConfigureAwait(false);
-                        if (!leaseResponse.IsSuccessful)
+                        bool wasStarted = await _runDetectedShortcutAsync(shortcut.Id, cancellationToken).ConfigureAwait(false);
+                        if (wasStarted)
                         {
-                            Logger.Warn($"AutomaticGameDetectionWorker/RunAsync: Display control was not available for shortcut '{shortcut.Name}' ({shortcut.Id}): {leaseResponse.Message}");
-                            _stateTracker.HasNewlyStarted(shortcut.Id, false);
-                            continue;
-                        }
-
-                        _registration.OperationState = AgentOperationState.Running;
-                        try
-                        {
-                            ControlResponse stateResponse = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Running, cancellationToken).ConfigureAwait(false);
-                            if (!stateResponse.IsSuccessful)
-                            {
-                                Logger.Warn($"AutomaticGameDetectionWorker/RunAsync: Could not report automatic shortcut '{shortcut.Name}' as running: {stateResponse.Message}");
-                                _stateTracker.HasNewlyStarted(shortcut.Id, false);
-                                continue;
-                            }
-
-                            await _shortcutRunner.ApplyDetectedGameShortcutAsync(shortcut.Id, 0, cancellationToken).ConfigureAwait(false);
                             _stateTracker.HasNewlyStarted(shortcut.Id, false);
                         }
-                        finally
+                        else
                         {
-                            _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
-                            _registration.OperationState = AgentOperationState.Idle;
-                            ControlResponse stateResponse = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Idle, CancellationToken.None).ConfigureAwait(false);
-                            if (!stateResponse.IsSuccessful)
-                            {
-                                Logger.Warn($"AutomaticGameDetectionWorker/RunAsync: Could not report automatic shortcut '{shortcut.Name}' as idle: {stateResponse.Message}");
-                            }
+                            Logger.Debug("AutomaticGameDetectionWorker/RunAsync: Automatic shortcut {0} was deferred because another operation is active or display control is unavailable.", shortcut.Id);
                         }
                     }
                 }

@@ -53,6 +53,29 @@ public sealed class ProfileOperationRouterTests
     }
 
     [Fact]
+    public async Task ApplyProfileAsync_MarksTheDisplayLeaseActiveBeforeForwardingTheCommand()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient
+        {
+            OnSend = (_, request) =>
+            {
+                Assert.Equal(ControlMessageType.ApplyProfile, request.MessageType);
+                Assert.NotNull(coordinator.GetDisplayControlLease()!.ActiveOperationId);
+            }
+        };
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), () => agent.SessionId);
+
+        ControlResponse response = await router.ApplyProfileAsync(agent.UserSid, agent.SessionId, "display-profile", CancellationToken.None);
+
+        Assert.True(response.IsSuccessful, response.Message);
+        Assert.True(commandClient.WasCalled);
+        Assert.Null(coordinator.GetDisplayControlLease()!.ActiveOperationId);
+    }
+
+    [Fact]
     public async Task StartShortcutAsync_ForwardsShortcutIdToRegisteredAgent()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();

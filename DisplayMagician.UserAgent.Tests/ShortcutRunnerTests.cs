@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -169,5 +170,39 @@ public sealed class ShortcutRunnerTests
             action => { Assert.Equal(20, action.Priority); Assert.NotNull(action.StartProgram); },
             action => { Assert.Equal(25, action.Priority); Assert.NotNull(action.StopProgram); },
             action => { Assert.Equal(30, action.Priority); Assert.NotNull(action.StartProgram); });
+    }
+
+    [Fact]
+    public async Task ApplyDetectedGameShortcutAsync_PublishesTheSharedOperationStatusWithTheSuppliedOperationId()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutRunner-{Guid.NewGuid():N}");
+        try
+        {
+            ShortcutStore store = new ShortcutStore(root);
+            RepositorySnapshot snapshot = store.GetSnapshot();
+            store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = snapshot.Revision, Json = "{\"Shortcuts\":[{\"UUID\":\"detected-shortcut\",\"Name\":\"Detected shortcut\",\"Category\":2}]}" });
+            ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
+            Guid operationId = Guid.NewGuid();
+            List<OperationStatusUpdate> statuses = new List<OperationStatusUpdate>();
+
+            ShortcutRunResult result = await runner.ApplyDetectedGameShortcutAsync("detected-shortcut", 0, CancellationToken.None, (status, _) =>
+            {
+                statuses.Add(status);
+                return Task.CompletedTask;
+            }, operationId);
+
+            Assert.Equal(ShortcutRunOutcome.Completed, result.Outcome);
+            Assert.Equal(operationId, result.OperationId);
+            Assert.All(statuses, status => Assert.Equal(operationId, status.OperationId));
+            Assert.Contains(statuses, status => status.Phase == OperationPhase.Validating);
+            Assert.Contains(statuses, status => status.Phase == OperationPhase.StartingPrograms);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+        }
     }
 }
