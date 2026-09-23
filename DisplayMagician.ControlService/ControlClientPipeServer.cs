@@ -85,8 +85,10 @@ public sealed class ControlClientPipeServer
             else
             {
                 PipeClientIdentity identity = GetClientIdentity(pipe);
-                response = request.MessageType switch
+                try
                 {
+                    response = request.MessageType switch
+                    {
                     ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ListGames => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                     ControlMessageType.ListApps => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
@@ -115,8 +117,14 @@ public sealed class ControlClientPipeServer
                     ControlMessageType.GetServiceStatus => GetServiceStatus(),
                     ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
                     ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
-                    _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
-                };
+                        _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
+                    };
+                }
+                catch (JsonException ex)
+                {
+                    _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: The client sent an invalid JSON request payload.");
+                    response = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The client request payload was invalid." };
+                }
             }
 
             await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope { MessageType = request.MessageType, RequestId = request.RequestId, Payload = JsonSerializer.Serialize(response) }, cancellationToken).ConfigureAwait(false);

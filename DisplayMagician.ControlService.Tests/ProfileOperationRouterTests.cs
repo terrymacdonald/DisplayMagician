@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
@@ -183,14 +184,50 @@ public sealed class ProfileOperationRouterTests
         AgentRegistration agent = CreateAgent();
         RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
         RegisteringSessionLauncherClient sessionLauncherClient = new RegisteringSessionLauncherClient(coordinator, agent);
-        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient);
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        RecoveryAdministrationStore recoveryAdministrationStore = new RecoveryAdministrationStore(new StoragePaths(storageRoot));
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, sessionLauncherClient, recoveryAdministrationStore);
 
-        ControlResponse response = await router.RestartUserAgentAsync(agent.UserSid, agent.SessionId, Guid.NewGuid(), CancellationToken.None);
+        try
+        {
+            ControlResponse response = await router.RestartUserAgentAsync(agent.UserSid, agent.SessionId, Guid.NewGuid(), CancellationToken.None);
 
-        Assert.True(response.IsSuccessful, response.Message);
-        Assert.True(sessionLauncherClient.WasCalled);
-        Assert.False(commandClient.WasCalled);
-        Assert.NotNull(coordinator.GetAgentRegistration(agent.UserSid, agent.SessionId));
+            Assert.True(response.IsSuccessful, response.Message);
+            Assert.True(sessionLauncherClient.WasCalled);
+            Assert.False(commandClient.WasCalled);
+            Assert.NotNull(coordinator.GetAgentRegistration(agent.UserSid, agent.SessionId));
+            Assert.Equal("RestartUserAgent", recoveryAdministrationStore.GetLatest()!.Action);
+        }
+        finally
+        {
+            if (Directory.Exists(storageRoot)) Directory.Delete(storageRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task RestartUserAgentAsync_RecordsFailureWhenAgentRefusesToStop()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            ControlStateCoordinator coordinator = new ControlStateCoordinator();
+            AgentRegistration agent = CreateAgent();
+            coordinator.RegisterAgent(agent, DateTime.UtcNow);
+            RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient { Response = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "Agent has active work." } };
+            RecoveryAdministrationStore recoveryAdministrationStore = new RecoveryAdministrationStore(new StoragePaths(storageRoot));
+            ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), recoveryAdministrationStore);
+
+            ControlResponse response = await router.RestartUserAgentAsync(agent.UserSid, agent.SessionId, Guid.NewGuid(), CancellationToken.None);
+
+            Assert.False(response.IsSuccessful);
+            RecoveryAdministrationRecord record = Assert.IsType<RecoveryAdministrationRecord>(recoveryAdministrationStore.GetLatest());
+            Assert.Equal("RestartUserAgent", record.Action);
+            Assert.Equal("Failed", record.Outcome);
+        }
+        finally
+        {
+            if (Directory.Exists(storageRoot)) Directory.Delete(storageRoot, recursive: true);
+        }
     }
 
     [Fact]
@@ -238,13 +275,15 @@ public sealed class ProfileOperationRouterTests
 
         public Action<AgentRegistration, ControlEnvelope>? OnSend { get; init; }
 
+        public ControlResponse Response { get; init; } = new ControlResponse { IsSuccessful = true, Message = "Test command response." };
+
         public Task<ControlResponse> SendAsync(AgentRegistration agent, ControlEnvelope request, CancellationToken cancellationToken)
         {
             WasCalled = true;
             Agent = agent;
             Request = request;
             OnSend?.Invoke(agent, request);
-            return Task.FromResult(new ControlResponse { IsSuccessful = true, Message = "Test command response." });
+            return Task.FromResult(Response);
         }
     }
 

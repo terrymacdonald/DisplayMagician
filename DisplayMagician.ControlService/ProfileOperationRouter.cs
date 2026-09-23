@@ -25,6 +25,11 @@ public sealed class ProfileOperationRouter
     {
     }
 
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, RecoveryAdministrationStore recoveryAdministrationStore)
+        : this(coordinator, agentCommandClient, sessionLauncherClient, ConsoleSessionLocator.GetActiveConsoleSessionId, recoveryAdministrationStore)
+    {
+    }
+
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> getActiveConsoleSessionId, RecoveryAdministrationStore? recoveryAdministrationStore = null)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
@@ -52,6 +57,7 @@ public sealed class ProfileOperationRouter
             ControlResponse stopResponse = await SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle, RequestId = requestId }, false, cancellationToken).ConfigureAwait(false);
             if (!stopResponse.IsSuccessful)
             {
+                RecordRestart(userSid, sessionId, "Failed");
                 return stopResponse;
             }
 

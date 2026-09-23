@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
+using NLog;
 
 namespace DisplayMagician.UserAgent;
 
@@ -25,6 +26,7 @@ public static class AgentCommandPipe
 
 public sealed class AgentCommandServer
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly string _pipeName;
 
     public AgentCommandServer(string pipeName)
@@ -55,14 +57,7 @@ public sealed class AgentCommandServer
                 }
 
                 using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
-                ControlResponse response = request.ProtocolVersion == ControlProtocol.CurrentVersion
-                    ? await commandHandler(request, cancellationToken).ConfigureAwait(false)
-                    : new ControlResponse
-                    {
-                        IsSuccessful = false,
-                        ErrorCode = ControlErrorCode.UnsupportedProtocolVersion,
-                        Message = "The Control Service uses an unsupported protocol version."
-                    };
+                ControlResponse response = await ExecuteCommandAsync(request, commandHandler, cancellationToken).ConfigureAwait(false);
 
                 await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope
                 {
@@ -80,6 +75,26 @@ public sealed class AgentCommandServer
             {
                 return;
             }
+        }
+    }
+
+    internal static async Task<ControlResponse> ExecuteCommandAsync(ControlEnvelope request, Func<ControlEnvelope, CancellationToken, Task<ControlResponse>> commandHandler, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return request.ProtocolVersion == ControlProtocol.CurrentVersion
+                ? await commandHandler(request, cancellationToken).ConfigureAwait(false)
+                : new ControlResponse
+                {
+                    IsSuccessful = false,
+                    ErrorCode = ControlErrorCode.UnsupportedProtocolVersion,
+                    Message = "The Control Service uses an unsupported protocol version."
+                };
+        }
+        catch (JsonException ex)
+        {
+            Logger.Warn(ex, "AgentCommandServer/ExecuteCommandAsync: The Control Service sent an invalid JSON request payload.");
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Control Service request payload was invalid." };
         }
     }
 

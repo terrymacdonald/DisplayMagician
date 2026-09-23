@@ -88,14 +88,22 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
         SetActionsEnabled(false);
         try
         {
-            bool restarted = await RunElevatedRecoveryActionAsync(Program.RestartControlServiceCommandLineOption, "Control Service restarted successfully.", "Control Service did not restart. Check the DisplayMagician log for details.");
+            int restartExitCode = await RunElevatedRecoveryActionAsync(Program.RestartControlServiceCommandLineOption, "Control Service restarted successfully.", "Control Service did not restart. Check the DisplayMagician log for details.");
+            bool restarted = restartExitCode == (int)Program.ERRORLEVEL.OK || restartExitCode == (int)Program.ERRORLEVEL.ERROR_RECOVERY_HISTORY_NOT_RECORDED;
             if (restarted)
             {
                 await Task.Delay(1000);
                 ControlResponse userAgentResponse = await _controlServiceClient.RestartUserAgentAsync(CancellationToken.None);
-                lbl_result.Text = userAgentResponse.IsSuccessful
-                    ? "Control Service and User Agent restarted successfully."
-                    : $"Control Service restarted, but the User Agent could not restart: {userAgentResponse.Message}";
+                if (userAgentResponse.IsSuccessful)
+                {
+                    lbl_result.Text = restartExitCode == (int)Program.ERRORLEVEL.OK
+                        ? "Control Service and User Agent restarted successfully."
+                        : "Control Service and User Agent restarted, but the recovery history could not be recorded.";
+                }
+                else
+                {
+                    lbl_result.Text = $"Control Service restarted, but the User Agent could not restart: {userAgentResponse.Message}";
+                }
             }
             await RefreshStatusAsync();
         }
@@ -105,7 +113,7 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
         }
     }
 
-    private async Task<bool> RunElevatedRecoveryActionAsync(string commandLineOption, string successMessage, string failureMessage)
+    private async Task<int> RunElevatedRecoveryActionAsync(string commandLineOption, string successMessage, string failureMessage)
     {
         try
         {
@@ -119,18 +127,18 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
             await elevatedProcess.WaitForExitAsync();
             bool succeeded = elevatedProcess.ExitCode == (int)Program.ERRORLEVEL.OK;
             lbl_result.Text = succeeded ? successMessage : failureMessage;
-            return succeeded;
+            return elevatedProcess.ExitCode;
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {
             lbl_result.Text = "Administrator approval was cancelled. No recovery action was performed.";
-            return false;
+            return (int)Program.ERRORLEVEL.CANCELED_BY_USER;
         }
         catch (Exception ex)
         {
             logger.Error(ex, "ServiceRecoveryForm/RunElevatedRecoveryActionAsync: Could not start the elevated recovery action {0}.", commandLineOption);
             lbl_result.Text = $"Could not start the recovery action: {ex.Message}";
-            return false;
+            return (int)Program.ERRORLEVEL.ERROR_EXCEPTION;
         }
     }
 

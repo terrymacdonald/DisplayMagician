@@ -210,6 +210,7 @@ namespace DisplayMagician {
             ERROR_APPLYING_PROFILE = 103,  // Errorlevel returned when RunProfile command is used, and it cannot apply the profile for some reason
             ERROR_UNKNOWN_COMMAND = 104, // Errorlevel returned when DisplayMagician is given an unregonised command
             ERROR_PROFILE_CHANGE_OCCURRING = 105, // Errorlevel returned when DisplayMagician is already making a display profile change and is unable to comeplete what the user requested at this time. Try again soon. 
+            ERROR_RECOVERY_HISTORY_NOT_RECORDED = 106, // The recovery action completed, but its administration history could not be recorded.
         };
 
         public struct UpgradeExtraDetails
@@ -1013,7 +1014,12 @@ namespace DisplayMagician {
 
                 try
                 {
-                    new ControlServicePipeClient().RecordRecoveryAdministrationAsync("RestartControlService", "Succeeded", CancellationToken.None).GetAwaiter().GetResult();
+                    ControlResponse recoveryRecordResponse = new ControlServicePipeClient().RecordRecoveryAdministrationAsync("RestartControlService", "Succeeded", CancellationToken.None).GetAwaiter().GetResult();
+                    if (!recoveryRecordResponse.IsSuccessful)
+                    {
+                        logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service restarted but rejected its recovery history record. ErrorCode={0}; Message={1}", recoveryRecordResponse.ErrorCode, recoveryRecordResponse.Message);
+                        return (int)ERRORLEVEL.ERROR_RECOVERY_HISTORY_NOT_RECORDED;
+                    }
                 }
                 catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
                 {
