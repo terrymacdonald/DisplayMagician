@@ -1,6 +1,9 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -27,6 +30,7 @@ public partial class ServerSettingsForm : DisplayMagicianForm
 
         await RefreshStatusAsync();
         GatewaySettings settings = await _controlServiceClient.GetGatewaySettingsAsync(CancellationToken.None);
+        LoadLanBindAddresses(settings.LanBindAddress);
         txt_lan_host.Text = settings.LanAdvertisedHost;
         txt_lan_port.Text = settings.LanPort.ToString();
         txt_remote_host.Text = settings.RemoteHost;
@@ -190,7 +194,7 @@ public partial class ServerSettingsForm : DisplayMagicianForm
             return;
         }
 
-        ControlResponse response = await _controlServiceClient.UpdateGatewaySettingsAsync(new GatewaySettings { LanAdvertisedHost = txt_lan_host.Text, LanPort = lanPort, RemoteHost = txt_remote_host.Text, RemotePort = remotePort }, CancellationToken.None);
+        ControlResponse response = await _controlServiceClient.UpdateGatewaySettingsAsync(new GatewaySettings { LanBindAddress = cbo_lan_bind_address.SelectedItem?.ToString() ?? "*", LanAdvertisedHost = txt_lan_host.Text, LanPort = lanPort, RemoteHost = txt_remote_host.Text, RemotePort = remotePort }, CancellationToken.None);
         if (!response.IsSuccessful)
         {
             lbl_result.Text = response.Message;
@@ -215,6 +219,30 @@ public partial class ServerSettingsForm : DisplayMagicianForm
             logger.Error(ex, "ServerSettingsForm/btn_pair_remote_device_Click: Could not open the device pairing dialog.");
             lbl_result.Text = $"Could not open device pairing: {ex.Message}";
         }
+    }
+
+    private void LoadLanBindAddresses(string selectedAddress)
+    {
+        string[] addresses = NetworkInterface.GetAllNetworkInterfaces()
+            .Where(networkInterface => networkInterface.OperationalStatus == OperationalStatus.Up)
+            .SelectMany(networkInterface => networkInterface.GetIPProperties().UnicastAddresses)
+            .Select(unicastAddress => unicastAddress.Address)
+            .Where(address => address.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6 && !System.Net.IPAddress.IsLoopback(address))
+            .Select(address => address.ToString())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(address => address, StringComparer.OrdinalIgnoreCase)
+            .Prepend("*")
+            .ToArray();
+
+        cbo_lan_bind_address.Items.Clear();
+        cbo_lan_bind_address.Items.AddRange(addresses);
+        string selected = string.IsNullOrWhiteSpace(selectedAddress) ? "*" : selectedAddress;
+        if (!cbo_lan_bind_address.Items.Contains(selected))
+        {
+            cbo_lan_bind_address.Items.Add(selected);
+        }
+
+        cbo_lan_bind_address.SelectedItem = selected;
     }
 
 }
