@@ -190,7 +190,16 @@ public enum ControlMessageType
     RejectDevicePairing = 64,
     GetGatewayIdentity = 65,
     ListPairedClients = 66,
-    RevokePairedClient = 67
+    RevokePairedClient = 67,
+    GetDevicePairingStatus = 68,
+    AuthenticateGatewayRequest = 69,
+    GetRemoteUserStatus = 70,
+    ListRemoteProfiles = 71,
+    ListRemoteAudioProfiles = 72,
+    ListRemoteShortcuts = 73,
+    ApplyRemoteProfile = 74,
+    ApplyRemoteAudioProfile = 75,
+    StartRemoteShortcut = 76
 }
 
 public enum ControlErrorCode
@@ -358,6 +367,14 @@ public sealed class RejectDevicePairingRequest
     public Guid PairingSessionId { get; set; }
 }
 
+/// <summary>One-time-secret-protected status request made by a device awaiting pairing approval.</summary>
+public sealed class DevicePairingStatusRequest
+{
+    public Guid PairingSessionId { get; set; }
+    public string PairingSecret { get; set; } = string.Empty;
+    public string DeviceId { get; set; } = string.Empty;
+}
+
 /// <summary>Request to revoke one currently paired remote device.</summary>
 public sealed class RevokePairedClientRequest
 {
@@ -370,6 +387,54 @@ public sealed class DevicePairingResult
     public DevicePairingState State { get; set; }
     public string DeviceId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>Transport-neutral P-256 request proof. The signature covers method, path, body hash, timestamp, and nonce.</summary>
+public sealed class SignedGatewayRequest
+{
+    public string DeviceId { get; set; } = string.Empty;
+    public DateTime TimestampUtc { get; set; }
+    public string Nonce { get; set; } = string.Empty;
+    public string Signature { get; set; } = string.Empty;
+
+    public static string CreateCanonicalPayload(string method, string path, string bodySha256, DateTime timestampUtc, string nonce)
+    {
+        return string.Concat(method?.Trim().ToUpperInvariant() ?? string.Empty, "\n", path ?? string.Empty, "\n", bodySha256 ?? string.Empty, "\n", timestampUtc.ToUniversalTime().ToString("O"), "\n", nonce ?? string.Empty);
+    }
+}
+
+/// <summary>Gateway-only authenticated device context. It is never returned to an unpaired network client.</summary>
+public sealed class GatewayAuthenticationResult
+{
+    public bool IsAuthenticated { get; set; }
+    public string OwnerUserSid { get; set; } = string.Empty;
+    public string DeviceId { get; set; } = string.Empty;
+    public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
+    public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>Gateway-only verification request carrying a signed remote HTTP request's immutable details.</summary>
+public sealed class GatewayAuthenticationRequest
+{
+    public SignedGatewayRequest SignedRequest { get; set; } = new SignedGatewayRequest();
+    public string Method { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public string BodySha256 { get; set; } = string.Empty;
+    public string SourceIpAddress { get; set; } = string.Empty;
+}
+
+/// <summary>Authenticated, user-scoped status returned only to a paired client with status-read.</summary>
+public sealed class RemoteUserStatus
+{
+    public OperationStatus[] Operations { get; set; } = Array.Empty<OperationStatus>();
+    public OperationDecision[] PendingDecisions { get; set; } = Array.Empty<OperationDecision>();
+}
+
+/// <summary>Gateway-only wrapper that keeps authenticated device context separate from the original shared command payload.</summary>
+public sealed class GatewayRemoteCommand
+{
+    public GatewayAuthenticationResult Authentication { get; set; } = new GatewayAuthenticationResult();
+    public string Payload { get; set; } = string.Empty;
 }
 
 /// <summary>Persisted machine-owned association between a remote device key and a Windows user.</summary>
@@ -973,6 +1038,10 @@ public sealed class ControlResponse
     public DevicePairingSessionView[] DevicePairingRequests { get; set; } = Array.Empty<DevicePairingSessionView>();
 
     public PairedClientView[] PairedClients { get; set; } = Array.Empty<PairedClientView>();
+
+    public GatewayAuthenticationResult? GatewayAuthentication { get; set; }
+
+    public RemoteUserStatus? RemoteUserStatus { get; set; }
 
     public GameListResult? GameList { get; set; }
 

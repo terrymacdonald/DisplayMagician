@@ -17,11 +17,19 @@ public sealed class GatewayPairingPipeServer
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly DevicePairingCoordinator _pairingCoordinator;
     private readonly GatewayIdentityRegistry _identityRegistry;
+    private readonly GatewayRequestAuthenticator _requestAuthenticator;
+    private readonly OperationStatusStore _operationStatusStore;
+    private readonly OperationDecisionStore _operationDecisionStore;
+    private readonly ProfileOperationRouter _profileOperationRouter;
 
-    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry)
+    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter)
     {
         _pairingCoordinator = pairingCoordinator ?? throw new ArgumentNullException(nameof(pairingCoordinator));
         _identityRegistry = identityRegistry ?? throw new ArgumentNullException(nameof(identityRegistry));
+        _requestAuthenticator = requestAuthenticator ?? throw new ArgumentNullException(nameof(requestAuthenticator));
+        _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
+        _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
+        _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -68,6 +76,15 @@ public sealed class GatewayPairingPipeServer
             {
                 ControlMessageType.GatewayRegistration => Register(request),
                 ControlMessageType.SubmitDevicePairing => Submit(request),
+                ControlMessageType.GetDevicePairingStatus => GetStatus(request),
+                ControlMessageType.AuthenticateGatewayRequest => Authenticate(request),
+                ControlMessageType.GetRemoteUserStatus => GetRemoteUserStatus(request),
+                ControlMessageType.ListRemoteProfiles => ListRemote(request, RemoteClientCapabilities.ProfilesRead, ControlMessageType.ListProfiles),
+                ControlMessageType.ListRemoteAudioProfiles => ListRemote(request, RemoteClientCapabilities.AudioProfilesRead, ControlMessageType.ListAudioProfiles),
+                ControlMessageType.ListRemoteShortcuts => ListRemote(request, RemoteClientCapabilities.ShortcutsRead, ControlMessageType.ListShortcuts),
+                ControlMessageType.ApplyRemoteProfile => ExecuteRemote(request, RemoteClientCapabilities.ProfilesApply, ControlMessageType.ApplyProfile),
+                ControlMessageType.ApplyRemoteAudioProfile => ExecuteRemote(request, RemoteClientCapabilities.AudioProfilesApply, ControlMessageType.ApplyAudioProfile),
+                ControlMessageType.StartRemoteShortcut => ExecuteRemote(request, RemoteClientCapabilities.ShortcutsRun, ControlMessageType.StartShortcut),
                 _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Gateway operation is not supported." }
             };
             response.ProtocolWelcome = welcome;
@@ -97,6 +114,58 @@ public sealed class GatewayPairingPipeServer
         }
 
         return new ControlResponse { IsSuccessful = true, Message = "Pairing request processed.", DevicePairingResult = _pairingCoordinator.Submit(pairingRequest, DateTime.UtcNow) };
+    }
+
+    private ControlResponse GetStatus(ControlEnvelope request)
+    {
+        DevicePairingStatusRequest? statusRequest = JsonSerializer.Deserialize<DevicePairingStatusRequest>(request.Payload);
+        return statusRequest == null
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The pairing status request is invalid." }
+            : new ControlResponse { IsSuccessful = true, DevicePairingResult = _pairingCoordinator.GetStatus(statusRequest, DateTime.UtcNow) };
+    }
+
+    private ControlResponse Authenticate(ControlEnvelope request)
+    {
+        GatewayAuthenticationRequest? authenticationRequest = JsonSerializer.Deserialize<GatewayAuthenticationRequest>(request.Payload);
+        return authenticationRequest == null
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Gateway authentication request is invalid." }
+            : new ControlResponse { IsSuccessful = true, GatewayAuthentication = _requestAuthenticator.Authenticate(authenticationRequest, DateTime.UtcNow) };
+    }
+
+    private ControlResponse GetRemoteUserStatus(ControlEnvelope request)
+    {
+        GatewayAuthenticationResult? authentication = JsonSerializer.Deserialize<GatewayAuthenticationResult>(request.Payload);
+        if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised to read status." };
+        }
+
+        return new ControlResponse { IsSuccessful = true, RemoteUserStatus = new RemoteUserStatus { Operations = _operationStatusStore.GetAll(authentication.OwnerUserSid), PendingDecisions = _operationDecisionStore.GetPending(authentication.OwnerUserSid, 0) } };
+    }
+
+    private ControlResponse ListRemote(ControlEnvelope request, string requiredCapability, ControlMessageType messageType)
+    {
+        GatewayAuthenticationResult? authentication = JsonSerializer.Deserialize<GatewayAuthenticationResult>(request.Payload);
+        if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(requiredCapability, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised for this resource." };
+        int sessionId = ConsoleSessionLocator.GetActiveConsoleSessionId();
+        return messageType == ControlMessageType.ListProfiles
+            ? _profileOperationRouter.ListProfilesAsync(authentication.OwnerUserSid, sessionId, CancellationToken.None).GetAwaiter().GetResult()
+            : _profileOperationRouter.ManageProfileAsync(authentication.OwnerUserSid, sessionId, new ControlEnvelope { MessageType = messageType }, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    private ControlResponse ExecuteRemote(ControlEnvelope request, string requiredCapability, ControlMessageType messageType)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult? authentication = command?.Authentication;
+        if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(requiredCapability, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised for this action." };
+        GatewayRemoteCommand validCommand = command!;
+        int sessionId = ConsoleSessionLocator.GetActiveConsoleSessionId();
+        ControlEnvelope agentRequest = new ControlEnvelope { MessageType = messageType, Payload = validCommand.Payload, RequestId = Guid.NewGuid() };
+        ApplyProfileRequest? applyProfileRequest = messageType == ControlMessageType.ApplyProfile ? JsonSerializer.Deserialize<ApplyProfileRequest>(validCommand.Payload) : null;
+        if (messageType == ControlMessageType.ApplyProfile && (applyProfileRequest == null || string.IsNullOrWhiteSpace(applyProfileRequest.ProfileId))) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile is required." };
+        return messageType == ControlMessageType.ApplyProfile
+            ? _profileOperationRouter.ApplyProfileAsync(authentication.OwnerUserSid, sessionId, applyProfileRequest!.ProfileId, applyProfileRequest.OperationId, agentRequest.RequestId, CancellationToken.None).GetAwaiter().GetResult()
+            : _profileOperationRouter.ManageProfileAsync(authentication.OwnerUserSid, sessionId, agentRequest, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     private static bool IsLocalService(NamedPipeServerStream pipe)

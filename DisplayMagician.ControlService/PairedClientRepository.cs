@@ -53,6 +53,27 @@ public sealed class PairedClientRepository
         }
     }
 
+    public PairedClient? FindActiveByDeviceId(string deviceId)
+    {
+        lock (_syncRoot)
+        {
+            PairedClient? client = _clients.LastOrDefault(candidate => candidate.RevokedUtc == null && string.Equals(candidate.DeviceId, deviceId, StringComparison.Ordinal));
+            return client == null ? null : Copy(client);
+        }
+    }
+
+    public void RecordAuthentication(string deviceId, string sourceIpAddress, DateTime utcNow)
+    {
+        lock (_syncRoot)
+        {
+            PairedClient? client = _clients.LastOrDefault(candidate => candidate.RevokedUtc == null && string.Equals(candidate.DeviceId, deviceId, StringComparison.Ordinal));
+            if (client == null) return;
+            client.LastKnownIpAddress = sourceIpAddress ?? string.Empty;
+            client.LastAuthenticatedUtc = utcNow.ToUniversalTime();
+            PersistUnsafe();
+        }
+    }
+
     public void Upsert(PairedClient client)
     {
         ArgumentNullException.ThrowIfNull(client);

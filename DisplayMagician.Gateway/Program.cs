@@ -50,6 +50,7 @@ internal static class Program
         });
 
         WebApplication app = builder.Build();
+        app.UseMiddleware<GatewayRequestAuthenticationMiddleware>();
         app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity) => Results.Ok(gatewayIdentity.ToView()));
         app.MapPost("/v1/pairing/request", async (DevicePairingRequest request, HttpContext httpContext, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
         {
@@ -57,6 +58,23 @@ internal static class Program
             DevicePairingResult result = await controlServiceClient.SubmitDevicePairingAsync(request, cancellationToken).ConfigureAwait(false);
             return Results.Json(result, statusCode: result.State == DevicePairingState.AwaitingApproval ? StatusCodes.Status202Accepted : StatusCodes.Status400BadRequest);
         });
+        app.MapPost("/v1/pairing/status", async (DevicePairingStatusRequest request, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) => Results.Json(await controlServiceClient.GetDevicePairingStatusAsync(request, cancellationToken).ConfigureAwait(false)));
+        app.MapGet("/v1/status", async (HttpContext context, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
+        {
+            GatewayAuthenticationResult authentication = GatewayRequestAuthenticationMiddleware.GetAuthentication(context);
+            if (!authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal))
+            {
+                return Results.Json(new { error = "The paired device is not authorised to read status." }, statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            return Results.Ok(await controlServiceClient.GetRemoteUserStatusAsync(authentication, cancellationToken).ConfigureAwait(false));
+        });
+        app.MapGet("/v1/profiles", (HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), token));
+        app.MapGet("/v1/audio-profiles", (HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteAudioProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), token));
+        app.MapGet("/v1/shortcuts", (HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteShortcuts, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), token));
+        app.MapPost("/v1/profiles/apply", (ApplyProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), System.Text.Json.JsonSerializer.Serialize(request), token));
+        app.MapPost("/v1/audio-profiles/apply", (ApplyAudioProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteAudioProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), System.Text.Json.JsonSerializer.Serialize(request), token));
+        app.MapPost("/v1/shortcuts/run", (StartShortcutRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.StartRemoteShortcut, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), System.Text.Json.JsonSerializer.Serialize(request), token));
         app.Run();
     }
 

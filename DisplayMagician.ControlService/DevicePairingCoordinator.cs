@@ -144,6 +144,22 @@ public sealed class DevicePairingCoordinator
         }
     }
 
+    public DevicePairingResult GetStatus(DevicePairingStatusRequest request, DateTime utcNow)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        lock (_syncRoot)
+        {
+            ExpireUnsafe(utcNow);
+            PairingSessionRecord? session = _sessions.LastOrDefault(candidate => candidate.PairingSessionId == request.PairingSessionId);
+            if (session == null || !FixedTimeEquals(session.SecretHash, GetHash(request.PairingSecret)) || !string.Equals(session.DeviceId, request.DeviceId, StringComparison.Ordinal))
+            {
+                return new DevicePairingResult { State = DevicePairingState.Rejected, Message = "The pairing session is unavailable." };
+            }
+
+            return new DevicePairingResult { State = session.State, DeviceId = session.DeviceId, Message = session.State switch { DevicePairingState.AwaitingApproval => "Awaiting approval.", DevicePairingState.Approved => "Pairing was approved.", DevicePairingState.Expired => "The pairing session expired.", _ => "Pairing was rejected." } };
+        }
+    }
+
     public PairedClientView[] GetPairedClients(string ownerUserSid)
     {
         return _pairedClients.GetActiveForUser(ownerUserSid).Select(client => new PairedClientView

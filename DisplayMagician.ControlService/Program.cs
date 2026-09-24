@@ -24,6 +24,7 @@ internal static class Program
         builder.Services.AddSingleton<AuditStore>();
         builder.Services.AddSingleton<RecoveryAdministrationStore>();
         builder.Services.AddSingleton<PairedClientRepository>();
+        builder.Services.AddSingleton<GatewayRequestAuthenticator>();
         builder.Services.AddSingleton<DevicePairingCoordinator>();
         builder.Services.AddSingleton<GatewayIdentityRegistry>();
         builder.Services.AddSingleton<GatewaySettingsStore>();
