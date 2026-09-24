@@ -51,8 +51,9 @@ internal static class Program
 
         WebApplication app = builder.Build();
         app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity) => Results.Ok(gatewayIdentity.ToView()));
-        app.MapPost("/v1/pairing/request", async (DevicePairingRequest request, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
+        app.MapPost("/v1/pairing/request", async (DevicePairingRequest request, HttpContext httpContext, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
         {
+            request.SourceIpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
             DevicePairingResult result = await controlServiceClient.SubmitDevicePairingAsync(request, cancellationToken).ConfigureAwait(false);
             return Results.Json(result, statusCode: result.State == DevicePairingState.AwaitingApproval ? StatusCodes.Status202Accepted : StatusCodes.Status400BadRequest);
         });

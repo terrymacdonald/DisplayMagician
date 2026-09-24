@@ -88,6 +88,8 @@ public sealed class DevicePairingCoordinator
 
             session.DeviceId = request.DeviceId;
             session.DeviceDisplayName = request.DeviceDisplayName;
+            session.ClientType = request.ClientType;
+            session.SourceIpAddress = request.SourceIpAddress;
             session.DevicePublicKeyJwk = request.DevicePublicKeyJwk;
             session.RequestedCapabilities = (request.RequestedCapabilities ?? Array.Empty<string>()).ToArray();
             session.State = DevicePairingState.AwaitingApproval;
@@ -148,6 +150,9 @@ public sealed class DevicePairingCoordinator
         {
             DeviceId = client.DeviceId,
             DisplayName = client.DisplayName,
+            ClientType = client.ClientType,
+            LastKnownIpAddress = client.LastKnownIpAddress,
+            ConnectedSinceUtc = client.ConnectedSinceUtc,
             PublicKeyFingerprint = client.PublicKeyFingerprint,
             GrantedCapabilities = (client.GrantedCapabilities ?? Array.Empty<string>()).ToArray(),
             PairedUtc = client.PairedUtc,
@@ -178,6 +183,9 @@ public sealed class DevicePairingCoordinator
                 DeviceId = session.DeviceId,
                 OwnerUserSid = session.OwnerUserSid,
                 DisplayName = session.DeviceDisplayName,
+                ClientType = session.ClientType,
+                LastKnownIpAddress = session.SourceIpAddress,
+                ConnectedSinceUtc = pairedUtc,
                 PublicKeyJwk = session.DevicePublicKeyJwk,
                 PublicKeyFingerprint = GetFingerprint(session.DevicePublicKeyJwk),
                 GrantedCapabilities = request.GrantedCapabilities.ToArray(),
@@ -192,7 +200,7 @@ public sealed class DevicePairingCoordinator
     private static bool IsValidRequest(DevicePairingRequest request)
     {
         string[] capabilities = request.RequestedCapabilities ?? Array.Empty<string>();
-        return IsBounded(request.DeviceId, ControlProtocol.MaximumDeviceIdLength) && IsBounded(request.DeviceDisplayName, ControlProtocol.MaximumDisplayNameLength) && IsP256PublicKeyJwk(request.DevicePublicKeyJwk) && capabilities.Length <= ControlProtocol.MaximumRequiredCapabilities && capabilities.All(IsValidCapability) && capabilities.Distinct(StringComparer.Ordinal).Count() == capabilities.Length;
+        return IsBounded(request.DeviceId, ControlProtocol.MaximumDeviceIdLength) && IsBounded(request.DeviceDisplayName, ControlProtocol.MaximumDisplayNameLength) && IsBounded(request.ClientType, ControlProtocol.MaximumDisplayNameLength) && IsP256PublicKeyJwk(request.DevicePublicKeyJwk) && capabilities.Length <= ControlProtocol.MaximumRequiredCapabilities && capabilities.All(IsValidCapability) && capabilities.Distinct(StringComparer.Ordinal).Count() == capabilities.Length;
     }
 
     private static bool AreGrantedCapabilitiesValid(PairingSessionRecord session, string[]? grantedCapabilities)
@@ -270,7 +278,7 @@ public sealed class DevicePairingCoordinator
 
     private static DevicePairingSessionView ToView(PairingSessionRecord session)
     {
-        return new DevicePairingSessionView { PairingSessionId = session.PairingSessionId, OwnerUserSid = session.OwnerUserSid, State = session.State, CreatedUtc = session.CreatedUtc, ExpiresUtc = session.ExpiresUtc, DeviceId = session.DeviceId, DeviceDisplayName = session.DeviceDisplayName, RequestedCapabilities = (session.RequestedCapabilities ?? Array.Empty<string>()).ToArray() };
+        return new DevicePairingSessionView { PairingSessionId = session.PairingSessionId, OwnerUserSid = session.OwnerUserSid, State = session.State, CreatedUtc = session.CreatedUtc, ExpiresUtc = session.ExpiresUtc, DeviceId = session.DeviceId, DeviceDisplayName = session.DeviceDisplayName, ClientType = session.ClientType, RequestedCapabilities = (session.RequestedCapabilities ?? Array.Empty<string>()).ToArray() };
     }
 
     private static GatewayPairingIdentity Copy(GatewayPairingIdentity gateway)
@@ -289,6 +297,8 @@ public sealed class DevicePairingCoordinator
         public DevicePairingState State { get; set; }
         public string DeviceId { get; set; } = string.Empty;
         public string DeviceDisplayName { get; set; } = string.Empty;
+        public string ClientType { get; set; } = string.Empty;
+        public string SourceIpAddress { get; set; } = string.Empty;
         public string DevicePublicKeyJwk { get; set; } = string.Empty;
         public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
     }

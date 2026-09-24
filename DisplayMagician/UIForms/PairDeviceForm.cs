@@ -24,6 +24,7 @@ public partial class PairDeviceForm : DisplayMagicianForm
     {
         await RefreshQrCodeAsync();
         await RefreshRequestsAsync();
+        await RefreshPairedDevicesAsync();
     }
 
     private async void rdo_gateway_location_CheckedChanged(object sender, EventArgs e)
@@ -37,6 +38,28 @@ public partial class PairDeviceForm : DisplayMagicianForm
     private async void btn_refresh_requests_Click(object sender, EventArgs e)
     {
         await RefreshRequestsAsync();
+    }
+
+    private async void btn_refresh_paired_devices_Click(object sender, EventArgs e)
+    {
+        await RefreshPairedDevicesAsync();
+    }
+
+    private async void dgv_paired_devices_CellContentClick(object sender, DataGridViewCellEventArgs e)
+    {
+        if (e.RowIndex < 0 || e.ColumnIndex != col_paired_remove.Index || dgv_paired_devices.Rows[e.RowIndex].Tag is not PairedClientView client)
+        {
+            return;
+        }
+
+        if (MessageBox.Show(this, $"Remove {client.DisplayName}? This device will need to pair again before it can use DisplayMagician.", "Remove Paired Device", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+        {
+            return;
+        }
+
+        ControlResponse response = await _controlServiceClient.RevokePairedClientAsync(client.DeviceId, CancellationToken.None);
+        lbl_paired_result.Text = response.Message;
+        await RefreshPairedDevicesAsync();
     }
 
     private async void btn_approve_request_Click(object sender, EventArgs e)
@@ -139,6 +162,25 @@ public partial class PairDeviceForm : DisplayMagicianForm
         catch (Exception ex)
         {
             lbl_request_result.Text = $"Could not load pairing requests: {ex.Message}";
+        }
+    }
+
+    private async Task RefreshPairedDevicesAsync()
+    {
+        try
+        {
+            PairedClientView[] clients = await _controlServiceClient.ListPairedClientsAsync(CancellationToken.None);
+            dgv_paired_devices.Rows.Clear();
+            foreach (PairedClientView client in clients)
+            {
+                int rowIndex = dgv_paired_devices.Rows.Add(client.DisplayName, client.ClientType, client.LastKnownIpAddress, client.ConnectedSinceUtc.ToLocalTime().ToString("g"));
+                dgv_paired_devices.Rows[rowIndex].Tag = client;
+            }
+            lbl_paired_result.Text = clients.Length == 0 ? "No devices are currently paired." : $"{clients.Length} paired device(s).";
+        }
+        catch (Exception ex)
+        {
+            lbl_paired_result.Text = $"Could not load paired devices: {ex.Message}";
         }
     }
 

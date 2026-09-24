@@ -324,6 +324,9 @@ public sealed class DevicePairingRequest
     public string PairingSecret { get; set; } = string.Empty;
     public string DeviceId { get; set; } = string.Empty;
     public string DeviceDisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
+    /// <summary>Set only by the Gateway from the incoming connection; remote clients must not supply this value.</summary>
+    public string SourceIpAddress { get; set; } = string.Empty;
     public string DevicePublicKeyJwk { get; set; } = string.Empty;
     public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
 }
@@ -338,6 +341,7 @@ public sealed class DevicePairingSessionView
     public DateTime ExpiresUtc { get; set; }
     public string DeviceId { get; set; } = string.Empty;
     public string DeviceDisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
     public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
 }
 
@@ -374,6 +378,9 @@ public sealed class PairedClient
     public string DeviceId { get; set; } = string.Empty;
     public string OwnerUserSid { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
+    public string LastKnownIpAddress { get; set; } = string.Empty;
+    public DateTime ConnectedSinceUtc { get; set; }
     public string PublicKeyJwk { get; set; } = string.Empty;
     public string PublicKeyFingerprint { get; set; } = string.Empty;
     public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
@@ -387,6 +394,9 @@ public sealed class PairedClientView
 {
     public string DeviceId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
+    public string LastKnownIpAddress { get; set; } = string.Empty;
+    public DateTime ConnectedSinceUtc { get; set; }
     public string PublicKeyFingerprint { get; set; } = string.Empty;
     public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
     public DateTime PairedUtc { get; set; }
