@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 using DisplayMagician.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -22,18 +24,38 @@ internal static class Program
         ConfigureLogging();
         GatewayIdentityProvider identityProvider = new GatewayIdentityProvider();
         GatewayIdentity identity = identityProvider.GetOrCreate();
+        GatewaySettings settings = GatewaySettingsProvider.Load();
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         builder.Services.AddWindowsService(options => options.ServiceName = "DisplayMagicianGateway");
         builder.Services.AddSingleton(identity);
+        builder.Services.AddSingleton(settings);
+        builder.Services.AddSingleton<GatewayControlServiceClient>();
+        builder.Services.AddHostedService<GatewayRegistrationService>();
         builder.WebHost.ConfigureKestrel(options =>
         {
             options.AddServerHeader = false;
             options.Limits.MaxRequestBodySize = ControlProtocol.MaximumMessageLength;
-            options.ListenAnyIP(ControlProtocol.DefaultGatewayPort, listenOptions => listenOptions.UseHttps(identity.TlsCertificate));
+            if (settings.LanBindAddress == "*" || string.IsNullOrWhiteSpace(settings.LanBindAddress))
+            {
+                options.ListenAnyIP(settings.LanPort, listenOptions => listenOptions.UseHttps(identity.TlsCertificate));
+            }
+            else if (IPAddress.TryParse(settings.LanBindAddress, out IPAddress? bindAddress))
+            {
+                options.Listen(bindAddress, settings.LanPort, listenOptions => listenOptions.UseHttps(identity.TlsCertificate));
+            }
+            else
+            {
+                throw new InvalidOperationException("Gateway LAN bind address must be an IP address or all interfaces.");
+            }
         });
 
         WebApplication app = builder.Build();
         app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity) => Results.Ok(gatewayIdentity.ToView()));
+        app.MapPost("/v1/pairing/request", async (DevicePairingRequest request, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
+        {
+            DevicePairingResult result = await controlServiceClient.SubmitDevicePairingAsync(request, cancellationToken).ConfigureAwait(false);
+            return Results.Json(result, statusCode: result.State == DevicePairingState.AwaitingApproval ? StatusCodes.Status202Accepted : StatusCodes.Status400BadRequest);
+        });
         app.Run();
     }
 

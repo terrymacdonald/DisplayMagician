@@ -1,6 +1,6 @@
 namespace DisplayMagician.UIForms
 {
-    partial class ServiceRecoveryForm
+    partial class ServerSettingsForm
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -28,8 +28,17 @@ namespace DisplayMagician.UIForms
             lbl_result = new System.Windows.Forms.Label();
             btn_back = new System.Windows.Forms.Button();
             gb_service_release = new System.Windows.Forms.GroupBox();
+            gb_lan_settings = new System.Windows.Forms.GroupBox();
+            txt_lan_host = new System.Windows.Forms.TextBox();
+            txt_lan_port = new System.Windows.Forms.TextBox();
+            gb_remote_settings = new System.Windows.Forms.GroupBox();
+            txt_remote_host = new System.Windows.Forms.TextBox();
+            txt_remote_port = new System.Windows.Forms.TextBox();
+            btn_apply_gateway_settings = new System.Windows.Forms.Button();
             gb_status.SuspendLayout();
             gb_service_release.SuspendLayout();
+            gb_lan_settings.SuspendLayout();
+            gb_remote_settings.SuspendLayout();
             SuspendLayout();
             // 
             // gb_status
@@ -153,28 +162,66 @@ namespace DisplayMagician.UIForms
             gb_service_release.TabStop = false;
             gb_service_release.Text = "Recovery Actions";
             // 
-            // ServiceRecoveryForm
+            // ServerSettingsForm
             // 
             AcceptButton = btn_refresh;
             AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.Black;
             CancelButton = btn_back;
-            ClientSize = new System.Drawing.Size(660, 346);
+            gb_lan_settings.Controls.Add(txt_lan_host);
+            gb_lan_settings.Controls.Add(txt_lan_port);
+            gb_lan_settings.ForeColor = System.Drawing.Color.White;
+            gb_lan_settings.Location = new System.Drawing.Point(18, 290);
+            gb_lan_settings.Name = "gb_lan_settings";
+            gb_lan_settings.Size = new System.Drawing.Size(624, 70);
+            gb_lan_settings.Text = "LAN Settings (host/IP and port)";
+            txt_lan_host.Location = new System.Drawing.Point(18, 28);
+            txt_lan_host.Name = "txt_lan_host";
+            txt_lan_host.Size = new System.Drawing.Size(420, 23);
+            txt_lan_port.Location = new System.Drawing.Point(456, 28);
+            txt_lan_port.Name = "txt_lan_port";
+            txt_lan_port.Size = new System.Drawing.Size(150, 23);
+            gb_remote_settings.Controls.Add(txt_remote_host);
+            gb_remote_settings.Controls.Add(txt_remote_port);
+            gb_remote_settings.ForeColor = System.Drawing.Color.White;
+            gb_remote_settings.Location = new System.Drawing.Point(18, 372);
+            gb_remote_settings.Name = "gb_remote_settings";
+            gb_remote_settings.Size = new System.Drawing.Size(624, 70);
+            gb_remote_settings.Text = "Remote Settings (external DNS/IP and port)";
+            txt_remote_host.Location = new System.Drawing.Point(18, 28);
+            txt_remote_host.Name = "txt_remote_host";
+            txt_remote_host.Size = new System.Drawing.Size(420, 23);
+            txt_remote_port.Location = new System.Drawing.Point(456, 28);
+            txt_remote_port.Name = "txt_remote_port";
+            txt_remote_port.Size = new System.Drawing.Size(150, 23);
+            btn_apply_gateway_settings.Location = new System.Drawing.Point(400, 458);
+            btn_apply_gateway_settings.Name = "btn_apply_gateway_settings";
+            btn_apply_gateway_settings.Size = new System.Drawing.Size(150, 30);
+            btn_apply_gateway_settings.Text = "Apply and Restart Gateway";
+            btn_apply_gateway_settings.Click += btn_apply_gateway_settings_Click;
+            ClientSize = new System.Drawing.Size(660, 510);
+            Controls.Add(btn_apply_gateway_settings);
+            Controls.Add(gb_remote_settings);
+            Controls.Add(gb_lan_settings);
             Controls.Add(gb_service_release);
             Controls.Add(btn_back);
             Controls.Add(gb_status);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = false;
-            Name = "ServiceRecoveryForm";
+            Name = "ServerSettingsForm";
             ShowInTaskbar = false;
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "Service Recovery";
-            Load += ServiceRecoveryForm_Load;
+            Text = "Server Settings";
+            Load += ServerSettingsForm_Load;
             gb_status.ResumeLayout(false);
             gb_service_release.ResumeLayout(false);
             gb_service_release.PerformLayout();
+            gb_lan_settings.ResumeLayout(false);
+            gb_lan_settings.PerformLayout();
+            gb_remote_settings.ResumeLayout(false);
+            gb_remote_settings.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -190,5 +237,12 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_result;
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.GroupBox gb_service_release;
+        private System.Windows.Forms.GroupBox gb_lan_settings;
+        private System.Windows.Forms.TextBox txt_lan_host;
+        private System.Windows.Forms.TextBox txt_lan_port;
+        private System.Windows.Forms.GroupBox gb_remote_settings;
+        private System.Windows.Forms.TextBox txt_remote_host;
+        private System.Windows.Forms.TextBox txt_remote_port;
+        private System.Windows.Forms.Button btn_apply_gateway_settings;
     }
 }

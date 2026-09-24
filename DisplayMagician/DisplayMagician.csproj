@@ -218,7 +218,7 @@
     <EmbeddedResource Include="UIForms\MessagesForm.resx" />
     <EmbeddedResource Include="UIForms\OperationDecisionForm.resx" />
     <EmbeddedResource Include="UIForms\ProfileSettingsForm.resx" />
-    <EmbeddedResource Include="UIForms\ServiceRecoveryForm.resx" />
+    <EmbeddedResource Include="UIForms\ServerSettingsForm.resx" />
     <EmbeddedResource Include="UIForms\SettingsForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutErrorForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutForm.resx" />

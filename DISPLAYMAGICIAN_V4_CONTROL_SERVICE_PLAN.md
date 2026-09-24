@@ -500,6 +500,8 @@ Pairing grants the stable scoped values in `RemoteClientCapabilities`, such as `
 
 Each client requests only the capabilities it implements. Approval grants exactly that requested set; it must never silently add a broader scope. A later client version requesting additional capabilities requires a new pairing approval.
 
+The administrator-only WinForms Server Settings page contains Service Recovery, LAN Settings, and Remote Settings. LAN Settings select `All available interfaces` or one detected/custom local host/IP plus the Gateway listening port. Remote Settings contain only the externally reachable DNS/IP and port encoded in the Remote Network QR code. The Pair Device dialog switches its QR payload between Local LAN and Remote Network settings. Initial remote support is direct NAT/TCP pass-through only: TLS must reach Gateway unchanged so the QR-pinned Gateway certificate fingerprint remains valid. TLS-terminating reverse proxies are deferred to future proxy work.
+
 ## Current Heartbeats, Messages, and Metrics
 
 Current DM uses `AnonymousMetricsService`, `ClientSyncService`, and `MessageSyncService` from the WinForms `Program` process. v4 separates their ownership: metrics and client-sync scheduling become machine-level service responsibilities, while messages are per-user Agent data exposed through contracts.

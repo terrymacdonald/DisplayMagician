@@ -181,7 +181,14 @@ public enum ControlMessageType
     GetOperationDecision = 55,
     ReconcileOperationStatuses = 56,
     GatewayRegistration = 57,
-    SubmitDevicePairing = 58
+    SubmitDevicePairing = 58,
+    GetGatewaySettings = 59,
+    UpdateGatewaySettings = 60,
+    CreateDevicePairingQr = 61,
+    ListDevicePairingRequests = 62,
+    ApproveDevicePairing = 63,
+    RejectDevicePairing = 64,
+    GetGatewayIdentity = 65
 }
 
 public enum ControlErrorCode
@@ -277,10 +284,26 @@ public sealed class GatewayIdentityView
     public string TlsCertificateSha256 { get; set; } = string.Empty;
 }
 
+/// <summary>Machine-owned Gateway listener and QR advertisement settings.</summary>
+public sealed class GatewaySettings
+{
+    public string LanBindAddress { get; set; } = "*";
+    public string LanAdvertisedHost { get; set; } = string.Empty;
+    public int LanPort { get; set; } = ControlProtocol.DefaultGatewayPort;
+    public string RemoteHost { get; set; } = string.Empty;
+    public int RemotePort { get; set; } = ControlProtocol.DefaultGatewayPort;
+}
+
 /// <summary>Gateway-only local-pipe registration. This is never accepted over REST.</summary>
 public sealed class GatewayRegistration
 {
     public GatewayPairingIdentity Identity { get; set; } = new GatewayPairingIdentity();
+}
+
+/// <summary>Local desktop request for a QR session using the registered Gateway identity and the selected advertised endpoint.</summary>
+public sealed class CreateDevicePairingQrRequest
+{
+    public string GatewayUri { get; set; } = string.Empty;
 }
 
 /// <summary>One-time QR payload. The secret is never persisted or included in diagnostic data.</summary>
@@ -321,6 +344,12 @@ public sealed class ApproveDevicePairingRequest
 {
     public Guid PairingSessionId { get; set; }
     public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
+}
+
+/// <summary>Request made by an authorised client to reject a pending device pairing request.</summary>
+public sealed class RejectDevicePairingRequest
+{
+    public Guid PairingSessionId { get; set; }
 }
 
 /// <summary>Result returned to a candidate device. Pending does not disclose user state or approved-client information.</summary>
@@ -916,6 +945,14 @@ public sealed class ControlResponse
     public OperationDecision[] OperationDecisions { get; set; } = Array.Empty<OperationDecision>();
 
     public DevicePairingResult? DevicePairingResult { get; set; }
+
+    public GatewaySettings? GatewaySettings { get; set; }
+
+    public GatewayIdentityView? GatewayIdentity { get; set; }
+
+    public DevicePairingQrCode? DevicePairingQrCode { get; set; }
+
+    public DevicePairingSessionView[] DevicePairingRequests { get; set; } = Array.Empty<DevicePairingSessionView>();
 
     public GameListResult? GameList { get; set; }
 

@@ -8,24 +8,29 @@ using DisplayMagician.Contracts;
 
 namespace DisplayMagician.UIForms;
 
-public partial class ServiceRecoveryForm : DisplayMagicianForm
+public partial class ServerSettingsForm : DisplayMagicianForm
 {
     private readonly ControlServicePipeClient _controlServiceClient = new ControlServicePipeClient();
     private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public ServiceRecoveryForm()
+    public ServerSettingsForm()
     {
         InitializeComponent();
     }
 
-    private async void ServiceRecoveryForm_Load(object sender, EventArgs e)
+    private async void ServerSettingsForm_Load(object sender, EventArgs e)
     {
         btn_force_release.Enabled = true;
         btn_restart_user_agent.Enabled = true;
         btn_restart_control_service.Enabled = true;
-        lbl_administrator_notice.Text = "Restarting Control Service or releasing stuck display control requests Windows administrator approval.";
+        lbl_administrator_notice.Text = "Server settings and recovery actions require Windows administrator approval.";
 
         await RefreshStatusAsync();
+        GatewaySettings settings = await _controlServiceClient.GetGatewaySettingsAsync(CancellationToken.None);
+        txt_lan_host.Text = settings.LanAdvertisedHost;
+        txt_lan_port.Text = settings.LanPort.ToString();
+        txt_remote_host.Text = settings.RemoteHost;
+        txt_remote_port.Text = settings.RemotePort.ToString();
     }
 
     private async void btn_refresh_Click(object sender, EventArgs e)
@@ -69,7 +74,7 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "ServiceRecoveryForm/btn_restart_user_agent_Click: Could not restart the User Agent.");
+            logger.Error(ex, "ServerSettingsForm/btn_restart_user_agent_Click: Could not restart the User Agent.");
             lbl_result.Text = $"Could not restart the User Agent: {ex.Message}";
         }
         finally
@@ -136,7 +141,7 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "ServiceRecoveryForm/RunElevatedRecoveryActionAsync: Could not start the elevated recovery action {0}.", commandLineOption);
+            logger.Error(ex, "ServerSettingsForm/RunElevatedRecoveryActionAsync: Could not start the elevated recovery action {0}.", commandLineOption);
             lbl_result.Text = $"Could not start the recovery action: {ex.Message}";
             return (int)Program.ERRORLEVEL.ERROR_EXCEPTION;
         }
@@ -175,6 +180,26 @@ public partial class ServiceRecoveryForm : DisplayMagicianForm
     private void btn_back_Click(object sender, EventArgs e)
     {
         Close();
+    }
+
+    private async void btn_apply_gateway_settings_Click(object sender, EventArgs e)
+    {
+        if (!int.TryParse(txt_lan_port.Text, out int lanPort) || !int.TryParse(txt_remote_port.Text, out int remotePort))
+        {
+            lbl_result.Text = "Gateway ports must be valid numbers.";
+            return;
+        }
+
+        ControlResponse response = await _controlServiceClient.UpdateGatewaySettingsAsync(new GatewaySettings { LanAdvertisedHost = txt_lan_host.Text, LanPort = lanPort, RemoteHost = txt_remote_host.Text, RemotePort = remotePort }, CancellationToken.None);
+        if (!response.IsSuccessful)
+        {
+            lbl_result.Text = response.Message;
+            return;
+        }
+
+        using Process process = Process.Start(new ProcessStartInfo(Application.ExecutablePath, Program.RestartGatewayCommandLineOption) { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden })!;
+        await process.WaitForExitAsync();
+        lbl_result.Text = process.ExitCode == (int)Program.ERRORLEVEL.OK ? "Gateway settings saved and Gateway restarted." : "Gateway settings saved, but Gateway could not restart.";
     }
 
 }

@@ -26,6 +26,7 @@ internal static class Program
         builder.Services.AddSingleton<PairedClientRepository>();
         builder.Services.AddSingleton<DevicePairingCoordinator>();
         builder.Services.AddSingleton<GatewayIdentityRegistry>();
+        builder.Services.AddSingleton<GatewaySettingsStore>();
         builder.Services.AddSingleton<GatewayPairingPipeServer>();
         builder.Services.AddSingleton<LegacyFileMigration>();
         builder.Services.AddSingleton<UserDataMigrationRunner>();

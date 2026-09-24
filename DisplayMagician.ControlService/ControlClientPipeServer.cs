@@ -30,10 +30,13 @@ public sealed class ControlClientPipeServer
     private readonly OperationDecisionStore _operationDecisionStore;
     private readonly StoragePaths _storagePaths;
     private readonly ControlRequestReplayStore _requestReplayStore;
+    private readonly GatewaySettingsStore _gatewaySettingsStore;
+    private readonly DevicePairingCoordinator _devicePairingCoordinator;
+    private readonly GatewayIdentityRegistry _gatewayIdentityRegistry;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
     private readonly SemaphoreSlim _replayableMutationLock = new SemaphoreSlim(1, 1);
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore, GatewaySettingsStore gatewaySettingsStore, DevicePairingCoordinator devicePairingCoordinator, GatewayIdentityRegistry gatewayIdentityRegistry)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
@@ -45,6 +48,9 @@ public sealed class ControlClientPipeServer
         _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
         _requestReplayStore = requestReplayStore ?? throw new ArgumentNullException(nameof(requestReplayStore));
+        _gatewaySettingsStore = gatewaySettingsStore ?? throw new ArgumentNullException(nameof(gatewaySettingsStore));
+        _devicePairingCoordinator = devicePairingCoordinator ?? throw new ArgumentNullException(nameof(devicePairingCoordinator));
+        _gatewayIdentityRegistry = gatewayIdentityRegistry ?? throw new ArgumentNullException(nameof(gatewayIdentityRegistry));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -172,6 +178,13 @@ public sealed class ControlClientPipeServer
                                     ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
                                     ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
                                     ControlMessageType.GetServiceStatus => GetServiceStatus(identity),
+                                    ControlMessageType.GetGatewaySettings => GetGatewaySettings(),
+                                    ControlMessageType.UpdateGatewaySettings => UpdateGatewaySettings(identity, request),
+                                    ControlMessageType.GetGatewayIdentity => GetGatewayIdentity(),
+                                    ControlMessageType.CreateDevicePairingQr => CreateDevicePairingQr(identity, request),
+                                    ControlMessageType.ListDevicePairingRequests => new ControlResponse { IsSuccessful = true, DevicePairingRequests = _devicePairingCoordinator.GetPendingForUser(identity.UserSid, DateTime.UtcNow) },
+                                    ControlMessageType.ApproveDevicePairing => ApproveDevicePairing(identity, request),
+                                    ControlMessageType.RejectDevicePairing => RejectDevicePairing(identity, request),
                                     ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
                                     ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
                                     _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
@@ -349,6 +362,72 @@ public sealed class ControlClientPipeServer
         }
 
         return new ControlResponse { IsSuccessful = true, Message = "Control Service status returned.", ServiceStatus = status };
+    }
+
+    private ControlResponse GetGatewaySettings()
+    {
+        return new ControlResponse { IsSuccessful = true, Message = "Gateway settings returned.", GatewaySettings = _gatewaySettingsStore.Get() };
+    }
+
+    private ControlResponse UpdateGatewaySettings(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        if (!identity.IsAdministrator)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AdministratorRequired, Message = "Administrator approval is required to update Gateway settings." };
+        }
+
+        GatewaySettings? settings = JsonSerializer.Deserialize<GatewaySettings>(request.Payload);
+        if (settings == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "Gateway settings are required." };
+        }
+
+        return new ControlResponse { IsSuccessful = true, Message = "Gateway settings updated.", GatewaySettings = _gatewaySettingsStore.Update(settings) };
+    }
+
+    private ControlResponse GetGatewayIdentity()
+    {
+        GatewayPairingIdentity? gateway = _gatewayIdentityRegistry.Get();
+        return gateway == null
+            ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The Gateway has not registered its identity yet." }
+            : new ControlResponse { IsSuccessful = true, GatewayIdentity = new GatewayIdentityView { HostId = gateway.HostId, HostIdentityPublicKeyJwk = gateway.HostIdentityPublicKeyJwk, TlsCertificateSha256 = gateway.TlsCertificateSha256 } };
+    }
+
+    private ControlResponse CreateDevicePairingQr(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        CreateDevicePairingQrRequest? pairingRequest = JsonSerializer.Deserialize<CreateDevicePairingQrRequest>(request.Payload);
+        GatewayPairingIdentity? registeredGateway = _gatewayIdentityRegistry.Get();
+        if (pairingRequest == null || !Uri.TryCreate(pairingRequest.GatewayUri, UriKind.Absolute, out Uri? gatewayUri) || gatewayUri.Scheme != Uri.UriSchemeHttps || registeredGateway == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A registered Gateway and valid HTTPS endpoint are required." };
+        }
+
+        GatewayPairingIdentity gateway = new GatewayPairingIdentity { GatewayUri = gatewayUri.AbsoluteUri.TrimEnd('/'), HostId = registeredGateway.HostId, HostIdentityPublicKeyJwk = registeredGateway.HostIdentityPublicKeyJwk, TlsCertificateSha256 = registeredGateway.TlsCertificateSha256 };
+        return new ControlResponse { IsSuccessful = true, DevicePairingQrCode = _devicePairingCoordinator.CreateQrCode(identity.UserSid, gateway, DateTime.UtcNow) };
+    }
+
+    private ControlResponse ApproveDevicePairing(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        ApproveDevicePairingRequest? approval = JsonSerializer.Deserialize<ApproveDevicePairingRequest>(request.Payload);
+        if (approval == null || approval.PairingSessionId == Guid.Empty)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid device pairing approval is required." };
+        }
+
+        DevicePairingResult result = _devicePairingCoordinator.ApproveFromLocalClient(identity.UserSid, approval, DateTime.UtcNow);
+        return new ControlResponse { IsSuccessful = result.State == DevicePairingState.Approved, ErrorCode = result.State == DevicePairingState.Approved ? ControlErrorCode.None : ControlErrorCode.ValidationFailed, Message = result.Message, DevicePairingResult = result };
+    }
+
+    private ControlResponse RejectDevicePairing(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        RejectDevicePairingRequest? rejection = JsonSerializer.Deserialize<RejectDevicePairingRequest>(request.Payload);
+        if (rejection == null || rejection.PairingSessionId == Guid.Empty)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid device pairing rejection is required." };
+        }
+
+        DevicePairingResult result = _devicePairingCoordinator.Reject(identity.UserSid, rejection.PairingSessionId, DateTime.UtcNow);
+        return new ControlResponse { IsSuccessful = result.DeviceId.Length > 0, ErrorCode = result.DeviceId.Length > 0 ? ControlErrorCode.None : ControlErrorCode.ValidationFailed, Message = result.Message, DevicePairingResult = result };
     }
 
     private ControlResponse ResolveOperationDecision(PipeClientIdentity identity, ControlEnvelope request)

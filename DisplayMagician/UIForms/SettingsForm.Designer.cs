@@ -686,7 +686,7 @@ namespace DisplayMagician.UIForms
             btn_service_recovery.Name = "btn_service_recovery";
             btn_service_recovery.Size = new System.Drawing.Size(214, 38);
             btn_service_recovery.TabIndex = 23;
-            btn_service_recovery.Text = "Service Recovery";
+            btn_service_recovery.Text = "Server Settings";
             btn_service_recovery.UseVisualStyleBackColor = true;
             btn_service_recovery.Click += btn_service_recovery_Click;
             // 
@@ -726,7 +726,7 @@ namespace DisplayMagician.UIForms
             label10.Name = "label10";
             label10.Size = new System.Drawing.Size(488, 37);
             label10.TabIndex = 0;
-            label10.Text = "Use this button to fix an error with the DisplayMagician ControlService. This can happen with a failed display profile change.";
+            label10.Text = "Configure DisplayMagician Gateway LAN and remote access, or recover Control Service after a failed display change.";
             label10.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SettingsForm

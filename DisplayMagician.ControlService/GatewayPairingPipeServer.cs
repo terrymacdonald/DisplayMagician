@@ -110,6 +110,16 @@ public sealed class GatewayPairingPipeServer
 public sealed class GatewayIdentityRegistry
 {
     private GatewayPairingIdentity? _identity;
-    public GatewayPairingIdentity? Get() => _identity;
-    public void Set(GatewayPairingIdentity identity) => _identity = identity ?? throw new ArgumentNullException(nameof(identity));
+
+    public GatewayPairingIdentity? Get()
+    {
+        GatewayPairingIdentity? identity = _identity;
+        return identity == null ? null : new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsCertificateSha256 = identity.TlsCertificateSha256 };
+    }
+
+    public void Set(GatewayPairingIdentity identity)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        _identity = new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsCertificateSha256 = identity.TlsCertificateSha256 };
+    }
 }

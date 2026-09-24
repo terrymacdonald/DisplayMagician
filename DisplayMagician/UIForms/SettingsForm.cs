@@ -2,6 +2,8 @@ using AutoUpdaterDotNET;
 //using NHotkey;
 //using NHotkey.WindowsForms;
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -58,7 +60,7 @@ namespace DisplayMagician.UIForms
 
         private void SettingsForm_Load(object sender, EventArgs e)
         {
-            btn_service_recovery.Visible = IsElevatedAdministrator();
+            btn_service_recovery.Visible = true;
             // start displaymagician when computer starts
             if (Program.AppProgramSettings.StartOnBootUp == true)
             {
@@ -657,8 +659,21 @@ namespace DisplayMagician.UIForms
 
         private void btn_service_recovery_Click(object sender, EventArgs e)
         {
-            using ServiceRecoveryForm recoveryForm = new ServiceRecoveryForm();
-            recoveryForm.ShowDialog(this);
+            if (IsElevatedAdministrator())
+            {
+                using ServerSettingsForm serverSettingsForm = new ServerSettingsForm();
+                serverSettingsForm.ShowDialog(this);
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo(Application.ExecutablePath, Program.ServerSettingsCommandLineOption) { UseShellExecute = true, Verb = "runas" });
+            }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                MessageBox.Show(this, "Administrator approval was cancelled. Server Settings was not opened.", "Server Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private static bool IsElevatedAdministrator()

@@ -100,6 +100,8 @@ namespace DisplayMagician {
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
         internal const string ForceReleaseDisplayControlCommandLineOption = "--force-release-display-control";
         internal const string RestartControlServiceCommandLineOption = "--restart-control-service";
+        internal const string ServerSettingsCommandLineOption = "--server-settings";
+        internal const string RestartGatewayCommandLineOption = "--restart-gateway";
         private const string ControlServiceName = "DisplayMagicianControlService";
 
         private static volatile bool _useTestUpdateFeed;
@@ -320,6 +322,22 @@ namespace DisplayMagician {
             {
                 _isElevatedRecoveryAction = true;
                 return RestartControlServiceFromElevatedProcess();
+            }
+
+            if (args.Any(argument => string.Equals(argument, ServerSettingsCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                using ServerSettingsForm serverSettingsForm = new ServerSettingsForm();
+                serverSettingsForm.ShowDialog();
+                return (int)ERRORLEVEL.OK;
+            }
+
+            if (args.Any(argument => string.Equals(argument, RestartGatewayCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                return RunServiceControlCommand("stop", out _, "DisplayMagicianGateway") == 0 && RunServiceControlCommand("start", out _, "DisplayMagicianGateway") == 0 ? (int)ERRORLEVEL.OK : (int)ERRORLEVEL.ERROR_EXCEPTION;
             }
 
             // Check for the --test-update-feed to check for the test update feed instead of the normal update feed. This is useful for testing the update feed without having to change the code.
@@ -1040,9 +1058,9 @@ namespace DisplayMagician {
             }
         }
 
-        private static int RunServiceControlCommand(string action, out string output)
+        private static int RunServiceControlCommand(string action, out string output, string serviceName = null)
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "sc.exe"), $"{action} \"{ControlServiceName}\"")
+            ProcessStartInfo startInfo = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "sc.exe"), $"{action} \"{serviceName ?? ControlServiceName}\"")
             {
                 CreateNoWindow = true,
                 RedirectStandardError = true,

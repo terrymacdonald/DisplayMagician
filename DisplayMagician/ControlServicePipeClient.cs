@@ -263,6 +263,47 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RestartUserAgent }, cancellationToken);
     }
 
+    public async Task<GatewaySettings> GetGatewaySettingsAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetGatewaySettings }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.GatewaySettings != null ? response.GatewaySettings : throw new InvalidOperationException(response.Message);
+    }
+
+    public Task<ControlResponse> UpdateGatewaySettingsAsync(GatewaySettings settings, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.UpdateGatewaySettings, Payload = JsonSerializer.Serialize(settings) }, cancellationToken);
+    }
+
+    public async Task<GatewayIdentityView> GetGatewayIdentityAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetGatewayIdentity }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.GatewayIdentity != null ? response.GatewayIdentity : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<DevicePairingQrCode> CreateDevicePairingQrAsync(string gatewayUri, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CreateDevicePairingQr, Payload = JsonSerializer.Serialize(new CreateDevicePairingQrRequest { GatewayUri = gatewayUri ?? string.Empty }) }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.DevicePairingQrCode != null ? response.DevicePairingQrCode : throw new InvalidOperationException(response.Message);
+    }
+
+    public async Task<DevicePairingSessionView[]> ListDevicePairingRequestsAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListDevicePairingRequests }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful ? response.DevicePairingRequests : throw new InvalidOperationException(response.Message);
+    }
+
+    public Task<ControlResponse> ApproveDevicePairingAsync(ApproveDevicePairingRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ApproveDevicePairing, Payload = JsonSerializer.Serialize(request) }, cancellationToken);
+    }
+
+    public Task<ControlResponse> RejectDevicePairingAsync(Guid pairingSessionId, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RejectDevicePairing, Payload = JsonSerializer.Serialize(new RejectDevicePairingRequest { PairingSessionId = pairingSessionId }) }, cancellationToken);
+    }
+
     public Task<ControlResponse> CreateUserSupportBundleAsync(string destinationPath, CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope
