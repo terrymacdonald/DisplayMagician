@@ -1,4 +1,4 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util" xmlns:firewall="http://wixtoolset.org/schemas/v4/wxs/firewall">
 	<Fragment>
 		<!--
 			ProgramData is deliberately split into a machine-only branch and a per-SID
@@ -195,7 +195,7 @@
 							Stop="both"
 							Remove="uninstall"
 							Wait="yes" />
-				<util:FirewallException Id="GatewayFirewallException"
+				<firewall:FirewallException Id="GatewayFirewallException"
 									Name="DisplayMagician Gateway"
 									Description="Allows paired DisplayMagician devices to connect to the Gateway."
 									Port="22846"
