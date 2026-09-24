@@ -70,7 +70,8 @@ public enum ControlMessageType
     RestartUserAgent = 52,
     StopUserAgent = 53,
     RecordRecoveryAdministration = 54,
-    GetOperationDecision = 55
+    GetOperationDecision = 55,
+    ReconcileOperationStatuses = 56
 }
 
 public enum ControlErrorCode
@@ -356,6 +357,9 @@ public sealed class OperationDecisionStatusRequest
 /// <summary>Published by the User Agent as a shortcut or profile operation progresses.</summary>
 public sealed class OperationStatusUpdate
 {
+    /// <summary>Stable delivery identity. Retrying the same update must not create another sequence entry.</summary>
+    public Guid UpdateId { get; set; } = Guid.NewGuid();
+
     public Guid OperationId { get; set; }
 
     public DisplayOperationType OperationType { get; set; }
@@ -370,6 +374,12 @@ public sealed class OperationStatusUpdate
 
     public ControlErrorCode ErrorCode { get; set; }
 
+}
+
+/// <summary>Agent snapshot used after a Control Service restart to restore live operation state.</summary>
+public sealed class OperationStatusReconciliationRequest
+{
+    public OperationStatusUpdate[] ActiveUpdates { get; set; } = Array.Empty<OperationStatusUpdate>();
 }
 
 /// <summary>Service-owned, client-visible operation state. Sequence is per operation and always increases.</summary>
@@ -398,6 +408,8 @@ public sealed class OperationStatus
     public bool IsSuccessful { get; set; }
 
     public ControlErrorCode ErrorCode { get; set; }
+
+    public Guid LastUpdateId { get; set; }
 
     public bool IsAuthoritative { get; set; } = true;
 

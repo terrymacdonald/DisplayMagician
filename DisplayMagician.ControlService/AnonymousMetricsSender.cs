@@ -18,7 +18,7 @@ public sealed class AnonymousMetricsSender
     private readonly MachineScheduleCoordinator _machineScheduleCoordinator;
 
     public AnonymousMetricsSender(MachineScheduleCoordinator machineScheduleCoordinator)
-        : this(new HttpClient(), machineScheduleCoordinator)
+        : this(new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, machineScheduleCoordinator)
     {
     }
 

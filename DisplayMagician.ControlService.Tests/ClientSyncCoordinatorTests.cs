@@ -71,6 +71,33 @@ public sealed class ClientSyncCoordinatorTests
     }
 
     [Fact]
+    public async Task SendLatestManifestAsync_ReloadsPersistedManifestAfterServiceRestart()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            StoragePaths paths = new StoragePaths(storageRoot);
+            MachineScheduleCoordinator schedule = new MachineScheduleCoordinator(new MachineScheduleStore(paths));
+            ControlStateCoordinator state = new ControlStateCoordinator();
+            AgentRegistration agent = new AgentRegistration { UserSid = "S-1-5-21-100", SessionId = 10, ProcessId = 1000, CommandPipeName = "test-agent-command" };
+            using HttpClient httpClient = new HttpClient(new StaticDocumentHandler(CreateDocument()));
+            ClientSyncCoordinator first = new ClientSyncCoordinator(httpClient, schedule, state, new RecordingAgentCommandClient(), paths);
+            await first.SyncAsync(new ClientSyncRequest { IsManual = true }, null, null, CancellationToken.None);
+            RecordingAgentCommandClient reloadedClient = new RecordingAgentCommandClient();
+            ClientSyncCoordinator reloaded = new ClientSyncCoordinator(httpClient, schedule, state, reloadedClient, paths);
+
+            await reloaded.SendLatestManifestAsync(agent, CancellationToken.None);
+
+            Assert.True(reloadedClient.WasCalled);
+            Assert.Equal(ControlMessageType.ApplyClientSyncMessages, reloadedClient.Request!.MessageType);
+        }
+        finally
+        {
+            if (Directory.Exists(storageRoot)) Directory.Delete(storageRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task SyncAsync_TreatsAnUnavailableScheduleStoreAsARecoverableFailure()
     {
         string storageRoot = Path.GetTempFileName();

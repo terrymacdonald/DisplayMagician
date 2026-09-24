@@ -34,9 +34,13 @@ namespace DisplayMagician.Messaging
         private readonly string _storePath;
         private readonly object _storeLock = new object();
 
-        public MessageSyncService(HttpClient httpClient, NLog.Logger logger, string manifestUrl, string messagesFolderPath)
+    public MessageSyncService(HttpClient httpClient, NLog.Logger logger, string manifestUrl, string messagesFolderPath)
+    {
+        _httpClient = httpClient;
+        if (_httpClient.Timeout == System.Threading.Timeout.InfiniteTimeSpan)
         {
-            _httpClient = httpClient;
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        }
             _logger = logger;
             _manifestUrl = manifestUrl;
             _messagesFolderPath = messagesFolderPath;

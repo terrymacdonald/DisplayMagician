@@ -153,6 +153,17 @@ public sealed class ControlServiceClient
         return statusResponse.OperationStatus;
     }
 
+    public async Task ReconcileOperationStatusesAsync(AgentRegistration registration, OperationStatusUpdate[] activeUpdates, CancellationToken cancellationToken)
+    {
+        using NamedPipeClientStream pipe = await ConnectRegisteredAgentPipeAsync(registration, cancellationToken).ConfigureAwait(false);
+        ControlResponse response = await SendAndReceiveAsync(pipe, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.ReconcileOperationStatuses,
+            Payload = JsonSerializer.Serialize(new OperationStatusReconciliationRequest { ActiveUpdates = activeUpdates ?? Array.Empty<OperationStatusUpdate>() })
+        }, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessful) throw new InvalidOperationException(response.Message);
+    }
+
     public async Task<OperationDecision> RequestOperationDecisionAsync(AgentRegistration registration, RequestOperationDecisionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);

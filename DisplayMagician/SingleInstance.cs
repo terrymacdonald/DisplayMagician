@@ -38,6 +38,8 @@ namespace DisplayMagician
         private static readonly Queue<string[]> _pendingCommandLineArguments = new Queue<string[]>();
         private static readonly object _pendingCommandLock = new object();
         private static bool _readyForCommands = false;
+        private const int MaximumForwardedCommandBytes = 64 * 1024;
+        private const int ForwardedCommandTimeoutMilliseconds = 10000;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -276,9 +278,15 @@ namespace DisplayMagician
                 using (var namedPipeClientStream = new NamedPipeClientStream(".", GetPipeName(), PipeDirection.InOut))
                 {
                     namedPipeClientStream.Connect(3000); // Maximum wait 3 seconds
-
-                    var ser = new DataContractJsonSerializer(typeof(Payload));
-                    ser.WriteObject(namedPipeClientStream, namedPipePayload);
+                    namedPipeClientStream.ReadTimeout = ForwardedCommandTimeoutMilliseconds;
+                    namedPipeClientStream.WriteTimeout = ForwardedCommandTimeoutMilliseconds;
+                    byte[] payloadBytes = SerializePayload(namedPipePayload);
+                    using (var writer = new BinaryWriter(namedPipeClientStream, Encoding.UTF8, leaveOpen: true))
+                    {
+                        writer.Write(payloadBytes.Length);
+                        writer.Write(payloadBytes);
+                        writer.Flush();
+                    }
                     namedPipeClientStream.Flush();
 
                     using (var reader = new StreamReader(namedPipeClientStream, Encoding.UTF8, false, 1024, leaveOpen: true))
@@ -365,8 +373,8 @@ namespace DisplayMagician
                 lock (_namedPiperServerThreadLock)
                 {
 
-                    var ser = new DataContractJsonSerializer(typeof(Payload));
-                    var payload = (Payload)ser.ReadObject(_namedPipeServerStream);
+                    using System.Threading.Timer timeout = new System.Threading.Timer(_ => _namedPipeServerStream?.Dispose(), null, ForwardedCommandTimeoutMilliseconds, System.Threading.Timeout.Infinite);
+                    Payload payload = DeserializePayload(_namedPipeServerStream);
 
                     logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: The other DisplayMagician sent us the following commandline: {payload.CommandLineArguments.ToString()}");
 
@@ -404,6 +412,43 @@ namespace DisplayMagician
             // Create a new pipe for next connection
             logger.Trace($"SingleInstance/NamedPipeServerConnectionCallback: Creating a new named pipe server in preparation for any DisplayMagicians to send us something in the future.");
             NamedPipeServerCreateServer();
+        }
+
+        private static byte[] SerializePayload(Payload payload)
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                new DataContractJsonSerializer(typeof(Payload)).WriteObject(stream, payload);
+                if (stream.Length == 0 || stream.Length > MaximumForwardedCommandBytes)
+                {
+                    throw new InvalidDataException("The forwarded command is outside the permitted size.");
+                }
+
+                return stream.ToArray();
+            }
+        }
+
+        private static Payload DeserializePayload(Stream stream)
+        {
+            using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                int length = reader.ReadInt32();
+                if (length <= 0 || length > MaximumForwardedCommandBytes)
+                {
+                    throw new InvalidDataException("The forwarded command has an invalid size.");
+                }
+
+                byte[] bytes = reader.ReadBytes(length);
+                if (bytes.Length != length)
+                {
+                    throw new EndOfStreamException("The forwarded command ended before its declared length.");
+                }
+
+                using (MemoryStream payloadStream = new MemoryStream(bytes, writable: false))
+                {
+                    return (Payload)new DataContractJsonSerializer(typeof(Payload)).ReadObject(payloadStream);
+                }
+            }
         }
 
         /*private static string GetRunningProcessHash()

@@ -26,20 +26,28 @@ public sealed class ClientSyncCoordinator
     private readonly IAgentCommandClient _agentCommandClient;
     private readonly ControlClientEventHub? _eventHub;
     private readonly SemaphoreSlim _syncGate = new SemaphoreSlim(1, 1);
+    private readonly string? _manifestStoragePath;
     private ClientSyncMessageManifest? _latestMessageManifest;
 
     public ClientSyncCoordinator(MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator controlStateCoordinator, IAgentCommandClient agentCommandClient, ControlClientEventHub? eventHub = null)
-        : this(new HttpClient(), machineScheduleCoordinator, controlStateCoordinator, agentCommandClient, eventHub)
+        : this(new HttpClient { Timeout = TimeSpan.FromSeconds(30) }, machineScheduleCoordinator, controlStateCoordinator, agentCommandClient, eventHub)
     {
     }
 
     public ClientSyncCoordinator(HttpClient httpClient, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator controlStateCoordinator, IAgentCommandClient agentCommandClient, ControlClientEventHub? eventHub = null)
+        : this(httpClient, machineScheduleCoordinator, controlStateCoordinator, agentCommandClient, null, eventHub)
+    {
+    }
+
+    public ClientSyncCoordinator(HttpClient httpClient, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator controlStateCoordinator, IAgentCommandClient agentCommandClient, StoragePaths? storagePaths, ControlClientEventHub? eventHub = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _machineScheduleCoordinator = machineScheduleCoordinator ?? throw new ArgumentNullException(nameof(machineScheduleCoordinator));
         _controlStateCoordinator = controlStateCoordinator ?? throw new ArgumentNullException(nameof(controlStateCoordinator));
         _agentCommandClient = agentCommandClient ?? throw new ArgumentNullException(nameof(agentCommandClient));
         _eventHub = eventHub;
+        _manifestStoragePath = storagePaths == null ? null : Path.Combine(storagePaths.MachinePath, "ClientSyncMessageManifest.json");
+        LoadLatestManifest();
     }
 
     public async Task<ClientSyncResult> SyncAsync(ClientSyncRequest request, string? requestingUserSid, int? requestingSessionId, CancellationToken cancellationToken)
@@ -63,6 +71,7 @@ public sealed class ClientSyncCoordinator
             }
 
             _latestMessageManifest = snapshot.MessageManifest;
+            PersistLatestManifest();
             MessageSyncResult? requestingMessageResult = await DistributeManifestAsync(snapshot, requestingUserSid, requestingSessionId, cancellationToken).ConfigureAwait(false);
             _machineScheduleCoordinator.RecordClientSyncSuccess(now);
             return new ClientSyncResult
@@ -113,6 +122,33 @@ public sealed class ClientSyncCoordinator
         }
 
         await SendManifestAsync(agent, manifest, cancellationToken).ConfigureAwait(false);
+    }
+
+    private void LoadLatestManifest()
+    {
+        if (string.IsNullOrWhiteSpace(_manifestStoragePath) || !File.Exists(_manifestStoragePath)) return;
+        try
+        {
+            ClientSyncMessageManifest? manifest = JsonSerializer.Deserialize<ClientSyncMessageManifest>(File.ReadAllText(_manifestStoragePath));
+            if (manifest?.SchemaVersion == 1) _latestMessageManifest = manifest;
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+        {
+            Logger.Warn(ex, "ClientSyncCoordinator/LoadLatestManifest: Could not load the last validated message manifest.");
+        }
+    }
+
+    private void PersistLatestManifest()
+    {
+        if (string.IsNullOrWhiteSpace(_manifestStoragePath) || _latestMessageManifest == null) return;
+        try
+        {
+            AtomicFileStore.WriteAllText(_manifestStoragePath, JsonSerializer.Serialize(_latestMessageManifest), $"{_manifestStoragePath}.bak");
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            Logger.Warn(ex, "ClientSyncCoordinator/PersistLatestManifest: Could not persist the validated message manifest.");
+        }
     }
 
     private async Task<ClientSyncSnapshot?> DownloadAndValidateAsync(CancellationToken cancellationToken)

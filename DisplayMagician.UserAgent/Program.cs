@@ -57,12 +57,38 @@ internal static class Program
         }
 
         await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
+        Task statusReconciliation = RunOperationStatusReconciliationAsync(profileCommandHandler, cancellationTokenSource.Token);
         AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.RunDetectedShortcutAsync);
         Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(cancellationTokenSource.Token);
 
-        await Task.WhenAny(commandConnection, automaticGameDetection).ConfigureAwait(false);
+        await Task.WhenAny(commandConnection, automaticGameDetection, statusReconciliation).ConfigureAwait(false);
         cancellationTokenSource.Cancel();
-        await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection).ConfigureAwait(false);
+        await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection, statusReconciliation).ConfigureAwait(false);
+    }
+
+    private static async Task RunOperationStatusReconciliationAsync(ProfileCommandHandler profileCommandHandler, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await profileCommandHandler.FlushPendingOperationStatusUpdatesAsync(cancellationToken).ConfigureAwait(false);
+                await profileCommandHandler.ReconcileOperationStatusesAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)
+            {
+                LogManager.GetCurrentClassLogger().Debug(ex, "Program/RunOperationStatusReconciliationAsync: Control Service is unavailable for operation-status reconciliation.");
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+        }
     }
 
     private static async Task RunServiceConnectionWithRetryAsync(ControlServiceClient serviceClient, AgentRegistration registration, bool acquireDisplayControl, bool migrateUserData, TaskCompletionSource<ControlResponse> migrationCompletion, CancellationToken cancellationToken)

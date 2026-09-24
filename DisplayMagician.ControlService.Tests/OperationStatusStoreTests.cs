@@ -111,4 +111,20 @@ public sealed class OperationStatusStoreTests
         Assert.True(lateProgress.IsTerminal);
         Assert.Equal(OperationPhase.Completed, lateProgress.Phase);
     }
+
+    [Fact]
+    public void Publish_SameDeliveryId_DoesNotDuplicateAnOperationUpdate()
+    {
+        OperationStatusStore store = new OperationStatusStore(new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"))));
+        Guid operationId = Guid.NewGuid();
+        Guid updateId = Guid.NewGuid();
+        OperationStatusUpdate update = new OperationStatusUpdate { UpdateId = updateId, OperationId = operationId, OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.StartingGame, Message = "Starting." };
+
+        OperationStatus first = store.Publish("S-1-5-21-100", 10, update, DateTime.UtcNow);
+        OperationStatus replay = store.Publish("S-1-5-21-100", 10, update, DateTime.UtcNow.AddSeconds(1));
+
+        Assert.Equal(1, first.Sequence);
+        Assert.Equal(first.Sequence, replay.Sequence);
+        Assert.Equal(updateId, replay.LastUpdateId);
+    }
 }

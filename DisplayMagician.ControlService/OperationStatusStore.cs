@@ -48,6 +48,11 @@ public sealed class OperationStatusStore
                     throw new InvalidOperationException("An operation can only be updated by its owning User Agent session.");
                 }
 
+                if (update.UpdateId != Guid.Empty && existing.LastUpdateId == update.UpdateId)
+                {
+                    return Copy(existing);
+                }
+
                 if (existing.IsTerminal)
                 {
                     return Copy(existing);
@@ -75,6 +80,7 @@ public sealed class OperationStatusStore
             status.IsTerminal = update.IsTerminal;
             status.IsSuccessful = update.IsSuccessful;
             status.ErrorCode = update.ErrorCode;
+            status.LastUpdateId = update.UpdateId;
             _operations[status.OperationId] = status;
             RemoveOldCompletedOperations();
             Persist();
@@ -211,6 +217,7 @@ public sealed class OperationStatusStore
             IsTerminal = status.IsTerminal,
             IsSuccessful = status.IsSuccessful,
             ErrorCode = status.ErrorCode,
+            LastUpdateId = status.LastUpdateId,
             IsAuthoritative = status.IsAuthoritative,
             IsStale = status.IsStale,
             StaleReason = status.StaleReason

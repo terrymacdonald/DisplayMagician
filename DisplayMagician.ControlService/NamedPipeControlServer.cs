@@ -245,6 +245,23 @@ public sealed class NamedPipeControlServer
             return;
         }
 
+        if (request.MessageType == ControlMessageType.ReconcileOperationStatuses)
+        {
+            OperationStatusReconciliationRequest? reconciliation = JsonSerializer.Deserialize<OperationStatusReconciliationRequest>(request.Payload);
+            if (reconciliation == null || reconciliation.ActiveUpdates == null || Array.Exists(reconciliation.ActiveUpdates, update => update == null || update.OperationId == Guid.Empty))
+            {
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The active operation reconciliation was invalid.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            foreach (OperationStatusUpdate update in reconciliation.ActiveUpdates!)
+            {
+                _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
+            }
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Active operation statuses reconciled.", cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         if (request.MessageType == ControlMessageType.RequestOperationDecision)
         {
             RequestOperationDecisionRequest? decisionRequest = JsonSerializer.Deserialize<RequestOperationDecisionRequest>(request.Payload);

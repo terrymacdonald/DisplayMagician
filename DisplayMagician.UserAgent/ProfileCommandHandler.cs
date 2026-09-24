@@ -27,7 +27,7 @@ namespace DisplayMagician.UserAgent;
 public sealed class ProfileCommandHandler
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    private static readonly HttpClient _httpClient = new HttpClient();
+    private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     private readonly AgentRegistration _registration;
     private readonly string _userDataPath;
     private readonly ShortcutStore _shortcutStore;
@@ -40,6 +40,7 @@ public sealed class ProfileCommandHandler
     private readonly UserSupportBundleGenerator _userSupportBundleGenerator;
     private readonly IInteractiveSessionStateProvider _interactiveSessionStateProvider;
     private readonly ControlServiceClient _controlServiceClient;
+    private readonly OperationStatusOutbox _operationStatusOutbox;
     private readonly object _shortcutOperationsLock = new object();
     private readonly Dictionary<Guid, CancellationTokenSource> _shortcutOperations = new Dictionary<Guid, CancellationTokenSource>();
     private bool _stopRequested;
@@ -54,6 +55,7 @@ public sealed class ProfileCommandHandler
         _interactiveSessionStateProvider = interactiveSessionStateProvider ?? new WtsInteractiveSessionStateProvider();
         _controlServiceClient = new ControlServiceClient();
         _userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", _registration.UserSid);
+        _operationStatusOutbox = new OperationStatusOutbox(_userDataPath);
         ProfileRepository.ConfigureStoragePath(_userDataPath);
         AudioProfileRepository.ConfigureStoragePath(_userDataPath);
         _shortcutStore = new ShortcutStore(_userDataPath);
@@ -872,14 +874,32 @@ public sealed class ProfileCommandHandler
 
     private async Task PublishShortcutStatusAsync(OperationStatusUpdate update, CancellationToken cancellationToken)
     {
-        try
+        _operationStatusOutbox.Enqueue(update);
+        await FlushPendingOperationStatusUpdatesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Retries every status accepted locally but not yet acknowledged by ControlService.</summary>
+    public async Task FlushPendingOperationStatusUpdatesAsync(CancellationToken cancellationToken)
+    {
+        foreach (OperationStatusUpdate update in _operationStatusOutbox.GetPending())
         {
-            await _controlServiceClient.PublishOperationStatusAsync(_registration, update, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await _controlServiceClient.PublishOperationStatusAsync(_registration, update, cancellationToken).ConfigureAwait(false);
+                _operationStatusOutbox.Acknowledge(update.UpdateId);
+            }
+            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)
+            {
+                _logger.Warn(ex, "ProfileCommandHandler/FlushPendingOperationStatusUpdatesAsync: Could not publish shortcut operation {0} phase {1}; it remains queued for retry.", update.OperationId, update.Phase);
+                return;
+            }
         }
-        catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)
-        {
-            _logger.Warn(ex, "ProfileCommandHandler/PublishShortcutStatusAsync: Could not publish shortcut operation {0} phase {1}.", update.OperationId, update.Phase);
-        }
+    }
+
+    /// <summary>Restores the current Agent view of active operations after ControlService has restarted.</summary>
+    public Task ReconcileOperationStatusesAsync(CancellationToken cancellationToken)
+    {
+        return _controlServiceClient.ReconcileOperationStatusesAsync(_registration, _operationStatusOutbox.GetActive(), cancellationToken);
     }
 
     private static string? GetThumbnailPngBase64(ProfileItem profile)
