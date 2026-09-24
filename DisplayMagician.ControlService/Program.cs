@@ -23,6 +23,8 @@ internal static class Program
         builder.Services.AddSingleton<DisplayControlLeaseStore>();
         builder.Services.AddSingleton<AuditStore>();
         builder.Services.AddSingleton<RecoveryAdministrationStore>();
+        builder.Services.AddSingleton<PairedClientRepository>();
+        builder.Services.AddSingleton<DevicePairingCoordinator>();
         builder.Services.AddSingleton<LegacyFileMigration>();
         builder.Services.AddSingleton<UserDataMigrationRunner>();
         builder.Services.AddSingleton<ControlStateCoordinator>();

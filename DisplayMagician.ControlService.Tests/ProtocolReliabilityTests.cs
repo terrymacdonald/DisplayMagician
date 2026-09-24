@@ -91,7 +91,7 @@ public sealed class ProtocolReliabilityTests
                 DisplayName = "Future client",
                 RequiredCapabilities = new[] { "operation-status" }
             },
-            Payload = JsonSerializer.Serialize(new DevicePairingRequest { PairingCode = "123456", DeviceId = "device-123", DeviceDisplayName = "Future client", DevicePublicKey = "public-key-placeholder" })
+            Payload = JsonSerializer.Serialize(new DevicePairingRequest { PairingSessionId = Guid.NewGuid(), PairingSecret = "one-time-secret", DeviceId = "device-123", DeviceDisplayName = "Future client", DevicePublicKeyJwk = "public-key-placeholder" })
         };
         await using MemoryStream stream = new MemoryStream();
 

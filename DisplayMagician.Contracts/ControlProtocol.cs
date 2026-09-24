@@ -12,6 +12,7 @@ public static class ControlProtocol
     public const string ClientEventPipeName = "DisplayMagician.ControlService.ClientEvents.v1";
     public const string AgentCommandPipePrefix = "DisplayMagician.UserAgent.Command.v1.";
     public const string SessionLauncherPipeName = "DisplayMagician.SessionLauncher.v1";
+    public const int DefaultGatewayPort = 22846;
     public const int DefaultAudioDeviceWaitMilliseconds = 20000;
     public const int MaximumMessageLength = 5 * 1024 * 1024;
     public const int MaximumRequiredCapabilities = 64;
@@ -100,6 +101,27 @@ public static class ControlCapabilities
     public const string ClientSync = "client-sync";
     public const string Diagnostics = "diagnostics";
     public const string Messages = "messages";
+}
+
+/// <summary>Stable authorisation scopes that may be granted to a paired remote device.</summary>
+public static class RemoteClientCapabilities
+{
+    public const string StatusRead = "status-read";
+    public const string DecisionsRead = "decisions-read";
+    public const string DecisionsAnswer = "decisions-answer";
+    public const string ProfilesRead = "profiles-read";
+    public const string ProfilesApply = "profiles-apply";
+    public const string AudioProfilesRead = "audio-profiles-read";
+    public const string AudioProfilesApply = "audio-profiles-apply";
+    public const string ShortcutsRead = "shortcuts-read";
+    public const string ShortcutsRun = "shortcuts-run";
+    public const string PairingApprove = "pairing-approve";
+
+    public static readonly string[] All = new[]
+    {
+        StatusRead, DecisionsRead, DecisionsAnswer, ProfilesRead, ProfilesApply,
+        AudioProfilesRead, AudioProfilesApply, ShortcutsRead, ShortcutsRun, PairingApprove
+    };
 }
 
 public enum ControlMessageType
@@ -221,20 +243,97 @@ public sealed class ProtocolWelcome
     public string[] NegotiatedOptionalCapabilities { get; set; } = Array.Empty<string>();
 }
 
-/// <summary>Future remote-pairing request shape. Pairing is intentionally not implemented on local pipes.</summary>
-public sealed class DevicePairingRequest
+/// <summary>Lifecycle state for a short-lived remote-device pairing session.</summary>
+public enum DevicePairingState
 {
-    public string PairingCode { get; set; } = string.Empty;
-    public string DeviceId { get; set; } = string.Empty;
-    public string DeviceDisplayName { get; set; } = string.Empty;
-    public string DevicePublicKey { get; set; } = string.Empty;
+    Unknown = 0,
+    AwaitingDevice = 1,
+    AwaitingApproval = 2,
+    Approved = 3,
+    Rejected = 4,
+    Expired = 5
 }
 
+/// <summary>Information supplied by the Gateway for a QR pairing session.</summary>
+public sealed class GatewayPairingIdentity
+{
+    public string GatewayUri { get; set; } = string.Empty;
+    public string HostId { get; set; } = string.Empty;
+    public string HostIdentityPublicKeyJwk { get; set; } = string.Empty;
+    public string TlsCertificateSha256 { get; set; } = string.Empty;
+}
+
+/// <summary>One-time QR payload. The secret is never persisted or included in diagnostic data.</summary>
+public sealed class DevicePairingQrCode
+{
+    public Guid PairingSessionId { get; set; }
+    public string PairingSecret { get; set; } = string.Empty;
+    public DateTime ExpiresUtc { get; set; }
+    public GatewayPairingIdentity Gateway { get; set; } = new GatewayPairingIdentity();
+}
+
+/// <summary>Transport-neutral request made by an unpaired remote client after it scans a pairing QR code.</summary>
+public sealed class DevicePairingRequest
+{
+    public Guid PairingSessionId { get; set; }
+    public string PairingSecret { get; set; } = string.Empty;
+    public string DeviceId { get; set; } = string.Empty;
+    public string DeviceDisplayName { get; set; } = string.Empty;
+    public string DevicePublicKeyJwk { get; set; } = string.Empty;
+    public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
+}
+
+/// <summary>Client-safe pairing state. It deliberately excludes the one-time QR secret and public-key material.</summary>
+public sealed class DevicePairingSessionView
+{
+    public Guid PairingSessionId { get; set; }
+    public string OwnerUserSid { get; set; } = string.Empty;
+    public DevicePairingState State { get; set; }
+    public DateTime CreatedUtc { get; set; }
+    public DateTime ExpiresUtc { get; set; }
+    public string DeviceId { get; set; } = string.Empty;
+    public string DeviceDisplayName { get; set; } = string.Empty;
+    public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
+}
+
+/// <summary>Request made by an authorised local or paired client to approve a pending device.</summary>
+public sealed class ApproveDevicePairingRequest
+{
+    public Guid PairingSessionId { get; set; }
+    public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
+}
+
+/// <summary>Result returned to a candidate device. Pending does not disclose user state or approved-client information.</summary>
 public sealed class DevicePairingResult
 {
-    public bool IsPaired { get; set; }
+    public DevicePairingState State { get; set; }
     public string DeviceId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>Persisted machine-owned association between a remote device key and a Windows user.</summary>
+public sealed class PairedClient
+{
+    public string DeviceId { get; set; } = string.Empty;
+    public string OwnerUserSid { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string PublicKeyJwk { get; set; } = string.Empty;
+    public string PublicKeyFingerprint { get; set; } = string.Empty;
+    public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
+    public DateTime PairedUtc { get; set; }
+    public DateTime? LastAuthenticatedUtc { get; set; }
+    public DateTime? RevokedUtc { get; set; }
+}
+
+/// <summary>Safe remote-device information for management UIs. It excludes the public key itself.</summary>
+public sealed class PairedClientView
+{
+    public string DeviceId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string PublicKeyFingerprint { get; set; } = string.Empty;
+    public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
+    public DateTime PairedUtc { get; set; }
+    public DateTime? LastAuthenticatedUtc { get; set; }
 }
 
 public enum DisplayOperationType

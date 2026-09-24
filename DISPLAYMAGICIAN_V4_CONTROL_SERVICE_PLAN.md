@@ -473,14 +473,9 @@ The console must call the Control Service, respect ownership rules, print struct
 
 ## REST Foundation
 
-REST is disabled by default and is for future external/local integrations. Internal WinForms, Console, and Agent coordination use named pipes.
+REST is a future network-facing Gateway for paired external clients. Internal WinForms, Console, and Agent coordination continue to use named pipes. The Gateway is a separate least-privilege process (`DisplayMagician.Gateway`) that adapts authenticated REST/WebSocket traffic to the local Control Service pipe; Control Service itself is never exposed to the network.
 
-When enabled, bind only to:
-
-```text
-127.0.0.1
-::1
-```
+Remote access is enabled by default and the Gateway listens on all network interfaces for direct device connectivity at TCP port `22846`. It uses a self-signed TLS certificate whose SHA-256 fingerprint is pinned in the pairing QR code. Do not silently bind ControlService itself to any network interface.
 
 Required initial endpoints:
 
@@ -499,15 +494,9 @@ GET  /v1/operations/{operationId}
 POST /v1/operations/{operationId}/cancel
 ```
 
-Create abstractions now:
+Pairing starts with a short-lived QR session. It carries the gateway address, TLS certificate pin, host P-256 public identity, session ID, random one-time secret, and expiry. ControlService persists only the secret hash. Sessions expire after one hour and are rejected unless the owning user's local WinForms app or an already-paired client holding `pairing-approve` approves them. ControlService persists the resulting association of Windows user, device ID, P-256 public JWK/fingerprint, capability grants, and revocation state; it never stores a remote private key.
 
-```text
-IPairingProvider
-IPairedClientRepository
-IClientAuthorizationService
-```
-
-Pairing grants scoped credentials such as `profiles:read`, `profiles:apply`, `shortcuts:read`, and `shortcuts:run`. Never expose arbitrary executable, command-line, raw display, registry, or path-based operations.
+Pairing grants the stable scoped values in `RemoteClientCapabilities`, such as `profiles-read`, `profiles-apply`, `shortcuts-read`, and `shortcuts-run`. These authorisation grants are distinct from negotiated endpoint `ControlCapabilities`. Never expose arbitrary executable, command-line, raw display, registry, or path-based operations. The host signing identity, TLS key, and paired-client keys must be separate keys. A future Cloudflare relay may use the pinned host identity to prove it is connected to the genuine DM PC; end-to-end encryption through such a relay requires separate key-agreement material.
 
 ## Current Heartbeats, Messages, and Metrics
 

@@ -409,6 +409,7 @@ public sealed class ControlClientPipeServer
                 Path.Combine(_storagePaths.MachinePath, "OperationDecisions.json"),
                 Path.Combine(_storagePaths.MachinePath, "OperationStatuses.json"),
                 Path.Combine(_storagePaths.MachinePath, "ScheduleState.json"),
+                Path.Combine(_storagePaths.MachinePath, "PairedClients.json"),
                 Path.Combine(_storagePaths.MachineDiagnosticsPath, "RecoveryAdministration.json")
             })
             {

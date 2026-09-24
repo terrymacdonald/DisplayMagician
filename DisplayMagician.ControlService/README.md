@@ -2,13 +2,13 @@
 
 This project hosts the machine-wide Windows service named **DisplayMagician Control Service**. It authenticates local clients, routes requests to the correct per-user User Agent, serialises machine display operations, retains operation status and pending decisions, coordinates persistence/recovery, and owns machine-level scheduling, audit, diagnostics, and the local integration foundation.
 
-It does not show UI, launch games, inspect Steam or desktop windows, or change display/audio settings directly. Those interactive-session responsibilities belong to `DisplayMagician.UserAgent`.
+It does not show UI, launch games, inspect Steam or desktop windows, or change display/audio settings directly. Those interactive-session responsibilities belong to `DisplayMagician.UserAgent`. It also owns approved remote-device public-key associations and one-hour pairing sessions; `DisplayMagician.Gateway` will be the only network-facing adapter and will ask the service to apply these pairing rules.
 
 When an authorised active user has no connected Agent, the service can request `DisplayMagician.SessionLauncher` to demand-start one in that user's session.
 
 Control Service routes work only to a ready Agent whose process and command-pipe identity match the fixed installed payload. It bounds pipe handshakes and subscribers, retains successful mutating client responses for 24 hours for safe retry, and makes lagging event subscribers reconnect for an authoritative status/decision snapshot.
 
-Every local request carries the shared transport-neutral protocol hello and receives a negotiated protocol/capability welcome before work is processed. This is a compatibility boundary only; remote authentication and pairing belong to a future REST gateway, not to the Windows service listener.
+Every local request carries the shared transport-neutral protocol hello and receives a negotiated protocol/capability welcome before work is processed. This is a compatibility boundary only; remote authentication belongs to the future REST gateway, not to the Windows service listener. ControlService remains the source of truth for pairing approval, expiry, revocation, ownership, and capability grants.
 
 ## Development
 
