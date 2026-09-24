@@ -419,8 +419,14 @@ internal sealed class ControlServicePipeClient
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         ControlEnvelope response = await SendAndReceiveEnvelopeAsync(pipe, request, cancellationToken).ConfigureAwait(false);
 
-        return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
+        ControlResponse controlResponse = JsonSerializer.Deserialize<ControlResponse>(response.Payload)
             ?? throw new InvalidDataException("The Control Service returned an unreadable response.");
+        if (controlResponse.IsSuccessful && !ControlProtocol.IsCompatibleWelcome(request.Hello, controlResponse.ProtocolWelcome))
+        {
+            throw new InvalidDataException("The Control Service did not complete a compatible protocol negotiation.");
+        }
+
+        return controlResponse;
     }
 
     private static async Task<ControlEnvelope> SendAndReceiveEnvelopeAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)

@@ -1,10 +1,12 @@
 using System;
+using System.Linq;
 
 namespace DisplayMagician.Contracts;
 
 public static class ControlProtocol
 {
     public const int CurrentVersion = 1;
+    public const int MinimumSupportedVersion = 1;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";
     public const string ClientPipeName = "DisplayMagician.ControlService.Client.v1";
     public const string ClientEventPipeName = "DisplayMagician.ControlService.ClientEvents.v1";
@@ -15,6 +17,47 @@ public static class ControlProtocol
     public static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(10);
     public static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan EventIdleTimeout = TimeSpan.FromSeconds(45);
+
+    public static readonly string[] ControlServiceCapabilities = new[] { "protocol-negotiation", "operation-status", "operation-decisions", "profiles", "audio-profiles", "shortcuts", "client-events", "client-sync", "diagnostics" };
+    public static readonly string[] UserAgentCapabilities = new[] { "protocol-negotiation", "operation-status", "operation-decisions", "profiles", "audio-profiles", "shortcuts", "messages" };
+
+    public static bool TryCreateWelcome(ProtocolHello? hello, string endpointKind, string[] supportedCapabilities, out ProtocolWelcome? welcome, out ControlErrorCode errorCode, out string message)
+    {
+        welcome = null;
+        errorCode = ControlErrorCode.None;
+        message = string.Empty;
+        if (hello == null || hello.MinimumProtocolVersion <= 0 || hello.MaximumProtocolVersion < hello.MinimumProtocolVersion)
+        {
+            errorCode = ControlErrorCode.InvalidRequest;
+            message = "The protocol hello was invalid.";
+            return false;
+        }
+
+        int selectedVersion = Math.Min(hello.MaximumProtocolVersion, CurrentVersion);
+        if (selectedVersion < hello.MinimumProtocolVersion || selectedVersion < MinimumSupportedVersion)
+        {
+            errorCode = ControlErrorCode.IncompatibleProtocolVersion;
+            message = $"No compatible protocol version exists. This endpoint supports versions {MinimumSupportedVersion} through {CurrentVersion}.";
+            return false;
+        }
+
+        string[] requiredCapabilities = hello.RequiredCapabilities ?? Array.Empty<string>();
+        string[] unavailable = requiredCapabilities.Where(capability => !supportedCapabilities.Contains(capability, StringComparer.Ordinal)).ToArray();
+        if (unavailable.Length > 0)
+        {
+            errorCode = ControlErrorCode.RequiredCapabilityUnavailable;
+            message = $"The endpoint does not support required capabilities: {string.Join(", ", unavailable)}.";
+            return false;
+        }
+
+        welcome = new ProtocolWelcome { SelectedProtocolVersion = selectedVersion, EndpointKind = endpointKind, SupportedCapabilities = supportedCapabilities, ServiceInstanceId = Environment.MachineName };
+        return true;
+    }
+
+    public static bool IsCompatibleWelcome(ProtocolHello hello, ProtocolWelcome? welcome)
+    {
+        return hello != null && welcome != null && welcome.SelectedProtocolVersion >= hello.MinimumProtocolVersion && welcome.SelectedProtocolVersion <= hello.MaximumProtocolVersion && welcome.SelectedProtocolVersion >= MinimumSupportedVersion && welcome.SelectedProtocolVersion <= CurrentVersion;
+    }
 }
 
 public enum ControlMessageType
@@ -71,7 +114,8 @@ public enum ControlMessageType
     StopUserAgent = 53,
     RecordRecoveryAdministration = 54,
     GetOperationDecision = 55,
-    ReconcileOperationStatuses = 56
+    ReconcileOperationStatuses = 56,
+    ProtocolHello = 57
 }
 
 public enum ControlErrorCode
@@ -95,7 +139,58 @@ public enum ControlErrorCode
     ValidationFailed = 16,
     ExecutionFailed = 17,
     OperationNotFound = 18,
-    DecisionUnavailable = 19
+    DecisionUnavailable = 19,
+    IncompatibleProtocolVersion = 20,
+    RequiredCapabilityUnavailable = 21,
+    AuthenticationRequired = 22,
+    PairingRequired = 23
+}
+
+public enum ControlClientKind
+{
+    Unknown = 0,
+    DesktopApplication = 1,
+    ConsoleApplication = 2,
+    UserAgent = 3,
+    LocalIntegration = 4,
+    RemoteApplication = 5
+}
+
+/// <summary>Transport-neutral compatibility request. It is carried by local envelopes today and can be the REST handshake body later.</summary>
+public sealed class ProtocolHello
+{
+    public int MinimumProtocolVersion { get; set; } = ControlProtocol.MinimumSupportedVersion;
+    public int MaximumProtocolVersion { get; set; } = ControlProtocol.CurrentVersion;
+    public ControlClientKind ClientKind { get; set; }
+    public string ClientId { get; set; } = string.Empty;
+    public string DeviceId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string[] RequiredCapabilities { get; set; } = Array.Empty<string>();
+}
+
+/// <summary>Transport-neutral compatibility response. It carries no authentication grant.</summary>
+public sealed class ProtocolWelcome
+{
+    public int SelectedProtocolVersion { get; set; }
+    public string EndpointKind { get; set; } = string.Empty;
+    public string ServiceInstanceId { get; set; } = string.Empty;
+    public string[] SupportedCapabilities { get; set; } = Array.Empty<string>();
+}
+
+/// <summary>Future remote-pairing request shape. Pairing is intentionally not implemented on local pipes.</summary>
+public sealed class DevicePairingRequest
+{
+    public string PairingCode { get; set; } = string.Empty;
+    public string DeviceId { get; set; } = string.Empty;
+    public string DeviceDisplayName { get; set; } = string.Empty;
+    public string DevicePublicKey { get; set; } = string.Empty;
+}
+
+public sealed class DevicePairingResult
+{
+    public bool IsPaired { get; set; }
+    public string DeviceId { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
 }
 
 public enum DisplayOperationType
@@ -121,6 +216,8 @@ public sealed class ControlEnvelope
     public ControlMessageType MessageType { get; set; }
 
     public Guid RequestId { get; set; } = Guid.NewGuid();
+
+    public ProtocolHello Hello { get; set; } = new ProtocolHello();
 
     public string Payload { get; set; } = string.Empty;
 }
@@ -630,6 +727,8 @@ public sealed class ControlResponse
     public ControlErrorCode ErrorCode { get; set; }
 
     public string Message { get; set; } = string.Empty;
+
+    public ProtocolWelcome? ProtocolWelcome { get; set; }
 
     public LeaseDecision? LeaseDecision { get; set; }
 

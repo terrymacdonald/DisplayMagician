@@ -54,8 +54,14 @@ public sealed class AgentCommandClient : IAgentCommandClient
                 throw new InvalidDataException("The User Agent returned an invalid command response.");
             }
 
-            return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
+            ControlResponse controlResponse = JsonSerializer.Deserialize<ControlResponse>(response.Payload)
                 ?? throw new InvalidDataException("The User Agent returned an unreadable command response.");
+            if (controlResponse.IsSuccessful && !ControlProtocol.IsCompatibleWelcome(request.Hello, controlResponse.ProtocolWelcome))
+            {
+                throw new InvalidDataException("The User Agent did not complete a compatible protocol negotiation.");
+            }
+
+            return controlResponse;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {

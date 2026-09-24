@@ -119,6 +119,12 @@ public sealed class NamedPipeControlServer
                     return;
                 }
 
+                if (!ControlProtocol.TryCreateWelcome(envelope.Hello, "ControlService", ControlProtocol.ControlServiceCapabilities, out ProtocolWelcome? registrationWelcome, out ControlErrorCode registrationNegotiationError, out string registrationNegotiationMessage))
+                {
+                    await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, false, registrationNegotiationError, registrationNegotiationMessage, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
                 if (envelope.MessageType != ControlMessageType.AgentRegistration)
                 {
                     await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, false, ControlErrorCode.InvalidRequest, "The first pipe message must be an Agent registration.", cancellationToken).ConfigureAwait(false);
@@ -136,7 +142,7 @@ public sealed class NamedPipeControlServer
                 _coordinator.RegisterAgent(registration, DateTime.UtcNow);
                 registeredIdentity = identity;
                 _logger.Info("NamedPipeControlServer/HandleClientAsync: Registered User Agent for SID {0}, session {1}, process {2}.", identity.UserSid, identity.SessionId, identity.ProcessId);
-                await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, true, ControlErrorCode.None, "Agent registration accepted.", cancellationToken).ConfigureAwait(false);
+                await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, true, ControlErrorCode.None, "Agent registration accepted.", cancellationToken, protocolWelcome: registrationWelcome).ConfigureAwait(false);
                 try
                 {
                     await _clientSyncCoordinator.SendLatestManifestAsync(registration, cancellationToken).ConfigureAwait(false);
@@ -157,6 +163,12 @@ public sealed class NamedPipeControlServer
                     if (request.ProtocolVersion != ControlProtocol.CurrentVersion)
                     {
                         await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.UnsupportedProtocolVersion, "The client uses an unsupported protocol version.", cancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    if (!ControlProtocol.TryCreateWelcome(request.Hello, "ControlService", ControlProtocol.ControlServiceCapabilities, out _, out ControlErrorCode negotiationError, out string negotiationMessage))
+                    {
+                        await SendResultAsync(pipe, request.MessageType, request.RequestId, false, negotiationError, negotiationMessage, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
@@ -405,7 +417,7 @@ public sealed class NamedPipeControlServer
         }
     }
 
-    private static Task SendResultAsync(NamedPipeServerStream pipe, ControlMessageType messageType, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null, OperationDecision? operationDecision = null)
+    private static Task SendResultAsync(NamedPipeServerStream pipe, ControlMessageType messageType, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null, OperationDecision? operationDecision = null, ProtocolWelcome? protocolWelcome = null)
     {
         ControlEnvelope response = new ControlEnvelope
         {
@@ -419,7 +431,8 @@ public sealed class NamedPipeControlServer
                 ServiceStatus = serviceStatus,
                 LeaseDecision = leaseDecision,
                 OperationStatus = operationStatus,
-                OperationDecision = operationDecision
+                OperationDecision = operationDecision,
+                ProtocolWelcome = protocolWelcome ?? new ProtocolWelcome { SelectedProtocolVersion = ControlProtocol.CurrentVersion, EndpointKind = "ControlService", ServiceInstanceId = Environment.MachineName, SupportedCapabilities = ControlProtocol.ControlServiceCapabilities }
             })
         };
 

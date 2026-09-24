@@ -249,8 +249,14 @@ public sealed class ControlServiceClient
                 throw new InvalidDataException("The Control Service returned an invalid response.");
             }
 
-            return JsonSerializer.Deserialize<ControlResponse>(response.Payload)
+            ControlResponse controlResponse = JsonSerializer.Deserialize<ControlResponse>(response.Payload)
                 ?? throw new InvalidDataException("The Control Service returned an unreadable registration response.");
+            if (controlResponse.IsSuccessful && !ControlProtocol.IsCompatibleWelcome(request.Hello, controlResponse.ProtocolWelcome))
+            {
+                throw new InvalidDataException("The Control Service did not complete a compatible protocol negotiation.");
+            }
+
+            return controlResponse;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {

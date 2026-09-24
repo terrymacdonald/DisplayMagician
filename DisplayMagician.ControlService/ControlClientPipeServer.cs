@@ -121,6 +121,10 @@ public sealed class ControlClientPipeServer
                 {
                     response = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.UnsupportedProtocolVersion, Message = "The client uses an unsupported protocol version." };
                 }
+                else if (!ControlProtocol.TryCreateWelcome(request.Hello, "ControlService", ControlProtocol.ControlServiceCapabilities, out ProtocolWelcome? welcome, out ControlErrorCode negotiationError, out string negotiationMessage))
+                {
+                    response = new ControlResponse { IsSuccessful = false, ErrorCode = negotiationError, Message = negotiationMessage };
+                }
                 else
                 {
                     PipeClientIdentity identity = GetClientIdentity(pipe);
@@ -192,6 +196,8 @@ public sealed class ControlClientPipeServer
                             _replayableMutationLock.Release();
                         }
                     }
+
+                    response.ProtocolWelcome = welcome;
                 }
 
                 await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope { MessageType = request.MessageType, RequestId = request.RequestId, Payload = JsonSerializer.Serialize(response) }, cancellationToken).ConfigureAwait(false);

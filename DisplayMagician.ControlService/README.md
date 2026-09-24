@@ -8,6 +8,8 @@ When an authorised active user has no connected Agent, the service can request `
 
 Control Service routes work only to a ready Agent whose process and command-pipe identity match the fixed installed payload. It bounds pipe handshakes and subscribers, retains successful mutating client responses for 24 hours for safe retry, and makes lagging event subscribers reconnect for an authoritative status/decision snapshot.
 
+Every local request carries the shared transport-neutral protocol hello and receives a negotiated protocol/capability welcome before work is processed. This is a compatibility boundary only; remote authentication and pairing belong to a future REST gateway, not to the Windows service listener.
+
 ## Development
 
 ```powershell

@@ -116,14 +116,24 @@ public sealed class AgentCommandServer
     {
         try
         {
-            return request.ProtocolVersion == ControlProtocol.CurrentVersion
-                ? await commandHandler(request, cancellationToken).ConfigureAwait(false)
-                : new ControlResponse
+            if (request.ProtocolVersion != ControlProtocol.CurrentVersion)
+            {
+                return new ControlResponse
                 {
                     IsSuccessful = false,
                     ErrorCode = ControlErrorCode.UnsupportedProtocolVersion,
                     Message = "The Control Service uses an unsupported protocol version."
                 };
+            }
+
+            if (!ControlProtocol.TryCreateWelcome(request.Hello, "UserAgent", ControlProtocol.UserAgentCapabilities, out ProtocolWelcome? welcome, out ControlErrorCode negotiationError, out string negotiationMessage))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = negotiationError, Message = negotiationMessage };
+            }
+
+            ControlResponse response = await commandHandler(request, cancellationToken).ConfigureAwait(false);
+            response.ProtocolWelcome = welcome;
+            return response;
         }
         catch (JsonException ex)
         {

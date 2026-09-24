@@ -98,12 +98,18 @@ public sealed class ControlClientEventPipeServer
                     return;
                 }
 
+                if (!ControlProtocol.TryCreateWelcome(request.Hello, "ControlService", ControlProtocol.ControlServiceCapabilities, out ProtocolWelcome? welcome, out _, out _))
+                {
+                    return;
+                }
+
                 PipeClientIdentity identity = GetClientIdentity(pipe);
                 using ControlClientEventSubscription subscription = _eventHub.Subscribe(identity.UserSid, identity.SessionId);
                 ControlResponse subscriptionResponse = new ControlResponse
                 {
                     IsSuccessful = true,
                     Message = "Client event subscription accepted.",
+                    ProtocolWelcome = welcome,
                     OperationStatuses = _operationStatusStore.GetActive(identity.UserSid),
                     OperationDecisions = _operationDecisionStore.GetPending(identity.UserSid, identity.SessionId)
                 };

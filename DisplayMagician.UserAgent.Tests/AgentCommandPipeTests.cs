@@ -39,4 +39,23 @@ public sealed class AgentCommandPipeTests
         Assert.False(response.IsSuccessful);
         Assert.Equal(ControlErrorCode.UnsupportedProtocolVersion, response.ErrorCode);
     }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_RejectsAnUnavailableRequiredCapabilityWithoutExecutingTheCommand()
+    {
+        bool wasCalled = false;
+        ControlResponse response = await AgentCommandServer.ExecuteCommandAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.ListProfiles,
+            Hello = new ProtocolHello { RequiredCapabilities = new[] { "remote-only-capability" } }
+        }, (_, _) =>
+        {
+            wasCalled = true;
+            return Task.FromResult(new ControlResponse { IsSuccessful = true });
+        }, CancellationToken.None);
+
+        Assert.False(wasCalled);
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.RequiredCapabilityUnavailable, response.ErrorCode);
+    }
 }

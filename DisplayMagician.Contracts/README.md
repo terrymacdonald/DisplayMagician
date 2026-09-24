@@ -10,6 +10,8 @@ It contains versioned control envelopes, protocol message types, request/respons
 - Add protocol changes in a backwards-compatible form and preserve the serializer conventions in `ControlEnvelopeSerializer`.
 - Control envelopes have a shared 5 MiB maximum serialized size. Keep normal list responses compact; use paging or separate assets for data that could grow beyond that boundary.
 - Every request and response must preserve `ProtocolVersion`, `MessageType`, and `RequestId`; clients must validate all three before accepting a response.
+- Every envelope carries transport-neutral `ProtocolHello`; the recipient validates the supported version range and required capabilities before performing work, then returns `ProtocolWelcome`. This is deliberately usable over named pipes today and REST later. `ProtocolHello` is compatibility metadata, not authentication or a licence grant.
+- Same-device/same-Windows-user callers use local pipes. Cross-device or cross-user callers will use authenticated REST pairing; keep remote pairing DTOs transport-neutral and do not expose Control Service directly to a network.
 - Use the shared connection and response timeouts. A caller must not wait indefinitely for a pipe connection or response.
 - Reuse a request ID only to retry the identical operation. Control Service retains successful mutating request results for 24 hours so a lost reply cannot repeat an operation.
 - Do not place persisted configuration definitions here; they belong in `DisplayMagician.ConfigurationDefinitions`.
