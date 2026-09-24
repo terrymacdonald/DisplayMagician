@@ -35,6 +35,7 @@ namespace DisplayMagician.UIForms
             txt_remote_host = new System.Windows.Forms.TextBox();
             txt_remote_port = new System.Windows.Forms.TextBox();
             btn_apply_gateway_settings = new System.Windows.Forms.Button();
+            btn_pair_remote_device = new System.Windows.Forms.Button();
             gb_status.SuspendLayout();
             gb_service_release.SuspendLayout();
             gb_lan_settings.SuspendLayout();
@@ -200,8 +201,14 @@ namespace DisplayMagician.UIForms
             btn_apply_gateway_settings.Size = new System.Drawing.Size(150, 30);
             btn_apply_gateway_settings.Text = "Apply and Restart Gateway";
             btn_apply_gateway_settings.Click += btn_apply_gateway_settings_Click;
+            btn_pair_remote_device.Location = new System.Drawing.Point(225, 458);
+            btn_pair_remote_device.Name = "btn_pair_remote_device";
+            btn_pair_remote_device.Size = new System.Drawing.Size(150, 30);
+            btn_pair_remote_device.Text = "Pair Remote Device";
+            btn_pair_remote_device.Click += btn_pair_remote_device_Click;
             ClientSize = new System.Drawing.Size(660, 510);
             Controls.Add(btn_apply_gateway_settings);
+            Controls.Add(btn_pair_remote_device);
             Controls.Add(gb_remote_settings);
             Controls.Add(gb_lan_settings);
             Controls.Add(gb_service_release);
@@ -244,5 +251,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TextBox txt_remote_host;
         private System.Windows.Forms.TextBox txt_remote_port;
         private System.Windows.Forms.Button btn_apply_gateway_settings;
+        private System.Windows.Forms.Button btn_pair_remote_device;
     }
 }

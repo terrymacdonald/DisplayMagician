@@ -304,6 +304,17 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RejectDevicePairing, Payload = JsonSerializer.Serialize(new RejectDevicePairingRequest { PairingSessionId = pairingSessionId }) }, cancellationToken);
     }
 
+    public async Task<PairedClientView[]> ListPairedClientsAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListPairedClients }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful ? response.PairedClients : throw new InvalidOperationException(response.Message);
+    }
+
+    public Task<ControlResponse> RevokePairedClientAsync(string deviceId, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RevokePairedClient, Payload = JsonSerializer.Serialize(new RevokePairedClientRequest { DeviceId = deviceId ?? string.Empty }) }, cancellationToken);
+    }
+
     public Task<ControlResponse> CreateUserSupportBundleAsync(string destinationPath, CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope

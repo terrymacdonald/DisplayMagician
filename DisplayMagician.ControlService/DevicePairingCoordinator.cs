@@ -142,6 +142,24 @@ public sealed class DevicePairingCoordinator
         }
     }
 
+    public PairedClientView[] GetPairedClients(string ownerUserSid)
+    {
+        return _pairedClients.GetActiveForUser(ownerUserSid).Select(client => new PairedClientView
+        {
+            DeviceId = client.DeviceId,
+            DisplayName = client.DisplayName,
+            PublicKeyFingerprint = client.PublicKeyFingerprint,
+            GrantedCapabilities = (client.GrantedCapabilities ?? Array.Empty<string>()).ToArray(),
+            PairedUtc = client.PairedUtc,
+            LastAuthenticatedUtc = client.LastAuthenticatedUtc
+        }).ToArray();
+    }
+
+    public bool RevokePairedClient(string ownerUserSid, string deviceId, DateTime utcNow)
+    {
+        return _pairedClients.Revoke(ownerUserSid, deviceId, utcNow);
+    }
+
     private DevicePairingResult Approve(string ownerUserSid, ApproveDevicePairingRequest request, DateTime utcNow)
     {
         ArgumentNullException.ThrowIfNull(request);

@@ -185,6 +185,8 @@ public sealed class ControlClientPipeServer
                                     ControlMessageType.ListDevicePairingRequests => new ControlResponse { IsSuccessful = true, DevicePairingRequests = _devicePairingCoordinator.GetPendingForUser(identity.UserSid, DateTime.UtcNow) },
                                     ControlMessageType.ApproveDevicePairing => ApproveDevicePairing(identity, request),
                                     ControlMessageType.RejectDevicePairing => RejectDevicePairing(identity, request),
+                                    ControlMessageType.ListPairedClients => new ControlResponse { IsSuccessful = true, PairedClients = _devicePairingCoordinator.GetPairedClients(identity.UserSid) },
+                                    ControlMessageType.RevokePairedClient => RevokePairedClient(identity, request),
                                     ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
                                     ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
                                     _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
@@ -428,6 +430,20 @@ public sealed class ControlClientPipeServer
 
         DevicePairingResult result = _devicePairingCoordinator.Reject(identity.UserSid, rejection.PairingSessionId, DateTime.UtcNow);
         return new ControlResponse { IsSuccessful = result.DeviceId.Length > 0, ErrorCode = result.DeviceId.Length > 0 ? ControlErrorCode.None : ControlErrorCode.ValidationFailed, Message = result.Message, DevicePairingResult = result };
+    }
+
+    private ControlResponse RevokePairedClient(PipeClientIdentity identity, ControlEnvelope request)
+    {
+        RevokePairedClientRequest? revokeRequest = JsonSerializer.Deserialize<RevokePairedClientRequest>(request.Payload);
+        if (revokeRequest == null || string.IsNullOrWhiteSpace(revokeRequest.DeviceId))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A paired device identifier is required." };
+        }
+
+        bool revoked = _devicePairingCoordinator.RevokePairedClient(identity.UserSid, revokeRequest.DeviceId, DateTime.UtcNow);
+        return revoked
+            ? new ControlResponse { IsSuccessful = true, Message = "The paired device was revoked." }
+            : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The paired device is unavailable." };
     }
 
     private ControlResponse ResolveOperationDecision(PipeClientIdentity identity, ControlEnvelope request)

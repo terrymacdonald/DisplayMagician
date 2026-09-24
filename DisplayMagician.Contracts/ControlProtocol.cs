@@ -188,7 +188,9 @@ public enum ControlMessageType
     ListDevicePairingRequests = 62,
     ApproveDevicePairing = 63,
     RejectDevicePairing = 64,
-    GetGatewayIdentity = 65
+    GetGatewayIdentity = 65,
+    ListPairedClients = 66,
+    RevokePairedClient = 67
 }
 
 public enum ControlErrorCode
@@ -350,6 +352,12 @@ public sealed class ApproveDevicePairingRequest
 public sealed class RejectDevicePairingRequest
 {
     public Guid PairingSessionId { get; set; }
+}
+
+/// <summary>Request to revoke one currently paired remote device.</summary>
+public sealed class RevokePairedClientRequest
+{
+    public string DeviceId { get; set; } = string.Empty;
 }
 
 /// <summary>Result returned to a candidate device. Pending does not disclose user state or approved-client information.</summary>
@@ -953,6 +961,8 @@ public sealed class ControlResponse
     public DevicePairingQrCode? DevicePairingQrCode { get; set; }
 
     public DevicePairingSessionView[] DevicePairingRequests { get; set; } = Array.Empty<DevicePairingSessionView>();
+
+    public PairedClientView[] PairedClients { get; set; } = Array.Empty<PairedClientView>();
 
     public GameListResult? GameList { get; set; }
 

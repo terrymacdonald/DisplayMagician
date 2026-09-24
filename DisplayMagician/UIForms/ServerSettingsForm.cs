@@ -202,4 +202,19 @@ public partial class ServerSettingsForm : DisplayMagicianForm
         lbl_result.Text = process.ExitCode == (int)Program.ERRORLEVEL.OK ? "Gateway settings saved and Gateway restarted." : "Gateway settings saved, but Gateway could not restart.";
     }
 
+    private async void btn_pair_remote_device_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            GatewaySettings settings = await _controlServiceClient.GetGatewaySettingsAsync(CancellationToken.None);
+            using PairDeviceForm pairDeviceForm = new PairDeviceForm(settings);
+            pairDeviceForm.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "ServerSettingsForm/btn_pair_remote_device_Click: Could not open the device pairing dialog.");
+            lbl_result.Text = $"Could not open device pairing: {ex.Message}";
+        }
+    }
+
 }
