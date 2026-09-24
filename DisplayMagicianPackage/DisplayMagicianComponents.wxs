@@ -171,6 +171,42 @@
 			</Files>
 		</ComponentGroup>
 
+		<ComponentGroup Id="DisplayMagicianGatewayComponents" Directory="GatewayFolder">
+			<Component Id="GatewayComponent">
+				<File Id="GatewayExe" Source="$(var.DmGatewayPublishDir)DisplayMagician.Gateway.exe" KeyPath="yes" />
+				<ServiceInstall Id="InstallGateway"
+							Name="DisplayMagicianGateway"
+							DisplayName="DisplayMagician Gateway"
+							Description="Provides secure paired-device access to DisplayMagician."
+							Account="NT AUTHORITY\LocalService"
+							Start="auto"
+							Type="ownProcess"
+							ErrorControl="normal"
+							Vital="yes">
+					<util:ServiceConfig FirstFailureActionType="restart"
+										SecondFailureActionType="restart"
+										ThirdFailureActionType="restart"
+										RestartServiceDelayInSeconds="60"
+										ResetPeriodInDays="1" />
+				</ServiceInstall>
+				<ServiceControl Id="ControlGateway"
+							Name="DisplayMagicianGateway"
+							Start="install"
+							Stop="both"
+							Remove="uninstall"
+							Wait="yes" />
+				<util:FirewallException Id="GatewayFirewallException"
+									Name="DisplayMagician Gateway"
+									Description="Allows paired DisplayMagician devices to connect to the Gateway."
+									Port="22846"
+									Protocol="tcp"
+									Scope="any" />
+			</Component>
+			<Files Include="$(var.DmGatewayPublishDir)**">
+				<Exclude Files="$(var.DmGatewayPublishDir)DisplayMagician.Gateway.exe" />
+			</Files>
+		</ComponentGroup>
+
 		<ComponentGroup Id="DisplayMagicianUserAgentComponents" Directory="UserAgentFolder">
 			<Component>
 				<File Id="UserAgentExe" Source="$(var.DmUserAgentPublishDir)DisplayMagician.UserAgent.exe" KeyPath="yes" />

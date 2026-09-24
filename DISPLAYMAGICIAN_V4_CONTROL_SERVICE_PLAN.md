@@ -498,6 +498,8 @@ Pairing starts with a short-lived QR session. It carries the gateway address, TL
 
 Pairing grants the stable scoped values in `RemoteClientCapabilities`, such as `profiles-read`, `profiles-apply`, `shortcuts-read`, and `shortcuts-run`. These authorisation grants are distinct from negotiated endpoint `ControlCapabilities`. Never expose arbitrary executable, command-line, raw display, registry, or path-based operations. The host signing identity, TLS key, and paired-client keys must be separate keys. A future Cloudflare relay may use the pinned host identity to prove it is connected to the genuine DM PC; end-to-end encryption through such a relay requires separate key-agreement material.
 
+Each client requests only the capabilities it implements. Approval grants exactly that requested set; it must never silently add a broader scope. A later client version requesting additional capabilities requires a new pairing approval.
+
 ## Current Heartbeats, Messages, and Metrics
 
 Current DM uses `AnonymousMetricsService`, `ClientSyncService`, and `MessageSyncService` from the WinForms `Program` process. v4 separates their ownership: metrics and client-sync scheduling become machine-level service responsibilities, while messages are per-user Agent data exposed through contracts.

@@ -16,6 +16,7 @@ $components = @{
     'DisplayMagician.UserAgent' = 'UserAgent'
     'DisplayMagician.ControlService' = 'ControlService'
     'DisplayMagician.SessionLauncher' = 'SessionLauncher'
+    'DisplayMagician.Gateway' = 'Gateway'
 }
 
 if (-not $components.ContainsKey($ProjectName))

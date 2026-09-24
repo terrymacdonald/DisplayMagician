@@ -13,6 +13,7 @@ public static class ControlProtocol
     public const string AgentCommandPipePrefix = "DisplayMagician.UserAgent.Command.v1.";
     public const string SessionLauncherPipeName = "DisplayMagician.SessionLauncher.v1";
     public const int DefaultGatewayPort = 22846;
+    public const string GatewayControlPipeName = "DisplayMagician.Gateway.Control.v1";
     public const int DefaultAudioDeviceWaitMilliseconds = 20000;
     public const int MaximumMessageLength = 5 * 1024 * 1024;
     public const int MaximumRequiredCapabilities = 64;
@@ -178,7 +179,9 @@ public enum ControlMessageType
     StopUserAgent = 53,
     RecordRecoveryAdministration = 54,
     GetOperationDecision = 55,
-    ReconcileOperationStatuses = 56
+    ReconcileOperationStatuses = 56,
+    GatewayRegistration = 57,
+    SubmitDevicePairing = 58
 }
 
 public enum ControlErrorCode
@@ -217,7 +220,8 @@ public enum ControlClientKind
     UserAgent = 3,
     LocalIntegration = 4,
     RemoteApplication = 5,
-    ControlService = 6
+    ControlService = 6,
+    Gateway = 7
 }
 
 /// <summary>Transport-neutral compatibility request. It is carried by local envelopes today and can be the REST handshake body later.</summary>
@@ -263,6 +267,22 @@ public sealed class GatewayPairingIdentity
     public string TlsCertificateSha256 { get; set; } = string.Empty;
 }
 
+/// <summary>Client-safe Gateway identity returned before a device is paired.</summary>
+public sealed class GatewayIdentityView
+{
+    public int ProtocolVersion { get; set; } = ControlProtocol.CurrentVersion;
+    public int Port { get; set; } = ControlProtocol.DefaultGatewayPort;
+    public string HostId { get; set; } = string.Empty;
+    public string HostIdentityPublicKeyJwk { get; set; } = string.Empty;
+    public string TlsCertificateSha256 { get; set; } = string.Empty;
+}
+
+/// <summary>Gateway-only local-pipe registration. This is never accepted over REST.</summary>
+public sealed class GatewayRegistration
+{
+    public GatewayPairingIdentity Identity { get; set; } = new GatewayPairingIdentity();
+}
+
 /// <summary>One-time QR payload. The secret is never persisted or included in diagnostic data.</summary>
 public sealed class DevicePairingQrCode
 {
@@ -296,7 +316,7 @@ public sealed class DevicePairingSessionView
     public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
 }
 
-/// <summary>Request made by an authorised local or paired client to approve a pending device.</summary>
+/// <summary>Request made by an authorised local or paired client to approve a pending device. Granted capabilities must exactly match the candidate's request.</summary>
 public sealed class ApproveDevicePairingRequest
 {
     public Guid PairingSessionId { get; set; }
@@ -894,6 +914,8 @@ public sealed class ControlResponse
     public OperationDecision? OperationDecision { get; set; }
 
     public OperationDecision[] OperationDecisions { get; set; } = Array.Empty<OperationDecision>();
+
+    public DevicePairingResult? DevicePairingResult { get; set; }
 
     public GameListResult? GameList { get; set; }
 

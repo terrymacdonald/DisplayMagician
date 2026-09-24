@@ -180,7 +180,7 @@ public sealed class DevicePairingCoordinator
     private static bool AreGrantedCapabilitiesValid(PairingSessionRecord session, string[]? grantedCapabilities)
     {
         string[] granted = grantedCapabilities ?? Array.Empty<string>();
-        return granted.Length <= ControlProtocol.MaximumRequiredCapabilities && granted.All(IsValidCapability) && granted.Distinct(StringComparer.Ordinal).Count() == granted.Length && granted.All(capability => session.RequestedCapabilities.Contains(capability, StringComparer.Ordinal));
+        return granted.Length == session.RequestedCapabilities.Length && granted.Length <= ControlProtocol.MaximumRequiredCapabilities && granted.All(IsValidCapability) && granted.Distinct(StringComparer.Ordinal).Count() == granted.Length && granted.All(capability => session.RequestedCapabilities.Contains(capability, StringComparer.Ordinal));
     }
 
     private static bool IsP256PublicKeyJwk(string? publicKeyJwk)

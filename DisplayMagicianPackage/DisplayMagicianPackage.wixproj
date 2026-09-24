@@ -1,4 +1,4 @@
-﻿<Project Sdk="WixToolset.Sdk/7.0.0">
+<Project Sdk="WixToolset.Sdk/7.0.0">
 
   <!-- Import local signing config (copy SigningConfig.props.example to SigningConfig.props and fill in values) -->
   <Import Project="..\SigningConfig.props" Condition="Exists('..\SigningConfig.props')" />
@@ -14,7 +14,8 @@
   <DmControlServicePublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician.ControlService\</DmControlServicePublishDir>
   <DmSessionLauncherPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician.SessionLauncher\</DmSessionLauncherPublishDir>
   <DmUserAgentPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician.UserAgent\</DmUserAgentPublishDir>
-  <DefineConstants>DmPublishDir=$(DmPublishDir);DmConsolePublishDir=$(DmConsolePublishDir);DmControlServicePublishDir=$(DmControlServicePublishDir);DmSessionLauncherPublishDir=$(DmSessionLauncherPublishDir);DmUserAgentPublishDir=$(DmUserAgentPublishDir)</DefineConstants>
+  <DmGatewayPublishDir>$(MSBuildThisFileDirectory)obj\$(Platform)\$(Configuration)\publish\DisplayMagician.Gateway\</DmGatewayPublishDir>
+  <DefineConstants>DmPublishDir=$(DmPublishDir);DmConsolePublishDir=$(DmConsolePublishDir);DmControlServicePublishDir=$(DmControlServicePublishDir);DmSessionLauncherPublishDir=$(DmSessionLauncherPublishDir);DmUserAgentPublishDir=$(DmUserAgentPublishDir);DmGatewayPublishDir=$(DmGatewayPublishDir)</DefineConstants>
   </PropertyGroup>
 
 
@@ -40,6 +41,7 @@
 	<ProjectReference Include="..\DisplayMagician.ControlService\DisplayMagician.ControlService.csproj" Publish="true" />
 	<ProjectReference Include="..\DisplayMagician.SessionLauncher\DisplayMagician.SessionLauncher.csproj" Publish="true" />
 	<ProjectReference Include="..\DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj" Publish="true" />
+	<ProjectReference Include="..\DisplayMagician.Gateway\DisplayMagician.Gateway.csproj" Publish="true" />
   </ItemGroup>
 
   <!-- Define the configuration (Debug/Release) based on the build -->

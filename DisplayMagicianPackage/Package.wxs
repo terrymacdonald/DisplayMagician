@@ -116,6 +116,7 @@
 			<ComponentGroupRef Id="DisplayMagicianConsoleComponents" />
 			<ComponentGroupRef Id="DisplayMagicianControlServiceComponents" />
 			<ComponentGroupRef Id="DisplayMagicianSessionLauncherComponents" />
+			<ComponentGroupRef Id="DisplayMagicianGatewayComponents" />
 			<ComponentGroupRef Id="DisplayMagicianUserAgentComponents" />
 			<ComponentRef Id="IdentityMsixComponent" />
 			<ComponentGroupRef Id="ContextMenuCleanupComponents" />
