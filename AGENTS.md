@@ -54,6 +54,7 @@
 - `DisplayMagician.UserAgent` owns interactive-session display/audio execution, game and process monitoring, shortcut lifecycle/recovery, per-user messages, and notifications. Keep that runtime behaviour out of the desktop application and Control Service.
 - `DisplayMagician.SessionLauncher` is a narrow, authenticated LocalSystem broker used only by Control Service to demand-start the signed UserAgent in an authorised interactive session. Do not widen its access, make it a general launcher, or give it display/audio/UI responsibilities.
 - Represent operation progress and user decisions with the shared operation contracts. A pending decision must be answerable by any authorised client for that user; where a recovery decision expires, preserve the agreed default of `Continue` unless the user changes that policy.
+- A new remote device may request pairing but is not authorised to approve itself or receive user status. A pairing request for a user may be approved or rejected by that user's local WinForms application or any already-paired authorised client device for that same user; ControlService remains the source of truth for the resulting device/user/capability association.
 
 ## Logging and error handling
 - Use the project NLog convention: `ClassName/MethodName: descriptive message`.
