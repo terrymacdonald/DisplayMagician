@@ -10,6 +10,23 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class OperationDecisionStoreTests
 {
     [Fact]
+    public void Resolve_RejectsAnotherUsersDecisionEvenWhenThePromptIdIsKnown()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            OperationDecisionStore store = new OperationDecisionStore(new StoragePaths(storageRoot));
+            OperationDecision decision = store.Create("S-1-5-21-100", 10, Guid.NewGuid(), "Continue?", "A display change failed.", new[] { OperationDecisionChoice.Continue }, OperationDecisionChoice.Continue, DateTime.UtcNow.AddMinutes(1), DateTime.UtcNow);
+
+            OperationDecision? resolved = store.Resolve("S-1-5-21-200", 20, decision.PromptId, OperationDecisionChoice.Continue, DateTime.UtcNow);
+
+            Assert.Null(resolved);
+            Assert.False(store.Get("S-1-5-21-100", decision.PromptId)!.IsResolved);
+        }
+        finally { if (Directory.Exists(storageRoot)) Directory.Delete(storageRoot, true); }
+    }
+
+    [Fact]
     public async Task WaitForResolutionAsync_RestoresAnUnresolvedDecisionAfterServiceRestart()
     {
         string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));

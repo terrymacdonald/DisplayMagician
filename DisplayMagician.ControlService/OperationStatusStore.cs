@@ -113,6 +113,18 @@ public sealed class OperationStatusStore
         }
     }
 
+    public OperationStatus[] GetChangedSince(string ownerUserSid, DateTime changedSinceUtc)
+    {
+        lock (_syncRoot)
+        {
+            return _operations.Values
+                .Where(status => string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) && status.UpdatedUtc >= changedSinceUtc.ToUniversalTime())
+                .OrderBy(status => status.UpdatedUtc)
+                .Select(Copy)
+                .ToArray();
+        }
+    }
+
     public OperationStatus[] GetActive(string ownerUserSid)
     {
         lock (_syncRoot)

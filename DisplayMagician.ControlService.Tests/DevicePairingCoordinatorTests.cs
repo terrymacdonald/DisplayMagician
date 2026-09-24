@@ -139,6 +139,27 @@ public sealed class DevicePairingCoordinatorTests
         }
     }
 
+    [Fact]
+    public void PairingStatus_RequiresTheCorrectOneTimeSecretAndDevice()
+    {
+        string storageRoot = CreateStorageRoot();
+        try
+        {
+            StoragePaths paths = new StoragePaths(storageRoot);
+            DevicePairingCoordinator coordinator = new DevicePairingCoordinator(paths, new PairedClientRepository(paths));
+            DateTime now = DateTime.UtcNow;
+            DevicePairingQrCode qrCode = coordinator.CreateQrCode("S-1-5-21-100", CreateGateway(), now);
+            coordinator.Submit(CreateRequest(qrCode), now.AddMinutes(1));
+
+            DevicePairingResult valid = coordinator.GetStatus(new DevicePairingStatusRequest { PairingSessionId = qrCode.PairingSessionId, PairingSecret = qrCode.PairingSecret, DeviceId = "phone-123" }, now.AddMinutes(2));
+            DevicePairingResult invalid = coordinator.GetStatus(new DevicePairingStatusRequest { PairingSessionId = qrCode.PairingSessionId, PairingSecret = "wrong", DeviceId = "phone-123" }, now.AddMinutes(2));
+
+            Assert.Equal(DevicePairingState.AwaitingApproval, valid.State);
+            Assert.Equal(DevicePairingState.Rejected, invalid.State);
+        }
+        finally { DeleteStorageRoot(storageRoot); }
+    }
+
     private static string CreateStorageRoot() => Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
     private static void DeleteStorageRoot(string storageRoot)
     {
@@ -149,7 +170,7 @@ public sealed class DevicePairingCoordinatorTests
     }
 
     private static GatewayPairingIdentity CreateGateway() => new GatewayPairingIdentity { GatewayUri = "https://displaymagician.local:22846", HostId = "host-123", HostIdentityPublicKeyJwk = ValidP256Jwk, TlsCertificateSha256 = new string('A', 64) };
-    private static DevicePairingRequest CreateRequest(DevicePairingQrCode qrCode) => new DevicePairingRequest { PairingSessionId = qrCode.PairingSessionId, PairingSecret = qrCode.PairingSecret, DeviceId = "phone-123", DeviceDisplayName = "Phone", DevicePublicKeyJwk = ValidP256Jwk, RequestedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.PairingApprove } };
+    private static DevicePairingRequest CreateRequest(DevicePairingQrCode qrCode) => new DevicePairingRequest { PairingSessionId = qrCode.PairingSessionId, PairingSecret = qrCode.PairingSecret, DeviceId = "phone-123", DeviceDisplayName = "Phone", ClientType = "Android phone", SourceIpAddress = "192.168.1.20", DevicePublicKeyJwk = ValidP256Jwk, RequestedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.PairingApprove } };
 
     private const string ValidP256Jwk = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"y\":\"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\"}";
 }

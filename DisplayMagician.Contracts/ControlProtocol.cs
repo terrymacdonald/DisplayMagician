@@ -199,7 +199,8 @@ public enum ControlMessageType
     ListRemoteShortcuts = 73,
     ApplyRemoteProfile = 74,
     ApplyRemoteAudioProfile = 75,
-    StartRemoteShortcut = 76
+    StartRemoteShortcut = 76,
+    ResolveRemoteOperationDecision = 77
 }
 
 public enum ControlErrorCode
@@ -428,6 +429,13 @@ public sealed class RemoteUserStatus
 {
     public OperationStatus[] Operations { get; set; } = Array.Empty<OperationStatus>();
     public OperationDecision[] PendingDecisions { get; set; } = Array.Empty<OperationDecision>();
+    public DateTime NextChangedSinceUtc { get; set; }
+}
+
+public sealed class GatewayRemoteStatusRequest
+{
+    public GatewayAuthenticationResult Authentication { get; set; } = new GatewayAuthenticationResult();
+    public DateTime? ChangedSinceUtc { get; set; }
 }
 
 /// <summary>Gateway-only wrapper that keeps authenticated device context separate from the original shared command payload.</summary>

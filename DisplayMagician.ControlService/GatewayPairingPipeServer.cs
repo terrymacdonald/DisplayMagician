@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
@@ -85,6 +86,7 @@ public sealed class GatewayPairingPipeServer
                 ControlMessageType.ApplyRemoteProfile => ExecuteRemote(request, RemoteClientCapabilities.ProfilesApply, ControlMessageType.ApplyProfile),
                 ControlMessageType.ApplyRemoteAudioProfile => ExecuteRemote(request, RemoteClientCapabilities.AudioProfilesApply, ControlMessageType.ApplyAudioProfile),
                 ControlMessageType.StartRemoteShortcut => ExecuteRemote(request, RemoteClientCapabilities.ShortcutsRun, ControlMessageType.StartShortcut),
+                ControlMessageType.ResolveRemoteOperationDecision => ResolveRemoteDecision(request),
                 _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Gateway operation is not supported." }
             };
             response.ProtocolWelcome = welcome;
@@ -134,13 +136,17 @@ public sealed class GatewayPairingPipeServer
 
     private ControlResponse GetRemoteUserStatus(ControlEnvelope request)
     {
-        GatewayAuthenticationResult? authentication = JsonSerializer.Deserialize<GatewayAuthenticationResult>(request.Payload);
+        GatewayRemoteStatusRequest? statusRequest = JsonSerializer.Deserialize<GatewayRemoteStatusRequest>(request.Payload);
+        GatewayAuthenticationResult? authentication = statusRequest?.Authentication;
         if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal))
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised to read status." };
         }
 
-        return new ControlResponse { IsSuccessful = true, RemoteUserStatus = new RemoteUserStatus { Operations = _operationStatusStore.GetAll(authentication.OwnerUserSid), PendingDecisions = _operationDecisionStore.GetPending(authentication.OwnerUserSid, 0) } };
+        DateTime cursor = statusRequest!.ChangedSinceUtc?.ToUniversalTime() ?? DateTime.MinValue;
+        OperationStatus[] operations = cursor == DateTime.MinValue ? _operationStatusStore.GetAll(authentication.OwnerUserSid) : _operationStatusStore.GetChangedSince(authentication.OwnerUserSid, cursor);
+        DateTime nextCursor = operations.Length == 0 ? cursor : operations.Max(status => status.UpdatedUtc);
+        return new ControlResponse { IsSuccessful = true, RemoteUserStatus = new RemoteUserStatus { Operations = operations, PendingDecisions = _operationDecisionStore.GetPending(authentication.OwnerUserSid, 0), NextChangedSinceUtc = nextCursor } };
     }
 
     private ControlResponse ListRemote(ControlEnvelope request, string requiredCapability, ControlMessageType messageType)
@@ -166,6 +172,17 @@ public sealed class GatewayPairingPipeServer
         return messageType == ControlMessageType.ApplyProfile
             ? _profileOperationRouter.ApplyProfileAsync(authentication.OwnerUserSid, sessionId, applyProfileRequest!.ProfileId, applyProfileRequest.OperationId, agentRequest.RequestId, CancellationToken.None).GetAwaiter().GetResult()
             : _profileOperationRouter.ManageProfileAsync(authentication.OwnerUserSid, sessionId, agentRequest, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    private ControlResponse ResolveRemoteDecision(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult? authentication = command?.Authentication;
+        ResolveOperationDecisionRequest? resolution = command == null ? null : JsonSerializer.Deserialize<ResolveOperationDecisionRequest>(command.Payload);
+        if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsAnswer, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised to answer decisions." };
+        if (resolution == null || resolution.PromptId == Guid.Empty || resolution.Choice == OperationDecisionChoice.Unknown) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid operation decision is required." };
+        OperationDecision? decision = _operationDecisionStore.Resolve(authentication.OwnerUserSid, 0, resolution.PromptId, resolution.Choice, DateTime.UtcNow);
+        return decision == null ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DecisionUnavailable, Message = "The operation decision is unavailable, expired, or already resolved." } : new ControlResponse { IsSuccessful = true, Message = "Operation decision recorded.", OperationDecision = decision };
     }
 
     private static bool IsLocalService(NamedPipeServerStream pipe)

@@ -16,7 +16,7 @@ public sealed class GatewayRequestAuthenticationMiddleware
 
     public GatewayRequestAuthenticationMiddleware(RequestDelegate next) => _next = next ?? throw new ArgumentNullException(nameof(next));
 
-    public async Task InvokeAsync(HttpContext context, GatewayControlServiceClient controlServiceClient)
+    public async Task InvokeAsync(HttpContext context, IGatewayAuthenticationClient controlServiceClient)
     {
         if (IsPublicPath(context.Request.Path))
         {

@@ -83,6 +83,27 @@ public sealed class OperationStatusStoreTests
     }
 
     [Fact]
+    public void GetChangedSince_ReturnsOnlyTheOwnersChangedOperationsIncludingCursorTimestamp()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            OperationStatusStore store = new OperationStatusStore(new StoragePaths(storageRoot));
+            DateTime cursor = new DateTime(2026, 9, 25, 1, 2, 3, DateTimeKind.Utc);
+            store.Publish("S-1-5-21-100", 10, new OperationStatusUpdate { OperationId = Guid.NewGuid(), OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.StartingGame, Message = "At cursor." }, cursor);
+            store.Publish("S-1-5-21-100", 10, new OperationStatusUpdate { OperationId = Guid.NewGuid(), OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.WaitingForGameToClose, Message = "After cursor." }, cursor.AddSeconds(1));
+            store.Publish("S-1-5-21-200", 20, new OperationStatusUpdate { OperationId = Guid.NewGuid(), OperationType = DisplayOperationType.ApplyDisplayProfile, Phase = OperationPhase.ApplyingDisplayProfile, Message = "Other user." }, cursor.AddSeconds(1));
+
+            OperationStatus[] statuses = store.GetChangedSince("S-1-5-21-100", cursor);
+
+            Assert.Equal(2, statuses.Length);
+            Assert.All(statuses, status => Assert.Equal("S-1-5-21-100", status.OwnerUserSid));
+            Assert.Contains(statuses, status => status.UpdatedUtc == cursor);
+        }
+        finally { if (Directory.Exists(storageRoot)) Directory.Delete(storageRoot, true); }
+    }
+
+    [Fact]
     public void Publish_DoesNotAllowALateProgressUpdateToReopenATerminalOperation()
     {
         string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));

@@ -8,8 +8,13 @@ using DisplayMagician.Contracts;
 
 namespace DisplayMagician.Gateway;
 
+public interface IGatewayAuthenticationClient
+{
+    Task<GatewayAuthenticationResult> AuthenticateAsync(GatewayAuthenticationRequest request, CancellationToken cancellationToken);
+}
+
 /// <summary>Uses the narrow LocalService-only pipe; it cannot invoke normal desktop client operations.</summary>
-public sealed class GatewayControlServiceClient
+public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
 {
     public Task<ControlResponse> ExecuteRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, string payload, CancellationToken cancellationToken) => SendAsync(messageType, JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, Payload = payload }), cancellationToken);
     public async Task<ControlResponse> ListRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, CancellationToken cancellationToken)
@@ -17,9 +22,9 @@ public sealed class GatewayControlServiceClient
         return await SendAsync(messageType, JsonSerializer.Serialize(authentication), cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<RemoteUserStatus> GetRemoteUserStatusAsync(GatewayAuthenticationResult authentication, CancellationToken cancellationToken)
+    public async Task<RemoteUserStatus> GetRemoteUserStatusAsync(GatewayAuthenticationResult authentication, DateTime? changedSinceUtc, CancellationToken cancellationToken)
     {
-        ControlResponse response = await SendAsync(ControlMessageType.GetRemoteUserStatus, JsonSerializer.Serialize(authentication), cancellationToken).ConfigureAwait(false);
+        ControlResponse response = await SendAsync(ControlMessageType.GetRemoteUserStatus, JsonSerializer.Serialize(new GatewayRemoteStatusRequest { Authentication = authentication, ChangedSinceUtc = changedSinceUtc }), cancellationToken).ConfigureAwait(false);
         return response.IsSuccessful && response.RemoteUserStatus != null ? response.RemoteUserStatus : throw new InvalidOperationException(response.Message);
     }
 
