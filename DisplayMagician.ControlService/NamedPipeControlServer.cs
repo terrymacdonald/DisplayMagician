@@ -432,7 +432,7 @@ public sealed class NamedPipeControlServer
                 LeaseDecision = leaseDecision,
                 OperationStatus = operationStatus,
                 OperationDecision = operationDecision,
-                ProtocolWelcome = protocolWelcome ?? new ProtocolWelcome { SelectedProtocolVersion = ControlProtocol.CurrentVersion, EndpointKind = "ControlService", ServiceInstanceId = Environment.MachineName, SupportedCapabilities = ControlProtocol.ControlServiceCapabilities }
+                ProtocolWelcome = protocolWelcome ?? new ProtocolWelcome { SelectedProtocolVersion = ControlProtocol.CurrentVersion, EndpointKind = "ControlService", ServiceInstanceId = ControlProtocol.EndpointInstanceId, SupportedCapabilities = ControlProtocol.ControlServiceCapabilities }
             })
         };
 

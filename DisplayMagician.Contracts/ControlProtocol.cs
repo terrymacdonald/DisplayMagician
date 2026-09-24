@@ -14,19 +14,30 @@ public static class ControlProtocol
     public const string SessionLauncherPipeName = "DisplayMagician.SessionLauncher.v1";
     public const int DefaultAudioDeviceWaitMilliseconds = 20000;
     public const int MaximumMessageLength = 5 * 1024 * 1024;
+    public const int MaximumRequiredCapabilities = 64;
+    public const int MaximumOptionalCapabilities = 64;
+    public const int MaximumClientIdLength = 128;
+    public const int MaximumDeviceIdLength = 128;
+    public const int MaximumDisplayNameLength = 128;
     public static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(10);
     public static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan EventIdleTimeout = TimeSpan.FromSeconds(45);
 
-    public static readonly string[] ControlServiceCapabilities = new[] { "protocol-negotiation", "operation-status", "operation-decisions", "profiles", "audio-profiles", "shortcuts", "client-events", "client-sync", "diagnostics" };
-    public static readonly string[] UserAgentCapabilities = new[] { "protocol-negotiation", "operation-status", "operation-decisions", "profiles", "audio-profiles", "shortcuts", "messages" };
+    public static readonly string EndpointInstanceId = Guid.NewGuid().ToString("N");
+    public static readonly string[] ControlServiceCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.ClientEvents, ControlCapabilities.ClientSync, ControlCapabilities.Diagnostics };
+    public static readonly string[] UserAgentCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.Messages };
+
+    public static ProtocolHello CreateHello(ControlClientKind clientKind, string clientId, string? displayName = null)
+    {
+        return new ProtocolHello { ClientKind = clientKind, ClientId = clientId, DisplayName = displayName ?? clientId };
+    }
 
     public static bool TryCreateWelcome(ProtocolHello? hello, string endpointKind, string[] supportedCapabilities, out ProtocolWelcome? welcome, out ControlErrorCode errorCode, out string message)
     {
         welcome = null;
         errorCode = ControlErrorCode.None;
         message = string.Empty;
-        if (hello == null || hello.MinimumProtocolVersion <= 0 || hello.MaximumProtocolVersion < hello.MinimumProtocolVersion)
+        if (hello == null || hello.MinimumProtocolVersion <= 0 || hello.MaximumProtocolVersion < hello.MinimumProtocolVersion || hello.ClientKind == ControlClientKind.Unknown || !IsValidIdentityValue(hello.ClientId, MaximumClientIdLength) || !IsOptionalIdentityValue(hello.DeviceId, MaximumDeviceIdLength) || !IsOptionalIdentityValue(hello.DisplayName, MaximumDisplayNameLength))
         {
             errorCode = ControlErrorCode.InvalidRequest;
             message = "The protocol hello was invalid.";
@@ -42,6 +53,14 @@ public static class ControlProtocol
         }
 
         string[] requiredCapabilities = hello.RequiredCapabilities ?? Array.Empty<string>();
+        string[] optionalCapabilities = hello.OptionalCapabilities ?? Array.Empty<string>();
+        if (requiredCapabilities.Length > MaximumRequiredCapabilities || optionalCapabilities.Length > MaximumOptionalCapabilities || requiredCapabilities.Any(capability => !IsValidCapabilityId(capability)) || optionalCapabilities.Any(capability => !IsValidCapabilityId(capability)) || requiredCapabilities.Distinct(StringComparer.Ordinal).Count() != requiredCapabilities.Length || optionalCapabilities.Distinct(StringComparer.Ordinal).Count() != optionalCapabilities.Length || requiredCapabilities.Intersect(optionalCapabilities, StringComparer.Ordinal).Any())
+        {
+            errorCode = ControlErrorCode.InvalidRequest;
+            message = "The required capability list was invalid.";
+            return false;
+        }
+
         string[] unavailable = requiredCapabilities.Where(capability => !supportedCapabilities.Contains(capability, StringComparer.Ordinal)).ToArray();
         if (unavailable.Length > 0)
         {
@@ -50,7 +69,7 @@ public static class ControlProtocol
             return false;
         }
 
-        welcome = new ProtocolWelcome { SelectedProtocolVersion = selectedVersion, EndpointKind = endpointKind, SupportedCapabilities = supportedCapabilities, ServiceInstanceId = Environment.MachineName };
+        welcome = new ProtocolWelcome { SelectedProtocolVersion = selectedVersion, EndpointKind = endpointKind, SupportedCapabilities = supportedCapabilities.ToArray(), NegotiatedOptionalCapabilities = optionalCapabilities.Where(capability => supportedCapabilities.Contains(capability, StringComparer.Ordinal)).ToArray(), ServiceInstanceId = EndpointInstanceId };
         return true;
     }
 
@@ -58,6 +77,29 @@ public static class ControlProtocol
     {
         return hello != null && welcome != null && welcome.SelectedProtocolVersion >= hello.MinimumProtocolVersion && welcome.SelectedProtocolVersion <= hello.MaximumProtocolVersion && welcome.SelectedProtocolVersion >= MinimumSupportedVersion && welcome.SelectedProtocolVersion <= CurrentVersion;
     }
+
+    private static bool IsValidCapabilityId(string? capability)
+    {
+        return !string.IsNullOrWhiteSpace(capability) && capability.Length <= 64 && capability.All(character => character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
+    }
+
+    private static bool IsValidIdentityValue(string? value, int maximumLength) => !string.IsNullOrWhiteSpace(value) && value.Length <= maximumLength;
+    private static bool IsOptionalIdentityValue(string? value, int maximumLength) => string.IsNullOrEmpty(value) || value.Length <= maximumLength;
+}
+
+/// <summary>Stable capability identifiers shared by all local and future remote clients.</summary>
+public static class ControlCapabilities
+{
+    public const string ProtocolNegotiation = "protocol-negotiation";
+    public const string OperationStatus = "operation-status";
+    public const string OperationDecisions = "operation-decisions";
+    public const string Profiles = "profiles";
+    public const string AudioProfiles = "audio-profiles";
+    public const string Shortcuts = "shortcuts";
+    public const string ClientEvents = "client-events";
+    public const string ClientSync = "client-sync";
+    public const string Diagnostics = "diagnostics";
+    public const string Messages = "messages";
 }
 
 public enum ControlMessageType
@@ -114,8 +156,7 @@ public enum ControlMessageType
     StopUserAgent = 53,
     RecordRecoveryAdministration = 54,
     GetOperationDecision = 55,
-    ReconcileOperationStatuses = 56,
-    ProtocolHello = 57
+    ReconcileOperationStatuses = 56
 }
 
 public enum ControlErrorCode
@@ -153,7 +194,8 @@ public enum ControlClientKind
     ConsoleApplication = 2,
     UserAgent = 3,
     LocalIntegration = 4,
-    RemoteApplication = 5
+    RemoteApplication = 5,
+    ControlService = 6
 }
 
 /// <summary>Transport-neutral compatibility request. It is carried by local envelopes today and can be the REST handshake body later.</summary>
@@ -166,6 +208,7 @@ public sealed class ProtocolHello
     public string DeviceId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string[] RequiredCapabilities { get; set; } = Array.Empty<string>();
+    public string[] OptionalCapabilities { get; set; } = Array.Empty<string>();
 }
 
 /// <summary>Transport-neutral compatibility response. It carries no authentication grant.</summary>
@@ -175,6 +218,7 @@ public sealed class ProtocolWelcome
     public string EndpointKind { get; set; } = string.Empty;
     public string ServiceInstanceId { get; set; } = string.Empty;
     public string[] SupportedCapabilities { get; set; } = Array.Empty<string>();
+    public string[] NegotiatedOptionalCapabilities { get; set; } = Array.Empty<string>();
 }
 
 /// <summary>Future remote-pairing request shape. Pairing is intentionally not implemented on local pipes.</summary>

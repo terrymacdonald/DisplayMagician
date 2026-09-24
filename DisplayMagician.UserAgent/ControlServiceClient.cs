@@ -238,6 +238,7 @@ public sealed class ControlServiceClient
 
     private static async Task<ControlResponse> SendAndReceiveAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)
     {
+        request.Hello = ControlProtocol.CreateHello(ControlClientKind.UserAgent, "DisplayMagician.UserAgent", "DisplayMagician User Agent");
         using CancellationTokenSource responseTimeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         responseTimeoutSource.CancelAfter(ControlProtocol.ResponseTimeout);
         try

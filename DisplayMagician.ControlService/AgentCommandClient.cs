@@ -41,6 +41,8 @@ public sealed class AgentCommandClient : IAgentCommandClient
             throw new InvalidOperationException("The User Agent did not register a command pipe.");
         }
 
+        request.Hello = ControlProtocol.CreateHello(ControlClientKind.ControlService, "DisplayMagician.ControlService", "DisplayMagician Control Service");
+
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", agent.CommandPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         using CancellationTokenSource responseTimeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

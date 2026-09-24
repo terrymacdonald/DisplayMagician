@@ -13,7 +13,7 @@ public sealed class AgentCommandServerTests
     public async Task ExecuteCommandAsync_ReturnsInvalidRequestWhenTheHandlerRejectsMalformedJson()
     {
         ControlResponse response = await AgentCommandServer.ExecuteCommandAsync(
-            new ControlEnvelope { MessageType = ControlMessageType.ApplyProfile },
+            new ControlEnvelope { MessageType = ControlMessageType.ApplyProfile, Hello = ControlProtocol.CreateHello(ControlClientKind.ControlService, "DisplayMagician.Test") },
             (_, _) => Task.FromException<ControlResponse>(new JsonException("Invalid payload.")),
             CancellationToken.None);
 

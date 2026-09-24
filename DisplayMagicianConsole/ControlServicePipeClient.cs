@@ -108,6 +108,7 @@ namespace DisplayMagicianConsole
 
         private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
         {
+            request.Hello = ControlProtocol.CreateHello(ControlClientKind.ConsoleApplication, "DisplayMagician.Console", "DisplayMagician Console");
             using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
             using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

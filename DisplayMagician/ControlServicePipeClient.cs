@@ -355,7 +355,7 @@ internal sealed class ControlServicePipeClient
         ArgumentNullException.ThrowIfNull(onEvent);
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientEventPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
-        ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.SubscribeClientEvents };
+        ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.SubscribeClientEvents, Hello = ControlProtocol.CreateHello(ControlClientKind.DesktopApplication, "DisplayMagician.WinForms", "DisplayMagician") };
         ControlEnvelope response = await SendAndReceiveEnvelopeAsync(pipe, request, cancellationToken).ConfigureAwait(false);
         if (response.MessageType != ControlMessageType.SubscribeClientEvents)
         {
@@ -415,6 +415,7 @@ internal sealed class ControlServicePipeClient
 
     private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
+        request.Hello = ControlProtocol.CreateHello(ControlClientKind.DesktopApplication, "DisplayMagician.WinForms", "DisplayMagician");
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         ControlEnvelope response = await SendAndReceiveEnvelopeAsync(pipe, request, cancellationToken).ConfigureAwait(false);

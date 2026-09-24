@@ -47,7 +47,7 @@ public sealed class AgentCommandPipeTests
         ControlResponse response = await AgentCommandServer.ExecuteCommandAsync(new ControlEnvelope
         {
             MessageType = ControlMessageType.ListProfiles,
-            Hello = new ProtocolHello { RequiredCapabilities = new[] { "remote-only-capability" } }
+            Hello = new ProtocolHello { ClientKind = ControlClientKind.ControlService, ClientId = "DisplayMagician.Test", RequiredCapabilities = new[] { "remote-only-capability" } }
         }, (_, _) =>
         {
             wasCalled = true;
@@ -57,5 +57,16 @@ public sealed class AgentCommandPipeTests
         Assert.False(wasCalled);
         Assert.False(response.IsSuccessful);
         Assert.Equal(ControlErrorCode.RequiredCapabilityUnavailable, response.ErrorCode);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandAsync_AddsACompatibleWelcomeToSuccessfulResponses()
+    {
+        ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.ListProfiles, Hello = ControlProtocol.CreateHello(ControlClientKind.ControlService, "DisplayMagician.Test") };
+        ControlResponse response = await AgentCommandServer.ExecuteCommandAsync(request, (_, _) => Task.FromResult(new ControlResponse { IsSuccessful = true }), CancellationToken.None);
+
+        Assert.True(response.IsSuccessful);
+        Assert.True(ControlProtocol.IsCompatibleWelcome(request.Hello, response.ProtocolWelcome));
+        Assert.Contains("profiles", response.ProtocolWelcome!.SupportedCapabilities);
     }
 }

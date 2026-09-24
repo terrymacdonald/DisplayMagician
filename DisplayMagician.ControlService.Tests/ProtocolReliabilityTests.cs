@@ -76,4 +76,34 @@ public sealed class ProtocolReliabilityTests
 
         await Assert.ThrowsAsync<InvalidDataException>(() => ControlEnvelopeSerializer.ReadAsync(stream, CancellationToken.None));
     }
+
+    [Fact]
+    public async Task EnvelopeSerializer_RoundTripsProtocolAndFuturePairingContracts()
+    {
+        ControlEnvelope envelope = new ControlEnvelope
+        {
+            MessageType = ControlMessageType.GetServiceStatus,
+            Hello = new ProtocolHello
+            {
+                ClientKind = ControlClientKind.RemoteApplication,
+                ClientId = "com.displaymagician.future-client",
+                DeviceId = "device-123",
+                DisplayName = "Future client",
+                RequiredCapabilities = new[] { "operation-status" }
+            },
+            Payload = JsonSerializer.Serialize(new DevicePairingRequest { PairingCode = "123456", DeviceId = "device-123", DeviceDisplayName = "Future client", DevicePublicKey = "public-key-placeholder" })
+        };
+        await using MemoryStream stream = new MemoryStream();
+
+        await ControlEnvelopeSerializer.WriteAsync(stream, envelope, CancellationToken.None);
+        stream.Position = 0;
+        ControlEnvelope? reread = await ControlEnvelopeSerializer.ReadAsync(stream, CancellationToken.None);
+        DevicePairingRequest? pairingRequest = JsonSerializer.Deserialize<DevicePairingRequest>(reread!.Payload);
+
+        Assert.NotNull(reread);
+        Assert.Equal(ControlClientKind.RemoteApplication, reread.Hello.ClientKind);
+        Assert.Equal("operation-status", Assert.Single(reread.Hello.RequiredCapabilities));
+        Assert.NotNull(pairingRequest);
+        Assert.Equal("device-123", pairingRequest!.DeviceId);
+    }
 }
