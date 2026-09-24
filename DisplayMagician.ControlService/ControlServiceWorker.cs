@@ -21,8 +21,9 @@ public sealed class ControlServiceWorker : BackgroundService
     private readonly ControlClientEventHub _eventHub;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
+    private readonly ControlStateCoordinator _controlStateCoordinator;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ControlStateCoordinator controlStateCoordinator)
     {
         _pipeServer = pipeServer;
         _clientPipeServer = clientPipeServer;
@@ -34,6 +35,7 @@ public sealed class ControlServiceWorker : BackgroundService
         _eventHub = eventHub;
         _operationStatusStore = operationStatusStore;
         _operationDecisionStore = operationDecisionStore;
+        _controlStateCoordinator = controlStateCoordinator;
         _operationStatusStore.StatusUpdated += PublishOperationStatus;
         _operationDecisionStore.DecisionUpdated += PublishOperationDecision;
     }
@@ -67,7 +69,8 @@ public sealed class ControlServiceWorker : BackgroundService
             await _clientSyncCoordinator.SyncAsync(new ClientSyncRequest(), null, null, stoppingToken).ConfigureAwait(false);
             await _anonymousMetricsSender.TrySendAsync(stoppingToken).ConfigureAwait(false);
             _operationDecisionStore.Expire(DateTime.UtcNow);
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken).ConfigureAwait(false);
+            _operationStatusStore.RefreshAuthority(_controlStateCoordinator.GetStatus(DateTime.UtcNow).Agents);
+            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken).ConfigureAwait(false);
         }
     }
 

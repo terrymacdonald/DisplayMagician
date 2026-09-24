@@ -1484,6 +1484,11 @@ namespace DisplayMagician {
             }
             else if (clientEvent.EventType == ControlClientEventType.OperationStatusUpdated && clientEvent.OperationStatus != null)
             {
+                if (!clientEvent.OperationStatus.IsTerminal && clientEvent.PublishedUtc != default && DateTime.UtcNow - clientEvent.PublishedUtc > ControlProtocol.EventIdleTimeout)
+                {
+                    logger.Warn("Program/HandleControlServiceEventAsync: Ignored delayed operation status for {0}.", clientEvent.OperationStatus.OperationId);
+                    return Task.CompletedTask;
+                }
                 _mainSynchronizationContext?.Post(_ => HandleOperationStatusEvent(clientEvent.OperationStatus), null);
             }
             else if (clientEvent.EventType == ControlClientEventType.OperationDecisionUpdated && clientEvent.OperationDecision != null)
@@ -1754,6 +1759,10 @@ namespace DisplayMagician {
                 };
                 string headerText = status.IsTerminal ? $"{operationName} {outcome}" : $"{operationName}: {status.Phase}";
                 string message = string.IsNullOrWhiteSpace(status.Message) ? "DisplayMagician is processing your request." : status.Message;
+                if (status.IsStale)
+                {
+                    message = $"{message} Status is no longer confirmed. {status.StaleReason}";
+                }
 
                 ToastContentBuilder toast = new ToastContentBuilder()
                     .AddText(headerText, hintMaxLines: 1)

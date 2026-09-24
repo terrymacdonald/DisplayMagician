@@ -374,7 +374,7 @@ internal sealed class ControlServicePipeClient
             await onEvent(new ControlClientEvent
             {
                 EventType = ControlClientEventType.OperationStatusUpdated,
-                PublishedUtc = status.UpdatedUtc,
+                PublishedUtc = DateTime.UtcNow,
                 OperationStatus = status
             }).ConfigureAwait(false);
         }

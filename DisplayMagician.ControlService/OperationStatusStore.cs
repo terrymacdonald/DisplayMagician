@@ -119,6 +119,29 @@ public sealed class OperationStatusStore
         }
     }
 
+    public void RefreshAuthority(AgentStatus[] agents)
+    {
+        ArgumentNullException.ThrowIfNull(agents);
+        List<OperationStatus> changedStatuses = new List<OperationStatus>();
+        lock (_syncRoot)
+        {
+            foreach (OperationStatus status in _operations.Values.Where(status => !status.IsTerminal))
+            {
+                AgentStatus? agent = agents.FirstOrDefault(candidate => candidate.SessionId == status.OwnerSessionId && string.Equals(candidate.UserSid, status.OwnerUserSid, StringComparison.OrdinalIgnoreCase));
+                bool isAuthoritative = agent?.IsReady == true && agent.IsHealthy;
+                string staleReason = isAuthoritative ? string.Empty : agent == null ? "The User Agent is disconnected." : "The User Agent has not sent a recent heartbeat.";
+                if (status.IsAuthoritative == isAuthoritative && status.IsStale == !isAuthoritative && string.Equals(status.StaleReason, staleReason, StringComparison.Ordinal)) continue;
+                status.IsAuthoritative = isAuthoritative;
+                status.IsStale = !isAuthoritative;
+                status.StaleReason = staleReason;
+                status.Sequence++;
+                changedStatuses.Add(Copy(status));
+            }
+            if (changedStatuses.Count > 0) Persist();
+        }
+        foreach (OperationStatus status in changedStatuses) StatusUpdated?.Invoke(status);
+    }
+
     private void Load()
     {
         try
@@ -187,7 +210,10 @@ public sealed class OperationStatusStore
             UpdatedUtc = status.UpdatedUtc,
             IsTerminal = status.IsTerminal,
             IsSuccessful = status.IsSuccessful,
-            ErrorCode = status.ErrorCode
+            ErrorCode = status.ErrorCode,
+            IsAuthoritative = status.IsAuthoritative,
+            IsStale = status.IsStale,
+            StaleReason = status.StaleReason
         };
     }
 }

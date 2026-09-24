@@ -369,6 +369,7 @@ public sealed class OperationStatusUpdate
     public bool IsSuccessful { get; set; }
 
     public ControlErrorCode ErrorCode { get; set; }
+
 }
 
 /// <summary>Service-owned, client-visible operation state. Sequence is per operation and always increases.</summary>
@@ -397,6 +398,12 @@ public sealed class OperationStatus
     public bool IsSuccessful { get; set; }
 
     public ControlErrorCode ErrorCode { get; set; }
+
+    public bool IsAuthoritative { get; set; } = true;
+
+    public bool IsStale { get; set; }
+
+    public string StaleReason { get; set; } = string.Empty;
 }
 
 public sealed class OperationStatusRequest
