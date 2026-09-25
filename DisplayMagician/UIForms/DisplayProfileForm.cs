@@ -261,6 +261,7 @@ namespace DisplayMagician.UIForms
             if (Program.AppProgramSettings.InstallDesktopContextMenu)
             {
                 DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
+                RefreshInstalledProfileContextMenu();
             }
 
             // Also refresh the right-click menu (if we have a main form loaded)
@@ -738,6 +739,7 @@ namespace DisplayMagician.UIForms
             if (Program.AppProgramSettings.InstallDesktopContextMenu)
             {
                 DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
+                RefreshInstalledProfileContextMenu();
             }
 
 
@@ -789,6 +791,14 @@ namespace DisplayMagician.UIForms
         public void RefreshCurrentView()
         {
             btn_view_current.PerformClick();
+        }
+
+        private void RefreshInstalledProfileContextMenu()
+        {
+            if (!DisplayMagician.ContextMenu.UpdateProfileContextMenu())
+            {
+                logger.Warn("DisplayProfileForm/RefreshInstalledProfileContextMenu: Failed to refresh the desktop profile context menu.");
+            }
         }
 
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
@@ -1053,6 +1063,10 @@ namespace DisplayMagician.UIForms
 
                     // Refresh the Profile UI
                     RefreshDisplayProfileUI();
+                    if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                    {
+                        RefreshInstalledProfileContextMenu();
+                    }
                     // Recenter the Window
                     //RecenterWindow();
 
