@@ -242,7 +242,50 @@ namespace DisplayMagician.UIForms
         private void applyToolStripMenuItem_Click(object sender, EventArgs e) => btn_apply.PerformClick();
         private void deleteProfileToolStripMenuItem_Click(object sender, EventArgs e) => btn_delete.PerformClick();
         private void saveProfileToDesktopToolStripMenuItem_Click(object sender, EventArgs e) => Save_Click(sender, e);
-        private void Save_Click(object sender, EventArgs e) => MessageBox.Show(this, "Creating desktop shortcuts for display profiles is not available while profile execution is owned by the User Agent.", "Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        private void Save_Click(object sender, EventArgs e)
+        {
+            if (_selectedProfile?.IsSaved != true)
+            {
+                return;
+            }
+
+            dialog_save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            dialog_save.FileName = _selectedProfile.Name;
+            if (dialog_save.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            string shortcutPath = Path.ChangeExtension(dialog_save.FileName, ".lnk");
+            try
+            {
+                Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                if (shellType == null)
+                {
+                    throw new InvalidOperationException("WScript.Shell COM is unavailable.");
+                }
+
+                dynamic shell = Activator.CreateInstance(shellType);
+                dynamic shortcut = shell.CreateShortcut(shortcutPath);
+                shortcut.TargetPath = Environment.ProcessPath;
+                shortcut.Arguments = $"{DisplayMagicianStartupAction.ChangeProfile} \"{_selectedProfile.Id}\"";
+                shortcut.Description = $"Switching display profile to '{_selectedProfile.Name}'.";
+                shortcut.WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath) ?? string.Empty;
+                shortcut.IconLocation = $"{Environment.ProcessPath},0";
+                shortcut.Save();
+
+                MessageBox.Show(this, $"Shortcut successfully saved to '{shortcutPath}'.", "Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "DisplayProfileForm/Save_Click: Could not save desktop shortcut for profile {0} to {1}.", _selectedProfile.Id, shortcutPath);
+                MessageBox.Show(this, "DisplayMagician could not create the desktop shortcut.", "Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                dialog_save.FileName = string.Empty;
+            }
+        }
         private void sendToClipboardToolStripMenuItem_Click(object sender, EventArgs e) { if (_selectedProfile?.IsSaved == true) Clipboard.SetText(_selectedProfile.Id); }
 
         private void ResizeProfileAdvisoryPanel()
