@@ -48,7 +48,6 @@
     <UseVSHostingProcess>true</UseVSHostingProcess>
     <WarningLevel>4</WarningLevel>
 	  <OutputPath>$(ProjectDir)bin\Debug\</OutputPath>
-	  <NoWarn>1701;1702;CA1416</NoWarn>
 	  <WarningsAsErrors />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -57,7 +56,6 @@
     <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
     <WarningLevel>3</WarningLevel>
 	  <OutputPath>$(ProjectDir)bin\Release\</OutputPath>
-	  <NoWarn>1701;1702;CA1416</NoWarn>
 	  <WarningsAsErrors />
   </PropertyGroup>
   <PropertyGroup>
