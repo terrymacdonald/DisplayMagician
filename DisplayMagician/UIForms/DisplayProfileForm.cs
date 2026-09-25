@@ -165,6 +165,7 @@ namespace DisplayMagician.UIForms
                 : await _controlServiceClient.CreateProfileFromCurrentAsync(txt_profile_save_name.Text, CancellationToken.None);
             if (!response.IsSuccessful) { MessageBox.Show(this, response.Message, "Save Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
             await RefreshProfilesAsync(_selectedProfile?.IsSaved == true ? _selectedProfile.Id : null, CancellationToken.None);
+            RefreshInstalledProfileContextMenu();
         }
 
         private async void Delete_Click(object sender, EventArgs e)
@@ -175,10 +176,19 @@ namespace DisplayMagician.UIForms
             if (!response.IsSuccessful) { MessageBox.Show(this, response.Message, "Delete Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
             Program.AppDirectInputManager.RemoveHotkeysByUUID(deletedProfileId);
             await RefreshProfilesAsync(null, CancellationToken.None);
+            RefreshInstalledProfileContextMenu();
         }
 
         private async void btn_view_current_Click(object sender, EventArgs e) { await RefreshProfilesAsync(null, CancellationToken.None); ChangeSelectedProfile(_currentLayout); }
         public void RefreshCurrentView() => btn_view_current.PerformClick();
+
+        private void RefreshInstalledProfileContextMenu()
+        {
+            if (Program.AppProgramSettings.InstallDesktopContextMenu && !DisplayMagician.ContextMenu.UpdateProfileContextMenu())
+            {
+                logger.Warn("DisplayProfileForm/RefreshInstalledProfileContextMenu: Failed to refresh the desktop profile context menu.");
+            }
+        }
 
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
