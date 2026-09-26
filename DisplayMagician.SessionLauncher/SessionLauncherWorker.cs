@@ -164,9 +164,10 @@ public sealed class InteractiveUserProcessLauncher
     public UserAgentLaunchResult Launch(UserAgentLaunchRequest request)
     {
         Program.ApplyDiagnosticLogLevel(request.DiagnosticLogLevel);
-        if (string.IsNullOrWhiteSpace(request.UserSid) || request.SessionId < 0 || WTSGetActiveConsoleSessionId() != (uint)request.SessionId)
+        if (string.IsNullOrWhiteSpace(request.UserSid) || request.SessionId < 0)
         {
-            return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested User Agent session is not the active physical console session." };
+            _logger.Warn("InteractiveUserProcessLauncher/Launch: Rejected an invalid User Agent launch request for SID {0}, session {1}.", request.UserSid, request.SessionId);
+            return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested User Agent session was invalid." };
         }
 
         string executablePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "UserAgent", "DisplayMagician.UserAgent.exe"));
@@ -181,9 +182,18 @@ public sealed class InteractiveUserProcessLauncher
         IntPtr environment = IntPtr.Zero;
         try
         {
-            if (!WTSQueryUserToken((uint)request.SessionId, out userToken) || !DuplicateTokenEx(userToken, 0x02000000, IntPtr.Zero, 2, 1, out primaryToken))
+            if (!WTSQueryUserToken((uint)request.SessionId, out userToken))
             {
-                return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not obtain an interactive token for the requested session." };
+                int errorCode = Marshal.GetLastWin32Error();
+                _logger.Error("InteractiveUserProcessLauncher/Launch: Windows could not obtain an interactive token for SID {0}, session {1}. Win32 error {2}.", request.UserSid, request.SessionId, errorCode);
+                return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not access the requested interactive session." };
+            }
+
+            if (!DuplicateTokenEx(userToken, 0x02000000, IntPtr.Zero, 2, 1, out primaryToken))
+            {
+                int errorCode = Marshal.GetLastWin32Error();
+                _logger.Error("InteractiveUserProcessLauncher/Launch: Windows could not duplicate the interactive token for SID {0}, session {1}. Win32 error {2}.", request.UserSid, request.SessionId, errorCode);
+                return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not prepare the requested interactive session." };
             }
 
             using WindowsIdentity identity = new WindowsIdentity(primaryToken);
@@ -199,7 +209,9 @@ public sealed class InteractiveUserProcessLauncher
                 ? $" --diagnostic-log-level {request.DiagnosticLogLevel}" : string.Empty;
             if (!CreateProcessAsUser(primaryToken, executablePath, $"\"{executablePath}\"{diagnosticArgument}", IntPtr.Zero, IntPtr.Zero, false, 0x00000400, environment, Path.GetDirectoryName(executablePath), ref startupInfo, out PROCESS_INFORMATION processInformation))
             {
-                return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not start the User Agent in the active console session." };
+                int errorCode = Marshal.GetLastWin32Error();
+                _logger.Error("InteractiveUserProcessLauncher/Launch: Windows could not start User Agent for SID {0}, session {1}. Win32 error {2}.", request.UserSid, request.SessionId, errorCode);
+                return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not start the User Agent in the requested session." };
             }
 
             CloseHandle(processInformation.hThread);
@@ -222,9 +234,10 @@ public sealed class InteractiveUserProcessLauncher
 
     public UserAgentLaunchResult Stop(UserAgentStopRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.UserSid) || request.SessionId < 0 || request.ProcessId <= 0 || WTSGetActiveConsoleSessionId() != (uint)request.SessionId)
+        if (string.IsNullOrWhiteSpace(request.UserSid) || request.SessionId < 0 || request.ProcessId <= 0)
         {
-            return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested User Agent process is not in the active physical-console session." };
+            _logger.Warn("InteractiveUserProcessLauncher/Stop: Rejected an invalid User Agent stop request for process {0}, SID {1}, session {2}.", request.ProcessId, request.UserSid, request.SessionId);
+            return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested User Agent process or session was invalid." };
         }
 
         try
@@ -253,7 +266,6 @@ public sealed class InteractiveUserProcessLauncher
         }
     }
 
-    [DllImport("kernel32.dll")] private static extern uint WTSGetActiveConsoleSessionId();
     [DllImport("wtsapi32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool WTSQueryUserToken(uint sessionId, out IntPtr token);
     [DllImport("advapi32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool DuplicateTokenEx(IntPtr existingToken, uint access, IntPtr attributes, int impersonationLevel, int tokenType, out IntPtr newToken);
     [DllImport("userenv.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool CreateEnvironmentBlock(out IntPtr environment, IntPtr token, bool inherit);

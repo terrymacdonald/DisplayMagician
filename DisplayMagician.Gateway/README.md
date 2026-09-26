@@ -6,7 +6,7 @@ The Gateway owns two distinct machine P-256 identities: a host signing identity 
 
 At startup, and periodically afterwards, the Gateway registers its public identity with ControlService through a dedicated LocalService-only named pipe. ControlService uses that registered identity when it creates pairing sessions, so a desktop client cannot substitute a different host key or certificate fingerprint.
 
-Current network endpoints are `GET /v1/identity`, which exposes only the public host identity and TLS fingerprint, and `POST /v1/pairing/request`, which submits an unpaired device's pairing request. Authenticated commands, status events, and WebSocket support follow in later slices.
+Current network endpoints include authenticated profile, audio-profile, shortcut, operation-decision, status, and SSE status-stream routes. Every authenticated remote request must include `targetSessionId`; ControlService verifies that this is a healthy, ready User Agent session owned by the paired device's authenticated Windows SID. Gateway never chooses a console session implicitly.
 
 ## Development
 

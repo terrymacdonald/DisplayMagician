@@ -438,6 +438,13 @@ public sealed class RemoteUserStatus
 public sealed class GatewayRemoteStatusRequest
 {
     public GatewayAuthenticationResult Authentication { get; set; } = new GatewayAuthenticationResult();
+
+    /// <summary>
+    /// The interactive Windows session selected by the paired device. Control Service verifies
+    /// that it belongs to <see cref="GatewayAuthenticationResult.OwnerUserSid"/> and has a healthy User Agent.
+    /// </summary>
+    public int? TargetSessionId { get; set; }
+
     public DateTime? ChangedSinceUtc { get; set; }
 }
 
@@ -445,6 +452,13 @@ public sealed class GatewayRemoteStatusRequest
 public sealed class GatewayRemoteCommand
 {
     public GatewayAuthenticationResult Authentication { get; set; } = new GatewayAuthenticationResult();
+
+    /// <summary>
+    /// The interactive Windows session selected by the paired device. It is not trusted until
+    /// Control Service verifies its registered User Agent belongs to the authenticated owner SID.
+    /// </summary>
+    public int? TargetSessionId { get; set; }
+
     public string Payload { get; set; } = string.Empty;
 }
 

@@ -4,45 +4,45 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
+using NLog;
 
 namespace DisplayMagician.ControlService;
 
 public sealed class ProfileOperationRouter
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly ControlStateCoordinator _coordinator;
     private readonly IAgentCommandClient _agentCommandClient;
     private readonly ISessionLauncherClient _sessionLauncherClient;
-    private readonly Func<int> _getActiveConsoleSessionId;
     private readonly RecoveryAdministrationStore? _recoveryAdministrationStore;
     private readonly MachineDiagnosticLogLevelStore? _machineDiagnosticLogLevelStore;
     private readonly SemaphoreSlim _agentLaunchLock = new SemaphoreSlim(1, 1);
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
-        : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient(), ConsoleSessionLocator.GetActiveConsoleSessionId)
+        : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient())
     {
     }
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient)
-        : this(coordinator, agentCommandClient, sessionLauncherClient, ConsoleSessionLocator.GetActiveConsoleSessionId)
+        : this(coordinator, agentCommandClient, sessionLauncherClient, (RecoveryAdministrationStore?)null)
     {
     }
 
-    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, RecoveryAdministrationStore recoveryAdministrationStore)
-        : this(coordinator, agentCommandClient, sessionLauncherClient, ConsoleSessionLocator.GetActiveConsoleSessionId, recoveryAdministrationStore)
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> ignoredActiveConsoleSessionId)
+        : this(coordinator, agentCommandClient, sessionLauncherClient)
     {
     }
 
-    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> getActiveConsoleSessionId, RecoveryAdministrationStore? recoveryAdministrationStore = null)
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, RecoveryAdministrationStore? recoveryAdministrationStore = null)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _agentCommandClient = agentCommandClient ?? throw new ArgumentNullException(nameof(agentCommandClient));
         _sessionLauncherClient = sessionLauncherClient ?? throw new ArgumentNullException(nameof(sessionLauncherClient));
-        _getActiveConsoleSessionId = getActiveConsoleSessionId ?? throw new ArgumentNullException(nameof(getActiveConsoleSessionId));
         _recoveryAdministrationStore = recoveryAdministrationStore;
     }
 
-    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> getActiveConsoleSessionId, RecoveryAdministrationStore? recoveryAdministrationStore, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
-        : this(coordinator, agentCommandClient, sessionLauncherClient, getActiveConsoleSessionId, recoveryAdministrationStore)
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, RecoveryAdministrationStore? recoveryAdministrationStore, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
+        : this(coordinator, agentCommandClient, sessionLauncherClient, recoveryAdministrationStore)
     {
         _machineDiagnosticLogLevelStore = machineDiagnosticLogLevelStore ?? throw new ArgumentNullException(nameof(machineDiagnosticLogLevelStore));
     }
@@ -132,7 +132,7 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
         }
 
-        LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, _getActiveConsoleSessionId(), DateTime.UtcNow);
+        LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, DateTime.UtcNow);
         if (!leaseDecision.IsGranted)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
@@ -173,11 +173,6 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID and correlation IDs are required." };
         }
 
-        if (sessionId != _getActiveConsoleSessionId())
-        {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.NotActiveConsoleUser, Message = "Only the active physical-console user can control displays." };
-        }
-
         ControlEnvelope command = new ControlEnvelope
         {
             MessageType = ControlMessageType.StartShortcut,
@@ -190,7 +185,7 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
         }
 
-        LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, _getActiveConsoleSessionId(), DateTime.UtcNow);
+        LeaseDecision leaseDecision = _coordinator.TryAcquireDisplayControl(userSid, sessionId, DateTime.UtcNow);
         if (!leaseDecision.IsGranted)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = leaseDecision.ErrorCode, Message = leaseDecision.Message, LeaseDecision = leaseDecision };
@@ -304,7 +299,8 @@ public sealed class ProfileOperationRouter
 
             if (!launchResult.IsSuccessful)
             {
-                return null;
+                Logger.Error("ProfileOperationRouter/GetOrStartAgentAsync: Session Launcher could not start User Agent for SID {0}, session {1}. {2}", userSid, sessionId, launchResult.Message);
+                throw new SessionLauncherUnavailableException(launchResult.Message, new InvalidOperationException("The Session Launcher rejected the User Agent launch request."));
             }
 
             return await WaitForReadyAgentAsync(userSid, sessionId, cancellationToken).ConfigureAwait(false);

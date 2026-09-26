@@ -29,6 +29,7 @@ public sealed class GatewayStatusFeed : IHostedService
 
     public ChannelReader<RemoteUserStatus> Subscribe(
         GatewayAuthenticationResult authentication,
+        int targetSessionId,
         CancellationToken cancellationToken)
     {
         if (Volatile.Read(ref _isStopping) != 0)
@@ -36,13 +37,14 @@ public sealed class GatewayStatusFeed : IHostedService
             return CreateCompletedReader();
         }
 
-        string ownerUserSid = authentication.OwnerUserSid;
+        string ownerUserSid = $"{authentication.OwnerUserSid}:{targetSessionId}";
         while (true)
         {
             Entry entry = _entries.GetOrAdd(
                 ownerUserSid,
                 ownerSid => new Entry(
                     authentication,
+                    targetSessionId,
                     _client,
                     retiredEntry => RemoveEntry(ownerSid, retiredEntry)));
 
@@ -85,6 +87,7 @@ public sealed class GatewayStatusFeed : IHostedService
     private sealed class Entry
     {
         private readonly GatewayAuthenticationResult _authentication;
+        private readonly int _targetSessionId;
         private readonly GatewayControlServiceClient _client;
         private readonly Action<Entry> _removeWhenRetired;
         private readonly Dictionary<Guid, Subscriber> _subscribers = new();
@@ -101,10 +104,12 @@ public sealed class GatewayStatusFeed : IHostedService
 
         public Entry(
             GatewayAuthenticationResult authentication,
+            int targetSessionId,
             GatewayControlServiceClient client,
             Action<Entry> removeWhenRetired)
         {
             _authentication = authentication;
+            _targetSessionId = targetSessionId;
             _client = client;
             _removeWhenRetired = removeWhenRetired;
         }
@@ -207,6 +212,7 @@ public sealed class GatewayStatusFeed : IHostedService
                         RemoteUserStatus status = await _client
                             .GetRemoteUserStatusAsync(
                                 _authentication,
+                                _targetSessionId,
                                 changedSinceUtc,
                                 _stopCancellation.Token)
                             .ConfigureAwait(false);
@@ -228,8 +234,9 @@ public sealed class GatewayStatusFeed : IHostedService
                     {
                         Logger.Warn(
                             ex,
-                            "GatewayStatusFeed/RunAsync: Could not refresh the cached remote status for user {0}. Retrying in {1} seconds.",
+                            "GatewayStatusFeed/RunAsync: Could not refresh the cached remote status for user {0}, session {1}. Retrying in {2} seconds.",
                             _authentication.OwnerUserSid,
+                            _targetSessionId,
                             retrySeconds);
                         delaySeconds = retrySeconds;
                         retrySeconds = Math.Min(retrySeconds * 2, 60);

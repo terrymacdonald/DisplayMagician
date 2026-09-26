@@ -95,7 +95,7 @@ namespace DisplayMagician {
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
         private static readonly CancellationTokenSource _clientEventListenerCancellationSource = new CancellationTokenSource();
         private static readonly ConcurrentDictionary<Guid, long> _lastOperationStatusSequences = new ConcurrentDictionary<Guid, long>();
-        private static string? _controlServiceInstanceId;
+        private static string _controlServiceInstanceId;
         private static readonly ConcurrentDictionary<Guid, byte> _displayedOperationDecisionPrompts = new ConcurrentDictionary<Guid, byte>();
         private static readonly ConcurrentDictionary<Guid, OperationDecisionForm> _operationDecisionForms = new ConcurrentDictionary<Guid, OperationDecisionForm>();
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
@@ -1551,7 +1551,7 @@ namespace DisplayMagician {
                 {
                     await new ControlServicePipeClient().SubscribeClientEventsAsync(HandleControlServiceEventAsync, welcome =>
                     {
-                        string? previous = _controlServiceInstanceId;
+                        string previous = _controlServiceInstanceId;
                         _controlServiceInstanceId = welcome.ServiceInstanceId;
                         if (string.IsNullOrWhiteSpace(previous)) logger.Info("Program/ListenForControlServiceEventsAsync: Connected to Control Service instance {0}.", welcome.ServiceInstanceId);
                         else if (!string.Equals(previous, welcome.ServiceInstanceId, StringComparison.Ordinal)) logger.Warn("Program/ListenForControlServiceEventsAsync: Control Service instance changed from {0} to {1}. Event state was resynchronised.", previous, welcome.ServiceInstanceId);

@@ -109,16 +109,11 @@ public sealed class ControlStateCoordinator
         }
     }
 
-    public LeaseDecision TryAcquireDisplayControl(string userSid, int sessionId, int activeConsoleSessionId, DateTime utcNow)
+    public LeaseDecision TryAcquireDisplayControl(string userSid, int sessionId, DateTime utcNow)
     {
         lock (_syncRoot)
         {
-            ReleaseIdleLeaseIfUnavailable(activeConsoleSessionId, utcNow);
-
-            if (sessionId != activeConsoleSessionId)
-            {
-                return Deny(ControlErrorCode.NotActiveConsoleUser, "Only the active physical-console user can control displays.");
-            }
+            ReleaseIdleLeaseIfOwnerUnavailable(utcNow);
 
             if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent) || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
             {
@@ -250,6 +245,27 @@ public sealed class ControlStateCoordinator
         }
     }
 
+    public LeaseDecision TryAcquireDisplayControl(string userSid, int sessionId, int ignoredActiveConsoleSessionId, DateTime utcNow)
+    {
+        return TryAcquireDisplayControl(userSid, sessionId, utcNow);
+    }
+
+    public AgentRegistration? GetHealthyReadyAgentRegistration(string userSid, int sessionId, DateTime utcNow)
+    {
+        lock (_syncRoot)
+        {
+            if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent) ||
+                !agent.Registration.IsReady ||
+                utcNow - agent.LastHeartbeatUtc > AgentHeartbeatTimeout ||
+                !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return CopyRegistration(agent.Registration);
+        }
+    }
+
     public AgentRegistration[] GetAgentRegistrations()
     {
         lock (_syncRoot)
@@ -340,16 +356,15 @@ public sealed class ControlStateCoordinator
         };
     }
 
-    private void ReleaseIdleLeaseIfUnavailable(int activeConsoleSessionId, DateTime utcNow)
+    private void ReleaseIdleLeaseIfOwnerUnavailable(DateTime utcNow)
     {
         if (_displayControlLease == null || _displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired)
         {
             return;
         }
 
-        bool ownerIsNoLongerActiveConsoleUser = _displayControlLease.OwnerSessionId != activeConsoleSessionId;
         bool ownerHeartbeatIsStale = utcNow - _displayControlLease.LastHeartbeatUtc > AgentHeartbeatTimeout;
-        if (ownerIsNoLongerActiveConsoleUser || ownerHeartbeatIsStale)
+        if (ownerHeartbeatIsStale)
         {
             _displayControlLease = null;
             ClearPersistedLease();

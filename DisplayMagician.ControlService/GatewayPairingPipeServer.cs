@@ -24,9 +24,10 @@ public sealed class GatewayPairingPipeServer
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
     private readonly ProfileOperationRouter _profileOperationRouter;
+    private readonly ControlStateCoordinator _controlStateCoordinator;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
-    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter)
+    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter, ControlStateCoordinator controlStateCoordinator)
     {
         _pairingCoordinator = pairingCoordinator ?? throw new ArgumentNullException(nameof(pairingCoordinator));
         _identityRegistry = identityRegistry ?? throw new ArgumentNullException(nameof(identityRegistry));
@@ -34,6 +35,7 @@ public sealed class GatewayPairingPipeServer
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
         _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
+        _controlStateCoordinator = controlStateCoordinator ?? throw new ArgumentNullException(nameof(controlStateCoordinator));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -201,17 +203,25 @@ public sealed class GatewayPairingPipeServer
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised to read status." };
         }
 
-        DateTime cursor = statusRequest!.ChangedSinceUtc?.ToUniversalTime() ?? DateTime.MinValue;
-        OperationStatus[] operations = cursor == DateTime.MinValue ? _operationStatusStore.GetAll(authentication.OwnerUserSid) : _operationStatusStore.GetChangedSince(authentication.OwnerUserSid, cursor);
+        if (!TryGetVerifiedTargetSession(authentication, statusRequest!.TargetSessionId, out int sessionId, out ControlResponse failure))
+        {
+            return failure;
+        }
+
+        DateTime cursor = statusRequest.ChangedSinceUtc?.ToUniversalTime() ?? DateTime.MinValue;
+        OperationStatus[] operations = (cursor == DateTime.MinValue ? _operationStatusStore.GetAll(authentication.OwnerUserSid) : _operationStatusStore.GetChangedSince(authentication.OwnerUserSid, cursor))
+            .Where(status => status.OwnerSessionId == sessionId)
+            .ToArray();
         DateTime nextCursor = operations.Length == 0 ? cursor : operations.Max(status => status.UpdatedUtc);
-        return new ControlResponse { IsSuccessful = true, RemoteUserStatus = new RemoteUserStatus { Operations = operations, PendingDecisions = _operationDecisionStore.GetPending(authentication.OwnerUserSid, 0), NextChangedSinceUtc = nextCursor } };
+        return new ControlResponse { IsSuccessful = true, RemoteUserStatus = new RemoteUserStatus { Operations = operations, PendingDecisions = _operationDecisionStore.GetPending(authentication.OwnerUserSid, sessionId), NextChangedSinceUtc = nextCursor } };
     }
 
     private ControlResponse ListRemote(ControlEnvelope request, string requiredCapability, ControlMessageType messageType)
     {
-        GatewayAuthenticationResult? authentication = JsonSerializer.Deserialize<GatewayAuthenticationResult>(request.Payload);
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult? authentication = command?.Authentication;
         if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(requiredCapability, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised for this resource." };
-        int sessionId = ConsoleSessionLocator.GetActiveConsoleSessionId();
+        if (!TryGetVerifiedTargetSession(authentication, command!.TargetSessionId, out int sessionId, out ControlResponse failure)) return failure;
         return messageType == ControlMessageType.ListProfiles
             ? _profileOperationRouter.ListProfilesAsync(authentication.OwnerUserSid, sessionId, CancellationToken.None).GetAwaiter().GetResult()
             : _profileOperationRouter.ManageProfileAsync(authentication.OwnerUserSid, sessionId, new ControlEnvelope { MessageType = messageType }, CancellationToken.None).GetAwaiter().GetResult();
@@ -223,7 +233,7 @@ public sealed class GatewayPairingPipeServer
         GatewayAuthenticationResult? authentication = command?.Authentication;
         if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(requiredCapability, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised for this action." };
         GatewayRemoteCommand validCommand = command!;
-        int sessionId = ConsoleSessionLocator.GetActiveConsoleSessionId();
+        if (!TryGetVerifiedTargetSession(authentication, validCommand.TargetSessionId, out int sessionId, out ControlResponse failure)) return failure;
         ControlEnvelope agentRequest = new ControlEnvelope { MessageType = messageType, Payload = validCommand.Payload, RequestId = Guid.NewGuid() };
         ApplyProfileRequest? applyProfileRequest = messageType == ControlMessageType.ApplyProfile ? JsonSerializer.Deserialize<ApplyProfileRequest>(validCommand.Payload) : null;
         if (messageType == ControlMessageType.ApplyProfile && (applyProfileRequest == null || string.IsNullOrWhiteSpace(applyProfileRequest.ProfileId))) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile is required." };
@@ -239,8 +249,28 @@ public sealed class GatewayPairingPipeServer
         ResolveOperationDecisionRequest? resolution = command == null ? null : JsonSerializer.Deserialize<ResolveOperationDecisionRequest>(command.Payload);
         if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsAnswer, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised to answer decisions." };
         if (resolution == null || resolution.PromptId == Guid.Empty || resolution.Choice == OperationDecisionChoice.Unknown) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid operation decision is required." };
-        OperationDecision? decision = _operationDecisionStore.Resolve(authentication.OwnerUserSid, 0, resolution.PromptId, resolution.Choice, DateTime.UtcNow);
+        if (!TryGetVerifiedTargetSession(authentication, command!.TargetSessionId, out int sessionId, out ControlResponse failure)) return failure;
+        OperationDecision? decision = _operationDecisionStore.Resolve(authentication.OwnerUserSid, sessionId, resolution.PromptId, resolution.Choice, DateTime.UtcNow);
         return decision == null ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DecisionUnavailable, Message = "The operation decision is unavailable, expired, or already resolved." } : new ControlResponse { IsSuccessful = true, Message = "Operation decision recorded.", OperationDecision = decision };
+    }
+
+    private bool TryGetVerifiedTargetSession(GatewayAuthenticationResult authentication, int? targetSessionId, out int sessionId, out ControlResponse failure)
+    {
+        sessionId = targetSessionId ?? -1;
+        if (!targetSessionId.HasValue || sessionId < 0)
+        {
+            failure = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A target Windows session is required for this remote request." };
+            return false;
+        }
+
+        if (_controlStateCoordinator.GetHealthyReadyAgentRegistration(authentication.OwnerUserSid, sessionId, DateTime.UtcNow) == null)
+        {
+            failure = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The selected Windows session does not have a healthy User Agent for this paired user." };
+            return false;
+        }
+
+        failure = new ControlResponse();
+        return true;
     }
 
     private static bool IsLocalService(NamedPipeServerStream pipe)

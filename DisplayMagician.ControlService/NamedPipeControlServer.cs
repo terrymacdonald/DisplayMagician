@@ -401,7 +401,7 @@ public sealed class NamedPipeControlServer
             LeaseDecision decision;
             try
             {
-                decision = _coordinator.TryAcquireDisplayControl(identity.UserSid, identity.SessionId, ConsoleSessionLocator.GetActiveConsoleSessionId(), DateTime.UtcNow);
+                decision = _coordinator.TryAcquireDisplayControl(identity.UserSid, identity.SessionId, DateTime.UtcNow);
             }
             catch (InvalidOperationException ex)
             {
