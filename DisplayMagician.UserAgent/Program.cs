@@ -49,7 +49,7 @@ internal static class Program
         await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
         registration.IsReady = true;
-        ControlResponse readyResponse = await serviceClient.RegisterOnceAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
+        ControlResponse readyResponse = await serviceClient.UpdateRegistrationAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
         if (!readyResponse.IsSuccessful)
         {
             cancellationTokenSource.Cancel();

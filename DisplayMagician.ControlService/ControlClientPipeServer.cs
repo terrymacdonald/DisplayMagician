@@ -104,9 +104,41 @@ public sealed class ControlClientPipeServer
     private static NamedPipeServerStream CreatePipe()
     {
         PipeSecurity security = new PipeSecurity();
-        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
-        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
-        return NamedPipeServerStreamAcl.Create(ControlProtocol.ClientPipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security, HandleInheritability.None);
+
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(
+                    WellKnownSidType.AuthenticatedUserSid,
+                    null),
+                PipeAccessRights.ReadWrite,
+                AccessControlType.Allow));
+
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(
+                    WellKnownSidType.LocalServiceSid,
+                    null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Allow));
+
+        security.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(
+                    WellKnownSidType.LocalSystemSid,
+                    null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Allow));
+
+        return NamedPipeServerStreamAcl.Create(
+            ControlProtocol.ClientPipeName,
+            PipeDirection.InOut,
+            NamedPipeServerStream.MaxAllowedServerInstances,
+            PipeTransmissionMode.Byte,
+            PipeOptions.Asynchronous,
+            0,
+            0,
+            security,
+            HandleInheritability.None);
     }
 
     private async Task HandleClientAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)

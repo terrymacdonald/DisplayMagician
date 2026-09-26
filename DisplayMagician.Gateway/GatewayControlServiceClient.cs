@@ -76,7 +76,7 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
             ControlResponse? response = envelope == null ? null : JsonSerializer.Deserialize<ControlResponse>(envelope.Payload);
             return response ?? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "Control Service did not return a Gateway response." };
         }
-        catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is OperationCanceledException || ex is JsonException)
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is TimeoutException || ex is OperationCanceledException || ex is JsonException)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "Control Service is unavailable." };
         }

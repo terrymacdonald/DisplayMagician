@@ -28,7 +28,7 @@ public sealed class GatewayIdentityProvider
 
     private static X509Certificate2 GetOrCreateTlsCertificate()
     {
-        using X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+        using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
         store.Open(OpenFlags.ReadWrite);
         X509Certificate2? existing = store.Certificates.Cast<X509Certificate2>().FirstOrDefault(certificate => certificate.FriendlyName == TlsCertificateFriendlyName && certificate.NotAfter.ToUniversalTime() > DateTime.UtcNow.AddDays(30) && certificate.HasPrivateKey);
         if (existing != null)
@@ -51,18 +51,21 @@ public sealed class GatewayIdentityProvider
     private static CngKey OpenOrCreateKey(string keyName)
     {
         CngProvider provider = CngProvider.MicrosoftSoftwareKeyStorageProvider;
-        CngKeyOpenOptions options = CngKeyOpenOptions.MachineKey;
-        if (CngKey.Exists(keyName, provider, options))
+
+        if (CngKey.Exists(keyName, provider))
         {
-            return CngKey.Open(keyName, provider, options);
+            return CngKey.Open(keyName, provider);
         }
 
         CngKeyCreationParameters parameters = new CngKeyCreationParameters
         {
-            Provider = provider,
-            KeyCreationOptions = CngKeyCreationOptions.MachineKey
+            Provider = provider
         };
-        return CngKey.Create(CngAlgorithm.ECDsaP256, keyName, parameters);
+
+        return CngKey.Create(
+            CngAlgorithm.ECDsaP256,
+            keyName,
+            parameters);
     }
 
     private static string CreatePublicJwk(CngKey key)

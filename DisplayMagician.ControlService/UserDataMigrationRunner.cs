@@ -66,7 +66,7 @@ public sealed class UserDataMigrationRunner
         AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Icons"), userPaths.IconsPath, legacyAppDataPath, userPaths);
         AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Wallpaper"), userPaths.WallpaperPath, legacyAppDataPath, userPaths);
         AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Messages"), userPaths.MessagesPath, legacyAppDataPath, userPaths);
-        AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Logs"), userPaths.LogsPath, legacyAppDataPath, userPaths);
+        //AddDirectoryFiles(files, Path.Combine(legacyAppDataPath, "Logs"), userPaths.LogsPath, legacyAppDataPath, userPaths);
         return files;
     }
 
@@ -80,6 +80,13 @@ public sealed class UserDataMigrationRunner
         foreach (string filePath in Directory.GetFiles(legacyAppDataPath, "*", SearchOption.TopDirectoryOnly))
         {
             string fileName = Path.GetFileName(filePath);
+
+            // Ignore any .old backed up files!
+            if (fileName.EndsWith(".old", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             if (fileName.StartsWith("Settings", StringComparison.OrdinalIgnoreCase) || fileName.StartsWith("Donation", StringComparison.OrdinalIgnoreCase))
             {
                 files.Add(new MigrationFile(filePath, Path.Combine(userPaths.SettingsPath, fileName)));

@@ -83,8 +83,30 @@ public sealed class NamedPipeControlServer
     private static NamedPipeServerStream CreatePipe()
     {
         PipeSecurity pipeSecurity = new PipeSecurity();
-        pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
-        pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+
+        pipeSecurity.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(
+                    WellKnownSidType.AuthenticatedUserSid,
+                    null),
+                PipeAccessRights.ReadWrite,
+                AccessControlType.Allow));
+
+        pipeSecurity.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(
+                    WellKnownSidType.LocalServiceSid,
+                    null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Allow));
+
+        pipeSecurity.AddAccessRule(
+            new PipeAccessRule(
+                new SecurityIdentifier(
+                    WellKnownSidType.LocalSystemSid,
+                    null),
+                PipeAccessRights.FullControl,
+                AccessControlType.Allow));
 
         return NamedPipeServerStreamAcl.Create(
             ControlProtocol.ServicePipeName,
@@ -214,6 +236,38 @@ public sealed class NamedPipeControlServer
 
     private async Task HandleAgentMessageAsync(NamedPipeServerStream pipe, PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
     {
+        if (request.MessageType == ControlMessageType.AgentRegistration)
+        {
+            AgentRegistration? registration = JsonSerializer.Deserialize<AgentRegistration>(request.Payload);
+            if (registration == null ||
+                !string.Equals(registration.UserSid, identity.UserSid, StringComparison.OrdinalIgnoreCase) ||
+                registration.SessionId != identity.SessionId ||
+                registration.ProcessId != identity.ProcessId ||
+                !IsInstalledUserAgent(identity, registration))
+            {
+                await SendResultAsync(
+                    pipe,
+                    request.MessageType,
+                    request.RequestId,
+                    false,
+                    ControlErrorCode.CallerIdentityMismatch,
+                    "The updated Agent registration does not match the Windows pipe client.",
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            _coordinator.RegisterAgent(registration, DateTime.UtcNow);
+            await SendResultAsync(
+                pipe,
+                request.MessageType,
+                request.RequestId,
+                true,
+                ControlErrorCode.None,
+                "Agent registration updated.",
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
         if (request.MessageType == ControlMessageType.AgentHeartbeat)
         {

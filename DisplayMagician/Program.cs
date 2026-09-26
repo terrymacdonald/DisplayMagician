@@ -1313,26 +1313,75 @@ namespace DisplayMagician {
 
         internal static bool EnsureUserAgentStarted()
         {
-            if (_userAgentProcess != null && !_userAgentProcess.HasExited)
+            try
             {
-                return true;
-            }
+                int currentSessionId = Process.GetCurrentProcess().SessionId;
 
-            string userAgentPath = Path.Combine(AppStartupPath, "UserAgent", "DisplayMagician.UserAgent.exe");
-            if (!File.Exists(userAgentPath))
+                if (_userAgentProcess != null &&
+                    !_userAgentProcess.HasExited &&
+                    _userAgentProcess.SessionId == currentSessionId)
+                {
+                    return true;
+                }
+
+                Process[] existingAgents =
+                    Process.GetProcessesByName("DisplayMagician.UserAgent");
+
+                foreach (Process process in existingAgents)
+                {
+                    try
+                    {
+                        if (!process.HasExited &&
+                            process.SessionId == currentSessionId)
+                        {
+                            _userAgentProcess = process;
+
+                            logger.Info(
+                                "Program/EnsureUserAgentStarted: Reusing existing User Agent process {0} in session {1}.",
+                                process.Id,
+                                currentSessionId);
+
+                            return true;
+                        }
+                    }
+                    catch
+                    {
+                        process.Dispose();
+                    }
+                }
+
+                string userAgentPath = Path.Combine(
+                    AppStartupPath,
+                    "UserAgent",
+                    "DisplayMagician.UserAgent.exe");
+
+                if (!File.Exists(userAgentPath))
+                {
+                    logger.Error(
+                        "Program/EnsureUserAgentStarted: User Agent executable was not found at {0}.",
+                        userAgentPath);
+
+                    return false;
+                }
+
+                _userAgentProcess = Process.Start(
+                    new ProcessStartInfo
+                    {
+                        FileName = userAgentPath,
+                        WorkingDirectory = Path.GetDirectoryName(userAgentPath)!,
+                        UseShellExecute = false
+                    });
+
+                return _userAgentProcess != null;
+            }
+            catch (Exception ex)
             {
-                logger.Error("Program/EnsureUserAgentStarted: Could not find the User Agent at {0}.", userAgentPath);
+                logger.Error(
+                    ex,
+                    "Program/EnsureUserAgentStarted: Failed to start the User Agent.");
+
                 return false;
             }
-
-            _userAgentProcess = Process.Start(new ProcessStartInfo { FileName = userAgentPath, UseShellExecute = false });
-            if (_userAgentProcess == null)
-            {
-                logger.Error("Program/EnsureUserAgentStarted: The User Agent process did not start.");
-                return false;
-            }
-
-            return true;
         }
 
         private static bool ConnectDesktopStateToUserAgent()
@@ -1344,15 +1393,57 @@ namespace DisplayMagician {
                     return false;
                 }
 
-                UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(new ControlServicePipeClient());
-                ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
-                DesktopProfileViewCache.Refresh();
-                logger.Info("Program/ConnectDesktopStateToUserAgent: Loaded display profile views and the shortcut cache from the User Agent.");
-                return true;
+                Exception lastException = null;
+
+                for (int attempt = 1; attempt <= 20; attempt++)
+                {
+                    try
+                    {
+                        UserAgentRepositoryConnection userAgentRepositoryConnection =
+                            new UserAgentRepositoryConnection(
+                                new ControlServicePipeClient());
+
+                        ShortcutRepository.ConnectToUserAgent(
+                            userAgentRepositoryConnection);
+
+                        DesktopProfileViewCache.Refresh();
+
+                        logger.Info(
+                            "Program/ConnectDesktopStateToUserAgent: Loaded display profile views and the shortcut cache from the User Agent.");
+
+                        return true;
+                    }
+                    catch (Exception ex) when (
+                        ex is IOException ||
+                        ex is TimeoutException ||
+                        ex is InvalidOperationException)
+                    {
+                        lastException = ex;
+
+                        logger.Debug(
+                            ex,
+                            "Program/ConnectDesktopStateToUserAgent: User Agent is not ready yet. Attempt {0}/20.",
+                            attempt);
+
+                        Thread.Sleep(500);
+                    }
+                }
+
+                if (lastException != null)
+                {
+                    logger.Error(
+                        lastException,
+                        "Program/ConnectDesktopStateToUserAgent: User Agent did not become ready within the startup timeout.");
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Program/ConnectDesktopStateToUserAgent: Could not load desktop state from the User Agent.");
+                logger.Error(
+                    ex,
+                    "Program/ConnectDesktopStateToUserAgent: Could not load desktop state from the User Agent.");
+
                 return false;
             }
         }
