@@ -23,23 +23,50 @@ public sealed class SessionLauncherClient : ISessionLauncherClient
 
     public async Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, string? diagnosticLogLevel, CancellationToken cancellationToken)
     {
-        await EnsureSessionLauncherRunningAsync(cancellationToken).ConfigureAwait(false);
-        using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.SessionLauncherPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
-        ControlEnvelope request = new ControlEnvelope
+        try
         {
-            MessageType = ControlMessageType.LaunchUserAgent,
-            RequestId = requestId,
-            Payload = JsonSerializer.Serialize(new UserAgentLaunchRequest { UserSid = userSid, SessionId = sessionId, OperationId = operationId, DiagnosticLogLevel = diagnosticLogLevel })
-        };
-        ControlEnvelope response = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-        if (response.MessageType != request.MessageType)
-        {
-            throw new InvalidDataException("The Session Launcher returned an invalid response.");
-        }
+            await EnsureSessionLauncherRunningAsync(cancellationToken).ConfigureAwait(false);
+            using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.SessionLauncherPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+            await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
+            ControlEnvelope request = new ControlEnvelope
+            {
+                MessageType = ControlMessageType.LaunchUserAgent,
+                RequestId = requestId,
+                Payload = JsonSerializer.Serialize(new UserAgentLaunchRequest { UserSid = userSid, SessionId = sessionId, OperationId = operationId, DiagnosticLogLevel = diagnosticLogLevel })
+            };
+            ControlEnvelope response = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
+            if (response.MessageType != request.MessageType)
+            {
+                throw new InvalidDataException("The Session Launcher returned an invalid response.");
+            }
 
-        return JsonSerializer.Deserialize<UserAgentLaunchResult>(response.Payload)
-            ?? throw new InvalidDataException("The Session Launcher returned an unreadable response.");
+            return JsonSerializer.Deserialize<UserAgentLaunchResult>(response.Payload)
+                ?? throw new InvalidDataException("The Session Launcher returned an unreadable response.");
+        }
+        catch (SessionLauncherUnavailableException)
+        {
+            throw;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Logger.Error(ex, "SessionLauncherClient/LaunchUserAgentAsync: The Control Service was denied access to the Session Launcher pipe.");
+            throw new SessionLauncherUnavailableException("The Control Service was denied access to the Session Launcher service.", ex);
+        }
+        catch (IOException ex)
+        {
+            Logger.Error(ex, "SessionLauncherClient/LaunchUserAgentAsync: Could not connect to the Session Launcher pipe.");
+            throw new SessionLauncherUnavailableException("The Control Service could not connect to the Session Launcher service.", ex);
+        }
+        catch (InvalidDataException ex)
+        {
+            Logger.Error(ex, "SessionLauncherClient/LaunchUserAgentAsync: The Session Launcher returned an invalid response.");
+            throw new SessionLauncherUnavailableException("The Session Launcher service returned an invalid response.", ex);
+        }
+        catch (System.TimeoutException ex)
+        {
+            Logger.Error(ex, "SessionLauncherClient/LaunchUserAgentAsync: The Session Launcher pipe did not respond in time.");
+            throw new SessionLauncherUnavailableException("The Session Launcher service did not respond in time.", ex);
+        }
     }
 
     private static async Task EnsureSessionLauncherRunningAsync(CancellationToken cancellationToken)

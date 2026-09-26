@@ -68,7 +68,7 @@ public sealed class SessionLauncherPipeServer
     private static NamedPipeServerStream CreatePipe()
     {
         PipeSecurity security = new PipeSecurity();
-        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
         return NamedPipeServerStreamAcl.Create(ControlProtocol.SessionLauncherPipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security, HandleInheritability.None);
     }
 
@@ -118,7 +118,7 @@ public sealed class SessionLauncherPipeServer
     {
         string? clientSid = null;
         pipe.RunAsClient(() => { using WindowsIdentity identity = WindowsIdentity.GetCurrent(TokenAccessLevels.Query); clientSid = identity.User?.Value; });
-        if (!string.Equals(clientSid, new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null).Value, StringComparison.OrdinalIgnoreCase) || !GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint processId))
+        if (!string.Equals(clientSid, new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null).Value, StringComparison.OrdinalIgnoreCase) || !GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint processId))
         {
             return false;
         }
