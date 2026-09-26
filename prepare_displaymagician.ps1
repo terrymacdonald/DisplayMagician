@@ -8,14 +8,17 @@
       1. Installs WiX Toolset v7.0.0 dotnet global tool
       2. Installs ImageMagick portable into the repository-local .tools folder
       3. Restores WiX NuGet SDK packages into the local cache
-      3b. Restores Microsoft.Build.NoTargets SDK for the MSIX identity project
-      4. Installs the HeatWave VS extension (.wixproj support in Visual Studio)
-      5. Creates a self-signed code-signing certificate (CN=LittleBitBig)
-      6. Exports it to a PFX file at a path you choose
-      6b. Exports the public certificate to Sandbox\Local\DisplayMagicianTest.cer
-      7. Imports the certificate into LocalMachine\TrustedPeople so Windows
-         trusts the signed MSIX identity package on this machine
-      8. Writes SigningConfig.props so MSBuild can sign the MSIX during build
+      4. Restores Microsoft.Build.NoTargets SDK for the MSIX identity project
+      5. Installs the HeatWave VS extension (.wixproj support in Visual Studio)
+      6. Creates or reuses the local self-signed code-signing certificate
+      7. Exports the certificate to PFX
+      8. Exports the public certificate for Windows Sandbox testing
+      9. Trusts the development certificate locally
+     10. Writes SigningConfig.props for local MSIX signing
+     11. Downloads the latest .NET 10 Desktop Runtime installer
+     12. Downloads the latest .NET 10 ASP.NET Core Runtime installer
+     13. Writes DisplayMagicianBundle\RuntimeConfig.props with the runtime
+         versions and installer filenames used by the WiX bundle
 
     The PFX file and SigningConfig.props are both listed in .gitignore and
     will never be committed to the repository.
@@ -517,99 +520,158 @@ Write-Host "  (This file is gitignored and will not be committed.)" -ForegroundC
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# Download latest .NET 10 Desktop Runtime installer into
+# Download latest .NET 10 Desktop and ASP.NET Core Runtime installers into
 # DisplayMagicianBundle\Packages\
 # ---------------------------------------------------------------------------
 
 $runtimeChannel = '10.0'
-$runtimeUrl = "https://aka.ms/dotnet/$runtimeChannel/windowsdesktop-runtime-win-x64.exe"
 
 $bundlePackagesDir = Join-Path $PSScriptRoot 'DisplayMagicianBundle\Packages'
 New-Item -ItemType Directory -Force -Path $bundlePackagesDir | Out-Null
 
-$tempRuntimePath = Join-Path $env:TEMP "windowsdesktop-runtime-$([Guid]::NewGuid().ToString('N')).exe"
 
-Write-Host "Checking for latest .NET $runtimeChannel Desktop Runtime installer..."
+function Get-DotNetRuntimeInstaller {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string] $DisplayName,
 
-try {
-    Write-Host "  Downloading latest .NET $runtimeChannel Desktop Runtime from Microsoft..."
+        [Parameter(Mandatory = $true)]
+        [string] $DownloadUrl,
 
-    Invoke-WebRequest `
-        -Uri $runtimeUrl `
-        -OutFile $tempRuntimePath `
-        -UseBasicParsing
+        [Parameter(Mandatory = $true)]
+        [string] $FilenamePrefix,
 
-    $runtimeFile = Get-Item -LiteralPath $tempRuntimePath
+        [Parameter(Mandatory = $true)]
+        [string] $CleanupFilter
+    )
 
-    # A real .NET Desktop Runtime installer is many MB.
-    if ($runtimeFile.Length -lt 10MB) {
-        throw "Downloaded installer is unexpectedly small: $($runtimeFile.Length) bytes."
-    }
+    $tempRuntimePath = Join-Path `
+        $env:TEMP `
+        "$FilenamePrefix-$([Guid]::NewGuid().ToString('N')).exe"
 
-    # Verify that Microsoft signed the downloaded executable.
-    $runtimeSignature = Get-AuthenticodeSignature -FilePath $tempRuntimePath
+    try {
+        Write-Host "Checking for latest .NET $runtimeChannel $DisplayName..."
+        Write-Host "  Downloading latest .NET $runtimeChannel $DisplayName from Microsoft..."
 
-    if ($runtimeSignature.Status -ne 'Valid') {
-        throw "Downloaded installer has invalid Authenticode signature: $($runtimeSignature.Status)"
-    }
+        Invoke-WebRequest `
+            -Uri $DownloadUrl `
+            -OutFile $tempRuntimePath `
+            -UseBasicParsing
 
-    # Determine the actual .NET runtime version from the downloaded executable.
-    $productVersion = $runtimeFile.VersionInfo.ProductVersion
+        $runtimeFile = Get-Item -LiteralPath $tempRuntimePath
 
-    if ($productVersion -notmatch '^(?<version>\d+\.\d+\.\d+)') {
-        throw "Could not determine .NET runtime version from installer ProductVersion '$productVersion'."
-    }
+        # Genuine Microsoft runtime installers are many MB.
+        if ($runtimeFile.Length -lt 5MB) {
+            throw "Downloaded installer is unexpectedly small: $($runtimeFile.Length) bytes."
+        }
 
-    $runtimeVersion = $Matches.version
-    $runtimeFilename = "windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
-    $runtimeDest = Join-Path $bundlePackagesDir $runtimeFilename
+        # Verify the installer is authentically signed by Microsoft.
+        $runtimeSignature = Get-AuthenticodeSignature -FilePath $tempRuntimePath
 
-    Write-Host "  Latest runtime version: $runtimeVersion" -ForegroundColor Cyan
+        if ($runtimeSignature.Status -ne 'Valid') {
+            throw "Downloaded installer has invalid Authenticode signature: $($runtimeSignature.Status)"
+        }
 
-    # Remove older .NET 10 Desktop Runtime installers from the package directory.
-    Get-ChildItem `
-        -LiteralPath $bundlePackagesDir `
-        -Filter 'windowsdesktop-runtime-10.0.*-win-x64.exe' `
-        -File `
-        -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -ne $runtimeDest } |
-        Remove-Item -Force
+        # Determine the actual runtime version from the downloaded executable.
+        $productVersion = $runtimeFile.VersionInfo.ProductVersion
 
-    if (Test-Path -LiteralPath $runtimeDest) {
-        $existingFile = Get-Item -LiteralPath $runtimeDest
-        $existingSignature = Get-AuthenticodeSignature -FilePath $runtimeDest
+        if ($productVersion -notmatch '^(?<version>\d+\.\d+\.\d+)') {
+            throw "Could not determine .NET runtime version from installer ProductVersion '$productVersion'."
+        }
 
-        if (
-            $existingFile.Length -eq $runtimeFile.Length -and
-            $existingSignature.Status -eq 'Valid'
-        ) {
-            Write-Host "  Latest runtime already present: $runtimeDest" -ForegroundColor Green
-            Remove-Item -LiteralPath $tempRuntimePath -Force
+        $runtimeVersion = $Matches.version
+        $runtimeFilename = "$FilenamePrefix-$runtimeVersion-win-x64.exe"
+        $runtimeDest = Join-Path $bundlePackagesDir $runtimeFilename
+
+        Write-Host "  Latest runtime version: $runtimeVersion" -ForegroundColor Cyan
+
+        # Remove older installers of this runtime family.
+        Get-ChildItem `
+            -LiteralPath $bundlePackagesDir `
+            -Filter $CleanupFilter `
+            -File `
+            -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -ne $runtimeDest } |
+            Remove-Item -Force
+
+        if (Test-Path -LiteralPath $runtimeDest) {
+            $existingFile = Get-Item -LiteralPath $runtimeDest
+            $existingSignature = Get-AuthenticodeSignature -FilePath $runtimeDest
+
+            if (
+                $existingFile.Length -eq $runtimeFile.Length -and
+                $existingSignature.Status -eq 'Valid'
+            ) {
+                Write-Host "  Latest runtime already present: $runtimeDest" -ForegroundColor Green
+                Remove-Item -LiteralPath $tempRuntimePath -Force
+            }
+            else {
+                Write-Host "  Replacing existing runtime installer..." -ForegroundColor Yellow
+                Move-Item `
+                    -LiteralPath $tempRuntimePath `
+                    -Destination $runtimeDest `
+                    -Force
+            }
         }
         else {
-            Write-Host "  Replacing existing runtime installer..." -ForegroundColor Yellow
-            Move-Item -LiteralPath $tempRuntimePath -Destination $runtimeDest -Force
+            Move-Item `
+                -LiteralPath $tempRuntimePath `
+                -Destination $runtimeDest
+        }
+
+        $finalRuntimeFile = Get-Item -LiteralPath $runtimeDest
+
+        Write-Host "  Runtime installer ready:" -ForegroundColor Green
+        Write-Host "    Version: $runtimeVersion"
+        Write-Host "    File:    $runtimeDest"
+        Write-Host "    Size:    $([Math]::Round($finalRuntimeFile.Length / 1MB, 2)) MB"
+        Write-Host ""
+
+        return [PSCustomObject]@{
+            Version  = $runtimeVersion
+            Filename = $runtimeFilename
+            Path     = $runtimeDest
         }
     }
-    else {
-        Move-Item -LiteralPath $tempRuntimePath -Destination $runtimeDest
+    catch {
+        Remove-Item `
+            -LiteralPath $tempRuntimePath `
+            -Force `
+            -ErrorAction SilentlyContinue
+
+        throw
     }
-
-    $finalRuntimeFile = Get-Item -LiteralPath $runtimeDest
-
-    Write-Host "  Runtime installer ready:" -ForegroundColor Green
-    Write-Host "    Version: $runtimeVersion"
-    Write-Host "    File:    $runtimeDest"
-    Write-Host "    Size:    $([Math]::Round($finalRuntimeFile.Length / 1MB, 2)) MB"
+}
 
 
-    $runtimeConfigPath = Join-Path $PSScriptRoot 'DisplayMagicianBundle\RuntimeConfig.props'
+try {
+    # Windows Desktop Runtime
+    $desktopRuntime = Get-DotNetRuntimeInstaller `
+        -DisplayName 'Desktop Runtime' `
+        -DownloadUrl "https://aka.ms/dotnet/$runtimeChannel/windowsdesktop-runtime-win-x64.exe" `
+        -FilenamePrefix 'windowsdesktop-runtime' `
+        -CleanupFilter 'windowsdesktop-runtime-10.0.*-win-x64.exe'
+
+    # ASP.NET Core Runtime - required by DisplayMagician.Gateway
+    $aspNetCoreRuntime = Get-DotNetRuntimeInstaller `
+        -DisplayName 'ASP.NET Core Runtime' `
+        -DownloadUrl "https://aka.ms/dotnet/$runtimeChannel/aspnetcore-runtime-win-x64.exe" `
+        -FilenamePrefix 'aspnetcore-runtime' `
+        -CleanupFilter 'aspnetcore-runtime-10.0.*-win-x64.exe'
+
+
+    $runtimeConfigPath = Join-Path `
+        $PSScriptRoot `
+        'DisplayMagicianBundle\RuntimeConfig.props'
 
     $runtimeConfigContent = @"
 <Project>
   <PropertyGroup>
-    <DotNetDesktopRuntimeVersion>$runtimeVersion</DotNetDesktopRuntimeVersion>
-    <DotNetDesktopRuntimeFilename>$runtimeFilename</DotNetDesktopRuntimeFilename>
+    <DotNetDesktopRuntimeVersion>$($desktopRuntime.Version)</DotNetDesktopRuntimeVersion>
+    <DotNetDesktopRuntimeFilename>$($desktopRuntime.Filename)</DotNetDesktopRuntimeFilename>
+
+    <AspNetCoreRuntimeVersion>$($aspNetCoreRuntime.Version)</AspNetCoreRuntimeVersion>
+    <AspNetCoreRuntimeFilename>$($aspNetCoreRuntime.Filename)</AspNetCoreRuntimeFilename>
   </PropertyGroup>
 </Project>
 "@
@@ -618,17 +680,13 @@ try {
         -LiteralPath $runtimeConfigPath `
         -Encoding UTF8
 
-    Write-Host "  Runtime configuration written: $runtimeConfigPath" -ForegroundColor Green
-    
+    Write-Host "Runtime configuration written: $runtimeConfigPath" -ForegroundColor Green
 }
 catch {
-    Remove-Item -LiteralPath $tempRuntimePath -Force -ErrorAction SilentlyContinue
-
-    Write-Warning "Could not download a valid .NET Desktop Runtime installer: $_"
+    Write-Warning "Could not download valid .NET runtime installers: $_"
     Write-Warning "Download manually from https://dotnet.microsoft.com/download/dotnet/10.0"
     throw
 }
-
 Write-Host ""
 
 
@@ -637,20 +695,22 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 Write-Host "=== Setup complete ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "You can now build DisplayMagicianPackage or DisplayMagicianBundle in Visual Studio"
-Write-Host "and the MSIX identity package will be packed and signed automatically."
-Write-Host ""
 Write-Host "Tools installed:" -ForegroundColor White
 Write-Host "  WiX Toolset v$requiredWixVersion (dotnet global tool)"
 Write-Host "  ImageMagick $imageMagickVersion portable ($imageMagickToolDir)"
 Write-Host "  HeatWave VS extension (.wixproj support in Visual Studio)"
 Write-Host "  Microsoft.Build.NoTargets SDK (DisplayMagicianIdentityPkg NuGet restore)"
-Write-Host "  .NET $runtimeVersion Desktop Runtime installer (DisplayMagicianBundle\Packages\)"
+Write-Host "  .NET $($desktopRuntime.Version) Desktop Runtime installer"
+Write-Host "    $($desktopRuntime.Path)"
+Write-Host "  .NET $($aspNetCoreRuntime.Version) ASP.NET Core Runtime installer"
+Write-Host "    $($aspNetCoreRuntime.Path)"
 Write-Host ""
+
 Write-Host "Files created/updated:" -ForegroundColor White
 Write-Host "  $pfxPath"
 Write-Host "  $sandboxCerPath"
 Write-Host "  $signingProps"
+Write-Host "  $runtimeConfigPath"
 Write-Host ""
 Write-Host "REMINDER: Keep your PFX file safe. If you lose it you will need to re-run" -ForegroundColor Yellow
 Write-Host "this script and reinstall your application on all test machines." -ForegroundColor Yellow

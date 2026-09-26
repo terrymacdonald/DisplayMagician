@@ -9,7 +9,9 @@
     <DefineConstants>
       DmPackageDir=$(DmPackageDir);
       DotNetDesktopRuntimeVersion=$(DotNetDesktopRuntimeVersion);
-      DotNetDesktopRuntimeFilename=$(DotNetDesktopRuntimeFilename)
+      DotNetDesktopRuntimeFilename=$(DotNetDesktopRuntimeFilename);
+      AspNetCoreRuntimeVersion=$(AspNetCoreRuntimeVersion);
+      AspNetCoreRuntimeFilename=$(AspNetCoreRuntimeFilename)
     </DefineConstants>
     <!-- Suppress ICE validation to avoid WIX1105 warning when not running as admin -->
     <SuppressValidation>true</SuppressValidation>
@@ -33,12 +35,20 @@
   </ItemGroup>
   <Target Name="ValidateRuntimeConfig" BeforeTargets="Build">
     <Error
-      Condition="'$(DotNetDesktopRuntimeVersion)' == ''"
-      Text="The .NET Desktop Runtime configuration is missing. Run prepare_displaymagician.ps1 first." />
+        Condition="'$(DotNetDesktopRuntimeVersion)' == ''"
+        Text="The .NET Desktop Runtime configuration is missing. Run prepare_displaymagician.ps1 first." />
 
     <Error
-      Condition="'$(DotNetDesktopRuntimeFilename)' == ''"
-      Text="The .NET Desktop Runtime filename is missing. Run prepare_displaymagician.ps1 first." />
+        Condition="'$(DotNetDesktopRuntimeFilename)' == ''"
+        Text="The .NET Desktop Runtime filename is missing. Run prepare_displaymagician.ps1 first." />
+
+    <Error
+        Condition="'$(AspNetCoreRuntimeVersion)' == ''"
+        Text="The ASP.NET Core Runtime configuration is missing. Run prepare_displaymagician.ps1 first." />
+
+    <Error
+        Condition="'$(AspNetCoreRuntimeFilename)' == ''"
+        Text="The ASP.NET Core Runtime filename is missing. Run prepare_displaymagician.ps1 first." />
   </Target>
   <!-- Added as workaround for FireGiant HeatWave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
   <Target Name="CollectSuggestedVisualStudioComponentIds" />
