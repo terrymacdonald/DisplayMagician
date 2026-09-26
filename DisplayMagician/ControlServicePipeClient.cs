@@ -412,9 +412,10 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful && response.RepositoryCommit != null ? response.RepositoryCommit : throw new InvalidOperationException(response.Message);
     }
 
-    public async Task SubscribeClientEventsAsync(Func<ControlClientEvent, Task> onEvent, CancellationToken cancellationToken)
+    public async Task SubscribeClientEventsAsync(Func<ControlClientEvent, Task> onEvent, Action<ProtocolWelcome> onConnected, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(onEvent);
+        ArgumentNullException.ThrowIfNull(onConnected);
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientEventPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.SubscribeClientEvents, Hello = ControlProtocol.CreateHello(ControlClientKind.DesktopApplication, "DisplayMagician.WinForms", "DisplayMagician") };
@@ -430,6 +431,13 @@ internal sealed class ControlServicePipeClient
         {
             throw new InvalidOperationException(subscriptionResponse.Message);
         }
+
+        if (subscriptionResponse.ProtocolWelcome == null)
+        {
+            throw new InvalidDataException("The Control Service did not provide event subscription compatibility metadata.");
+        }
+
+        onConnected(subscriptionResponse.ProtocolWelcome);
 
         foreach (OperationStatus status in subscriptionResponse.OperationStatuses)
         {

@@ -98,6 +98,7 @@ public sealed class SessionLauncherClient : ISessionLauncherClient
 
     public async Task<UserAgentLaunchResult> StopUserAgentAsync(string userSid, int sessionId, int processId, Guid requestId, CancellationToken cancellationToken)
     {
+        await EnsureSessionLauncherRunningAsync(cancellationToken).ConfigureAwait(false);
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.SessionLauncherPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.StopUserAgent, RequestId = requestId, Payload = JsonSerializer.Serialize(new UserAgentStopRequest { UserSid = userSid, SessionId = sessionId, ProcessId = processId }) };

@@ -93,6 +93,7 @@ internal static class Program
 
     private static async Task RunServiceConnectionWithRetryAsync(ControlServiceClient serviceClient, AgentRegistration registration, bool acquireDisplayControl, bool migrateUserData, TaskCompletionSource<ControlResponse> migrationCompletion, CancellationToken cancellationToken)
     {
+        int retrySeconds = 5;
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -106,12 +107,14 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                LogManager.GetCurrentClassLogger().Warn(ex, "Program/RunServiceConnectionWithRetryAsync: Control Service connection ended. Retrying shortly without stopping the User Agent.");
+                LogManager.GetCurrentClassLogger().Warn(ex, "Program/RunServiceConnectionWithRetryAsync: Control Service connection ended. Retrying in approximately {0} seconds without stopping the User Agent.", retrySeconds);
             }
 
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
+                int delayMilliseconds = (int)(retrySeconds * 1000 * (0.8 + (Random.Shared.NextDouble() * 0.4)));
+                await Task.Delay(TimeSpan.FromMilliseconds(delayMilliseconds), cancellationToken).ConfigureAwait(false);
+                retrySeconds = Math.Min(retrySeconds * 2, 60);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
