@@ -34,6 +34,7 @@ internal static class Program
         builder.Services.AddSingleton(settings);
         builder.Services.AddSingleton<GatewayControlServiceClient>();
         builder.Services.AddSingleton<GatewayStatusFeed>();
+        builder.Services.AddHostedService(provider => provider.GetRequiredService<GatewayStatusFeed>());
         builder.Services.AddSingleton<IGatewayAuthenticationClient>(provider => provider.GetRequiredService<GatewayControlServiceClient>());
         builder.Services.AddHostedService<GatewayRegistrationService>();
         builder.WebHost.ConfigureKestrel(options =>
@@ -74,7 +75,7 @@ internal static class Program
 
             return Results.Ok(await controlServiceClient.GetRemoteUserStatusAsync(authentication, changedSinceUtc, cancellationToken).ConfigureAwait(false));
         });
-        app.MapGet("/v1/status/stream", async (HttpContext context, DateTime? changedSinceUtc, GatewayStatusFeed statusFeed, CancellationToken cancellationToken) =>
+        app.MapGet("/v1/status/stream", async (HttpContext context, GatewayStatusFeed statusFeed, CancellationToken cancellationToken) =>
         {
             GatewayAuthenticationResult authentication = GatewayRequestAuthenticationMiddleware.GetAuthentication(context);
             if (!authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal))
@@ -86,23 +87,26 @@ internal static class Program
             context.Response.ContentType = "text/event-stream";
             context.Response.Headers.CacheControl = "no-cache";
             ChannelReader<RemoteUserStatus> updates = statusFeed.Subscribe(authentication, cancellationToken);
-            DateTime lastKeepAliveUtc = DateTime.UtcNow;
             while (!cancellationToken.IsCancellationRequested)
             {
-                Task<RemoteUserStatus> read = updates.ReadAsync(cancellationToken).AsTask();
-                Task delay = Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
-                if (await Task.WhenAny(read, delay).ConfigureAwait(false) == read)
+                using CancellationTokenSource keepAliveCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                keepAliveCancellation.CancelAfter(TimeSpan.FromSeconds(15));
+
+                try
                 {
-                    RemoteUserStatus status = await read.ConfigureAwait(false);
+                    RemoteUserStatus status = await updates.ReadAsync(keepAliveCancellation.Token).ConfigureAwait(false);
                     string json = System.Text.Json.JsonSerializer.Serialize(status);
                     await context.Response.WriteAsync($"event: status\ndata: {json}\n\n", cancellationToken).ConfigureAwait(false);
                     await context.Response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);
                 }
-                else
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
                     await context.Response.WriteAsync(": keep-alive\n\n", cancellationToken).ConfigureAwait(false);
                     await context.Response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);
-                    lastKeepAliveUtc = DateTime.UtcNow;
+                }
+                catch (ChannelClosedException)
+                {
+                    break;
                 }
             }
         });
