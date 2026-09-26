@@ -132,6 +132,35 @@ public sealed class ControlStateCoordinatorTests
     }
 
     [Fact]
+    public void TryRegisterAgentConnection_RejectsDifferentProcessForSameSession()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        DateTime now = DateTime.UtcNow;
+        AgentRegistration firstAgent = CreateAgent("S-1-5-21-100", 10, 1000);
+        AgentRegistration secondAgent = CreateAgent("S-1-5-21-100", 10, 2000);
+
+        Assert.True(coordinator.TryRegisterAgentConnection(firstAgent, now, out _));
+        Assert.False(coordinator.TryRegisterAgentConnection(secondAgent, now.AddSeconds(1), out string message));
+        Assert.Contains("already connected", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(firstAgent.ProcessId, coordinator.GetAgentRegistration(firstAgent.UserSid, firstAgent.SessionId)!.ProcessId);
+    }
+
+    [Fact]
+    public void UpdateAgentRegistration_DoesNotAddAnotherConnection()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        DateTime now = DateTime.UtcNow;
+        AgentRegistration agent = CreateAgent("S-1-5-21-100", 10, 1000);
+        Assert.True(coordinator.TryRegisterAgentConnection(agent, now, out _));
+
+        agent.IsReady = true;
+        Assert.True(coordinator.UpdateAgentRegistration(agent, now.AddSeconds(1), out _));
+        coordinator.UnregisterAgent(agent.UserSid, agent.SessionId, agent.ProcessId);
+
+        Assert.Null(coordinator.GetAgentRegistration(agent.UserSid, agent.SessionId));
+    }
+
+    [Fact]
     public void RecoveryRequiredLease_SurvivesServiceRestartUntilOwnerAgentConfirmsRestoration()
     {
         string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ControlState-{Guid.NewGuid():N}");

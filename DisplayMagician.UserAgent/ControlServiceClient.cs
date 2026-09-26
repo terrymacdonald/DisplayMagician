@@ -36,6 +36,7 @@ public sealed class ControlServiceClient
             ControlResponse registrationResponse = await SendPersistentAsync(request, cancellationToken).ConfigureAwait(false);
             if (!registrationResponse.IsSuccessful)
             {
+                migrationCompletion?.TrySetResult(registrationResponse);
                 throw new InvalidOperationException(registrationResponse.Message);
             }
 

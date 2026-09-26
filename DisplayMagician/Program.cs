@@ -105,7 +105,6 @@ namespace DisplayMagician {
         private const string ControlServiceName = "DisplayMagicianControlService";
 
         private static volatile bool _useTestUpdateFeed;
-        private static Process _userAgentProcess;
 
         public static bool CancelActiveOperation()
         {
@@ -1274,11 +1273,6 @@ namespace DisplayMagician {
             profileId = profileId.Trim('"');
             try
             {
-                if (!EnsureUserAgentStarted())
-                {
-                    return ERRORLEVEL.ERROR_APPLYING_PROFILE;
-                }
-
                 ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
                 DisplayMagician.Contracts.ControlResponse response = controlServiceClient.ApplyProfileWhenAgentAvailableAsync(profileId, CancellationToken.None).GetAwaiter().GetResult();
                 if (response.IsSuccessful)
@@ -1311,88 +1305,10 @@ namespace DisplayMagician {
             return true;
         }
 
-        internal static bool EnsureUserAgentStarted()
-        {
-            try
-            {
-                int currentSessionId = Process.GetCurrentProcess().SessionId;
-
-                if (_userAgentProcess != null &&
-                    !_userAgentProcess.HasExited &&
-                    _userAgentProcess.SessionId == currentSessionId)
-                {
-                    return true;
-                }
-
-                Process[] existingAgents =
-                    Process.GetProcessesByName("DisplayMagician.UserAgent");
-
-                foreach (Process process in existingAgents)
-                {
-                    try
-                    {
-                        if (!process.HasExited &&
-                            process.SessionId == currentSessionId)
-                        {
-                            _userAgentProcess = process;
-
-                            logger.Info(
-                                "Program/EnsureUserAgentStarted: Reusing existing User Agent process {0} in session {1}.",
-                                process.Id,
-                                currentSessionId);
-
-                            return true;
-                        }
-                    }
-                    catch
-                    {
-                        process.Dispose();
-                    }
-                }
-
-                string userAgentPath = Path.Combine(
-                    AppStartupPath,
-                    "UserAgent",
-                    "DisplayMagician.UserAgent.exe");
-
-                if (!File.Exists(userAgentPath))
-                {
-                    logger.Error(
-                        "Program/EnsureUserAgentStarted: User Agent executable was not found at {0}.",
-                        userAgentPath);
-
-                    return false;
-                }
-
-                _userAgentProcess = Process.Start(
-                    new ProcessStartInfo
-                    {
-                        FileName = userAgentPath,
-                        WorkingDirectory = Path.GetDirectoryName(userAgentPath)!,
-                        UseShellExecute = false
-                    });
-
-                return _userAgentProcess != null;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(
-                    ex,
-                    "Program/EnsureUserAgentStarted: Failed to start the User Agent.");
-
-                return false;
-            }
-        }
-
         private static bool ConnectDesktopStateToUserAgent()
         {
             try
             {
-                if (!EnsureUserAgentStarted())
-                {
-                    return false;
-                }
-
                 Exception lastException = null;
 
                 for (int attempt = 1; attempt <= 20; attempt++)
@@ -1450,23 +1366,18 @@ namespace DisplayMagician {
 
         internal static void StopUserAgentIfIdle()
         {
-            if (_userAgentProcess == null || _userAgentProcess.HasExited)
-            {
-                return;
-            }
-
             try
             {
                 ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
                 DisplayMagician.Contracts.ControlResponse response = controlServiceClient.StopAgentIfIdleAsync(CancellationToken.None).GetAwaiter().GetResult();
-                if (!response.IsSuccessful)
+                if (!response.IsSuccessful && response.ErrorCode != DisplayMagician.Contracts.ControlErrorCode.AgentUnavailable)
                 {
                     logger.Info("Program/StopUserAgentIfIdle: The User Agent remains running. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
                 }
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, "Program/StopUserAgentIfIdle: Unable to ask the User Agent to stop before WinForms exits.");
+                logger.Warn(ex, "Program/StopUserAgentIfIdle: Unable to ask the Control Service to stop the User Agent before WinForms exits.");
             }
         }
 

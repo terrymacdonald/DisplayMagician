@@ -62,7 +62,6 @@ namespace DisplayMagician.UIForms
         {
             try
             {
-                if (!Program.EnsureUserAgentStarted()) throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load display profiles.");
                 await RefreshProfilesAsync(null, cancellationToken);
                 if (Utils.TimeToRunDonationAnimation()) Utils.AddAnimation(btn_donate);
             }

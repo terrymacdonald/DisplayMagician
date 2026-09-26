@@ -35,7 +35,7 @@ internal static class Program
 
         bool acquireDisplayControl = startupRequest.Action == UserAgentStartupAction.AcquireDisplayControl;
         bool migrateUserData = true;
-        ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration);
+        ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration, serviceClient);
         TaskCompletionSource<ControlResponse> migrationCompletion = new TaskCompletionSource<ControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
         Task serviceConnection = RunServiceConnectionWithRetryAsync(serviceClient, registration, acquireDisplayControl, migrateUserData, migrationCompletion, cancellationTokenSource.Token);

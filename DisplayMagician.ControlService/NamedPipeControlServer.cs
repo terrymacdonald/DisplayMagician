@@ -161,7 +161,13 @@ public sealed class NamedPipeControlServer
                     return;
                 }
 
-                _coordinator.RegisterAgent(registration, DateTime.UtcNow);
+                if (!_coordinator.TryRegisterAgentConnection(registration, DateTime.UtcNow, out string registrationMessage))
+                {
+                    _logger.Warn("NamedPipeControlServer/HandleClientAsync: Rejected duplicate User Agent for SID {0}, session {1}, process {2}. {3}", identity.UserSid, identity.SessionId, identity.ProcessId, registrationMessage);
+                    await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, false, ControlErrorCode.AgentUnavailable, registrationMessage, cancellationToken, protocolWelcome: registrationWelcome).ConfigureAwait(false);
+                    return;
+                }
+
                 registeredIdentity = identity;
                 _logger.Info("NamedPipeControlServer/HandleClientAsync: Registered User Agent for SID {0}, session {1}, process {2}.", identity.UserSid, identity.SessionId, identity.ProcessId);
                 await SendResultAsync(pipe, envelope.MessageType, envelope.RequestId, true, ControlErrorCode.None, "Agent registration accepted.", cancellationToken, protocolWelcome: registrationWelcome).ConfigureAwait(false);
@@ -256,14 +262,26 @@ public sealed class NamedPipeControlServer
                 return;
             }
 
-            _coordinator.RegisterAgent(registration, DateTime.UtcNow);
+            if (!_coordinator.UpdateAgentRegistration(registration, DateTime.UtcNow, out string updateMessage))
+            {
+                await SendResultAsync(
+                    pipe,
+                    request.MessageType,
+                    request.RequestId,
+                    false,
+                    ControlErrorCode.AgentUnavailable,
+                    updateMessage,
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             await SendResultAsync(
                 pipe,
                 request.MessageType,
                 request.RequestId,
                 true,
                 ControlErrorCode.None,
-                "Agent registration updated.",
+                updateMessage,
                 cancellationToken).ConfigureAwait(false);
             return;
         }

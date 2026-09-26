@@ -49,11 +49,11 @@ public sealed class ProfileCommandHandler
     public AutomaticGameDetectionRegistry AutomaticGameDetectionRegistry => _automaticGameDetectionRegistry;
     public ShortcutRunner ShortcutRunner => _shortcutRunner;
 
-    public ProfileCommandHandler(AgentRegistration registration, IInteractiveSessionStateProvider? interactiveSessionStateProvider = null)
+    public ProfileCommandHandler(AgentRegistration registration, ControlServiceClient controlServiceClient, IInteractiveSessionStateProvider? interactiveSessionStateProvider = null)
     {
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
+        _controlServiceClient = controlServiceClient ?? throw new ArgumentNullException(nameof(controlServiceClient));
         _interactiveSessionStateProvider = interactiveSessionStateProvider ?? new WtsInteractiveSessionStateProvider();
-        _controlServiceClient = new ControlServiceClient();
         _userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", _registration.UserSid);
         _operationStatusOutbox = new OperationStatusOutbox(_userDataPath);
         ProfileRepository.ConfigureStoragePath(_userDataPath);

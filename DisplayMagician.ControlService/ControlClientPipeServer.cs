@@ -254,7 +254,7 @@ public sealed class ControlClientPipeServer
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException || ex is TimeoutException)
             {
-                _logger.Debug(ex, "ControlClientPipeServer/HandleClientAsync: Client request ended or was invalid.");
+                _logger.Error(ex, "ControlClientPipeServer/HandleClientAsync: Client request processing failed.");
             }
         }
     }

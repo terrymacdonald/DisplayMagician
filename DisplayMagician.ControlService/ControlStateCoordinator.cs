@@ -25,28 +25,57 @@ public sealed class ControlStateCoordinator
 
     public void RegisterAgent(AgentRegistration registration, DateTime utcNow)
     {
+        if (!TryRegisterAgentConnection(registration, utcNow, out string message))
+        {
+            throw new InvalidOperationException(message);
+        }
+    }
+
+    public bool TryRegisterAgentConnection(AgentRegistration registration, DateTime utcNow, out string message)
+    {
         ArgumentNullException.ThrowIfNull(registration);
 
         lock (_syncRoot)
         {
-            if (_agentsBySession.TryGetValue(registration.SessionId, out RegisteredAgent? existingAgent)
-                && string.Equals(existingAgent.Registration.UserSid, registration.UserSid, StringComparison.OrdinalIgnoreCase)
-                && existingAgent.Registration.ProcessId == registration.ProcessId)
+            if (_agentsBySession.TryGetValue(registration.SessionId, out RegisteredAgent? existingAgent))
             {
+                if (!string.Equals(existingAgent.Registration.UserSid, registration.UserSid, StringComparison.OrdinalIgnoreCase)
+                    || existingAgent.Registration.ProcessId != registration.ProcessId)
+                {
+                    message = $"Another User Agent is already connected for session {registration.SessionId}.";
+                    return false;
+                }
+
                 existingAgent.ConnectionCount++;
-                existingAgent.Registration.Version = registration.Version;
-                existingAgent.Registration.StartupMode = registration.StartupMode;
-                existingAgent.Registration.OperationState = registration.OperationState;
-                existingAgent.Registration.IsRecoveryRequired = registration.IsRecoveryRequired;
-                existingAgent.Registration.IsReady = registration.IsReady;
-                existingAgent.Registration.CommandPipeName = registration.CommandPipeName;
-                existingAgent.LastHeartbeatUtc = utcNow;
-                ConfirmRecoveryRestored(registration);
-                return;
+                UpdateRegistration(existingAgent, registration, utcNow);
+                message = "Agent connection registered.";
+                return true;
             }
 
-            _agentsBySession[registration.SessionId] = new RegisteredAgent(registration, utcNow);
+            _agentsBySession[registration.SessionId] = new RegisteredAgent(CopyRegistration(registration), utcNow);
             ConfirmRecoveryRestored(registration);
+            message = "Agent connection registered.";
+            return true;
+        }
+    }
+
+    public bool UpdateAgentRegistration(AgentRegistration registration, DateTime utcNow, out string message)
+    {
+        ArgumentNullException.ThrowIfNull(registration);
+
+        lock (_syncRoot)
+        {
+            if (!_agentsBySession.TryGetValue(registration.SessionId, out RegisteredAgent? existingAgent)
+                || !string.Equals(existingAgent.Registration.UserSid, registration.UserSid, StringComparison.OrdinalIgnoreCase)
+                || existingAgent.Registration.ProcessId != registration.ProcessId)
+            {
+                message = "The User Agent is no longer the registered owner of this session.";
+                return false;
+            }
+
+            UpdateRegistration(existingAgent, registration, utcNow);
+            message = "Agent registration updated.";
+            return true;
         }
     }
 
@@ -288,6 +317,18 @@ public sealed class ControlStateCoordinator
                 DisplayControlLease = _displayControlLease == null ? null : CopyLease(_displayControlLease)
             };
         }
+    }
+
+    private void UpdateRegistration(RegisteredAgent existingAgent, AgentRegistration registration, DateTime utcNow)
+    {
+        existingAgent.Registration.Version = registration.Version;
+        existingAgent.Registration.StartupMode = registration.StartupMode;
+        existingAgent.Registration.OperationState = registration.OperationState;
+        existingAgent.Registration.IsRecoveryRequired = registration.IsRecoveryRequired;
+        existingAgent.Registration.IsReady = registration.IsReady;
+        existingAgent.Registration.CommandPipeName = registration.CommandPipeName;
+        existingAgent.LastHeartbeatUtc = utcNow;
+        ConfirmRecoveryRestored(registration);
     }
 
     private static LeaseDecision Deny(ControlErrorCode errorCode, string message)

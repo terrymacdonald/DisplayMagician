@@ -33,9 +33,6 @@ namespace DisplayMagician.UIForms
         {
             try
             {
-                if (!Program.EnsureUserAgentStarted())
-                    throw new InvalidOperationException("DisplayMagician could not start the User Agent required to load audio profiles.");
-
                 await RefreshAudioProfilesAsync();
             }
             catch (Exception ex)
