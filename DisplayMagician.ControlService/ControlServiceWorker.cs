@@ -84,6 +84,6 @@ public sealed class ControlServiceWorker : BackgroundService
 
     private void PublishOperationDecision(OperationDecision decision)
     {
-        _eventHub.Publish(decision.OwnerUserSid, decision.OwnerSessionId, new ControlClientEvent { EventType = ControlClientEventType.OperationDecisionUpdated, PublishedUtc = DateTime.UtcNow, OperationDecision = decision });
+        _eventHub.Publish(decision.OwnerUserSid, decision.OwnerSessionId, new ControlClientEvent { EventType = ControlClientEventType.OperationDecisionUpdated, Scope = ControlClientEventScope.User, PublishedUtc = DateTime.UtcNow, OperationDecision = decision });
     }
 }

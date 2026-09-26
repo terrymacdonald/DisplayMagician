@@ -105,9 +105,25 @@ public sealed class AgentCommandServer
             {
                 return;
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException || ex is TimeoutException)
+            catch (EndOfStreamException ex)
             {
-                Logger.Debug(ex, "AgentCommandServer/RunAsync: Control Service command connection ended or was invalid.");
+                Logger.Debug(ex, "AgentCommandServer/RunAsync: The Control Service closed the User Agent command pipe before completing a request.");
+            }
+            catch (IOException ex)
+            {
+                Logger.Debug(ex, "AgentCommandServer/RunAsync: The User Agent command pipe was disconnected during a Control Service request.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Logger.Warn(ex, "AgentCommandServer/RunAsync: Rejected an unauthorised caller on the User Agent command pipe.");
+            }
+            catch (TimeoutException ex)
+            {
+                Logger.Warn(ex, "AgentCommandServer/RunAsync: The Control Service did not send a complete User Agent command before the request timeout.");
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is JsonException)
+            {
+                Logger.Warn(ex, "AgentCommandServer/RunAsync: The Control Service sent an invalid User Agent command request.");
             }
         }
     }
@@ -146,24 +162,25 @@ public sealed class AgentCommandServer
     {
         using WindowsIdentity identity = WindowsIdentity.GetCurrent();
         SecurityIdentifier userSid = identity.User ?? throw new InvalidOperationException("The current Windows user has no SID.");
-        SecurityIdentifier localServiceSid = new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null);
+        SecurityIdentifier localSystemSid = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
         PipeSecurity security = new PipeSecurity();
         security.AddAccessRule(new PipeAccessRule(userSid, PipeAccessRights.FullControl, AccessControlType.Allow));
-        security.AddAccessRule(new PipeAccessRule(localServiceSid, PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(localSystemSid, PipeAccessRights.ReadWrite, AccessControlType.Allow));
 
         return NamedPipeServerStreamAcl.Create(_pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security, HandleInheritability.None);
     }
 
     private static bool IsControlService(NamedPipeServerStream pipe)
     {
-        bool isLocalService = false;
+        bool isLocalSystem = false;
         pipe.RunAsClient(() =>
         {
             using WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            isLocalService = identity.User?.IsWellKnown(WellKnownSidType.LocalServiceSid) == true;
+            isLocalSystem = identity.User?.IsWellKnown(WellKnownSidType.LocalSystemSid) == true;
         });
-        if (!isLocalService || !GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint processId))
+        if (!isLocalSystem || !GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint processId))
         {
+            Logger.Warn("AgentCommandServer/IsControlService: Rejected a command-pipe caller because it was not the LocalSystem Control Service.");
             return false;
         }
 
@@ -171,7 +188,13 @@ public sealed class AgentCommandServer
         {
             using System.Diagnostics.Process process = System.Diagnostics.Process.GetProcessById(checked((int)processId));
             string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "ControlService", "DisplayMagician.ControlService.exe"));
-            return string.Equals(process.MainModule?.FileName, expectedPath, StringComparison.OrdinalIgnoreCase);
+            bool isControlService = string.Equals(process.MainModule?.FileName, expectedPath, StringComparison.OrdinalIgnoreCase);
+            if (!isControlService)
+            {
+                Logger.Warn("AgentCommandServer/IsControlService: Rejected command-pipe caller process {0} because it was not the installed Control Service executable.", processId);
+            }
+
+            return isControlService;
         }
         catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception || ex is UnauthorizedAccessException)
         {

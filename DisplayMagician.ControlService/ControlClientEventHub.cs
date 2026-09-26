@@ -23,7 +23,8 @@ public sealed class ControlClientEventHub
         ArgumentNullException.ThrowIfNull(clientEvent);
         foreach (Subscription subscription in _subscriptions.Values)
         {
-            if (string.Equals(subscription.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(subscription.UserSid, userSid, StringComparison.OrdinalIgnoreCase) &&
+                (clientEvent.Scope == ControlClientEventScope.User || subscription.SessionId == sessionId))
             {
                 if (!subscription.Events.Writer.TryWrite(clientEvent))
                 {

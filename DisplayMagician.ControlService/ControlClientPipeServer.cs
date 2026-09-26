@@ -256,9 +256,25 @@ public sealed class ControlClientPipeServer
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException || ex is TimeoutException)
+            catch (EndOfStreamException ex)
             {
-                _logger.Error(ex, "ControlClientPipeServer/HandleClientAsync: Client request processing failed.");
+                _logger.Debug(ex, "ControlClientPipeServer/HandleClientAsync: Client closed the Control Service request pipe before the response was sent.");
+            }
+            catch (IOException ex)
+            {
+                _logger.Debug(ex, "ControlClientPipeServer/HandleClientAsync: The Control Service request pipe was disconnected during client processing.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: Rejected an unauthorised Control Service client request.");
+            }
+            catch (TimeoutException ex)
+            {
+                _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: A client request did not complete before the pipe timeout.");
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is JsonException)
+            {
+                _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: A client sent an invalid Control Service request.");
             }
         }
     }

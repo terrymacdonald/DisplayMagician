@@ -137,6 +137,18 @@ public sealed class OperationStatusStore
         }
     }
 
+    public OperationStatus[] GetActive(string ownerUserSid, int ownerSessionId)
+    {
+        lock (_syncRoot)
+        {
+            return _operations.Values
+                .Where(status => !status.IsTerminal && string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) && status.OwnerSessionId == ownerSessionId)
+                .OrderByDescending(status => status.UpdatedUtc)
+                .Select(Copy)
+                .ToArray();
+        }
+    }
+
     public void RefreshAuthority(AgentStatus[] agents)
     {
         ArgumentNullException.ThrowIfNull(agents);

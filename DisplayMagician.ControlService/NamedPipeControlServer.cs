@@ -211,9 +211,21 @@ public sealed class NamedPipeControlServer
             {
                 _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Pipe client did not register or send a heartbeat before its deadline.");
             }
-            catch (Exception ex)
+            catch (EndOfStreamException ex)
             {
-                _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Pipe client processing failed.");
+                _logger.Debug(ex, "NamedPipeControlServer/HandleClientAsync: User Agent closed its persistent Control Service pipe.");
+            }
+            catch (IOException ex)
+            {
+                _logger.Debug(ex, "NamedPipeControlServer/HandleClientAsync: The persistent User Agent pipe was disconnected.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Rejected an unauthorised User Agent pipe client.");
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is JsonException)
+            {
+                _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: The User Agent pipe client sent an invalid request.");
             }
             finally
             {

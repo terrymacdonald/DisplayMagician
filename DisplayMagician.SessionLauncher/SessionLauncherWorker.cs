@@ -58,9 +58,25 @@ public sealed class SessionLauncherPipeServer
             {
                 return;
             }
-            catch (Exception ex)
+            catch (EndOfStreamException ex)
             {
-                _logger.Error(ex, "SessionLauncherPipeServer/RunAsync: Unable to serve a Session Launcher request.");
+                _logger.Debug(ex, "SessionLauncherPipeServer/RunAsync: The Control Service closed the Session Launcher pipe before completing its request.");
+            }
+            catch (IOException ex)
+            {
+                _logger.Debug(ex, "SessionLauncherPipeServer/RunAsync: The Session Launcher pipe was disconnected during a Control Service request.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.Warn(ex, "SessionLauncherPipeServer/RunAsync: Rejected an unauthorised Session Launcher pipe caller.");
+            }
+            catch (TimeoutException ex)
+            {
+                _logger.Warn(ex, "SessionLauncherPipeServer/RunAsync: The Control Service did not send a complete Session Launcher request before the timeout.");
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is JsonException)
+            {
+                _logger.Warn(ex, "SessionLauncherPipeServer/RunAsync: The Control Service sent an invalid Session Launcher request.");
             }
         }
     }

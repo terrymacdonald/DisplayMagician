@@ -16,7 +16,7 @@ public sealed class ControlClientEventHubTests
 
         for (int index = 0; index < 33; index++)
         {
-            hub.Publish("S-1-5-21-100", 11, clientEvent);
+            hub.Publish("S-1-5-21-100", 10, clientEvent);
         }
 
         for (int index = 0; index < 32; index++)
@@ -32,7 +32,7 @@ public sealed class ControlClientEventHubTests
     {
         ControlClientEventHub hub = new ControlClientEventHub();
         using ControlClientEventSubscription subscription = hub.Subscribe("S-1-5-21-100", 10);
-        ControlClientEvent clientEvent = new ControlClientEvent { EventType = ControlClientEventType.OperationDecisionUpdated, PublishedUtc = DateTime.UtcNow };
+        ControlClientEvent clientEvent = new ControlClientEvent { EventType = ControlClientEventType.OperationDecisionUpdated, Scope = ControlClientEventScope.User, PublishedUtc = DateTime.UtcNow };
 
         hub.Publish("S-1-5-21-100", 11, clientEvent);
 

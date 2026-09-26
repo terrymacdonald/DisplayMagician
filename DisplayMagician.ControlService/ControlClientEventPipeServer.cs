@@ -6,6 +6,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
 using Microsoft.Win32.SafeHandles;
@@ -90,32 +91,88 @@ public sealed class ControlClientEventPipeServer
     {
         using (pipe)
         {
+            PipeClientIdentity? identity = null;
             try
             {
                 ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, cancellationToken).ConfigureAwait(false);
-                if (request == null || request.ProtocolVersion != ControlProtocol.CurrentVersion || request.MessageType != ControlMessageType.SubscribeClientEvents)
+                if (request == null)
                 {
+                    Logger.Debug("ControlClientEventPipeServer/HandleClientAsync: A client disconnected before completing its event subscription request.");
                     return;
                 }
 
-                if (!ControlProtocol.TryCreateWelcome(request.Hello, "ControlService", ControlProtocol.ControlServiceCapabilities, out ProtocolWelcome? welcome, out _, out _))
+                if (request.ProtocolVersion != ControlProtocol.CurrentVersion || request.MessageType != ControlMessageType.SubscribeClientEvents)
                 {
+                    Logger.Warn("ControlClientEventPipeServer/HandleClientAsync: Rejected an invalid event subscription request. MessageType={0}, ProtocolVersion={1}.", request.MessageType, request.ProtocolVersion);
                     return;
                 }
 
-                PipeClientIdentity identity = GetClientIdentity(pipe);
+                if (!ControlProtocol.TryCreateWelcome(request.Hello, "ControlService", ControlProtocol.ControlServiceCapabilities, out ProtocolWelcome? welcome, out ControlErrorCode negotiationError, out string negotiationMessage))
+                {
+                    Logger.Warn("ControlClientEventPipeServer/HandleClientAsync: Rejected an event subscription because protocol negotiation failed. ErrorCode={0}, Message={1}", negotiationError, negotiationMessage);
+                    return;
+                }
+
+                identity = GetClientIdentity(pipe);
                 using ControlClientEventSubscription subscription = _eventHub.Subscribe(identity.UserSid, identity.SessionId);
                 ControlResponse subscriptionResponse = new ControlResponse
                 {
                     IsSuccessful = true,
                     Message = "Client event subscription accepted.",
                     ProtocolWelcome = welcome,
-                    OperationStatuses = _operationStatusStore.GetActive(identity.UserSid),
+                    OperationStatuses = _operationStatusStore.GetActive(identity.UserSid, identity.SessionId),
                     OperationDecisions = _operationDecisionStore.GetPending(identity.UserSid, identity.SessionId)
                 };
                 await SendResponseAsync(pipe, request.RequestId, subscriptionResponse, cancellationToken).ConfigureAwait(false);
-                await foreach (ControlClientEvent clientEvent in subscription.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+                Logger.Debug("ControlClientEventPipeServer/HandleClientAsync: Accepted an event subscription for SID {0}, session {1}.", identity.UserSid, identity.SessionId);
+                while (!cancellationToken.IsCancellationRequested)
                 {
+                    using CancellationTokenSource eventReadCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    using CancellationTokenSource heartbeatCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    Task<ControlClientEvent> eventReadTask = subscription.Reader.ReadAsync(eventReadCancellationSource.Token).AsTask();
+                    Task heartbeatTask = Task.Delay(ControlProtocol.EventKeepAliveInterval, heartbeatCancellationSource.Token);
+                    Task completedTask = await Task.WhenAny(eventReadTask, heartbeatTask).ConfigureAwait(false);
+
+                    if (completedTask == heartbeatTask)
+                    {
+                        eventReadCancellationSource.Cancel();
+                        ControlClientEvent? eventReceivedAtHeartbeat = null;
+                        try
+                        {
+                            eventReceivedAtHeartbeat = await eventReadTask.ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+
+                        await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope
+                        {
+                            MessageType = ControlMessageType.ClientEvent,
+                            Payload = JsonSerializer.Serialize(new ControlClientEvent { EventType = ControlClientEventType.SubscriptionHeartbeat, PublishedUtc = DateTime.UtcNow })
+                        }, cancellationToken).ConfigureAwait(false);
+
+                        if (eventReceivedAtHeartbeat != null)
+                        {
+                            await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope
+                            {
+                                MessageType = ControlMessageType.ClientEvent,
+                                Payload = JsonSerializer.Serialize(eventReceivedAtHeartbeat)
+                            }, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        continue;
+                    }
+
+                    heartbeatCancellationSource.Cancel();
+                    try
+                    {
+                        await heartbeatTask.ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+
+                    ControlClientEvent clientEvent = await eventReadTask.ConfigureAwait(false);
                     await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope
                     {
                         MessageType = ControlMessageType.ClientEvent,
@@ -126,9 +183,29 @@ public sealed class ControlClientEventPipeServer
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is JsonException || ex is EndOfStreamException || ex is TimeoutException)
+            catch (EndOfStreamException ex)
             {
-                Logger.Debug(ex, "ControlClientEventPipeServer/HandleClientAsync: Client event subscription ended or sent an invalid request.");
+                Logger.Debug(ex, "ControlClientEventPipeServer/HandleClientAsync: Event subscriber disconnected for SID {0}, session {1}.", identity?.UserSid ?? "unknown", identity?.SessionId ?? 0);
+            }
+            catch (IOException ex)
+            {
+                Logger.Debug(ex, "ControlClientEventPipeServer/HandleClientAsync: Event subscription pipe was disconnected for SID {0}, session {1}.", identity?.UserSid ?? "unknown", identity?.SessionId ?? 0);
+            }
+            catch (ChannelClosedException ex)
+            {
+                Logger.Warn(ex, "ControlClientEventPipeServer/HandleClientAsync: Closed the event subscription for SID {0}, session {1} because it could not keep up. The client must reconnect and use the authoritative snapshot.", identity?.UserSid ?? "unknown", identity?.SessionId ?? 0);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Logger.Warn(ex, "ControlClientEventPipeServer/HandleClientAsync: Rejected an unauthorised event subscriber.");
+            }
+            catch (TimeoutException ex)
+            {
+                Logger.Warn(ex, "ControlClientEventPipeServer/HandleClientAsync: An event subscriber did not send its subscription request before the timeout.");
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is JsonException)
+            {
+                Logger.Warn(ex, "ControlClientEventPipeServer/HandleClientAsync: An event subscriber sent an invalid subscription request.");
             }
         }
     }

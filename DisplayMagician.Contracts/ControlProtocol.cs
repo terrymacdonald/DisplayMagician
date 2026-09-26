@@ -24,6 +24,7 @@ public static class ControlProtocol
     public static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(10);
     public static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan EventIdleTimeout = TimeSpan.FromSeconds(45);
+    public static readonly TimeSpan EventKeepAliveInterval = TimeSpan.FromSeconds(20);
 
     public static readonly string EndpointInstanceId = Guid.NewGuid().ToString("N");
     public static readonly string[] ControlServiceCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.ClientEvents, ControlCapabilities.ClientSync, ControlCapabilities.Diagnostics };

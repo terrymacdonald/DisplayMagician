@@ -42,7 +42,7 @@ public sealed class DiagnosticsAndRecoveryTests
     }
 
     [Fact]
-    public async Task ControlClientEventHub_PublishesToEverySessionForTheSameUser()
+    public async Task ControlClientEventHub_PublishesSessionScopedEventsOnlyToTheOwningSession()
     {
         ControlClientEventHub hub = new ControlClientEventHub();
         using ControlClientEventSubscription firstSession = hub.Subscribe("S-1-5-21-100", 10);
@@ -53,7 +53,7 @@ public sealed class DiagnosticsAndRecoveryTests
         hub.Publish("S-1-5-21-100", 10, clientEvent);
 
         Assert.Equal(clientEvent.EventType, (await firstSession.Reader.ReadAsync(CancellationToken.None)).EventType);
-        Assert.Equal(clientEvent.EventType, (await secondSession.Reader.ReadAsync(CancellationToken.None)).EventType);
+        Assert.False(secondSession.Reader.TryRead(out _));
         Assert.False(otherUser.Reader.TryRead(out _));
     }
 
