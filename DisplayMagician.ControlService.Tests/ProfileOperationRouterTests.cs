@@ -361,7 +361,7 @@ public sealed class ProfileOperationRouterTests
 
         public Guid? OperationId { get; private set; }
 
-        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
+        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, string? diagnosticLogLevel, CancellationToken cancellationToken)
         {
             WasCalled = true;
             RequestId = requestId;

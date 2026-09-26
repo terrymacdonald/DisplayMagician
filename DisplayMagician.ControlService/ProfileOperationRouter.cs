@@ -239,9 +239,17 @@ public sealed class ProfileOperationRouter
 
     private async Task<ControlResponse> SendToAgentAsync(string userSid, int sessionId, ControlEnvelope command, bool startAgentIfMissing, CancellationToken cancellationToken)
     {
-        AgentRegistration? agent = startAgentIfMissing
-            ? await GetOrStartAgentAsync(userSid, sessionId, command.RequestId, GetOperationId(command), cancellationToken).ConfigureAwait(false)
-            : _coordinator.GetReadyAgentRegistration(userSid, sessionId);
+        AgentRegistration? agent;
+        try
+        {
+            agent = startAgentIfMissing
+                ? await GetOrStartAgentAsync(userSid, sessionId, command.RequestId, GetOperationId(command), cancellationToken).ConfigureAwait(false)
+                : _coordinator.GetReadyAgentRegistration(userSid, sessionId);
+        }
+        catch (SessionLauncherUnavailableException ex)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = ex.Message };
+        }
         if (agent == null)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
@@ -284,6 +292,10 @@ public sealed class ProfileOperationRouter
             {
                 string diagnosticLogLevel = _machineDiagnosticLogLevelStore?.GetActiveLevel(DateTime.UtcNow) ?? "Info";
                 launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, requestId, operationId, diagnosticLogLevel, cancellationToken).ConfigureAwait(false);
+            }
+            catch (SessionLauncherUnavailableException)
+            {
+                throw;
             }
             catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is InvalidOperationException)
             {

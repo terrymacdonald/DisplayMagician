@@ -616,9 +616,12 @@ namespace DisplayMagician {
 
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
-            if (!ConnectDesktopStateToUserAgent())
+            if (!ConnectDesktopStateToUserAgent(out string desktopStateConnectionError))
             {
-                MessageBox.Show("DisplayMagician could not connect to the User Agent that manages your profiles. Please restart DisplayMagician and try again.", "DisplayMagician User Agent", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string message = string.IsNullOrWhiteSpace(desktopStateConnectionError)
+                    ? "DisplayMagician could not connect to the User Agent that manages your profiles. Please restart DisplayMagician and try again."
+                    : desktopStateConnectionError;
+                MessageBox.Show(message, "DisplayMagician User Agent", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return (int)ERRORLEVEL.ERROR_EXCEPTION;
             }
 
@@ -1330,8 +1333,9 @@ namespace DisplayMagician {
             return true;
         }
 
-        private static bool ConnectDesktopStateToUserAgent()
+        private static bool ConnectDesktopStateToUserAgent(out string errorMessage)
         {
+            errorMessage = string.Empty;
             try
             {
                 Exception lastException = null;
@@ -1374,6 +1378,13 @@ namespace DisplayMagician {
                     {
                         lastException = ex;
 
+                        if (ex.Message.StartsWith("The DisplayMagician Session Launcher service could not be started.", StringComparison.Ordinal))
+                        {
+                            errorMessage = ex.Message;
+                            logger.Error(ex, "Program/ConnectDesktopStateToUserAgent: The Session Launcher service could not be started.");
+                            return false;
+                        }
+
                         logger.Debug(
                             ex,
                             "Program/ConnectDesktopStateToUserAgent: User Agent is not ready yet. Attempt {0}/20.",
@@ -1385,6 +1396,7 @@ namespace DisplayMagician {
 
                 if (lastException != null)
                 {
+                    errorMessage = lastException.Message;
                     logger.Error(
                         lastException,
                         "Program/ConnectDesktopStateToUserAgent: User Agent did not become ready within the startup timeout.");
@@ -1394,6 +1406,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
+                errorMessage = ex.Message;
                 logger.Error(
                     ex,
                     "Program/ConnectDesktopStateToUserAgent: Could not load desktop state from the User Agent.");
