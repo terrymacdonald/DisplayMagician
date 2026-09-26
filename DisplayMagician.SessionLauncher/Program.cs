@@ -40,13 +40,26 @@ internal static class Program
                 MaxArchiveFiles = 7,
                 Layout = "${displaymagicianlog:component=SessionLauncher}"
             };
-            configuration.AddRule(LogLevel.Info, LogLevel.Fatal, logFile);
+            LoggingRule loggingRule = new LoggingRule("SessionLauncherFileLog");
+            loggingRule.EnableLoggingForLevels(LogLevel.Info, LogLevel.Fatal);
+            loggingRule.Targets.Add(logFile);
+            configuration.LoggingRules.Add(loggingRule);
             LogManager.Configuration = configuration;
             LogManager.GetCurrentClassLogger().Info("SessionLauncher/ConfigureLogging: Session Launcher logging started at {0}.", logPath);
         }
         catch
         {
             // The service must still start to report installer or ACL failures through the Service Control Manager.
+        }
+    }
+
+    internal static void ApplyDiagnosticLogLevel(string? level)
+    {
+        LogLevel logLevel = string.Equals(level, "Trace", StringComparison.OrdinalIgnoreCase) ? LogLevel.Trace : string.Equals(level, "Debug", StringComparison.OrdinalIgnoreCase) ? LogLevel.Debug : LogLevel.Info;
+        if (LogManager.Configuration?.FindRuleByName("SessionLauncherFileLog") is LoggingRule loggingRule)
+        {
+            loggingRule.SetLoggingLevels(logLevel, LogLevel.Fatal);
+            LogManager.ReconfigExistingLoggers();
         }
     }
 }

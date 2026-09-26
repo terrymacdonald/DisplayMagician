@@ -10,13 +10,13 @@ namespace DisplayMagician.ControlService;
 
 public interface ISessionLauncherClient
 {
-    Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken);
+    Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, string? diagnosticLogLevel, CancellationToken cancellationToken);
     Task<UserAgentLaunchResult> StopUserAgentAsync(string userSid, int sessionId, int processId, Guid requestId, CancellationToken cancellationToken);
 }
 
 public sealed class SessionLauncherClient : ISessionLauncherClient
 {
-    public async Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
+    public async Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, string? diagnosticLogLevel, CancellationToken cancellationToken)
     {
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.SessionLauncherPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
@@ -24,7 +24,7 @@ public sealed class SessionLauncherClient : ISessionLauncherClient
         {
             MessageType = ControlMessageType.LaunchUserAgent,
             RequestId = requestId,
-            Payload = JsonSerializer.Serialize(new UserAgentLaunchRequest { UserSid = userSid, SessionId = sessionId, OperationId = operationId })
+            Payload = JsonSerializer.Serialize(new UserAgentLaunchRequest { UserSid = userSid, SessionId = sessionId, OperationId = operationId, DiagnosticLogLevel = diagnosticLogLevel })
         };
         ControlEnvelope response = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
         if (response.MessageType != request.MessageType)

@@ -83,6 +83,7 @@ namespace DisplayMagician {
         public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
         private static NLog.LogLevel _userWantedLogLevel = NLog.LogLevel.Info; // Default log level is Info, but can be changed later based on user settings
         private static bool _userOverrodeLogLevel = false; // Used to track if the user has overridden the log level via command line options
+        private static Guid _temporaryDiagnosticLogLevelOwnerId;
         private static bool _packageIdentityWarningNeeded = false;
         private static bool _autoUpdaterEventsRegistered = false;
         private static bool _lastUpdateCheckWasAutomatic = true;
@@ -243,6 +244,7 @@ namespace DisplayMagician {
                     return;
 
                 _clientEventListenerCancellationSource.Cancel();
+                ReleaseTemporaryDiagnosticLogLevel();
                 StopUserAgentIfIdle();
             };
 
@@ -271,7 +273,7 @@ namespace DisplayMagician {
             {
                 // Set things to debug mode as the user provided this on the command line
                 logLevel = NLog.LogLevel.Debug;
-                _userWantedLogLevel = NLog.LogLevel.Trace;
+                _userWantedLogLevel = NLog.LogLevel.Debug;
                 _userOverrodeLogLevel = true; // User has overridden the log level to debug, so we will use this for the rest of the program
             }
             else if (args.Contains("--trace"))
@@ -534,6 +536,29 @@ namespace DisplayMagician {
             else
             {
                 logger.Trace($"Program/Main: User has set the log level to {_userWantedLogLevel} via command line options so no need to use the log level from program settings.");
+            }
+
+            if (_userOverrodeLogLevel)
+            {
+                try
+                {
+                    _temporaryDiagnosticLogLevelOwnerId = Guid.NewGuid();
+                    ControlResponse response = new ControlServicePipeClient().SetTemporaryDiagnosticLogLevelAsync(_userWantedLogLevel.Name, _temporaryDiagnosticLogLevelOwnerId, CancellationToken.None).GetAwaiter().GetResult();
+                    if (!response.IsSuccessful)
+                    {
+                        logger.Warn("Program/Main: Could not enable temporary machine diagnostic logging. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
+                        _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
+                    }
+                    else
+                    {
+                        logger.Info("Program/Main: Enabled temporary {0} machine diagnostic logging for this command-line session.", _userWantedLogLevel.Name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "Program/Main: Could not enable temporary machine diagnostic logging.");
+                    _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
+                }
             }
 
 
@@ -1315,14 +1340,27 @@ namespace DisplayMagician {
                 {
                     try
                     {
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: Starting attempt {0}/20.",
+                            attempt);
+
                         UserAgentRepositoryConnection userAgentRepositoryConnection =
                             new UserAgentRepositoryConnection(
                                 new ControlServicePipeClient());
 
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: Calling ShortcutRepository.ConnectToUserAgent.");
+
                         ShortcutRepository.ConnectToUserAgent(
                             userAgentRepositoryConnection);
 
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: ShortcutRepository.ConnectToUserAgent returned.");
+
                         DesktopProfileViewCache.Refresh();
+
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: DesktopProfileViewCache.Refresh returned.");
 
                         logger.Info(
                             "Program/ConnectDesktopStateToUserAgent: Loaded display profile views and the shortcut cache from the User Agent.");
@@ -1378,6 +1416,27 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 logger.Warn(ex, "Program/StopUserAgentIfIdle: Unable to ask the Control Service to stop the User Agent before WinForms exits.");
+            }
+        }
+
+        private static void ReleaseTemporaryDiagnosticLogLevel()
+        {
+            if (_temporaryDiagnosticLogLevelOwnerId == Guid.Empty)
+            {
+                return;
+            }
+
+            try
+            {
+                new ControlServicePipeClient().ReleaseTemporaryDiagnosticLogLevelAsync(_temporaryDiagnosticLogLevelOwnerId, CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/ReleaseTemporaryDiagnosticLogLevel: Could not release temporary machine diagnostic logging; it will expire automatically.");
+            }
+            finally
+            {
+                _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
             }
         }
 

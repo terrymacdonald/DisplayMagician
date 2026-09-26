@@ -14,6 +14,7 @@ public sealed class ProfileOperationRouter
     private readonly ISessionLauncherClient _sessionLauncherClient;
     private readonly Func<int> _getActiveConsoleSessionId;
     private readonly RecoveryAdministrationStore? _recoveryAdministrationStore;
+    private readonly MachineDiagnosticLogLevelStore? _machineDiagnosticLogLevelStore;
     private readonly SemaphoreSlim _agentLaunchLock = new SemaphoreSlim(1, 1);
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
@@ -38,6 +39,12 @@ public sealed class ProfileOperationRouter
         _sessionLauncherClient = sessionLauncherClient ?? throw new ArgumentNullException(nameof(sessionLauncherClient));
         _getActiveConsoleSessionId = getActiveConsoleSessionId ?? throw new ArgumentNullException(nameof(getActiveConsoleSessionId));
         _recoveryAdministrationStore = recoveryAdministrationStore;
+    }
+
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, Func<int> getActiveConsoleSessionId, RecoveryAdministrationStore? recoveryAdministrationStore, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
+        : this(coordinator, agentCommandClient, sessionLauncherClient, getActiveConsoleSessionId, recoveryAdministrationStore)
+    {
+        _machineDiagnosticLogLevelStore = machineDiagnosticLogLevelStore ?? throw new ArgumentNullException(nameof(machineDiagnosticLogLevelStore));
     }
 
     public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, CancellationToken cancellationToken)
@@ -275,7 +282,8 @@ public sealed class ProfileOperationRouter
             UserAgentLaunchResult launchResult;
             try
             {
-                launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
+                string diagnosticLogLevel = _machineDiagnosticLogLevelStore?.GetActiveLevel(DateTime.UtcNow) ?? "Info";
+                launchResult = await _sessionLauncherClient.LaunchUserAgentAsync(userSid, sessionId, requestId, operationId, diagnosticLogLevel, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is InvalidOperationException)
             {
@@ -318,7 +326,7 @@ public sealed class ProfileOperationRouter
 
     private sealed class UnavailableSessionLauncherClient : ISessionLauncherClient
     {
-        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, CancellationToken cancellationToken)
+        public Task<UserAgentLaunchResult> LaunchUserAgentAsync(string userSid, int sessionId, Guid requestId, Guid? operationId, string? diagnosticLogLevel, CancellationToken cancellationToken)
         {
             return Task.FromResult(new UserAgentLaunchResult { IsSuccessful = false, Message = "The Session Launcher is not configured." });
         }

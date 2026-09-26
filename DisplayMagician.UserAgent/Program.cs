@@ -17,10 +17,10 @@ internal static class Program
         // The current WinForms application still owns desktop work. This executable becomes its interactive-session host
         // once the existing profile and shortcut lifecycle is moved behind the Agent boundary.
         AgentRegistration registration = AgentIdentity.CreateRegistration(AgentBuildVersion.Current, "manual");
-        ConfigureLogging(registration.UserSid);
+        UserAgentStartupRequest startupRequest = UserAgentCommandLine.Parse(args);
+        ConfigureLogging(registration.UserSid, startupRequest.DiagnosticLogLevel);
         ControlServiceClient serviceClient = new ControlServiceClient();
         using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-        UserAgentStartupRequest startupRequest = UserAgentCommandLine.Parse(args);
         if (startupRequest.Action == UserAgentStartupAction.RegisterOnce)
         {
             cancellationTokenSource.CancelAfter(10000);
@@ -120,7 +120,7 @@ internal static class Program
         }
     }
 
-    private static void ConfigureLogging(string userSid)
+    private static void ConfigureLogging(string userSid, string? diagnosticLogLevel)
     {
         string legacyLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs");
         string preferredLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", userSid, "Logs");
@@ -137,7 +137,8 @@ internal static class Program
                 ArchiveAboveSize = 41943040,
                 Layout = "${displaymagicianlog:component=UserAgent}"
             };
-            configuration.AddRule(LogLevel.Info, LogLevel.Fatal, fileTarget);
+            LogLevel level = string.Equals(diagnosticLogLevel, "Trace", StringComparison.OrdinalIgnoreCase) ? LogLevel.Trace : string.Equals(diagnosticLogLevel, "Debug", StringComparison.OrdinalIgnoreCase) ? LogLevel.Debug : LogLevel.Info;
+            configuration.AddRule(level, LogLevel.Fatal, fileTarget);
             LogManager.Configuration = configuration;
             LogManager.GetCurrentClassLogger().Info("UserAgent/ConfigureLogging: User Agent logging started at {0}.", logPath);
         }

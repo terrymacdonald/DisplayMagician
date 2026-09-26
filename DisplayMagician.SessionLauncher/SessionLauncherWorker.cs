@@ -147,6 +147,7 @@ public sealed class InteractiveUserProcessLauncher
 
     public UserAgentLaunchResult Launch(UserAgentLaunchRequest request)
     {
+        Program.ApplyDiagnosticLogLevel(request.DiagnosticLogLevel);
         if (string.IsNullOrWhiteSpace(request.UserSid) || request.SessionId < 0 || WTSGetActiveConsoleSessionId() != (uint)request.SessionId)
         {
             return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested User Agent session is not the active physical console session." };
@@ -178,7 +179,9 @@ public sealed class InteractiveUserProcessLauncher
 
             CreateEnvironmentBlock(out environment, primaryToken, false);
             STARTUPINFO startupInfo = new STARTUPINFO { cb = Marshal.SizeOf<STARTUPINFO>(), lpDesktop = "winsta0\\default" };
-            if (!CreateProcessAsUser(primaryToken, executablePath, $"\"{executablePath}\"", IntPtr.Zero, IntPtr.Zero, false, 0x00000400, environment, Path.GetDirectoryName(executablePath), ref startupInfo, out PROCESS_INFORMATION processInformation))
+            string diagnosticArgument = string.Equals(request.DiagnosticLogLevel, "Trace", StringComparison.OrdinalIgnoreCase) || string.Equals(request.DiagnosticLogLevel, "Debug", StringComparison.OrdinalIgnoreCase)
+                ? $" --diagnostic-log-level {request.DiagnosticLogLevel}" : string.Empty;
+            if (!CreateProcessAsUser(primaryToken, executablePath, $"\"{executablePath}\"{diagnosticArgument}", IntPtr.Zero, IntPtr.Zero, false, 0x00000400, environment, Path.GetDirectoryName(executablePath), ref startupInfo, out PROCESS_INFORMATION processInformation))
             {
                 return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not start the User Agent in the active console session." };
             }

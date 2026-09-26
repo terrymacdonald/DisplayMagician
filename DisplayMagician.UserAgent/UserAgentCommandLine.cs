@@ -15,12 +15,17 @@ public sealed class UserAgentStartupRequest
     public UserAgentStartupAction Action { get; init; }
 
     public string? ProfileId { get; init; }
+    public string? DiagnosticLogLevel { get; init; }
 }
 
 public static class UserAgentCommandLine
 {
     public static UserAgentStartupRequest Parse(string[]? args)
     {
+        if (args?.Length == 2 && string.Equals(args[0], "--diagnostic-log-level", StringComparison.Ordinal) && (string.Equals(args[1], "Debug", StringComparison.OrdinalIgnoreCase) || string.Equals(args[1], "Trace", StringComparison.OrdinalIgnoreCase)))
+        {
+            return new UserAgentStartupRequest { Action = UserAgentStartupAction.Run, DiagnosticLogLevel = args[1] };
+        }
         if (args?.Length == 1 && string.Equals(args[0], "--once", StringComparison.Ordinal))
         {
             return new UserAgentStartupRequest { Action = UserAgentStartupAction.RegisterOnce };

@@ -263,6 +263,16 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RestartUserAgent }, cancellationToken);
     }
 
+    public Task<ControlResponse> SetTemporaryDiagnosticLogLevelAsync(string level, Guid ownerId, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.SetTemporaryDiagnosticLogLevel, Payload = JsonSerializer.Serialize(new TemporaryDiagnosticLogLevelRequest { Level = level, OwnerId = ownerId, DurationMinutes = 30 }) }, cancellationToken);
+    }
+
+    public Task<ControlResponse> ReleaseTemporaryDiagnosticLogLevelAsync(Guid ownerId, CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ReleaseTemporaryDiagnosticLogLevel, Payload = JsonSerializer.Serialize(new ReleaseTemporaryDiagnosticLogLevelRequest { OwnerId = ownerId }) }, cancellationToken);
+    }
+
     public async Task<GatewaySettings> GetGatewaySettingsAsync(CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetGatewaySettings }, cancellationToken).ConfigureAwait(false);

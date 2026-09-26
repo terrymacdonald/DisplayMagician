@@ -200,7 +200,9 @@ public enum ControlMessageType
     ApplyRemoteProfile = 74,
     ApplyRemoteAudioProfile = 75,
     StartRemoteShortcut = 76,
-    ResolveRemoteOperationDecision = 77
+    ResolveRemoteOperationDecision = 77,
+    SetTemporaryDiagnosticLogLevel = 78,
+    ReleaseTemporaryDiagnosticLogLevel = 79
 }
 
 public enum ControlErrorCode
@@ -910,6 +912,20 @@ public sealed class UserAgentLaunchRequest
     public int SessionId { get; set; }
 
     public Guid? OperationId { get; set; }
+
+    public string? DiagnosticLogLevel { get; set; }
+}
+
+public sealed class TemporaryDiagnosticLogLevelRequest
+{
+    public string Level { get; set; } = string.Empty;
+    public Guid OwnerId { get; set; }
+    public int DurationMinutes { get; set; }
+}
+
+public sealed class ReleaseTemporaryDiagnosticLogLevelRequest
+{
+    public Guid OwnerId { get; set; }
 }
 
 public sealed class UserAgentLaunchResult

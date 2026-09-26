@@ -33,10 +33,11 @@ public sealed class ControlClientPipeServer
     private readonly GatewaySettingsStore _gatewaySettingsStore;
     private readonly DevicePairingCoordinator _devicePairingCoordinator;
     private readonly GatewayIdentityRegistry _gatewayIdentityRegistry;
+    private readonly MachineDiagnosticLogLevelStore _machineDiagnosticLogLevelStore;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
     private readonly SemaphoreSlim _replayableMutationLock = new SemaphoreSlim(1, 1);
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore, GatewaySettingsStore gatewaySettingsStore, DevicePairingCoordinator devicePairingCoordinator, GatewayIdentityRegistry gatewayIdentityRegistry)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore, GatewaySettingsStore gatewaySettingsStore, DevicePairingCoordinator devicePairingCoordinator, GatewayIdentityRegistry gatewayIdentityRegistry, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
@@ -51,6 +52,7 @@ public sealed class ControlClientPipeServer
         _gatewaySettingsStore = gatewaySettingsStore ?? throw new ArgumentNullException(nameof(gatewaySettingsStore));
         _devicePairingCoordinator = devicePairingCoordinator ?? throw new ArgumentNullException(nameof(devicePairingCoordinator));
         _gatewayIdentityRegistry = gatewayIdentityRegistry ?? throw new ArgumentNullException(nameof(gatewayIdentityRegistry));
+        _machineDiagnosticLogLevelStore = machineDiagnosticLogLevelStore ?? throw new ArgumentNullException(nameof(machineDiagnosticLogLevelStore));
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -221,6 +223,8 @@ public sealed class ControlClientPipeServer
                                     ControlMessageType.RevokePairedClient => RevokePairedClient(identity, request),
                                     ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
                                     ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
+                                    ControlMessageType.SetTemporaryDiagnosticLogLevel => SetTemporaryDiagnosticLogLevel(request),
+                                    ControlMessageType.ReleaseTemporaryDiagnosticLogLevel => ReleaseTemporaryDiagnosticLogLevel(request),
                                     _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
                                 };
                             }
@@ -281,6 +285,41 @@ public sealed class ControlClientPipeServer
             ControlMessageType.CommitRepositorySnapshot or ControlMessageType.SetMessageReadState or ControlMessageType.ResolveOperationDecision or ControlMessageType.UpdateAnonymousMetricsSettings or
             ControlMessageType.InitializeAnonymousMetrics or ControlMessageType.ForceReleaseDisplayControl or ControlMessageType.RecordRecoveryAdministration or ControlMessageType.RestartUserAgent or
             ControlMessageType.CreateUserSupportBundle;
+    }
+
+    private ControlResponse SetTemporaryDiagnosticLogLevel(ControlEnvelope request)
+    {
+        TemporaryDiagnosticLogLevelRequest? diagnosticRequest = JsonSerializer.Deserialize<TemporaryDiagnosticLogLevelRequest>(request.Payload);
+        if (diagnosticRequest == null)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The temporary diagnostic log level request was invalid." };
+        }
+
+        try
+        {
+            string level = _machineDiagnosticLogLevelStore.Set(diagnosticRequest, DateTime.UtcNow);
+            Program.ApplyDiagnosticLogLevel(level);
+            _logger.Info("ControlClientPipeServer/SetTemporaryDiagnosticLogLevel: Enabled temporary {0} diagnostic logging until the lease expires.", level);
+            return new ControlResponse { IsSuccessful = true, Message = $"Temporary {level} diagnostic logging is active." };
+        }
+        catch (ArgumentException)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The temporary diagnostic log level request was invalid." };
+        }
+    }
+
+    private ControlResponse ReleaseTemporaryDiagnosticLogLevel(ControlEnvelope request)
+    {
+        ReleaseTemporaryDiagnosticLogLevelRequest? releaseRequest = JsonSerializer.Deserialize<ReleaseTemporaryDiagnosticLogLevelRequest>(request.Payload);
+        if (releaseRequest == null || releaseRequest.OwnerId == Guid.Empty)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The temporary diagnostic log level release request was invalid." };
+        }
+
+        string level = _machineDiagnosticLogLevelStore.Release(releaseRequest.OwnerId, DateTime.UtcNow);
+        Program.ApplyDiagnosticLogLevel(level);
+        _logger.Info("ControlClientPipeServer/ReleaseTemporaryDiagnosticLogLevel: Temporary diagnostic logging is now {0}.", level);
+        return new ControlResponse { IsSuccessful = true, Message = "Temporary diagnostic logging was released." };
     }
 
     private Task<ControlResponse> ApplyProfileAsync(PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)

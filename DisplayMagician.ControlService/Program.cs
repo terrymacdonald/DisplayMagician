@@ -17,6 +17,7 @@ internal static class Program
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Services.AddWindowsService(options => options.ServiceName = "DisplayMagician Control Service");
         builder.Services.AddSingleton(storagePaths);
+        builder.Services.AddSingleton<MachineDiagnosticLogLevelStore>();
         builder.Services.AddSingleton<MachineScheduleStore>();
         builder.Services.AddSingleton<MachineScheduleCoordinator>();
         builder.Services.AddSingleton<AnonymousMetricsSender>();
@@ -39,7 +40,7 @@ internal static class Program
         builder.Services.AddSingleton<IAgentCommandClient, AgentCommandClient>();
         builder.Services.AddSingleton(provider => new ClientSyncCoordinator(new System.Net.Http.HttpClient { Timeout = System.TimeSpan.FromSeconds(30) }, provider.GetRequiredService<MachineScheduleCoordinator>(), provider.GetRequiredService<ControlStateCoordinator>(), provider.GetRequiredService<IAgentCommandClient>(), storagePaths, provider.GetRequiredService<ControlClientEventHub>()));
         builder.Services.AddSingleton<ISessionLauncherClient, SessionLauncherClient>();
-        builder.Services.AddSingleton<ProfileOperationRouter>();
+        builder.Services.AddSingleton(provider => new ProfileOperationRouter(provider.GetRequiredService<ControlStateCoordinator>(), provider.GetRequiredService<IAgentCommandClient>(), provider.GetRequiredService<ISessionLauncherClient>(), ConsoleSessionLocator.GetActiveConsoleSessionId, provider.GetRequiredService<RecoveryAdministrationStore>(), provider.GetRequiredService<MachineDiagnosticLogLevelStore>()));
         builder.Services.AddSingleton<NamedPipeControlServer>();
         builder.Services.AddSingleton<ControlClientPipeServer>();
         builder.Services.AddSingleton<ControlClientEventPipeServer>();
@@ -47,6 +48,15 @@ internal static class Program
 
         using IHost host = builder.Build();
         await host.RunAsync().ConfigureAwait(false);
+    }
+
+    internal static void ApplyDiagnosticLogLevel(string level)
+    {
+        if (LogLevel.FromString(level) is LogLevel logLevel && LogManager.Configuration?.FindRuleByName("ControlServiceFileLog") is LoggingRule loggingRule)
+        {
+            loggingRule.SetLoggingLevels(logLevel, LogLevel.Fatal);
+            LogManager.ReconfigExistingLoggers();
+        }
     }
 
     private static void ConfigureLogging(StoragePaths storagePaths)
