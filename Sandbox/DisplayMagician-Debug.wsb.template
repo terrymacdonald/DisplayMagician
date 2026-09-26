@@ -17,8 +17,13 @@
       <SandboxFolder>C:\DisplayMagician\RemoteDebugger</SandboxFolder>
       <ReadOnly>true</ReadOnly>
     </MappedFolder>
+    <MappedFolder>
+      <HostFolder>__SANDBOX_LOCAL_HOST_FOLDER__</HostFolder>
+      <SandboxFolder>C:\DisplayMagician\Local</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
   </MappedFolders>
   <LogonCommand>
-    <Command>powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\DisplayMagician\Sandbox\Scripts\Start-DisplayMagicianSandbox.ps1</Command>
+    <Command>powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\DisplayMagician\Sandbox\Scripts\Start-DisplayMagicianSandbox.ps1 -BundlePath "C:\DisplayMagician\Bundle\__BUNDLE_FILENAME__"</Command>
   </LogonCommand>
 </Configuration>

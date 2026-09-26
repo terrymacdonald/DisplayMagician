@@ -1,35 +1,73 @@
 param (
-    # Path passed as a parameter from the command line, defaulting to the current directory if not provided
     [string]$outputDir = (Get-Location),
     [string]$Configuration = "Debug"
 )
 
-# Get the current directory (where the script is being run)
-$currentDir = Get-Location
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
-# Path to the DisplayMagician assembly (DLL) containing the version info, using a relative path
-$relativeAssemblyPath = "..\DisplayMagician\bin\$Configuration\DisplayMagician.dll"
-$assemblyPath = Join-Path -Path $currentDir -ChildPath $relativeAssemblyPath
+# Resolve paths relative to this script, not the caller's current directory.
+$scriptDir = $PSScriptRoot
 
-# Get the Version from the file
+$assemblyPath = Join-Path `
+    -Path $scriptDir `
+    -ChildPath "..\DisplayMagician\bin\$Configuration\DisplayMagician.dll"
+
+$assemblyPath = [System.IO.Path]::GetFullPath($assemblyPath)
+
+if (-not (Test-Path -LiteralPath $assemblyPath)) {
+    throw "DisplayMagician assembly was not found: $assemblyPath"
+}
+
 $fileVersionInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($assemblyPath)
 $versionInfo = $fileVersionInfo.FileVersion
 
-# Output the new setup file name
-Write-Host "OutputDir passed was '$outputDir'"
-
-# Define the new setup file name with version
-$newSetupFileName = "DisplayMagicianSetup_v$($versionInfo).exe"
-
-# Rename the setup file
-#Rename-Item -Path $setupFilePath -NewName $newSetupFileName -Force
-
-Set-Location -Path $outputDir
-
-Get-Childitem DisplayMagicianSetup.exe | ForEach-Object {
-    Move-Item $_ $_.Name.Replace("DisplayMagicianSetup.exe", $newSetupFileName) -Force
+if ([string]::IsNullOrWhiteSpace($versionInfo)) {
+    throw "Could not determine the DisplayMagician file version from: $assemblyPath"
 }
 
+$outputDir = $outputDir.Trim().Trim('"').TrimEnd('\')
+$outputDir = [System.IO.Path]::GetFullPath($outputDir)
 
-# Output the new setup file name
-Write-Host "Renamed '$outputDir\DisplayMagicianSetup.exe' to '$newSetupFileName'"
+Write-Host "OutputDir passed was '$outputDir'"
+
+$sourcePath = Join-Path $outputDir 'DisplayMagicianSetup.exe'
+$newSetupFileName = "DisplayMagicianSetup_v$versionInfo.exe"
+$destinationPath = Join-Path $outputDir $newSetupFileName
+
+if (-not (Test-Path -LiteralPath $sourcePath)) {
+    throw "Bundle output was not found: $sourcePath"
+}
+
+# Remove an existing versioned output if present.
+if (Test-Path -LiteralPath $destinationPath) {
+    Remove-Item `
+        -LiteralPath $destinationPath `
+        -Force `
+        -ErrorAction Stop
+}
+
+# WiX/MSBuild may briefly retain a handle to the bundle after the build.
+# Retry the rename until the handle is released.
+$maxAttempts = 40
+$delayMilliseconds = 250
+
+for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+    try {
+        Move-Item `
+            -LiteralPath $sourcePath `
+            -Destination $destinationPath `
+            -Force `
+            -ErrorAction Stop
+
+        Write-Host "Renamed '$sourcePath' to '$newSetupFileName'"
+        return
+    }
+    catch {
+        if ($attempt -eq $maxAttempts) {
+            throw "Could not rename '$sourcePath' after $maxAttempts attempts. Last error: $($_.Exception.Message)"
+        }
+
+        Start-Sleep -Milliseconds $delayMilliseconds
+    }
+}

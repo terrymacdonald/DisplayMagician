@@ -1,10 +1,16 @@
 ﻿<Project Sdk="WixToolset.Sdk/7.0.0">
+  <Import Project="RuntimeConfig.props"
+        Condition="Exists('RuntimeConfig.props')" />
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
     <OutputName>DisplayMagicianSetup</OutputName>
     <AcceptEula>wix7</AcceptEula>
     <DmPackageDir>$(MSBuildThisFileDirectory)..\DisplayMagicianPackage\bin\$(Platform)\$(Configuration)\en-US\</DmPackageDir>
-    <DefineConstants>DmPackageDir=$(DmPackageDir)</DefineConstants>
+    <DefineConstants>
+      DmPackageDir=$(DmPackageDir);
+      DotNetDesktopRuntimeVersion=$(DotNetDesktopRuntimeVersion);
+      DotNetDesktopRuntimeFilename=$(DotNetDesktopRuntimeFilename)
+    </DefineConstants>
     <!-- Suppress ICE validation to avoid WIX1105 warning when not running as admin -->
     <SuppressValidation>true</SuppressValidation>
   </PropertyGroup>
@@ -19,13 +25,56 @@
     <ProjectReference Include="..\DisplayMagicianPackage\DisplayMagicianPackage.wixproj" Condition="'$(UseExistingMsiPackage)' != 'true'" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning"
+                    Version="3.9.50"
+                    PrivateAssets="all" />
     <PackageReference Include="WixToolset.Bal.wixext" Version="7.0.0" />
     <PackageReference Include="WixToolset.Netfx.wixext" Version="7.0.0" />
   </ItemGroup>
-  <Target Name="RenameBundleFile" AfterTargets="Build">
-    <!-- Use PowerShell to rename the bundle output file after the build -->
-    <Exec Command="powershell -ExecutionPolicy Bypass -File .\renamedisplaymagician.ps1 -outputDir $(ProjectDir)$(OutputPath) -Configuration $(Configuration)" />
+  <Target Name="ValidateRuntimeConfig" BeforeTargets="Build">
+    <Error
+      Condition="'$(DotNetDesktopRuntimeVersion)' == ''"
+      Text="The .NET Desktop Runtime configuration is missing. Run prepare_displaymagician.ps1 first." />
+
+    <Error
+      Condition="'$(DotNetDesktopRuntimeFilename)' == ''"
+      Text="The .NET Desktop Runtime filename is missing. Run prepare_displaymagician.ps1 first." />
   </Target>
   <!-- Added as workaround for FireGiant HeatWave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
   <Target Name="CollectSuggestedVisualStudioComponentIds" />
+
+  <Target Name="CreateVersionedBundle"
+        AfterTargets="Build"
+        DependsOnTargets="GetBuildVersion">
+
+    <PropertyGroup>
+      <VersionedBundlePath>
+        $(TargetDir)DisplayMagicianSetup_v$(BuildVersion).exe
+      </VersionedBundlePath>
+    </PropertyGroup>
+
+    <Copy
+        SourceFiles="$(TargetPath)"
+        DestinationFiles="$(VersionedBundlePath)"
+        SkipUnchangedFiles="false" />
+
+    <Delete Files="$(TargetPath)" />
+
+    <Message
+      Importance="High"
+      Text="" />
+
+    <Message
+        Importance="High"
+        Text="=== Renaming generated DisplayMagician setup bundle ===" />
+
+    <Message
+        Importance="High"
+        Text="$(VersionedBundlePath)" />
+
+    <Message
+        Importance="High"
+        Text="" />
+
+  </Target>
 </Project>

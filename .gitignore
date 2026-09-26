@@ -255,3 +255,5 @@ ModelManifest.xml
 
 .tools/
 DisplayMagicianIdentityPkg/AppxManifest.xml
+DisplayMagicianBundle/RuntimeConfig.props
+Sandbox/Local/

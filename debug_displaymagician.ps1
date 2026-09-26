@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
@@ -8,7 +8,8 @@
     The local workflow publishes Debug runtime payloads into an existing
     DisplayMagician installation. The Windows Sandbox workflow builds the
     Debug Bundle, generates a machine-specific Sandbox configuration, and
-    starts Sandbox with the Bundle and Visual Studio Remote Debugger mapped
+    verifies the local Debug signing certificate is available, then starts
+    Sandbox with the Bundle, certificate, and Visual Studio Remote Debugger mapped
     read-only.
 
 .PARAMETER NoLaunch
@@ -25,12 +26,20 @@ $ErrorActionPreference = 'Stop'
 
 function Find-MSBuild {
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-    if (Test-Path -LiteralPath $vswhere) {
-        $msbuildPath = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' 2>$null |
-            Select-Object -First 1
-        if ($msbuildPath -and (Test-Path -LiteralPath $msbuildPath)) {
-            return $msbuildPath
-        }
+
+    if (-not (Test-Path -LiteralPath $vswhere)) {
+        throw 'Visual Studio Installer was not found. Install Visual Studio with the MSBuild component.'
+    }
+
+    $msbuildPath = & $vswhere `
+        -latest `
+        -prerelease `
+        -requires Microsoft.Component.MSBuild `
+        -find 'MSBuild\**\Bin\MSBuild.exe' 2>$null |
+        Select-Object -First 1
+
+    if ($msbuildPath -and (Test-Path -LiteralPath $msbuildPath)) {
+        return $msbuildPath
     }
 
     throw 'MSBuild.exe was not found. Install Visual Studio with the MSBuild component.'
@@ -42,7 +51,7 @@ function Find-RemoteDebugger {
         throw 'Visual Studio Installer was not found. Install Visual Studio with the Remote Debugger tools.'
     }
 
-    $visualStudioPath = & $vswhere -latest -requires Microsoft.Component.MSBuild -property installationPath 2>$null |
+    $visualStudioPath = & $vswhere -latest -prerelease -requires Microsoft.Component.MSBuild -property installationPath 2>$null |
         Select-Object -First 1
     if ([string]::IsNullOrWhiteSpace($visualStudioPath)) {
         throw 'A Visual Studio installation with MSBuild could not be found.'
@@ -66,7 +75,7 @@ function Publish-Project {
     )
 
     New-Item -ItemType Directory -Path $PublishDirectory -Force | Out-Null
-    $properties = "Configuration=Debug;Platform=$Platform;RuntimeIdentifier=win-x64;SelfContained=false;PublishDir=$PublishDirectory\"
+    $properties = "Configuration=Debug;Platform=$Platform;RuntimeIdentifier=win-x64;SelfContained=false;PublishDir=$PublishDirectory\\"
     if (-not [string]::IsNullOrWhiteSpace($PublishProfile)) {
         $properties = "$properties;PublishProfile=$PublishProfile"
     }
@@ -172,9 +181,22 @@ function Start-WindowsSandboxDebugging {
     $sandboxRoot = Join-Path $script:root 'Sandbox'
     $templatePath = Join-Path $sandboxRoot 'DisplayMagician-Debug.wsb.template'
     $generatedRoot = Join-Path $sandboxRoot 'Generated'
+    $localAssetsRoot = Join-Path $sandboxRoot 'Local'
+    $testCertificatePath = Join-Path $localAssetsRoot 'DisplayMagicianTest.cer'
     $bundleProject = Join-Path $script:root 'DisplayMagicianBundle\DisplayMagicianBundle.wixproj'
     if (-not (Test-Path -LiteralPath $templatePath) -or -not (Test-Path -LiteralPath $bundleProject)) {
         throw 'The Windows Sandbox harness files are missing. Restore the Sandbox folder from source control.'
+    }
+
+    if (-not (Test-Path -LiteralPath $testCertificatePath)) {
+        throw @"
+The DisplayMagician test signing certificate was not found.
+Expected:
+  $testCertificatePath
+Run prepare_displaymagician.ps1 first. It exports the public test-signing
+certificate used by the Debug MSIX into Sandbox\Local for Windows Sandbox.
+The Sandbox\Local directory is intentionally excluded from Git.
+"@
     }
 
     Assert-WindowsSandboxAvailable
@@ -197,8 +219,22 @@ function Start-WindowsSandboxDebugging {
     New-Item -ItemType Directory -Path $generatedRoot -Force | Out-Null
     $generatedConfigurationPath = Join-Path $generatedRoot 'DisplayMagician-Debug.wsb'
     $configuration = Get-Content -LiteralPath $templatePath -Raw
+    $requiredPlaceholders = @(
+        '__BUNDLE_HOST_FOLDER__',
+        '__BUNDLE_FILENAME__',
+        '__SANDBOX_HOST_FOLDER__',
+        '__SANDBOX_LOCAL_HOST_FOLDER__',
+        '__REMOTE_DEBUGGER_HOST_FOLDER__'
+    )
+    foreach ($placeholder in $requiredPlaceholders) {
+        if (-not $configuration.Contains($placeholder)) {
+            throw "The Windows Sandbox template is missing required placeholder '$placeholder': $templatePath"
+        }
+    }
     $configuration = $configuration.Replace('__BUNDLE_HOST_FOLDER__', [System.Security.SecurityElement]::Escape($bundleDirectory))
+    $configuration = $configuration.Replace('__BUNDLE_FILENAME__', [System.Security.SecurityElement]::Escape($bundlePath.Name))
     $configuration = $configuration.Replace('__SANDBOX_HOST_FOLDER__', [System.Security.SecurityElement]::Escape($sandboxRoot))
+    $configuration = $configuration.Replace('__SANDBOX_LOCAL_HOST_FOLDER__', [System.Security.SecurityElement]::Escape($localAssetsRoot))
     $configuration = $configuration.Replace('__REMOTE_DEBUGGER_HOST_FOLDER__', [System.Security.SecurityElement]::Escape($remoteDebuggerPath))
     [System.IO.File]::WriteAllText($generatedConfigurationPath, $configuration, [System.Text.UTF8Encoding]::new($true))
 
