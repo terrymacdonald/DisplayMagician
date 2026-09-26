@@ -536,9 +536,23 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
             }
 
+            Guid operationId = audioApplyRequest.OperationId == Guid.Empty ? Guid.NewGuid() : audioApplyRequest.OperationId;
             int deviceWaitMilliseconds = audioApplyRequest.DeviceWaitMilliseconds > 0 ? audioApplyRequest.DeviceWaitMilliseconds : ControlProtocol.DefaultAudioDeviceWaitMilliseconds;
-            ApplyAudioProfileOperationResult result = _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, deviceWaitMilliseconds);
-            return new ControlResponse { IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed, Message = result.IsSuccessful ? "Audio profile applied." : $"Audio profile could not be applied. Missing devices: {string.Join(", ", result.MissingDeviceNames)}" };
+            await PublishShortcutStatusAsync(new OperationStatusUpdate { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = OperationPhase.Requested, Message = "Audio profile operation requested." }, CancellationToken.None).ConfigureAwait(false);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    ApplyAudioProfileOperationResult result = _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, deviceWaitMilliseconds);
+                    await PublishShortcutStatusAsync(new OperationStatusUpdate { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed, Message = result.IsSuccessful ? "Audio profile applied." : "Audio profile could not be applied.", IsTerminal = true, IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed }, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Audio profile operation {0} failed unexpectedly.", operationId);
+                    await PublishShortcutStatusAsync(new OperationStatusUpdate { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = OperationPhase.Failed, Message = "Audio profile operation failed unexpectedly.", IsTerminal = true, ErrorCode = ControlErrorCode.ExecutionFailed }, CancellationToken.None).ConfigureAwait(false);
+                }
+            });
+            return new ControlResponse { IsSuccessful = true, Message = "Audio profile operation accepted.", OperationStatus = new OperationStatus { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = OperationPhase.Requested } };
         }
 
         if (request.MessageType == ControlMessageType.CreateAudioProfileFromCurrent)

@@ -373,7 +373,7 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful && response.AudioProfileList != null ? response.AudioProfileList : throw new InvalidOperationException(response.Message);
     }
 
-    public Task<ControlResponse> ApplyAudioProfileAsync(string profileId, int deviceWaitMilliseconds, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ApplyAudioProfile, Payload = JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = profileId, DeviceWaitMilliseconds = deviceWaitMilliseconds }) }, cancellationToken);
+    public Task<ControlResponse> ApplyAudioProfileAsync(string profileId, int deviceWaitMilliseconds, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ApplyAudioProfile, Payload = JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = profileId, DeviceWaitMilliseconds = deviceWaitMilliseconds, OperationId = Guid.NewGuid() }) }, cancellationToken);
 
     public Task<ControlResponse> CreateAudioProfileFromCurrentAsync(string name, CancellationToken cancellationToken) => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.CreateAudioProfileFromCurrent, Payload = JsonSerializer.Serialize(new CreateProfileRequest { Name = name }) }, cancellationToken);
 

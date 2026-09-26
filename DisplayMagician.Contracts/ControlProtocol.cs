@@ -484,7 +484,8 @@ public enum DisplayOperationType
     Unknown = 0,
     ApplyDisplayProfile = 1,
     StartShortcut = 2,
-    RestoreTemporaryState = 3
+    RestoreTemporaryState = 3,
+    ApplyAudioProfile = 4
 }
 
 public enum AgentOperationState
@@ -861,7 +862,7 @@ public sealed class AudioProfileListResult
     public bool CanAccessAudioSettings { get; set; }
 }
 
-public sealed class ApplyAudioProfileRequest { public string ProfileId { get; set; } = string.Empty; public int DeviceWaitMilliseconds { get; set; } = ControlProtocol.DefaultAudioDeviceWaitMilliseconds; }
+public sealed class ApplyAudioProfileRequest { public string ProfileId { get; set; } = string.Empty; public int DeviceWaitMilliseconds { get; set; } = ControlProtocol.DefaultAudioDeviceWaitMilliseconds; public Guid OperationId { get; set; } }
 
 public sealed class CreateProfileRequest { public string Name { get; set; } = string.Empty; }
 
