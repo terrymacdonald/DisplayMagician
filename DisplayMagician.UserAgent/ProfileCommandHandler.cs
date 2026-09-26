@@ -724,6 +724,24 @@ public sealed class ProfileCommandHandler
             Phase = OperationPhase.Requested,
             Message = "Display profile operation requested."
         }, CancellationToken.None).ConfigureAwait(false);
+
+        _ = RunDisplayProfileOperationAsync(profileOperationId, applyRequest.ProfileId, cancellationToken);
+        return new ControlResponse
+        {
+            IsSuccessful = true,
+            Message = "Display profile operation accepted.",
+            OperationStatus = new OperationStatus
+            {
+                OperationId = profileOperationId,
+                OperationType = DisplayOperationType.ApplyDisplayProfile,
+                Phase = OperationPhase.Requested
+            }
+        };
+    }
+
+    private async Task RunDisplayProfileOperationAsync(Guid profileOperationId, string profileId, CancellationToken cancellationToken)
+    {
+        using IDisposable operationScope = SupportLogScope.BeginOperation(profileOperationId);
         try
         {
             await PublishShortcutStatusAsync(new OperationStatusUpdate
@@ -733,7 +751,7 @@ public sealed class ProfileCommandHandler
                 Phase = OperationPhase.ApplyingDisplayProfile,
                 Message = "Applying display profile."
             }, CancellationToken.None).ConfigureAwait(false);
-            ApplyDisplayProfileOperationResult result = await _userProfileOperationService.ApplyDisplayProfileAsync(applyRequest.ProfileId, cancellationToken).ConfigureAwait(false);
+            ApplyDisplayProfileOperationResult result = await _userProfileOperationService.ApplyDisplayProfileAsync(profileId, cancellationToken).ConfigureAwait(false);
             await PublishShortcutStatusAsync(new OperationStatusUpdate
             {
                 OperationId = profileOperationId,
@@ -744,14 +762,6 @@ public sealed class ProfileCommandHandler
                 IsSuccessful = result.IsSuccessful,
                 ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed
             }, CancellationToken.None).ConfigureAwait(false);
-            return new ControlResponse
-            {
-                IsSuccessful = result.IsSuccessful,
-                ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed,
-                Message = result.IsSuccessful ? "Display profile applied." : "Display profile could not be applied.",
-                ApplyProfile = new DisplayMagician.Contracts.ApplyProfileResult { WasCancelled = result.WasCancelled },
-                OperationStatus = new OperationStatus { OperationId = profileOperationId, OperationType = DisplayOperationType.ApplyDisplayProfile, Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed, IsTerminal = true, IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed }
-            };
         }
         catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
         {
@@ -765,13 +775,6 @@ public sealed class ProfileCommandHandler
                 ErrorCode = ControlErrorCode.ExecutionFailed
             }, CancellationToken.None).ConfigureAwait(false);
             _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Display profile operation {0} failed unexpectedly.", profileOperationId);
-            return new ControlResponse
-            {
-                IsSuccessful = false,
-                ErrorCode = ControlErrorCode.ExecutionFailed,
-                Message = "Display profile operation failed unexpectedly.",
-                OperationStatus = new OperationStatus { OperationId = profileOperationId, OperationType = DisplayOperationType.ApplyDisplayProfile, Phase = OperationPhase.Failed, IsTerminal = true, ErrorCode = ControlErrorCode.ExecutionFailed }
-            };
         }
         finally
         {

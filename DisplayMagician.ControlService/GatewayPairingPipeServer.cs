@@ -15,6 +15,8 @@ namespace DisplayMagician.ControlService;
 /// <summary>Accepts only LocalService Gateway pairing traffic; it is deliberately not a general Control Service client pipe.</summary>
 public sealed class GatewayPairingPipeServer
 {
+    private const int MaximumConnectedClients = 16;
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly DevicePairingCoordinator _pairingCoordinator;
     private readonly GatewayIdentityRegistry _identityRegistry;
@@ -22,6 +24,7 @@ public sealed class GatewayPairingPipeServer
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
     private readonly ProfileOperationRouter _profileOperationRouter;
+    private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
     public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter)
     {
@@ -37,16 +40,61 @@ public sealed class GatewayPairingPipeServer
     {
         while (!cancellationToken.IsCancellationRequested)
         {
+            NamedPipeServerStream? pipe = null;
             try
             {
-                using NamedPipeServerStream pipe = CreatePipe();
+                pipe = CreatePipe();
                 await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
-                await HandleAsync(pipe, cancellationToken).ConfigureAwait(false);
+                if (!await _connectedClientSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                {
+                    Logger.Warn("GatewayPairingPipeServer/RunAsync: Rejected a Gateway pipe request because the connected-client limit of {0} was reached.", MaximumConnectedClients);
+                    pipe.Dispose();
+                    continue;
+                }
+
+                _ = HandleWithSlotAsync(pipe, cancellationToken);
+                pipe = null;
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { pipe?.Dispose(); return; }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
             {
+                pipe?.Dispose();
                 Logger.Warn(ex, "GatewayPairingPipeServer/RunAsync: Gateway pipe request failed.");
+            }
+        }
+    }
+
+    private async Task HandleWithSlotAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
+    {
+        using (pipe)
+        {
+            try
+            {
+                await HandleAsync(pipe, cancellationToken).ConfigureAwait(false);
+            }
+            catch (EndOfStreamException ex)
+            {
+                Logger.Debug(ex, "GatewayPairingPipeServer/HandleWithSlotAsync: The Gateway closed the Control Service pipe before completing its request.");
+            }
+            catch (IOException ex)
+            {
+                Logger.Debug(ex, "GatewayPairingPipeServer/HandleWithSlotAsync: The Gateway Control Service pipe was disconnected during a request.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Logger.Warn(ex, "GatewayPairingPipeServer/HandleWithSlotAsync: Rejected an unauthorised Gateway pipe caller.");
+            }
+            catch (TimeoutException ex)
+            {
+                Logger.Warn(ex, "GatewayPairingPipeServer/HandleWithSlotAsync: The Gateway did not send a complete request before the timeout.");
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is JsonException)
+            {
+                Logger.Warn(ex, "GatewayPairingPipeServer/HandleWithSlotAsync: The Gateway sent an invalid Control Service request.");
+            }
+            finally
+            {
+                _connectedClientSlots.Release();
             }
         }
     }
@@ -61,7 +109,17 @@ public sealed class GatewayPairingPipeServer
 
     private async Task HandleAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
     {
-        ControlEnvelope? request = await ControlEnvelopeSerializer.ReadAsync(pipe, cancellationToken).ConfigureAwait(false);
+        using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(RequestTimeout);
+        ControlEnvelope? request;
+        try
+        {
+            request = await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested && timeoutSource.IsCancellationRequested)
+        {
+            throw new TimeoutException("The Gateway did not send a complete Control Service request within 10 seconds.", ex);
+        }
         ControlResponse response;
         if (request == null || !IsLocalService(pipe))
         {

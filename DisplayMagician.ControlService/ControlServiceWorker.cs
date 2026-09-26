@@ -69,11 +69,50 @@ public sealed class ControlServiceWorker : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await _clientSyncCoordinator.SyncAsync(new ClientSyncRequest(), null, null, stoppingToken).ConfigureAwait(false);
-            await _anonymousMetricsSender.TrySendAsync(stoppingToken).ConfigureAwait(false);
-            _operationDecisionStore.Expire(DateTime.UtcNow);
-            _operationStatusStore.RefreshAuthority(_controlStateCoordinator.GetStatus(DateTime.UtcNow).Agents);
-            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken).ConfigureAwait(false);
+            try
+            {
+                await _clientSyncCoordinator.SyncAsync(new ClientSyncRequest(), null, null, stoppingToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "ControlServiceWorker/RunClientSyncAsync: Client sync failed. The Control Service pipe listeners will continue running.");
+            }
+
+            try
+            {
+                await _anonymousMetricsSender.TrySendAsync(stoppingToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "ControlServiceWorker/RunClientSyncAsync: Anonymous metrics delivery failed. The Control Service pipe listeners will continue running.");
+            }
+
+            try
+            {
+                _operationDecisionStore.Expire(DateTime.UtcNow);
+                _operationStatusStore.RefreshAuthority(_controlStateCoordinator.GetStatus(DateTime.UtcNow).Agents);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "ControlServiceWorker/RunClientSyncAsync: Operation maintenance failed. The Control Service pipe listeners will continue running.");
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
         }
     }
 
