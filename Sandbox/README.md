@@ -12,7 +12,7 @@ The generated Sandbox maps these folders read-only:
 - This `Sandbox` source folder, at `C:\DisplayMagician\Sandbox`.
 - Visual Studio Remote Debugger tools, at `C:\DisplayMagician\RemoteDebugger`.
 
-Inside Sandbox, the startup script opens the Bundle folder, creates a GitHub Releases desktop shortcut for older-version upgrade tests, and starts elevated `msvsmon.exe`. Configure Remote Debugger with Windows Authentication before attaching from Visual Studio on the host.
+Inside Sandbox, the startup script copies the mapped bundle into the writable Sandbox temporary directory before launching it. This lets Burn reacquire and cache prerequisite payloads without prompting for a source from the read-only mapping. It also creates a GitHub Releases desktop shortcut for older-version upgrade tests and starts elevated `msvsmon.exe`. Configure Remote Debugger with Windows Authentication before attaching from Visual Studio on the host.
 
 This harness is for installer, service, migration, and storage debugging. It does not replace hardware validation for displays, GPUs, audio devices, Steam, or session-switching behaviour.
 

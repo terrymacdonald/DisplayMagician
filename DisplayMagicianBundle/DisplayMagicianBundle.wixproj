@@ -1,4 +1,4 @@
-﻿<Project Sdk="WixToolset.Sdk/7.0.0">
+<Project Sdk="WixToolset.Sdk/7.0.0">
   <!-- Optional, local-only signing settings created by prepare_displaymagician.ps1. -->
   <Import Project="..\SigningConfig.props" Condition="Exists('..\SigningConfig.props')" />
   <Import Project="RuntimeConfig.props"
@@ -17,6 +17,8 @@
     </DefineConstants>
     <!-- Suppress ICE validation to avoid WIX1105 warning when not running as admin -->
     <SuppressValidation>true</SuppressValidation>
+    <_LocalSigningConfigured Condition="'$(SigningCertificatePfx)' != '' and Exists('$(SigningCertificatePfx)')">true</_LocalSigningConfigured>
+    <SignOutput Condition="'$(_LocalSigningConfigured)' == 'true'">true</SignOutput>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
@@ -90,18 +92,17 @@
 
   </Target>
 
-  <!-- Sign the final versioned EXE after it has been renamed. CI deliberately
-       leaves this disabled and signs this same file through SignPath. -->
-  <Target Name="SignLocalVersionedBundle" AfterTargets="CreateVersionedBundle">
+  <!-- Burn requires its engine to be signed before it is reattached, then the
+       complete bundle to be signed. Do not sign a completed bundle directly. -->
+  <Target Name="ResolveLocalSigningTool"
+          BeforeTargets="SignBundleEngine;SignBundle"
+          Condition="'$(_LocalSigningConfigured)' == 'true'">
     <PropertyGroup>
-      <_LocalSigningConfigured Condition="'$(SigningCertificatePfx)' != '' and Exists('$(SigningCertificatePfx)')">true</_LocalSigningConfigured>
       <_LocalSigningTimestampArgument Condition="'$(SigningTimestampUrl)' != ''">/tr $(SigningTimestampUrl) /td sha256</_LocalSigningTimestampArgument>
       <_WindowsKitRoot>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot10', null, RegistryView.Registry32, RegistryView.Default))</_WindowsKitRoot>
-      <_VersionedBundlePathToSign>$(VersionedBundlePath.Trim())</_VersionedBundlePathToSign>
     </PropertyGroup>
 
-    <Exec Condition="'$(_LocalSigningConfigured)' == 'true'"
-          Command="powershell -NoProfile -Command &quot;(Get-ChildItem '$(_WindowsKitRoot)bin' -Filter '10.*' -Directory | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName)&quot;"
+    <Exec Command="powershell -NoProfile -Command &quot;(Get-ChildItem '$(_WindowsKitRoot)bin' -Filter '10.*' -Directory | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName)&quot;"
           ConsoleToMsBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="_WindowsKitVersionDirectory" />
     </Exec>
@@ -109,16 +110,19 @@
       <_LocalSignToolExe>$(_WindowsKitVersionDirectory.Trim())\x64\signtool.exe</_LocalSignToolExe>
     </PropertyGroup>
 
-    <Error Condition="'$(_LocalSigningConfigured)' == 'true' and !Exists('$(_LocalSignToolExe)')"
+    <Error Condition="!Exists('$(_LocalSignToolExe)')"
            Text="signtool.exe was not found. Install the Windows SDK before building a locally signed bundle." />
-    <Exec Condition="'$(_LocalSigningConfigured)' == 'true'"
-          Command="&quot;$(_LocalSignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_LocalSigningTimestampArgument) &quot;$(_VersionedBundlePathToSign)&quot;"
+  </Target>
+
+  <Target Name="SignBundleEngine" Condition="'$(_LocalSigningConfigured)' == 'true'">
+    <Exec Command="&quot;$(_LocalSignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_LocalSigningTimestampArgument) &quot;%(SignBundleEngine.FullPath)&quot;"
           ConsoleToMsBuild="true"
           EchoOff="true" />
-    <Message Condition="'$(_LocalSigningConfigured)' == 'true'"
-             Importance="high"
-             Text="Versioned bundle signed with the configured local development certificate." />
-    <Warning Condition="'$(SigningCertificatePfx)' != '' and !Exists('$(SigningCertificatePfx)')"
-             Text="The configured local signing PFX was not found, so the versioned bundle was not signed." />
+  </Target>
+
+  <Target Name="SignBundle" Condition="'$(_LocalSigningConfigured)' == 'true'">
+    <Exec Command="&quot;$(_LocalSignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_LocalSigningTimestampArgument) &quot;%(SignBundle.FullPath)&quot;"
+          ConsoleToMsBuild="true"
+          EchoOff="true" />
   </Target>
 </Project>

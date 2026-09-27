@@ -11,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 $bundleDirectory = 'C:\DisplayMagician\Bundle'
 $testCertificatePath = 'C:\DisplayMagician\Local\DisplayMagicianTest.cer'
 $remoteDebuggerPath = 'C:\DisplayMagician\RemoteDebugger\msvsmon.exe'
+$bundleStagingDirectory = Join-Path $env:TEMP 'DisplayMagician\Bundle'
 
 $desktopPath = [Environment]::GetFolderPath('Desktop')
 $releaseShortcutPath = Join-Path $desktopPath 'DisplayMagician Releases.url'
@@ -118,4 +119,10 @@ Start-Process -FilePath $remoteDebuggerPath -Verb RunAs
 # ---------------------------------------------------------------------------
 # Start  installer
 # ---------------------------------------------------------------------------
-Start-Process -FilePath $BundlePath
+New-Item -ItemType Directory -Path $bundleStagingDirectory -Force | Out-Null
+$stagedBundlePath = Join-Path $bundleStagingDirectory (Split-Path -Path $BundlePath -Leaf)
+Copy-Item -LiteralPath $BundlePath -Destination $stagedBundlePath -Force
+
+# Burn may need to reacquire its source while applying prerequisites. The mapped
+# bundle folder is read-only, so run a local copy from the writable Sandbox temp directory.
+Start-Process -FilePath $stagedBundlePath -WorkingDirectory $bundleStagingDirectory
