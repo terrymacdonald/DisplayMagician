@@ -422,6 +422,7 @@ namespace DisplayMagician.UIForms
             {
                 MessageSyncResult syncResult = await _controlServicePipeClient.SyncMessagesAsync(System.Threading.CancellationToken.None);
                 await LoadMessagesIntoListAsync();
+                RefreshMessageIndicators(syncResult.UnreadCount);
                 if (dgv_messages.Rows.Count > 0)
                 {
                     DataGridViewRow firstRow = dgv_messages.Rows[0];

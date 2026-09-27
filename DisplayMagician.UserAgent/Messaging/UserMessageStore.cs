@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using DisplayMagician.Contracts;
 using NLog;
+using Newtonsoft.Json;
+using MessageStoreDocument = DisplayMagician.Messaging.MessageStoreDocument;
+using StoredMessage = DisplayMagician.Messaging.LocalMessage;
 
 namespace DisplayMagician.UserAgent.Messaging;
 
@@ -120,7 +122,7 @@ internal sealed class UserMessageStore
         try
         {
             string json = File.ReadAllText(_indexPath);
-            return JsonSerializer.Deserialize<MessageStoreDocument>(json) ?? new MessageStoreDocument();
+            return JsonConvert.DeserializeObject<MessageStoreDocument>(json) ?? new MessageStoreDocument();
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
         {
@@ -135,7 +137,7 @@ internal sealed class UserMessageStore
         {
             Directory.CreateDirectory(_messagesDirectory);
             string temporaryPath = Path.Combine(_messagesDirectory, $".MessagesIndex.{Guid.NewGuid():N}.tmp");
-            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(store));
+            File.WriteAllText(temporaryPath, JsonConvert.SerializeObject(store, Formatting.Indented));
             if (File.Exists(_indexPath))
             {
                 File.Replace(temporaryPath, _indexPath, null);
@@ -151,25 +153,4 @@ internal sealed class UserMessageStore
         }
     }
 
-    private sealed class MessageStoreDocument
-    {
-        public List<StoredMessage> Messages { get; set; } = new();
-    }
-
-    private sealed class StoredMessage
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string MarkdownFileName { get; set; } = string.Empty;
-        public DateTime? PublishedUtc { get; set; }
-        public DateTime ReceivedUtc { get; set; }
-        public bool IsRead { get; set; }
-        public string Format { get; set; } = string.Empty;
-        public bool ShowOnStartup { get; set; }
-        public bool IsFaulty { get; set; }
-        public string Kind { get; set; } = "standard";
-        public string? ReleaseVersion { get; set; }
-        public string? ReleaseChannel { get; set; }
-        public string? UpdateAction { get; set; }
-    }
 }
