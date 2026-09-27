@@ -78,4 +78,35 @@
 
   <Target Name="CollectSuggestedVisualStudioComponentIds" />
 
+  <!-- Local developer builds use the certificate created by prepare_displaymagician.ps1.
+       CI deliberately leaves this disabled and sends the MSI to SignPath instead. -->
+  <Target Name="SignLocalPackage" AfterTargets="Build">
+    <PropertyGroup>
+      <_LocalSigningConfigured Condition="'$(SigningCertificatePfx)' != '' and Exists('$(SigningCertificatePfx)')">true</_LocalSigningConfigured>
+      <_LocalSigningTimestampArgument Condition="'$(SigningTimestampUrl)' != ''">/tr $(SigningTimestampUrl) /td sha256</_LocalSigningTimestampArgument>
+      <_WindowsKitRoot>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot10', null, RegistryView.Registry32, RegistryView.Default))</_WindowsKitRoot>
+    </PropertyGroup>
+
+    <Exec Condition="'$(_LocalSigningConfigured)' == 'true'"
+          Command="powershell -NoProfile -Command &quot;(Get-ChildItem '$(_WindowsKitRoot)bin' -Filter '10.*' -Directory | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName)&quot;"
+          ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_WindowsKitVersionDirectory" />
+    </Exec>
+    <PropertyGroup>
+      <_LocalSignToolExe>$(_WindowsKitVersionDirectory.Trim())\x64\signtool.exe</_LocalSignToolExe>
+    </PropertyGroup>
+
+    <Error Condition="'$(_LocalSigningConfigured)' == 'true' and !Exists('$(_LocalSignToolExe)')"
+           Text="signtool.exe was not found. Install the Windows SDK before building a locally signed MSI." />
+    <Exec Condition="'$(_LocalSigningConfigured)' == 'true'"
+          Command="&quot;$(_LocalSignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_LocalSigningTimestampArgument) &quot;$(TargetPath)&quot;"
+          ConsoleToMsBuild="true"
+          EchoOff="true" />
+    <Message Condition="'$(_LocalSigningConfigured)' == 'true'"
+             Importance="high"
+             Text="MSI signed with the configured local development certificate." />
+    <Warning Condition="'$(SigningCertificatePfx)' != '' and !Exists('$(SigningCertificatePfx)')"
+             Text="The configured local signing PFX was not found, so the MSI was not signed." />
+  </Target>
+
 </Project>

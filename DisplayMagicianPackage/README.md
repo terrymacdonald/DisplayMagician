@@ -16,6 +16,6 @@ For development, build the WiX project after its payload projects have built:
 dotnet build .\DisplayMagicianPackage\DisplayMagicianPackage.wixproj
 ```
 
-The project accepts a `UseExistingIdentityPackage=true` build property when CI supplies a previously signed MSIX. Signing configuration is intentionally local and is loaded from the repository-level `SigningConfig.props` when present.
+The project accepts a `UseExistingIdentityPackage=true` build property when CI supplies a previously signed MSIX. Signing configuration is intentionally local and is loaded from the repository-level `SigningConfig.props` when present. For a local developer build, the configured certificate signs both the sparse MSIX and the resulting MSI. CI deliberately uses SignPath-signed artifacts instead.
 
 Do not hand-edit generated publish output or `Packages\` contents; change the relevant component project, WiX source, or build workflow instead.
