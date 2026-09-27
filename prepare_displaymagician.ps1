@@ -417,6 +417,44 @@ if ($pfxExists) {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
+# 6b. Generate the local MSIX manifest from the tracked template
+# ---------------------------------------------------------------------------
+$manifestTemplatePath = Join-Path $PSScriptRoot 'DisplayMagicianIdentityPkg\AppxManifest.template.xml'
+$manifestPath = Join-Path $PSScriptRoot 'DisplayMagicianIdentityPkg\AppxManifest.xml'
+$manifestPublisher = [System.Security.SecurityElement]::Escape($cert.Subject)
+$manifestNeedsGeneration = -not (Test-Path -LiteralPath $manifestPath)
+
+if (-not $manifestNeedsGeneration) {
+    try {
+        [xml]$existingManifest = Get-Content -LiteralPath $manifestPath -Raw -ErrorAction Stop
+        $manifestNeedsGeneration = $null -eq $existingManifest.Package -or
+            $null -eq $existingManifest.Package.Identity -or
+            $existingManifest.Package.Identity.Publisher -ne $cert.Subject
+    } catch {
+        $manifestNeedsGeneration = $true
+        Write-Warning "Existing AppxManifest.xml is invalid and will be regenerated."
+    }
+}
+
+if ($manifestNeedsGeneration) {
+    if (-not (Test-Path -LiteralPath $manifestTemplatePath)) {
+        throw "MSIX manifest template not found: $manifestTemplatePath"
+    }
+
+    $manifestTemplate = Get-Content -LiteralPath $manifestTemplatePath -Raw -ErrorAction Stop
+    if (-not $manifestTemplate.Contains('__IDENTITY_PACKAGE_PUBLISHER__')) {
+        throw "MSIX manifest template does not contain the publisher placeholder."
+    }
+
+    $manifestContent = $manifestTemplate.Replace('__IDENTITY_PACKAGE_PUBLISHER__', $manifestPublisher)
+    [System.IO.File]::WriteAllText($manifestPath, $manifestContent, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "Generated local MSIX manifest: $manifestPath" -ForegroundColor Green
+} else {
+    Write-Host "Using existing local MSIX manifest: $manifestPath" -ForegroundColor Green
+}
+Write-Host ""
+
+# ---------------------------------------------------------------------------
 # 7. Export to PFX (skipped if PFX already exists)
 # ---------------------------------------------------------------------------
 if ($pfxExists) {

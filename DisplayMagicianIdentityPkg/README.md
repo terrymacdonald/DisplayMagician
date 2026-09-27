@@ -4,6 +4,8 @@ This MSBuild no-targets project creates the sparse MSIX identity package used by
 
 The build patches the MSIX manifest version from `DisplayMagician.exe`, generates PRI resources with the installed Windows SDK tools, packs the MSIX, and signs it when `SigningConfig.props` supplies a certificate.
 
+`AppxManifest.template.xml` is source-controlled. `prepare_displaymagician.ps1` creates the ignored local `AppxManifest.xml` from it when the local manifest is missing or invalid, using the selected signing certificate's subject as its publisher. Run the setup script before building on a new machine.
+
 ## Build
 
 Build `DisplayMagician` first, then build this project:
