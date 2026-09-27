@@ -30,7 +30,9 @@ public sealed class AgentCommandServer
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
+    private const int MaximumConnectedCommandClients = 4;
     private readonly string _pipeName;
+    private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedCommandClients, MaximumConnectedCommandClients);
     private readonly Dictionary<Guid, (ControlMessageType MessageType, string Payload, ControlResponse Response, DateTime CompletedUtc)> _successfulResponses = new Dictionary<Guid, (ControlMessageType, string, ControlResponse, DateTime)>();
 
     public AgentCommandServer(string pipeName)
@@ -42,22 +44,60 @@ public sealed class AgentCommandServer
     {
         ArgumentNullException.ThrowIfNull(commandHandler);
         ArgumentNullException.ThrowIfNull(shouldStop);
+        TaskCompletionSource<bool> stopRequested = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         while (!cancellationToken.IsCancellationRequested)
         {
+            NamedPipeServerStream? pipe = null;
             try
             {
-                using NamedPipeServerStream pipe = CreatePipe();
-                await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
+                pipe = CreatePipe();
+                Task connectionTask = pipe.WaitForConnectionAsync(cancellationToken);
+                if (await Task.WhenAny(connectionTask, stopRequested.Task).ConfigureAwait(false) == stopRequested.Task)
+                {
+                    pipe.Dispose();
+                    return;
+                }
+
+                await connectionTask.ConfigureAwait(false);
+                if (!await _connectedClientSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                {
+                    Logger.Warn("AgentCommandServer/RunAsync: Rejected a Control Service command because the connected-command limit of {0} was reached.", MaximumConnectedCommandClients);
+                    pipe.Dispose();
+                    continue;
+                }
+
+                _ = HandleClientWithSlotAsync(pipe, commandHandler, shouldStop, stopRequested, cancellationToken);
+                pipe = null;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                pipe?.Dispose();
+                return;
+            }
+            catch (Exception ex)
+            {
+                pipe?.Dispose();
+                Logger.Error(ex, "AgentCommandServer/RunAsync: Unable to accept a Control Service command.");
+            }
+        }
+    }
+
+    private async Task HandleClientWithSlotAsync(NamedPipeServerStream pipe, Func<ControlEnvelope, CancellationToken, Task<ControlResponse>> commandHandler, Func<bool> shouldStop, TaskCompletionSource<bool> stopRequested, CancellationToken cancellationToken)
+    {
+        using (pipe)
+        {
+            try
+            {
                 if (!IsControlService(pipe))
                 {
-                    continue;
+                    return;
                 }
 
                 ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, cancellationToken).ConfigureAwait(false);
                 if (request == null)
                 {
-                    continue;
+                    return;
                 }
 
                 using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
@@ -98,32 +138,32 @@ public sealed class AgentCommandServer
 
                 if (shouldStop())
                 {
-                    return;
+                    stopRequested.TrySetResult(true);
                 }
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                return;
             }
             catch (EndOfStreamException ex)
             {
-                Logger.Debug(ex, "AgentCommandServer/RunAsync: The Control Service closed the User Agent command pipe before completing a request.");
+                Logger.Debug(ex, "AgentCommandServer/HandleClientWithSlotAsync: The Control Service closed the User Agent command pipe before completing a request.");
             }
             catch (IOException ex)
             {
-                Logger.Debug(ex, "AgentCommandServer/RunAsync: The User Agent command pipe was disconnected during a Control Service request.");
+                Logger.Debug(ex, "AgentCommandServer/HandleClientWithSlotAsync: The User Agent command pipe was disconnected during a Control Service request.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                Logger.Warn(ex, "AgentCommandServer/RunAsync: Rejected an unauthorised caller on the User Agent command pipe.");
+                Logger.Warn(ex, "AgentCommandServer/HandleClientWithSlotAsync: Rejected an unauthorised caller on the User Agent command pipe.");
             }
             catch (TimeoutException ex)
             {
-                Logger.Warn(ex, "AgentCommandServer/RunAsync: The Control Service did not send a complete User Agent command before the request timeout.");
+                Logger.Warn(ex, "AgentCommandServer/HandleClientWithSlotAsync: The Control Service did not send a complete User Agent command before the request timeout.");
             }
-            catch (Exception ex) when (ex is InvalidOperationException || ex is JsonException)
+            catch (Exception ex)
             {
-                Logger.Warn(ex, "AgentCommandServer/RunAsync: The Control Service sent an invalid User Agent command request.");
+                Logger.Error(ex, "AgentCommandServer/HandleClientWithSlotAsync: The User Agent could not process a Control Service command.");
+            }
+            finally
+            {
+                _connectedClientSlots.Release();
             }
         }
     }
@@ -167,7 +207,7 @@ public sealed class AgentCommandServer
         security.AddAccessRule(new PipeAccessRule(userSid, PipeAccessRights.FullControl, AccessControlType.Allow));
         security.AddAccessRule(new PipeAccessRule(localSystemSid, PipeAccessRights.ReadWrite, AccessControlType.Allow));
 
-        return NamedPipeServerStreamAcl.Create(_pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security, HandleInheritability.None);
+        return NamedPipeServerStreamAcl.Create(_pipeName, PipeDirection.InOut, MaximumConnectedCommandClients, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security, HandleInheritability.None);
     }
 
     private static bool IsControlService(NamedPipeServerStream pipe)

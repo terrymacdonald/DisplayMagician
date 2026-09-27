@@ -4,7 +4,7 @@ Run `debug_displaymagician.ps1` as an administrator and select **2. Windows Sand
 
 Before using this workflow, enable the Windows Sandbox optional feature and restart the host if Windows requests it. The launcher checks this feature but does not enable it automatically.
 
-The launcher builds `Debug|x64` Bundle output, discovers the installed Visual Studio x64 Remote Debugger, and writes `Sandbox\Generated\DisplayMagician-Debug.wsb` with the required absolute paths. It then starts Windows Sandbox.
+Build the `Debug|x64` Bundle before running the launcher. The launcher uses the most recently built versioned Bundle output, discovers the installed Visual Studio x64 Remote Debugger, and writes `Sandbox\Generated\DisplayMagician-Debug.wsb` with the required absolute paths. It then starts Windows Sandbox.
 
 The generated Sandbox maps these folders read-only:
 

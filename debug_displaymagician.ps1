@@ -6,11 +6,11 @@
 
 .DESCRIPTION
     The local workflow publishes Debug runtime payloads into an existing
-    DisplayMagician installation. The Windows Sandbox workflow builds the
-    Debug Bundle, generates a machine-specific Sandbox configuration, and
-    verifies the local Debug signing certificate is available, then starts
-    Sandbox with the Bundle, certificate, and Visual Studio Remote Debugger mapped
-    read-only.
+    DisplayMagician installation. The Windows Sandbox workflow uses the most
+    recently built Debug Bundle, generates a machine-specific Sandbox
+    configuration, and verifies the local Debug signing certificate is
+    available, then starts Sandbox with the Bundle, certificate, and Visual
+    Studio Remote Debugger mapped read-only.
 
 .PARAMETER NoLaunch
     In the local workflow, deploy and start the services without launching
@@ -183,8 +183,7 @@ function Start-WindowsSandboxDebugging {
     $generatedRoot = Join-Path $sandboxRoot 'Generated'
     $localAssetsRoot = Join-Path $sandboxRoot 'Local'
     $testCertificatePath = Join-Path $localAssetsRoot 'DisplayMagicianTest.cer'
-    $bundleProject = Join-Path $script:root 'DisplayMagicianBundle\DisplayMagicianBundle.wixproj'
-    if (-not (Test-Path -LiteralPath $templatePath) -or -not (Test-Path -LiteralPath $bundleProject)) {
+    if (-not (Test-Path -LiteralPath $templatePath)) {
         throw 'The Windows Sandbox harness files are missing. Restore the Sandbox folder from source control.'
     }
 
@@ -201,18 +200,12 @@ The Sandbox\Local directory is intentionally excluded from Git.
 
     Assert-WindowsSandboxAvailable
 
-    Write-Host 'Building the Debug DisplayMagician Bundle...' -ForegroundColor Cyan
-    & $script:msbuild $bundleProject '-t:Build' '-p:Configuration=Debug' '-p:Platform=x64' '-nologo' '-v:minimal'
-    if ($LASTEXITCODE -ne 0) {
-        throw "Debug Bundle build failed with exit code $LASTEXITCODE."
-    }
-
     $bundleDirectory = Join-Path $script:root 'DisplayMagicianBundle\bin\x64\Debug'
     $bundlePath = Get-ChildItem -LiteralPath $bundleDirectory -Filter 'DisplayMagicianSetup_v*.exe' -File |
         Sort-Object LastWriteTimeUtc -Descending |
         Select-Object -First 1
     if ($null -eq $bundlePath) {
-        throw "The Debug Bundle was not found in $bundleDirectory."
+        throw "No Debug Bundle was found in $bundleDirectory. Build the Debug Bundle before starting the Windows Sandbox workflow."
     }
 
     $remoteDebuggerPath = Find-RemoteDebugger
@@ -254,7 +247,7 @@ Write-Host '  1. Local installed Debug build'
 Write-Host '     Publish Debug components into the existing host installation.'
 Write-Host ''
 Write-Host '  2. Windows Sandbox based Debugging'
-Write-Host '     Build the Debug Bundle and start the configured Windows Sandbox.'
+Write-Host '     Start the configured Windows Sandbox using the most recently built Debug Bundle.'
 Write-Host ''
 Write-Host '  Q. Quit'
 Write-Host ''
