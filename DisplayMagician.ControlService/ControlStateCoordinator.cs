@@ -266,6 +266,19 @@ public sealed class ControlStateCoordinator
         }
     }
 
+    public AgentRegistration[] GetHealthyReadyAgentRegistrations(string userSid, DateTime utcNow)
+    {
+        lock (_syncRoot)
+        {
+            return _agentsBySession.Values
+                .Where(agent => agent.Registration.IsReady &&
+                    utcNow - agent.LastHeartbeatUtc <= AgentHeartbeatTimeout &&
+                    string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
+                .Select(agent => CopyRegistration(agent.Registration))
+                .ToArray();
+        }
+    }
+
     public AgentRegistration[] GetAgentRegistrations()
     {
         lock (_syncRoot)

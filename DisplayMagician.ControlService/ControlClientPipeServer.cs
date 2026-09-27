@@ -492,7 +492,7 @@ public sealed class ControlClientPipeServer
         }
 
         GatewayPairingIdentity gateway = new GatewayPairingIdentity { GatewayUri = gatewayUri.AbsoluteUri.TrimEnd('/'), HostId = registeredGateway.HostId, HostIdentityPublicKeyJwk = registeredGateway.HostIdentityPublicKeyJwk, TlsCertificateSha256 = registeredGateway.TlsCertificateSha256 };
-        return new ControlResponse { IsSuccessful = true, DevicePairingQrCode = _devicePairingCoordinator.CreateQrCode(identity.UserSid, gateway, DateTime.UtcNow) };
+        return new ControlResponse { IsSuccessful = true, DevicePairingQrCode = _devicePairingCoordinator.CreateQrCode(identity.UserSid, identity.SessionId, gateway, DateTime.UtcNow) };
     }
 
     private ControlResponse ApproveDevicePairing(PipeClientIdentity identity, ControlEnvelope request)

@@ -256,21 +256,48 @@ public sealed class GatewayPairingPipeServer
 
     private bool TryGetVerifiedTargetSession(GatewayAuthenticationResult authentication, int? targetSessionId, out int sessionId, out ControlResponse failure)
     {
-        sessionId = targetSessionId ?? -1;
-        if (!targetSessionId.HasValue || sessionId < 0)
+        sessionId = targetSessionId ?? authentication.PreferredSessionId ?? -1;
+        if (targetSessionId.HasValue && targetSessionId.Value < 0)
         {
-            failure = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A target Windows session is required for this remote request." };
+            failure = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested target Windows session was invalid." };
             return false;
         }
 
-        if (_controlStateCoordinator.GetHealthyReadyAgentRegistration(authentication.OwnerUserSid, sessionId, DateTime.UtcNow) == null)
+        if (targetSessionId.HasValue)
         {
+            if (_controlStateCoordinator.GetHealthyReadyAgentRegistration(authentication.OwnerUserSid, sessionId, DateTime.UtcNow) != null)
+            {
+                failure = new ControlResponse();
+                return true;
+            }
+
             failure = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The selected Windows session does not have a healthy User Agent for this paired user." };
             return false;
         }
 
-        failure = new ControlResponse();
-        return true;
+        if (authentication.PreferredSessionId.HasValue &&
+            _controlStateCoordinator.GetHealthyReadyAgentRegistration(authentication.OwnerUserSid, sessionId, DateTime.UtcNow) != null)
+        {
+            failure = new ControlResponse();
+            return true;
+        }
+
+        AgentRegistration[] availableAgents = _controlStateCoordinator.GetHealthyReadyAgentRegistrations(authentication.OwnerUserSid, DateTime.UtcNow);
+        if (availableAgents.Length == 1)
+        {
+            sessionId = availableAgents[0].SessionId;
+            failure = new ControlResponse();
+            return true;
+        }
+
+        if (availableAgents.Length == 0)
+        {
+            failure = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The paired user has no healthy User Agent session available." };
+            return false;
+        }
+
+        failure = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "More than one User Agent session is available. Select a target session explicitly." };
+        return false;
     }
 
     private static bool IsLocalService(NamedPipeServerStream pipe)

@@ -140,6 +140,7 @@ public sealed class PairedClientRepository
         {
             DeviceId = client.DeviceId,
             OwnerUserSid = client.OwnerUserSid,
+            PreferredSessionId = client.PreferredSessionId,
             DisplayName = client.DisplayName,
             ClientType = client.ClientType,
             LastKnownIpAddress = client.LastKnownIpAddress,

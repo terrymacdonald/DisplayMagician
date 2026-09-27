@@ -413,6 +413,8 @@ public sealed class GatewayAuthenticationResult
     public bool IsAuthenticated { get; set; }
     public string OwnerUserSid { get; set; } = string.Empty;
     public string DeviceId { get; set; } = string.Empty;
+    /// <summary>Server-owned preferred session captured when this device was paired. It is never trusted from a remote request.</summary>
+    public int? PreferredSessionId { get; set; }
     public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
     public string Message { get; set; } = string.Empty;
 }
@@ -467,6 +469,8 @@ public sealed class PairedClient
 {
     public string DeviceId { get; set; } = string.Empty;
     public string OwnerUserSid { get; set; } = string.Empty;
+    /// <summary>The interactive session selected by the local QR creator. It is transient and must be revalidated before every route.</summary>
+    public int? PreferredSessionId { get; set; }
     public string DisplayName { get; set; } = string.Empty;
     public string ClientType { get; set; } = string.Empty;
     public string LastKnownIpAddress { get; set; } = string.Empty;

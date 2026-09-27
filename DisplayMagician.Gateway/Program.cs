@@ -73,12 +73,7 @@ internal static class Program
                 return Results.Json(new { error = "The paired device is not authorised to read status." }, statusCode: StatusCodes.Status403Forbidden);
             }
 
-            if (!targetSessionId.HasValue || targetSessionId < 0)
-            {
-                return Results.Json(new { error = "A targetSessionId is required." }, statusCode: StatusCodes.Status400BadRequest);
-            }
-
-            return Results.Ok(await controlServiceClient.GetRemoteUserStatusAsync(authentication, targetSessionId.Value, changedSinceUtc, cancellationToken).ConfigureAwait(false));
+            return Results.Ok(await controlServiceClient.GetRemoteUserStatusAsync(authentication, targetSessionId, changedSinceUtc, cancellationToken).ConfigureAwait(false));
         });
         app.MapGet("/v1/status/stream", async (HttpContext context, int? targetSessionId, GatewayStatusFeed statusFeed, CancellationToken cancellationToken) =>
         {
@@ -89,15 +84,9 @@ internal static class Program
                 return;
             }
 
-            if (!targetSessionId.HasValue || targetSessionId < 0)
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                return;
-            }
-
             context.Response.ContentType = "text/event-stream";
             context.Response.Headers.CacheControl = "no-cache";
-            ChannelReader<RemoteUserStatus> updates = statusFeed.Subscribe(authentication, targetSessionId.Value, cancellationToken);
+            ChannelReader<RemoteUserStatus> updates = statusFeed.Subscribe(authentication, targetSessionId, cancellationToken);
             while (!cancellationToken.IsCancellationRequested)
             {
                 using CancellationTokenSource keepAliveCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -121,13 +110,13 @@ internal static class Program
                 }
             }
         });
-        app.MapGet("/v1/profiles", (int targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token));
-        app.MapGet("/v1/audio-profiles", (int targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteAudioProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token));
-        app.MapGet("/v1/shortcuts", (int targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteShortcuts, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token));
-        app.MapPost("/v1/profiles/apply", (int targetSessionId, ApplyProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
-        app.MapPost("/v1/audio-profiles/apply", (int targetSessionId, ApplyAudioProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteAudioProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
-        app.MapPost("/v1/shortcuts/run", (int targetSessionId, StartShortcutRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.StartRemoteShortcut, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
-        app.MapPost("/v1/decisions/answer", (int targetSessionId, ResolveOperationDecisionRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ResolveRemoteOperationDecision, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
+        app.MapGet("/v1/profiles", (int? targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token));
+        app.MapGet("/v1/audio-profiles", (int? targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteAudioProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token));
+        app.MapGet("/v1/shortcuts", (int? targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ListRemoteAsync(ControlMessageType.ListRemoteShortcuts, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token));
+        app.MapPost("/v1/profiles/apply", (int? targetSessionId, ApplyProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
+        app.MapPost("/v1/audio-profiles/apply", (int? targetSessionId, ApplyAudioProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteAudioProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
+        app.MapPost("/v1/shortcuts/run", (int? targetSessionId, StartShortcutRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.StartRemoteShortcut, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
+        app.MapPost("/v1/decisions/answer", (int? targetSessionId, ResolveOperationDecisionRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => client.ExecuteRemoteAsync(ControlMessageType.ResolveRemoteOperationDecision, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token));
         app.Run();
     }
 

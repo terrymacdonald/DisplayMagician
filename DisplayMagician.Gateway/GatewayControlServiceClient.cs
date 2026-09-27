@@ -16,13 +16,13 @@ public interface IGatewayAuthenticationClient
 /// <summary>Uses the narrow LocalService-only pipe; it cannot invoke normal desktop client operations.</summary>
 public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
 {
-    public Task<ControlResponse> ExecuteRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int targetSessionId, string payload, CancellationToken cancellationToken) => SendAsync(messageType, JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, TargetSessionId = targetSessionId, Payload = payload }), cancellationToken);
-    public async Task<ControlResponse> ListRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int targetSessionId, CancellationToken cancellationToken)
+    public Task<ControlResponse> ExecuteRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int? targetSessionId, string payload, CancellationToken cancellationToken) => SendAsync(messageType, JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, TargetSessionId = targetSessionId, Payload = payload }), cancellationToken);
+    public async Task<ControlResponse> ListRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int? targetSessionId, CancellationToken cancellationToken)
     {
         return await SendAsync(messageType, JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, TargetSessionId = targetSessionId }), cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<RemoteUserStatus> GetRemoteUserStatusAsync(GatewayAuthenticationResult authentication, int targetSessionId, DateTime? changedSinceUtc, CancellationToken cancellationToken)
+    public async Task<RemoteUserStatus> GetRemoteUserStatusAsync(GatewayAuthenticationResult authentication, int? targetSessionId, DateTime? changedSinceUtc, CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(ControlMessageType.GetRemoteUserStatus, JsonSerializer.Serialize(new GatewayRemoteStatusRequest { Authentication = authentication, TargetSessionId = targetSessionId, ChangedSinceUtc = changedSinceUtc }), cancellationToken).ConfigureAwait(false);
         return response.IsSuccessful && response.RemoteUserStatus != null ? response.RemoteUserStatus : throw new InvalidOperationException(response.Message);

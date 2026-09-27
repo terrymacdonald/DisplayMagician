@@ -29,7 +29,7 @@ public sealed class GatewayStatusFeed : IHostedService
 
     public ChannelReader<RemoteUserStatus> Subscribe(
         GatewayAuthenticationResult authentication,
-        int targetSessionId,
+        int? targetSessionId,
         CancellationToken cancellationToken)
     {
         if (Volatile.Read(ref _isStopping) != 0)
@@ -37,7 +37,7 @@ public sealed class GatewayStatusFeed : IHostedService
             return CreateCompletedReader();
         }
 
-        string ownerUserSid = $"{authentication.OwnerUserSid}:{targetSessionId}";
+        string ownerUserSid = $"{authentication.DeviceId}:{targetSessionId?.ToString() ?? "default"}";
         while (true)
         {
             Entry entry = _entries.GetOrAdd(
@@ -87,7 +87,7 @@ public sealed class GatewayStatusFeed : IHostedService
     private sealed class Entry
     {
         private readonly GatewayAuthenticationResult _authentication;
-        private readonly int _targetSessionId;
+        private readonly int? _targetSessionId;
         private readonly GatewayControlServiceClient _client;
         private readonly Action<Entry> _removeWhenRetired;
         private readonly Dictionary<Guid, Subscriber> _subscribers = new();
@@ -104,7 +104,7 @@ public sealed class GatewayStatusFeed : IHostedService
 
         public Entry(
             GatewayAuthenticationResult authentication,
-            int targetSessionId,
+            int? targetSessionId,
             GatewayControlServiceClient client,
             Action<Entry> removeWhenRetired)
         {

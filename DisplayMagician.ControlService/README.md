@@ -4,7 +4,7 @@ This project hosts the machine-wide Windows service named **DisplayMagician Cont
 
 It does not show UI, launch games, inspect Steam or desktop windows, or change display/audio settings directly. Those interactive-session responsibilities belong to `DisplayMagician.UserAgent`. It also owns approved remote-device public-key associations and one-hour pairing sessions; `DisplayMagician.Gateway` will be the only network-facing adapter and will ask the service to apply these pairing rules.
 
-When an authorised interactive user session has no connected Agent, the service can request `DisplayMagician.SessionLauncher` to demand-start one in that verified SID/session. A physical-console session is not required. Remote Gateway requests must explicitly name a target session, which ControlService verifies belongs to the paired owner's SID and has a healthy ready Agent.
+When an authorised interactive user session has no connected Agent, the service can request `DisplayMagician.SessionLauncher` to demand-start one in that verified SID/session. A physical-console session is not required. QR pairing records that local SID/session as the paired device's preferred route. ControlService revalidates it before every remote request, falls back only when the owner has exactly one healthy ready Agent, and otherwise requires an explicit target selection.
 
 Control Service routes work only to a ready Agent whose process and command-pipe identity match the fixed installed payload. It bounds pipe handshakes and subscribers, retains successful mutating client responses for 24 hours for safe retry, and makes lagging event subscribers reconnect for an authoritative status/decision snapshot.
 

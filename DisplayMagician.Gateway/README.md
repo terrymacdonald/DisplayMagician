@@ -6,7 +6,7 @@ The Gateway owns two distinct machine P-256 identities: a host signing identity 
 
 At startup, and periodically afterwards, the Gateway registers its public identity with ControlService through a dedicated LocalService-only named pipe. ControlService uses that registered identity when it creates pairing sessions, so a desktop client cannot substitute a different host key or certificate fingerprint.
 
-Current network endpoints include authenticated profile, audio-profile, shortcut, operation-decision, status, and SSE status-stream routes. Every authenticated remote request must include `targetSessionId`; ControlService verifies that this is a healthy, ready User Agent session owned by the paired device's authenticated Windows SID. Gateway never chooses a console session implicitly.
+Current network endpoints include authenticated profile, audio-profile, shortcut, operation-decision, status, and SSE status-stream routes. QR pairing binds a paired device to the verified local session that created the QR. ControlService uses that preferred session while it has a healthy, ready User Agent, or automatically uses the only healthy session for that SID. A remote client may provide `targetSessionId` only when it needs to resolve multiple available sessions; Gateway never chooses a console session implicitly.
 
 ## Development
 

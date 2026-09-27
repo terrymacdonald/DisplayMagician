@@ -28,7 +28,7 @@ public sealed class GatewayRequestAuthenticator
         PairedClient? client = _pairedClients.FindActiveByDeviceId(signedRequest.DeviceId);
         if (client == null || !Verify(client.PublicKeyJwk, signedRequest, request.Method, request.Path, request.BodySha256)) return new GatewayAuthenticationResult { Message = "The request signature is invalid." };
         _pairedClients.RecordAuthentication(client.DeviceId, request.SourceIpAddress, utcNow);
-        return new GatewayAuthenticationResult { IsAuthenticated = true, OwnerUserSid = client.OwnerUserSid, DeviceId = client.DeviceId, GrantedCapabilities = client.GrantedCapabilities, Message = "Authenticated." };
+        return new GatewayAuthenticationResult { IsAuthenticated = true, OwnerUserSid = client.OwnerUserSid, DeviceId = client.DeviceId, PreferredSessionId = client.PreferredSessionId, GrantedCapabilities = client.GrantedCapabilities, Message = "Authenticated." };
     }
 
     private static bool Verify(string publicKeyJwk, SignedGatewayRequest request, string method, string path, string bodySha256)

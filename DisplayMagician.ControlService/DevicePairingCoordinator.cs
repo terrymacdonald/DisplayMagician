@@ -28,9 +28,13 @@ public sealed class DevicePairingCoordinator
         _sessions = Load();
     }
 
-    public DevicePairingQrCode CreateQrCode(string ownerUserSid, GatewayPairingIdentity gateway, DateTime utcNow)
+    public DevicePairingQrCode CreateQrCode(string ownerUserSid, int ownerSessionId, GatewayPairingIdentity gateway, DateTime utcNow)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
+        if (ownerSessionId < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ownerSessionId));
+        }
         ArgumentNullException.ThrowIfNull(gateway);
         if (string.IsNullOrWhiteSpace(gateway.GatewayUri) || string.IsNullOrWhiteSpace(gateway.HostId) || string.IsNullOrWhiteSpace(gateway.HostIdentityPublicKeyJwk) || string.IsNullOrWhiteSpace(gateway.TlsCertificateSha256))
         {
@@ -47,6 +51,7 @@ public sealed class DevicePairingCoordinator
             {
                 PairingSessionId = Guid.NewGuid(),
                 OwnerUserSid = ownerUserSid,
+                OwnerSessionId = ownerSessionId,
                 Gateway = Copy(gateway),
                 SecretHash = GetHash(secret),
                 CreatedUtc = utcNow.ToUniversalTime(),
@@ -57,6 +62,11 @@ public sealed class DevicePairingCoordinator
             PersistUnsafe();
             return new DevicePairingQrCode { PairingSessionId = session.PairingSessionId, PairingSecret = secret, ExpiresUtc = expiresUtc, Gateway = Copy(gateway) };
         }
+    }
+
+    public DevicePairingQrCode CreateQrCode(string ownerUserSid, GatewayPairingIdentity gateway, DateTime utcNow)
+    {
+        return CreateQrCode(ownerUserSid, 0, gateway, utcNow);
     }
 
     public DevicePairingResult Submit(DevicePairingRequest request, DateTime utcNow)
@@ -198,6 +208,7 @@ public sealed class DevicePairingCoordinator
             {
                 DeviceId = session.DeviceId,
                 OwnerUserSid = session.OwnerUserSid,
+                PreferredSessionId = session.OwnerSessionId,
                 DisplayName = session.DeviceDisplayName,
                 ClientType = session.ClientType,
                 LastKnownIpAddress = session.SourceIpAddress,
@@ -306,6 +317,7 @@ public sealed class DevicePairingCoordinator
     {
         public Guid PairingSessionId { get; set; }
         public string OwnerUserSid { get; set; } = string.Empty;
+        public int? OwnerSessionId { get; set; }
         public GatewayPairingIdentity Gateway { get; set; } = new GatewayPairingIdentity();
         public string SecretHash { get; set; } = string.Empty;
         public DateTime CreatedUtc { get; set; }
