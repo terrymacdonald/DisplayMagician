@@ -89,11 +89,6 @@ public sealed class AgentCommandServer
         {
             try
             {
-                if (!IsControlService(pipe))
-                {
-                    return;
-                }
-
                 ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, cancellationToken).ConfigureAwait(false);
                 if (request == null)
                 {
@@ -200,34 +195,13 @@ public sealed class AgentCommandServer
 
     private NamedPipeServerStream CreatePipe()
     {
-        using WindowsIdentity identity = WindowsIdentity.GetCurrent();
-        SecurityIdentifier userSid = identity.User ?? throw new InvalidOperationException("The current Windows user has no SID.");
         SecurityIdentifier localSystemSid = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
         PipeSecurity security = new PipeSecurity();
-        security.AddAccessRule(new PipeAccessRule(userSid, PipeAccessRights.FullControl, AccessControlType.Allow));
+        // Control Service is the only supported command caller. The interactive user must use
+        // Control Service rather than being able to connect directly to the User Agent.
         security.AddAccessRule(new PipeAccessRule(localSystemSid, PipeAccessRights.ReadWrite, AccessControlType.Allow));
 
         return NamedPipeServerStreamAcl.Create(_pipeName, PipeDirection.InOut, MaximumConnectedCommandClients, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security, HandleInheritability.None);
-    }
-
-    private static bool IsControlService(NamedPipeServerStream pipe)
-    {
-        bool isLocalSystem = false;
-        pipe.RunAsClient(() =>
-        {
-            using WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            isLocalSystem = identity.User?.IsWellKnown(WellKnownSidType.LocalSystemSid) == true;
-        });
-        if (!isLocalSystem)
-        {
-            Logger.Warn("AgentCommandServer/IsControlService: Rejected a command-pipe caller because it was not the LocalSystem Control Service.");
-            return false;
-        }
-
-        // The pipe ACL permits only this interactive user and LocalSystem. LocalSystem already
-        // has machine-wide authority, so an executable-path inspection adds no security boundary
-        // and can fail when a standard user inspects the service process.
-        return true;
     }
 
     private static async Task<ControlEnvelope?> ReadEnvelopeWithTimeoutAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
