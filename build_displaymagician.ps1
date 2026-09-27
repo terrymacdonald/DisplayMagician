@@ -69,16 +69,20 @@ function Invoke-Step {
 }
 
 # ---------------------------------------------------------------------------
-# Clean, restore + build the solution (project order is determined by solution dependencies)
+# Restore, clean + build the solution (project order is determined by solution dependencies).
+#
+# Restore must occur before Clean: on a new or updated .NET SDK installation, Clean evaluates
+# Windows reference packs before it can remove project outputs. Restoring the "any" runtime
+# pack first prevents NETSDK1112 from stopping the build before its normal restore step.
 # ---------------------------------------------------------------------------
+Invoke-Step "Restore DisplayMagician.sln" {
+    $sln = Join-Path $root 'DisplayMagician.sln'
+    & $msbuild $sln -t:Restore -p:RuntimeIdentifier=any -nologo -v:minimal
+}
+
 Invoke-Step "Clean DisplayMagician.sln" {
     $sln = Join-Path $root 'DisplayMagician.sln'
     & $msbuild $sln -t:Clean -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
-}
-
-Invoke-Step "Restore DisplayMagician.sln" {
-    $sln = Join-Path $root 'DisplayMagician.sln'
-    & $msbuild $sln -t:Restore -nologo -v:minimal
 }
 
 Invoke-Step "Build DisplayMagician.sln ($Configuration|$Platform)" {
