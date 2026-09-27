@@ -39,6 +39,10 @@ internal static class Program
         TaskCompletionSource<ControlResponse> migrationCompletion = new TaskCompletionSource<ControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
         Task serviceConnection = RunServiceConnectionWithRetryAsync(serviceClient, registration, acquireDisplayControl, migrateUserData, migrationCompletion, cancellationTokenSource.Token);
+        // Control Service can deliver its saved client-sync manifest as soon as it accepts the
+        // registration. Start this listener before awaiting migration so that delivery cannot
+        // block the persistent registration pipe that carries the migration response.
+        Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
         ControlResponse migrationResponse = await migrationCompletion.Task.ConfigureAwait(false);
         if (!migrationResponse.IsSuccessful)
         {
@@ -47,7 +51,6 @@ internal static class Program
         }
 
         await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-        Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
         registration.IsReady = true;
         ControlResponse readyResponse = await serviceClient.UpdateRegistrationAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
         if (!readyResponse.IsSuccessful)

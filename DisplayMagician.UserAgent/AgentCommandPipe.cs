@@ -8,6 +8,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
 using DisplayMagician.Contracts;
 using NLog;
 
@@ -226,9 +227,9 @@ public sealed class AgentCommandServer
 
         try
         {
-            using System.Diagnostics.Process process = System.Diagnostics.Process.GetProcessById(checked((int)processId));
+            string processPath = GetProcessExecutablePath(checked((int)processId));
             string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "ControlService", "DisplayMagician.ControlService.exe"));
-            bool isControlService = string.Equals(process.MainModule?.FileName, expectedPath, StringComparison.OrdinalIgnoreCase);
+            bool isControlService = string.Equals(processPath, expectedPath, StringComparison.OrdinalIgnoreCase);
             if (!isControlService)
             {
                 Logger.Warn("AgentCommandServer/IsControlService: Rejected command-pipe caller process {0} because it was not the installed Control Service executable.", processId);
@@ -240,6 +241,32 @@ public sealed class AgentCommandServer
         {
             Logger.Warn(ex, "AgentCommandServer/IsControlService: Could not verify the Control Service executable for pipe process {0}.", processId);
             return false;
+        }
+    }
+
+    private static string GetProcessExecutablePath(int processId)
+    {
+        const uint processQueryLimitedInformation = 0x1000;
+        IntPtr processHandle = OpenProcess(processQueryLimitedInformation, false, processId);
+        if (processHandle == IntPtr.Zero)
+        {
+            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "Unable to open the Control Service process for limited-information verification.");
+        }
+
+        try
+        {
+            uint length = 32768;
+            StringBuilder path = new StringBuilder(checked((int)length));
+            if (!QueryFullProcessImageName(processHandle, 0, path, ref length))
+            {
+                throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "Unable to read the Control Service executable path for verification.");
+            }
+
+            return path.ToString();
+        }
+        finally
+        {
+            CloseHandle(processHandle);
         }
     }
 
@@ -269,4 +296,15 @@ public sealed class AgentCommandServer
     [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
     [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
     private static extern bool GetNamedPipeClientProcessId(Microsoft.Win32.SafeHandles.SafePipeHandle pipe, out uint clientProcessId);
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint processAccess, [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)] bool inheritHandle, int processId);
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool QueryFullProcessImageName(IntPtr processHandle, uint flags, StringBuilder executablePath, ref uint size);
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool CloseHandle(IntPtr handle);
 }
