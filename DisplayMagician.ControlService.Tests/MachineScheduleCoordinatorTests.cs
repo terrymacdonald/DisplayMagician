@@ -7,6 +7,31 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class MachineScheduleCoordinatorTests
 {
     [Fact]
+    public void EnsureInitialized_SchedulesFirstClientSyncWithinTwelveHours()
+    {
+        string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            MachineScheduleCoordinator coordinator = new MachineScheduleCoordinator(new MachineScheduleStore(new StoragePaths(storageRoot)));
+            DateTime before = DateTime.UtcNow;
+
+            MachineScheduleState initial = coordinator.EnsureInitialized();
+
+            DateTime after = DateTime.UtcNow;
+            Assert.False(string.IsNullOrWhiteSpace(initial.InstallId));
+            Assert.NotNull(initial.NextClientSyncUtc);
+            Assert.InRange(initial.NextClientSyncUtc!.Value, before, after.AddHours(12));
+        }
+        finally
+        {
+            if (Directory.Exists(storageRoot))
+            {
+                Directory.Delete(storageRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void RecordClientSyncFailure_UsesCappedExponentialBackoff()
     {
         string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));

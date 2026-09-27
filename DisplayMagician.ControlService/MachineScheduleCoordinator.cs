@@ -21,6 +21,11 @@ public sealed class MachineScheduleCoordinator
             {
                 state.InstallId = Guid.NewGuid().ToString();
             }
+
+            if (!state.NextClientSyncUtc.HasValue)
+            {
+                state.NextClientSyncUtc = DateTime.UtcNow.AddMinutes(Random.Shared.Next(0, (12 * 60) + 1));
+            }
         });
     }
 
