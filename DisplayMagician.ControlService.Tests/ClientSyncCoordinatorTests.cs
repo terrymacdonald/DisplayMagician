@@ -127,7 +127,7 @@ public sealed class ClientSyncCoordinatorTests
                 "stable": { "version": "4.1.2.3", "url": "https://downloads.displaymagician.com/stable.exe", "changelog": "https://displaymagician.com/stable", "mandatory": { "value": false, "mode": 0 }, "checksum": { "value": "{{hash}}", "hashingAlgorithm": "SHA256" } },
                 "prerelease": { "version": "4.2.0.0", "url": "https://downloads.displaymagician.com/prerelease.exe", "changelog": "https://displaymagician.com/prerelease", "mandatory": { "value": false, "mode": 0 }, "checksum": { "value": "{{hash}}", "hashingAlgorithm": "SHA256" } }
               },
-              "messages": [ { "id": "11111111-1111-1111-1111-111111111111", "status": "published", "title": "Test", "url": "/sync/messages/test.md", "format": "md", "sha256": "{{hash}}" } ]
+              "messages": [ { "id": "11111111-1111-1111-1111-111111111111", "status": "published", "title": "Test", "url": "/sync/messages/test.md", "format": "md", "sha256": "{{hash}}", "deletedUtc": null, "endUtc": null } ]
             }
             """;
     }

@@ -437,6 +437,11 @@ namespace DisplayMagician.UIForms
                     : $"DisplayMagician found {syncResult.NewMessagesCount} new messages.";
                 MessageBox.Show(this, completionMessage, "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is System.IO.IOException || ex is TimeoutException)
+            {
+                logger.Warn(ex, "MessagesForm/btn_check_for_new_messages_Click: DisplayMagician could not check for new messages.");
+                MessageBox.Show(this, "DisplayMagician could not check for new messages. Please try again later.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
             finally
             {
                 btn_check_for_new_messages.Enabled = true;

@@ -359,7 +359,7 @@ public sealed class ClientSyncCoordinator
 
     private static string GetString(JsonElement source, string propertyName) => source.TryGetProperty(propertyName, out JsonElement property) ? property.GetString() ?? string.Empty : string.Empty;
     private static bool GetBoolean(JsonElement source, string propertyName) => source.TryGetProperty(propertyName, out JsonElement property) && property.ValueKind == JsonValueKind.True;
-    private static DateTime? GetUtcDate(JsonElement source, string propertyName) => source.TryGetProperty(propertyName, out JsonElement property) && property.TryGetDateTime(out DateTime value) ? value.ToUniversalTime() : null;
+    private static DateTime? GetUtcDate(JsonElement source, string propertyName) => source.TryGetProperty(propertyName, out JsonElement property) && property.ValueKind == JsonValueKind.String && property.TryGetDateTime(out DateTime value) ? value.ToUniversalTime() : null;
     private static List<string> GetStrings(JsonElement source, string propertyName) => source.TryGetProperty(propertyName, out JsonElement property) && property.ValueKind == JsonValueKind.Array ? property.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.String).Select(item => item.GetString() ?? string.Empty).ToList() : new List<string>();
 
     private sealed record ClientSyncSnapshot(ClientSyncUpdateView StableUpdate, ClientSyncUpdateView PrereleaseUpdate, ClientSyncMessageManifest MessageManifest);

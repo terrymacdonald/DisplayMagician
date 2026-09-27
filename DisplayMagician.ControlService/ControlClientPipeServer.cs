@@ -374,7 +374,7 @@ public sealed class ControlClientPipeServer
         {
             IsSuccessful = result.WasDue || !request.IsManual,
             ErrorCode = result.WasDue || !request.IsManual ? ControlErrorCode.None : ControlErrorCode.InvalidRequest,
-            Message = result.WasDue ? "Combined client sync completed." : "Combined client sync was not due.",
+            Message = result.WasDue ? "Combined client sync completed." : request.IsManual ? "Combined client sync could not be completed." : "Combined client sync was not due.",
             ClientSync = result,
             MessageSync = result.MessageSync
         };
