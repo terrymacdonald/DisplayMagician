@@ -71,9 +71,6 @@ namespace DisplayMagician.UIForms
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
             lbl_version.Text = string.Format(lbl_version.Text, Program.AppVersion);
 
-            // Update the message count on the Messages button to reflect any unread messages
-            SetUnreadMessageCount(Program.GetUnreadMessageCount());
-
             ShortcutRepository.IsValidRefresh();
 
             // Update the system tray menus
@@ -227,6 +224,16 @@ namespace DisplayMagician.UIForms
                 if (!this.IsHandleCreated) CreateHandle();
             }
             base.SetVisibleCore(value);
+        }
+
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+
+            if (Visible)
+            {
+                _ = RefreshUnreadMessageCountAsync();
+            }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -412,7 +419,23 @@ namespace DisplayMagician.UIForms
 
 
             logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
-            SetUnreadMessageCount(Program.GetUnreadMessageCount());
+            _ = RefreshUnreadMessageCountAsync();
+        }
+
+        private async Task RefreshUnreadMessageCountAsync()
+        {
+            try
+            {
+                int unreadCount = await Task.Run(() => Program.GetUnreadMessageCount());
+                if (!IsDisposed && IsHandleCreated)
+                {
+                    SetUnreadMessageCount(unreadCount);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "MainForm/RefreshUnreadMessageCountAsync: Could not refresh the unread message count.");
+            }
         }
 
         public void SetUnreadMessageCount(int unreadCount)
