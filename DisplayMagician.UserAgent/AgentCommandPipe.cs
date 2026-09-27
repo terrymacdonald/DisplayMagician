@@ -8,7 +8,6 @@ using System.Security.Principal;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text;
 using DisplayMagician.Contracts;
 using NLog;
 
@@ -219,55 +218,16 @@ public sealed class AgentCommandServer
             using WindowsIdentity identity = WindowsIdentity.GetCurrent();
             isLocalSystem = identity.User?.IsWellKnown(WellKnownSidType.LocalSystemSid) == true;
         });
-        if (!isLocalSystem || !GetNamedPipeClientProcessId(pipe.SafePipeHandle, out uint processId))
+        if (!isLocalSystem)
         {
             Logger.Warn("AgentCommandServer/IsControlService: Rejected a command-pipe caller because it was not the LocalSystem Control Service.");
             return false;
         }
 
-        try
-        {
-            string processPath = GetProcessExecutablePath(checked((int)processId));
-            string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "ControlService", "DisplayMagician.ControlService.exe"));
-            bool isControlService = string.Equals(processPath, expectedPath, StringComparison.OrdinalIgnoreCase);
-            if (!isControlService)
-            {
-                Logger.Warn("AgentCommandServer/IsControlService: Rejected command-pipe caller process {0} because it was not the installed Control Service executable.", processId);
-            }
-
-            return isControlService;
-        }
-        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception || ex is UnauthorizedAccessException)
-        {
-            Logger.Warn(ex, "AgentCommandServer/IsControlService: Could not verify the Control Service executable for pipe process {0}.", processId);
-            return false;
-        }
-    }
-
-    private static string GetProcessExecutablePath(int processId)
-    {
-        const uint processQueryLimitedInformation = 0x1000;
-        IntPtr processHandle = OpenProcess(processQueryLimitedInformation, false, processId);
-        if (processHandle == IntPtr.Zero)
-        {
-            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "Unable to open the Control Service process for limited-information verification.");
-        }
-
-        try
-        {
-            uint length = 32768;
-            StringBuilder path = new StringBuilder(checked((int)length));
-            if (!QueryFullProcessImageName(processHandle, 0, path, ref length))
-            {
-                throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "Unable to read the Control Service executable path for verification.");
-            }
-
-            return path.ToString();
-        }
-        finally
-        {
-            CloseHandle(processHandle);
-        }
+        // The pipe ACL permits only this interactive user and LocalSystem. LocalSystem already
+        // has machine-wide authority, so an executable-path inspection adds no security boundary
+        // and can fail when a standard user inspects the service process.
+        return true;
     }
 
     private static async Task<ControlEnvelope?> ReadEnvelopeWithTimeoutAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
@@ -293,18 +253,4 @@ public sealed class AgentCommandServer
         }
     }
 
-    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
-    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-    private static extern bool GetNamedPipeClientProcessId(Microsoft.Win32.SafeHandles.SafePipeHandle pipe, out uint clientProcessId);
-
-    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
-    private static extern IntPtr OpenProcess(uint processAccess, [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)] bool inheritHandle, int processId);
-
-    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
-    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-    private static extern bool QueryFullProcessImageName(IntPtr processHandle, uint flags, StringBuilder executablePath, ref uint size);
-
-    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
-    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-    private static extern bool CloseHandle(IntPtr handle);
 }
