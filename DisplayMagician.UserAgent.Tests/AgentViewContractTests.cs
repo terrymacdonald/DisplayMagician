@@ -8,6 +8,16 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class AgentViewContractTests
 {
     [Fact]
+    public void ProfileListRequest_DefaultsToCompactList()
+    {
+        ProfileListRequest request = new ProfileListRequest();
+
+        Assert.Equal(string.Empty, request.DetailedProfileId);
+        Assert.False(request.IncludeActiveProfileDetail);
+        Assert.False(request.IncludeCurrentLayoutDetail);
+    }
+
+    [Fact]
     public void ProfileListRequest_RoundTripsSelectedDetailOptions()
     {
         ProfileListRequest request = new ProfileListRequest

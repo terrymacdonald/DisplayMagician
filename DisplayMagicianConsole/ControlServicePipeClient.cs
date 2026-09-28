@@ -12,7 +12,11 @@ namespace DisplayMagicianConsole
     {
         public async Task<ProfileListResult> ListProfilesAsync(CancellationToken cancellationToken)
         {
-            ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListProfiles }, cancellationToken).ConfigureAwait(false);
+            ControlResponse response = await SendAsync(new ControlEnvelope
+            {
+                MessageType = ControlMessageType.ListProfiles,
+                Payload = JsonSerializer.Serialize(new ProfileListRequest())
+            }, cancellationToken).ConfigureAwait(false);
             return response.IsSuccessful && response.ProfileList != null
                 ? response.ProfileList
                 : throw new InvalidOperationException(response.Message);

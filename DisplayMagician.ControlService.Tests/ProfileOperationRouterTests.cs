@@ -36,6 +36,7 @@ public sealed class ProfileOperationRouterTests
         Assert.True(response.IsSuccessful);
         Assert.True(commandClient.WasCalled);
         Assert.Equal(ControlMessageType.ListProfiles, commandClient.Request!.MessageType);
+        Assert.False(string.IsNullOrWhiteSpace(commandClient.Request.Payload));
         Assert.Equal(agent.CommandPipeName, commandClient.Agent!.CommandPipeName);
     }
 

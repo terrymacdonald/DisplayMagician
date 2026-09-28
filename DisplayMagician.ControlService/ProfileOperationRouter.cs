@@ -49,7 +49,11 @@ public sealed class ProfileOperationRouter
 
     public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, CancellationToken cancellationToken)
     {
-        return SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.ListProfiles }, cancellationToken);
+        return SendToAgentAsync(userSid, sessionId, new ControlEnvelope
+        {
+            MessageType = ControlMessageType.ListProfiles,
+            Payload = JsonSerializer.Serialize(new ProfileListRequest())
+        }, cancellationToken);
     }
 
     public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, ControlEnvelope request, CancellationToken cancellationToken)

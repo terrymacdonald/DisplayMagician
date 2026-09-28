@@ -181,12 +181,12 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.ListProfiles)
         {
-            ProfileListRequest? listRequest = null;
+            ProfileListRequest listRequest = new ProfileListRequest();
             if (!string.IsNullOrWhiteSpace(request.Payload))
             {
                 try
                 {
-                    listRequest = JsonSerializer.Deserialize<ProfileListRequest>(request.Payload);
+                    listRequest = JsonSerializer.Deserialize<ProfileListRequest>(request.Payload) ?? new ProfileListRequest();
                 }
                 catch (JsonException)
                 {
@@ -195,9 +195,9 @@ public sealed class ProfileCommandHandler
             }
             ProfileRepository.RefreshDisplayDetectionState();
             ProfileRepository.UpdateActiveProfile();
-            ProfileItem? detailedProfile = listRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(profile =>
+            ProfileItem? detailedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile =>
                 !string.IsNullOrWhiteSpace(listRequest.DetailedProfileId) && string.Equals(profile.UUID, listRequest.DetailedProfileId, StringComparison.OrdinalIgnoreCase));
-            if (detailedProfile == null && listRequest?.IncludeActiveProfileDetail == true)
+            if (detailedProfile == null && listRequest.IncludeActiveProfileDetail)
                 detailedProfile = ProfileRepository.AllProfiles.FirstOrDefault(ProfileRepository.IsActiveProfile);
             return new ControlResponse
             {
@@ -206,10 +206,10 @@ public sealed class ProfileCommandHandler
                 ProfileList = new ProfileListResult
                 {
                     SavedProfiles = ProfileRepository.AllProfiles.Select(profile => CreateDisplayProfileView(profile,
-                        includeDetailedLayout: listRequest == null || ReferenceEquals(profile, detailedProfile),
-                        includeDesktopIcon: listRequest != null && ReferenceEquals(profile, detailedProfile))).ToArray(),
+                        includeDetailedLayout: ReferenceEquals(profile, detailedProfile),
+                        includeDesktopIcon: ReferenceEquals(profile, detailedProfile))).ToArray(),
                     CurrentLayout = ProfileRepository.CurrentProfile == null ? null : CreateDisplayProfileView(ProfileRepository.CurrentProfile, false,
-                        listRequest == null || listRequest.IncludeCurrentLayoutDetail || (listRequest.IncludeActiveProfileDetail && detailedProfile == null))
+                        listRequest.IncludeCurrentLayoutDetail || (listRequest.IncludeActiveProfileDetail && detailedProfile == null))
                 }
             };
         }
@@ -958,9 +958,17 @@ public sealed class ProfileCommandHandler
 
     private static string? GetDesktopIconIcoBase64(ProfileItem profile)
     {
-        using MemoryStream stream = new MemoryStream();
-        profile.ProfileIcon.ToIcon().Save(stream);
-        return Convert.ToBase64String(stream.ToArray());
+        try
+        {
+            using MemoryStream stream = new MemoryStream();
+            profile.ProfileIcon.ToIcon().Save(stream);
+            return Convert.ToBase64String(stream.ToArray());
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn(ex, "ProfileCommandHandler/GetDesktopIconIcoBase64: Could not render the desktop icon for profile '{0}'; the client can use its thumbnail fallback.", profile.Name);
+            return null;
+        }
     }
 
     private static DisplayProfileView CreateDisplayProfileView(ProfileItem profile, bool isSaved = true, bool includeDetailedLayout = false, bool includeDesktopIcon = false)
