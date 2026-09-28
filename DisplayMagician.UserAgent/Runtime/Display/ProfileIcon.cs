@@ -127,6 +127,72 @@ namespace DisplayMagician.UserAgent.Runtime
             return bitmap;
         }
 
+        public Bitmap ToDetailedBitmap(int width = 1536, int height = 720)
+        {
+            var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            using Graphics g = Graphics.FromImage(bitmap);
+            g.Clear(Color.Transparent);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+
+            List<ScreenPosition> screens = _profile.Screens.Where(screen => screen.ScreenWidth > 0 && screen.ScreenHeight > 0).ToList();
+            if (screens.Count == 0) return bitmap;
+
+            int minX = screens.Min(screen => screen.ScreenX);
+            int minY = screens.Min(screen => screen.ScreenY);
+            int maxX = screens.Max(screen => screen.ScreenX + screen.ScreenWidth);
+            int maxY = screens.Max(screen => screen.ScreenY + screen.ScreenHeight);
+            const float margin = 24f;
+            float scale = Math.Min((width - margin * 2) / (maxX - minX), (height - margin * 2) / (maxY - minY));
+            float offsetX = (width - (maxX - minX) * scale) / 2f;
+            float offsetY = (height - (maxY - minY) * scale) / 2f;
+
+            foreach (ScreenPosition screen in screens)
+            {
+                RectangleF outline = new RectangleF(offsetX + (screen.ScreenX - minX) * scale,
+                    offsetY + (screen.ScreenY - minY) * scale, screen.ScreenWidth * scale, screen.ScreenHeight * scale);
+                float bezel = Math.Max(3f, Math.Min(outline.Width, outline.Height) * 0.025f);
+                RectangleF display = RectangleF.Inflate(outline, -bezel, -bezel);
+                using (var frameBrush = new SolidBrush(Color.FromArgb(33, 33, 33))) g.FillRectangle(frameBrush, outline);
+                using (var displayBrush = new SolidBrush(screen.Colour)) g.FillRectangle(displayBrush, display);
+                using (var borderPen = new Pen(Color.Black, 2f)) g.DrawRectangle(borderPen, outline.X, outline.Y, outline.Width, outline.Height);
+
+                float taskbarSize = Math.Max(2f, display.Height * 0.05f);
+                RectangleF taskbar = screen.TaskbarPosition switch
+                {
+                    TaskbarPosition.Left => new RectangleF(display.Left, display.Top, taskbarSize, display.Height),
+                    TaskbarPosition.Top => new RectangleF(display.Left, display.Top, display.Width, taskbarSize),
+                    TaskbarPosition.Right => new RectangleF(display.Right - taskbarSize, display.Top, taskbarSize, display.Height),
+                    _ => new RectangleF(display.Left, display.Bottom - taskbarSize, display.Width, taskbarSize)
+                };
+                using (var taskbarBrush = new SolidBrush(Color.FromArgb(200, 200, 200))) g.FillRectangle(taskbarBrush, taskbar);
+
+                var lines = new List<string> { screen.IsPrimary ? $"{screen.Library} Primary Display" : $"{screen.Library} Display" };
+                if (!string.IsNullOrWhiteSpace(screen.AdapterName)) lines.Add($"({screen.AdapterName})");
+                if (!string.IsNullOrWhiteSpace(screen.Name)) lines.Add(screen.Name);
+                lines.Add(screen.RefreshRateHz > 0
+                    ? $"{screen.ScreenWidth}×{screen.ScreenHeight} @ {screen.RefreshRateHz:0.###}Hz"
+                    : $"{screen.ScreenWidth}×{screen.ScreenHeight}");
+                if (!string.IsNullOrWhiteSpace(screen.ColorEncoding) && screen.BitsPerColorChannel > 0)
+                    lines.Add($"{screen.ColorEncoding} {screen.BitsPerColorChannel * 3}-bit");
+                if (!string.IsNullOrWhiteSpace(screen.DisplayConnector)) lines.Add(screen.DisplayConnector);
+                if (screen.IsClone) lines.Add($"(+{screen.ClonedCopies - 1} Clone)");
+
+                RectangleF textBounds = RectangleF.Inflate(display, -display.Width * 0.04f, -display.Height * 0.08f);
+                float fontSize = Math.Clamp(Math.Min(textBounds.Height / (lines.Count + 1) * 0.72f, textBounds.Width / 21f), 8f, 38f);
+                using var font = new Font("Segoe UI", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
+                using var textBrush = new SolidBrush(screen.Colour.GetBrightness() > 0.65f ? Color.Black : Color.White);
+                using var centered = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter };
+                g.DrawString(string.Join(Environment.NewLine, lines), font, textBrush, textBounds, centered);
+                using var positionFont = new Font("Segoe UI", Math.Max(8f, fontSize * 0.8f), FontStyle.Regular, GraphicsUnit.Pixel);
+                g.DrawString($"[{screen.ScreenX},{screen.ScreenY}]", positionFont, textBrush,
+                    new RectangleF(textBounds.Left, textBounds.Top, textBounds.Width, positionFont.Height * 1.3f));
+            }
+
+            return bitmap;
+        }
+
         public Bitmap ToTightestBitmap(PixelFormat format = PixelFormat.Format32bppArgb)
         {
             if (_profile.Screens.Count == 0)

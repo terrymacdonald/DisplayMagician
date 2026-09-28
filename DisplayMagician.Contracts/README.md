@@ -9,6 +9,7 @@ It contains versioned control envelopes, protocol message types, request/respons
 - Treat public serialized fields and enum numeric values as compatibility contracts.
 - Add protocol changes in a backwards-compatible form and preserve the serializer conventions in `ControlEnvelopeSerializer`.
 - Control envelopes have a shared 5 MiB maximum serialized size. Keep normal list responses compact; use paging or separate assets for data that could grow beyond that boundary.
+- `DisplayProfileView` carries a compact thumbnail and an optional detailed layout preview. Older clients can ignore the added preview field.
 - Every request and response must preserve `ProtocolVersion`, `MessageType`, and `RequestId`; clients must validate all three before accepting a response.
 - Every envelope carries transport-neutral `ProtocolHello`; the recipient validates the supported version range and required capabilities before performing work, then returns `ProtocolWelcome`. This is deliberately usable over named pipes today and REST later. `ProtocolHello` is compatibility metadata, not authentication or a licence grant.
 - Set `ClientKind` and a stable `ClientId` using `ControlProtocol.CreateHello`; do not rely on the `Unknown` default. Capability IDs belong in `ControlCapabilities`. Required capabilities reject an incompatible endpoint; optional capabilities are returned as the negotiated subset so a client can disable unavailable features gracefully.

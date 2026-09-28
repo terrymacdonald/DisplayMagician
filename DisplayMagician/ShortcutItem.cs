@@ -1376,7 +1376,7 @@ namespace DisplayMagician
         }
 
 
-        public void SaveShortcutIconToCache()
+        public void SaveShortcutIconToCache(bool requireSelectedImage = false)
         {
 
             // Work out the name of the shortcut we'll save.
@@ -1399,6 +1399,7 @@ namespace DisplayMagician
             catch (Exception ex)
             {
                 logger.Warn(ex, $"ShortcutItem/SaveShortcutIconToCache: Exception while trying to save the Shortcut icon.");
+                if (requireSelectedImage) throw;
                 shortcutIcon.Clear();
                 // If we fail to create an icon any other way, then we use the default profile icon
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileName} as the icon instead.");
@@ -1676,19 +1677,32 @@ namespace DisplayMagician
             // Now we are ready to create a shortcut based on the filename the user gave us
             shortcutFileName = Path.ChangeExtension(shortcutFileName, @"lnk");
 
-            // And we use the Icon from the shortcutIconCache
-            //SaveShortcutIconToCache();
-            shortcutIconFileName = SavedShortcutIconCacheFilename;
-
             // If the user supplied a file
             if (shortcutFileName != null)
             {
                 try
                 {
-                    // Remove the old file if it exists to replace it
-                    if (System.IO.File.Exists(shortcutFileName))
+                    if (_originalBitmap != null)
                     {
-                        System.IO.File.Delete(shortcutFileName);
+                        DisplayProfileView profile = DesktopProfileViewCache.SavedProfiles.FirstOrDefault(
+                            view => string.Equals(view.Id, ProfileUUID, StringComparison.OrdinalIgnoreCase));
+                        using Bitmap profileThumbnail = profile != null ? GetProfileThumbnail(profile) :
+                            _profileThumbnail != null ? new Bitmap(_profileThumbnail) : null;
+                        if (profileThumbnail == null && !string.Equals(ProfileUUID, SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidOperationException("The shortcut's display layout image is unavailable.");
+                        Bitmap refreshedIcon = ImageUtils.MakeBitmapOverlay(_originalBitmap, profileThumbnail, 256, 256);
+                        if (refreshedIcon == null)
+                            throw new InvalidOperationException("The selected game icon could not be composed with its display layout.");
+                        _shortcutBitmap = refreshedIcon;
+                    }
+                    if (_shortcutBitmap == null)
+                        throw new InvalidOperationException("The shortcut icon image is unavailable.");
+
+                    SaveShortcutIconToCache(requireSelectedImage: true);
+                    shortcutIconFileName = SavedShortcutIconCacheFilename;
+                    using (FileStream iconCheck = File.OpenRead(shortcutIconFileName))
+                    {
+                        if (iconCheck.Length == 0) throw new IOException("The shortcut icon file is empty.");
                     }
 
                     Type shellType = Type.GetTypeFromProgID("WScript.Shell");
@@ -1739,7 +1753,7 @@ namespace DisplayMagician
         private static Bitmap GetProfileThumbnail(DisplayProfileView profile)
         {
             if (profile == null || string.IsNullOrWhiteSpace(profile.ThumbnailPngBase64))
-                return Properties.Resources.skipdisplaychange;
+                return new Bitmap(Properties.Resources.skipdisplaychange);
 
             byte[] thumbnailBytes = Convert.FromBase64String(profile.ThumbnailPngBase64);
             using MemoryStream thumbnailStream = new MemoryStream(thumbnailBytes);

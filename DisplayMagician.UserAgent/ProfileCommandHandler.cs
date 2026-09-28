@@ -921,13 +921,17 @@ public sealed class ProfileCommandHandler
 
     private static string? GetThumbnailPngBase64(ProfileItem profile)
     {
-        if (profile.ProfileBitmap == null)
-        {
-            return null;
-        }
-
+        using Bitmap bitmap = profile.ProfileIcon.ToBitmap(256, 256);
         using MemoryStream stream = new MemoryStream();
-        profile.ProfileBitmap.Save(stream, ImageFormat.Png);
+        bitmap.Save(stream, ImageFormat.Png);
+        return Convert.ToBase64String(stream.ToArray());
+    }
+
+    private static string? GetDetailedLayoutPngBase64(ProfileItem profile)
+    {
+        using Bitmap bitmap = profile.ProfileIcon.ToDetailedBitmap();
+        using MemoryStream stream = new MemoryStream();
+        bitmap.Save(stream, ImageFormat.Png);
         return Convert.ToBase64String(stream.ToArray());
     }
 
@@ -948,6 +952,7 @@ public sealed class ProfileCommandHandler
             Id = profile.UUID,
             Name = profile.Name,
             ThumbnailPngBase64 = GetThumbnailPngBase64(profile),
+            DetailedLayoutPngBase64 = GetDetailedLayoutPngBase64(profile),
             ConnectedDisplayCount = profile.WindowsDisplayConfig.DisplayIdentifiers.Count,
             PrimaryDisplayWidth = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsWidth,
             PrimaryDisplayHeight = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsHeight,

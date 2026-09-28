@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.Contracts;
+using IconLib;
 using Manina.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -101,7 +102,7 @@ namespace DisplayMagician.UIForms
             _selectedProfile = profile;
             lbl_profile_shown.Text = profile.Name;
             txt_profile_save_name.Text = profile.Name;
-            RenderProfileThumbnail(profile.ThumbnailPngBase64);
+            RenderProfileThumbnail(profile.DetailedLayoutPngBase64 ?? profile.ThumbnailPngBase64);
             bool hasDiagnostic = !string.IsNullOrWhiteSpace(profile.DiagnosticMessage);
             p_profile_advisory.Visible = profile.IsSaved && (!profile.IsValid || hasDiagnostic);
             if (p_profile_advisory.Visible)
@@ -268,6 +269,31 @@ namespace DisplayMagician.UIForms
             string shortcutPath = Path.ChangeExtension(dialog_save.FileName, ".lnk");
             try
             {
+                if (string.IsNullOrWhiteSpace(_selectedProfile.ThumbnailPngBase64))
+                    throw new InvalidOperationException("The profile layout icon is unavailable.");
+
+                string iconDirectory = Path.Combine(Program.AppIconPath, "ProfileCache");
+                Directory.CreateDirectory(iconDirectory);
+                string iconPath = Path.Combine(iconDirectory, $"{_selectedProfile.Id}.ico");
+                using (MemoryStream imageStream = new MemoryStream(Convert.FromBase64String(_selectedProfile.ThumbnailPngBase64)))
+                using (Image image = Image.FromStream(imageStream))
+                {
+                    MultiIcon multiIcon = new MultiIcon();
+                    SingleIcon icon = multiIcon.Add("ProfileLayout");
+                    foreach (int size in new[] { 256, 64, 48, 32, 16 })
+                    {
+                        using Bitmap bitmap = new Bitmap(image, new Size(size, size));
+                        icon.Add(bitmap);
+                        if (size == 256) icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
+                    }
+                    multiIcon.SelectedIndex = 0;
+                    multiIcon.Save(iconPath);
+                }
+                using (FileStream iconCheck = File.OpenRead(iconPath))
+                {
+                    if (iconCheck.Length == 0) throw new IOException("The profile icon file is empty.");
+                }
+
                 Type shellType = Type.GetTypeFromProgID("WScript.Shell");
                 if (shellType == null)
                 {
@@ -280,7 +306,7 @@ namespace DisplayMagician.UIForms
                 shortcut.Arguments = $"{DisplayMagicianStartupAction.ChangeProfile} \"{_selectedProfile.Id}\"";
                 shortcut.Description = $"Switching display profile to '{_selectedProfile.Name}'.";
                 shortcut.WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath) ?? string.Empty;
-                shortcut.IconLocation = $"{Environment.ProcessPath},0";
+                shortcut.IconLocation = iconPath;
                 shortcut.Save();
 
                 MessageBox.Show(this, $"Shortcut successfully saved to '{shortcutPath}'.", "Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Information);

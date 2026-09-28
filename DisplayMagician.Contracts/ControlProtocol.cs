@@ -838,6 +838,7 @@ public sealed class DisplayProfileView
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? ThumbnailPngBase64 { get; set; }
+    public string? DetailedLayoutPngBase64 { get; set; }
     public int ConnectedDisplayCount { get; set; }
     public int PrimaryDisplayWidth { get; set; }
     public int PrimaryDisplayHeight { get; set; }
