@@ -1657,7 +1657,7 @@ namespace DisplayMagician
                 if (Category == ShortcutCategory.Executable)
                 {
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", _profileName);
+                    shortcutDescription = string.Format("Running '{0}' with '{1}' profile.", programName, _profileName);
 
                 }
                 else

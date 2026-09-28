@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using IconLib;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using DisplayMagician.UserAgent.Runtime.Windows;
 
@@ -127,7 +128,7 @@ namespace DisplayMagician.UserAgent.Runtime
             return bitmap;
         }
 
-        public Bitmap ToDetailedBitmap(int width = 1536, int height = 720)
+        public Bitmap ToDetailedBitmap(int width = 1200, int height = 563)
         {
             var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             using Graphics g = Graphics.FromImage(bitmap);
@@ -155,7 +156,42 @@ namespace DisplayMagician.UserAgent.Runtime
                 float bezel = Math.Max(3f, Math.Min(outline.Width, outline.Height) * 0.025f);
                 RectangleF display = RectangleF.Inflate(outline, -bezel, -bezel);
                 using (var frameBrush = new SolidBrush(Color.FromArgb(33, 33, 33))) g.FillRectangle(frameBrush, outline);
-                using (var displayBrush = new SolidBrush(screen.Colour)) g.FillRectangle(displayBrush, display);
+                Color backgroundColour = screen.Colour;
+                bool wallpaperDrawn = false;
+                if (_profile.WallpaperConfiguration?.WallpaperMode == Wallpaper.Mode.Apply)
+                {
+                    foreach (var monitor in _profile.WallpaperConfiguration.MonitorWallpapers)
+                    {
+                        var bounds = monitor.MonitorBounds;
+                        if (bounds.left != screen.ScreenX || bounds.top != screen.ScreenY ||
+                            bounds.right - bounds.left != screen.ScreenWidth || bounds.bottom - bounds.top != screen.ScreenHeight)
+                            continue;
+
+                        if (!string.IsNullOrWhiteSpace(monitor.WallpaperFilePath))
+                        {
+                            try
+                            {
+                                using Image wallpaper = Image.FromFile(monitor.WallpaperFilePath);
+                                g.DrawImage(wallpaper, display);
+                                using Bitmap average = new Bitmap(1, 1);
+                                using (Graphics averageGraphics = Graphics.FromImage(average))
+                                {
+                                    averageGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                    averageGraphics.DrawImage(wallpaper, 0, 0, 1, 1);
+                                }
+                                backgroundColour = average.GetPixel(0, 0);
+                                wallpaperDrawn = true;
+                            }
+                            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is OutOfMemoryException)
+                            {
+                                SharedLogger.logger.Warn(ex, $"ProfileIcon/ToDetailedBitmap: Could not draw saved wallpaper for display '{screen.Name}' from '{monitor.WallpaperFilePath}'.");
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (!wallpaperDrawn)
+                    using (var displayBrush = new SolidBrush(screen.Colour)) g.FillRectangle(displayBrush, display);
                 using (var borderPen = new Pen(Color.Black, 2f)) g.DrawRectangle(borderPen, outline.X, outline.Y, outline.Width, outline.Height);
 
                 float taskbarSize = Math.Max(2f, display.Height * 0.05f);
@@ -167,6 +203,9 @@ namespace DisplayMagician.UserAgent.Runtime
                     _ => new RectangleF(display.Left, display.Bottom - taskbarSize, display.Width, taskbarSize)
                 };
                 using (var taskbarBrush = new SolidBrush(Color.FromArgb(200, 200, 200))) g.FillRectangle(taskbarBrush, taskbar);
+                float startButtonSize = Math.Max(2f, taskbarSize * 0.5f);
+                RectangleF startButton = new RectangleF(taskbar.Left + taskbarSize * 0.25f, taskbar.Top + taskbarSize * 0.25f, startButtonSize, startButtonSize);
+                using (var startButtonBrush = new SolidBrush(Color.FromArgb(3, 194, 252))) g.FillRectangle(startButtonBrush, startButton);
 
                 var lines = new List<string> { screen.IsPrimary ? $"{screen.Library} Primary Display" : $"{screen.Library} Display" };
                 if (!string.IsNullOrWhiteSpace(screen.AdapterName)) lines.Add($"({screen.AdapterName})");
@@ -182,7 +221,7 @@ namespace DisplayMagician.UserAgent.Runtime
                 RectangleF textBounds = RectangleF.Inflate(display, -display.Width * 0.04f, -display.Height * 0.08f);
                 float fontSize = Math.Clamp(Math.Min(textBounds.Height / (lines.Count + 1) * 0.72f, textBounds.Width / 21f), 8f, 38f);
                 using var font = new Font("Segoe UI", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
-                using var textBrush = new SolidBrush(screen.Colour.GetBrightness() > 0.65f ? Color.Black : Color.White);
+                using var textBrush = new SolidBrush(backgroundColour.R * 0.299 + backgroundColour.G * 0.587 + backgroundColour.B * 0.114 > 186 ? Color.Black : Color.White);
                 using var centered = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter };
                 g.DrawString(string.Join(Environment.NewLine, lines), font, textBrush, textBounds, centered);
                 using var positionFont = new Font("Segoe UI", Math.Max(8f, fontSize * 0.8f), FontStyle.Regular, GraphicsUnit.Pixel);

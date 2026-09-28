@@ -113,6 +113,27 @@ public sealed class ShortcutStore
         return definitions;
     }
 
+    public Dictionary<string, string> GetSavedShortcutBitmaps(string json)
+    {
+        Dictionary<string, string> bitmaps = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(json))
+            return bitmaps;
+
+        using JsonDocument document = JsonDocument.Parse(json);
+        if (!document.RootElement.TryGetProperty("Shortcuts", out JsonElement shortcuts) || shortcuts.ValueKind != JsonValueKind.Array)
+            return bitmaps;
+
+        foreach (JsonElement shortcut in shortcuts.EnumerateArray())
+        {
+            string id = GetString(shortcut, "UUID");
+            if (!string.IsNullOrWhiteSpace(id) && shortcut.TryGetProperty("ShortcutBitmap", out JsonElement bitmap) &&
+                bitmap.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(bitmap.GetString()))
+                bitmaps[id] = bitmap.GetString()!;
+        }
+
+        return bitmaps;
+    }
+
     public RepositoryCommitResult Commit(RepositoryCommitRequest request)
     {
         RepositorySnapshot snapshot = GetSnapshot();

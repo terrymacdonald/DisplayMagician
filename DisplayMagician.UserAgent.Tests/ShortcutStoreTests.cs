@@ -12,6 +12,26 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class ShortcutStoreTests
 {
     [Fact]
+    public void GetSavedShortcutBitmaps_ReturnsPersistedCompositeImage()
+    {
+        ShortcutStore store = new ShortcutStore(Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}"));
+        string bitmap = Convert.ToBase64String(new byte[] { 1, 2, 3, 4 });
+        string json = JsonSerializer.Serialize(new
+        {
+            Shortcuts = new[]
+            {
+                new { UUID = "selected-game", ShortcutBitmap = (string?)bitmap },
+                new { UUID = "no-image", ShortcutBitmap = (string?)null }
+            }
+        });
+
+        var savedBitmaps = store.GetSavedShortcutBitmaps(json);
+
+        Assert.Equal(bitmap, savedBitmaps["selected-game"]);
+        Assert.False(savedBitmaps.ContainsKey("no-image"));
+    }
+
+    [Fact]
     public void Commit_WritesSnapshotAndRejectsStaleRevision()
     {
         string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");

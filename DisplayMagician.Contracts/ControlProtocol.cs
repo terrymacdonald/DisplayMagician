@@ -639,6 +639,13 @@ public sealed class ProfileListResult
     public DisplayProfileView? CurrentLayout { get; set; }
 }
 
+public sealed class ProfileListRequest
+{
+    public string DetailedProfileId { get; set; } = string.Empty;
+    public bool IncludeActiveProfileDetail { get; set; }
+    public bool IncludeCurrentLayoutDetail { get; set; }
+}
+
 public sealed class ApplyProfileRequest
 {
     public string ProfileId { get; set; } = string.Empty;
@@ -839,6 +846,7 @@ public sealed class DisplayProfileView
     public string Name { get; set; } = string.Empty;
     public string? ThumbnailPngBase64 { get; set; }
     public string? DetailedLayoutPngBase64 { get; set; }
+    public string? DesktopIconIcoBase64 { get; set; }
     public int ConnectedDisplayCount { get; set; }
     public int PrimaryDisplayWidth { get; set; }
     public int PrimaryDisplayHeight { get; set; }

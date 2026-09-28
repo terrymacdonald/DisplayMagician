@@ -181,16 +181,35 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.ListProfiles)
         {
+            ProfileListRequest? listRequest = null;
+            if (!string.IsNullOrWhiteSpace(request.Payload))
+            {
+                try
+                {
+                    listRequest = JsonSerializer.Deserialize<ProfileListRequest>(request.Payload);
+                }
+                catch (JsonException)
+                {
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The profile list request is invalid." };
+                }
+            }
             ProfileRepository.RefreshDisplayDetectionState();
             ProfileRepository.UpdateActiveProfile();
+            ProfileItem? detailedProfile = listRequest == null ? null : ProfileRepository.AllProfiles.FirstOrDefault(profile =>
+                !string.IsNullOrWhiteSpace(listRequest.DetailedProfileId) && string.Equals(profile.UUID, listRequest.DetailedProfileId, StringComparison.OrdinalIgnoreCase));
+            if (detailedProfile == null && listRequest?.IncludeActiveProfileDetail == true)
+                detailedProfile = ProfileRepository.AllProfiles.FirstOrDefault(ProfileRepository.IsActiveProfile);
             return new ControlResponse
             {
                 IsSuccessful = true,
                 Message = "Profiles returned.",
                 ProfileList = new ProfileListResult
                 {
-                    SavedProfiles = ProfileRepository.AllProfiles.Select(profile => CreateDisplayProfileView(profile)).ToArray(),
-                    CurrentLayout = ProfileRepository.CurrentProfile == null ? null : CreateDisplayProfileView(ProfileRepository.CurrentProfile, false)
+                    SavedProfiles = ProfileRepository.AllProfiles.Select(profile => CreateDisplayProfileView(profile,
+                        includeDetailedLayout: listRequest == null || ReferenceEquals(profile, detailedProfile),
+                        includeDesktopIcon: listRequest != null && ReferenceEquals(profile, detailedProfile))).ToArray(),
+                    CurrentLayout = ProfileRepository.CurrentProfile == null ? null : CreateDisplayProfileView(ProfileRepository.CurrentProfile, false,
+                        listRequest == null || listRequest.IncludeCurrentLayoutDetail || (listRequest.IncludeActiveProfileDetail && detailedProfile == null))
                 }
             };
         }
@@ -241,14 +260,16 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.ListShortcuts)
         {
-            ShortcutView[] shortcuts = _shortcutStore.GetShortcutDefinitions()
+            string shortcutJson = _shortcutStore.GetSnapshot().Json;
+            Dictionary<string, string> savedBitmaps = _shortcutStore.GetSavedShortcutBitmaps(shortcutJson);
+            ShortcutView[] shortcuts = _shortcutStore.GetShortcutDefinitions(shortcutJson)
                 .Select(shortcut => new ShortcutView
                 {
                     Id = shortcut.Id,
                     Name = shortcut.Name,
                     Category = (ShortcutCategory)shortcut.Category,
                     ProfileId = shortcut.ProfileId,
-                    IconPngBase64 = GetShortcutIconPngBase64(shortcut)
+                    IconPngBase64 = GetShortcutIconPngBase64(shortcut, savedBitmaps.GetValueOrDefault(shortcut.Id))
                 })
                 .ToArray();
             return new ControlResponse { IsSuccessful = true, Message = "Shortcuts returned.", ShortcutList = new ShortcutListResult { Shortcuts = shortcuts } };
@@ -935,7 +956,14 @@ public sealed class ProfileCommandHandler
         return Convert.ToBase64String(stream.ToArray());
     }
 
-    private static DisplayProfileView CreateDisplayProfileView(ProfileItem profile, bool isSaved = true)
+    private static string? GetDesktopIconIcoBase64(ProfileItem profile)
+    {
+        using MemoryStream stream = new MemoryStream();
+        profile.ProfileIcon.ToIcon().Save(stream);
+        return Convert.ToBase64String(stream.ToArray());
+    }
+
+    private static DisplayProfileView CreateDisplayProfileView(ProfileItem profile, bool isSaved = true, bool includeDetailedLayout = false, bool includeDesktopIcon = false)
     {
         bool isValid = profile.HasUsableSavedConfiguration(out string diagnosticMessage);
         string[] undetectedDisplays = isValid ? profile.GetUndetectedDisplayDescriptions().ToArray() : Array.Empty<string>();
@@ -952,7 +980,8 @@ public sealed class ProfileCommandHandler
             Id = profile.UUID,
             Name = profile.Name,
             ThumbnailPngBase64 = GetThumbnailPngBase64(profile),
-            DetailedLayoutPngBase64 = GetDetailedLayoutPngBase64(profile),
+            DetailedLayoutPngBase64 = includeDetailedLayout ? GetDetailedLayoutPngBase64(profile) : null,
+            DesktopIconIcoBase64 = isSaved && includeDesktopIcon ? GetDesktopIconIcoBase64(profile) : null,
             ConnectedDisplayCount = profile.WindowsDisplayConfig.DisplayIdentifiers.Count,
             PrimaryDisplayWidth = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsWidth,
             PrimaryDisplayHeight = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsHeight,
@@ -984,8 +1013,30 @@ public sealed class ProfileCommandHandler
         };
     }
 
-    private static string? GetShortcutIconPngBase64(ShortcutDefinition shortcut)
+    private static string? GetShortcutIconPngBase64(ShortcutDefinition shortcut, string? savedBitmapBase64)
     {
+        if (!string.IsNullOrWhiteSpace(savedBitmapBase64))
+        {
+            try
+            {
+                using MemoryStream savedStream = new MemoryStream(Convert.FromBase64String(savedBitmapBase64));
+                using Image savedImage = Image.FromStream(savedStream);
+                using Bitmap thumbnail = new Bitmap(128, 128, PixelFormat.Format32bppArgb);
+                using (Graphics savedGraphics = Graphics.FromImage(thumbnail))
+                {
+                    savedGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    savedGraphics.DrawImage(savedImage, GetCenteredBounds(savedImage.Size, thumbnail.Size));
+                }
+                using MemoryStream pngStream = new MemoryStream();
+                thumbnail.Save(pngStream, ImageFormat.Png);
+                return Convert.ToBase64String(pngStream.ToArray());
+            }
+            catch (Exception ex) when (ex is FormatException || ex is ArgumentException || ex is ExternalException || ex is OutOfMemoryException)
+            {
+                _logger.Warn(ex, "ProfileCommandHandler/GetShortcutIconPngBase64: The saved icon for shortcut '{0}' could not be decoded; using the source icon instead.", shortcut.Id);
+            }
+        }
+
         using Bitmap? icon = LoadShortcutIcon(shortcut);
         if (icon == null)
         {

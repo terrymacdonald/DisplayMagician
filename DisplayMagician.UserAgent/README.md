@@ -4,7 +4,7 @@ This project is the per-user background executor that runs in the interactive Wi
 
 The Agent is the owner of interactive desktop work. It starts its command pipe and restores pending state before it reports itself ready to the Control Service. The service performs machine-wide coordination and routing, but must not take over these responsibilities.
 
-Profile list responses include a compact layout thumbnail and a separate, labelled preview image for the desktop profile editor. The Agent renders both from its authoritative display configuration; the compact image is also used for profile and game shortcut icons.
+Profile list responses include compact layout thumbnails. A client may request a labelled preview and multi-size desktop `.ico` for one selected profile or a preview for the current layout; the Agent renders these from its authoritative display and saved wallpaper configuration, falling back to the display colour when a saved wallpaper cannot be read. Compact thumbnails are used for list and game shortcut overlays. Shortcut-list icons prefer the user's saved composite image over an executable-derived fallback.
 
 ## Development
 

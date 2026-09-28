@@ -186,7 +186,7 @@ public sealed class ControlClientPipeServer
                             {
                                 response = request.MessageType switch
                                 {
-                                    ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                                     ControlMessageType.ListGames => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                                     ControlMessageType.ListApps => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                                     ControlMessageType.ListShortcuts => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),

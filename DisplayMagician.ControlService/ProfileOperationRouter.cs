@@ -52,6 +52,11 @@ public sealed class ProfileOperationRouter
         return SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.ListProfiles }, cancellationToken);
     }
 
+    public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        return SendToAgentAsync(userSid, sessionId, request, cancellationToken);
+    }
+
     public Task<ControlResponse> StopAgentIfIdleAsync(string userSid, int sessionId, CancellationToken cancellationToken)
     {
         return SendToAgentAsync(userSid, sessionId, new ControlEnvelope { MessageType = ControlMessageType.StopAgentIfIdle }, false, cancellationToken);

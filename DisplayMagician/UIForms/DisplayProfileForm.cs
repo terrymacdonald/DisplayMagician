@@ -78,9 +78,11 @@ namespace DisplayMagician.UIForms
             finally { if (!IsDisposed && IsHandleCreated) SetProfileActionsEnabled(true); }
         }
 
-        private async Task RefreshProfilesAsync(string selectedProfileId, CancellationToken cancellationToken)
+        private async Task RefreshProfilesAsync(string selectedProfileId, CancellationToken cancellationToken, bool showCurrentLayout = false)
         {
-            DisplayMagician.Contracts.ProfileListResult profiles = await _controlServiceClient.ListProfilesAsync(cancellationToken);
+            DisplayMagician.Contracts.ProfileListResult profiles = await _controlServiceClient.ListProfilesAsync(cancellationToken,
+                detailedProfileId: selectedProfileId, includeActiveProfileDetail: !showCurrentLayout && string.IsNullOrWhiteSpace(selectedProfileId),
+                includeCurrentLayoutDetail: showCurrentLayout);
             _currentLayout = profiles.CurrentLayout;
             DisplayProfileView selected = !string.IsNullOrWhiteSpace(selectedProfileId)
                 ? profiles.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase))
@@ -179,7 +181,7 @@ namespace DisplayMagician.UIForms
             RefreshInstalledProfileContextMenu();
         }
 
-        private async void btn_view_current_Click(object sender, EventArgs e) { await RefreshProfilesAsync(null, CancellationToken.None); ChangeSelectedProfile(_currentLayout); }
+        private async void btn_view_current_Click(object sender, EventArgs e) { await RefreshProfilesAsync(null, CancellationToken.None, showCurrentLayout: true); ChangeSelectedProfile(_currentLayout); }
         public void RefreshCurrentView() => btn_view_current.PerformClick();
 
         private void RefreshInstalledProfileContextMenu()
@@ -190,9 +192,20 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
+        private async void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
-            if (e.Item.VirtualItemKey is DisplayProfileView profile) ChangeSelectedProfile(profile);
+            if (e.Item.VirtualItemKey is DisplayProfileView profile)
+            {
+                try
+                {
+                    await RefreshProfilesAsync(profile.Id, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "DisplayProfileForm/ilv_saved_profiles_ItemClick: Could not load the detailed preview for profile '{0}'.", profile.Name);
+                    ChangeSelectedProfile(profile);
+                }
+            }
             if (e.Buttons == MouseButtons.Right) cms_profiles.Show(ilv_saved_profiles, e.Location);
         }
 
@@ -269,20 +282,30 @@ namespace DisplayMagician.UIForms
             string shortcutPath = Path.ChangeExtension(dialog_save.FileName, ".lnk");
             try
             {
-                if (string.IsNullOrWhiteSpace(_selectedProfile.ThumbnailPngBase64))
+                if (string.IsNullOrWhiteSpace(_selectedProfile.DesktopIconIcoBase64) && string.IsNullOrWhiteSpace(_selectedProfile.ThumbnailPngBase64))
                     throw new InvalidOperationException("The profile layout icon is unavailable.");
 
                 string iconDirectory = Path.Combine(Program.AppIconPath, "ProfileCache");
                 Directory.CreateDirectory(iconDirectory);
                 string iconPath = Path.Combine(iconDirectory, $"{_selectedProfile.Id}.ico");
-                using (MemoryStream imageStream = new MemoryStream(Convert.FromBase64String(_selectedProfile.ThumbnailPngBase64)))
-                using (Image image = Image.FromStream(imageStream))
+                if (!string.IsNullOrWhiteSpace(_selectedProfile.DesktopIconIcoBase64))
                 {
+                    File.WriteAllBytes(iconPath, Convert.FromBase64String(_selectedProfile.DesktopIconIcoBase64));
+                }
+                else
+                {
+                    using MemoryStream imageStream = new MemoryStream(Convert.FromBase64String(_selectedProfile.ThumbnailPngBase64));
+                    using Image image = Image.FromStream(imageStream);
                     MultiIcon multiIcon = new MultiIcon();
                     SingleIcon icon = multiIcon.Add("ProfileLayout");
-                    foreach (int size in new[] { 256, 64, 48, 32, 16 })
+                    foreach (int size in new[] { 256, 64, 48, 32, 24, 16 })
                     {
-                        using Bitmap bitmap = new Bitmap(image, new Size(size, size));
+                        using Bitmap bitmap = new Bitmap(size, size);
+                        using (Graphics graphics = Graphics.FromImage(bitmap))
+                        {
+                            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                            graphics.DrawImage(image, 0, 0, size, size);
+                        }
                         icon.Add(bitmap);
                         if (size == 256) icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
                     }

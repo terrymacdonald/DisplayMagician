@@ -2115,6 +2115,26 @@ namespace DisplayMagician.UIForms
             UpdateProfileImageListView(profile);
 
             UpdateProfilePreview(profile);
+            if (string.IsNullOrWhiteSpace(profile.DetailedLayoutPngBase64))
+                _ = LoadDetailedProfilePreviewAsync(profile);
+        }
+
+        private async Task LoadDetailedProfilePreviewAsync(DisplayProfileView profile)
+        {
+            try
+            {
+                ProfileListResult profiles = await new ControlServicePipeClient().ListProfilesAsync(CancellationToken.None, detailedProfileId: profile.Id);
+                DisplayProfileView detailedProfile = profiles.SavedProfiles.FirstOrDefault(item => string.Equals(item.Id, profile.Id, StringComparison.OrdinalIgnoreCase));
+                if (detailedProfile == null || IsDisposed || !string.Equals(_profileToUse?.Id, profile.Id, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                profile.DetailedLayoutPngBase64 = detailedProfile.DetailedLayoutPngBase64;
+                UpdateProfilePreview(profile);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutForm/LoadDetailedProfilePreviewAsync: Could not load the detailed preview for profile '{0}'.", profile.Name);
+            }
         }
 
         private void UpdateProfilePreview(DisplayProfileView profile)
@@ -2123,21 +2143,22 @@ namespace DisplayMagician.UIForms
             dv_profile.Image = null;
             previousImage?.Dispose();
 
-            if (profile == null || string.IsNullOrWhiteSpace(profile.ThumbnailPngBase64))
+            string previewPngBase64 = profile?.DetailedLayoutPngBase64 ?? profile?.ThumbnailPngBase64;
+            if (string.IsNullOrWhiteSpace(previewPngBase64))
             {
                 return;
             }
 
             try
             {
-                byte[] thumbnailBytes = Convert.FromBase64String(profile.ThumbnailPngBase64);
+                byte[] thumbnailBytes = Convert.FromBase64String(previewPngBase64);
                 using MemoryStream thumbnailStream = new MemoryStream(thumbnailBytes);
                 using Image thumbnail = Image.FromStream(thumbnailStream);
                 dv_profile.Image = new Bitmap(thumbnail);
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, "ShortcutForm/UpdateProfilePreview: Could not load the display profile thumbnail.");
+                logger.Warn(ex, "ShortcutForm/UpdateProfilePreview: Could not load the display profile preview.");
             }
         }
 

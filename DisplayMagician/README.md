@@ -14,7 +14,7 @@ dotnet build .\DisplayMagician\DisplayMagician.csproj
 
 Run the project from Visual Studio in an interactive Windows session. The forms are designer-backed: change static layout in `UIForms\*.Designer.cs` and behaviour in the matching form file.
 
-The Display Profile form uses the detailed layout image supplied by UserAgent. Saved-profile lists and desktop shortcut icons use its compact layout thumbnail. Desktop shortcut `.ico` files are kept under the current user's LocalAppData `DisplayMagician\Icons` folder so Explorer can read them after restarts and upgrades.
+The Display Profile and Game Shortcut forms request a detailed layout image for the selected profile; ordinary profile lists use compact thumbnails. The detailed image includes saved per-monitor wallpapers when the profile applies them. Profile desktop shortcut icons use the multi-size `.ico` rendered by UserAgent (with a compact-thumbnail fallback for older Agents); game desktop shortcuts use the saved game-and-layout composite. These `.ico` files are kept under the current user's LocalAppData `DisplayMagician\Icons` folder so Explorer can read them after restarts and upgrades.
 
 For a complete installable build, use `build_displaymagician.ps1` from the repository root rather than treating this project output as an installer.
 

@@ -8,6 +8,24 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class AgentViewContractTests
 {
     [Fact]
+    public void ProfileListRequest_RoundTripsSelectedDetailOptions()
+    {
+        ProfileListRequest request = new ProfileListRequest
+        {
+            DetailedProfileId = "saved-profile",
+            IncludeActiveProfileDetail = true,
+            IncludeCurrentLayoutDetail = false
+        };
+
+        ProfileListRequest? roundTripped = JsonSerializer.Deserialize<ProfileListRequest>(JsonSerializer.Serialize(request));
+
+        Assert.NotNull(roundTripped);
+        Assert.Equal("saved-profile", roundTripped!.DetailedProfileId);
+        Assert.True(roundTripped.IncludeActiveProfileDetail);
+        Assert.False(roundTripped.IncludeCurrentLayoutDetail);
+    }
+
+    [Fact]
     public void ProfileListResult_RoundTripsCurrentLayoutAndProfileSettings()
     {
         DisplayProfileSettings settings = new DisplayProfileSettings
@@ -27,6 +45,7 @@ public sealed class AgentViewContractTests
                     Id = "saved-profile",
                     Name = "Desk",
                     ThumbnailPngBase64 = Convert.ToBase64String([137, 80, 78, 71]),
+                    DesktopIconIcoBase64 = Convert.ToBase64String([0, 0, 1, 0]),
                     ConnectedDisplayCount = 2,
                     PrimaryDisplayWidth = 3840,
                     PrimaryDisplayHeight = 2160,
@@ -53,6 +72,7 @@ public sealed class AgentViewContractTests
         Assert.Equal("saved-profile", roundTripped.SavedProfiles[0].Id);
         Assert.Equal(2, roundTripped.SavedProfiles[0].ConnectedDisplayCount);
         Assert.Equal(3840, roundTripped.SavedProfiles[0].PrimaryDisplayWidth);
+        Assert.Equal(new byte[] { 0, 0, 1, 0 }, Convert.FromBase64String(roundTripped.SavedProfiles[0].DesktopIconIcoBase64!));
         Assert.True(roundTripped.SavedProfiles[0].Settings.ApplyWallpaper);
         Assert.Equal("Span across displays", roundTripped.SavedProfiles[0].Settings.BackgroundDescription);
         Assert.True(roundTripped.SavedProfiles[0].Settings.ForceExplorerRestart);

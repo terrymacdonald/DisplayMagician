@@ -152,12 +152,21 @@ internal sealed class ControlServicePipeClient
         throw new InvalidOperationException("The User Agent registration retry loop completed unexpectedly.");
     }
 
-    public async Task<ProfileListResult> ListProfilesAsync(CancellationToken cancellationToken)
+    public async Task<ProfileListResult> ListProfilesAsync(CancellationToken cancellationToken, string detailedProfileId = null, bool includeActiveProfileDetail = false, bool includeCurrentLayoutDetail = false)
     {
         const int maximumAttempts = 40;
         for (int attempt = 1; attempt <= maximumAttempts; attempt++)
         {
-            ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListProfiles }, cancellationToken).ConfigureAwait(false);
+            ControlResponse response = await SendAsync(new ControlEnvelope
+            {
+                MessageType = ControlMessageType.ListProfiles,
+                Payload = JsonSerializer.Serialize(new ProfileListRequest
+                {
+                    DetailedProfileId = detailedProfileId ?? string.Empty,
+                    IncludeActiveProfileDetail = includeActiveProfileDetail,
+                    IncludeCurrentLayoutDetail = includeCurrentLayoutDetail
+                })
+            }, cancellationToken).ConfigureAwait(false);
             if (response.IsSuccessful && response.ProfileList != null)
             {
                 return response.ProfileList;

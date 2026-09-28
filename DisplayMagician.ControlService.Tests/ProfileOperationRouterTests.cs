@@ -40,6 +40,22 @@ public sealed class ProfileOperationRouterTests
     }
 
     [Fact]
+    public async Task ListProfilesAsync_ForwardsSelectedPreviewRequest()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient);
+        ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.ListProfiles, Payload = "{\"DetailedProfileId\":\"saved-profile\"}" };
+
+        ControlResponse response = await router.ListProfilesAsync(agent.UserSid, agent.SessionId, request, CancellationToken.None);
+
+        Assert.True(response.IsSuccessful);
+        Assert.Equal(request.Payload, commandClient.Request!.Payload);
+    }
+
+    [Fact]
     public async Task ApplyProfileAsync_RejectsMissingProfileIdWithoutCallingAgent()
     {
         RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
