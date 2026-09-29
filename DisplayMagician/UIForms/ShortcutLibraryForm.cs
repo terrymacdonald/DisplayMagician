@@ -405,15 +405,19 @@ namespace DisplayMagician.UIForms
                 _shortcutForm.ShowDialog(this);
                 if (_shortcutForm.DialogResult == DialogResult.OK)
                 {
-                    RefreshShortcutLibraryUI();
-                    // As this is an edit, we need to manually force saving the shortcut library
-                    ShortcutRepository.SaveShortcuts();
-                    // We update the Game Shortcut context menu is always updated and correct.
-                    if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                    // The editor updates the repository object; do not report the edit as
+                    // saved until the User Agent has accepted the repository commit.
+                    if (ShortcutRepository.SaveShortcuts())
                     {
-                        DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
+                        if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                            DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
+                    }
+                    else
+                    {
+                        MessageBox.Show(this, "The shortcut changes could not be saved. Please reopen the shortcut and try again.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
 
+                    RefreshShortcutLibraryUI();
                 }
 
                 this.Cursor = Cursors.Default;

@@ -505,6 +505,13 @@ namespace DisplayMagician
 
                 var json = JsonConvert.SerializeObject(shortcutFile, Formatting.Indented, mySerializerSettings);
 
+                if (jsonErrors.Count > 0)
+                {
+                    foreach (string jsonError in jsonErrors)
+                        logger.Error($"ShortcutRepository/SaveShortcuts: {jsonError}");
+
+                    return false;
+                }
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {

@@ -362,6 +362,8 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
 
             }
@@ -417,6 +419,8 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an executable shortcut.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
             else if (_shortcutCategory == ShortcutCategory.Application)
@@ -480,6 +484,8 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
             else if (_shortcutCategory == ShortcutCategory.NoGame)
@@ -506,11 +512,15 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a shortcut that doesn't run anything.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
             else
             {
                 logger.Error($"ShortcutForm/btn_save_Click: We're unable to save as the Shortut Category isn't a category we support! {_shortcutCategory.ToString("G")}");
+                MessageBox.Show(this, "This shortcut type cannot be saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
 
             /*if (_hotkey == Keys.None)
@@ -1806,6 +1816,7 @@ namespace DisplayMagician.UIForms
             // Refresh the Shortcut UI
             RefreshShortcutUI();
             ChangeSelectedProfile(chosenProfile);
+            UpdateHotkeyText();
             //RefreshImageListView(chosenProfile);
 
             _loadedShortcut = true;
@@ -1826,6 +1837,11 @@ namespace DisplayMagician.UIForms
                     UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(controlServiceClient);
                     ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                 });
+
+                // Connecting replaces the repository objects. Keep the editor attached to
+                // the current object so its changes are included in the next commit.
+                if (_editingExistingShortcut && _shortcutToEdit != null)
+                    _shortcutToEdit = ShortcutRepository.GetShortcut(_shortcutToEdit.UUID);
             }
             catch (Exception ex)
             {
