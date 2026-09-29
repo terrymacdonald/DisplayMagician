@@ -60,6 +60,7 @@ namespace DisplayMagician.UIForms
 
             dgv_messages.ClearSelection();
             SelectInitialMessageIfNeeded();
+            await ShowSelectedMessageAsync();
         }
 
         private async Task InitializeWebViewIfNeededAsync()
@@ -143,6 +144,11 @@ namespace DisplayMagician.UIForms
 
         private async void dgv_messages_SelectionChanged(object sender, EventArgs e)
         {
+            await ShowSelectedMessageAsync();
+        }
+
+        private async Task ShowSelectedMessageAsync()
+        {
             if (_isUpdatingList)
             {
                 return;
@@ -151,8 +157,13 @@ namespace DisplayMagician.UIForms
             if (dgv_messages.SelectedRows.Count == 0)
             {
                 panel_release_header.Visible = false;
+                RenderMessage(null);
                 return;
             }
+
+            MessageView selectedMessage = dgv_messages.SelectedRows[0].Tag as MessageView;
+            ConfigureReleaseHeader(selectedMessage);
+            RenderMessage(selectedMessage);
 
             List<string> selectedIds = dgv_messages.SelectedRows
                 .Cast<DataGridViewRow>()
@@ -160,25 +171,32 @@ namespace DisplayMagician.UIForms
                 .Where(n => !string.IsNullOrWhiteSpace(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
+            List<string> unreadIds = dgv_messages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => row.Tag as MessageView)
+                .Where(message => message != null && !message.IsRead && !string.IsNullOrWhiteSpace(message.Id))
+                .Select(message => message.Id)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (unreadIds.Count == 0)
+                return;
 
             try
             {
                 _isUpdatingList = true;
-                MessageListResult messageList = await _controlServicePipeClient.SetMessageReadStateAsync(selectedIds, true, System.Threading.CancellationToken.None);
+                MessageListResult messageList = await _controlServicePipeClient.SetMessageReadStateAsync(unreadIds, true, System.Threading.CancellationToken.None);
                 SetMessages(messageList);
                 RestoreSelection(selectedIds);
                 RefreshMessageIndicators(messageList.UnreadCount);
             }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+            {
+                logger.Warn(ex, "MessagesForm/ShowSelectedMessageAsync: Could not mark the displayed message as read.");
+            }
             finally
             {
                 _isUpdatingList = false;
-            }
-
-            if (dgv_messages.SelectedRows.Count > 0)
-            {
-                MessageView selectedMessage = dgv_messages.SelectedRows[0].Tag as MessageView;
-                ConfigureReleaseHeader(selectedMessage);
-                RenderMessage(selectedMessage);
             }
         }
 
@@ -315,9 +333,6 @@ namespace DisplayMagician.UIForms
                 rowToSelect.Selected = true;
                 dgv_messages.CurrentCell = rowToSelect.Cells[0];
                 dgv_messages.FirstDisplayedScrollingRowIndex = rowToSelect.Index;
-                MessageView messageToRender = rowToSelect.Tag as MessageView;
-                ConfigureReleaseHeader(messageToRender);
-                RenderMessage(messageToRender);
             }
             finally
             {
@@ -420,18 +435,14 @@ namespace DisplayMagician.UIForms
             btn_check_for_new_messages.Enabled = false;
             try
             {
+                _isUpdatingList = true;
                 MessageSyncResult syncResult = await _controlServicePipeClient.SyncMessagesAsync(System.Threading.CancellationToken.None);
                 await LoadMessagesIntoListAsync();
                 RefreshMessageIndicators(syncResult.UnreadCount);
-                if (dgv_messages.Rows.Count > 0)
-                {
-                    DataGridViewRow firstRow = dgv_messages.Rows[0];
-                    firstRow.Selected = true;
-                    dgv_messages.CurrentCell = firstRow.Cells[0];
-                    MessageView firstMessage = firstRow.Tag as MessageView;
-                    ConfigureReleaseHeader(firstMessage);
-                    RenderMessage(firstMessage);
-                }
+                _isUpdatingList = false;
+                dgv_messages.ClearSelection();
+                SelectInitialMessageIfNeeded();
+                await ShowSelectedMessageAsync();
 
                 string completionMessage = syncResult.NewMessagesCount == 1
                     ? "DisplayMagician found 1 new message."
@@ -445,6 +456,7 @@ namespace DisplayMagician.UIForms
             }
             finally
             {
+                _isUpdatingList = false;
                 btn_check_for_new_messages.Enabled = true;
             }
         }
