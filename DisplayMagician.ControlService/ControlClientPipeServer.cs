@@ -583,6 +583,13 @@ public sealed class ControlClientPipeServer
             }
 
             StageInstallerLog(machineLogsStagingPath, machineCollectionWarnings);
+            string auditLogPath = Path.Combine(_storagePaths.MachineDiagnosticsPath, "Audit.jsonl");
+            if (File.Exists(auditLogPath))
+            {
+                string auditStagingPath = Path.Combine(machineLogsStagingPath, "Diagnostics", "Audit.jsonl");
+                Directory.CreateDirectory(Path.GetDirectoryName(auditStagingPath)!);
+                CopyStagedFile(auditLogPath, auditStagingPath);
+            }
 
             Directory.CreateDirectory(machineConfigurationStagingPath);
             foreach (string sourcePath in new[]
@@ -592,12 +599,20 @@ public sealed class ControlClientPipeServer
                 Path.Combine(_storagePaths.MachinePath, "OperationStatuses.json"),
                 Path.Combine(_storagePaths.MachinePath, "ScheduleState.json"),
                 Path.Combine(_storagePaths.MachinePath, "PairedClients.json"),
-                Path.Combine(_storagePaths.MachineDiagnosticsPath, "RecoveryAdministration.json")
+                Path.Combine(_storagePaths.MachinePath, "GatewaySettings.json"),
+                Path.Combine(_storagePaths.MachineDiagnosticsPath, "RecoveryAdministration.json"),
+                Path.Combine(_storagePaths.MachineDiagnosticsPath, "TemporaryDiagnosticLogLevel.json")
             })
             {
                 if (File.Exists(sourcePath))
                 {
                     CopyStagedFile(sourcePath, Path.Combine(machineConfigurationStagingPath, Path.GetFileName(sourcePath)));
+                }
+
+                string backupPath = $"{sourcePath}.bak";
+                if (File.Exists(backupPath))
+                {
+                    CopyStagedFile(backupPath, Path.Combine(machineConfigurationStagingPath, Path.GetFileName(backupPath)));
                 }
             }
 

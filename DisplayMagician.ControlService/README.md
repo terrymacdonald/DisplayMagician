@@ -20,3 +20,5 @@ dotnet test .\DisplayMagician.ControlService.Tests\DisplayMagician.ControlServic
 The service is installed and configured by the WiX package; do not manually register a development build as a production service. Build the complete installer through `build_displaymagician.ps1`.
 
 Machine-owned state, audit records, and logs live under `C:\ProgramData\DisplayMagician\Machine\` in an installed environment. See the [architecture plan](../DISPLAYMAGICIAN_V4_CONTROL_SERVICE_PLAN.md) for IPC, security, and ownership rules.
+
+For a user-selected Support ZIP, ControlService stages retained machine logs, the installer transaction log, the audit log, and an allowlisted machine configuration snapshot (including gateway and temporary diagnostic settings and their backups). It does not stage pairing sessions, replay records, gateway identities, or other secret-bearing machine state.

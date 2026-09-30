@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text.Json;
 using DisplayMagician.Contracts;
 using Microsoft.Win32;
@@ -56,15 +57,17 @@ public sealed class UserSupportBundleGenerator
         AddDirectory(archive, "Configuration/AudioProfiles", Path.Combine(_userDataPath, "AudioProfiles"), null, warnings, includedEntries);
         AddDirectory(archive, "Configuration/Shortcuts", Path.Combine(_userDataPath, "Shortcuts"), null, warnings, includedEntries);
         AddDirectory(archive, "Configuration/Settings", Path.Combine(_userDataPath, "Settings"), null, warnings, includedEntries);
+        AddDirectory(archive, "Configuration/Backups", Path.Combine(_userDataPath, "Backups"), null, warnings, includedEntries, IsConfigurationBackup);
         AddDirectory(archive, "Logs", Path.Combine(_userDataPath, "Logs"), null, warnings, includedEntries);
         if (Directory.Exists(_legacyLogPath))
         {
-            AddDirectory(archive, "Logs/Legacy", _legacyLogPath, null, warnings, includedEntries);
+            AddDirectory(archive, "Logs/Legacy", _legacyLogPath, null, warnings, includedEntries, IsRetainedLog);
         }
+        AddDirectory(archive, "Logs/Backups", Path.Combine(_userDataPath, "Backups"), null, warnings, includedEntries, IsRetainedLog);
 
         AddMachineLogs(archive, machineLogsStagingPath, warnings, includedEntries);
         AddMachineConfiguration(archive, machineConfigurationStagingPath, warnings, includedEntries);
-        AddDirectory(archive, "Configuration/LegacyFiles", Path.Combine(_userDataPath, "LegacyFiles"), null, warnings, includedEntries);
+        AddDirectory(archive, "Configuration/LegacyFiles", Path.Combine(_userDataPath, "LegacyFiles"), null, warnings, includedEntries, IsKnownLegacyConfiguration);
         AddFile(archive, Path.Combine(_userDataPath, "Migration.json"), "Configuration/Migration.json", null, warnings, includedEntries);
         AddManifest(archive, warnings, includedEntries);
 
@@ -166,7 +169,7 @@ public sealed class UserSupportBundleGenerator
         }
     }
 
-    private static void AddDirectory(ZipArchive archive, string entryRoot, string directoryPath, long? maximumBytesPerFile, List<string> warnings, List<SupportBundleEntry> includedEntries)
+    private static void AddDirectory(ZipArchive archive, string entryRoot, string directoryPath, long? maximumBytesPerFile, List<string> warnings, List<SupportBundleEntry> includedEntries, Func<string, bool>? includeFile = null)
     {
         if (!Directory.Exists(directoryPath))
         {
@@ -177,8 +180,43 @@ public sealed class UserSupportBundleGenerator
         foreach (string filePath in Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories))
         {
             string relativePath = Path.GetRelativePath(directoryPath, filePath);
+            if (relativePath.StartsWith($"SupportStaging{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                || (includeFile != null && !includeFile(filePath)))
+            {
+                continue;
+            }
+
             AddFile(archive, filePath, Path.Combine(entryRoot, relativePath), maximumBytesPerFile, warnings, includedEntries);
         }
+    }
+
+    private static bool IsConfigurationBackup(string filePath)
+    {
+        string fileName = Path.GetFileName(filePath);
+        if (!fileName.Contains(".pre-v4.bak", StringComparison.OrdinalIgnoreCase)
+            && !fileName.Contains(".replace.bak", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return new[] { "DisplayProfiles.json.", "AudioProfiles.json.", "Shortcuts.json.", "Settings.json.", "Donation.json." }
+            .Any(prefix => fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsRetainedLog(string filePath)
+    {
+        string fileName = Path.GetFileName(filePath);
+        return fileName.EndsWith(".log", StringComparison.OrdinalIgnoreCase)
+            || fileName.EndsWith(".log.old", StringComparison.OrdinalIgnoreCase)
+            || fileName.EndsWith(".log.bak", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsKnownLegacyConfiguration(string filePath)
+    {
+        string fileName = Path.GetFileName(filePath);
+        return new[] { "DisplayProfiles.json", "AudioProfiles.json", "Shortcuts.json", "Settings.json", "Donation.json" }
+            .Any(name => string.Equals(fileName, name, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(fileName, $"{name}.old", StringComparison.OrdinalIgnoreCase));
     }
 
     private static void AddFile(ZipArchive archive, string sourcePath, string entryName, long? maximumBytes, List<string> warnings, List<SupportBundleEntry> includedEntries)
@@ -230,7 +268,8 @@ public sealed class UserSupportBundleGenerator
             CollectionResult = "Included"
         };
 
-        if (entryName.StartsWith("Logs/Legacy/", StringComparison.OrdinalIgnoreCase))
+        if (entryName.StartsWith("Logs/Legacy/", StringComparison.OrdinalIgnoreCase)
+            || entryName.StartsWith("Logs/Backups/", StringComparison.OrdinalIgnoreCase))
         {
             entry.Category = "LegacyLog";
             entry.Component = GetLogComponent(Path.GetFileName(entryName));
@@ -250,14 +289,18 @@ public sealed class UserSupportBundleGenerator
         {
             entry.Category = "Log";
             string fileName = Path.GetFileName(entryName);
-            entry.Component = fileName.StartsWith("Installer-", StringComparison.OrdinalIgnoreCase) ? "Installer" : GetLogComponent(fileName);
-            entry.Format = string.Equals(entry.Component, "Installer", StringComparison.Ordinal) ? "msi-verbose" : "logfmt-v1";
+            entry.Component = fileName.StartsWith("Installer-", StringComparison.OrdinalIgnoreCase) ? "Installer" : GetLogComponent(fileName) ?? "ControlService";
+            entry.Format = string.Equals(entry.Component, "Installer", StringComparison.Ordinal) ? "msi-verbose"
+                : fileName.EndsWith(".jsonl", StringComparison.OrdinalIgnoreCase) ? "jsonl" : "logfmt-v1";
             return entry;
         }
 
-        entry.Category = "Configuration";
+        entry.Category = entryName.StartsWith("Configuration/Backups/", StringComparison.OrdinalIgnoreCase) ? "ConfigurationBackup" : "Configuration";
         entry.Component = entryName.StartsWith("Configuration/Machine/", StringComparison.OrdinalIgnoreCase) ? "ControlService" : "UserAgent";
-        entry.Format = entryName.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ? "json" : "file";
+        entry.Format = entryName.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            || entryName.EndsWith(".json.bak", StringComparison.OrdinalIgnoreCase)
+            || entryName.EndsWith(".json.old", StringComparison.OrdinalIgnoreCase)
+            || entry.Category == "ConfigurationBackup" ? "json" : "file";
         return entry;
     }
 
