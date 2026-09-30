@@ -176,9 +176,32 @@ namespace DisplayMagician.UIForms
             string deletedProfileId = _selectedProfile.Id;
             ControlResponse response = await _controlServiceClient.DeleteProfileAsync(deletedProfileId, CancellationToken.None);
             if (!response.IsSuccessful) { MessageBox.Show(this, response.Message, "Delete Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
+            bool iconCleanupFailed = false;
+            if (Guid.TryParse(deletedProfileId, out _))
+            {
+                string iconPath = Path.Combine(Program.AppIconPath, "ProfileCache", $"{deletedProfileId}.ico");
+                try
+                {
+                    // The desktop shortcut icon is created by this client, not the User Agent.
+                    // Missing files are expected when the profile was never saved to the desktop.
+                    File.Delete(iconPath);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+                {
+                    iconCleanupFailed = true;
+                    logger.Warn(ex, "DisplayProfileForm/Delete_Click: Deleted profile {0}, but could not remove its desktop shortcut icon at {1}.", deletedProfileId, iconPath);
+                }
+            }
+            else
+            {
+                iconCleanupFailed = true;
+                logger.Warn("DisplayProfileForm/Delete_Click: Deleted profile {0}, but its ID was not valid for desktop shortcut icon cleanup.", deletedProfileId);
+            }
             Program.AppDirectInputManager.RemoveHotkeysByUUID(deletedProfileId);
             await RefreshProfilesAsync(null, CancellationToken.None);
             RefreshInstalledProfileContextMenu();
+            if (iconCleanupFailed)
+                MessageBox.Show(this, "The display profile was deleted, but its cached desktop shortcut icon could not be removed.", "Display Profile Deleted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private async void btn_view_current_Click(object sender, EventArgs e) { await RefreshProfilesAsync(null, CancellationToken.None, showCurrentLayout: true); ChangeSelectedProfile(_currentLayout); }

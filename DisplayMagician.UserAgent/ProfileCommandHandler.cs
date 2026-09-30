@@ -700,8 +700,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
             }
 
-            ProfileRepository.CopyCurrentLayoutToProfile(profile);
-            return ProfileRepository.SaveProfiles()
+            return ProfileRepository.CopyCurrentLayoutToProfile(profile)
                 ? new ControlResponse { IsSuccessful = true, Message = "Display profile updated." }
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be updated." };
         }

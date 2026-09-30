@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using WindowsWallpaperWrapper;
 using WwwRect = WindowsWallpaperWrapper.Interop.RECT;
 
@@ -172,6 +173,42 @@ namespace DisplayMagician.UserAgent.Runtime
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Error(ex, $"Wallpaper/SaveWallpaperFiles: Exception copying wallpaper for monitor {mon.MonitorHardwareId}/{mon.MonitorConnectorId}: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>Removes only unreferenced files directly inside DisplayMagician's wallpaper folder.</summary>
+        internal static void DeleteUnusedStoredWallpaperFiles(string storePath, IEnumerable<string> candidates, IEnumerable<string> retainedPaths)
+        {
+            string wallpaperDirectory = Path.GetFullPath(storePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            HashSet<string> retained = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string path in retainedPaths.Where(path => !string.IsNullOrWhiteSpace(path)))
+            {
+                try { retained.Add(Path.GetFullPath(path)); }
+                catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is PathTooLongException)
+                {
+                    SharedLogger.logger.Warn(ex, "Wallpaper/DeleteUnusedStoredWallpaperFiles: Could not resolve a retained wallpaper path; cleanup will skip uncertain files.");
+                    return;
+                }
+            }
+
+            foreach (string path in candidates.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    string fullPath = Path.GetFullPath(path);
+                    if (!string.Equals(Path.GetDirectoryName(fullPath), wallpaperDirectory, StringComparison.OrdinalIgnoreCase))
+                    {
+                        SharedLogger.logger.Warn("Wallpaper/DeleteUnusedStoredWallpaperFiles: Skipped a wallpaper path outside the managed folder.");
+                        continue;
+                    }
+
+                    if (!retained.Contains(fullPath) && File.Exists(fullPath))
+                        File.Delete(fullPath);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException || ex is PathTooLongException)
+                {
+                    SharedLogger.logger.Warn(ex, "Wallpaper/DeleteUnusedStoredWallpaperFiles: Could not remove an unused wallpaper from the managed folder.");
                 }
             }
         }

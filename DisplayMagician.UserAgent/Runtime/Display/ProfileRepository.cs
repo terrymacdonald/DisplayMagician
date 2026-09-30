@@ -314,6 +314,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
             // Remove the Profile Icons from the Cache
             List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profile.UUID));
+            List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
+                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
                 // Attempt to delete the icon
@@ -343,20 +345,6 @@ namespace DisplayMagician.UserAgent.Runtime
                     SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
 
-                // attempt to delete all stored per-monitor wallpaper images
-                foreach (MonitorWallpaperConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
-                {
-                    try
-                    {
-                        if (!string.IsNullOrEmpty(mon.WallpaperFilePath) && File.Exists(mon.WallpaperFilePath))
-                            File.Delete(mon.WallpaperFilePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.WallpaperFilePath}: {ex.Message}");
-                    }
-                }
-
             }
 
             // Remove the Profile from the list.
@@ -364,7 +352,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
             if (numRemoved == 1)
             {
-                SaveProfiles();
+                if (!SaveProfiles()) return false;
+                DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
                 RefreshDisplayDetectionState();
                 UpdateActiveProfile();
                 return true;
@@ -386,6 +375,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
             // Remove the Profile Icons from the Cache
             List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.Name.Equals(profileName));
+            List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
+                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
                 // Attempt to delete the icon
@@ -415,20 +406,6 @@ namespace DisplayMagician.UserAgent.Runtime
                     SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
 
-                // attempt to delete all stored per-monitor wallpaper images
-                foreach (MonitorWallpaperConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
-                {
-                    try
-                    {
-                        if (!string.IsNullOrEmpty(mon.WallpaperFilePath) && File.Exists(mon.WallpaperFilePath))
-                            File.Delete(mon.WallpaperFilePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Could not delete stored wallpaper file {mon.WallpaperFilePath}: {ex.Message}");
-                    }
-                }
-
             }
 
             // Remove the Profile from the list.
@@ -436,7 +413,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
             if (numRemoved == 1)
             {
-                SaveProfiles();
+                if (!SaveProfiles()) return false;
+                DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
                 RefreshDisplayDetectionState();
                 UpdateActiveProfile();
                 return true;
@@ -459,6 +437,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
             // Remove the Profile Icons from the Cache
             List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profileIdStr));
+            List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
+                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
                 // Attempt to delete the icon
@@ -488,22 +468,6 @@ namespace DisplayMagician.UserAgent.Runtime
                     SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
 
-                // attempt to delete the wallpaper files
-                foreach (MonitorWallpaperConfig mon in ProfileToRemove.WallpaperConfiguration.MonitorWallpapers)
-                {
-                    try
-                    {
-                        if (!string.IsNullOrEmpty(mon.WallpaperFilePath) && File.Exists(mon.WallpaperFilePath))
-                        {
-                            File.Delete(mon.WallpaperFilePath);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: Exception while deleting wallpaper file {mon.WallpaperFilePath} for profile {ProfileToRemove.Name}.");
-                    }
-                }
-
             }
 
             // Remove the Profile from the list.
@@ -511,7 +475,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
             if (numRemoved == 1)
             {
-                SaveProfiles();
+                if (!SaveProfiles()) return false;
+                DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
                 RefreshDisplayDetectionState();
                 UpdateActiveProfile();
                 return true;
@@ -1043,14 +1008,28 @@ namespace DisplayMagician.UserAgent.Runtime
             profile.WindowsDisplayConfig = windowsDisplayConfig;
         }
 
-        public static void CopyCurrentLayoutToProfile(ProfileItem profile)
+        private static void DeleteUnusedProfileWallpapers(IEnumerable<string> candidatePaths)
+        {
+            IEnumerable<string> retainedPaths = _allProfiles.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
+                .Select(monitor => monitor.WallpaperFilePath);
+            Wallpaper.DeleteUnusedStoredWallpaperFiles(Path.Combine(AppDataPath, "Wallpaper"), candidatePaths, retainedPaths);
+        }
+
+        public static bool CopyCurrentLayoutToProfile(ProfileItem profile)
         {
 
             SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
 
-            // Actually do the updating of the display settings
-            profile.CreateProfileFromCurrentDisplaySettings();
+            List<string> previousWallpaperPaths = profile.WallpaperConfiguration.MonitorWallpapers
+                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
+            if (!profile.CreateProfileFromCurrentDisplaySettings()) return false;
             profile.PreSave();
+            if (!SaveProfiles()) return false;
+
+            // The new profile snapshot is durable; old copies can be removed only if
+            // no saved profile still refers to them.
+            DeleteUnusedProfileWallpapers(previousWallpaperPaths);
+            return true;
 
         }
 
@@ -1214,7 +1193,7 @@ namespace DisplayMagician.UserAgent.Runtime
                         SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: {jsonError}");
                     }
 
-                    SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: JSON data: {json}");
+                    return false;
                 }
 
 
