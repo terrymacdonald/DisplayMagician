@@ -139,9 +139,11 @@ namespace DisplayMagician.Messaging
                 return false;
             }
 
-            document.Messages = (document.Messages ?? new List<MessageManifestEntry>())
-                .Where(IsValidMessageEntry)
-                .ToList();
+            if ((document.Messages ?? new List<MessageManifestEntry>()).Any(entry => !IsValidMessageEntry(entry)))
+            {
+                error = "The client sync document contains an invalid message entry.";
+                return false;
+            }
 
             return true;
         }

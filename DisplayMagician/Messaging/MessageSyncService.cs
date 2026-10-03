@@ -148,6 +148,7 @@ namespace DisplayMagician.Messaging
             HashSet<string> currentVendorIds = GetCurrentVendorIds();
             Uri manifestUri = suppliedManifestUri ?? new Uri(_manifestUrl, UriKind.Absolute);
             int newMessages = 0;
+            bool allArtifactsProcessed = true;
 
             if (authoritativeSnapshot)
             {
@@ -225,51 +226,33 @@ namespace DisplayMagician.Messaging
                 LocalMessage existing = store.Messages.FirstOrDefault(m => m.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase));
                 if (existing != null)
                 {
-                    if (existing.IsFaulty)
-                    {
-                        _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping faulty message id={entry.Id}.");
-                        continue;
-                    }
-
-                    string existingSha256 = existing.Sha256;
-                    existing.Title = string.IsNullOrWhiteSpace(entry.Title) ? existing.Title : entry.Title;
-                    existing.SourceMarkdownUrl = entry.Url;
-                    existing.PublishedUtc = entry.PublishedUtc;
-                    existing.Vendors = entry.Vendors ?? new List<string>();
-                    existing.Format = format;
-                    existing.Sha256 = entry.Sha256;
-                    existing.ShowOnStartup = entry.ShowOnStartup;
-                    existing.Kind = messageKind;
-                    existing.ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null;
-                    existing.ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null;
-                    existing.GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null;
-                    existing.UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null;
-
                     // Check if the local content matches the manifest before skipping a download.
                     string checkPath = Path.Combine(_messagesFolderPath, existing.MarkdownFileName);
-                    if (File.Exists(checkPath) && string.Equals(existingSha256?.Trim(), entry.Sha256?.Trim(), StringComparison.OrdinalIgnoreCase))
+                    if (File.Exists(checkPath) && string.Equals(existing.Sha256?.Trim(), entry.Sha256?.Trim(), StringComparison.OrdinalIgnoreCase)
+                        && await IsFileHashValidAsync(checkPath, entry.Sha256, cancellationToken).ConfigureAwait(false))
                     {
                         try
                         {
                             string existingContent = await File.ReadAllTextAsync(checkPath, cancellationToken).ConfigureAwait(false);
                             await SyncMessageMediaAsync(manifestUri, existingContent, cancellationToken).ConfigureAwait(false);
-                            await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false);
+                            if (!await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false))
+                            {
+                                allArtifactsProcessed = false;
+                                continue;
+                            }
+
+                            UpdateLocalMessageMetadata(existing, entry, format, messageKind);
                         }
                         catch (Exception ex)
                         {
                             _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Failed to backfill media for existing message id={entry.Id}.");
+                            allArtifactsProcessed = false;
                         }
 
                         _logger.Trace($"MessageSyncService/SyncMessagesAsync: Skipping existing valid message id={entry.Id}.");
                         continue;
                     }
 
-                    if (existing.DownloadAttempts >= 3)
-                    {
-                        existing.IsFaulty = true;
-                        _logger.Warn($"MessageSyncService/SyncMessagesAsync: Missing message file id={entry.Id} but exhausted download attempts. Marked as faulty.");
-                        continue;
-                    }
                 }
 
                 if (!IsEligibleForClient(entry, appVersion, currentVendorIds))
@@ -313,78 +296,49 @@ namespace DisplayMagician.Messaging
 
                 if (content == null || !isHashValid)
                 {
-                    // Track retry attempts
-                    if (existing != null)
-                    {
-                        existing.DownloadAttempts++;
-                        if (existing.DownloadAttempts >= 3)
-                        {
-                            existing.IsFaulty = true;
-                            _logger.Error($"MessageSyncService/SyncMessagesAsync: Message id={entry.Id} failed verification or download after multiple attempts. Marked as faulty.");
-                        }
-                    }
-                    else
-                    {
-                        // Add to database so we track its failed attempts
-                        store.Messages.Add(new LocalMessage
-                        {
-                            Id = entry.Id,
-                            Title = string.IsNullOrWhiteSpace(entry.Title) ? "DisplayMagician Message" : entry.Title,
-                            MarkdownFileName = BuildSafeFileName(entry.Id, format),
-                            SourceMarkdownUrl = targetUrl,
-                            PublishedUtc = entry.PublishedUtc,
-                            ReceivedUtc = DateTime.UtcNow,
-                            IsRead = false,
-                            Vendors = entry.Vendors ?? new List<string>(),
-                            Format = format,
-                            Sha256 = entry.Sha256,
-                            ShowOnStartup = entry.ShowOnStartup,
-                            Kind = messageKind,
-                            ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null,
-                            ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null,
-                            GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null,
-                            UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null,
-                            DownloadAttempts = 1,
-                            IsFaulty = false
-                        });
-                    }
+                    allArtifactsProcessed = false;
                     continue;
                 }
 
                 string safeFileName = BuildSafeFileName(entry.Id, format);
                 string fullPath = Path.Combine(_messagesFolderPath, safeFileName);
+                string temporaryPath = fullPath + ".tmp";
                 try
                 {
-                    await File.WriteAllTextAsync(fullPath, content, cancellationToken).ConfigureAwait(false);
+                    await File.WriteAllTextAsync(temporaryPath, content, cancellationToken).ConfigureAwait(false);
                     await SyncMessageMediaAsync(manifestUri, content, cancellationToken).ConfigureAwait(false);
-                    await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false);
+                    if (!await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false))
+                    {
+                        File.Delete(temporaryPath);
+                        allArtifactsProcessed = false;
+                        continue;
+                    }
+
+                    File.Copy(temporaryPath, fullPath, true);
+                    File.Delete(temporaryPath);
                 }
                 catch (Exception ex)
                 {
                     _logger.Warn(ex, $"MessageSyncService/SyncMessagesAsync: Failed to write message file (messageId={entry.Id}, markdownPath={fullPath}, sourceUrl={targetUrl}).");
-                    if (existing != null)
+                    try
                     {
-                        existing.DownloadAttempts++;
-                        if (existing.DownloadAttempts >= 3)
+                        if (File.Exists(temporaryPath))
                         {
-                            existing.IsFaulty = true;
+                            File.Delete(temporaryPath);
                         }
                     }
+                    catch (Exception cleanupException)
+                    {
+                        _logger.Warn(cleanupException, $"MessageSyncService/SyncMessagesAsync: Failed to remove temporary message file (messageId={entry.Id}, temporaryPath={temporaryPath}).");
+                    }
+                    allArtifactsProcessed = false;
                     continue;
                 }
 
                 if (existing != null)
                 {
+                    UpdateLocalMessageMetadata(existing, entry, format, messageKind);
                     existing.MarkdownFileName = safeFileName;
-                    existing.SourceMarkdownUrl = targetUrl;
-                    existing.Format = format;
-                    existing.Sha256 = entry.Sha256;
-                    existing.ShowOnStartup = entry.ShowOnStartup;
-                    existing.Kind = messageKind;
-                    existing.ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null;
-                    existing.ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null;
-                    existing.GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null;
-                    existing.UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null;
                     existing.DownloadAttempts = 0;
                     existing.IsFaulty = false;
                 }
@@ -413,6 +367,17 @@ namespace DisplayMagician.Messaging
                     });
                     newMessages++;
                 }
+            }
+
+            if (!allArtifactsProcessed)
+            {
+                SaveStore(store);
+                return new MessageSyncResult
+                {
+                    Success = false,
+                    NewMessagesCount = newMessages,
+                    UnreadCount = store.Messages.Count(m => !m.IsRead)
+                };
             }
 
             PruneToMaxMessages(store);
@@ -627,11 +592,11 @@ namespace DisplayMagician.Messaging
             }
         }
 
-        private async Task SyncDeclaredMessageMediaAsync(Uri manifestUri, IEnumerable<MessageManifestMedia> mediaEntries, CancellationToken cancellationToken)
+        private async Task<bool> SyncDeclaredMessageMediaAsync(Uri manifestUri, IEnumerable<MessageManifestMedia> mediaEntries, CancellationToken cancellationToken)
         {
             if (mediaEntries == null)
             {
-                return;
+                return true;
             }
 
             string mediaFolderPath = Path.Combine(_messagesFolderPath, "media");
@@ -641,7 +606,7 @@ namespace DisplayMagician.Messaging
                 if (media == null || !IsSha256(media.Sha256) || !TryGetMediaExtension(media.ContentType, out string extension))
                 {
                     _logger.Warn("MessageSyncService/SyncDeclaredMessageMediaAsync: Skipping invalid static media entry.");
-                    continue;
+                    return false;
                 }
 
                 string mediaFilePath = Path.Combine(mediaFolderPath, media.Sha256.ToLowerInvariant() + extension);
@@ -657,14 +622,14 @@ namespace DisplayMagician.Messaging
                     if (!response.IsSuccessStatusCode)
                     {
                         _logger.Warn($"MessageSyncService/SyncDeclaredMessageMediaAsync: Media request failed (statusCode={(int)response.StatusCode}).");
-                        continue;
+                        return false;
                     }
 
                     byte[] mediaBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
                     if (!string.Equals(ComputeSha256(mediaBytes), media.Sha256, StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.Warn("MessageSyncService/SyncDeclaredMessageMediaAsync: Static media hash verification failed.");
-                        continue;
+                        return false;
                     }
 
                     string temporaryPath = mediaFilePath + ".tmp";
@@ -675,8 +640,27 @@ namespace DisplayMagician.Messaging
                 catch (Exception ex)
                 {
                     _logger.Warn(ex, "MessageSyncService/SyncDeclaredMessageMediaAsync: Failed to download static media.");
+                    return false;
                 }
             }
+
+            return true;
+        }
+
+        private static void UpdateLocalMessageMetadata(LocalMessage message, MessageManifestEntry entry, string format, string messageKind)
+        {
+            message.Title = string.IsNullOrWhiteSpace(entry.Title) ? message.Title : entry.Title;
+            message.SourceMarkdownUrl = entry.Url;
+            message.PublishedUtc = entry.PublishedUtc;
+            message.Vendors = entry.Vendors ?? new List<string>();
+            message.Format = format;
+            message.Sha256 = entry.Sha256;
+            message.ShowOnStartup = entry.ShowOnStartup;
+            message.Kind = messageKind;
+            message.ReleaseVersion = messageKind == "releaseAnnouncement" ? entry.ReleaseVersion : null;
+            message.ReleaseChannel = messageKind == "releaseAnnouncement" ? entry.ReleaseChannel : null;
+            message.GithubReleaseId = messageKind == "releaseAnnouncement" ? entry.GithubReleaseId : null;
+            message.UpdateAction = messageKind == "releaseAnnouncement" ? entry.UpdateAction : null;
         }
 
         private static bool IsSha256(string value) => !string.IsNullOrWhiteSpace(value) && Regex.IsMatch(value, "^[a-fA-F0-9]{64}$");
