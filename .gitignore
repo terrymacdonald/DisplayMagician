@@ -254,3 +254,4 @@ ModelManifest.xml
 .codex-build/
 
 .tools/
+DisplayMagicianIdentityPkg/AppxManifest.xml
