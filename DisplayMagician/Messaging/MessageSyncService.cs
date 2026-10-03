@@ -16,6 +16,18 @@ namespace DisplayMagician.Messaging
 {
     public sealed class MessageSyncService
     {
+        private sealed class DownloadedMessageBody
+        {
+            public DownloadedMessageBody(byte[] bytes, string content)
+            {
+                Bytes = bytes;
+                Content = content;
+            }
+
+            public byte[] Bytes { get; }
+            public string Content { get; }
+        }
+
         private const int CurrentSchemaVersion = 1;
         private const int MaxStoredMessages = 50;
         private static readonly TimeSpan DailyInterval = TimeSpan.FromHours(24);
@@ -261,30 +273,20 @@ namespace DisplayMagician.Messaging
                 }
 
                 string targetUrl = entry.Url;
-                string content = await DownloadMarkdownAsync(manifestUri, targetUrl, cancellationToken).ConfigureAwait(false);
+                DownloadedMessageBody downloadedBody = await DownloadMarkdownAsync(manifestUri, targetUrl, cancellationToken).ConfigureAwait(false);
+                string content = downloadedBody?.Content;
 
                 // Compute and verify hash if provided in manifest
                 bool isHashValid = true;
-                if (content != null && !string.IsNullOrWhiteSpace(entry.Sha256))
+                if (downloadedBody != null && !string.IsNullOrWhiteSpace(entry.Sha256))
                 {
                     try
                     {
-                        using (System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create())
+                        string computedHash = ComputeSha256(downloadedBody.Bytes);
+                        if (!computedHash.Equals(entry.Sha256.Trim(), StringComparison.OrdinalIgnoreCase))
                         {
-                            byte[] contentBytes = Encoding.UTF8.GetBytes(content);
-                            byte[] hashBytes = sha256.ComputeHash(contentBytes);
-                            StringBuilder sb = new StringBuilder(hashBytes.Length * 2);
-                            foreach (byte b in hashBytes)
-                            {
-                                sb.Append(b.ToString("x2"));
-                            }
-                            string computedHash = sb.ToString();
-
-                            if (!computedHash.Equals(entry.Sha256.Trim(), StringComparison.OrdinalIgnoreCase))
-                            {
-                                isHashValid = false;
-                                _logger.Warn($"MessageSyncService/SyncMessagesAsync: Hash mismatch for message id={entry.Id}. Expected: '{entry.Sha256}', Computed: '{computedHash}'.");
-                            }
+                            isHashValid = false;
+                            _logger.Warn($"MessageSyncService/SyncMessagesAsync: Hash mismatch for message id={entry.Id}. Expected: '{entry.Sha256}', Computed: '{computedHash}'.");
                         }
                     }
                     catch (Exception ex)
@@ -305,7 +307,7 @@ namespace DisplayMagician.Messaging
                 string temporaryPath = fullPath + ".tmp";
                 try
                 {
-                    await File.WriteAllTextAsync(temporaryPath, content, cancellationToken).ConfigureAwait(false);
+                    await File.WriteAllBytesAsync(temporaryPath, downloadedBody.Bytes, cancellationToken).ConfigureAwait(false);
                     await SyncMessageMediaAsync(manifestUri, content, cancellationToken).ConfigureAwait(false);
                     if (!await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false))
                     {
@@ -421,7 +423,7 @@ namespace DisplayMagician.Messaging
             }
         }
 
-        private async Task<string> DownloadMarkdownAsync(Uri manifestUri, string markdownUrl, CancellationToken cancellationToken)
+        private async Task<DownloadedMessageBody> DownloadMarkdownAsync(Uri manifestUri, string markdownUrl, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(markdownUrl))
             {
@@ -442,20 +444,37 @@ namespace DisplayMagician.Messaging
                     return null;
                 }
 
-                string markdown = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                byte[] bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                string markdown = DecodeMessageBody(bytes, response.Content.Headers.ContentType?.CharSet);
                 if (string.IsNullOrWhiteSpace(markdown))
                 {
                     _logger.Warn($"MessageSyncService/DownloadMarkdownAsync: Markdown content was empty (manifestUrl={manifestUri}, sourceMarkdownUrl={markdownUrl}, resolvedUrl={resolved}).");
                     return null;
                 }
 
-                return markdown;
+                return new DownloadedMessageBody(bytes, markdown);
             }
             catch (Exception ex)
             {
                 _logger.Warn(ex, $"MessageSyncService/DownloadMarkdownAsync: Failed to fetch markdown (manifestUrl={manifestUri}, sourceMarkdownUrl={markdownUrl}).");
                 return null;
             }
+        }
+
+        private static string DecodeMessageBody(byte[] bytes, string characterSet)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(characterSet))
+                {
+                    return Encoding.GetEncoding(characterSet).GetString(bytes);
+                }
+            }
+            catch (ArgumentException)
+            {
+            }
+
+            return Encoding.UTF8.GetString(bytes);
         }
 
         private bool TryValidateEntry(MessageManifestEntry entry, HashSet<string> seenIds)

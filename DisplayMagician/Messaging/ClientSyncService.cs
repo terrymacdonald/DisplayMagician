@@ -87,7 +87,7 @@ namespace DisplayMagician.Messaging
                 }
 
                 ClientSyncUpdate selectedUpdate = _settings.UpgradeToPreReleases ? document.Updates.Prerelease : document.Updates.Stable;
-                ScheduleSuccess(now);
+                ScheduleSuccess(DateTime.UtcNow);
                 if (!_settings.SaveSettings())
                 {
                     return HandleFailure("Client sync state could not be persisted.");

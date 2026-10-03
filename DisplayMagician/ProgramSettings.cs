@@ -44,7 +44,7 @@ namespace DisplayMagician
     {
         #region Class Variables
         // Other constants that are useful
-        public const string CurrentProgramSettingsFileVersion = "7";
+        public const string CurrentProgramSettingsFileVersion = "8";
         public const string ProgramSettingsStorageJsonFileName = "Settings.json";
         public static string ProgramSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, ProgramSettingsStorageJsonFileName);
         public static string _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
@@ -72,6 +72,7 @@ namespace DisplayMagician
         private DateTime? _lastSuccessfulClientSyncUtc;
         private int _consecutiveClientSyncFailures;
         private DateTime? _nextMetricsHeartbeatUtc;
+        private int _consecutiveMetricsHeartbeatFailures;
         private string _lastMetricsReportedVersion;
         private bool _shareAnonymousUsageMetrics = true;
         private long _totalAnonymousMetricLaunches;
@@ -149,6 +150,7 @@ namespace DisplayMagician
         public DateTime? LastSuccessfulClientSyncUtc { get => _lastSuccessfulClientSyncUtc; set => _lastSuccessfulClientSyncUtc = value?.ToUniversalTime(); }
         public int ConsecutiveClientSyncFailures { get => _consecutiveClientSyncFailures; set => _consecutiveClientSyncFailures = Math.Max(0, value); }
         public DateTime? NextMetricsHeartbeatUtc { get => _nextMetricsHeartbeatUtc; set => _nextMetricsHeartbeatUtc = value?.ToUniversalTime(); }
+        public int ConsecutiveMetricsHeartbeatFailures { get => _consecutiveMetricsHeartbeatFailures; set => _consecutiveMetricsHeartbeatFailures = Math.Max(0, value); }
         public string LastMetricsReportedVersion { get => _lastMetricsReportedVersion; set => _lastMetricsReportedVersion = value; }
         [DefaultValue(true)]
         public bool ShareAnonymousUsageMetrics { get => _shareAnonymousUsageMetrics; set => _shareAnonymousUsageMetrics = value; }

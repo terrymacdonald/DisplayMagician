@@ -17,7 +17,8 @@ namespace DisplayMagician
             new SettingsV3ToV4LegacyDataMigration(),
             new SettingsV4ToV5DonationSplitMigration(),
             new SettingsV5ToV6ClientSyncMigration(),
-            new SettingsV6ToV7DisplayProfileWaitMigration()
+            new SettingsV6ToV7DisplayProfileWaitMigration(),
+            new SettingsV7ToV8MetricsRetryMigration()
         };
 
         public enum MigrationStatus
@@ -585,6 +586,41 @@ namespace DisplayMagician
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ConfigMigrationRunner/{nameof(SettingsV6ToV7DisplayProfileWaitMigration)}: Failed to migrate Settings.json.");
+                    return false;
+                }
+            }
+        }
+
+        private sealed class SettingsV7ToV8MetricsRetryMigration : IConfigMigrationRule
+        {
+            public string Name => "Settings v7 to v8 anonymous metrics retry";
+
+            public bool Applies(MigrationContext context)
+            {
+                return string.Equals(context.GetSettingsFileVersion(), "7", StringComparison.OrdinalIgnoreCase);
+            }
+
+            public bool Apply(MigrationContext context)
+            {
+                try
+                {
+                    string backupFileName = CreateBackup(context.SettingsFileName, "v7-to-v8");
+                    logger.Info($"ConfigMigrationRunner/{nameof(SettingsV7ToV8MetricsRetryMigration)}: Created Settings.json backup at {backupFileName}.");
+                    JObject settings = context.GetSettingsObject();
+                    if (settings == null)
+                        return false;
+
+                    if (settings.Property("ConsecutiveMetricsHeartbeatFailures") == null)
+                        settings["ConsecutiveMetricsHeartbeatFailures"] = 0;
+
+                    context.SettingsFile["SettingsFileVersion"] = ProgramSettings.CurrentProgramSettingsFileVersion;
+                    context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
+                    context.MarkSettingsFileChanged();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ConfigMigrationRunner/{nameof(SettingsV7ToV8MetricsRetryMigration)}: Failed to migrate Settings.json.");
                     return false;
                 }
             }

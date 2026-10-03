@@ -27,6 +27,9 @@ namespace DisplayMagician.UIForms
         public bool Remind { get; set;  } = false;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool IsMandatoryUpdate { get; set; }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ChangelogURL { get; set; } = "https://github.com/terrymacdonald/DisplayMagician/releases";
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -61,6 +64,12 @@ namespace DisplayMagician.UIForms
 
         private async void UpgradeForm_Load(object sender, EventArgs e)
         {
+            if (IsMandatoryUpdate)
+            {
+                btn_remind_later.Visible = false;
+                btn_skip.Visible = false;
+            }
+
             lnk_changelog.Text = ChangelogURL;
             lbl_release_heading.Text = ReleaseHeading;
             if (!string.IsNullOrWhiteSpace(ReleaseNotesHtml))

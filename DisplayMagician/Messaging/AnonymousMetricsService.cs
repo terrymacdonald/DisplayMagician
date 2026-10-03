@@ -73,16 +73,30 @@ namespace DisplayMagician.Messaging
                 {
                     _settings.LastMetricsReportedVersion = Program.AppVersion;
                     _settings.NextMetricsHeartbeatUtc = GetNextWeeklyHeartbeatUtc(now, _settings.InstallId);
+                    _settings.ConsecutiveMetricsHeartbeatFailures = 0;
                     _settings.SaveSettings();
                 }
                 else
                 {
+                    ScheduleFailureRetry(now);
                     _logger.Warn($"AnonymousMetricsService/TrySendAsync: Heartbeat was not accepted (statusCode={(int)response.StatusCode}).");
                 }
             }
             catch (Exception ex)
             {
+                ScheduleFailureRetry(now);
                 _logger.Warn(ex, "AnonymousMetricsService/TrySendAsync: Anonymous metrics heartbeat failed.");
+            }
+        }
+
+        private void ScheduleFailureRetry(DateTime now)
+        {
+            int failures = Math.Min(_settings.ConsecutiveMetricsHeartbeatFailures + 1, 6);
+            _settings.ConsecutiveMetricsHeartbeatFailures = failures;
+            _settings.NextMetricsHeartbeatUtc = now.AddHours(Math.Min(Math.Pow(2, failures - 1), 24));
+            if (!_settings.SaveSettings())
+            {
+                _logger.Warn("AnonymousMetricsService/ScheduleFailureRetry: Failed to persist anonymous metrics retry time.");
             }
         }
 
@@ -107,7 +121,7 @@ namespace DisplayMagician.Messaging
             return $"{version.Major}.{version.Minor}.{version.Build}";
         }
 
-        private static DateTime GetNextWeeklyHeartbeatUtc(DateTime now, string installId)
+        public static DateTime GetNextWeeklyHeartbeatUtc(DateTime now, string installId)
         {
             unchecked
             {

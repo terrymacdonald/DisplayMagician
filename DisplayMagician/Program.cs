@@ -393,7 +393,7 @@ namespace DisplayMagician {
             }
             if (!AppProgramSettings.NextMetricsHeartbeatUtc.HasValue)
             {
-                AppProgramSettings.NextMetricsHeartbeatUtc = DateTime.UtcNow;
+                AppProgramSettings.NextMetricsHeartbeatUtc = AnonymousMetricsService.GetNextWeeklyHeartbeatUtc(DateTime.UtcNow, AppProgramSettings.InstallId);
                 settingsChanged = true;
             }
             AppProgramSettings.TotalAnonymousMetricLaunches++;
@@ -1621,7 +1621,7 @@ namespace DisplayMagician {
 
         private static void ScheduleMetricsHeartbeatTimer()
         {
-            if (_metricsHeartbeatTimer == null || AppProgramSettings?.NextMetricsHeartbeatUtc == null || string.IsNullOrWhiteSpace(AppProgramSettings.LastMetricsReportedVersion))
+            if (_metricsHeartbeatTimer == null || AppProgramSettings?.NextMetricsHeartbeatUtc == null)
             {
                 return;
             }
@@ -1766,7 +1766,7 @@ namespace DisplayMagician {
         private static async Task TrySendAnonymousMetricsAsync()
         {
             EnsureClientSyncService();
-            await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: false, CancellationToken.None).ConfigureAwait(false);
+            await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: true, CancellationToken.None).ConfigureAwait(false);
         }
 
         private static MessageSyncService EnsureMessageSyncService()
@@ -2252,7 +2252,13 @@ namespace DisplayMagician {
 
         private static void ShowClientSyncUpdate(ClientSyncUpdate update, bool automatic)
         {
-            if (!AppProgramSettings.UpgradeEnabled || !Version.TryParse(update.Version, out Version availableVersion) || !Version.TryParse(AppVersion, out Version installedVersion))
+            if (!Version.TryParse(update.Version, out Version availableVersion) || !Version.TryParse(AppVersion, out Version installedVersion))
+            {
+                return;
+            }
+
+            bool isMandatoryUpdate = IsMandatoryUpdate(update.Mandatory, installedVersion);
+            if (!AppProgramSettings.UpgradeEnabled && !isMandatoryUpdate)
             {
                 return;
             }
@@ -2355,6 +2361,8 @@ namespace DisplayMagician {
                     UpgradeForm upgradeForm = new UpgradeForm();
                     upgradeForm.ChangelogURL = args.ChangelogURL;
                     upgradeForm.ReleaseHeading = $"DisplayMagician update {args.CurrentVersion} is available";
+                    bool isMandatoryUpdate = IsMandatoryUpdate(args.Mandatory, args.InstalledVersion);
+                    upgradeForm.IsMandatoryUpdate = isMandatoryUpdate;
 
                     string updateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
                     LocalMessage releaseAnnouncement = GetStoredMessages().FirstOrDefault(m =>
@@ -2469,6 +2477,11 @@ namespace DisplayMagician {
                         AppUpdateRemindLaterTimer.Start();
                         logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - User deferred update from version {args.InstalledVersion} to {args.CurrentVersion}; DisplayMagician remains on version {args.InstalledVersion} until the next reminder.");
                     }
+                    else if (isMandatoryUpdate)
+                    {
+                        logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent - Mandatory update to version {args.CurrentVersion} was dismissed. DisplayMagician will close.");
+                        Application.Exit();
+                    }
                     else
                     {
                         logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - User skipped update from version {args.InstalledVersion} to {args.CurrentVersion}; DisplayMagician remains on version {args.InstalledVersion}.");
@@ -2515,6 +2528,26 @@ namespace DisplayMagician {
                         MessageBoxIcon.Error);
                 }
             }
+        }
+
+        private static bool IsMandatoryUpdate(Mandatory mandatory, Version installedVersion)
+        {
+            if (mandatory == null || !mandatory.Value)
+            {
+                return false;
+            }
+
+            return !Version.TryParse(mandatory.MinimumVersion, out Version minimumVersion) || installedVersion < minimumVersion;
+        }
+
+        private static bool IsMandatoryUpdate(ClientSyncMandatory mandatory, Version installedVersion)
+        {
+            if (mandatory == null || !mandatory.Value)
+            {
+                return false;
+            }
+
+            return !Version.TryParse(mandatory.MinVersion, out Version minimumVersion) || installedVersion < minimumVersion;
         }
 
         private static void RegisterDisplayMagicianWithWindows()
