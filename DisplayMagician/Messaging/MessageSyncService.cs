@@ -156,11 +156,13 @@ namespace DisplayMagician.Messaging
                 return new MessageSyncResult { Success = false, UnreadCount = store.Messages.Count(m => !m.IsRead) };
             }
 
+            store = CloneStore(store);
             HashSet<string> seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             HashSet<string> currentVendorIds = GetCurrentVendorIds();
             Uri manifestUri = suppliedManifestUri ?? new Uri(_manifestUrl, UriKind.Absolute);
             int newMessages = 0;
             bool allArtifactsProcessed = true;
+            List<string> pendingBodyDeletes = new List<string>();
 
             if (authoritativeSnapshot)
             {
@@ -173,7 +175,7 @@ namespace DisplayMagician.Messaging
                 foreach (LocalMessage localMessage in store.Messages.Where(message => !snapshotIds.Contains(message.Id)).ToList())
                 {
                     store.Messages.Remove(localMessage);
-                    TryDeleteMarkdownFile(localMessage.MarkdownFileName);
+                    pendingBodyDeletes.Add(localMessage.MarkdownFileName);
                     _logger.Info($"MessageSyncService/SyncMessagesAsync: Removed message id={localMessage.Id} because it is absent from the authoritative client sync snapshot.");
                 }
             }
@@ -194,7 +196,7 @@ namespace DisplayMagician.Messaging
                     if (localToRemove != null)
                     {
                         store.Messages.Remove(localToRemove);
-                        TryDeleteMarkdownFile(localToRemove.MarkdownFileName);
+                        pendingBodyDeletes.Add(localToRemove.MarkdownFileName);
                         _logger.Info($"MessageSyncService/SyncMessagesAsync: Retracted and deleted message id={entry.Id} based on manifest tombstone.");
                     }
                     continue;
@@ -245,8 +247,6 @@ namespace DisplayMagician.Messaging
                     {
                         try
                         {
-                            string existingContent = await File.ReadAllTextAsync(checkPath, cancellationToken).ConfigureAwait(false);
-                            await SyncMessageMediaAsync(manifestUri, existingContent, cancellationToken).ConfigureAwait(false);
                             if (!await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false))
                             {
                                 allArtifactsProcessed = false;
@@ -269,6 +269,11 @@ namespace DisplayMagician.Messaging
 
                 if (!IsEligibleForClient(entry, appVersion, currentVendorIds))
                 {
+                    if (existing != null)
+                    {
+                        store.Messages.Remove(existing);
+                        pendingBodyDeletes.Add(existing.MarkdownFileName);
+                    }
                     continue;
                 }
 
@@ -302,13 +307,12 @@ namespace DisplayMagician.Messaging
                     continue;
                 }
 
-                string safeFileName = BuildSafeFileName(entry.Id, format);
+                string safeFileName = BuildSafeFileName($"{entry.Id}-{entry.Sha256}", format);
                 string fullPath = Path.Combine(_messagesFolderPath, safeFileName);
                 string temporaryPath = fullPath + ".tmp";
                 try
                 {
                     await File.WriteAllBytesAsync(temporaryPath, downloadedBody.Bytes, cancellationToken).ConfigureAwait(false);
-                    await SyncMessageMediaAsync(manifestUri, content, cancellationToken).ConfigureAwait(false);
                     if (!await SyncDeclaredMessageMediaAsync(manifestUri, entry.Media, cancellationToken).ConfigureAwait(false))
                     {
                         File.Delete(temporaryPath);
@@ -339,6 +343,10 @@ namespace DisplayMagician.Messaging
 
                 if (existing != null)
                 {
+                    if (!string.Equals(existing.MarkdownFileName, safeFileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        pendingBodyDeletes.Add(existing.MarkdownFileName);
+                    }
                     UpdateLocalMessageMetadata(existing, entry, format, messageKind);
                     existing.MarkdownFileName = safeFileName;
                     existing.DownloadAttempts = 0;
@@ -373,7 +381,6 @@ namespace DisplayMagician.Messaging
 
             if (!allArtifactsProcessed)
             {
-                SaveStore(store);
                 return new MessageSyncResult
                 {
                     Success = false,
@@ -382,9 +389,21 @@ namespace DisplayMagician.Messaging
                 };
             }
 
-            PruneToMaxMessages(store);
+            PruneToMaxMessages(store, pendingBodyDeletes);
             store.LastSuccessfulCheckUtc = DateTime.UtcNow;
-            SaveStore(store);
+            if (!SaveStore(store))
+            {
+                return new MessageSyncResult
+                {
+                    Success = false,
+                    NewMessagesCount = newMessages,
+                    UnreadCount = store.Messages.Count(m => !m.IsRead)
+                };
+            }
+            foreach (string markdownFileName in pendingBodyDeletes.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                TryDeleteMarkdownFile(markdownFileName);
+            }
 
             _logger.Info($"MessageSyncService/SyncMessagesAsync: Sync finished (newMessages={newMessages}, totalMessages={store.Messages.Count}, unread={store.Messages.Count(m => !m.IsRead)}).");
 
@@ -808,7 +827,7 @@ namespace DisplayMagician.Messaging
             return vendorIds;
         }
 
-        private void PruneToMaxMessages(MessageStoreDocument store)
+        private void PruneToMaxMessages(MessageStoreDocument store, ICollection<string> pendingBodyDeletes)
         {
             if (store.Messages.Count <= MaxStoredMessages)
             {
@@ -824,7 +843,7 @@ namespace DisplayMagician.Messaging
             {
                 LocalMessage toRemove = ordered[0];
                 ordered.RemoveAt(0);
-                TryDeleteMarkdownFile(toRemove.MarkdownFileName);
+                pendingBodyDeletes.Add(toRemove.MarkdownFileName);
             }
 
             int removedCount = store.Messages.Count - ordered.Count;
@@ -888,7 +907,13 @@ namespace DisplayMagician.Messaging
             }
         }
 
-        private void SaveStore(MessageStoreDocument store)
+        private static MessageStoreDocument CloneStore(MessageStoreDocument store)
+        {
+            string json = JsonConvert.SerializeObject(store);
+            return JsonConvert.DeserializeObject<MessageStoreDocument>(json) ?? new MessageStoreDocument();
+        }
+
+        private bool SaveStore(MessageStoreDocument store)
         {
             lock (_storeLock)
             {
@@ -897,10 +922,12 @@ namespace DisplayMagician.Messaging
                     Directory.CreateDirectory(_messagesFolderPath);
                     string json = JsonConvert.SerializeObject(store, Formatting.Indented);
                     AtomicFile.WriteAllText(_storePath, json, Encoding.UTF8);
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     _logger.Warn(ex, $"MessageSyncService/SaveStore: Failed to persist message store (storePath={_storePath}, messageCount={store?.Messages?.Count ?? 0}).");
+                    return false;
                 }
             }
         }

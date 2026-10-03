@@ -354,31 +354,31 @@ namespace DisplayMagician.UIForms
             {
                 rawContent = File.ReadAllText(fullPath);
                 string mediaFolderPath = Path.Combine(Program.AppMessagesPath, "media");
-                rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"(?<url>(?:https?://[^\s\""'<>\)\]]+)?/messages/media/(?<id>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))", match =>
-                {
-                    string mediaId = match.Groups["id"].Value;
-                    string localMediaPath = Directory.Exists(mediaFolderPath)
-                        ? Directory.EnumerateFiles(mediaFolderPath, mediaId + ".*").FirstOrDefault()
-                        : null;
-                    return localMediaPath == null
-                        ? match.Value
-                        : $"https://{MessagesVirtualHost}/media/{Path.GetFileName(localMediaPath)}";
-                }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"/sync/media/(?<hash>[a-fA-F0-9]{64})\.(?<extension>png|jpe?g|gif|webp)", match =>
                 {
                     string localMediaPath = Path.Combine(mediaFolderPath, match.Groups["hash"].Value.ToLowerInvariant() + "." + (match.Groups["extension"].Value.Equals("jpeg", StringComparison.OrdinalIgnoreCase) ? "jpg" : match.Groups["extension"].Value));
                     return File.Exists(localMediaPath) ? $"https://{MessagesVirtualHost}/media/{Path.GetFileName(localMediaPath)}" : match.Value;
                 }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                Uri manifestUri = new Uri(Program.ClientSyncUrl, UriKind.Absolute);
-                string messageBaseUrl = System.Net.WebUtility.HtmlEncode(manifestUri.GetLeftPart(UriPartial.Authority) + "/");
+                rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"(?is)<\s*(script|iframe|link|object|embed)\b[^>]*>.*?</\s*\1\s*>|<\s*(script|iframe|link|object|embed)\b[^>]*/?>", string.Empty);
+                rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"(?is)<(?<tag>img|video|audio|source|track)\b(?<attributes>[^>]*)>", match =>
+                {
+                    string attributes = System.Text.RegularExpressions.Regex.Replace(match.Groups["attributes"].Value, "\\s(?<name>src|poster)\\s*=\\s*(?<quote>['\\\"])(?<value>.*?)(\\k<quote>)", attributeMatch =>
+                    {
+                        string value = attributeMatch.Groups["value"].Value;
+                        return value.StartsWith($"https://{MessagesVirtualHost}/", StringComparison.OrdinalIgnoreCase)
+                            ? attributeMatch.Value
+                            : $" {attributeMatch.Groups["name"].Value}=\"\"";
+                    });
+                    return $"<{match.Groups["tag"].Value}{attributes}>";
+                });
                 if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
                 {
-                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='{messageBaseUrl}' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{rawContent}</body></html>";
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{rawContent}</body></html>";
                 }
                 else
                 {
                     string htmlBody = Markdown.ToHtml(rawContent, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
-                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='{messageBaseUrl}' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
+                    htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{htmlBody}</body></html>";
                 }
             }
             catch (Exception ex)

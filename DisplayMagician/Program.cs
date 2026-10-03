@@ -2357,11 +2357,38 @@ namespace DisplayMagician {
                         return;
                     }
 
+                    bool isMandatoryUpdate = IsMandatoryUpdate(args.Mandatory, args.InstalledVersion);
+                    bool isAutomaticMandatoryUpdate = isMandatoryUpdate && (int)args.Mandatory.UpdateMode == 2;
+                    if (isAutomaticMandatoryUpdate)
+                    {
+                        try
+                        {
+                            logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - Automatically downloading mandatory update version {args.CurrentVersion}.");
+                            if (AutoUpdater.DownloadUpdate(args))
+                            {
+                                Application.Exit();
+                            }
+                            else
+                            {
+                                logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent - Automatic download for mandatory update version {args.CurrentVersion} did not complete.");
+                                MessageBox.Show("DisplayMagician could not download the required update and will now close.", "Update required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                Application.Exit();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"Program/AutoUpdaterOnCheckForUpdateEvent - Automatic download for mandatory update version {args.CurrentVersion} failed.");
+                            MessageBox.Show("DisplayMagician could not download the required update and will now close.", "Update required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            Application.Exit();
+                        }
+
+                        return;
+                    }
+
                     DialogResult dialogResult;
                     UpgradeForm upgradeForm = new UpgradeForm();
                     upgradeForm.ChangelogURL = args.ChangelogURL;
                     upgradeForm.ReleaseHeading = $"DisplayMagician update {args.CurrentVersion} is available";
-                    bool isMandatoryUpdate = IsMandatoryUpdate(args.Mandatory, args.InstalledVersion);
                     upgradeForm.IsMandatoryUpdate = isMandatoryUpdate;
 
                     string updateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
