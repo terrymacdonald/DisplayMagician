@@ -289,6 +289,8 @@ namespace DisplayMagicianShared.Windows
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
+        private static readonly object PciVendorCacheLock = new object();
+        private static List<string> _cachedPciVideoCardVendors;
         private static WinLibrary _instance = new WinLibrary();
 
         private bool _initialised = false;
@@ -1378,8 +1380,9 @@ namespace DisplayMagicianShared.Windows
             // and map the adapter name to adapter id
             //var hdrInfos = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
             //int hdrInfoCount = 0;
-            foreach (var path in paths)
+            for (int pathIndex = 0; pathIndex < pathCount; pathIndex++)
             {
+                DISPLAYCONFIG_PATH_INFO path = paths[pathIndex];
                 // get display source name
                 var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
                 sourceInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
@@ -2465,15 +2468,14 @@ namespace DisplayMagicianShared.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
-            foreach (var path in paths)
+            for (int pathIndex = 0; pathIndex < pathCount; pathIndex++)
             {
+                DISPLAYCONFIG_PATH_INFO path = paths[pathIndex];
                 if (path.TargetInfo.TargetAvailable == false)
                 {
                     // We want to skip this one cause it's not valid
                     continue;
                 }
-
-                SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: This Path has the TargetAvailable for display #{path.TargetInfo.Id}");
 
                 // get display source name
                 var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
@@ -2482,13 +2484,9 @@ namespace DisplayMagicianShared.Windows
                 sourceInfo.Header.AdapterId = path.SourceInfo.AdapterId;
                 sourceInfo.Header.Id = path.SourceInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
+                if (err != WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Successfully got the source info from {path.SourceInfo.Id}.");
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.SourceInfo.Id}");
+                    SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get source info for display #{path.SourceInfo.Id}.");
                 }
 
                 // get display target name
@@ -2498,13 +2496,9 @@ namespace DisplayMagicianShared.Windows
                 targetInfo.Header.AdapterId = path.TargetInfo.AdapterId;
                 targetInfo.Header.Id = path.TargetInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref targetInfo);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
+                if (err != WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Successfully got the target info from {path.TargetInfo.Id}.");
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
+                    SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get target info for display #{path.TargetInfo.Id}.");
                 }
 
                 // get display adapter name
@@ -2514,13 +2508,9 @@ namespace DisplayMagicianShared.Windows
                 adapterInfo.Header.AdapterId = path.TargetInfo.AdapterId;
                 adapterInfo.Header.Id = path.TargetInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
+                if (err != WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Successfully got the display name info from {path.TargetInfo.Id}.");
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
+                    SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get adapter info for display #{path.TargetInfo.Id}.");
                 }
 
                 // Create an array of all the important display info we need to record
@@ -2614,28 +2604,35 @@ namespace DisplayMagicianShared.Windows
 
             // Sort the display identifiers
             displayIdentifiers.Sort();
+            SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Generated {displayIdentifiers.Count} unique display identifiers from {pathCount} returned display paths using selector {selector}.");
 
             return displayIdentifiers;
         }
 
         public static List<string> GetAllPCIVideoCardVendors()
         {
-            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the current PCI vendor ids for the videocards reported to Windows");
-            List<string> videoCardVendorIds = new List<string>();
-
-
-            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Testing whether the display configuration is valid (allowing tweaks).");
-            // Get the size of the largest Active Paths and Modes arrays
-            int pathCount = 0;
-            int modeCount = 0;
-            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ALL_PATHS, out pathCount, out modeCount);
-            if (err != WIN32STATUS.ERROR_SUCCESS)
+            lock (PciVendorCacheLock)
             {
-                SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
-                throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
-            }
+                if (_cachedPciVideoCardVendors != null)
+                {
+                    return new List<string>(_cachedPciVideoCardVendors);
+                }
 
-            SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
+                SharedLogger.logger.Debug($"WinLibrary/GetCurrentPCIVideoCardVendors: Querying Windows display paths for video adapter vendor IDs.");
+                List<string> videoCardVendorIds = new List<string>();
+                HashSet<string> adapterDevicePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // Get the size of the largest Active Paths and Modes arrays
+                int pathCount = 0;
+                int modeCount = 0;
+                WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ALL_PATHS, out pathCount, out modeCount);
+                if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+                    throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+                }
+
+            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the current Display Config path and mode arrays");
             var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
             var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
             err = CCDImport.QueryDisplayConfig(QDC.QDC_ALL_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
@@ -2651,7 +2648,7 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
                     throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
                 }
-                SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
+                SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the current Display Config path and mode arrays");
                 paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
                 modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
                 err = CCDImport.QueryDisplayConfig(QDC.QDC_ALL_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
@@ -2672,14 +2669,9 @@ namespace DisplayMagicianShared.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
-            foreach (var path in paths)
-            {
-                /*if (path.TargetInfo.TargetAvailable == false)
+                for (int pathIndex = 0; pathIndex < pathCount; pathIndex++)
                 {
-                    // We want to skip this one cause it's not valid
-                    SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Skipping path due to TargetAvailable not existing in display #{path.TargetInfo.Id}");
-                    continue;
-                }*/
+                    DISPLAYCONFIG_PATH_INFO path = paths[pathIndex];
 
                 // get display adapter name
                 var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
@@ -2687,85 +2679,76 @@ namespace DisplayMagicianShared.Windows
                 adapterInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_ADAPTER_NAME>();
                 adapterInfo.Header.AdapterId = path.TargetInfo.AdapterId;
                 adapterInfo.Header.Id = path.TargetInfo.Id;
-                err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
-                {
-                    //SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Successfully got the display name info from {path.TargetInfo.Id}.");
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/GetCurrentPCIVideoCardVendors: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
-                }
+                    err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
+                    if (err != WIN32STATUS.ERROR_SUCCESS)
+                    {
+                        SharedLogger.logger.Warn($"WinLibrary/GetCurrentPCIVideoCardVendors: DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get adapter info for display #{path.TargetInfo.Id}.");
+                        continue;
+                    }
 
-                try
-                {
+                    try
+                    {
                     // The AdapterDevicePath is something like "\\?\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}" if it's a PCI card
                     // or it is something like "\\?\USB#VID_17E9&PID_430C&MI_00#8&d6f23a6&1&0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}" if it's a USB card (or USB emulating)
                     // or it is something like "\\?\SuperDisplay#Display#1&3343b12b&0&1234#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}" if it's a SuperDisplay device (allows Android tablet device to be used as directly attached screen)
                     // or it is something like "\\\\?\\SWD#{1BAAD4AC-CD9D-4207-B4FF-C4F160604B13}#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}" if it is a SpaceDesk Monitor
                     // We only want the vendor ID
-                    SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The AdapterDevicePath for this path is :{adapterInfo.AdapterDevicePath}");
+                    adapterDevicePaths.Add(adapterInfo.AdapterDevicePath);
                     // Match against the vendor ID
                     string pattern = @"(PCI|USB)#(?:VEN|VID)_([\d\w]{4})&";
                     Match match = Regex.Match(adapterInfo.AdapterDevicePath, pattern);
                     if (match.Success)
                     {
-                        string pciType = match.Groups[1].Value;
                         string vendorId = match.Groups[2].Value;
-                       // SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The matched PCI Vendor ID is :{vendorId} and the PCI device is a {pciType} device.");
                         if (!videoCardVendorIds.Contains(vendorId))
                         {
                             videoCardVendorIds.Add(vendorId);
-                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Stored PCI vendor ID {vendorId} as we haven't already got it");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The device is not a USB or PCI card, so trying to see if it is a SuperDisplay device.");
                         string pattern2 = @"SuperDisplay#";
                         Match match2 = Regex.Match(adapterInfo.AdapterDevicePath, pattern2);
                         if (match2.Success)
                         {
-                            string pciType = "SuperDisplay";
                             string vendorId = "SuperDisplay";
-                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The matched PCI Vendor ID is :{vendorId} and the PCI device is a {pciType} device.");
                             if (!videoCardVendorIds.Contains(vendorId))
                             {
                                 videoCardVendorIds.Add(vendorId);
-                                SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Stored PCI vendor ID {vendorId} as we haven't already got it");
                             }
                         }
                         else
                         {
-                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The device is not a USB, PCI card or a SuperDisplay display, so trying to see if it is a SpaceDesk device.");
                             string pattern3 = @"SWD#";
                             Match match3 = Regex.Match(adapterInfo.AdapterDevicePath, pattern3);
                             if (match3.Success)
                             {
-                                string pciType = "SWD";
                                 string vendorId = "SWD";
-                                SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The matched PCI Vendor ID is :{vendorId} and the PCI device is a {pciType} device.");
                                 if (!videoCardVendorIds.Contains(vendorId))
                                 {
                                     videoCardVendorIds.Add(vendorId);
-                                    SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Stored PCI vendor ID {vendorId} as we haven't already got it");
                                 }
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The PCI Vendor ID pattern wasn't matched so we didn't record a vendor ID. AdapterDevicePath = {adapterInfo.AdapterDevicePath}");
+                                SharedLogger.logger.Debug($"WinLibrary/GetCurrentPCIVideoCardVendors: No supported vendor pattern matched adapter path {adapterInfo.AdapterDevicePath}.");
                             }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Warn(ex, $"WinLibrary/GetCurrentPCIVideoCardVendors: Exception getting PCI Vendor ID from Display Adapter {path.SourceInfo.AdapterId}.");
+                    }
+                    catch (Exception ex)
+                    {
+                        SharedLogger.logger.Warn(ex, $"WinLibrary/GetCurrentPCIVideoCardVendors: Exception getting PCI Vendor ID from Display Adapter {path.SourceInfo.AdapterId}.");
+                    }
+
                 }
 
+                videoCardVendorIds.Sort(StringComparer.OrdinalIgnoreCase);
+                _cachedPciVideoCardVendors = new List<string>(videoCardVendorIds);
+                SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Detected vendor IDs [{string.Join(", ", videoCardVendorIds)}] from {adapterDevicePaths.Count} unique adapter paths across {pathCount} returned display paths.");
+                SharedLogger.logger.Debug($"WinLibrary/GetCurrentPCIVideoCardVendors: Unique adapter paths: {string.Join("; ", adapterDevicePaths)}");
+                return new List<string>(_cachedPciVideoCardVendors);
             }
-
-            return videoCardVendorIds;
 
         }
 
@@ -2917,16 +2900,14 @@ namespace DisplayMagicianShared.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
-            foreach (var path in paths)
+            for (int pathIndex = 0; pathIndex < pathCount; pathIndex++)
             {
+                DISPLAYCONFIG_PATH_INFO path = paths[pathIndex];
                 if (path.TargetInfo.TargetAvailable == false)
                 {
                     // We want to skip this one cause it's not valid
                     continue;
                 }
-
-                SharedLogger.logger.Trace($"WinLibrary/GetAllAdapterIDs: This Path has the TargetAvailable for display #{path.TargetInfo.Id}");
-
                 // get display adapter name
                 var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
                 adapterInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
@@ -2936,15 +2917,16 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetAllAdapterIDs: Successfully got the display name info from {path.TargetInfo.Id}.");
                     currentAdapterMap[path.TargetInfo.AdapterId.Value] = adapterInfo.AdapterDevicePath;
                 }
                 else
                 {
-                    SharedLogger.logger.Warn($"WinLibrary/GetAllAdapterIDs: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
+                    SharedLogger.logger.Warn($"WinLibrary/GetAllAdapterIDs: DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get adapter info for display #{path.TargetInfo.Id}.");
                 }
 
             }
+
+            SharedLogger.logger.Trace($"WinLibrary/GetAllAdapterIDs: Found {currentAdapterMap.Count} unique display adapters across {pathCount} returned display paths.");
 
             return currentAdapterMap;
 

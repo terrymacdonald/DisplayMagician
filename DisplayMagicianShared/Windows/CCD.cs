@@ -447,10 +447,29 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO other && this.Equals(other);
 
         public bool Equals(DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO other)
-            => Header.Equals(other.Header) &&
-                Value == other.Value &&
-                ColorEncoding.Equals(other.ColorEncoding) &&
-                BitsPerColorChannel == other.BitsPerColorChannel;
+        {
+            if (!Header.Equals(other.Header))
+            {
+                SharedLogger.logger.Trace($"DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO/Equals: Header values don't equal each other. SavedAdapter={Header.AdapterId.Value}, CurrentAdapter={other.Header.AdapterId.Value}, SavedId={Header.Id}, CurrentId={other.Header.Id}, SavedType={Header.Type}, CurrentType={other.Header.Type}, SavedSize={Header.Size}, CurrentSize={other.Header.Size}");
+                return false;
+            }
+            if (Value != other.Value)
+            {
+                SharedLogger.logger.Trace($"DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO/Equals: Advanced color flags don't equal each other. Saved=0x{Value:X8} (Supported={AdvancedColorSupported}, Enabled={AdvancedColorEnabled}, WideColorEnforced={WideColorEnforced}, ForceDisabled={AdvancedColorForceDisabled}), Current=0x{other.Value:X8} (Supported={other.AdvancedColorSupported}, Enabled={other.AdvancedColorEnabled}, WideColorEnforced={other.WideColorEnforced}, ForceDisabled={other.AdvancedColorForceDisabled})");
+                return false;
+            }
+            if (!ColorEncoding.Equals(other.ColorEncoding))
+            {
+                SharedLogger.logger.Trace($"DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO/Equals: Color encodings don't equal each other. Saved={ColorEncoding}, Current={other.ColorEncoding}");
+                return false;
+            }
+            if (BitsPerColorChannel != other.BitsPerColorChannel)
+            {
+                SharedLogger.logger.Trace($"DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO/Equals: Bits per color channel don't equal each other. Saved={BitsPerColorChannel}, Current={other.BitsPerColorChannel}");
+                return false;
+            }
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -1122,8 +1141,19 @@ namespace DisplayMagicianShared.Windows
 
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_SDR_WHITE_LEVEL other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_SDR_WHITE_LEVEL other)
-            => Header.Equals(other.Header) &&
-               SDRWhiteLevel == other.SDRWhiteLevel;
+        {
+            if (!Header.Equals(other.Header))
+            {
+                SharedLogger.logger.Trace($"DISPLAYCONFIG_SDR_WHITE_LEVEL/Equals: Header values don't equal each other. SavedAdapter={Header.AdapterId.Value}, CurrentAdapter={other.Header.AdapterId.Value}, SavedId={Header.Id}, CurrentId={other.Header.Id}, SavedType={Header.Type}, CurrentType={other.Header.Type}, SavedSize={Header.Size}, CurrentSize={other.Header.Size}");
+                return false;
+            }
+            if (SDRWhiteLevel != other.SDRWhiteLevel)
+            {
+                SharedLogger.logger.Trace($"DISPLAYCONFIG_SDR_WHITE_LEVEL/Equals: SDR white levels don't equal each other. Saved={SDRWhiteLevel}, Current={other.SDRWhiteLevel}");
+                return false;
+            }
+            return true;
+        }
 
 
         public override int GetHashCode()

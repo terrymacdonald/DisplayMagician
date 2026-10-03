@@ -495,30 +495,66 @@ Write-Host "  (This file is gitignored and will not be committed.)" -ForegroundC
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# Download .NET 10 Desktop Runtime installer into DisplayMagicianBundle\Packages\
+# Download the current .NET 10 Desktop Runtime installer and write the exact
+# version/filename consumed by the WiX bundle. ASP.NET Core is not bundled.
 # ---------------------------------------------------------------------------
-$runtimeVersion  = '10.0.7'
-$runtimeFilename = "windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
-$runtimeUrl      = "https://download.visualstudio.microsoft.com/download/pr/windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
+$runtimeChannel = '10.0'
 $bundlePackagesDir = Join-Path $PSScriptRoot 'DisplayMagicianBundle\Packages'
-$runtimeDest     = Join-Path $bundlePackagesDir $runtimeFilename
+$temporaryRuntimePath = Join-Path $env:TEMP "windowsdesktop-runtime-$([Guid]::NewGuid().ToString('N')).exe"
+$runtimeConfigPath = Join-Path $PSScriptRoot 'DisplayMagicianBundle\RuntimeConfig.props'
 
-Write-Host "Checking for .NET $runtimeVersion Desktop Runtime installer..."
-if (Test-Path $runtimeDest) {
-    Write-Host "  Already present: $runtimeDest" -ForegroundColor Green
-} else {
+try {
     New-Item -ItemType Directory -Force -Path $bundlePackagesDir | Out-Null
-    Write-Host "  Downloading $runtimeFilename from Microsoft..."
-    try {
-        # Use the official aka.ms redirect which always resolves to the correct CDN URL
-        $redirectUrl = "https://aka.ms/dotnet/$runtimeVersion/windowsdesktop-runtime-win-x64.exe"
-        Invoke-WebRequest -Uri $redirectUrl -OutFile $runtimeDest -UseBasicParsing
-        Write-Host "  Downloaded: $runtimeDest" -ForegroundColor Green
-    } catch {
-        Write-Warning "Could not download .NET Desktop Runtime: $_"
-        Write-Warning "Download manually from https://dotnet.microsoft.com/download/dotnet/10.0"
-        Write-Warning "and place the installer at: $runtimeDest"
+    Write-Host "Downloading the current .NET $runtimeChannel Desktop Runtime installer from Microsoft..."
+    Invoke-WebRequest `
+        -Uri "https://aka.ms/dotnet/$runtimeChannel/windowsdesktop-runtime-win-x64.exe" `
+        -OutFile $temporaryRuntimePath `
+        -UseBasicParsing
+
+    $runtimeFile = Get-Item -LiteralPath $temporaryRuntimePath
+    if ($runtimeFile.Length -lt 5MB) {
+        throw "The downloaded .NET Desktop Runtime installer is unexpectedly small: $($runtimeFile.Length) bytes."
     }
+
+    $runtimeSignature = Get-AuthenticodeSignature -FilePath $temporaryRuntimePath
+    if ($runtimeSignature.Status -ne 'Valid') {
+        throw "The downloaded .NET Desktop Runtime installer has an invalid Authenticode signature: $($runtimeSignature.Status)."
+    }
+
+    $productVersion = $runtimeFile.VersionInfo.ProductVersion
+    if ($productVersion -notmatch '^(?<version>\d+\.\d+\.\d+)') {
+        throw "Could not determine the .NET Desktop Runtime version from '$productVersion'."
+    }
+
+    $runtimeVersion = $Matches.version
+    $runtimeFilename = "windowsdesktop-runtime-$runtimeVersion-win-x64.exe"
+    $runtimeDestination = Join-Path $bundlePackagesDir $runtimeFilename
+
+    Get-ChildItem `
+        -LiteralPath $bundlePackagesDir `
+        -Filter 'windowsdesktop-runtime-10.0.*-win-x64.exe' `
+        -File `
+        -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -ne $runtimeDestination } |
+        Remove-Item -Force
+
+    Move-Item -LiteralPath $temporaryRuntimePath -Destination $runtimeDestination -Force
+
+    @"
+<Project>
+  <PropertyGroup>
+    <DotNetDesktopRuntimeVersion>$runtimeVersion</DotNetDesktopRuntimeVersion>
+    <DotNetDesktopRuntimeFilename>$runtimeFilename</DotNetDesktopRuntimeFilename>
+  </PropertyGroup>
+</Project>
+"@ | Set-Content -LiteralPath $runtimeConfigPath -Encoding UTF8
+
+    Write-Host "  .NET Desktop Runtime $runtimeVersion is ready: $runtimeDestination" -ForegroundColor Green
+    Write-Host "  Bundle runtime configuration written: $runtimeConfigPath" -ForegroundColor Green
+}
+catch {
+    Remove-Item -LiteralPath $temporaryRuntimePath -Force -ErrorAction SilentlyContinue
+    throw
 }
 Write-Host ""
 
@@ -540,6 +576,7 @@ Write-Host ""
 Write-Host "Files created/updated:" -ForegroundColor White
 Write-Host "  $pfxPath"
 Write-Host "  $signingProps"
+Write-Host "  $runtimeConfigPath"
 Write-Host ""
 Write-Host "REMINDER: Keep your PFX file safe. If you lose it you will need to re-run" -ForegroundColor Yellow
 Write-Host "this script and reinstall your application on all test machines." -ForegroundColor Yellow
