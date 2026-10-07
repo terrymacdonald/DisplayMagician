@@ -1,0 +1,428 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://displaymagician.org/schemas/v4/ipc-v1.json",
+  "title": "DisplayMagician local IPC protocol version 1",
+  "description": "Common named-pipe envelope and selected public payload definitions. The Payload property contains serialized JSON text and therefore requires a second validation pass against the schema selected by MessageType.",
+  "$defs": {
+    "Guid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "DateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ControlClientKind": {
+      "type": "integer",
+      "enum": [0, 1, 2, 3, 4, 5, 6, 7]
+    },
+    "ControlMessageType": {
+      "type": "integer",
+      "enum": [
+        0, 1, 2, 3, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
+        38, 39, 40, 41, 42, 43, 44, 45, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+        56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72,
+        73, 74, 75, 76, 77, 78, 79
+      ]
+    },
+    "ControlErrorCode": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 23
+    },
+    "ProtocolHello": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "MinimumProtocolVersion",
+        "MaximumProtocolVersion",
+        "ClientKind",
+        "ClientId",
+        "DeviceId",
+        "DisplayName",
+        "RequiredCapabilities",
+        "OptionalCapabilities"
+      ],
+      "properties": {
+        "MinimumProtocolVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "MaximumProtocolVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ClientKind": {
+          "$ref": "#/$defs/ControlClientKind",
+          "not": {
+            "const": 0
+          }
+        },
+        "ClientId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "DeviceId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "DisplayName": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "RequiredCapabilities": {
+          "$ref": "#/$defs/CapabilityList"
+        },
+        "OptionalCapabilities": {
+          "$ref": "#/$defs/CapabilityList"
+        }
+      }
+    },
+    "CapabilityList": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9-]+$"
+      }
+    },
+    "ProtocolWelcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "SelectedProtocolVersion",
+        "EndpointKind",
+        "ServiceInstanceId",
+        "SupportedCapabilities",
+        "NegotiatedOptionalCapabilities"
+      ],
+      "properties": {
+        "SelectedProtocolVersion": {
+          "const": 1
+        },
+        "EndpointKind": {
+          "type": "string"
+        },
+        "ServiceInstanceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "SupportedCapabilities": {
+          "$ref": "#/$defs/CapabilityList"
+        },
+        "NegotiatedOptionalCapabilities": {
+          "$ref": "#/$defs/CapabilityList"
+        }
+      }
+    },
+    "ControlEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ProtocolVersion",
+        "MessageType",
+        "RequestId",
+        "Hello",
+        "Payload"
+      ],
+      "properties": {
+        "ProtocolVersion": {
+          "const": 1
+        },
+        "MessageType": {
+          "$ref": "#/$defs/ControlMessageType"
+        },
+        "RequestId": {
+          "$ref": "#/$defs/Guid",
+          "not": {
+            "const": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "Hello": {
+          "$ref": "#/$defs/ProtocolHello"
+        },
+        "Payload": {
+          "type": "string",
+          "contentMediaType": "application/json"
+        }
+      }
+    },
+    "ProfileListRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "DetailedProfileId",
+        "IncludeActiveProfileDetail",
+        "IncludeCurrentLayoutDetail"
+      ],
+      "properties": {
+        "DetailedProfileId": {
+          "type": "string"
+        },
+        "IncludeActiveProfileDetail": {
+          "type": "boolean"
+        },
+        "IncludeCurrentLayoutDetail": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ApplyProfileRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ProfileId", "OperationId"],
+      "properties": {
+        "ProfileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "OperationId": {
+          "$ref": "#/$defs/Guid"
+        }
+      }
+    },
+    "ApplyAudioProfileRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ProfileId", "DeviceWaitMilliseconds", "OperationId"],
+      "properties": {
+        "ProfileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "DeviceWaitMilliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "OperationId": {
+          "$ref": "#/$defs/Guid"
+        }
+      }
+    },
+    "StartShortcutRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ShortcutId", "OperationId"],
+      "properties": {
+        "ShortcutId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "OperationId": {
+          "$ref": "#/$defs/Guid"
+        }
+      }
+    },
+    "CancelOperationRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["OperationId"],
+      "properties": {
+        "OperationId": {
+          "$ref": "#/$defs/Guid"
+        }
+      }
+    },
+    "OperationStatusRequest": {
+      "$ref": "#/$defs/CancelOperationRequest"
+    },
+    "ResolveOperationDecisionRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["PromptId", "Choice"],
+      "properties": {
+        "PromptId": {
+          "$ref": "#/$defs/Guid"
+        },
+        "Choice": {
+          "type": "integer",
+          "enum": [1, 2]
+        }
+      }
+    },
+    "OperationStatus": {
+      "type": "object",
+      "required": [
+        "OperationId",
+        "OperationType",
+        "OwnerUserSid",
+        "OwnerSessionId",
+        "Sequence",
+        "Phase",
+        "Message",
+        "StartedUtc",
+        "UpdatedUtc",
+        "IsTerminal",
+        "IsSuccessful",
+        "ErrorCode",
+        "LastUpdateId",
+        "IsAuthoritative",
+        "IsStale",
+        "StaleReason"
+      ],
+      "properties": {
+        "OperationId": {
+          "$ref": "#/$defs/Guid"
+        },
+        "OperationType": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "OwnerUserSid": {
+          "type": "string"
+        },
+        "OwnerSessionId": {
+          "type": "integer"
+        },
+        "Sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "Phase": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "Message": {
+          "type": "string"
+        },
+        "StartedUtc": {
+          "$ref": "#/$defs/DateTime"
+        },
+        "UpdatedUtc": {
+          "$ref": "#/$defs/DateTime"
+        },
+        "IsTerminal": {
+          "type": "boolean"
+        },
+        "IsSuccessful": {
+          "type": "boolean"
+        },
+        "ErrorCode": {
+          "$ref": "#/$defs/ControlErrorCode"
+        },
+        "LastUpdateId": {
+          "$ref": "#/$defs/Guid"
+        },
+        "IsAuthoritative": {
+          "type": "boolean"
+        },
+        "IsStale": {
+          "type": "boolean"
+        },
+        "StaleReason": {
+          "type": "string"
+        }
+      }
+    },
+    "ControlClientEvent": {
+      "type": "object",
+      "required": [
+        "EventType",
+        "Scope",
+        "PublishedUtc",
+        "ClientSync",
+        "OperationStatus",
+        "OperationDecision"
+      ],
+      "properties": {
+        "EventType": {
+          "type": "integer",
+          "enum": [0, 1, 2, 3, 4]
+        },
+        "Scope": {
+          "type": "integer",
+          "enum": [0, 1]
+        },
+        "PublishedUtc": {
+          "$ref": "#/$defs/DateTime"
+        },
+        "ClientSync": {
+          "type": ["object", "null"]
+        },
+        "OperationStatus": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/OperationStatus"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "OperationDecision": {
+          "type": ["object", "null"]
+        }
+      }
+    },
+    "ControlResponse": {
+      "type": "object",
+      "required": [
+        "IsSuccessful",
+        "ErrorCode",
+        "Message",
+        "ProtocolWelcome"
+      ],
+      "properties": {
+        "IsSuccessful": {
+          "type": "boolean"
+        },
+        "ErrorCode": {
+          "$ref": "#/$defs/ControlErrorCode"
+        },
+        "Message": {
+          "type": "string"
+        },
+        "ProtocolWelcome": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ProtocolWelcome"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ServiceStatus": {
+          "type": ["object", "null"]
+        },
+        "ProfileList": {
+          "type": ["object", "null"]
+        },
+        "AudioProfileList": {
+          "type": ["object", "null"]
+        },
+        "ShortcutList": {
+          "type": ["object", "null"]
+        },
+        "OperationStatus": {
+          "type": ["object", "null"]
+        },
+        "OperationStatuses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OperationStatus"
+          }
+        },
+        "OperationDecision": {
+          "type": ["object", "null"]
+        },
+        "OperationDecisions": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$ref": "#/$defs/ControlEnvelope"
+}
+

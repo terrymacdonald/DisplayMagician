@@ -1,0 +1,20 @@
+{
+  "ProtocolVersion": 1,
+  "MessageType": 11,
+  "RequestId": "5e81ee74-6ae3-4866-aac4-88b1ace2ef59",
+  "Hello": {
+    "MinimumProtocolVersion": 1,
+    "MaximumProtocolVersion": 1,
+    "ClientKind": 4,
+    "ClientId": "example.integration",
+    "DeviceId": "",
+    "DisplayName": "Example integration",
+    "RequiredCapabilities": [
+      "protocol-negotiation",
+      "profiles"
+    ],
+    "OptionalCapabilities": []
+  },
+  "Payload": "{\"DetailedProfileId\":\"\",\"IncludeActiveProfileDetail\":false,\"IncludeCurrentLayoutDetail\":false}"
+}
+

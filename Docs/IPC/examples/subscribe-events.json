@@ -1,0 +1,22 @@
+{
+  "ProtocolVersion": 1,
+  "MessageType": 44,
+  "RequestId": "ec578314-e045-4b05-940c-f9deae6cf8a4",
+  "Hello": {
+    "MinimumProtocolVersion": 1,
+    "MaximumProtocolVersion": 1,
+    "ClientKind": 4,
+    "ClientId": "example.integration",
+    "DeviceId": "",
+    "DisplayName": "Example integration",
+    "RequiredCapabilities": [
+      "protocol-negotiation",
+      "client-events",
+      "operation-status",
+      "operation-decisions"
+    ],
+    "OptionalCapabilities": []
+  },
+  "Payload": ""
+}
+

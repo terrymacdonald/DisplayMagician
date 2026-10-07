@@ -1,0 +1,128 @@
+asyncapi: 3.1.0
+info:
+  title: DisplayMagician v4 Local IPC
+  version: 1.0.0
+  description: >-
+    Supplementary catalogue for the DMv4 public local named-pipe API. The
+    normative framing, compatibility, security, retry, and lifecycle rules are
+    in IPC-Specification.md. AsyncAPI has no standard Windows named-pipe binding.
+defaultContentType: application/json
+servers:
+  localControlService:
+    host: .
+    protocol: displaymagician-named-pipe
+    description: Same-device ControlService named pipes.
+    x-displaymagician-transport:
+      type: windows-named-pipe
+      transmissionMode: byte
+      framing: int32-little-endian-length-prefixed-utf8-json
+      maximumMessageBytes: 5242880
+      connectionTimeoutSeconds: 10
+      responseTimeoutSeconds: 30
+channels:
+  commands:
+    address: DisplayMagician.ControlService.Client.v1
+    description: One request and one correlated response per duplex connection.
+    messages:
+      commandEnvelope:
+        $ref: '#/components/messages/CommandEnvelope'
+      commandResponse:
+        $ref: '#/components/messages/CommandResponse'
+  clientEvents:
+    address: DisplayMagician.ControlService.ClientEvents.v1
+    description: Subscription acknowledgement followed by server-pushed client events.
+    messages:
+      subscriptionRequest:
+        $ref: '#/components/messages/SubscriptionRequest'
+      subscriptionResponse:
+        $ref: '#/components/messages/SubscriptionResponse'
+      clientEvent:
+        $ref: '#/components/messages/ClientEvent'
+operations:
+  sendCommand:
+    action: send
+    channel:
+      $ref: '#/channels/commands'
+    summary: Send one local command envelope.
+    messages:
+      - $ref: '#/channels/commands/messages/commandEnvelope'
+    reply:
+      channel:
+        $ref: '#/channels/commands'
+      messages:
+        - $ref: '#/channels/commands/messages/commandResponse'
+  subscribeToClientEvents:
+    action: send
+    channel:
+      $ref: '#/channels/clientEvents'
+    summary: Establish a reconnectable event subscription.
+    messages:
+      - $ref: '#/channels/clientEvents/messages/subscriptionRequest'
+    reply:
+      channel:
+        $ref: '#/channels/clientEvents'
+      messages:
+        - $ref: '#/channels/clientEvents/messages/subscriptionResponse'
+  receiveClientEvents:
+    action: receive
+    channel:
+      $ref: '#/channels/clientEvents'
+    summary: Receive status, decision, sync, and heartbeat events.
+    messages:
+      - $ref: '#/channels/clientEvents/messages/clientEvent'
+components:
+  messages:
+    CommandEnvelope:
+      name: ControlEnvelope
+      title: Control command
+      contentType: application/json
+      payload:
+        $ref: './schemas/displaymagician-ipc.schema.json'
+      examples:
+        - name: listProfiles
+          summary: List compact display profiles.
+          payload:
+            ProtocolVersion: 1
+            MessageType: 11
+            RequestId: 5e81ee74-6ae3-4866-aac4-88b1ace2ef59
+            Hello:
+              MinimumProtocolVersion: 1
+              MaximumProtocolVersion: 1
+              ClientKind: 4
+              ClientId: example.integration
+              DeviceId: ''
+              DisplayName: Example integration
+              RequiredCapabilities:
+                - protocol-negotiation
+                - profiles
+              OptionalCapabilities: []
+            Payload: '{"DetailedProfileId":"","IncludeActiveProfileDetail":false,"IncludeCurrentLayoutDetail":false}'
+    CommandResponse:
+      name: ControlResponseEnvelope
+      title: Correlated command response
+      contentType: application/json
+      payload:
+        $ref: './schemas/displaymagician-ipc.schema.json'
+    SubscriptionRequest:
+      name: SubscribeClientEvents
+      title: Event subscription request
+      contentType: application/json
+      payload:
+        $ref: './schemas/displaymagician-ipc.schema.json'
+      x-displaymagician-message-type: 44
+    SubscriptionResponse:
+      name: SubscribeClientEventsResponse
+      title: Subscription acknowledgement and authoritative snapshot
+      contentType: application/json
+      payload:
+        $ref: './schemas/displaymagician-ipc.schema.json'
+      x-displaymagician-message-type: 44
+    ClientEvent:
+      name: ClientEvent
+      title: Server-pushed client event
+      contentType: application/json
+      payload:
+        $ref: './schemas/displaymagician-ipc.schema.json'
+      x-displaymagician-message-type: 45
+      x-displaymagician-keep-alive-seconds: 20
+      x-displaymagician-client-idle-timeout-seconds: 45

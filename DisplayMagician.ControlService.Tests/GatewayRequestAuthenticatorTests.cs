@@ -70,7 +70,7 @@ public sealed class GatewayRequestAuthenticatorTests
             unknownDevice.SignedRequest.DeviceId = "unknown-device";
             GatewayAuthenticationRequest invalidSignature = CreateRequest(key, "/v1/status", "ABC", now, "invalid-signature");
             invalidSignature.SignedRequest.Signature = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-            GatewayAuthenticationRequest bodyTampered = CreateRequest(key, "/v1/profiles/apply", "ABC", now, "body-tampered");
+            GatewayAuthenticationRequest bodyTampered = CreateRequest(key, "/v1/display-profiles/apply", "ABC", now, "body-tampered");
             bodyTampered.BodySha256 = "DEF";
 
             Assert.False(authenticator.Authenticate(unknownDevice, now).IsAuthenticated);

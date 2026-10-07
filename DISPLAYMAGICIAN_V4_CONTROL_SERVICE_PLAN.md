@@ -487,8 +487,8 @@ POST /v1/pairing/request
 POST /v1/pairing/complete
 POST /v1/pairing/revoke
 
-GET  /v1/profiles
-POST /v1/profiles/{profileId}/apply
+GET  /v1/display-profiles
+POST /v1/display-profiles/apply
 
 GET  /v1/operations/{operationId}
 POST /v1/operations/{operationId}/cancel
@@ -884,4 +884,3 @@ v5+: Explicit profile sharing/ACLs and display-control handover.
 v5+: Central game-centre service with outbound authenticated connection.
 v5+: Android/iOS client through a secure relay.
 ```
-

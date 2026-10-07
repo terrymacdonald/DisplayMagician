@@ -1,0 +1,796 @@
+openapi: 3.1.0
+info:
+  title: DisplayMagician v4 Remote Controller API
+  version: 1.0.0
+  license:
+    name: GNU General Public License v3.0 only
+    identifier: GPL-3.0-only
+    url: https://github.com/terrymacdonald/DisplayMagician/blob/main/LICENSE
+  description: >-
+    HTTPS API exposed by DisplayMagician.Gateway to paired remote controllers.
+    This API is intentionally narrower than the local named-pipe API. The
+    implementation currently returns a shared ControlResponse with HTTP 200 for
+    many downstream failures; the response body's isSuccessful and errorCode
+    fields are therefore authoritative.
+servers:
+  - url: https://{host}:{port}
+    description: Gateway endpoint advertised in the pairing QR code.
+    variables:
+      host:
+        default: displaymagician.local
+      port:
+        default: '22846'
+tags:
+  - name: Identity
+    description: Public Gateway identity used during trusted pairing.
+  - name: Pairing
+    description: One-time QR pairing submission and status polling.
+  - name: Status
+    description: User-scoped operation and decision status.
+  - name: Profiles
+    description: Read and apply saved display profiles.
+  - name: Audio profiles
+    description: Read and apply saved audio profiles.
+  - name: Shortcuts
+    description: Read and run saved shortcuts.
+  - name: Decisions
+    description: Resolve pending operation decisions.
+paths:
+  /v1/identity:
+    get:
+      tags: [Identity]
+      operationId: getIdentity
+      summary: Get the public Gateway identity
+      description: >-
+        Public pre-pairing endpoint. A client must compare the returned host
+        identity and TLS fingerprint with the trusted values in the scanned QR
+        payload before trusting the Gateway.
+      security: []
+      responses:
+        '200':
+          description: Public Gateway identity.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayIdentityView'
+        4XX:
+          description: The HTTP request was malformed or rejected before route execution.
+  /v1/pairing/request:
+    post:
+      tags: [Pairing]
+      operationId: requestPairing
+      summary: Submit a scanned one-time pairing request
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePairingRequest'
+      responses:
+        '202':
+          description: Request accepted and awaiting approval.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePairingResult'
+        '400':
+          description: Pairing request is invalid, expired, rejected, or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePairingResult'
+  /v1/pairing/status:
+    post:
+      tags: [Pairing]
+      operationId: getPairingStatus
+      summary: Poll the state of a pending pairing request
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicePairingStatusRequest'
+      responses:
+        '200':
+          description: Current pairing state. Rejected results can also represent an invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicePairingResult'
+        4XX:
+          description: The HTTP request or JSON body was malformed or exceeded host limits.
+  /v1/status:
+    get:
+      tags: [Status]
+      operationId: getStatus
+      summary: Get operation and pending-decision status
+      description: Requires `status-read`. The current implementation also includes pending decisions without independently checking `decisions-read`; this is recorded as an API gap.
+      x-required-capability: status-read
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+        - name: changedSinceUtc
+          in: query
+          required: false
+          description: Return status changed since this UTC instant.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: User-scoped remote status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoteUserStatus'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+        '403':
+          $ref: '#/components/responses/AuthorizationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/status/stream:
+    get:
+      tags: [Status]
+      operationId: streamStatus
+      summary: Stream user status with Server-Sent Events
+      description: >-
+        Emits `status` events whose data is a JSON RemoteUserStatus. A comment
+        keep-alive is emitted after 15 seconds without a status update.
+      x-required-capability: status-read
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      responses:
+        '200':
+          description: SSE status stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: |
+                event: status
+                data: {"operations":[],"pendingDecisions":[],"nextChangedSinceUtc":"2026-10-07T08:00:00Z"}
+
+                : keep-alive
+
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+        '403':
+          description: Device lacks `status-read`; the stream is not established.
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/display-profiles:
+    get:
+      tags: [Profiles]
+      operationId: listDisplayProfiles
+      summary: List display profiles and current layout
+      x-required-capability: profiles-read
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      responses:
+        '200':
+          description: Shared response. Inspect `isSuccessful`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/display-profiles/apply:
+    post:
+      tags: [Profiles]
+      operationId: applyDisplayProfile
+      summary: Apply a saved display profile
+      x-required-capability: profiles-apply
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyProfileRequest'
+      responses:
+        '200':
+          description: Shared response. Successful submission is not operation completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/audio-profiles:
+    get:
+      tags: [Audio profiles]
+      operationId: listAudioProfiles
+      summary: List audio profiles and current layout
+      x-required-capability: audio-profiles-read
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      responses:
+        '200':
+          description: Shared response. Inspect `isSuccessful`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/audio-profiles/apply:
+    post:
+      tags: [Audio profiles]
+      operationId: applyAudioProfile
+      summary: Apply a saved audio profile
+      x-required-capability: audio-profiles-apply
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyAudioProfileRequest'
+      responses:
+        '200':
+          description: Shared response. Successful submission is not operation completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/shortcuts:
+    get:
+      tags: [Shortcuts]
+      operationId: listShortcuts
+      summary: List saved shortcuts
+      x-required-capability: shortcuts-read
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      responses:
+        '200':
+          description: Shared response. Inspect `isSuccessful`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/shortcuts/run:
+    post:
+      tags: [Shortcuts]
+      operationId: runShortcut
+      summary: Start a saved shortcut
+      x-required-capability: shortcuts-run
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartShortcutRequest'
+      responses:
+        '200':
+          description: Shared response. Successful submission is not operation completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+  /v1/decisions/answer:
+    post:
+      tags: [Decisions]
+      operationId: answerDecision
+      summary: Answer one pending operation decision
+      x-required-capability: decisions-answer
+      parameters:
+        - $ref: '#/components/parameters/TargetSessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveOperationDecisionRequest'
+      responses:
+        '200':
+          description: Shared response. Inspect `isSuccessful`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailure'
+      security:
+        - DeviceId: []
+          Timestamp: []
+          Nonce: []
+          Signature: []
+components:
+  securitySchemes:
+    DeviceId:
+      type: apiKey
+      in: header
+      name: X-DisplayMagician-Device-Id
+      description: Paired stable device ID.
+    Timestamp:
+      type: apiKey
+      in: header
+      name: X-DisplayMagician-Timestamp
+      description: ISO 8601 timestamp within five minutes of Gateway UTC.
+    Nonce:
+      type: apiKey
+      in: header
+      name: X-DisplayMagician-Nonce
+      description: Unique nonce. Reuse during the five-minute replay window is rejected.
+    Signature:
+      type: apiKey
+      in: header
+      name: X-DisplayMagician-Signature
+      description: >-
+        Base64url P-256 ECDSA SHA-256 signature in 64-byte IEEE P1363 format.
+        Sign UTF-8 text METHOD + LF + PATH + LF + uppercase SHA-256 body hex +
+        LF + UTC timestamp formatted with round-trip O + LF + nonce. METHOD is
+        uppercase and PATH excludes the query string.
+  parameters:
+    TargetSessionId:
+      name: targetSessionId
+      in: query
+      required: false
+      description: >-
+        Target interactive Windows session. Omit to use the pairing-bound
+        preferred healthy session or the only eligible healthy session.
+        ControlService validates that the session belongs to the paired user.
+      schema:
+        type: integer
+        minimum: 0
+  responses:
+    AuthenticationFailure:
+      description: Signed request is missing, invalid, expired, or replayed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    AuthorizationFailure:
+      description: Authenticated device lacks the required capability.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+  schemas:
+    Guid:
+      type: string
+      format: uuid
+    GatewayIdentityView:
+      type: object
+      required: [protocolVersion, port, hostId, hostIdentityPublicKeyJwk, tlsCertificateSha256]
+      properties:
+        protocolVersion:
+          type: integer
+          const: 1
+        port:
+          type: integer
+          default: 22846
+        hostId:
+          type: string
+        hostIdentityPublicKeyJwk:
+          type: string
+          description: Public P-256 host identity as JWK JSON text.
+        tlsCertificateSha256:
+          type: string
+          description: TLS certificate SHA-256 fingerprint.
+    DevicePairingRequest:
+      type: object
+      required:
+        - pairingSessionId
+        - pairingSecret
+        - deviceId
+        - deviceDisplayName
+        - clientType
+        - devicePublicKeyJwk
+        - requestedCapabilities
+      properties:
+        pairingSessionId:
+          $ref: '#/components/schemas/Guid'
+        pairingSecret:
+          type: string
+        deviceId:
+          type: string
+          maxLength: 128
+        deviceDisplayName:
+          type: string
+          maxLength: 128
+        clientType:
+          type: string
+        sourceIpAddress:
+          type: string
+          readOnly: true
+          description: Ignored from the body and set by Gateway from the connection.
+        devicePublicKeyJwk:
+          type: string
+          description: Public P-256 key as JWK JSON text.
+        requestedCapabilities:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/RemoteCapability'
+    DevicePairingStatusRequest:
+      type: object
+      required: [pairingSessionId, pairingSecret, deviceId]
+      properties:
+        pairingSessionId:
+          $ref: '#/components/schemas/Guid'
+        pairingSecret:
+          type: string
+        deviceId:
+          type: string
+    DevicePairingResult:
+      type: object
+      required: [state, deviceId, message]
+      properties:
+        state:
+          type: integer
+          description: Unknown=0, AwaitingDevice=1, AwaitingApproval=2, Approved=3, Rejected=4, Expired=5.
+          enum: [0, 1, 2, 3, 4, 5]
+        deviceId:
+          type: string
+        message:
+          type: string
+    RemoteCapability:
+      type: string
+      enum:
+        - status-read
+        - decisions-read
+        - decisions-answer
+        - profiles-read
+        - profiles-apply
+        - audio-profiles-read
+        - audio-profiles-apply
+        - shortcuts-read
+        - shortcuts-run
+        - pairing-approve
+    ApplyProfileRequest:
+      type: object
+      required: [profileId, operationId]
+      properties:
+        profileId:
+          type: string
+          minLength: 1
+        operationId:
+          $ref: '#/components/schemas/Guid'
+    ApplyAudioProfileRequest:
+      type: object
+      required: [profileId, deviceWaitMilliseconds, operationId]
+      properties:
+        profileId:
+          type: string
+          minLength: 1
+        deviceWaitMilliseconds:
+          type: integer
+          minimum: 0
+          default: 20000
+        operationId:
+          $ref: '#/components/schemas/Guid'
+    StartShortcutRequest:
+      type: object
+      required: [shortcutId, operationId]
+      properties:
+        shortcutId:
+          type: string
+          minLength: 1
+        operationId:
+          $ref: '#/components/schemas/Guid'
+    ResolveOperationDecisionRequest:
+      type: object
+      required: [promptId, choice]
+      properties:
+        promptId:
+          $ref: '#/components/schemas/Guid'
+        choice:
+          type: integer
+          description: Continue=1, StopAndRestore=2.
+          enum: [1, 2]
+    RemoteUserStatus:
+      type: object
+      required: [operations, pendingDecisions, nextChangedSinceUtc]
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationStatus'
+        pendingDecisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationDecision'
+        nextChangedSinceUtc:
+          type: string
+          format: date-time
+    OperationStatus:
+      type: object
+      required:
+        - operationId
+        - operationType
+        - ownerUserSid
+        - ownerSessionId
+        - sequence
+        - phase
+        - message
+        - startedUtc
+        - updatedUtc
+        - isTerminal
+        - isSuccessful
+        - errorCode
+        - lastUpdateId
+        - isAuthoritative
+        - isStale
+        - staleReason
+      properties:
+        operationId:
+          $ref: '#/components/schemas/Guid'
+        operationType:
+          type: integer
+          enum: [0, 1, 2, 3, 4]
+        ownerUserSid:
+          type: string
+        ownerSessionId:
+          type: integer
+        sequence:
+          type: integer
+          format: int64
+        phase:
+          type: integer
+          minimum: 0
+          maximum: 15
+        message:
+          type: string
+        startedUtc:
+          type: string
+          format: date-time
+        updatedUtc:
+          type: string
+          format: date-time
+        isTerminal:
+          type: boolean
+        isSuccessful:
+          type: boolean
+        errorCode:
+          type: integer
+          minimum: 0
+          maximum: 23
+        lastUpdateId:
+          $ref: '#/components/schemas/Guid'
+        isAuthoritative:
+          type: boolean
+        isStale:
+          type: boolean
+        staleReason:
+          type: string
+    OperationDecision:
+      type: object
+      required:
+        - promptId
+        - operationId
+        - ownerUserSid
+        - ownerSessionId
+        - title
+        - message
+        - allowedChoices
+        - defaultChoice
+        - createdUtc
+        - expiresUtc
+        - isResolved
+        - resolvedChoice
+      properties:
+        promptId:
+          $ref: '#/components/schemas/Guid'
+        operationId:
+          $ref: '#/components/schemas/Guid'
+        ownerUserSid:
+          type: string
+        ownerSessionId:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        allowedChoices:
+          type: array
+          items:
+            type: integer
+            enum: [0, 1, 2]
+        defaultChoice:
+          type: integer
+          enum: [0, 1, 2]
+        createdUtc:
+          type: string
+          format: date-time
+        expiresUtc:
+          type: string
+          format: date-time
+        isResolved:
+          type: boolean
+        resolvedChoice:
+          type: integer
+          enum: [0, 1, 2]
+        resolvedUtc:
+          type: [string, 'null']
+          format: date-time
+    DisplayProfileView:
+      type: object
+      additionalProperties: true
+      required: [id, name, connectedDisplayCount, isSaved, isActive, isValid]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        thumbnailPngBase64:
+          type: [string, 'null']
+        detailedLayoutPngBase64:
+          type: [string, 'null']
+        desktopIconIcoBase64:
+          type: [string, 'null']
+        connectedDisplayCount:
+          type: integer
+        primaryDisplayWidth:
+          type: integer
+        primaryDisplayHeight:
+          type: integer
+        isSaved:
+          type: boolean
+        isActive:
+          type: boolean
+        isValid:
+          type: boolean
+        diagnosticMessage:
+          type: string
+        settings:
+          type: object
+    ProfileListResult:
+      type: object
+      required: [savedProfiles]
+      properties:
+        savedProfiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisplayProfileView'
+        currentLayout:
+          oneOf:
+            - $ref: '#/components/schemas/DisplayProfileView'
+            - type: 'null'
+    AudioProfileView:
+      type: object
+      additionalProperties: true
+      required: [id, name, isSaved, isActive, settingsText, unavailableDeviceNames]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        isSaved:
+          type: boolean
+        isActive:
+          type: boolean
+        settingsText:
+          type: string
+        unavailableDeviceNames:
+          type: array
+          items:
+            type: string
+    AudioProfileListResult:
+      type: object
+      required: [savedProfiles, canAccessAudioSettings]
+      properties:
+        savedProfiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudioProfileView'
+        currentLayout:
+          oneOf:
+            - $ref: '#/components/schemas/AudioProfileView'
+            - type: 'null'
+        canAccessAudioSettings:
+          type: boolean
+    ShortcutView:
+      type: object
+      required: [id, name, category, profileId]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: integer
+          enum: [0, 1, 2, 3]
+        profileId:
+          type: string
+        iconPngBase64:
+          type: [string, 'null']
+    ShortcutListResult:
+      type: object
+      required: [shortcuts]
+      properties:
+        shortcuts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShortcutView'
+    ControlResponse:
+      type: object
+      description: Shared ControlService response serialized with ASP.NET Core camelCase JSON naming.
+      required: [isSuccessful, errorCode, message]
+      properties:
+        isSuccessful:
+          type: boolean
+        errorCode:
+          type: integer
+          minimum: 0
+          maximum: 23
+        message:
+          type: string
+        protocolWelcome:
+          type: [object, 'null']
+        profileList:
+          oneOf:
+            - $ref: '#/components/schemas/ProfileListResult'
+            - type: 'null'
+        audioProfileList:
+          oneOf:
+            - $ref: '#/components/schemas/AudioProfileListResult'
+            - type: 'null'
+        shortcutList:
+          oneOf:
+            - $ref: '#/components/schemas/ShortcutListResult'
+            - type: 'null'
+        operationStatus:
+          oneOf:
+            - $ref: '#/components/schemas/OperationStatus'
+            - type: 'null'
+        operationDecision:
+          oneOf:
+            - $ref: '#/components/schemas/OperationDecision'
+            - type: 'null'
+      additionalProperties: true
+    HttpError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
